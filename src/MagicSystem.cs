@@ -3224,7 +3224,7 @@ namespace TheWitheringArt
                             .Where(s => s.IsVillage && s.MapFaction != lord.MapFaction && s.Village != null && s.Village.Militia > 0f)
                             .OrderBy(s => _rng.Next()).FirstOrDefault();
                         if (target == null) return null;
-                        if (!TrySetMilitia(target.Village, 0f)) return null;
+                        if (!SpellEffects.TrySetMilitia(target.Village, 0f)) return null;
                         return $"Fear spreads from {lord.Name}. The defenders of {target.Name} disperse.";
                     }});
                     // Hollow Name — drain an enemy clan
@@ -3320,7 +3320,7 @@ namespace TheWitheringArt
                             .Where(s => s.IsVillage && s.MapFaction != lord.MapFaction && s.Village != null && s.Village.Militia > 0f)
                             .OrderBy(s => _rng.Next()).FirstOrDefault();
                         if (target == null) return null;
-                        if (!TrySetMilitia(target.Village, 0f)) return null;
+                        if (!SpellEffects.TrySetMilitia(target.Village, 0f)) return null;
                         return $"Fear rides ahead of {lord.Name}. The people of {target.Name} abandon their posts.";
                     }});
                     // Hollow Name — Khuzait riders spread word of weakness
