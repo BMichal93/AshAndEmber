@@ -12,6 +12,7 @@
 //   (e.g. true invisibility, missile slowdown, gate destruction).
 //   Those spells still apply their age cost and display flavour text — they are
 //   placeholders, not crashes.
+// !! TODO Refactor spells to different classes; remove unused parts of code !!
 // =============================================================================
 
 using System;
@@ -372,7 +373,7 @@ namespace TheWitheringArt
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.MageLord, LordFaction="aserai",
                 LearnHint="Kill or befriend an Aserai or Khuzait Mage Lord",
-                Flavour="They see your intent. They see what you will do to them. They choose not to stop you anyway." },
+                Flavour="They see you coming. They see what you intend. Their legs simply will not carry them to the fight." },
 
             new SpellEntry { Name="Hollow Name",  Combo="RDDR",    DayCost=20, BookTag="HOLLOW_NAME",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Combat,
@@ -2063,7 +2064,7 @@ namespace TheWitheringArt
                     if (party == MobileParty.MainParty) continue;
                     if (party.MapFaction == Hero.MainHero?.MapFaction) continue;
                     if (!party.IsActive) continue;
-                    party.RecentEventsMorale -= 5f;
+                    party.RecentEventsMorale -= 10f;
                     affected++;
                     if (affected >= 5) break; // limit to nearby parties
                 }
@@ -2726,56 +2727,61 @@ namespace TheWitheringArt
         }
 
         // ── Aura of Hate state ────────────────────────────────────────────────
+        // Drains village militia to zero — no soldiers means no resistance.
+        // Militia regenerates naturally via the game's daily tick, so no restore needed.
         private static bool _auraOfHateActive = false;
         private static CampaignTime _auraOfHateExpiry;
-        private static readonly List<string> _auraOfHateLordIds = new List<string>();
 
         public static bool IsAuraOfHateActive =>
             _auraOfHateActive && Campaign.Current != null && CampaignTime.Now < _auraOfHateExpiry;
 
-        // Called from OnApplicationTick (campaign map) every frame — cheap when inactive.
+        // Called from OnApplicationTick every frame — cheap when inactive.
         public static void TickAuraOfHate()
         {
             if (!_auraOfHateActive || Campaign.Current == null) return;
             if (CampaignTime.Now < _auraOfHateExpiry) return;
-
             _auraOfHateActive = false;
-            foreach (string id in _auraOfHateLordIds)
-            {
-                Hero lord = Hero.AllAliveHeroes.FirstOrDefault(h => h.StringId == id);
-                if (lord == null) continue;
-                try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -60, false); }
-                catch { }
-            }
-            _auraOfHateLordIds.Clear();
             InformationManager.DisplayMessage(new InformationMessage(
-                "The aura of hate fades. The land forgets your will.",
+                "The aura of hate fades. Courage returns to the land.",
                 new Color(0.5f, 0.2f, 0.3f)));
+        }
+
+        // set_Militia exists in the binary but is not public — reach it via reflection.
+        private static MethodInfo _setMilitiaSetter;
+        private static bool _setMilitiaResolved;
+
+        internal static bool TrySetMilitia(Village v, float value)
+        {
+            if (!_setMilitiaResolved)
+            {
+                _setMilitiaResolved = true;
+                PropertyInfo prop = typeof(Village).GetProperty("Militia",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                _setMilitiaSetter = prop?.GetSetMethod(nonPublic: true);
+            }
+            if (_setMilitiaSetter == null) return false;
+            try { _setMilitiaSetter.Invoke(v, new object[] { value }); return true; }
+            catch { return false; }
         }
 
         private static void AuraOfHate()
         {
-            if (MobileParty.MainParty == null || Hero.MainHero == null) return;
-            if (IsAuraOfHateActive) { Fizzle("The aura already holds over these lands."); return; }
+            if (Hero.MainHero == null) return;
+            if (IsAuraOfHateActive) { Fizzle("Fear already grips these lands."); return; }
 
-            _auraOfHateLordIds.Clear();
-            foreach (Settlement s in Settlement.All.Where(s => s.IsVillage))
+            int affected = 0;
+            foreach (Settlement s in Settlement.All)
             {
-                Hero owner = s.OwnerClan?.Leader;
-                if (owner == null || owner == Hero.MainHero) continue;
-                if (_auraOfHateLordIds.Contains(owner.StringId)) continue;
-                try
-                {
-                    ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, owner, 60, false);
-                    _auraOfHateLordIds.Add(owner.StringId);
-                }
-                catch { }
+                if (s.Village == null) continue;
+                if (TrySetMilitia(s.Village, 0f)) affected++;
             }
+
             _auraOfHateActive = true;
             _auraOfHateExpiry = CampaignTime.Now + CampaignTime.Hours(3);
-            InformationManager.DisplayMessage(new InformationMessage(
-                "A dark weight settles across the land. For three hours, no villager dares raise a hand against you.",
-                new Color(0.7f, 0.1f, 0.2f)));
+            string reach = affected > 0
+                ? $"Your hatred radiates outward. {affected} villages have been stripped of their defenders — none will resist for three hours."
+                : "Your hatred radiates outward. For three hours, no villager dares raise a hand against you.";
+            InformationManager.DisplayMessage(new InformationMessage(reach, new Color(0.7f, 0.1f, 0.2f)));
         }
 
         // ── Visual feedback system ───────────────────────────────────────────
@@ -3211,12 +3217,15 @@ namespace TheWitheringArt
                             catch { }
                             return $"{nearest.Name} withers under {lord.Name}'s will.";
                         }});
-                    // Aura of Hate — boost own party relations with nearby settlements
+                    // Aura of Hate — drain militia from a random enemy village
                     pool.Add(new MapSpellEntry { SpellName="Aura of Hate", DayCost=25, Action=() =>
                     {
-                        if (lord.PartyBelongedTo == null) return null;
-                        lord.PartyBelongedTo.RecentEventsMorale += 8f;
-                        return $"A dark weight radiates from {lord.Name}. Those nearby comply without question.";
+                        Settlement target = Settlement.All
+                            .Where(s => s.IsVillage && s.MapFaction != lord.MapFaction && s.Village != null && s.Village.Militia > 0f)
+                            .OrderBy(s => _rng.Next()).FirstOrDefault();
+                        if (target == null) return null;
+                        if (!TrySetMilitia(target.Village, 0f)) return null;
+                        return $"Fear spreads from {lord.Name}. The defenders of {target.Name} disperse.";
                     }});
                     // Hollow Name — drain an enemy clan
                     pool.Add(new MapSpellEntry { SpellName="Hollow Name", DayCost=20, Action=() =>
@@ -3304,16 +3313,15 @@ namespace TheWitheringArt
                     break;
 
                 case "khuzait":
-                    // Aura of Hate — intimidate a nearby enemy party into lowering morale
+                    // Aura of Hate — drain militia from a random enemy village
                     pool.Add(new MapSpellEntry { SpellName="Aura of Hate", DayCost=25, Action=() =>
                     {
-                        var enemy = Hero.AllAliveHeroes
-                            .Where(h => h.IsLord && h.MapFaction != lord.MapFaction
-                                        && h.PartyBelongedTo != null && h.IsAlive)
-                            .OrderBy(h => _rng.Next()).FirstOrDefault();
-                        if (enemy == null) return null;
-                        enemy.PartyBelongedTo.RecentEventsMorale -= 10f;
-                        return $"A dark compulsion ripples from {lord.Name}. Nearby enemies feel it in their bones.";
+                        Settlement target = Settlement.All
+                            .Where(s => s.IsVillage && s.MapFaction != lord.MapFaction && s.Village != null && s.Village.Militia > 0f)
+                            .OrderBy(s => _rng.Next()).FirstOrDefault();
+                        if (target == null) return null;
+                        if (!TrySetMilitia(target.Village, 0f)) return null;
+                        return $"Fear rides ahead of {lord.Name}. The people of {target.Name} abandon their posts.";
                     }});
                     // Hollow Name — Khuzait riders spread word of weakness
                     pool.Add(new MapSpellEntry { SpellName="Hollow Name", DayCost=20, Action=() =>
