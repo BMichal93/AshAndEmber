@@ -163,26 +163,26 @@ namespace TheWitheringArt
         public static readonly IReadOnlyList<SpellEntry> All = new List<SpellEntry>
         {
             // ── STARTING ─────────────────────────────────────────────────
-            new SpellEntry { Name="Memory",       Combo="UDL",     DayCost=0,  BookTag="MEMORY",
+            new SpellEntry { Name="Memory",       Combo="(book)",  DayCost=0,  BookTag="MEMORY",
                 Context=SpellContext.Both,    GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.Starting, LordFaction="",
                 LearnHint="Starting spell",
                 Flavour="The formulas do not live in your mind. They live in your blood. This is simply the act of listening." },
 
             // ── ATTRIBUTE ────────────────────────────────────────────────
-            new SpellEntry { Name="Push",         Combo="UDD",     DayCost=8,  BookTag="PUSH",
+            new SpellEntry { Name="Push",         Combo="RUL",     DayCost=8,  BookTag="PUSH",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Attribute, LordFaction="", ReqIntelligence=3,
                 LearnHint="Requires 3 Intelligence",
                 Flavour="The void presses outward from a point behind your eyes. Everything not anchored moves." },
 
-            new SpellEntry { Name="Vortex",       Combo="DUU",     DayCost=8,  BookTag="VORTEX",
+            new SpellEntry { Name="Vortex",       Combo="LRL",     DayCost=8,  BookTag="VORTEX",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Attribute, LordFaction="", ReqIntelligence=3,
                 LearnHint="Requires 3 Intelligence",
                 Flavour="The same force, turned inward. You become the heaviest thing on the field." },
 
-            new SpellEntry { Name="Blast",        Combo="DRUL",    DayCost=15, BookTag="BLAST",
+            new SpellEntry { Name="Blast",        Combo="UURR",    DayCost=15, BookTag="BLAST",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Attribute, LordFaction="", ReqIntelligence=4,
                 LearnHint="Requires 4 Intelligence",
@@ -201,37 +201,37 @@ namespace TheWitheringArt
                 LearnHint="Fight a Mage Lord or Mage Unit in battle",
                 Flavour="The art requires a channel. For sixty seconds, every channel on this field is closed." },
 
-            new SpellEntry { Name="Dismount",     Combo="DDRRU",   DayCost=30, BookTag="DISMOUNT",
+            new SpellEntry { Name="Dismount",     Combo="RRUUL",   DayCost=30, BookTag="DISMOUNT",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Defeat a Khuzait party in battle",
                 Flavour="The Gift does not hate horses. It simply forgets to hold them up." },
 
-            new SpellEntry { Name="Shrouding",    Combo="LDRD",    DayCost=15, BookTag="SHROUDING",
+            new SpellEntry { Name="Shrouding",    Combo="LLUR",    DayCost=15, BookTag="SHROUDING",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Flee from a battle",
                 Flavour="You are there. You are just not worth looking at. Not for a few hours." },
 
-            new SpellEntry { Name="Repel",        Combo="DDDDU",   DayCost=40, BookTag="REPEL",
+            new SpellEntry { Name="Repel",        Combo="LUURL",   DayCost=40, BookTag="REPEL",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Use Push seven times in a single battle",
                 Flavour="A pulse, repeated. The first time is a warning. The rest are a statement." },
 
-            new SpellEntry { Name="Scatter",      Combo="RDLU",    DayCost=25, BookTag="SCATTER",
+            new SpellEntry { Name="Scatter",      Combo="RULR",    DayCost=25, BookTag="SCATTER",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Win a battle while outnumbered 3 to 1",
                 Flavour="Formation is belief. The Gift ends the belief." },
 
-            new SpellEntry { Name="Sink",         Combo="DDUL",    DayCost=18, BookTag="SINK",
+            new SpellEntry { Name="Sink",         Combo="LURR",    DayCost=18, BookTag="SINK",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Fall from a height and survive in battle",
                 Flavour="Down is a direction. The void is very good at down." },
 
-            new SpellEntry { Name="Dark Bargain", Combo="DDDDUUU", DayCost=0,  BookTag="DARK_BARGAIN",
+            new SpellEntry { Name="Dark Bargain", Combo="RRRLLLU", DayCost=0,  BookTag="DARK_BARGAIN",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Execute at least one lord",
@@ -239,7 +239,7 @@ namespace TheWitheringArt
 
             // ── TRAVEL (friendly/allied faction required) ─────────────────
             // Battania — nature, life, air
-            new SpellEntry { Name="Rejuvenate",   Combo="DLDR",    DayCost=10, BookTag="REJUVENATE",
+            new SpellEntry { Name="Rejuvenate",   Combo="ULUL",    DayCost=10, BookTag="REJUVENATE",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Healing,
                 LearnHow=LearnHow.Travel, LordFaction="battania",
                 LearnHint="Visit the Battanian village while friendly",
@@ -251,38 +251,38 @@ namespace TheWitheringArt
                 LearnHint="Requires 3 Intelligence",
                 Flavour="You cannot give life. But you can redistribute it — from your years to their wounds." },
 
-            new SpellEntry { Name="Featherfall",  Combo="UDLL",    DayCost=10, BookTag="FEATHERFALL",
+            new SpellEntry { Name="Featherfall",  Combo="LUUL",    DayCost=10, BookTag="FEATHERFALL",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.Travel, LordFaction="battania",
                 LearnHint="Visit the Battanian village while friendly",
                 Flavour="The void does not catch you. It simply slows the agreement between you and the ground." },
 
-            new SpellEntry { Name="Inspire",      Combo="RULDR",   DayCost=15, BookTag="INSPIRE",
+            new SpellEntry { Name="Inspire",      Combo="RULRU",   DayCost=15, BookTag="INSPIRE",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Healing,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Win a battle using only soldiers — no companions",
                 Flavour="Not courage. Certainty. They feel — briefly — that you cannot lose." },
 
-            new SpellEntry { Name="Mending",      Combo="UDUUD",   DayCost=30, BookTag="MENDING",
+            new SpellEntry { Name="Mending",      Combo="UULUR",   DayCost=30, BookTag="MENDING",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Healing,
                 LearnHow=LearnHow.Travel, LordFaction="battania",
                 LearnHint="Visit the Battanian village while friendly",
                 Flavour="The body knows how to be whole. The Gift tells it to hurry." },
 
             // Aserai — manipulation, dark arts
-            new SpellEntry { Name="Charm",        Combo="RLDL",    DayCost=25, BookTag="CHARM",
+            new SpellEntry { Name="Charm",        Combo="RLLR",    DayCost=25, BookTag="CHARM",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.Travel, LordFaction="aserai",
                 LearnHint="Visit the Aserai village while friendly",
                 Flavour="You are not lying. You are simply allowing them to believe what is convenient." },
 
-            new SpellEntry { Name="Sinister Will", Combo="RRLDR",  DayCost=25, BookTag="SINISTER_WILL",
+            new SpellEntry { Name="Sinister Will", Combo="RRULR",  DayCost=25, BookTag="SINISTER_WILL",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Travel, LordFaction="aserai",
                 LearnHint="Visit the Aserai village while friendly",
                 Flavour="The land does not resist you. It simply forgets how to produce." },
 
-            new SpellEntry { Name="Severe Life",  Combo="UUDDRL",  DayCost=45, BookTag="SEVERE_LIFE",
+            new SpellEntry { Name="Severe Life",  Combo="UURRLL",  DayCost=45, BookTag="SEVERE_LIFE",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Travel, LordFaction="aserai",
                 LearnHint="Visit the Aserai city while allied",
@@ -295,7 +295,7 @@ namespace TheWitheringArt
                 LearnHint="Visit the Empire settlement while friendly",
                 Flavour="You are everywhere. Briefly. The cost of being everywhere is that you are briefly nowhere." },
 
-            new SpellEntry { Name="Hurl",         Combo="UUDDR",   DayCost=20, BookTag="HURL",
+            new SpellEntry { Name="Hurl",         Combo="RUURL",   DayCost=20, BookTag="HURL",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Travel, LordFaction="sturgia",
                 LearnHint="Visit the Sturgian settlement while friendly",
@@ -308,7 +308,7 @@ namespace TheWitheringArt
                 LearnHint="Visit the Vlandian settlement while friendly",
                 Flavour="You are here. Then you are somewhere else. The distance between was never real." },
 
-            new SpellEntry { Name="Pacify",       Combo="RRDDU",   DayCost=40, BookTag="PACIFY",
+            new SpellEntry { Name="Pacify",       Combo="LLURL",   DayCost=40, BookTag="PACIFY",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.Travel, LordFaction="vlandia",
                 LearnHint="Visit the Vlandian settlement while friendly",
@@ -330,20 +330,20 @@ namespace TheWitheringArt
                 Flavour="The ground was always optional. You simply forgot to ask permission to leave it." },
 
             // Aserai lords
-            new SpellEntry { Name="Devour",       Combo="DDUR",    DayCost=0,  BookTag="DEVOUR",
+            new SpellEntry { Name="Devour",       Combo="UULR",    DayCost=0,  BookTag="DEVOUR",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.MageLord, LordFaction="aserai",
                 LearnHint="Kill or befriend an Aserai Mage Lord",
                 Flavour="They followed you. That was always going to mean something." },
 
-            new SpellEntry { Name="Confuse",      Combo="LRDLU",   DayCost=30, BookTag="CONFUSE",
+            new SpellEntry { Name="Confuse",      Combo="LRULR",   DayCost=30, BookTag="CONFUSE",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.MageLord, LordFaction="aserai",
                 LearnHint="Kill or befriend an Aserai Mage Lord",
                 Flavour="A word in the blood, not the ear. The enemy follows an order they did not choose." },
 
             // Sturgia lords
-            new SpellEntry { Name="Hold Arrows",  Combo="DURLDL",  DayCost=60, BookTag="HOLD_ARROWS",
+            new SpellEntry { Name="Hold Arrows",  Combo="LURLUR",  DayCost=60, BookTag="HOLD_ARROWS",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.MageLord, LordFaction="sturgia",
                 LearnHint="Kill or befriend a Sturgian Mage Lord",
@@ -357,31 +357,31 @@ namespace TheWitheringArt
                 Flavour="The body was always capable of this. The mind simply did not believe it yet." },
 
             // Empire lords
-            new SpellEntry { Name="Swap",         Combo="LRDU",    DayCost=22, BookTag="SWAP",
+            new SpellEntry { Name="Swap",         Combo="LRRL",    DayCost=22, BookTag="SWAP",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.MageLord, LordFaction="empire",
                 LearnHint="Kill or befriend an Empire Mage Lord",
                 Flavour="You are there. They are here. Neither of you chose this." },
 
-            new SpellEntry { Name="Calling",      Combo="UURLDR",  DayCost=50, BookTag="CALLING",
+            new SpellEntry { Name="Calling",      Combo="UULRLU",  DayCost=50, BookTag="CALLING",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.MageLord, LordFaction="empire",
                 LearnHint="Kill or befriend an Empire Mage Lord",
                 Flavour="The call carries further than a voice. Those who hear it do not know why they march." },
 
-            new SpellEntry { Name="Aura of Hate", Combo="RDDLL",   DayCost=25, BookTag="AURA_OF_HATE",
+            new SpellEntry { Name="Aura of Hate", Combo="RLLUR",   DayCost=25, BookTag="AURA_OF_HATE",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.MageLord, LordFaction="aserai",
                 LearnHint="Kill or befriend an Aserai or Khuzait Mage Lord",
                 Flavour="They see you coming. They see what you intend. Their legs simply will not carry them to the fight." },
 
-            new SpellEntry { Name="Hollow Name",  Combo="RDDR",    DayCost=20, BookTag="HOLLOW_NAME",
+            new SpellEntry { Name="Hollow Name",  Combo="RUUR",    DayCost=20, BookTag="HOLLOW_NAME",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Reach age 70 through spell use",
                 Flavour="You are less. But so are they. The void does not play favourites — it only takes." },
 
-            new SpellEntry { Name="Long Road",    Combo="LRLD",    DayCost=25, BookTag="LONG_ROAD",
+            new SpellEntry { Name="Long Road",    Combo="LRLU",    DayCost=25, BookTag="LONG_ROAD",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.MageLord, LordFaction="vlandia",
                 LearnHint="Kill or befriend a Vlandian Mage Lord",
@@ -393,7 +393,7 @@ namespace TheWitheringArt
                 LearnHint="Kill or befriend any Mage Lord",
                 Flavour="A lord's power is the belief of those who follow them. For ten seconds, they forget to believe." },
 
-            new SpellEntry { Name="Crush",        Combo="UUUDDDR", DayCost=65, BookTag="CRUSH",
+            new SpellEntry { Name="Crush",        Combo="UUURRRL", DayCost=65, BookTag="CRUSH",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.MageLord, LordFaction="",
                 LearnHint="Kill or befriend any Mage Lord",
@@ -652,7 +652,7 @@ namespace TheWitheringArt
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"\"{s.Flavour}\"", new Color(0.55f, 0.3f, 0.75f)));
             InformationManager.DisplayMessage(new InformationMessage(
-                $"You learn {s.Name}. Combo: {s.Combo} — {cost}. (UDL for grimoire)",
+                $"You learn {s.Name}. Combo: {s.Combo} — {cost}. (S / L3 opens grimoire)",
                 new Color(0.8f, 0.4f, 1f)));
         }
 
@@ -736,7 +736,7 @@ namespace TheWitheringArt
 
             if (totalPages > 1)
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"  [ Page {_grimoirePage + 1}/{totalPages} — cast UDL again for next ]",
+                    $"  [ Page {_grimoirePage + 1}/{totalPages} — press S / L3 again for next ]",
                     new Color(0.5f, 0.3f, 0.7f)));
 
             _grimoirePage = (_grimoirePage + 1) % totalPages;
@@ -1564,9 +1564,9 @@ namespace TheWitheringArt
         {
             if (!SpellKnowledge.HasGift) { InputSuppressed = false; return; }
 
-            // Focus key: Left Alt (KB) or L3 / Left Stick Click (Gamepad)
+            // Focus key: Left Alt (KB) or Left Trigger / LT (Gamepad)
             bool focusing = Input.IsKeyDown(InputKey.LeftAlt)
-                         || Input.IsKeyDown(InputKey.ControllerLThumb);
+                         || Input.IsKeyDown(InputKey.ControllerLTrigger);
 
             InputSuppressed = focusing;
 
@@ -1574,17 +1574,18 @@ namespace TheWitheringArt
             {
                 _wasFocusing = true;
 
-                // Keyboard — WASD
+                // Keyboard — W/A/D only (no S: D direction removed from all combos)
+                // D key is the spellbook shortcut — opens grimoire immediately
                 if      (Input.IsKeyPressed(InputKey.W)) Append("U");
-                else if (Input.IsKeyPressed(InputKey.S)) Append("D");
                 else if (Input.IsKeyPressed(InputKey.A)) Append("L");
                 else if (Input.IsKeyPressed(InputKey.D)) Append("R");
-                // Gamepad — face buttons while L3 held (no native Bannerlord conflict)
-                //   RUp=Y  RDown=A  RLeft=X  RRight=B
+                else if (Input.IsKeyPressed(InputKey.S)) { SpellKnowledge.ShowGrimoire(); }
+                // Gamepad — face buttons while LT held
+                //   Y=U  X=L  A=R  L3=spellbook (instant)
                 else if (Input.IsKeyPressed(InputKey.ControllerRUp))    Append("U");
-                else if (Input.IsKeyPressed(InputKey.ControllerRDown))  Append("D");
                 else if (Input.IsKeyPressed(InputKey.ControllerRLeft))  Append("L");
-                else if (Input.IsKeyPressed(InputKey.ControllerRRight)) Append("R");
+                else if (Input.IsKeyPressed(InputKey.ControllerRDown))  Append("R");
+                else if (Input.IsKeyPressed(InputKey.ControllerLThumb)) { SpellKnowledge.ShowGrimoire(); }
 
                 if (_buffer.Length > 0 && _buffer != _lastDisplayedBuffer)
                 {
@@ -1621,12 +1622,6 @@ namespace TheWitheringArt
                     Fizzle("You do not yet understand the ritual.");
                 else
                     RitualSettings.Cycle();
-                return;
-            }
-
-            if (combo == "UDL")
-            {
-                SpellKnowledge.ShowGrimoire();
                 return;
             }
 
@@ -1718,47 +1713,46 @@ namespace TheWitheringArt
             switch (combo)
             {
                 // STARTING
-                case "UDL":     Memory();       break;
                 case "LLRR":    Relocate();     break;
                 case "UULL":    Restore();      break;
                 // ATTRIBUTE
-                case "UDD":     Push();         break;
-                case "DUU":     Vortex();       break;
-                case "DRUL":    Blast();        break;
-                case "UDUUD":   Mending();      break;
-                case "LRDLU":   Confuse();      break;
+                case "RUL":     Push();         break;
+                case "LRL":     Vortex();       break;
+                case "UURR":    Blast();        break;
+                case "UULUR":   Mending();      break;
+                case "LRULR":   Confuse();      break;
                 // EVENT
                 case "RRLU":    Suppress();     break;
-                case "DDRRU":   Dismount();     break;
-                case "LDRD":    Shrouding();    break;
-                case "RULDR":   Inspire();      break;
-                case "DDDDUUU": DarkBargain();  break;
-                case "DLDR":    Rejuvenate();   break;
-                case "RLDL":    Charm();        break;
+                case "RRUUL":   Dismount();     break;
+                case "LLUR":    Shrouding();    break;
+                case "RULRU":   Inspire();      break;
+                case "RRRLLLU": DarkBargain();  break;
+                case "ULUL":    Rejuvenate();   break;
+                case "RLLR":    Charm();        break;
                 // TRAVEL
-                case "RRLDR":   SinisterWill(); break;
+                case "RRULR":   SinisterWill(); break;
                 // MAGE LORD
-                case "UUDDR":   Hurl();         break;
-                case "DDDDU":   Repel();        break;
-                case "RRDDU":   Pacify();       break;
+                case "RUURL":   Hurl();         break;
+                case "LUURL":   Repel();        break;
+                case "LLURL":   Pacify();       break;
                 case "RRLL":    Accelerate();   break;
-                case "DURLDL":  HoldArrows();   break;
-                case "UUDDRL":  SevereLife();   break;
+                case "LURLUR":  HoldArrows();   break;
+                case "UURRLL":  SevereLife();   break;
                 case "LLRRU":   Clairvoyance(); break;
-                case "UUUDDDR": Crush();        break;
-                case "LRDU":    Swap();         break;
-                case "RDLU":    Scatter();      break;
-                case "DDUR":    Devour();       break;
-                case "DDUL":    Sink();         break;
+                case "UUURRRL": Crush();        break;
+                case "LRRL":    Swap();         break;
+                case "RULR":    Scatter();      break;
+                case "UULR":    Devour();       break;
+                case "LURR":    Sink();         break;
                 case "ULR":     Mark();         break;
                 case "LRRUL":   Unname();       break;
-                case "RDDR":    HollowName();   break;
-                case "LRLD":    LongRoad();     break;
+                case "RUUR":    HollowName();   break;
+                case "LRLU":    LongRoad();     break;
                 case "UUUR":    Levitate();     break;
-                case "UDLL":    Featherfall();  break;
+                case "LUUL":    Featherfall();  break;
                 case "LLUU":    Weightless();   break;
-                case "UURLDR":  Calling();      break;
-                case "RDDLL":   AuraOfHate();   break;
+                case "UULRLU":  Calling();      break;
+                case "RLLUR":   AuraOfHate();   break;
             }
         }
 
