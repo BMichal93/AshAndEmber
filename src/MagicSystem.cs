@@ -185,8 +185,8 @@ namespace TheWitheringArt
 
             new SpellEntry { Name="Blast",        Combo="UURR",    DayCost=15, BookTag="BLAST",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
-                LearnHow=LearnHow.Attribute, LordFaction="", ReqIntelligence=4,
-                LearnHint="Requires 4 Intelligence",
+                LearnHow=LearnHow.Travel, LordFaction="sturgia",
+                LearnHint="Visit the Sturgian settlement while friendly",
                 Flavour="A needle of condensed nothing. Whatever it strikes, it unmakes — briefly, but completely." },
 
             new SpellEntry { Name="Mark",         Combo="ULR",     DayCost=8,  BookTag="MARK",
@@ -298,8 +298,8 @@ namespace TheWitheringArt
 
             new SpellEntry { Name="Hurl",         Combo="RUURL",   DayCost=20, BookTag="HURL",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
-                LearnHow=LearnHow.Travel, LordFaction="sturgia",
-                LearnHint="Visit the Sturgian settlement while friendly",
+                LearnHow=LearnHow.Attribute, LordFaction="", ReqIntelligence=4,
+                LearnHint="Requires 4 Intelligence",
                 Flavour="What goes up comes down. The void is not responsible for what happens between." },
 
             // Vlandia — order, positioning
@@ -601,7 +601,7 @@ namespace TheWitheringArt
                 else if (s.BookTag == "CHARM")         { conditionMet = HasVisitedAserai;     siteName = SiteAserai; }
                 else if (s.BookTag == "SINISTER_WILL") { conditionMet = HasVisitedAserai;     siteName = SiteAserai; }
                 else if (s.BookTag == "SEVERE_LIFE")   { conditionMet = HasVisitedAseraiCity; siteName = SiteAseraiCity; }
-                else if (s.BookTag == "HURL")          { conditionMet = HasVisitedSturgia;    siteName = SiteSturgia; }
+                else if (s.BookTag == "BLAST")         { conditionMet = HasVisitedSturgia;    siteName = SiteSturgia; }
                 else if (s.BookTag == "CLAIRVOYANCE")  { conditionMet = HasVisitedEmpire;     siteName = SiteEmpire; }
                 else if (s.BookTag == "RELOCATE")      { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
                 else if (s.BookTag == "PACIFY")        { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
@@ -1635,7 +1635,7 @@ namespace TheWitheringArt
 
             SpellEntry spell = SpellDatabase.Find(combo);
 
-            if (spell == null) { Fizzle("The void does not recognise that sequence."); return; }
+            if (spell == null) { Fizzle("You failed to channel the Gift."); return; }
 
             if (!SpellKnowledge.IsKnown(spell.BookTag))
             {
