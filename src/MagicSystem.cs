@@ -668,6 +668,70 @@ namespace TheWitheringArt
             }
         }
 
+        private static bool TryGetTravelSpellSite(SpellEntry s, out string siteName)
+        {
+            siteName = "";
+            if (s == null || s.LearnHow != LearnHow.Travel) return false;
+
+            if      (s.BookTag == "REJUVENATE")    siteName = SiteBattania;
+            else if (s.BookTag == "FEATHERFALL")   siteName = SiteBattania;
+            else if (s.BookTag == "MENDING")       siteName = SiteBattania;
+            else if (s.BookTag == "CHARM")         siteName = SiteAserai;
+            else if (s.BookTag == "SINISTER_WILL") siteName = SiteAserai;
+            else if (s.BookTag == "SEVERE_LIFE")   siteName = SiteAseraiCity;
+            else if (s.BookTag == "BANE")          siteName = SiteAseraiCity;
+            else if (s.BookTag == "BLAST")         siteName = SiteSturgia;
+            else if (s.BookTag == "CLAIRVOYANCE")  siteName = SiteEmpire;
+            else if (s.BookTag == "RELOCATE")      siteName = SiteVlandia;
+            else if (s.BookTag == "PACIFY")        siteName = SiteVlandia;
+            else if (s.BookTag == "HALT")          siteName = SiteVlandia;
+            else if (s.BookTag == "ENRAGE")        siteName = SiteVlandia;
+            else if (s.BookTag == "DISMOUNT")      siteName = SiteVlandia;
+            else if (s.BookTag == "STOP_ARROWS")   siteName = SiteVlandia;
+            else if (s.BookTag == "WEIGHTLESS")    siteName = SiteKhuzait;
+
+            return !string.IsNullOrEmpty(siteName);
+        }
+
+        public static void TryLearnRandomUnknownSpell(string contextLine, string flavourPrefix = null)
+        {
+            if (!_hasGift) return;
+
+            var candidates = SpellDatabase.All
+                .Where(s => !IsKnown(s.BookTag) && s.LearnHow != LearnHow.Starting)
+                .ToList();
+
+            if (candidates.Count == 0) return;
+
+            SpellEntry learned = candidates[MBRandom.RandomInt(candidates.Count)];
+            string ctx = string.IsNullOrEmpty(contextLine)
+                ? "You find an old book among the spoils."
+                : contextLine;
+            if (!string.IsNullOrEmpty(flavourPrefix) && !string.IsNullOrEmpty(learned.Flavour))
+                ctx = flavourPrefix + ctx;
+            RevealSpell(learned, ctx);
+        }
+
+        public static bool TryLearnTravelSpellFromSiteName(string settlementName, string contextLine, int chancePercent = 50)
+        {
+            if (!_hasGift || string.IsNullOrEmpty(settlementName)) return false;
+
+            foreach (SpellEntry s in SpellDatabase.All.Where(s => s.LearnHow == LearnHow.Travel))
+            {
+                if (IsKnown(s.BookTag)) continue;
+                string siteName;
+                if (!TryGetTravelSpellSite(s, out siteName)) continue;
+                if (string.IsNullOrEmpty(siteName)) continue;
+                if (!settlementName.Contains(siteName)) continue;
+                if (MBRandom.RandomInt(100) >= chancePercent) continue;
+
+                RevealSpell(s, contextLine);
+                return true;
+            }
+
+            return false;
+        }
+
         public static void RevealSpell(SpellEntry s, string contextLine)
         {
             _notifiedTags.Add(s.BookTag);
@@ -1105,6 +1169,8 @@ namespace TheWitheringArt
             CampaignEvents.HeroCreated.AddNonSerializedListener(this, OnHeroCreated);
             CampaignEvents.NewCompanionAdded.AddNonSerializedListener(this, OnCompanionAdded);
             CampaignEvents.OnTroopRecruitedEvent.AddNonSerializedListener(this, OnTroopRecruited);
+            CampaignEvents.OnHideoutBattleCompletedEvent.AddNonSerializedListener(this, OnHideoutBattleCompleted);
+            CampaignEvents.VillageStateChanged.AddNonSerializedListener(this, OnVillageStateChanged);
         }
 
         // ── Daily: scan inventory for new spell books ─────────────────────
@@ -1614,6 +1680,39 @@ namespace TheWitheringArt
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{transformed} {(transformed == 1 ? "recruit manifests" : "recruits manifest")} an echo of the Gift.",
                     new Color(0.7f, 0.2f, 1f)));
+            }
+            catch { }
+        }
+
+        private void OnHideoutBattleCompleted(BattleSideEnum winnerSide, HideoutEventComponent hideoutEventComponent)
+        {
+            if (!SpellKnowledge.HasGift) return;
+            if (winnerSide != BattleSideEnum.Attacker) return;
+            if (hideoutEventComponent == null) return;
+            try
+            {
+                if (MBRandom.RandomInt(100) < 10)
+                {
+                    SpellKnowledge.TryLearnRandomUnknownSpell(
+                        "You sift through the bandit camp's loot and find an old spellbook.");
+                }
+            }
+            catch { }
+        }
+
+        private void OnVillageStateChanged(Village village, Village.VillageStates oldState,
+                                           Village.VillageStates newState, MobileParty raidingParty)
+        {
+            if (!SpellKnowledge.HasGift || village == null) return;
+            if (newState != Village.VillageStates.Looted) return;
+            if (raidingParty == null || raidingParty != MobileParty.MainParty) return;
+            try
+            {
+                string settlementName = village.Bound?.Name?.ToString() ?? "";
+                if (string.IsNullOrEmpty(settlementName)) return;
+                SpellKnowledge.TryLearnTravelSpellFromSiteName(
+                    settlementName,
+                    $"A prisoner whispers of hidden books as {settlementName} burns.");
             }
             catch { }
         }
