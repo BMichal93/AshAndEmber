@@ -197,11 +197,11 @@ namespace TheWitheringArt
                 LearnHint="Fight a Mage Lord or Mage Unit in battle",
                 Flavour="The art requires a channel. For sixty seconds, every channel on this field is closed." },
 
-            new SpellEntry { Name="Dismount",     Combo="RRUUL",   DayCost=30, BookTag="DISMOUNT",
-                Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
-                LearnHow=LearnHow.Event, LordFaction="",
-                LearnHint="Defeat a Khuzait party in battle",
-                Flavour="The Gift does not hate horses. It simply forgets to hold them up." },
+            new SpellEntry { Name="Halt",         Combo="URUL",    DayCost=30, BookTag="HALT",
+                Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
+                LearnHow=LearnHow.Travel, LordFaction="vlandia",
+                LearnHint="Visit the Vlandian settlement while friendly",
+                Flavour="The enemy line remembers what it was doing and decides to stop." },
 
             new SpellEntry { Name="Shrouding",    Combo="LLUR",    DayCost=60, BookTag="SHROUDING",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Support,
@@ -215,11 +215,29 @@ namespace TheWitheringArt
                 LearnHint="Visit the Aserai city while allied",
                 Flavour="A shadow settles over the roads and camps around you. Enemy scouts forget their purpose." },
 
+            new SpellEntry { Name="Enrage",      Combo="URUR",    DayCost=35, BookTag="ENRAGE",
+                Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
+                LearnHow=LearnHow.Travel, LordFaction="vlandia",
+                LearnHint="Visit the Vlandian settlement while friendly",
+                Flavour="The order reaches the enemy before their caution does. They surge forward in a murderous rush." },
+
+            new SpellEntry { Name="Dismount",    Combo="RRUUL",   DayCost=30, BookTag="DISMOUNT",
+                Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
+                LearnHow=LearnHow.Travel, LordFaction="vlandia",
+                LearnHint="Visit the Vlandian settlement while friendly",
+                Flavour="Horses are told to be elsewhere. Riders comply the hard way." },
+
             new SpellEntry { Name="Repel",        Combo="LUURL",   DayCost=40, BookTag="REPEL",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Use Blast seven times in a single battle",
                 Flavour="A pulse, repeated. The first time is a warning. The rest are a statement." },
+
+            new SpellEntry { Name="Stop Arrows",  Combo="LURLUR",  DayCost=60, BookTag="STOP_ARROWS",
+                Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
+                LearnHow=LearnHow.Travel, LordFaction="vlandia",
+                LearnHint="Visit the Vlandian settlement while friendly",
+                Flavour="The bowstrings slacken. The enemy remembers steel exists." },
 
             new SpellEntry { Name="Scatter",      Combo="RULR",    DayCost=25, BookTag="SCATTER",
                 Context=SpellContext.Mission, GlowColor=SpellGlowColor.Combat,
@@ -337,13 +355,6 @@ namespace TheWitheringArt
                 LearnHow=LearnHow.MageLord, LordFaction="aserai",
                 LearnHint="Kill or befriend an Aserai Mage Lord",
                 Flavour="A word in the blood, not the ear. The enemy follows an order they did not choose." },
-
-            // Sturgia lords
-            new SpellEntry { Name="Hold Arrows",  Combo="LURLUR",  DayCost=60, BookTag="HOLD_ARROWS",
-                Context=SpellContext.Mission, GlowColor=SpellGlowColor.Support,
-                LearnHow=LearnHow.MageLord, LordFaction="sturgia",
-                LearnHint="Kill or befriend a Sturgian Mage Lord",
-                Flavour="Every weapon on this field, for thirty seconds, decides it is tired." },
 
             // Vlandia lords
             new SpellEntry { Name="Accelerate",   Combo="RRLL",    DayCost=15, BookTag="ACCELERATE",
@@ -617,6 +628,10 @@ namespace TheWitheringArt
                 else if (s.BookTag == "CLAIRVOYANCE")  { conditionMet = HasVisitedEmpire;     siteName = SiteEmpire; }
                 else if (s.BookTag == "RELOCATE")      { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
                 else if (s.BookTag == "PACIFY")        { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
+                else if (s.BookTag == "HALT")          { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
+                else if (s.BookTag == "ENRAGE")        { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
+                else if (s.BookTag == "DISMOUNT")      { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
+                else if (s.BookTag == "STOP_ARROWS")   { conditionMet = HasVisitedVlandia;    siteName = SiteVlandia; }
                 else if (s.BookTag == "WEIGHTLESS")    { conditionMet = HasVisitedKhuzait;    siteName = SiteKhuzait; }
                 else                                   { conditionMet = false; }
 
@@ -640,7 +655,6 @@ namespace TheWitheringArt
 
                 bool conditionMet;
                 if      (s.BookTag == "SUPPRESS")     conditionMet = HasFoughtMage;
-                else if (s.BookTag == "DISMOUNT")      conditionMet = HasDefeatedKhuzait;
                 else if (s.BookTag == "SHROUDING")     conditionMet = HasFledBattle;
                 else if (s.BookTag == "INSPIRE")       conditionMet = HasWonSoloBattle;
                 else if (s.BookTag == "REPEL")         conditionMet = HasUsedPush7InBattle;
@@ -1726,7 +1740,19 @@ namespace TheWitheringArt
             { Fizzle($"{spell.Name} can only be cast on the campaign map."); return; }
 
             if (inMission && Agent.Main?.MountAgent != null)
-            { Fizzle("Dismount to cast."); return; }
+            {
+                bool allowsMountedCast =
+                    spell.BookTag == "HALT" ||
+                    spell.BookTag == "ENRAGE" ||
+                    spell.BookTag == "DISMOUNT" ||
+                    spell.BookTag == "STOP_ARROWS";
+
+                if (!allowsMountedCast)
+                {
+                    Fizzle("Dismount to cast.");
+                    return;
+                }
+            }
 
             // Age cost: spec-days / 252 = campaign years
             // 252 = 3 Bannerlord years — keeps costs felt but not punishing on frequent casts
@@ -1797,7 +1823,6 @@ namespace TheWitheringArt
                 case "LRULR":   Confuse();      break;
                 // EVENT
                 case "RRLU":    Suppress();     break;
-                case "RRUUL":   Dismount();     break;
                 case "LLUR":    ShroudEscape(); break;
                 case "LULR":    Bane();         break;
                 case "RULRU":   Inspire();      break;
@@ -1811,7 +1836,6 @@ namespace TheWitheringArt
                 case "LUURL":   Repel();        break;
                 case "LLURL":   Pacify();       break;
                 case "RRLL":    Accelerate();   break;
-                case "LURLUR":  HoldArrows();   break;
                 case "UURRLL":  SevereLife();   break;
                 case "LLRRU":   Clairvoyance(); break;
                 case "UUURRRL": Crush();        break;
@@ -1827,6 +1851,10 @@ namespace TheWitheringArt
                 case "LLUU":    Weightless();   break;
                 case "UULRLU":  Calling();      break;
                 case "RLLUR":   AuraOfHate();   break;
+                case "URUL":    Halt();        break;
+                case "URUR":    Enrage();      break;
+                case "RRUUL":   Dismount();    break;
+                case "LURLUR":  StopArrows();  break;
             }
         }
 
@@ -2127,27 +2155,92 @@ namespace TheWitheringArt
                 new Color(0.5f, 0.5f, 0.8f)));
         }
 
-        private static void Dismount()
+        private enum BattleCommandKind
         {
-            // Kill the mount directly — rider is dismounted when their horse dies
-            if (Player == null) return;
-            Vec3 fwd = Player.LookDirection.NormalizedCopy();
-            int knocked = 0;
+            Halt,
+            Enrage,
+            Dismount,
+            StopArrows
+        }
+
+        private static void IssueBattleCommand(BattleCommandKind kind, string successText)
+        {
+            if (Player == null || Mission.Current == null || Mission.Current.Scene == null)
+            {
+                Fizzle("No battle is active.");
+                return;
+            }
+
+            var formations = new HashSet<Formation>();
+            var scene = Mission.Current.Scene;
+
             foreach (Agent a in Enemies().ToList())
             {
-                if (a.MountAgent == null) continue;
-                Vec3 toAgent = (a.Position - Player.Position);
-                if (toAgent.Length > 10f) continue;
-                float dot = Vec3.DotProduct(fwd, toAgent.NormalizedCopy());
-                if (dot < 0.3f) continue;
-                try { KillAgent(a.MountAgent); knocked++; }
+                if (a.Formation == null) continue;
+                if (a.Position.Distance(Player.Position) > 500f) continue;
+
+                bool visible = false;
+                try
+                {
+                    visible = scene.CheckPointCanSeePoint(Player.Position, a.Position, 500f);
+                }
+                catch { }
+
+                if (!visible) continue;
+                formations.Add(a.Formation);
+            }
+
+            if (formations.Count == 0)
+            {
+                Fizzle("No visible enemy formations within 500m.");
+                return;
+            }
+
+            int affected = 0;
+            foreach (Formation formation in formations)
+            {
+                try
+                {
+                    switch (kind)
+                    {
+                        case BattleCommandKind.Halt:
+                            formation.SetMovementOrder(MovementOrder.MovementOrderStop);
+                            affected++;
+                            break;
+                        case BattleCommandKind.Enrage:
+                            formation.SetMovementOrder(MovementOrder.MovementOrderCharge);
+                            affected++;
+                            break;
+                        case BattleCommandKind.Dismount:
+                            if (formation.HasAnyMountedUnit)
+                            {
+                                formation.SetRidingOrder(RidingOrder.RidingOrderDismount);
+                                affected++;
+                            }
+                            break;
+                        case BattleCommandKind.StopArrows:
+                            if (formation.GetCountOfUnitsBelongingToLogicalClass(TaleWorlds.Core.FormationClass.Ranged) > 0 ||
+                                formation.GetCountOfUnitsBelongingToLogicalClass(TaleWorlds.Core.FormationClass.HorseArcher) > 0)
+                            {
+                                formation.SetFiringOrder(FiringOrder.FiringOrderHoldYourFire);
+                                affected++;
+                            }
+                            break;
+                    }
+                }
                 catch { }
             }
+
             InformationManager.DisplayMessage(new InformationMessage(
-                knocked > 0 ? $"{knocked} rider{(knocked==1?"":"s")} unseated."
-                            : "No mounted enemies in forward cone.",
-                new Color(0.9f, 0.7f, 0.2f)));
+                affected > 0 ? string.Format(successText, affected, affected == 1 ? "" : "s")
+                             : "No matching enemy formations were close enough.",
+                new Color(0.7f, 0.5f, 0.9f)));
         }
+
+        private static void Halt()     => IssueBattleCommand(BattleCommandKind.Halt,      "{0} enemy formation{1} ordered to halt.");
+        private static void Enrage()   => IssueBattleCommand(BattleCommandKind.Enrage,    "{0} enemy formation{1} driven into a charge.");
+        private static void Dismount() => IssueBattleCommand(BattleCommandKind.Dismount,  "{0} enemy formation{1} forced to dismount.");
+        private static void StopArrows()=> IssueBattleCommand(BattleCommandKind.StopArrows,"{0} enemy formation{1} told to stop shooting.");
 
         private static void Bane()
         {
@@ -2425,34 +2518,6 @@ namespace TheWitheringArt
             InformationManager.DisplayMessage(new InformationMessage(
                 "You move at the speed of a horse for 5 minutes.",
                 new Color(0.6f, 0.9f, 0.6f)));
-        }
-
-        private static void HoldArrows()
-        {
-            // Freeze all non-hero ranged agents for 30 seconds
-            if (Player == null) return;
-            ActionIndexCache freeze = ActionIndexCache.Create("act_stand_1");
-            int frozen = 0;
-            foreach (Agent a in Mission.Current?.Agents.ToList() ?? new List<Agent>())
-            {
-                if (a == Player || a.IsMount || !a.IsActive()) continue;
-                int idx = a.Index;
-                ActiveEffectManager.Add(new ActiveEffect
-                {
-                    Name            = $"_hold_{idx}",
-                    Duration        = 30f,
-                    IsMissionEffect = true,
-                    OnTick = _ =>
-                    {
-                        Agent t = Mission.Current?.Agents.FirstOrDefault(x => x.Index == idx);
-                        if (t != null && t.IsActive()) t.SetActionChannel(0, freeze, true);
-                    }
-                });
-                frozen++;
-            }
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"All agents are frozen in place for 30 seconds. ({frozen} affected)",
-                new Color(0.4f, 0.6f, 1f)));
         }
 
         private static void SevereLife()
@@ -4106,3 +4171,4 @@ namespace TheWitheringArt
         public static void ClearTimers() => _castTimers.Clear();
     }
 }
+
