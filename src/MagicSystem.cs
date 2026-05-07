@@ -91,6 +91,14 @@ namespace TheWitheringArt
                     Color.FromUint(0xFFCC0000)));
             }
 
+            // Near-death survival unlocks Sink (player drops below 5% HP and survives)
+            if (SpellKnowledge.HasGift && !SpellKnowledge.HasFallenAndSurvived &&
+                Agent.Main != null && Agent.Main.IsActive() &&
+                Agent.Main.Health / Math.Max(Agent.Main.HealthLimit, 1f) < 0.05f)
+            {
+                SpellKnowledge.TriggerFallenAndSurvived();
+            }
+
             if (!SpellKnowledge.HasGift || Mission.Current == null) return;
 
             // Detect mage fight (once per mission)
@@ -1058,6 +1066,7 @@ namespace TheWitheringArt
             CampaignEvents.PlayerStartTalkFromMenu.AddNonSerializedListener(this, OnPlayerTalkToHero);
             CampaignEvents.HeroCreated.AddNonSerializedListener(this, OnHeroCreated);
             CampaignEvents.NewCompanionAdded.AddNonSerializedListener(this, OnCompanionAdded);
+            CampaignEvents.OnTroopRecruitedEvent.AddNonSerializedListener(this, OnTroopRecruited);
         }
 
         // ── Daily: scan inventory for new spell books ─────────────────────
@@ -1133,6 +1142,7 @@ namespace TheWitheringArt
 
             MageLordRegistry.SeedInitialMageLords();
             MageLordRegistry.DailyMapCast();
+            MageLordRegistry.MaintainMageArmies();
             SpellEffects.TickLongRoad();
 
             // Seed locations if not yet done (e.g. save loaded before this feature)
@@ -1546,6 +1556,30 @@ namespace TheWitheringArt
             catch { }
         }
 
+        private void OnTroopRecruited(Hero recruiter, Settlement settlement, Hero volunteer,
+                                      CharacterObject troop, int count)
+        {
+            if (!SpellKnowledge.HasGift) return;
+            if (recruiter != Hero.MainHero) return;
+            if (troop == null || troop.Tier > 1) return;
+            if (MobileParty.MainParty == null) return;
+            try
+            {
+                var mageChar = MBObjectManager.Instance.GetObject<CharacterObject>("twa_mage_initiate");
+                if (mageChar == null) return;
+                int transformed = 0;
+                for (int i = 0; i < count; i++)
+                    if (MBRandom.RandomInt(100) < 2) transformed++;
+                if (transformed <= 0) return;
+                MobileParty.MainParty.MemberRoster.AddToCounts(troop, -transformed);
+                MobileParty.MainParty.MemberRoster.AddToCounts(mageChar, transformed);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{transformed} {(transformed == 1 ? "recruit manifests" : "recruits manifest")} an echo of the Gift.",
+                    new Color(0.7f, 0.2f, 1f)));
+            }
+            catch { }
+        }
+
         public override void SyncData(IDataStore dataStore)
         {
             dataStore.SyncData("TWA_GiftCheckDone",       ref _giftCheckDone);
@@ -1949,11 +1983,11 @@ namespace TheWitheringArt
             {
                 Vec3 toAgent = (a.Position - Player.Position);
                 float dist = toAgent.Length;
-                if (dist > 10f) continue;
+                if (dist > 20f) continue;
                 // Check forward cone (~120 degrees)
                 float dot = Vec3.DotProduct(fwd, toAgent.NormalizedCopy());
                 if (dot < 0.5f) continue; // outside cone
-                Vec3 pushDest = a.Position + fwd * 10f;
+                Vec3 pushDest = a.Position + fwd * 20f;
                 pushDest.z = a.Position.z;
                 try
                 {
@@ -1970,31 +2004,50 @@ namespace TheWitheringArt
         }
 
         private static void Vortex()
+    {
+        // Range extended to 20m. Pull distance remains 6m, but logic is added to prevent overshooting.
+        if (Player == null) return;
+        
+        // Using a more standard knockdown action to ensure 'tripping' occurs reliably
+        ActionIndexCache trip = ActionIndexCache.Create("act_fall_back_on_ground");
+        int pulled = 0;
+
+        foreach (Agent a in Enemies().ToList())
         {
-            // Pull enemies within 10m radius 6m closer to player, then trip
-            if (Player == null) return;
-            ActionIndexCache trip = ActionIndexCache.Create("act_struck_from_back_medium_left_staff");
-            int pulled = 0;
-            foreach (Agent a in Enemies().ToList())
+            float dist = a.Position.Distance(Player.Position);
+            
+            // Stage 1: Check extended 20m range
+            if (dist > 20f || dist < 0.5f) continue;
+
+            // Stage 2: Calculate pull vector
+            Vec3 dir = (Player.Position - a.Position).NormalizedCopy();
+            
+            // Ensure we don't teleport the enemy behind the player if they are closer than 6m
+            float pullAmount = Math.Min(dist - 0.5f, 6f);
+            Vec3 dest = a.Position + dir * pullAmount;
+            dest.z = a.Position.z;
+
+            try
             {
-                float dist = a.Position.Distance(Player.Position);
-                if (dist > 10f || dist < 0.5f) continue;
-                Vec3 dir = (Player.Position - a.Position).NormalizedCopy();
-                Vec3 dest = a.Position + dir * 6f;
-                dest.z = a.Position.z;
-                try
+                a.TeleportToPosition(dest);
+
+                // Stage 3: Force the trip
+                if (trip.Index >= 0)
                 {
-                    a.TeleportToPosition(dest);
-                    if (trip.Index >= 0) a.SetActionChannel(0, trip, false);
-                    pulled++;
+                    // Channel 0 is the primary movement/action channel
+                    // Using 'true' for the third parameter can help force the override
+                    a.SetActionChannel(0, trip, true, (ulong)0);
                 }
-                catch { }
+                pulled++;
             }
-            InformationManager.DisplayMessage(new InformationMessage(
-                pulled > 0 ? $"{pulled} {(pulled==1?"enemy":"enemies")} dragged closer."
-                           : "No enemies within 10 m.",
-                new Color(0.7f, 0.2f, 0.9f)));
+            catch { }
         }
+
+    InformationManager.DisplayMessage(new InformationMessage(
+        pulled > 0 ? $"{pulled} {(pulled == 1 ? "enemy" : "enemies")} caught in the vortex."
+                   : "No enemies within 20 m.",
+        new Color(0.7f, 0.2f, 0.9f)));
+}
 
         private static void Mending()
         {
@@ -2053,20 +2106,18 @@ namespace TheWitheringArt
 
         private static void Dismount()
         {
-            // Lift all mounted agents in forward 10m cone — fall damage dismounts them
+            // Kill the mount directly — rider is dismounted when their horse dies
             if (Player == null) return;
             Vec3 fwd = Player.LookDirection.NormalizedCopy();
             int knocked = 0;
             foreach (Agent a in Enemies().ToList())
             {
-                if (a.MountAgent == null) continue; // not mounted
+                if (a.MountAgent == null) continue;
                 Vec3 toAgent = (a.Position - Player.Position);
                 if (toAgent.Length > 10f) continue;
                 float dot = Vec3.DotProduct(fwd, toAgent.NormalizedCopy());
                 if (dot < 0.3f) continue;
-                Vec3 lifted = a.Position;
-                lifted.z += 3f;
-                try { a.TeleportToPosition(lifted); knocked++; }
+                try { KillAgent(a.MountAgent); knocked++; }
                 catch { }
             }
             InformationManager.DisplayMessage(new InformationMessage(
@@ -2386,7 +2437,7 @@ namespace TheWitheringArt
                 if (toAgent.Length > 10f) continue;
                 float dot = Vec3.DotProduct(fwd, toAgent.NormalizedCopy());
                 if (dot < 0.3f) continue;
-                a.Health = Math.Max(0f, a.Health - 200f);
+                a.Health = Math.Max(0f, a.Health - 20f);
                 if (a.Health <= 0f) { KillAgent(a); }
                 else if (stagger.Index >= 0) { try { a.SetActionChannel(0, stagger, false); } catch { } }
                 crushed++;
@@ -2572,9 +2623,6 @@ namespace TheWitheringArt
                 lifted.z += 4f;
                 try { a.TeleportToPosition(lifted); } catch { }
             }
-
-            // Track fall-and-survive for unlock — player is still alive so this qualifies
-            SpellKnowledge.TriggerFallenAndSurvived();
 
             InformationManager.DisplayMessage(new InformationMessage(
                 $"{targets.Count} {(targets.Count == 1 ? "enemy" : "enemies")} lifted and dropped.",
@@ -3544,6 +3592,35 @@ namespace TheWitheringArt
             }
         }
 
+        // ── Ensure every mage lord's party has ~5% mage units ────────────
+        public static void MaintainMageArmies()
+        {
+            var mageChar = MBObjectManager.Instance.GetObject<CharacterObject>("twa_mage_channeler");
+            if (mageChar == null) return;
+
+            foreach (string id in _mageLordIds.ToList())
+            {
+                try
+                {
+                    Hero lord = Hero.AllAliveHeroes.FirstOrDefault(h => h.StringId == id);
+                    if (lord?.PartyBelongedTo == null) continue;
+
+                    MobileParty party = lord.PartyBelongedTo;
+                    int total = party.MemberRoster.TotalManCount;
+                    if (total < 10) continue; // don't pad tiny parties
+
+                    int currentMages = party.MemberRoster.GetTroopRoster()
+                        .Where(e => e.Character?.StringId?.StartsWith("twa_mage_") ?? false)
+                        .Sum(e => e.Number);
+                    int target = Math.Max(1, (int)(total * 0.05f));
+
+                    if (currentMages < target)
+                        party.MemberRoster.AddToCounts(mageChar, target - currentMages);
+                }
+                catch { }
+            }
+        }
+
         public static void TryGrantCompanionMagic(Hero companion)
         {
             if (companion == null || _mageLordIds.Contains(companion.StringId)) return;
@@ -3551,6 +3628,9 @@ namespace TheWitheringArt
             InformationManager.DisplayMessage(new InformationMessage(
                 $"{companion.Name} carries a faint echo of the Gift. They will fight as one who knows it.",
                 new Color(0.7f, 0.2f, 1f)));
+
+            if (_rng.Next(100) < 25)
+                RevealRandomUnknownSpell(companion.Name.ToString());
         }
 
         // ── Save / Load ───────────────────────────────────────────────────
@@ -3674,7 +3754,31 @@ namespace TheWitheringArt
                                 (a.Position - agent.Position).NormalizedCopy()) > 0.5f);
 
             if (coneEnemies >= 2)
+            {
                 TriggerCast(agent, hero, "Hurt", 20, () => AIHurt(agent));
+                return;
+            }
+
+            // Priority 4 — Confuse when any non-hero enemies are nearby
+            bool hasNearbyEnemy = Mission.Current.Agents
+                .Any(a => a != agent && a.IsActive() && !a.IsMount && !a.IsHero &&
+                          a.Team != agent.Team &&
+                          a.Position.Distance(agent.Position) < 10f);
+
+            if (hasNearbyEnemy)
+            {
+                TriggerCast(agent, hero, "Confuse", 30, () => AIConfuse(agent));
+                return;
+            }
+
+            // Priority 5 — Blast any single enemy in range as last resort
+            bool anyEnemy = Mission.Current.Agents
+                .Any(a => a != agent && a.IsActive() && !a.IsMount &&
+                          a.Team != agent.Team &&
+                          a.Position.Distance(agent.Position) < 15f);
+
+            if (anyEnemy)
+                TriggerCast(agent, hero, "Blast", 15, () => AIBlast(agent));
         }
 
         private static void TriggerCast(Agent agent, Hero hero,
@@ -3742,6 +3846,45 @@ namespace TheWitheringArt
                 enemy.Health = Math.Max(0f, enemy.Health - 100f);
                 if (enemy.Health <= 0f) SpellEffects.KillAgent(enemy);
             }
+        }
+
+        private static void AIConfuse(Agent caster)
+        {
+            if (Mission.Current == null) return;
+            Vec3 forward = caster.LookDirection.NormalizedCopy();
+            ActionIndexCache freeze = ActionIndexCache.Create("act_stand_1");
+            foreach (Agent enemy in Mission.Current.Agents.ToList())
+            {
+                if (enemy == caster || enemy.IsMount || !enemy.IsActive()) continue;
+                if (enemy.Team == caster.Team || enemy.IsHero) continue;
+                Vec3 toEnemy = enemy.Position - caster.Position;
+                if (toEnemy.Length > 10f) continue;
+                if (Vec3.DotProduct(forward, toEnemy.NormalizedCopy()) < 0.3f) continue;
+                int idx = enemy.Index;
+                ActiveEffectManager.Add(new ActiveEffect
+                {
+                    Name            = $"_ai_confuse_{idx}",
+                    Duration        = 5f,
+                    IsMissionEffect = true,
+                    OnTick = _ =>
+                    {
+                        Agent t = Mission.Current?.Agents.FirstOrDefault(x => x.Index == idx);
+                        if (t != null && t.IsActive()) t.SetActionChannel(0, freeze, true);
+                    }
+                });
+            }
+        }
+
+        private static void AIBlast(Agent caster)
+        {
+            if (Mission.Current == null) return;
+            Agent target = Mission.Current.Agents
+                .Where(a => a != caster && a.IsActive() && !a.IsMount &&
+                            a.Team != caster.Team &&
+                            a.Position.Distance(caster.Position) <= 15f)
+                .OrderBy(a => a.Position.Distance(caster.Position))
+                .FirstOrDefault();
+            if (target != null) SpellEffects.KillAgent(target);
         }
 
         public static void ClearCooldowns() => _cooldowns.Clear();
@@ -3878,9 +4021,8 @@ namespace TheWitheringArt
             }
 
             // Kill the channeler after the splash
-            caster.Health = 0f;
-
             _castTimers.Remove(caster.Index);
+            SpellEffects.KillAgent(caster);
         }
 
         public static void ClearTimers() => _castTimers.Clear();
