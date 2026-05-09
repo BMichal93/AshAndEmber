@@ -2253,6 +2253,7 @@ namespace TheWitheringArt
             {
                 try
                 {
+                    BeginAgentGlow(target, SpellGlowColor.Combat);
                     KillAgent(target);
                     killed++;
                 }
@@ -2323,6 +2324,7 @@ namespace TheWitheringArt
                     a.TeleportToPosition(pushDest);
                     if (trip.Index >= 0) a.SetActionChannel(0, trip, false);
                     pushed++;
+                    BeginAgentGlow(a, SpellGlowColor.Combat);
                 }
                 catch { }
             }
@@ -2368,6 +2370,7 @@ namespace TheWitheringArt
                     a.SetActionChannel(0, trip, true, (ulong)0);
                 }
                 pulled++;
+                BeginAgentGlow(a, SpellGlowColor.Combat);
             }
             catch { }
         }
@@ -2415,6 +2418,7 @@ namespace TheWitheringArt
                     }
                 });
                 frozen++;
+                BeginAgentGlow(a, SpellGlowColor.Support);
             }
             InformationManager.DisplayMessage(new InformationMessage(
                 frozen > 0 ? $"{frozen} {(frozen==1?"enemy":"enemies")} stand confused for 5 seconds."
@@ -2466,6 +2470,7 @@ namespace TheWitheringArt
 
                 if (!visible) continue;
                 formations.Add(a.Formation);
+                BeginAgentGlow(a, SpellGlowColor.Support);
             }
 
             if (formations.Count == 0)
@@ -2696,6 +2701,7 @@ namespace TheWitheringArt
                         a.TeleportToPosition(pushDest);
                         if (trip.Index >= 0) a.SetActionChannel(0, trip, false);
                         pushed++;
+                        BeginAgentGlow(a, SpellGlowColor.Combat);
                     }
                     catch { }
                 }
@@ -2735,7 +2741,7 @@ namespace TheWitheringArt
                         Vec3 dir = (a.Position - Player.Position).NormalizedCopy();
                         Vec3 dest = a.Position + dir * 4f;
                         dest.z = a.Position.z;
-                        try { a.TeleportToPosition(dest); } catch { }
+                        try { a.TeleportToPosition(dest); BeginAgentGlow(a, SpellGlowColor.Support);} catch { }
                     }
                 }
             });
@@ -2770,6 +2776,7 @@ namespace TheWitheringArt
                     }
                 });
                 pacified++;
+                BeginAgentGlow(a, SpellGlowColor.Support);
             }
             InformationManager.DisplayMessage(new InformationMessage(
                 pacified > 0 ? $"{pacified} {(pacified==1?"enemy":"enemies")} stand motionless."
@@ -2815,6 +2822,7 @@ namespace TheWitheringArt
             if (targets.Count == 0) { Fizzle("No enemy targets."); return; }
             Agent target = targets[_rng.Next(targets.Count)];
             KillAgent(target);
+            BeginAgentGlow(target, SpellGlowColor.Combat);
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Somewhere on the field, {target.Name} simply stops.",
                 Color.FromUint(0xFFCC0000)));
@@ -2859,6 +2867,7 @@ namespace TheWitheringArt
                 if (a.Health <= 0f) { KillAgent(a); killed++; }
                 else if (stagger.Index >= 0) { try { a.SetActionChannel(0, stagger, false); } catch { } }
                 crushed++;
+                BeginAgentGlow(a, SpellGlowColor.Combat);
             }
             InformationManager.DisplayMessage(new InformationMessage(
                 crushed > 0 ? $"{crushed} {(crushed==1?"enemy":"enemies")} crushed; {killed} killed outright."
@@ -2881,7 +2890,7 @@ namespace TheWitheringArt
                 Vec3 dest   = Player.Position + new Vec3(
                     (float)Math.Cos(angle) * dist,
                     (float)Math.Sin(angle) * dist, 0f);
-                try { a.TeleportToPosition(dest); } catch { }
+                try { a.TeleportToPosition(dest); BeginAgentGlow(a, SpellGlowColor.Support);} catch { }
             }
             InformationManager.DisplayMessage(new InformationMessage(
                 $"{targets.Count} {(targets.Count == 1 ? "enemy" : "enemies")} scattered.",
@@ -2910,6 +2919,7 @@ namespace TheWitheringArt
                     a.InvalidateTargetAgent();
 
                     shaken++;
+                    BeginAgentGlow(a, SpellGlowColor.Support);
                 }
             }
 
@@ -3008,6 +3018,7 @@ namespace TheWitheringArt
                     a.TeleportToPosition(newPos);
 
                     a.SetActionChannel(0, ActionIndexCache.Create("act_strike_fall_back"), true);
+                    BeginAgentGlow(a, SpellGlowColor.Combat);
 
                 } 
                 catch { }
@@ -3105,6 +3116,7 @@ namespace TheWitheringArt
                     }
                 });
                 frozen++;
+                BeginAgentGlow(a, SpellGlowColor.Support);
             }
 
             InformationManager.DisplayMessage(new InformationMessage(
@@ -3298,7 +3310,7 @@ namespace TheWitheringArt
             }
         }
 
-        private static void BeginAgentGlow(Agent agent, SpellGlowColor color)
+        public static void BeginAgentGlow(Agent agent, SpellGlowColor color)
         {
             try
             {
