@@ -376,7 +376,7 @@ namespace TheWitheringArt
                 LearnHint="Raze at least 5 villages",
                 Flavour="They see you coming. They see what you intend. Their legs simply will not carry them to the fight." },
 
-            new SpellEntry { Name="Hollow Name",  Combo="RUUR",    DayCost=20, BookTag="HOLLOW_NAME",
+            new SpellEntry { Name="Hollow Name",  Combo="RUUR",    DayCost=30, BookTag="HOLLOW_NAME",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Combat,
                 LearnHow=LearnHow.Event, LordFaction="",
                 LearnHint="Reach age 70 through spell use",
@@ -3133,11 +3133,11 @@ namespace TheWitheringArt
             }
 
             try { Hero.MainHero?.Clan?.AddRenown(-5f); }  catch { }
-            try { target.Clan?.AddRenown(-15f); }         catch { }
+            try { target.Clan?.AddRenown(-25f); }         catch { }
 
             InformationManager.DisplayMessage(new InformationMessage(
                 $"You pour part of yourself into nothing. {target.Name}'s name grows quieter in the world. " +
-                $"(-5 your renown, -15 theirs)",
+                $"(-5 your renown, -25 theirs)",
                 new Color(0.6f, 0.2f, 0.7f)));
         }
 
@@ -4009,7 +4009,7 @@ namespace TheWitheringArt
                             return $"{count} soldiers answer {lord.Name}'s call and march to join them.";
                         }});
                     // Hollow Name — the Empire strips renown through law and whisper
-                    pool.Add(new MapSpellEntry { SpellName="Hollow Name", DayCost=20, Action=() =>
+                    pool.Add(new MapSpellEntry { SpellName="Hollow Name", DayCost=30, Action=() =>
                     {
                         var target = Hero.AllAliveHeroes
                             .Where(h => h.IsLord && h.MapFaction != lord.MapFaction
