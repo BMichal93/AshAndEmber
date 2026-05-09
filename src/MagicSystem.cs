@@ -3315,10 +3315,10 @@ namespace TheWitheringArt
             try
             {
                 uint col = color == SpellGlowColor.Combat  ? 0xFFFF4400u
-                         : color == SpellGlowColor.Healing ? 0xFF44FF88u
+                         : color == SpellGlowColor.Healing ? 0xFFFFD700u
                          :                                   0xFF4A83FFu;
                 agent.AgentVisuals?.GetEntity()?.SetContourColor(col, true);
-                _glowTimers.Add((agent, 1.5f));
+                _glowTimers.Add((agent, 3f));
             }
             catch { }
         }
