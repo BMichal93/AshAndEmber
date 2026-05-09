@@ -2786,31 +2786,77 @@ namespace TheWitheringArt
 
         private static void Accelerate()
         {
-            if (Player == null) return;
-            if (ActiveEffectManager.Has("_accel")) { Fizzle("Already accelerated."); return; }
+            if (Player == null || !Player.IsActive()) return;
 
-            // SetMaximumSpeedLimit only CAPS speed; it cannot raise it above the agent's
-            // natural base.  The actual speed multiplier lives in AgentDrivenProperties.
-            // AgentDrivenProperties may be a struct, so we copy-modify-assign each tick.
-            const float SpeedMult = 3f;
+            // 1. Sprawdzenie czy efekt już trwa
+            if (ActiveEffectManager.Has("_accel")) 
+            { 
+                Fizzle("Already accelerated."); 
+                return; 
+            }
 
+            // 2. Parametry czaru
+            const float SpeedMult = 3f; // 300% prędkości bazowej
+            const float DurationInSeconds = 300f; // 5 minut
+
+            // 3. Rejestracja efektu w ActiveEffectManager
             ActiveEffectManager.Add(new ActiveEffect
             {
-                Name            = "_accel",
-                Duration        = 300f,
+                Name = "_accel",
+                Duration = DurationInSeconds,
                 IsMissionEffect = true,
+                
                 OnTick = _ =>
                 {
+                    // Sprawdzamy co klatkę, bo silnik może próbować zresetować statystyki 
+                    // np. po wyciągnięciu innej broni lub otrzymaniu obrażeń.
                     if (Player == null || !Player.IsActive()) return;
-                    try { Player.AgentDrivenProperties.MaxSpeedMultiplier = SpeedMult; } catch { }
+                    
+                    try 
+                    { 
+                        // Przyspieszenie pieszego gracza
+                        Player.AgentDrivenProperties.MaxSpeedMultiplier = SpeedMult;
+                        Player.UpdateAgentStats(); 
+
+                        // Przyspieszenie konia, jeśli gracz go dosiada
+                        if (Player.MountAgent != null)
+                        {
+                            Player.MountAgent.AgentDrivenProperties.MaxSpeedMultiplier = SpeedMult;
+                            Player.MountAgent.UpdateAgentStats();
+                        }
+                    } 
+                    catch { 
+                        // Cichy catch, aby uniknąć crashy przy nagłym zniknięciu agenta
+                    }
                 },
+                
                 OnExpire = () =>
                 {
-                    try { Player?.AgentDrivenProperties?.MaxSpeedMultiplier = 1f; } catch { }
+                    // Przywracanie normalnej prędkości (1.0f)
+                    if (Player == null || !Player.IsActive()) return;
+                    
+                    try 
+                    { 
+                        Player.AgentDrivenProperties.MaxSpeedMultiplier = 1f; 
+                        Player.UpdateAgentStats(); 
+
+                        if (Player.MountAgent != null)
+                        {
+                            Player.MountAgent.AgentDrivenProperties.MaxSpeedMultiplier = 1f;
+                            Player.MountAgent.UpdateAgentStats();
+                        }
+                    } 
+                    catch { }
                 }
             });
+
+            // 4. Efekty wizualne i dźwiękowe (wykorzystujemy Twój nowy CastGlow)
+            // SpellGlowColor.Healing to Twój nowy złoty kolor
+            CastGlow(Player, SpellGlowColor.Healing);
+
+            // 5. Informacja dla gracza
             InformationManager.DisplayMessage(new InformationMessage(
-                "You move at the speed of a horse for 5 minutes.",
+                "Your steps are light as the wind. Speed tripled for 5 minutes.", 
                 new Color(0.6f, 0.9f, 0.6f)));
         }
 
@@ -3310,15 +3356,34 @@ namespace TheWitheringArt
             }
         }
 
-        public static void BeginAgentGlow(Agent agent, SpellGlowColor color)
+        public static void BeginAgentGlow(Agent agent, SpellGlowColor color, bool isCaster = false)
         {
+            if (agent == null) return;
             try
             {
-                uint col = color == SpellGlowColor.Combat  ? 0xFFFF4400u
-                         : color == SpellGlowColor.Healing ? 0xFFFFD700u
-                         :                                   0xFF4A83FFu;
+                uint col;
+                if (isCaster)
+                {
+                    // KOLORY DLA RZUCAJĄCEGO (Jaśniejsze, wywołujące mocniejszy efekt Bloom)
+                    col = color == SpellGlowColor.Combat  ? 0xFFFFFFFFu   // Biało-czerwony żar
+                        : color == SpellGlowColor.Healing ? 0xFFFFFFCCu   // Jaskrawe białe złoto
+                        :                                   0xFFDDEEFFu;  // Lodowy błękit
+                }
+                else
+                {
+                    // KOLORY DLA CELÓW (Standardowe)
+                    col = color == SpellGlowColor.Combat  ? 0xFFFF4400u   // Czerwony
+                        : color == SpellGlowColor.Healing ? 0xFFFFD700u   // Złoty
+                        :                                   0xFF4A83FFu;  // Niebieski
+                }
+
                 agent.AgentVisuals?.GetEntity()?.SetContourColor(col, true);
-                _glowTimers.Add((agent, 1.5f));
+
+                // Zapobieganie nakładaniu się timerów na tego samego agenta
+                _glowTimers.RemoveAll(x => x.agent == agent);
+
+                // Ustawienie czasu na 3 sekundy
+                _glowTimers.Add((agent, 3.0f));
             }
             catch { }
         }
@@ -3328,7 +3393,7 @@ namespace TheWitheringArt
             if (caster == null) return;
             try
             {
-                BeginAgentGlow(caster, glowColor);
+                BeginAgentGlow(caster, glowColor, true);
                 PlayCastAnimation(caster, glowColor);
                 TrySpawnCastParticle(caster.Position, glowColor);
                 FlinchAgentsNear(caster, glowColor);
@@ -3417,98 +3482,99 @@ namespace TheWitheringArt
         }
 
         // School-appropriate animations with a confirmed-working fallback at the end.
-        private static void PlayCastAnimation(Agent caster, SpellGlowColor glowColor)
-        {
-            string[] candidates;
-            switch (glowColor)
+            private static void PlayCastAnimation(Agent caster, SpellGlowColor glowColor)
             {
-                case SpellGlowColor.Combat:
-                    candidates = new[]
-                    {
-                        "act_yield_hard",
-                        "act_pickup_boulder_begin",
-                        "act_struck_from_back_medium_left_staff"  // confirmed
-                    };
-                    break;
-                case SpellGlowColor.Healing:
-                    candidates = new[]
-                    {
-                        "act_pickup_boulder_end",
-                        "act_struck_from_front_light"             // confirmed
-                    };
-                    break;
-                default: // Support/control
-                    candidates = new[]
-                    {
-                        "act_thrust_staff_wielder",
-                        "act_struck_from_front_light"             // confirmed
-                    };
-                    break;
-            }
-
-            foreach (string name in candidates)
-            {
-                try
-                {
-                    ActionIndexCache cache = ActionIndexCache.Create(name);
-                    if (cache.Index < 0) continue;
-                    caster.SetActionChannel(0, cache, false);
-                    return;
-                }
-                catch { }
-            }
-        }
-
-        // Spawn a vanilla particle burst at the cast origin.
-        // Uses reflection so the code compiles even if the engine API changes.
-            private static void TrySpawnCastParticle(Vec3 position, SpellGlowColor color)
-        {
-            try
-            {
-                var scene = Mission.Current?.Scene;
-                if (scene == null) return;
-
-                // WYBÓR EFEKTÓW AURY (Vanilla Bannerlord)
-                string particleName;
-                switch (color)
+                string[] candidates;
+                switch (glowColor)
                 {
                     case SpellGlowColor.Combat:
-                        // Ognisty podmuch / iskry (czerwony)
-                        particleName = "psys_burning_pot_liquid"; 
+                        candidates = new[]
+                        {
+                            "act_yield_hard",
+                            "act_pickup_boulder_begin",
+                            "act_struck_from_back_medium_left_staff"  // confirmed
+                        };
                         break;
                     case SpellGlowColor.Healing:
-                        // Jasne, biało-złote drobiny (złoty)
-                        particleName = "psys_game_blood_white"; 
+                        candidates = new[]
+                        {
+                            "act_pickup_boulder_end",
+                            "act_struck_from_front_light"             // confirmed
+                        };
                         break;
-                    case SpellGlowColor.Support:
-                        // Niebieskawe opary / magiczne flary (niebieski)
-                        particleName = "psys_missile_flare"; 
-                        break;
-                    default:
-                        particleName = "psys_game_dust_fall";
+                    default: // Support/control
+                        candidates = new[]
+                        {
+                            "act_thrust_staff_wielder",
+                            "act_struck_from_front_light"             // confirmed
+                        };
                         break;
                 }
 
-                // --- Reszta logiki refleksji pozostaje bez zmian, bo działa poprawnie ---
-                Type psmType = Type.GetType("TaleWorlds.Engine.ParticleSystemManager, TaleWorlds.Engine");
-                if (psmType == null) return;
-
-                MethodInfo getId = psmType.GetMethod("GetRuntimeIdByName", BindingFlags.Public | BindingFlags.Static);
-                if (getId == null) return;
-
-                object idObj = getId.Invoke(null, new object[] { particleName });
-                if (idObj == null || (int)idObj < 0) return;
-
-                // Tworzymy eksplozję cząsteczek
-                MethodInfo burst = scene.GetType().GetMethod("CreateBurstParticle", BindingFlags.Public | BindingFlags.Instance);
-                if (burst == null) return;
-
-                // Podnosimy pozycję o 0.2, żeby aura nie "tonęła" w ziemi
-                MatrixFrame frame = new MatrixFrame(Mat3.Identity, position + new Vec3(0, 0, 0.2f));
-                burst.Invoke(scene, new object[] { idObj, frame });
+                foreach (string name in candidates)
+                {
+                    try
+                    {
+                        ActionIndexCache cache = ActionIndexCache.Create(name);
+                        if (cache.Index < 0) continue;
+                        caster.SetActionChannel(0, cache, false);
+                        return;
+                    }
+                    catch { }
+                }
             }
-            catch { }
+
+            // Spawn a vanilla particle burst at the cast origin.
+            // Uses reflection so the code compiles even if the engine API changes.
+private static void TrySpawnCastParticle(Vec3 position, SpellGlowColor color)
+{
+    try
+    {
+        var mission = Mission.Current;
+        if (mission == null || mission.Scene == null) return;
+
+        // DOBÓR EFEKTÓW - Te systemy mają silne kolory i są dobrze widoczne
+        string particleName;
+        switch (color)
+        {
+            case SpellGlowColor.Combat:
+                particleName = "psys_fire_field_1m"; // Ogień (Czerwony)
+                break;
+            case SpellGlowColor.Healing:
+                particleName = "psys_spark_shimmer"; // Złote iskry (Złoty)
+                break;
+            case SpellGlowColor.Support:
+                particleName = "psys_env_ghost_dust"; // Duchowa mgła (Niebieski)
+                break;
+            default:
+                particleName = "psys_game_dust_fall";
+                break;
         }
+
+        // 1. Pobranie ID systemu przez refleksję
+        Type psmType = Type.GetType("TaleWorlds.Engine.ParticleSystemManager, TaleWorlds.Engine");
+        MethodInfo getId = psmType?.GetMethod("GetRuntimeIdByName", BindingFlags.Public | BindingFlags.Static);
+        object idObj = getId?.Invoke(null, new object[] { particleName });
+
+        if (idObj == null || (int)idObj < 0) return;
+
+        // 2. Szukamy metody AddParticleEffectAtEdge na obiekcie Mission
+        // To najbezpieczniejsza metoda w Bannerlordzie
+        MethodInfo addParticle = typeof(Mission).GetMethod("AddParticleEffectAtEdge", 
+            new Type[] { typeof(int), typeof(MatrixFrame), typeof(Vec3) });
+
+        if (addParticle != null)
+        {
+            // Przygotowanie pozycji (1.0f nad ziemią, czyli klatka piersiowa)
+            MatrixFrame frame = MatrixFrame.Identity;
+            frame.origin = position + new Vec3(0f, 0f, 1.0f);
+
+            // Wywołanie: (ID, Pozycja, Prędkość początkowa)
+            addParticle.Invoke(mission, new object[] { idObj, frame, Vec3.Zero });
+        }
+    }
+    catch { }
+}
 
         // Bloom flash that fades over 0.4 s.  Uses reflection so we handle both
         // SetBloomStrength(float) and SetBloom(bool) variants of the engine API.
