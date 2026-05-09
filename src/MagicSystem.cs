@@ -285,7 +285,7 @@ namespace TheWitheringArt
                 Flavour="The body knows how to be whole. The Gift tells it to hurry." },
 
             // Aserai — manipulation, dark arts
-            new SpellEntry { Name="Charm",        Combo="RLLR",    DayCost=12, BookTag="CHARM",
+            new SpellEntry { Name="Charm",        Combo="RLLR",    DayCost=25, BookTag="CHARM",
                 Context=SpellContext.Map, GlowColor=SpellGlowColor.Support,
                 LearnHow=LearnHow.Travel, LordFaction="aserai",
                 LearnHint="Visit the Aserai village while friendly",
@@ -2644,12 +2644,21 @@ namespace TheWitheringArt
 
         private static void Charm()
         {
-            // Gold bonus representing better trading circumstances
-            Hero.MainHero.Gold += 1500;
-            try { Hero.MainHero.Clan?.AddRenown(-1f); } catch { }
+            Hero player = Hero.MainHero;
+            
+            if (player?.Clan == null) 
+            {
+                return;
+            }
+
+            player.Clan.AddRenown(5f);
+
+            ChangeClanInfluenceAction.Apply(player.Clan, 5f);
+
             InformationManager.DisplayMessage(new InformationMessage(
-                "Persuasion flows from you. +1500 gold. Your reputation costs a little. (-1 renown)",
-                new Color(0.9f, 0.8f, 0.3f)));
+                "Your presence is felt. +5 Renown & +5 Influence",
+                Color.FromUint(0xFFE6CC4D) // Use a Hex-based Gold color for better visibility
+            ));
         }
 
         // ── MAGE LORD ────────────────────────────────────────────────────
@@ -3892,12 +3901,19 @@ namespace TheWitheringArt
                     break;
 
                 case "aserai":
-                    // Charm � give the lord's party some gold
+                    // Charm — raise the lord's renown
                     pool.Add(new MapSpellEntry { SpellName="Charm", DayCost=12, Action=() =>
                     {
-                        lord.Gold += 1000;
-                        try { lord.Clan?.AddRenown(-1f); } catch { }
-                        return $"{lord.Name}'s dealings grow unusually profitable.";
+                        try 
+                        { 
+                            lord.Clan?.AddRenown(5f); 
+                            ChangeClanInfluenceAction.Apply(lord.Clan, 5f);
+                            return $"{lord.Name}'s charm spreads through the land. Their reputation grows.";
+                        } 
+                        catch 
+                        { 
+                            return $"{lord.Name}'s charm flows, but has little effect.";
+                        }
                     }});
                     // Sinister Will � drain the nearest enemy village of hearth
                     if (lord.PartyBelongedTo != null)
@@ -3971,20 +3987,8 @@ namespace TheWitheringArt
                         if (enemy == null) return null;
                         enemy.PartyBelongedTo.RecentEventsMorale -= 12f;
                         return $"Soldiers near {enemy.Name} feel something press down on them.";
-                    }});
-                    // Hollow Name — chip away at an enemy clan's standing
-                    pool.Add(new MapSpellEntry { SpellName="Hollow Name", DayCost=20, Action=() =>
-                    {
-                        var target = Hero.AllAliveHeroes
-                            .Where(h => h.IsLord && h.MapFaction != lord.MapFaction
-                                        && h.Clan != null && h.IsAlive)
-                            .OrderBy(h => _rng.Next()).FirstOrDefault();
-                        if (target == null) return null;
-                        try { target.Clan?.AddRenown(-10f); } catch { }
-                        return $"{target.Name}'s reputation frays at the edges.";
-                    }});
+                    }});                    
                     break;
-
                 case "empire":
                     // Clairvoyance — flavour, no mechanical effect
                     pool.Add(new MapSpellEntry { SpellName="Clairvoyance", DayCost=10, Action=() =>
