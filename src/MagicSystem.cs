@@ -911,9 +911,9 @@ namespace ColoursOfCalradia
                 try
                 {
                     Hero.MainHero?.SetBirthDay(
-                        Hero.MainHero.BirthDay - CampaignTime.Years(4f / 252f));
+                        Hero.MainHero.BirthDay - CampaignTime.Years(1f / 12f)); // ~30 days per cast
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"Scholar: The working costs you days. | Age: {(int)(Hero.MainHero?.Age ?? 0)}",
+                        $"Scholar: The working ages you. | Age: {(int)(Hero.MainHero?.Age ?? 0)}",
                         ColorSchoolData.GetMessageColor(ColorSchool.Blue)));
                 }
                 catch { }
@@ -1339,7 +1339,7 @@ namespace ColoursOfCalradia
             if (Player == null || !Player.IsActive()) return;
             if (ActiveEffectManager.Has("_march")) { Msg("Already marching.", ColorSchool.Orange); return; }
 
-            const float SpeedMult = 2.5f;
+            const float SpeedMult = 1.5f;
             const float Duration  = 90f; // ~1.5 minutes
 
             ActiveEffectManager.Add(new ActiveEffect
@@ -1479,18 +1479,19 @@ namespace ColoursOfCalradia
         private static void SpellStun()
         {
             if (Player == null || Mission.Current == null) return;
+            const float StunRadius = 30f;
             int count = 0;
-            foreach (Agent a in Enemies().ToList())
+            foreach (Agent a in Enemies().Where(a => a.Position.Distance(Player.Position) <= StunRadius).ToList())
             {
                 try
                 {
-                    a.Health = Math.Max(1f, a.Health - 1f);
+                    a.Health = Math.Max(1f, a.Health - 15f);
                     BeginAgentGlow(a, ColorSchool.Blue, 1.5f);
                     count++;
                 }
                 catch { }
             }
-            Msg($"Every enemy on the field takes one point of damage. ({count} affected)", ColorSchool.Blue);
+            Msg($"{count} {(count == 1 ? "enemy" : "enemies")} within {StunRadius}m stunned for 15 damage.", ColorSchool.Blue);
         }
 
         // =================================================================
@@ -2371,6 +2372,17 @@ namespace ColoursOfCalradia
                 SpellEffects.IssueBattleCommand(agent, SpellEffects.BattleCommandKind.Halt,
                     "{0} formation{1} brought to halt.", ColorSchool.Yellow);
                 SetCooldown(hero);
+                return;
+            }
+
+            // Orange fallback — lords with only Orange still cast Encourage in battle
+            if (colors.Contains(ColorSchool.Orange))
+            {
+                CastWithGlow(agent, hero, ColorSchool.Orange, "Encourage", () =>
+                {
+                    foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
+                        try { a.SetMorale(Math.Min(a.GetMorale() + 20f, 100f)); } catch { }
+                });
             }
         }
 
@@ -2379,13 +2391,20 @@ namespace ColoursOfCalradia
             ColorSchool school = colors[_rng.Next(colors.Count)];
             switch (school)
             {
-                case ColorSchool.Purple when CanUsePurple(agent):
-                    CastWithGlow(agent, hero, ColorSchool.Purple, "Severe Life", () =>
+                case ColorSchool.Red:
+                    CastWithGlow(agent, hero, ColorSchool.Red, "Crush", () =>
                     {
-                        var targets = EnemiesOf(agent).Where(a => !a.IsHero).ToList();
-                        if (targets.Count > 0) SpellEffects.KillAgent(targets[_rng.Next(targets.Count)]);
+                        Vec3 fwd = agent.LookDirection.NormalizedCopy();
+                        foreach (Agent a in EnemiesOf(agent).ToList())
+                        {
+                            Vec3 to = a.Position - agent.Position;
+                            if (to.Length > 12f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.4f) continue;
+                            a.Health = Math.Max(0f, a.Health - 60f);
+                            if (a.Health <= 0f) SpellEffects.KillAgent(a);
+                            SpellEffects.BeginAgentGlow(a, ColorSchool.Red, 1.5f);
+                        }
                     });
-                    ApplyPurpleF2(agent);
+                    ApplyRedA1(agent); ApplyRedA2(agent);
                     break;
                 case ColorSchool.Orange:
                     CastWithGlow(agent, hero, ColorSchool.Orange, "Encourage", () =>
@@ -2393,6 +2412,37 @@ namespace ColoursOfCalradia
                         foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
                             try { a.SetMorale(Math.Min(a.GetMorale() + 20f, 100f)); } catch { }
                     });
+                    break;
+                case ColorSchool.Green when CanUseGreen(agent):
+                    CastWithGlow(agent, hero, ColorSchool.Green, "Aid", () =>
+                    {
+                        foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 12f).ToList())
+                        {
+                            a.Health = Math.Min(a.Health + 20f, a.HealthLimit);
+                            SpellEffects.BeginAgentGlow(a, ColorSchool.Green, 1.5f);
+                        }
+                    });
+                    ApplyGreenD2(agent);
+                    break;
+                case ColorSchool.Blue when CanUseBlue(agent):
+                    CastWithGlow(agent, hero, ColorSchool.Blue, "Stun", () =>
+                    {
+                        foreach (Agent a in EnemiesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 30f).ToList())
+                            try { a.Health = Math.Max(1f, a.Health - 15f); SpellEffects.BeginAgentGlow(a, ColorSchool.Blue, 1.5f); } catch { }
+                    });
+                    break;
+                case ColorSchool.Yellow:
+                    SpellEffects.IssueBattleCommand(agent, SpellEffects.BattleCommandKind.Halt,
+                        "{0} formation{1} halted.", ColorSchool.Yellow);
+                    SetCooldown(hero);
+                    break;
+                case ColorSchool.Purple when CanUsePurple(agent):
+                    CastWithGlow(agent, hero, ColorSchool.Purple, "Severe Life", () =>
+                    {
+                        var targets = EnemiesOf(agent).Where(a => !a.IsHero).ToList();
+                        if (targets.Count > 0) SpellEffects.KillAgent(targets[_rng.Next(targets.Count)]);
+                    });
+                    ApplyPurpleF2(agent);
                     break;
             }
         }

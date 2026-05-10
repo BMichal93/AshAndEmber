@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\mbudz\\source\\repos\\TheWitheringArt\\src\\TheWitheringArt.csproj",
+      "projectUniqueName": "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\src\\TheWitheringArt.csproj",
       "projectName": "TheWitheringArt",
-      "projectPath": "C:\\Users\\mbudz\\source\\repos\\TheWitheringArt\\src\\TheWitheringArt.csproj",
+      "projectPath": "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\src\\TheWitheringArt.csproj",
       "packagesPath": "C:\\Users\\mbudz\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\mbudz\\source\\repos\\TheWitheringArt\\src\\obj\\",
+      "outputPath": "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\src\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
