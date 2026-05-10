@@ -62,7 +62,7 @@ Press **S** (or **L3**) while holding Alt to cycle through your spellbook.
 ### Orange — Generous
 | Combo | Spell | Effect |
 |-------|-------|--------|
-| RLLRLL | Encourage | Boost nearby ally morale |
+| RLLRLL | Bound Together | Pull allies within 20 m to your side; hurl enemies in that radius outward |
 | UULRLU | Calling | Add imperial recruits to your party (join after battle) |
 | RRLLUU | March | Surge 12 m forward instantly |
 

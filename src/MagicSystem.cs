@@ -246,9 +246,9 @@ namespace ColoursOfCalradia
                 Flavour="The urge to fight reaches everyone before their caution does." },
 
             // ── ORANGE ─────────────────────────────────────────────────────────
-            new SpellEntry { Name="Encourage",   Combo="RLLRLL", School=ColorSchool.Orange,
+            new SpellEntry { Name="Bound Together", Combo="RLLRLL", School=ColorSchool.Orange,
                 Context=SpellContext.Mission,
-                Flavour="Not courage. Certainty. They feel — briefly — that you cannot lose." },
+                Flavour="A golden tether. Allies snap to your side; enemies are hurled beyond reach." },
             new SpellEntry { Name="Calling",     Combo="UULRLU", School=ColorSchool.Orange,
                 Context=SpellContext.Mission,
                 Flavour="The call carries further than a voice. Those who hear it do not know why they march." },
@@ -1173,6 +1173,7 @@ namespace ColoursOfCalradia
                                         a.Position.Distance(unit.Position) <= 5f).ToList())
                         {
                             near.Health = Math.Min(near.HealthLimit, near.Health + 15f);
+                            BeginAgentGlow(near, school, 1.5f);
                         }
                     }
                     InformationManager.DisplayMessage(new InformationMessage(
@@ -1243,7 +1244,7 @@ namespace ColoursOfCalradia
                 case "LRLRLU": SpellVortex();    break;
                 case "URUURR": SpellFury();      break;
                 // Orange
-                case "RLLRLL": SpellEncourage(); break;
+                case "RLLRLL": SpellBoundTogether(); break;
                 case "UULRLU": SpellCalling();   break;
                 case "RRLLUU": SpellMarch();     break;
                 // Yellow
@@ -1278,8 +1279,8 @@ namespace ColoursOfCalradia
             var inCone = Enemies()
                 .Where(a => {
                     Vec3 toAgent = a.Position - Player.Position;
-                    return toAgent.Length <= 14f &&
-                           Vec3.DotProduct(fwd, toAgent.NormalizedCopy()) >= 0.25f;
+                    return toAgent.Length <= 10f &&
+                           Vec3.DotProduct(fwd, toAgent.NormalizedCopy()) >= 0.5f;
                 })
                 .ToList();
             if (inCone.Count == 0) { Msg("No enemies in range.", ColorSchool.Red); return; }
@@ -1354,50 +1355,116 @@ namespace ColoursOfCalradia
         // ORANGE SPELLS
         // =================================================================
 
-        private static void SpellEncourage()
+        private static void SpellBoundTogether()
         {
             if (Mission.Current == null || Player == null) return;
-            // Morale boost to all allied agents by simulating battle cheering
-            int affected = 0;
-            foreach (Agent a in Allies().ToList())
+            const float Radius = 20f;
+            const float PullDist = 3f;   // allies land this far from caster
+            const float PushDist = 23f;  // enemies land this far from caster
+
+            int alliesMoved = 0, enemiesPushed = 0;
+
+            // Pull allies within Radius to a ring around the caster
+            var nearAllies = Allies()
+                .Where(a => a.Position.Distance(Player.Position) <= Radius && a != Player)
+                .ToList();
+            float allyAngle = 0f;
+            float allyStep = nearAllies.Count > 0 ? (2f * (float)Math.PI / nearAllies.Count) : 0f;
+            foreach (Agent a in nearAllies)
             {
                 try
                 {
-                    // Cannot directly set agent morale in battle easily; use SetMorale capped up
-                    float cur = a.GetMorale();
-                    a.SetMorale(Math.Min(cur + 30f, 100f));
+                    Vec3 offset = new Vec3((float)Math.Cos(allyAngle) * PullDist,
+                                          (float)Math.Sin(allyAngle) * PullDist, 0f);
+                    Vec3 dest = Player.Position + offset;
+                    dest.z = Player.Position.z;
+                    a.TeleportToPosition(dest);
                     BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
-                    affected++;
+                    alliesMoved++;
+                }
+                catch { }
+                allyAngle += allyStep;
+            }
+
+            // Push enemies within Radius out to PushDist in their outward direction
+            var nearEnemies = Enemies()
+                .Where(a => a.Position.Distance(Player.Position) <= Radius)
+                .ToList();
+            foreach (Agent a in nearEnemies)
+            {
+                try
+                {
+                    Vec3 dir = a.Position - Player.Position;
+                    if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
+                    else dir = dir.NormalizedCopy();
+                    Vec3 dest = Player.Position + dir * PushDist;
+                    dest.z = Player.Position.z;
+                    a.TeleportToPosition(dest);
+                    BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
+                    enemiesPushed++;
                 }
                 catch { }
             }
-            // Also boost campaign morale for after battle
-            try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += 15f; }
-            catch { }
-            Msg($"Your voice carries across the field. {affected} allies are emboldened.", ColorSchool.Orange);
+
+            string msg = "";
+            if (alliesMoved > 0) msg += $"{alliesMoved} {(alliesMoved == 1 ? "ally pulls" : "allies pull")} to your side. ";
+            if (enemiesPushed > 0) msg += $"{enemiesPushed} {(enemiesPushed == 1 ? "enemy is" : "enemies are")} hurled back.";
+            if (msg == "") msg = "No one within range.";
+            Msg(msg.Trim(), ColorSchool.Orange);
         }
 
         private static void SpellCalling()
         {
-            int cost    = LastOrangeCoinCost;
+            int cost     = LastOrangeCoinCost;
             int recruits = Math.Max(1, cost / 25);
 
             CharacterObject recruit = FindImperialRecruit();
-            if (recruit == null)
+            if (recruit == null) { Msg("The call finds no ears.", ColorSchool.Orange); return; }
+
+            // In battle: spawn agents directly on the map and send them charging
+            if (Mission.Current != null && Player != null)
             {
-                Msg("The call finds no ears.", ColorSchool.Orange);
+                Vec3 back = -Player.LookDirection.NormalizedCopy();
+                back.z = 0f;
+                if (back.Length < 0.01f) back = new Vec3(-1f, 0f, 0f);
+                else back = back.NormalizedCopy();
+                Vec3 perp = new Vec3(-back.y, back.x, 0f);
+
+                int spawned = 0;
+                for (int i = 0; i < recruits; i++)
+                {
+                    try
+                    {
+                        float spread = (i - recruits / 2f) * 1.5f;
+                        Vec3 pos = Player.Position + back * 4f + perp * spread;
+                        pos.z = Player.Position.z;
+                        Vec2 facing = (-back).AsVec2;
+
+                        AgentBuildData abd = new AgentBuildData(recruit)
+                            .Team(Mission.Current.PlayerTeam)
+                            .InitialPosition(in pos)
+                            .InitialDirection(in facing);
+
+                        Agent a = Mission.Current.SpawnAgent(abd, false);
+                        if (a == null) continue;
+                        a.SetWatchState(Agent.WatchState.Alarmed);
+                        BeginAgentGlow(a, ColorSchool.Orange, 2f);
+                        spawned++;
+                    }
+                    catch { }
+                }
+
+                Msg(spawned > 0
+                    ? $"{spawned} Imperial soldier{(spawned == 1 ? "" : "s")} burst onto the field and charge!"
+                    : "The call was heard but none came.", ColorSchool.Orange);
                 return;
             }
+
+            // Campaign map: add to roster
             try
             {
                 MobileParty.MainParty?.MemberRoster.AddToCounts(recruit, recruits);
-                // In an active battle the roster addition is a campaign-level effect:
-                // the recruits join the party and will fight from the next battle onward.
-                string timing = Mission.Current != null
-                    ? " — they will march with you after this battle"
-                    : "";
-                Msg($"{recruits} Imperial soldier{(recruits==1?"":"s")} answer your call{timing}. {cost} gold spent.",
-                    ColorSchool.Orange);
+                Msg($"{recruits} Imperial soldier{(recruits == 1 ? "" : "s")} answer your call. {cost} gold spent.", ColorSchool.Orange);
             }
             catch { Msg("The call was heard but none came.", ColorSchool.Orange); }
         }
@@ -1411,6 +1478,22 @@ namespace ColoursOfCalradia
             if (r != null) return r;
             foreach (CharacterObject c in CharacterObject.All)
                 if (!c.IsHero && c.Tier == 1 && c.Culture?.StringId?.Contains("empire") == true)
+                    return c;
+            return null;
+        }
+
+        // Finds a tier-1 recruit from the same culture as the given agent, falling back to any tier-1.
+        public static CharacterObject FindRecruit(Agent agent)
+        {
+            string cultureId = agent?.Character?.Culture?.StringId;
+            if (!string.IsNullOrEmpty(cultureId))
+            {
+                foreach (CharacterObject c in CharacterObject.All)
+                    if (!c.IsHero && c.Tier == 1 && c.Culture?.StringId == cultureId)
+                        return c;
+            }
+            foreach (CharacterObject c in CharacterObject.All)
+                if (!c.IsHero && c.Tier == 1)
                     return c;
             return null;
         }
@@ -1477,17 +1560,19 @@ namespace ColoursOfCalradia
         private static void SpellRestore()
         {
             if (Player == null) return;
-            float heal = Math.Min(20f, Player.HealthLimit - Player.Health);
-            Player.Health = Math.Min(Player.Health + 20f, Player.HealthLimit);
+            float heal = Math.Min(10f, Player.HealthLimit - Player.Health);
+            Player.Health = Math.Min(Player.Health + 10f, Player.HealthLimit);
             Msg($"You restore yourself. +{heal:F0} HP.", ColorSchool.Green);
         }
 
         private static void SpellAid()
         {
             if (Player == null || Mission.Current == null) return;
+            float radius = 8f;
+            var inRange = Allies().Where(a => a.Position.Distance(Player.Position) <= radius).ToList();
+            if (inRange.Count == 0) { Msg("No allies in range.", ColorSchool.Green); return; }
             int healed = 0;
-            float radius = 12f;
-            foreach (Agent a in Allies().Where(a => a.Position.Distance(Player.Position) <= radius).ToList())
+            foreach (Agent a in inRange)
             {
                 float h = Math.Min(25f, a.HealthLimit - a.Health);
                 if (h <= 0f) continue;
@@ -1495,8 +1580,8 @@ namespace ColoursOfCalradia
                 BeginAgentGlow(a, ColorSchool.Green, 1.5f);
                 healed++;
             }
-            Msg(healed > 0 ? $"Aid heals {healed} allies within {radius}m."
-                           : "No allies in range.", ColorSchool.Green);
+            Msg(healed > 0 ? $"Aid heals {healed} {(healed == 1 ? "ally" : "allies")} within {radius}m."
+                           : $"{inRange.Count} allies nearby are already at full health.", ColorSchool.Green);
         }
 
         private static void SpellNurture()
@@ -1506,19 +1591,16 @@ namespace ColoursOfCalradia
             int affected = 0;
             foreach (Agent a in Allies().Where(a => a.Position.Distance(Player.Position) <= radius).ToList())
             {
-                try
-                {
-                    // Restore morale and a small HP
-                    a.SetMorale(Math.Min(a.GetMorale() + 40f, 100f));
-                    a.Health = Math.Min(a.Health + 10f, a.HealthLimit);
-                    BeginAgentGlow(a, ColorSchool.Green, 1.5f);
-                    affected++;
-                }
-                catch { }
+                // Split into separate catches so a failing health setter doesn't prevent the morale boost
+                try { a.SetMorale(Math.Min(a.GetMorale() + 40f, 100f)); } catch { }
+                try { a.Health = Math.Min(a.Health + 3f, a.HealthLimit); } catch { }
+                BeginAgentGlow(a, ColorSchool.Green, 1.5f);
+                affected++;
             }
             try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += 10f; }
             catch { }
-            Msg($"Nurture refreshes {affected} allies — weariness lifts.", ColorSchool.Green);
+            Msg(affected > 0 ? $"Nurture refreshes {affected} {(affected == 1 ? "ally" : "allies")} — weariness lifts."
+                             : "No allies nearby.", ColorSchool.Green);
         }
 
         // =================================================================
@@ -1592,7 +1674,7 @@ namespace ColoursOfCalradia
         private static void SpellWither()
         {
             if (Player == null || Mission.Current == null) return;
-            const float Radius = 10f;
+            const float Radius = 7f;
             int count = 0;
             foreach (Agent a in Mission.Current.Agents
                 .Where(a => a.IsActive() && !a.IsMount && a != Player &&
@@ -1645,7 +1727,7 @@ namespace ColoursOfCalradia
             {
                 if (a.Formation == null) continue;
                 if (a.Position.Distance(source.Position) > 500f) continue;
-                bool visible = false;
+                bool visible = true;
                 try { visible = scene.CheckPointCanSeePoint(source.Position, a.Position, 500f); }
                 catch { }
                 if (!visible) continue;
@@ -1772,7 +1854,7 @@ namespace ColoursOfCalradia
             return false;
         }
 
-        private static void TryCastSound(Vec3 position, ColorSchool school)
+        public static void TryCastSound(Vec3 position, ColorSchool school)
         {
             if (Mission.Current == null || !TryResolveSoundEvent()) return;
             string[] candidates = school == ColorSchool.Red || school == ColorSchool.Purple
@@ -2328,7 +2410,7 @@ namespace ColoursOfCalradia
                 if (!CanUseGreen(agent)) goto SkipGreen;
                 CastWithGlow(agent, hero, ColorSchool.Green, "Restore", () =>
                 {
-                    agent.Health = Math.Min(agent.Health + 20f, agent.HealthLimit);
+                    agent.Health = Math.Min(agent.Health + 10f, agent.HealthLimit);
                 });
                 return;
                 SkipGreen:;
@@ -2407,8 +2489,12 @@ namespace ColoursOfCalradia
                 {
                     CastWithGlow(agent, hero, ColorSchool.Blue, "Stun", () =>
                     {
-                        foreach (Agent a in EnemiesOf(agent).ToList())
-                            try { a.Health = Math.Max(a.Health - 1f, 0f); } catch { }
+                        foreach (Agent a in EnemiesOf(agent)
+                            .Where(a => a.Position.Distance(agent.Position) <= 30f).ToList())
+                        {
+                            try { a.SetMorale(0f); } catch { }
+                            SpellEffects.BeginAgentGlow(a, ColorSchool.Blue, 1.5f);
+                        }
                     });
                     return;
                 }
@@ -2442,13 +2528,52 @@ namespace ColoursOfCalradia
                 return;
             }
 
-            // Orange fallback — lords with only Orange still cast Encourage in battle
+            // Orange — Calling: summon 2-3 recruits when outnumbered nearby
             if (colors.Contains(ColorSchool.Orange))
             {
-                CastWithGlow(agent, hero, ColorSchool.Orange, "Encourage", () =>
+                int nearAllies  = AlliesOf(agent).Count(a => a.Position.Distance(agent.Position) <= 20f);
+                int nearEnemies = EnemiesOf(agent).Count(a => a.Position.Distance(agent.Position) <= 20f);
+                if (nearEnemies > nearAllies)
+                {
+                    CastWithGlow(agent, hero, ColorSchool.Orange, "Calling", () =>
+                    {
+                        CharacterObject recruit = SpellEffects.FindRecruit(agent);
+                        if (recruit == null || Mission.Current == null) return;
+                        int count = _rng.Next(2, 4); // 2 or 3
+                        Vec3 back = -agent.LookDirection.NormalizedCopy(); back.z = 0f;
+                        if (back.Length < 0.01f) back = new Vec3(-1f, 0f, 0f); else back = back.NormalizedCopy();
+                        Vec3 perp = new Vec3(-back.y, back.x, 0f);
+                        for (int i = 0; i < count; i++)
+                        {
+                            try
+                            {
+                                float spread = (i - count / 2f) * 1.5f;
+                                Vec3 pos = agent.Position + back * 3f + perp * spread;
+                                pos.z = agent.Position.z;
+                                Vec2 facing = (-back).AsVec2;
+                                AgentBuildData abd = new AgentBuildData(recruit)
+                                    .Team(agent.Team)
+                                    .InitialPosition(in pos)
+                                    .InitialDirection(in facing);
+                                Agent spawned = Mission.Current.SpawnAgent(abd, false);
+                                if (spawned == null) continue;
+                                spawned.SetWatchState(Agent.WatchState.Alarmed);
+                                SpellEffects.BeginAgentGlow(spawned, ColorSchool.Orange, 2f);
+                            }
+                            catch { }
+                        }
+                    });
+                    return;
+                }
+
+                // Fallback — rally nearby allies
+                CastWithGlow(agent, hero, ColorSchool.Orange, "Bound Together", () =>
                 {
                     foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
+                    {
                         try { a.SetMorale(Math.Min(a.GetMorale() + 20f, 100f)); } catch { }
+                        SpellEffects.BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
+                    }
                 });
             }
         }
@@ -2477,7 +2602,10 @@ namespace ColoursOfCalradia
                     CastWithGlow(agent, hero, ColorSchool.Orange, "Encourage", () =>
                     {
                         foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
+                        {
                             try { a.SetMorale(Math.Min(a.GetMorale() + 20f, 100f)); } catch { }
+                            SpellEffects.BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
+                        }
                     });
                     break;
                 case ColorSchool.Green when CanUseGreen(agent):
@@ -2583,6 +2711,7 @@ namespace ColoursOfCalradia
             try { effect?.Invoke(); } catch { }
             SetCooldown(hero);
             SpellEffects.BeginAgentGlow(agent, school, 3.0f);
+            SpellEffects.TryCastSound(agent.Position, school);
 
             // Play charge animation on NPC caster
             string[] candidates = { "act_yield_hard", "act_pickup_boulder_begin",
