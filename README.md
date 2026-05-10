@@ -38,9 +38,9 @@ When a new game starts you will see a multi-selection screen listing all six col
 | **Red** | Violent, chaotic | Cunning | Forced charge after cast | Recoil damage |
 | **Orange** | Joyful, generous | Intelligence | Extra food consumed daily | Coin cost per cast |
 | **Yellow** | Strategic, tactical | Control | Dismounts after cast | Cooldown |
-| **Green** | Kind, healing | Endurance | No weapon in hand | Rooted for 3 s after cast |
+| **Green** | Kind, healing | Endurance | No weapon in hand | Sunwalker: cannot cast at night |
 | **Blue** | Cold, scholarly | Social | No horseback | Ages caster slightly |
-| **Purple** | Sinister, sacrificial | Vigour | Needs allies nearby | Sacrifices a random ally |
+| **Purple** | Sinister, sacrificial | Vigour | Delicate Art: cannot cast in daylight | Sacrifices a random ally |
 
 ## Casting
 

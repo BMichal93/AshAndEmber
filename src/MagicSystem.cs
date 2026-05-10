@@ -61,7 +61,6 @@ namespace ColoursOfCalradia
             ColourLordAI.MissionTick(dt);
             ColourUnitRegistry.MissionTick(dt);
             SpellEffects.TickGlows(dt);
-            SpellEffects.TickSteadyFreeze(dt);
             SpellEffects.TickRepel(dt);
             SpellEffects.TickRandomUnitMagic(dt);
         }
@@ -131,7 +130,7 @@ namespace ColoursOfCalradia
                                    "and hardship. Their pacifist heart, however, cannot act while holding a blade.",
                 PersonalityEffect= "Repeated casting increases your Mercy — slow to strike, quick to spare.",
                 LimitationA      = "Pacifist: You cannot use Green magic while wielding a weapon in hand.",
-                LimitationB      = "Steady: Each Green spell roots you in place for 3 seconds after casting.",
+                LimitationB      = "Sunwalker: You cannot cast Green magic at night — it feeds on sunlight.",
                 AttributePenalty = "-1 Endurance"
             },
             [ColorSchool.Blue] = new SchoolInfo
@@ -914,6 +913,13 @@ namespace ColoursOfCalradia
                 catch { }
             }
 
+            // D2 Sunwalker (Green) — cannot cast at night
+            if (spell.School == ColorSchool.Green && !SpellEffects.IsDaytime())
+            {
+                Fizzle("Sunwalker: Green magic feeds on sunlight. Wait for dawn.");
+                return;
+            }
+
             // E1 Grounded (Blue) — no horseback
             if (spell.School == ColorSchool.Blue && inMission && Agent.Main?.MountAgent != null)
             {
@@ -921,17 +927,11 @@ namespace ColoursOfCalradia
                 return;
             }
 
-            // F1 Proud (Purple) — need allied soldiers
-            if (spell.School == ColorSchool.Purple)
+            // F1 Delicate Art (Purple) — cannot cast in daylight
+            if (spell.School == ColorSchool.Purple && SpellEffects.IsDaytime())
             {
-                MobileParty party = MobileParty.MainParty;
-                int soldiers = party?.MemberRoster?.TotalManCount ?? 0;
-                // Player counts as 1, so need at least 2
-                if (soldiers < 2)
-                {
-                    Fizzle("Proud: You cannot cast without allied soldiers at your side.");
-                    return;
-                }
+                Fizzle("Delicate Art: Sunlight shatters the structure. Wait for darkness.");
+                return;
             }
 
             // ── Tournament guard ──────────────────────────────────────────────
@@ -979,10 +979,6 @@ namespace ColoursOfCalradia
                 catch { }
             }
 
-            // D2 Steady (Green) — freeze caster for 3 seconds
-            if (spell.School == ColorSchool.Green && inMission)
-                SpellEffects.ApplySteadyFreeze(Agent.Main, 3f);
-
             // E2 Scholar (Blue) — age caster
             if (spell.School == ColorSchool.Blue)
             {
@@ -1028,6 +1024,17 @@ namespace ColoursOfCalradia
         // Set by Orange Calling so Calling's effect knows how many coins were spent
         public static int LastOrangeCoinCost { get; set; } = 0;
 
+        public static bool IsDaytime()
+        {
+            try
+            {
+                if (Campaign.Current == null) return true;
+                float hour = (float)(CampaignTime.Now.ToHours % 24.0);
+                return hour >= 6f && hour < 20f;
+            }
+            catch { return true; }
+        }
+
         // Shield invulnerability state (Blue E1)
         private static bool _shieldInvulnActive = false;
 
@@ -1072,27 +1079,6 @@ namespace ColoursOfCalradia
                 try { a.TeleportToPosition(dest); BeginAgentGlow(a, ColorSchool.Yellow, 1.5f); }
                 catch { }
             }
-        }
-
-        // Steady freeze (Green D2)
-        private static float _steadyFreezeRemaining = 0f;
-
-        public static void TickSteadyFreeze(float dt)
-        {
-            if (_steadyFreezeRemaining <= 0f) return;
-            if (Player == null || !Player.IsActive()) { _steadyFreezeRemaining = 0f; return; }
-            _steadyFreezeRemaining -= dt;
-            try { Player.AgentDrivenProperties.MaxSpeedMultiplier = 0f; }
-            catch { }
-            if (_steadyFreezeRemaining <= 0f)
-                try { Player.UpdateAgentStats(); } catch { }
-        }
-
-        public static void ApplySteadyFreeze(Agent caster, float duration)
-        {
-            if (caster == null || !caster.IsActive()) return;
-            _steadyFreezeRemaining = duration;
-            BeginAgentGlow(caster, ColorSchool.Green, duration);
         }
 
         // Sacrifice (Purple F2)
@@ -1727,6 +1713,7 @@ namespace ColoursOfCalradia
             _glowTimers.Clear();
         }
 
+
         public static void BeginAgentGlow(Agent agent, ColorSchool school, float duration)
         {
             if (agent == null) return;
@@ -1736,7 +1723,7 @@ namespace ColoursOfCalradia
                     ?.SetContourColor(ColorSchoolData.GetGlowColor(school), true);
                 int idx = _glowTimers.FindIndex(x => x.agent == agent);
                 if (idx >= 0) _glowTimers.RemoveAt(idx);
-                _glowTimers.Add((agent, 2f)); // always clear after 2 seconds
+                _glowTimers.Add((agent, 1f)); // always clear after 1 seconds
             }
             catch { }
         }
@@ -1746,9 +1733,8 @@ namespace ColoursOfCalradia
             if (caster == null) return;
             try
             {
-                BeginAgentGlow(caster, school, 3.0f); // caster = 3 seconds
+                BeginAgentGlow(caster, school, 3.0f);
                 PlayChargeAnimation(caster);
-                TrySpawnCastParticle(caster.Position, school);
                 TryCastSound(caster.Position, school);
             }
             catch { }
@@ -1776,39 +1762,6 @@ namespace ColoursOfCalradia
                 }
                 catch { }
             }
-        }
-
-        private static void TrySpawnCastParticle(Vec3 position, ColorSchool school)
-        {
-            try
-            {
-                var mission = Mission.Current;
-                if (mission == null) return;
-
-                // Pick particle by school family
-                string particleName;
-                switch (school)
-                {
-                    case ColorSchool.Red:
-                    case ColorSchool.Purple: particleName = "psys_fire_field_1m";   break;
-                    case ColorSchool.Green:  particleName = "psys_spark_shimmer";   break;
-                    default:                 particleName = "psys_env_ghost_dust";  break;
-                }
-
-                Type psmType = Type.GetType("TaleWorlds.Engine.ParticleSystemManager, TaleWorlds.Engine");
-                MethodInfo getId = psmType?.GetMethod("GetRuntimeIdByName", BindingFlags.Public | BindingFlags.Static);
-                object idObj = getId?.Invoke(null, new object[] { particleName });
-                if (idObj == null || (int)idObj < 0) return;
-
-                MethodInfo addEffect = typeof(Mission).GetMethod("AddParticleEffectAtFrame",
-                    new Type[] { typeof(int), typeof(MatrixFrame) });
-                if (addEffect == null) return;
-
-                MatrixFrame frame = MatrixFrame.Identity;
-                frame.origin = position + new Vec3(0, 0, 1.0f);
-                addEffect.Invoke(mission, new object[] { idObj, frame });
-            }
-            catch { }
         }
 
         // Sound event cache
@@ -2394,7 +2347,6 @@ namespace ColoursOfCalradia
                 {
                     agent.Health = Math.Min(agent.Health + 40f, agent.HealthLimit);
                 });
-                ApplyGreenD2(agent);
                 return;
                 SkipGreen:;
             }
@@ -2494,8 +2446,7 @@ namespace ColoursOfCalradia
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Green, 1.5f);
                         }
                     });
-                    ApplyGreenD2(agent);
-                    return;
+                        return;
                 }
             }
 
@@ -2555,8 +2506,7 @@ namespace ColoursOfCalradia
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Green, 1.5f);
                         }
                     });
-                    ApplyGreenD2(agent);
-                    break;
+                        break;
                 case ColorSchool.Blue when CanUseBlue(agent):
                     CastWithGlow(agent, hero, ColorSchool.Blue, "Stun", () =>
                     {
@@ -2585,13 +2535,14 @@ namespace ColoursOfCalradia
         private static bool CanUseGreen(Agent agent)
         {
             if (agent == null) return false;
+            if (!SpellEffects.IsDaytime()) return false; // Sunwalker
             try { return agent.WieldedWeapon.IsEmpty || agent.WieldedWeapon.CurrentUsageItem?.IsShield == true; }
             catch { return true; }
         }
         private static bool CanUsePurple(Agent agent)
         {
             if (agent == null || Mission.Current == null) return false;
-            return AlliesOf(agent).Any(a => a.Position.Distance(agent.Position) <= 50f);
+            return !SpellEffects.IsDaytime(); // Delicate Art: only at night
         }
 
         // ── Post-cast limitation side effects ─────────────────────────────────
@@ -2605,27 +2556,6 @@ namespace ColoursOfCalradia
         {
             if (agent == null) return;
             try { agent.Health = Math.Max(1f, agent.Health - 8f); } catch { }
-        }
-        private static void ApplyGreenD2(Agent agent)
-        {
-            if (agent == null) return;
-            int idx = agent.Index;
-            SpellEffects.BeginAgentGlow(agent, ColorSchool.Green, 3f);
-            ActiveEffectManager.Add(new ActiveEffect
-            {
-                Name = $"_steady_npc_{idx}", Duration = 3f, IsMissionEffect = true,
-                OnTick = _ =>
-                {
-                    Agent a = Mission.Current?.Agents.FirstOrDefault(x => x.Index == idx);
-                    if (a != null && a.IsActive())
-                        try { a.AgentDrivenProperties.MaxSpeedMultiplier = 0f; } catch { }
-                },
-                OnExpire = () =>
-                {
-                    Agent a = Mission.Current?.Agents.FirstOrDefault(x => x.Index == idx);
-                    if (a != null && a.IsActive()) try { a.UpdateAgentStats(); } catch { }
-                }
-            });
         }
         private static void ApplyPurpleF2(Agent agent)
         {
