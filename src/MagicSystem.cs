@@ -2286,29 +2286,42 @@ namespace ColoursOfCalradia
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
         {
-            var lordIds   = _lordColors.Keys.ToList();
-            var lordVals  = _lordColors.Values.Select(v => v.Select(s => (int)s).ToList()).ToList();
-            var rKeys     = _respawnHours.Keys.ToList();
-            var rVals     = _respawnHours.Values.ToList();
-            var ccKeys    = _campaignCooldowns.Keys.ToList();
-            var ccVals    = _campaignCooldowns.Values.ToList();
-            bool seeded   = _seeded;
+            // Flatten List<ColorSchool> per lord into parallel count + flat-int lists —
+            // IDataStore cannot serialize List<List<T>>.
+            var lordIds        = _lordColors.Keys.ToList();
+            var lordSchoolCnts = _lordColors.Values.Select(v => v.Count).ToList();
+            var lordSchoolFlat = _lordColors.Values.SelectMany(v => v.Select(s => (int)s)).ToList();
+            var rKeys          = _respawnHours.Keys.ToList();
+            var rVals          = _respawnHours.Values.ToList();
+            var ccKeys         = _campaignCooldowns.Keys.ToList();
+            var ccVals         = _campaignCooldowns.Values.ToList();
+            bool seeded        = _seeded;
 
-            store.SyncData("COC_LordIds",      ref lordIds);
-            store.SyncData("COC_LordVals",     ref lordVals);
-            store.SyncData("COC_RespawnKeys",  ref rKeys);
-            store.SyncData("COC_RespawnVals",  ref rVals);
-            store.SyncData("COC_CdKeys",       ref ccKeys);
-            store.SyncData("COC_CdVals",       ref ccVals);
-            store.SyncData("COC_LordSeeded",   ref seeded);
+            store.SyncData("COC_LordIds",        ref lordIds);
+            store.SyncData("COC_LordSchoolCnts", ref lordSchoolCnts);
+            store.SyncData("COC_LordSchoolFlat", ref lordSchoolFlat);
+            store.SyncData("COC_RespawnKeys",    ref rKeys);
+            store.SyncData("COC_RespawnVals",    ref rVals);
+            store.SyncData("COC_CdKeys",         ref ccKeys);
+            store.SyncData("COC_CdVals",         ref ccVals);
+            store.SyncData("COC_LordSeeded",     ref seeded);
 
             _seeded = seeded;
 
             _lordColors.Clear();
-            if (lordIds != null && lordVals != null)
-                for (int i = 0; i < Math.Min(lordIds.Count, lordVals.Count); i++)
-                    if (lordVals[i] != null)
-                        _lordColors[lordIds[i]] = lordVals[i].Select(v => (ColorSchool)v).ToList();
+            if (lordIds != null && lordSchoolCnts != null && lordSchoolFlat != null)
+            {
+                int si = 0;
+                for (int i = 0; i < lordIds.Count; i++)
+                {
+                    int cnt = i < lordSchoolCnts.Count ? lordSchoolCnts[i] : 0;
+                    var schools = new List<ColorSchool>();
+                    for (int j = 0; j < cnt && si < lordSchoolFlat.Count; j++, si++)
+                        schools.Add((ColorSchool)lordSchoolFlat[si]);
+                    if (schools.Count > 0)
+                        _lordColors[lordIds[i]] = schools;
+                }
+            }
 
             _respawnHours.Clear();
             if (rKeys != null && rVals != null)
