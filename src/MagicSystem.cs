@@ -62,7 +62,6 @@ namespace ColoursOfCalradia
             ColourUnitRegistry.MissionTick(dt);
             SpellEffects.TickGlows(dt);
             SpellEffects.TickSteadyFreeze(dt);
-            SpellEffects.TickShieldAbsorb(dt);
             SpellEffects.TickRepel(dt);
             SpellEffects.TickRandomUnitMagic(dt);
         }
@@ -666,6 +665,7 @@ namespace ColoursOfCalradia
             ActiveEffectManager.ClearMissionEffects();
             ColourLordAI.ClearCooldowns();
             SpellEffects.ClearShieldHp();
+            SpellEffects.ClearGlows();
             ColourUnitRegistry.OnMissionEnded();
         }
 
@@ -1028,25 +1028,16 @@ namespace ColoursOfCalradia
         // Set by Orange Calling so Calling's effect knows how many coins were spent
         public static int LastOrangeCoinCost { get; set; } = 0;
 
-        // Shield absorb pool (Blue E1)
-        private static float _shieldPool   = 0f;
-        private static float _shieldLastHp = 0f;
+        // Shield invulnerability state (Blue E1)
+        private static bool _shieldInvulnActive = false;
 
-        public static void ClearShieldHp() { _shieldPool = 0f; }
-
-        public static void TickShieldAbsorb(float dt)
+        public static void ClearShieldHp()
         {
-            if (_shieldPool <= 0f || Player == null || !Player.IsActive()) return;
-            float current = Player.Health;
-            if (current < _shieldLastHp)
+            if (_shieldInvulnActive)
             {
-                float absorbed = Math.Min(_shieldLastHp - current, _shieldPool);
-                try { Player.Health = current + absorbed; } catch { }
-                _shieldPool -= absorbed;
-                if (_shieldPool <= 0f)
-                    Msg("The blue ward is spent.", ColorSchool.Blue);
+                try { if (Player != null && Player.IsActive()) Player.ToggleInvulnerable(); } catch { }
+                _shieldInvulnActive = false;
             }
-            _shieldLastHp = Player.Health;
         }
 
         // Repel state
@@ -1437,8 +1428,16 @@ namespace ColoursOfCalradia
             if (Player == null || !Player.IsActive()) return;
             if (ActiveEffectManager.Has("_march")) { Msg("Already marching.", ColorSchool.Orange); return; }
 
-            const float SpeedMult = 1.5f;
-            const float Duration  = 90f; // ~1.5 minutes
+            const float SpeedMult = 2.5f;
+            const float Duration  = 90f;
+
+            // Raise the hard speed cap once — this persists until we restore it
+            try
+            {
+                Player.SetMaximumSpeedLimit(SpeedMult, true);
+                if (Player.MountAgent != null) Player.MountAgent.SetMaximumSpeedLimit(SpeedMult, true);
+            }
+            catch { }
 
             ActiveEffectManager.Add(new ActiveEffect
             {
@@ -1448,6 +1447,8 @@ namespace ColoursOfCalradia
                     if (Player == null || !Player.IsActive()) return;
                     try
                     {
+                        // Drive toward the higher speed each frame (UpdateAgentStats may reset this,
+                        // so we set it again immediately after every tick)
                         Player.AgentDrivenProperties.MaxSpeedMultiplier = SpeedMult;
                         if (Player.MountAgent != null)
                             Player.MountAgent.AgentDrivenProperties.MaxSpeedMultiplier = SpeedMult;
@@ -1456,14 +1457,16 @@ namespace ColoursOfCalradia
                 },
                 OnExpire = () =>
                 {
-                    if (Player == null || !Player.IsActive()) return;
                     try
                     {
-                        Player.AgentDrivenProperties.MaxSpeedMultiplier = 1f;
-                        Player.UpdateAgentStats();
-                        if (Player.MountAgent != null)
+                        if (Player != null && Player.IsActive())
                         {
-                            Player.MountAgent.AgentDrivenProperties.MaxSpeedMultiplier = 1f;
+                            Player.SetMaximumSpeedLimit(1f, true);
+                            Player.UpdateAgentStats();
+                        }
+                        if (Player?.MountAgent != null)
+                        {
+                            Player.MountAgent.SetMaximumSpeedLimit(1f, true);
                             Player.MountAgent.UpdateAgentStats();
                         }
                         Msg("March fades. Your pace returns to normal.", ColorSchool.Orange);
@@ -1472,7 +1475,7 @@ namespace ColoursOfCalradia
                 }
             });
             BeginAgentGlow(Player, ColorSchool.Orange, Duration);
-            Msg("Your strides lengthen. Speed increased for 90 seconds.", ColorSchool.Orange);
+            Msg("Your strides lengthen — speed doubled for 90 seconds.", ColorSchool.Orange);
         }
 
         // =================================================================
@@ -1559,11 +1562,27 @@ namespace ColoursOfCalradia
 
         private static void SpellShield()
         {
-            if (Player == null) return;
-            _shieldPool   = 80f;
-            _shieldLastHp = Player.Health;
-            BeginAgentGlow(Player, ColorSchool.Blue, 10f);
-            Msg("A blue ward crystallises around you — the next 80 damage will be absorbed.", ColorSchool.Blue);
+            if (Player == null || !Player.IsActive()) return;
+            if (_shieldInvulnActive) { Msg("Ward already active.", ColorSchool.Blue); return; }
+            const float Duration = 8f;
+            try { Player.ToggleInvulnerable(); } catch { return; }
+            _shieldInvulnActive = true;
+            BeginAgentGlow(Player, ColorSchool.Blue, Duration);
+            ActiveEffectManager.Add(new ActiveEffect
+            {
+                Name = "_shield", Duration = Duration, IsMissionEffect = true,
+                OnExpire = () =>
+                {
+                    if (_shieldInvulnActive)
+                    {
+                        try { if (Player != null && Player.IsActive()) Player.ToggleInvulnerable(); }
+                        catch { }
+                        _shieldInvulnActive = false;
+                    }
+                    Msg("The blue ward fades — you are vulnerable again.", ColorSchool.Blue);
+                }
+            });
+            Msg("A blue ward crystallises around you — you cannot be harmed for 8 seconds.", ColorSchool.Blue);
         }
 
         private static void SpellStasis()
@@ -1699,8 +1718,8 @@ namespace ColoursOfCalradia
         // =================================================================
         // VISUAL SYSTEM  — per-school coloured glow
         // =================================================================
-        private static readonly List<(Agent agent, float remaining)> _glowTimers
-            = new List<(Agent, float)>();
+        private static readonly List<(Agent agent, float remaining, uint color)> _glowTimers
+            = new List<(Agent, float, uint)>();
 
         public static void TickGlows(float dt)
         {
@@ -1713,9 +1732,17 @@ namespace ColoursOfCalradia
                               ?.SetContourColor(null, false); } catch { }
                     _glowTimers.RemoveAt(i);
                 }
-                else _glowTimers[i] = (_glowTimers[i].agent, t);
+                else
+                {
+                    // Re-apply every tick so the engine can't silently clear our colour
+                    try { _glowTimers[i].agent?.AgentVisuals?.GetEntity()
+                              ?.SetContourColor(_glowTimers[i].color, true); } catch { }
+                    _glowTimers[i] = (_glowTimers[i].agent, t, _glowTimers[i].color);
+                }
             }
         }
+
+        public static void ClearGlows() => _glowTimers.Clear();
 
         public static void BeginAgentGlow(Agent agent, ColorSchool school, float duration)
         {
@@ -1725,7 +1752,7 @@ namespace ColoursOfCalradia
                 uint col = ColorSchoolData.GetGlowColor(school);
                 agent.AgentVisuals?.GetEntity()?.SetContourColor(col, true);
                 _glowTimers.RemoveAll(x => x.agent == agent);
-                _glowTimers.Add((agent, duration));
+                _glowTimers.Add((agent, duration, col));
             }
             catch { }
         }

@@ -14,7 +14,7 @@
     <SubModules>
         <SubModule>
             <Name value="ColoursOfCalradia"/>
-            <DLLName value="TheWitheringArt.dll"/>
+            <DLLName value="ColoursOfCalradia.dll"/>
             <SubModuleClassType value="ColoursOfCalradia.MainSubModule"/>
             <Tags>
                 <Tag key="DedicatedServerType" value="none"/>

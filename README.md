@@ -1,201 +1,155 @@
-# The Withering Art - Installation and Mechanics Guide
+# Colours of Calradia — v2.0
 
-The Withering Art is a Bannerlord magic overhaul built around criteria-driven spell learning, mage lords, mage units, and a dark sacrifice ritual. This README describes the current mechanics in the project, not an older spell sheet.
+A Mount & Blade II: Bannerlord magic overhaul built around six colour schools, named mage lords, persistent magical units, and a personality system that shifts with every cast.
 
-## What's In This Package
+## Package Structure
 
-```text
-TheWitheringArt/
-|-- SubModule.xml               mod manifest
-|-- ModuleData/
-|   |-- items.xml               reference spell books + ritual scroll + Awakening Mark
-|   `-- troops.xml              mage troop definitions
-|-- src/
-|   |-- MagicSystem.cs          all C# logic
-|   `-- TheWitheringArt.csproj  build project
-`-- README.md                   this file
+```
+ColoursOfCalradia/
+├── SubModule.xml               mod manifest
+├── ModuleData/
+│   ├── items.xml               (reserved for future spell items)
+│   └── troops.xml              (reserved for future mage troops)
+├── src/
+│   ├── MagicSystem.cs          all C# logic (~3 000 lines, one file)
+│   └── TheWitheringArt.csproj  build project (outputs ColoursOfCalradia.dll)
+└── README.md                   this file
 ```
 
 ## Installation
 
-1. Copy `SubModule.xml`, `ModuleData/items.xml`, and `ModuleData/troops.xml` into your Bannerlord `Modules/TheWitheringArt/` folder.
-2. Build `src/TheWitheringArt.csproj` with Visual Studio or `dotnet build`.
-3. Put the resulting DLL in `Modules/TheWitheringArt/bin/Win64_Shipping_Client/`.
-4. Enable the mod in the Bannerlord launcher.
+1. Copy the entire folder into `Modules/ColoursOfCalradia/` inside your Bannerlord directory.
+2. Build the project (see **Build** below). The DLL output is `ColoursOfCalradia.dll`.
+3. Place the DLL in `Modules/ColoursOfCalradia/bin/Gaming.Desktop.x64_Shipping_Client/` (Xbox/Game Pass) or `bin/Win64_Shipping_Client/` (Steam).
+4. Enable **Colours of Calradia** in the Bannerlord launcher.
 
-## Opt Into The Gift
+## Starting the Mod — Colour Selection
 
-The mod does not force magic on every character.
+When a new game starts you will see a multi-selection screen listing all six colour schools. Hover each colour to read its flavour text, attribute penalty, and two cast limitations.
 
-1. Use the in-game console and run:
+- Select any combination of colours (including none).
+- Your chosen colours are permanent for that playthrough.
+- Each colour you pick reduces one attribute by 1 and locks in two permanent limitations.
 
-```text
-campaign.give_item twa_gift_mark
-```
+## The Six Colour Schools
 
-2. On the next daily tick, the mod detects the Awakening Mark, grants the Gift, and applies a narrative penalty to one random physical attribute.
+| Colour | Theme | Attribute penalty | Limitation I | Limitation II |
+|--------|-------|-------------------|--------------|---------------|
+| **Red** | Violent, chaotic | Cunning | Forced charge after cast | Recoil damage |
+| **Orange** | Joyful, generous | Intelligence | Extra food consumed daily | Coin cost per cast |
+| **Yellow** | Strategic, tactical | Control | Dismounts after cast | Cooldown |
+| **Green** | Kind, healing | Endurance | No weapon in hand | Rooted for 3 s after cast |
+| **Blue** | Cold, scholarly | Social | No horseback | Ages caster slightly |
+| **Purple** | Sinister, sacrificial | Vigour | Needs allies nearby | Sacrifices a random ally |
 
-## Casting Spells
+## Casting
 
-1. Meet a spell's learning criterion: travel, personality, event, companion teaching, mage-lord contact, raw intellect, or a special condition.
-2. Once the formula is learned, hold Left Alt.
-3. Type the combo with WASD.
-4. Release Left Alt to cast.
+1. Hold **Left Alt** (keyboard) or **Left Trigger** (controller).
+2. Type any 6-key WASD combo shown in your spellbook.
+3. Release Alt / LT to fire the spell.
 
-The combo is shown in the grimoire and on discovery messages. Books are reference/flavor items and can hint at formulas, but they do not unlock casting by themselves.
+Press **S** (or **L3**) while holding Alt to cycle through your spellbook.
 
-Mission spells work in battles, map spells work on the campaign map, and some spells are allowed in both contexts.
+## Spell List (18 battle spells + 12 campaign map effects for lords)
 
-## Spell Schools
+### Red — Violent
+| Combo | Spell | Effect |
+|-------|-------|--------|
+| RRUULL | Crush | Cone damage burst |
+| LLRRUU | Vortex | Pull enemies toward you |
+| UURRLL | Fury | Issue charge to all friendly formations |
 
-The current color coding is:
+### Orange — Generous
+| Combo | Spell | Effect |
+|-------|-------|--------|
+| RLLRLL | Encourage | Boost nearby ally morale |
+| UULRLU | Calling | Summon imperial recruits |
+| RRLLUU | March | 2.5× movement speed for 90 s |
 
-- Red: offensive damage spells
-- Blue: control and manipulation spells
-- Green: support and healing spells
+### Yellow — Strategic
+| Combo | Spell | Effect |
+|-------|-------|--------|
+| UURLLU | Hold Arrows | Order enemy formations to cease fire |
+| LLUURR | Repel | Periodic knockback pulse for 60 s |
+| RRUULL | Dismount | Force enemy riders off their horses |
 
-That color is used for glow, particles, and some cast feedback.
+### Green — Healing
+| Combo | Spell | Effect |
+|-------|-------|--------|
+| UULLUR | Restore | Heal self for 40 HP |
+| ULLRUU | Aid | Heal nearby allies for 25 HP each |
+| UURLUL | Nurture | Wide-area morale + HP refresh |
+
+### Blue — Scholarly
+| Combo | Spell | Effect |
+|-------|-------|--------|
+| LULURU | Shield | 8 s invulnerability ward |
+| LLRRLU | Stasis | Halt all enemy formations |
+| RULRUL | Stun | 15 damage to all enemies within 30 m |
+
+### Purple — Sinister
+| Combo | Spell | Effect |
+|-------|-------|--------|
+| RLLULL | Severe Life | Instantly kill one random enemy (non-hero) |
+| LLRRUU | Wither | 60 damage to all enemies within 10 m |
+| UURRLL | Devour | Drain HP from nearby enemies to yourself |
+
+## Personality Drift
+
+Every 10 casts of the same school shifts one personality trait:
+
+| School | Trait | Direction |
+|--------|-------|-----------|
+| Red | Calculating | −1 |
+| Orange | Generosity | +1 |
+| Yellow | Valor | −1 |
+| Green | Mercy | +1 |
+| Blue | Calculating | +1 |
+| Purple | Mercy | −1 |
+
+The message only appears when the trait actually moves (stops at ±2).
 
 ## Tournament Rule
 
-Spellcasting during a tournament is forbidden. If you successfully cast a spell in a tournament mission, you are immediately disqualified with a warning message.
+Casting any spell during a tournament **immediately disqualifies you** — your character is killed and removed from the match with a warning message.
 
-## Spell Economy
+## Mage Lords (NPC)
 
-- Every cast has an age cost.
-- Player casts use the spell's listed age cost.
-- Mage lord casts use a heavier age cost multiplier.
-- Mage lords also age a little every day, reflecting the magic they use off-screen and in battles the player does not personally witness.
+- Each faction has several lords seeded with 1–3 colour schools.
+- They cast in battle using the same school rules (AI-controlled).
+- Every day they have a chance to cast a campaign-map spell: morale buffs, renown effects, healing, or influence gains.
+- Up to 3 lord map-casts fire per day total to keep the log readable.
 
-## World Map Lord Magic
+## Named Magical Units
 
-Mage lords are a separate system from the player.
+- Roughly 1 % of each lord army contains a named magical soldier with 1–2 schools.
+- Bandit groups of 15+ troops have a small seeding chance.
+- Named units cast in battle (AI-driven, school-appropriate effects).
+- They also have a 10 % daily chance to trigger a minor campaign-map effect (max 2 per day).
+- When killed, a unit enters a 3–5 day respawn queue and then reappears in their original or a fallback lord party.
 
-- The mod seeds a limited number of mage lords per faction.
-- Each day, living mage lords have a chance to cast a world map spell.
-- Their world map spells are faction-flavored and can affect morale, supplies, renown, villages, or enemy lords.
-- When a mage lord casts, the age cost is scaled up.
-- Mage lords also drift older every day even if they did not cast that day.
+## Children & Companions
 
-### Aserai Mage Lords
+- Children of the main hero are born with a colour gift: they share at least one colour with the parent and may have ±1 schools total.
+- Companions have a 30 % chance to be granted 1–2 colours on joining.
 
-Aserai mage lords get special treatment through `Dark Bargain`.
+## Level-Up Learning
 
-- Before age 40, Dark Bargain can still target an enemy lord.
-- At age 40 and above, they start spending prisoners first and then soldiers to reduce their own age.
-- That reduction uses the same sacrifice logic as the player ritual, including morale penalties.
-
-## Battle Mage Lords
-
-Mage lords who appear in battle use AI spellcasting.
-
-Typical battle casts include:
-
-- Mending when badly wounded
-- Repel when enemies swarm them
-- Blast when enemies cluster in front
-- Confuse against nearby enemies
-- Battle command spells such as Halt, Enrage, Dismount, and Stop Arrows
-- Severe Life for Aserai mage lords
-
-They also use the same age-cost system when they cast.
-
-## Break Spirits
-
-`Break Spirits` is a battle spell unlocked by winning a fight while your warband is in a very poor morale state.
-
-Mechanically, it breaks nearby enemy resolve and keeps them pinned down briefly. It is a control spell, so it uses the blue school color.
-
-## Mage Units
-
-Mage units are the void channelers that appear in mage-lord armies.
-
-- They are identified by the `twa_mage_` troop prefix.
-- Mage lord parties are padded to about 5 percent mage units.
-- Allied mage units near the player create a battery effect that improves spell damage.
-- They cast a small combat bolt on a cooldown.
-- Each cast can trigger burn-out, which can kill the unit and deal splash damage.
-
-## Tyrant Ritual
-
-The Hollow Covenant / Tyrant Ritual is the age-reversal system.
-
-### Unlocking the ritual
-
-- Find the ritual scroll item.
-- Carry it for 3 days.
-- After the third day, the ritual knowledge is unlocked.
-
-### Running the ritual
-
-While waiting in a settlement or camp:
-
-- The ritual consumes prisoners first.
-- If no prisoners remain, it sacrifices soldiers instead.
-- Prisoner sacrifice restores 30 days of youth per victim.
-- Soldier sacrifice restores 60 days of youth per victim.
-- The player cannot de-age below 20 years old.
-- The ritual applies party morale penalties and a narrative cost.
-
-## Spell Roster
-
-The current project contains 39 spells.
-
-The complete combo sheet is handled in-game through learned-spell discovery messages, the grimoire, and reference books, but the current roster is:
-
-- Memory
-- Vortex
-- Detonate
-- Mark
-- Blast
-- Accelerate
-- Suppress
-- Halt
-- Shroud
-- Bane
-- Enrage
-- Dismount
-- Repel
-- Stop Arrows
-- Scatter
-- Dark Bargain
-- Rejuvenate
-- Restore
-- Featherfall
-- Inspire
-- Mending
-- Charm
-- Sinister Will
-- Severe Life
-- Clairvoyance
-- Relocate
-- Pacify
-- Weightless
-- Levitate
-- Devour
-- Confuse
-- Swap
-- Calling
-- Aura of Hate
-- Hollow Name
-- Break Spirits
-- Long Road
-- Unname
-- Crush
-
-## Notes
-
-- Some spells are mission-only.
-- Some spells are map-only.
-- Some spells are available in both contexts.
-- The project intentionally uses one C# file so the systems stay centralized and easy to audit.
+At levels 10, 20, 30 … (while you have at least one school but fewer than 6), a prompt appears offering one new colour to learn. You can decline. Accepting applies the new school's attribute penalty and limitations normally.
 
 ## Build
 
 ```powershell
-$env:BannerlordPath = "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord"
+# Xbox / Game Pass
+$env:BannerlordPath = "C:\XboxGames\Mount & Blade II- Bannerlord\Content"
+
+# Steam
+# $env:BannerlordPath = "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord"
+
 cd src
-dotnet build TheWitheringArt.csproj --configuration Release
+dotnet build TheWitheringArt.csproj
 ```
 
-The project file is configured to copy the DLL into the active Bannerlord `Modules/TheWitheringArt/bin/...` output folder for your install.
+Output DLL: `src/bin/Debug/ColoursOfCalradia.dll`
+
+The project targets `.NET Framework 4.7.2` to match the game's runtime. All logic lives in the single file `MagicSystem.cs`.

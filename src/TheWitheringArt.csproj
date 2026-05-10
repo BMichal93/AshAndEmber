@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>TheWitheringArt</AssemblyName>
-    <RootNamespace>TheWitheringArt</RootNamespace>
+    <AssemblyName>ColoursOfCalradia</AssemblyName>
+    <RootNamespace>ColoursOfCalradia</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <Optimize>true</Optimize>
