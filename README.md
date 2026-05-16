@@ -104,7 +104,7 @@ Each school carries two permanent limitations. The first category (A) applies ev
 
 **Orange — Generous Hunger**
 - **(A) Overindulgent:** Your party consumes food faster and army upkeep is higher. 2 food units are drained daily.
-- **(B) Generous Flood:** Each Orange spell briefly overwhelms your senses — the world swims, the HUD blurs, and for a moment you cannot read the battlefield clearly.
+- **(B) Generous Flood:** Each Orange spell briefly seizes your body — you stagger in random directions for a moment, lurching unpredictably across the field.
 
 **Yellow — The Fearful Eye**
 - **(A) Paranoia:** Each Yellow spell costs your party 8 morale. The fear bleeds inward.
@@ -116,7 +116,7 @@ Each school carries two permanent limitations. The first category (A) applies ev
 
 **Blue — Scholar's Weight**
 - **(A) Scholar's Weight:** Each Blue spell makes your equipment feel heavier — your maximum movement speed decreases with every cast and does not recover until the battle ends. Up to 6 stacks; at the cap you slow to a crawl.
-- **(B) Heavy Knowledge:** Cerulean Mirror shields you from spells and magic effects for 60 seconds — but steel still finds you.
+- **(B) Heavy Knowledge:** Cerulean Mirror shields you from spells and magic effects for 40 seconds — but steel still finds you.
 
 **Purple — The Waning Art**
 - **(A) Waning Cost:** Each Purple spell ages the caster by approximately 2 days — the grey draws time inward, quietly.
@@ -202,12 +202,12 @@ All 18 battle spells follow a strict **Form + Colour** combo structure:
 
 | Spell | Combo | School | Effect |
 |-------|-------|--------|--------|
-| **Scarlet Ward** | `RLUURR` | Red | Absorbs the next single physical blow — one strike, then the ward shatters. Expires after 15 s if nothing hits. |
-| **Warm Beacon** | `RLLLRR` | Orange | Pulls all allies within 30 m to a ring around the caster (smooth lerp). |
-| **Nausea Bloom** | `RLLRLU` | Yellow | Persistent 30 s aura (radius 8 m) that deals 5 damage every 2 s to all nearby creatures. |
+| **Scarlet Ward** | `RLUURR` | Red | Absorbs the next single physical blow — one strike, then the ward shatters. Expires after 8 s if nothing hits. |
+| **Warm Beacon** | `RLLLRR` | Orange | Pulls all allies within 18 m to a ring around the caster (smooth lerp). |
+| **Nausea Bloom** | `RLLRLU` | Yellow | Persistent 30 s aura (radius 8 m) that deals 15 damage every 2 s to all nearby creatures. |
 | **Verdant Touch** | `RLRRLL` | Green | Heals the caster for 20 HP. |
-| **Cerulean Mirror** | `RLLLUU` | Blue | 60 s magic immunity — spells and magical area effects cannot harm you. Physical attacks still connect. |
-| **Grief's Veil** | `RLRRLU` | Purple | The grey folds you from sight for 15 s — you become invulnerable and nearby enemy formations halt momentarily. They do not flee; they simply lose track of you. |
+| **Cerulean Mirror** | `RLLLUU` | Blue | 40 s magic immunity — spells and magical area effects cannot harm you. Physical attacks still connect. |
+| **Grief's Veil** | `RLRRLU` | Purple | The grey folds you from sight for 12 s — you become invulnerable and nearby enemy formations halt momentarily. They do not flee; they simply lose track of you. |
 
 ### Create Spells (LR prefix) — Persistent battlefield effects
 
@@ -215,9 +215,9 @@ All 18 battle spells follow a strict **Form + Colour** combo structure:
 |-------|-------|--------|--------|
 | **Cinder Burst** | `LRUURR` | Red | Instant 45 damage to all creatures within 10 m. |
 | **Golden Snare** | `LRLLRR` | Orange | Places a golden patch (radius 10 m) at the caster's feet. The first enemy formation to step into it receives one random command — **Halt**, **Charge**, **Dismount**, or **Scatter** — then the trap vanishes. Expires after 60 s if untriggered; cast again to dismiss early. |
-| **Creeping Dread** | `LRLRLU` | Yellow | Toggle: releases a wandering cloud (radius 5 m) that roams the field, dealing 5 damage every 2 s to creatures it passes through. Changes direction randomly every ~3 s. Cast again to dismiss. |
-| **Emerald Font** | `LRRRLL` | Green | Toggle: creates a healing circle (radius 8 m) that restores 8 HP every 2 s to all within it — friend and foe alike. Cast again to dismiss. |
-| **Sapphire Bastion** | `LRLLUU` | Blue | Places a persistent repulsion field (radius 10 m) for 3 minutes. Any creature entering the radius is smoothly pushed outward every 0.5 s. |
+| **Creeping Dread** | `LRLRLU` | Yellow | Toggle: releases a wandering cloud (radius 7 m) that roams the field, dealing 25 damage every 2 s to creatures it passes through. Changes direction randomly every ~3 s. Cast again to dismiss. |
+| **Emerald Font** | `LRRRLL` | Green | Toggle: creates a healing circle (radius 8 m) that restores 10 HP every 2 s to all within it — friend and foe alike. Cast again to dismiss. |
+| **Sapphire Bastion** | `LRLLUU` | Blue | Places a persistent repulsion field (radius 8 m) for 3 minutes. Any creature that crosses into the radius is pushed outward every 0.5 s; creatures already inside when the field is raised are not affected. |
 | **Hollow Gaze** | `LRRRLU` | Purple | Pins one random nearby non-hero enemy (within 15 m) into a catatonic state — they stand still and do nothing. The effect is maintained until cancelled. Cast again to release them. |
 
 ### Notes on Create Spells

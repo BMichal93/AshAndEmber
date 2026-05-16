@@ -189,10 +189,10 @@ namespace ColoursOfCalradia
             {
                 Name             = "Orange",
                 FlavorText       = "Generous Hunger — Joyful, generous magic of warmth and plenty. Orange mages inspire and conjure allies from nothing. " +
-                                   "Their indulgent nature, however, devours resources and scatters their senses with each casting.",
+                                   "Their indulgent nature, however, devours resources and sends the caster lurching with each casting.",
                 PersonalityEffect= "Repeated casting increases your Generosity — open-handed and free with what you have.",
                 LimitationA      = "Overindulgent: Your party consumes food faster and army upkeep is higher.",
-                LimitationB      = "Generous Flood: Each Orange spell briefly overwhelms your senses — the world swims, the HUD blurs, and for a moment you cannot read the battlefield clearly.",
+                LimitationB      = "Generous Flood: Each Orange spell briefly seizes your body — you stagger in random directions for a moment, lurching unpredictably across the field.",
                 AttributePenalty = "-1 Intellect"
             },
             [ColorSchool.Yellow] = new SchoolInfo
@@ -355,10 +355,10 @@ namespace ColoursOfCalradia
                 Flavour="You lay hands upon yourself. The wounds knit closed." },
             new SpellEntry { Name="Cerulean Mirror",  Combo="RLLLUU", School=ColorSchool.Blue,
                 Context=SpellContext.Mission,
-                Flavour="Spells pass through you for 60 seconds. Steel does not." },
+                Flavour="Spells pass through you for 40 seconds. Steel does not." },
             new SpellEntry { Name="Grief's Veil",     Combo="RLRRLU", School=ColorSchool.Purple,
                 Context=SpellContext.Mission,
-                Flavour="The grey folds you from sight for 15 seconds. Nearby enemies lose track of you and pause. You cannot be touched while the veil holds." },
+                Flavour="The grey folds you from sight for 12 seconds. Nearby enemies lose track of you and pause. You cannot be touched while the veil holds." },
 
             // ── CREATE (LR prefix) — special area effect, specific to each colour ─
             new SpellEntry { Name="Cinder Burst",     Combo="LRUURR", School=ColorSchool.Red,
@@ -1183,9 +1183,9 @@ namespace ColoursOfCalradia
             }
 
 
-            // Orange — Generous Hunger: briefly flood the senses, obscuring the HUD
+            // Orange — Generous Hunger: stagger the caster in random directions
             if (spell.School == ColorSchool.Orange && inMission)
-                SpellEffects.TriggerHUDConfusion();
+                SpellEffects.TriggerConfusion();
 
             // Blue — Scholar's Weight: equipment grows heavier each cast, limiting speed
             if (spell.School == ColorSchool.Blue && inMission)
@@ -1303,6 +1303,8 @@ namespace ColoursOfCalradia
             public GameEntity LightEntity; // coloured point light marking the effect area
         }
         private static readonly List<AreaEffect> _areaEffects = new List<AreaEffect>();
+        private static readonly HashSet<int> _bastionPrevInside = new HashSet<int>();
+        private static readonly HashSet<int> _snarePrevInside   = new HashSet<int>();
 
         // If an effect with this id exists, remove it. Otherwise add newEffect (if not null).
         internal static void ToggleAreaEffect(string id, AreaEffect newEffect)
@@ -1312,6 +1314,8 @@ namespace ColoursOfCalradia
             {
                 try { _areaEffects[idx].LightEntity?.Remove(0); } catch { }
                 _areaEffects.RemoveAt(idx);
+                if (id == "create_blue")   _bastionPrevInside.Clear();
+                if (id == "create_orange") _snarePrevInside.Clear();
                 return;
             }
             if (newEffect != null)
@@ -1431,20 +1435,28 @@ namespace ColoursOfCalradia
                 {
                     case "create_orange": // Golden Snare — one-shot random command on first contact
                     {
-                        // Glow the patch centre each tick so the player can see it
+                        // Track who is inside this tick; glow them
+                        var snareCurrentInside = new HashSet<int>();
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())
+                        {
+                            snareCurrentInside.Add(a.Index);
                             try { BeginAgentGlow(a, e.School, 1.5f); } catch { }
+                        }
 
-                        // Find the first non-player agent that stepped into the patch
+                        // Find the first enemy that newly entered (not in previous tick's set)
                         Agent contact = null;
                         foreach (Agent a in Mission.Current.Agents)
                         {
                             if (!a.IsActive() || a.IsMount || a == Player) continue;
+                            if (a.Team == Player?.Team) continue; // allies skip
                             if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            if (_snarePrevInside.Contains(a.Index)) continue; // was already inside
                             contact = a; break;
                         }
+                        _snarePrevInside.Clear();
+                        foreach (int idx in snareCurrentInside) _snarePrevInside.Add(idx);
                         if (contact == null) break;
 
                         // Apply a random command to their formation
@@ -1494,10 +1506,18 @@ namespace ColoursOfCalradia
                             if (ProtectedByMirror(a)) continue;
                             try
                             {
-                                float before = a.Health;
-                                DamageAgent(a, 25f);
-                                if (a.Health < before || a.Health <= 0f) dreadHit++;
+                                const float DreadDmg = 25f;
+                                if (a.Health <= DreadDmg)
+                                {
+                                    KillAgent(a);
+                                }
+                                else
+                                {
+                                    a.Health -= DreadDmg;
+                                    try { a.SetMorale(Math.Max(0f, a.GetMorale() - 10f)); } catch { }
+                                }
                                 BeginAgentGlow(a, e.School, 1.5f);
+                                dreadHit++;
                             }
                             catch { }
                         }
@@ -1520,11 +1540,15 @@ namespace ColoursOfCalradia
                         }
                         break;
 
-                    case "create_blue": // Sapphire Bastion — push agents out of radius
+                    case "create_blue": // Sapphire Bastion — push agents that enter the radius
+                    {
+                        var currentInside = new HashSet<int>();
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())
                         {
+                            currentInside.Add(a.Index);
+                            if (_bastionPrevInside.Contains(a.Index)) continue; // already inside, skip
                             try
                             {
                                 Vec3 dir = (a.Position - e.Position);
@@ -1537,7 +1561,10 @@ namespace ColoursOfCalradia
                             }
                             catch { }
                         }
+                        _bastionPrevInside.Clear();
+                        foreach (int idx in currentInside) _bastionPrevInside.Add(idx);
                         break;
+                    }
 
                     case "self_yellow": // Nausea Bloom — drifting toxic cloud
                     {
@@ -1569,6 +1596,8 @@ namespace ColoursOfCalradia
             foreach (var e in _areaEffects)
                 try { e.LightEntity?.Remove(0); } catch { }
             _areaEffects.Clear();
+            _bastionPrevInside.Clear();
+            _snarePrevInside.Clear();
         }
 
         // ── Duration self-effects ────────────────────────────────────────────
@@ -1596,24 +1625,35 @@ namespace ColoursOfCalradia
             try { _hollowGazeTarget.SetMorale(0f); } catch { }
         }
 
-        // ── Orange: HUD confusion burst ───────────────────────────────────────
-        private static int   _confusionBursts = 0;
-        private static float _confusionTimer  = 0f;
-        private const  int   ConfusionBurstCount   = 9;
-        private const  float ConfusionBurstInterval = 0.18f;
+        // ── Orange: confusion stagger ─────────────────────────────────────────
+        private static float _confusionRemaining  = 0f;
+        private static float _confusionTickTimer  = 0f;
+        private const  float ConfusionDuration    = 1.5f;
+        private const  float ConfusionTickRate    = 0.35f;
+        private const  float ConfusionStaggerDist = 1.5f;
 
-        public static void TriggerHUDConfusion() => _confusionBursts = ConfusionBurstCount;
+        public static void TriggerConfusion()
+        {
+            _confusionRemaining = ConfusionDuration;
+            _confusionTickTimer = 0f;
+            Msg("Generous Hunger seizes you — your body lurches as the magic tears through.", ColorSchool.Orange);
+        }
 
         public static void TickHUDConfusion(float dt)
         {
-            if (_confusionBursts <= 0) return;
-            _confusionTimer -= dt;
-            if (_confusionTimer > 0f) return;
-            _confusionTimer = ConfusionBurstInterval;
-            _confusionBursts--;
-            InformationManager.DisplayMessage(new InformationMessage(
-                "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~",
-                Color.FromUint(0x44FF8800u)));
+            if (_confusionRemaining <= 0f) return;
+            _confusionRemaining -= dt;
+            _confusionTickTimer -= dt;
+            if (_confusionTickTimer > 0f) return;
+            _confusionTickTimer = ConfusionTickRate;
+            if (Player == null || !Player.IsActive()) return;
+            float angle = (float)(_rng.NextDouble() * Math.PI * 2);
+            Vec3 dest = Player.Position + new Vec3(
+                (float)Math.Cos(angle) * ConfusionStaggerDist,
+                (float)Math.Sin(angle) * ConfusionStaggerDist,
+                0f);
+            dest.z = Player.Position.z;
+            try { Player.TeleportToPosition(dest); } catch { }
         }
 
         // ── Blue: accumulating weight stacks ─────────────────────────────────
@@ -1639,7 +1679,7 @@ namespace ColoursOfCalradia
             if (_ceruleanMirrorActive) { _ceruleanMirrorActive = false; }
             _shadowVeilActive  = false;
             _hollowGazeTarget  = null;
-            _confusionBursts   = 0;
+            _confusionRemaining = 0f;
             if (_blueWeightStacks > 0)
             {
                 _blueWeightStacks = 0;
@@ -1678,8 +1718,8 @@ namespace ColoursOfCalradia
             if (_randomMagicTimer < RandomMagicInterval) return;
             _randomMagicTimer = 0f;
 
-            // 3% chance per minute
-            if (_rng.Next(100) >= 3) return;
+            // 0.7% chance per minute
+            if (_rng.Next(1000) >= 7) return;
 
             var candidates = Mission.Current.Agents
                 .Where(a => a.IsActive() && !a.IsMount && !a.IsHero).ToList();
@@ -2082,7 +2122,7 @@ namespace ColoursOfCalradia
                     Msg("The Cerulean Mirror dims. Spells find you again.", ColorSchool.Blue);
                 }
             });
-            Msg("Cerulean Mirror — spells pass through you for 60 seconds. Steel does not.", ColorSchool.Blue);
+            Msg("Cerulean Mirror — spells pass through you for 40 seconds. Steel does not.", ColorSchool.Blue);
         }
 
         // Grief's Veil — the grey folds you from sight; nearby enemies lose nerve
@@ -2168,12 +2208,18 @@ namespace ColoursOfCalradia
                 Msg("The Golden Snare fades before it could spring.", ColorSchool.Orange);
                 return;
             }
+            const float SnareRadius = 10f;
             ToggleAreaEffect("create_orange", new AreaEffect
             {
                 Id = "create_orange", School = ColorSchool.Orange,
-                Position = Player.Position, Radius = 10f,
+                Position = Player.Position, Radius = SnareRadius,
                 TickInterval = 0.5f, TickTimer = 0.5f, Remaining = 60f
             });
+            // Snapshot agents already inside so they don't trigger the snare immediately
+            _snarePrevInside.Clear();
+            foreach (Agent a in Mission.Current.Agents)
+                if (a.IsActive() && !a.IsMount && a.Position.Distance(Player.Position) <= SnareRadius)
+                    _snarePrevInside.Add(a.Index);
             BeginAgentGlow(Player, ColorSchool.Orange, 2f);
             Msg("Golden Snare laid — the first formation to step into it receives a random command and the trap vanishes. Cast again to dismiss.", ColorSchool.Orange);
         }
@@ -2191,7 +2237,7 @@ namespace ColoursOfCalradia
             ToggleAreaEffect("create_yellow", new AreaEffect
             {
                 Id = "create_yellow", School = ColorSchool.Yellow,
-                Position = Player.Position, Radius = 5f,
+                Position = Player.Position, Radius = 7f,
                 Velocity = new Vec3(1f, 0f, 0f),
                 DirTimer = 3f,
                 TickInterval = 2f, TickTimer = 2f, Remaining = -1f
@@ -2231,12 +2277,18 @@ namespace ColoursOfCalradia
                 return;
             }
             const float Duration = 180f; // 3 minutes
+            const float BastionRadius = 8f;
             ToggleAreaEffect("create_blue", new AreaEffect
             {
                 Id = "create_blue", School = ColorSchool.Blue,
-                Position = Player.Position, Radius = 8f,
+                Position = Player.Position, Radius = BastionRadius,
                 TickInterval = 0.5f, TickTimer = 0.5f, Remaining = Duration
             });
+            // Snapshot agents already inside so they are not repelled on first tick
+            _bastionPrevInside.Clear();
+            foreach (Agent a in Mission.Current.Agents)
+                if (a.IsActive() && !a.IsMount && a.Position.Distance(Player.Position) <= BastionRadius)
+                    _bastionPrevInside.Add(a.Index);
             BeginAgentGlow(Player, ColorSchool.Blue, 2f);
             Msg("Sapphire Bastion rises — a wall of force repels all who approach. Fades in 3 minutes.", ColorSchool.Blue);
         }
@@ -2504,10 +2556,10 @@ namespace ColoursOfCalradia
     // =========================================================================
     // 9. COLOUR LORD REGISTRY
     //    Lords have colour schools. Distribution per faction:
-    //      ~15% of lords → 1 random colour
-    //      ~10%          → 2 colours
-    //      ~10%          → 3 colours
-    //       1 lord       → 4 colours (faction archmage)
+    //      ~10% of lords → 1 random colour
+    //       ~7%          → 2 colours
+    //       ~5%          → 3 colours
+    //        1 lord      → 4 colours (faction archmage)
     // =========================================================================
     public static class ColourLordRegistry
     {
@@ -2578,9 +2630,9 @@ namespace ColoursOfCalradia
             {
                 int roll = _rng.Next(100);
                 int colorCount;
-                if      (roll < 10) colorCount = 3;
-                else if (roll < 20) colorCount = 2;
-                else if (roll < 35) colorCount = 1;
+                if      (roll <  5) colorCount = 3;
+                else if (roll < 12) colorCount = 2;
+                else if (roll < 22) colorCount = 1;
                 else                continue;
 
                 _lordColors[lords[i].StringId] = PickColors(colorCount);
