@@ -879,6 +879,7 @@ namespace ColoursOfCalradia
             SpellEffects.ClearAreaEffects();   // removes all engine lights + particle emitters
             SpellEffects.ClearSelfEffects();
             SpellEffects.ClearGlows();
+            SpellEffects.ClearMoves();         // releases stale agent refs from Bastion pushes
             ColourUnitRegistry.OnMissionEnded();
         }
 
@@ -1356,6 +1357,8 @@ namespace ColoursOfCalradia
         // AgentIndex → (seconds remaining, position frozen at cast time) for Azure Arrest halt
         private static readonly Dictionary<int, (float Remaining, Vec3 FrozenPos)> _haltedAgents
             = new Dictionary<int, (float, Vec3)>();
+        private static float _haltTeleportTimer = 0f;
+        private const  float HaltTeleportInterval = 0.25f;
 
         // If an effect with this id exists, remove it. Otherwise add newEffect (if not null).
         internal static void ToggleAreaEffect(string id, AreaEffect newEffect)
@@ -1734,13 +1737,17 @@ namespace ColoursOfCalradia
         public static void TickHaltedAgents(float dt)
         {
             if (_haltedAgents.Count == 0 || Mission.Current == null) return;
+            _haltTeleportTimer -= dt;
+            bool doTeleport = _haltTeleportTimer <= 0f;
+            if (doTeleport) _haltTeleportTimer = HaltTeleportInterval;
+
             var expired = new List<int>();
             foreach (int idx in _haltedAgents.Keys.ToList())
             {
                 var (remaining, frozenPos) = _haltedAgents[idx];
                 remaining -= dt;
                 Agent a = Mission.Current.Agents.FirstOrDefault(x => x.Index == idx);
-                if (a == null || !a.IsActive())
+                if (a == null || !a.IsActive() || a.Health <= 0f)
                 {
                     expired.Add(idx);
                     continue;
@@ -1754,7 +1761,7 @@ namespace ColoursOfCalradia
                 {
                     _haltedAgents[idx] = (remaining, frozenPos);
                     try { a.SetMaximumSpeedLimit(0f, false); } catch { }
-                    try { a.TeleportToPosition(frozenPos); } catch { }
+                    if (doTeleport) try { a.TeleportToPosition(frozenPos); } catch { }
                 }
             }
             foreach (int idx in expired) _haltedAgents.Remove(idx);
@@ -1909,6 +1916,14 @@ namespace ColoursOfCalradia
         public static void DamageAgent(Agent target, float damage)
         {
             if (target == null || !target.IsActive()) return;
+            if (target.Health <= damage)
+            {
+                // RegisterBlow with OwnerId=-1 crashes the engine's kill attribution pipeline
+                // when the blow is lethal. Route through KillAgent (Die()) which handles -1 safely.
+                if (!target.IsHero) { KillAgent(target); return; }
+                target.Health = 1f; // heroes: clamp to 1, let battle system handle incapacitation
+                return;
+            }
             try
             {
                 Blow blow = BuildBlow(target, DamageTypes.Blunt, damage);
@@ -1917,9 +1932,7 @@ namespace ColoursOfCalradia
             }
             catch
             {
-                target.Health = Math.Max(0f, target.Health - damage);
-                // Don't call KillAgent on heroes — let the game's own incapacitation logic handle them.
-                if (target.Health <= 0f && !target.IsHero) KillAgent(target);
+                target.Health = Math.Max(1f, target.Health - damage);
             }
         }
 
@@ -2621,8 +2634,9 @@ namespace ColoursOfCalradia
                 float t = _glowTimers[i].remaining - dt;
                 if (t <= 0f)
                 {
-                    try { _glowTimers[i].agent?.AgentVisuals?.GetEntity()
-                              ?.SetContourColor(null, false); } catch { }
+                    var a = _glowTimers[i].agent;
+                    if (a != null && a.IsActive())
+                        try { a.AgentVisuals?.GetEntity()?.SetContourColor(null, false); } catch { }
                     _glowTimers.RemoveAt(i);
                 }
                 else
@@ -2635,14 +2649,15 @@ namespace ColoursOfCalradia
         public static void ClearGlows()
         {
             foreach (var (agent, _) in _glowTimers)
-                try { agent?.AgentVisuals?.GetEntity()?.SetContourColor(null, false); } catch { }
+                if (agent != null && agent.IsActive())
+                    try { agent.AgentVisuals?.GetEntity()?.SetContourColor(null, false); } catch { }
             _glowTimers.Clear();
         }
 
 
         public static void BeginAgentGlow(Agent agent, ColorSchool school, float duration)
         {
-            if (agent == null) return;
+            if (agent == null || !agent.IsActive()) return;
             try
             {
                 agent.AgentVisuals?.GetEntity()
