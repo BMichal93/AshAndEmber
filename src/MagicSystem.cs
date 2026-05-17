@@ -2159,11 +2159,11 @@ namespace ColoursOfCalradia
             Vec3 fwd = Player.LookDirection.NormalizedCopy();
             // Exclude heroes — Die() with OwnerId=-1 on a hero crashes Bannerlord's death processing
             var inCone = ConeAgents(Player.Position, fwd, 15f, 0.6f).Where(a => !a.IsHero).ToList();
-            if (inCone.Count == 0) { Msg("No common souls in the cone — the grey passes over champions.", ColorSchool.Purple); return; }
+            if (inCone.Count == 0) { Msg("No common souls in the cone — the purple passes over champions.", ColorSchool.Purple); return; }
             Agent target = inCone[_rng.Next(inCone.Count)];
             BeginAgentGlow(target, ColorSchool.Purple, 1.5f);
             KillAgent(target);
-            Msg($"Grey Harvest — {target.Name} fades. The grey was always going to take them.", ColorSchool.Purple);
+            Msg($"Grey Harvest — {target.Name} fades. The purple was always going to take them.", ColorSchool.Purple);
         }
 
         // =================================================================
@@ -2186,7 +2186,7 @@ namespace ColoursOfCalradia
                     if (_scarletWardActive)
                     {
                         _scarletWardActive = false;
-                        Msg("The Scarlet Ward fades — no blow came to claim it.", ColorSchool.Red);
+                        Msg("The Scarlet Ward fades.", ColorSchool.Red);
                     }
                 }
             });
@@ -2281,7 +2281,7 @@ namespace ColoursOfCalradia
                     Msg("The Cerulean Mirror dims. Spells find you again.", ColorSchool.Blue);
                 }
             });
-            Msg("Cerulean Mirror — spells pass through you for 40 seconds. Steel does not.", ColorSchool.Blue);
+            Msg("Cerulean Mirror — spells pass through you for 40 seconds.", ColorSchool.Blue);
         }
 
         // Grief's Veil — the grey folds you from sight; nearby enemies lose nerve
@@ -2315,7 +2315,7 @@ namespace ColoursOfCalradia
                             try { if (Player?.IsActive() == true) Player.ToggleInvulnerable(); } catch { }
                             _shadowVeilActive = false;
                         }
-                        Msg("Grief's Veil lifts. The grey recedes. They find you again.", ColorSchool.Purple);
+                        Msg("Grief's Veil lifts. The purple recedes. They see again.", ColorSchool.Purple);
                     }
                 });
             }
@@ -2323,7 +2323,7 @@ namespace ColoursOfCalradia
             string haltedMsg = halted.Count > 0
                 ? $" {halted.Count} nearby {(halted.Count == 1 ? "formation pauses" : "formations pause")}."
                 : string.Empty;
-            Msg($"Grief's Veil — the grey folds you from sight for {(int)Duration}s.{haltedMsg}", ColorSchool.Purple);
+            Msg($"Grief's Veil — the purple folds you from sight for {(int)Duration}s.{haltedMsg}", ColorSchool.Purple);
         }
 
         // =================================================================
@@ -2353,7 +2353,7 @@ namespace ColoursOfCalradia
                 catch { }
             }
             BeginAgentGlow(Player, ColorSchool.Red, 1.5f);
-            Msg(count > 0 ? $"Cinder Burst scorches {count} {(count == 1 ? "creature" : "creatures")} within {Radius}m."
+            Msg(count > 0 ? $"Cinder Burst destroys {count} {(count == 1 ? "creature" : "creatures")} within {Radius}m."
                           : "The burst finds nothing nearby.", ColorSchool.Red);
         }
 
@@ -2403,7 +2403,7 @@ namespace ColoursOfCalradia
                         if (a.Position.Distance(pos) <= NodeRadius) { _snarePrevInside.Add(a.Index); break; }
                 }
             BeginAgentGlow(Player, ColorSchool.Orange, 2f);
-            Msg("Golden Snare laid — a 2×2 grid of arcane pressure. The first formation to step in receives a random command and the trap vanishes. Cast again to dismiss.", ColorSchool.Orange);
+            Msg("Golden Snare laid — a patch of arcane pressure. The first formation to step in receives a random command and the trap vanishes. Cast again to dismiss.", ColorSchool.Orange);
         }
 
         // Creeping Dread — moving cloud of revulsion that damages agents it passes through
@@ -2443,7 +2443,7 @@ namespace ColoursOfCalradia
                 _areaEffects.Add(node);
             }
             BeginAgentGlow(Player, ColorSchool.Yellow, 2f);
-            Msg("Creeping Dread takes shape — four clouds of formless revulsion drift across the field. Cast again to dismiss.", ColorSchool.Yellow);
+            Msg("Creeping Dread takes shape — four clouds of formless terror drift across the field. Cast again to dismiss.", ColorSchool.Yellow);
         }
 
         // Emerald Font — two healing pools side by side, perpendicular to caster's look direction
