@@ -432,7 +432,7 @@ namespace ColoursOfCalradia
         }
 
         // ── Execute switch ───────────────────────────────────────────────────
-        // Combos: first 2 chars = form (UU=Blast, RL=Self, LR=Create),
+        // Combos: first 2 chars = form (UU=Blast, RL=Self, LR=Create, UL=Affect, LU=Invoke),
         //         last 2 chars = colour (RR=Red, RU=Orange, LU=Yellow, LL=Green, UL=Blue, UR=Purple)
         public static bool Execute(string combo)
         {
@@ -459,6 +459,20 @@ namespace ColoursOfCalradia
                 case "LRLL": SpellCreateGreen();  break;
                 case "LRUL": SpellCreateBlue();   break;
                 case "LRUR": SpellCreatePurple(); break;
+                // AFFECT (UL)
+                case "ULRR": SpellAffectRed();    break;
+                case "ULRU": SpellAffectOrange(); break;
+                case "ULLU": SpellAffectYellow(); break;
+                case "ULLL": SpellAffectGreen();  break;
+                case "ULUL": SpellAffectBlue();   break;
+                case "ULUR": SpellAffectPurple(); break;
+                // INVOKE (LU)
+                case "LURR": SpellInvokeRed();    break;
+                case "LURU": SpellInvokeOrange(); break;
+                case "LULU": SpellInvokeYellow(); break;
+                case "LULL": SpellInvokeGreen();  break;
+                case "LUUL": SpellInvokeBlue();   break;
+                case "LUUR": SpellInvokePurple(); break;
                 default: return false;
             }
             return true;

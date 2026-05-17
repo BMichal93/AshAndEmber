@@ -25,14 +25,14 @@ using TaleWorlds.CampaignSystem.MapEvents;
 namespace ColoursOfCalradia
 {
     // =========================================================================
-    // 3. SPELL DATABASE  (18 battle spells, 4-char combos)
+    // 3. SPELL DATABASE  (18 battle spells + 6 campaign map Affect spells, 4-char combos)
     // =========================================================================
     public enum SpellContext { Mission, Map }
 
     public class SpellEntry
     {
         public string      Name;
-        public string      Combo;      // exactly 4 chars: U / L / R
+        public string      Combo;      // exactly 4 chars: U / L / R / D
         public ColorSchool School;
         public SpellContext Context;
         public string      Flavour;
@@ -41,7 +41,10 @@ namespace ColoursOfCalradia
     public static class SpellDatabase
     {
         // Combos follow a strict structure: first 2 chars = Form, last 2 chars = Colour.
-        // Forms: UU = Blast (cone), RL = Self (aura), LR = Create (area effect)
+        // Forms: UU = Blast (cone), RL = Self (aura), LR = Create (area effect),
+        //        UL = Affect (campaign map), LU = Invoke (campaign map, advanced)
+        // Note: D (S key) is only registered when the buffer is non-empty and opens the spellbook.
+        // No spell combo uses D — UL = W then A (mirror of LU = A then W).
         // Colours: RR = Red, RU = Orange, LU = Yellow, LL = Green, UL = Blue, UR = Purple
         public static readonly IReadOnlyList<SpellEntry> All = new List<SpellEntry>
         {
@@ -105,6 +108,46 @@ namespace ColoursOfCalradia
             new SpellEntry { Name="Hollow Gaze",      Combo="LRUR", School=ColorSchool.Purple,
                 Context=SpellContext.Mission,
                 Flavour="One nearby enemy empties out. They stand. They do not move. They wait for nothing. Cast again to release them." },
+
+            // ── INVOKE (LU prefix) — campaign map only, advanced forms ───────────
+            new SpellEntry { Name="Bloodprice",       Combo="LURR", School=ColorSchool.Red,
+                Context=SpellContext.Map,
+                Flavour="Spill your own blood before the march. Your soldiers feel it — and they answer." },
+            new SpellEntry { Name="Muster Call",      Combo="LURU", School=ColorSchool.Orange,
+                Context=SpellContext.Map,
+                Flavour="A warmth reaches outward to the nearest settlement. Voices answer before they know why they are moving." },
+            new SpellEntry { Name="Whispered Ruin",   Combo="LULU", School=ColorSchool.Yellow,
+                Context=SpellContext.Map,
+                Flavour="A name repeated in the wrong ears becomes a wound. The target's standing bleeds quietly." },
+            new SpellEntry { Name="Tend the Fallen",  Combo="LULL", School=ColorSchool.Green,
+                Context=SpellContext.Map,
+                Flavour="The green does not ask who deserves healing. It simply flows to where life is thin." },
+            new SpellEntry { Name="Counter-Scheme",   Combo="LUUL", School=ColorSchool.Blue,
+                Context=SpellContext.Map,
+                Flavour="The Scholar's networks are not only for building. Sometimes they are for unravelling." },
+            new SpellEntry { Name="Wither's Touch",   Combo="LUUR", School=ColorSchool.Purple,
+                Context=SpellContext.Map,
+                Flavour="The grey reaches into another life and takes something small. They will not know what is gone — only that it is." },
+
+            // ── AFFECT (UD prefix) — campaign map only, situation-dependent ─────
+            new SpellEntry { Name="Ember Drive",       Combo="ULRR", School=ColorSchool.Red,
+                Context=SpellContext.Map,
+                Flavour="Only usable while raiding a village or clearing a hideout. The red urges your soldiers forward — the work goes faster." },
+            new SpellEntry { Name="Shared Feast",      Combo="ULRU", School=ColorSchool.Orange,
+                Context=SpellContext.Map,
+                Flavour="Consume one unit of food from your supplies to lift the spirit of those who march with you." },
+            new SpellEntry { Name="Dread Whisper",     Combo="ULLU", School=ColorSchool.Yellow,
+                Context=SpellContext.Map,
+                Flavour="Send fear forward. Your party feels it too — but the closest enemy feels it more." },
+            new SpellEntry { Name="Verdant Hour",      Combo="ULLL", School=ColorSchool.Green,
+                Context=SpellContext.Map,
+                Flavour="The green works quietly. A small harvest of grain appears, coaxed from the earth by patience and living magic." },
+            new SpellEntry { Name="Scholar's Investment", Combo="ULUL", School=ColorSchool.Blue,
+                Context=SpellContext.Map,
+                Flavour="Knowledge, properly channelled, buys more than gold. Spend coin; gain standing." },
+            new SpellEntry { Name="Grey Veil",         Combo="ULUR", School=ColorSchool.Purple,
+                Context=SpellContext.Map,
+                Flavour="The grey hides you — at a price. Nearby enemies lose your trail. The years it costs are gone for good." },
         };
 
         public static SpellEntry Find(string combo) =>

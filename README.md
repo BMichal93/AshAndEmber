@@ -227,7 +227,7 @@ NPC mage lords require full daylight and will not cast during dim or dark condit
    - **W** → U (Up)
    - **A** → L (Left)
    - **D** → R (Right)
-   - **S** → D (Down) — **only** when the buffer is non-empty. Pressing S with an empty buffer opens your spellbook instead. This means no combo may begin with D.
+   - **S** → opens the spellbook (whether the buffer is empty or not). **S never appears in a spell combo.**
 3. Release **Left Alt** to fire.
 
 ### Gamepad
@@ -485,3 +485,50 @@ A message announces how many colours they carry when they join.
 ```
 
 Adjacent colours on the ring do not cause Madness. Non-adjacent combinations (e.g. Red + Yellow, or Green + Red) do.
+
+---
+
+## Campaign Map Spells
+
+Two additional spell forms work exclusively on the campaign map and require the same daytime light conditions as battle spells. They cannot be cast during battles or while in a settlement menu.
+
+### Forms
+
+| Prefix | Form | Keys |
+|--------|------|------|
+| `UL` | **Affect** | W then A (U then L) |
+| `LU` | **Invoke** | A then W (L then U) |
+
+### Affect Spells (UD prefix) — situation-based
+
+Each Affect spell is tied to a specific situation or resource. No cooldowns — all costs are mechanical.
+
+| Spell | Combo | School | Effect | Cost / Limiter |
+|-------|-------|--------|--------|----------------|
+| **Ember Drive** | `ULRR` | Red | +100×power gold during a village raid or hideout assault | −10% current HP per cast; blocked at ≤5 HP |
+| **Shared Feast** | `ULRU` | Orange | Consume food → party morale +8×power | Food cost doubles each cast within the day (1→2→4→8…), resets at midnight |
+| **Dread Whisper** | `ULLU` | Yellow | Nearest enemy party loses 15×power morale | Self-morale drain escalates +5 per cast within the day (5→10→15…) plus Yellow limitation −8 |
+| **Verdant Hour** | `ULLL` | Green | Produce 1–4 grain | −5% current HP per cast; blocked at ≤5 HP |
+| **Scholar's Investment** | `ULUL` | Blue | Spend 500 gold → +15×power influence | −3 clan renown per cast; kingdom required |
+| **Grey Veil** | `ULUR` | Purple | Scatter nearby enemy parties (radius 2); enemies lose your trail | Age scales per session: 7→14→21→… days |
+
+### Invoke Spells (LU prefix) — advanced campaign effects
+
+Invoke spells target heroes, rosters, and rival lords directly. No cooldowns — all costs are mechanical.
+
+| Spell | Combo | School | Effect | Cost / Limiter |
+|-------|-------|--------|--------|----------------|
+| **Bloodprice** | `LURR` | Red | Party morale +20×power | −20% current HP; blocked at ≤5 HP |
+| **Muster Call** | `LURU` | Orange | Recruit 2–4 tier-1 troops from nearest friendly settlement | Gold cost 100→200→400 (capped at 400), resets at midnight |
+| **Whispered Ruin** | `LULU` | Yellow | Nearest enemy lord (at war) clan renown −8 | −2 own clan renown per cast |
+| **Tend the Fallen** | `LULL` | Green | Heal 3+(power×2) wounded troops in own party | −5% current HP per cast; blocked at ≤5 HP |
+| **Counter-Scheme** | `LUUL` | Blue | Nearest enemy lord clan influence −8 | −300 gold per cast; kingdom required |
+| **Wither's Touch** | `LUUR` | Purple | Nearest enemy lord: party morale −15, clan renown −8 | 14 days aging (flat) per cast |
+
+### Notes
+
+- **Orange Muster Call** gold cost is capped at 400 — once at the cap, each cast costs 400 gold for as many recruits as your power allows. The cap resets each campaign day.
+- **Yellow Whispered Ruin** and **Dread Whisper** require an active war with the target's faction. **Counter-Scheme** and **Wither's Touch** work against any non-player faction.
+- **Blue** campaign spells both require kingdom membership — influence has no meaning outside one.
+- **Purple Grey Veil** session scaling resets on load (intentional — in-memory only). **Wither's Touch** aging is flat at 14 days regardless of how many times you cast it in a session.
+- **Red** HP costs apply to campaign HP, which carries into the next battle. Ember Drive during a raid means you fight the battle with reduced health.

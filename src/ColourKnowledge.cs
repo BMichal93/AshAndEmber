@@ -117,7 +117,7 @@ namespace ColoursOfCalradia
             catch { }
         }
 
-        public static void ShowGrimoire()
+        public static void ShowGrimoire(bool inMission = false)
         {
             if (!HasAnySchool)
             {
@@ -126,16 +126,26 @@ namespace ColoursOfCalradia
                 return;
             }
 
+            var context = inMission ? SpellContext.Mission : SpellContext.Map;
             var known = SpellDatabase.All
-                .Where(s => HasSchool(s.School))
+                .Where(s => HasSchool(s.School) && s.Context == context)
                 .ToList();
 
+            if (known.Count == 0)
+            {
+                string where = inMission ? "battle" : "campaign map";
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"No spells available for the {where}.", Color.FromUint(0xFFAAAAAA)));
+                return;
+            }
+
+            string header = inMission ? "Battle Spells" : "Campaign Spells";
             int totalPages = (known.Count + GrimoirePageSize - 1) / GrimoirePageSize;
             _grimoirePage  = _grimoirePage % totalPages;
             var page       = known.Skip(_grimoirePage * GrimoirePageSize).Take(GrimoirePageSize).ToList();
 
             InformationManager.DisplayMessage(new InformationMessage(
-                $"══ Spellbook — Page {_grimoirePage + 1}/{totalPages} ══",
+                $"══ Spellbook — {header} — Page {_grimoirePage + 1}/{totalPages} ══",
                 new Color(0.8f, 0.8f, 0.8f)));
 
             foreach (SpellEntry s in page)

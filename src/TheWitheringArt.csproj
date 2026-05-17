@@ -90,6 +90,7 @@
     <Compile Include="Spells\BlastSpells.cs"/>
     <Compile Include="Spells\SelfSpells.cs"/>
     <Compile Include="Spells\CreateSpells.cs"/>
+    <Compile Include="Spells\AffectSpells.cs"/>
     <Compile Include="Visual\AreaEffects.cs"/>
     <Compile Include="Visual\GlowSystem.cs"/>
     <Compile Include="Visual\MoveSystem.cs"/>
