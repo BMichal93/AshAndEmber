@@ -91,7 +91,7 @@ namespace ColoursOfCalradia
                                    "But knowledge is heavy — each casting strains the body, adding invisible weight to armour and limb.",
                 PersonalityEffect= "Repeated casting increases your Calculating trait — measured, deliberate, distant.",
                 LimitationA      = "Scholar's Weight: Each Blue spell makes your equipment feel heavier — movement slows with every cast and does not recover until the battle ends. Six stacks will slow you to a crawl.",
-                LimitationB      = "Heavy Knowledge: Cerulean Mirror shields you from spells and magic effects for 40 seconds — but steel still finds you.",
+                LimitationB      = "Grounded: Casting Blue magic from horseback has a chance to throw you from the saddle — the Scholar's Weight unbalances you mid-cast.",
                 AttributePenalty = "-1 Vigor"
             },
             [ColorSchool.Purple] = new SchoolInfo
@@ -118,6 +118,22 @@ namespace ColoursOfCalradia
                 case ColorSchool.Blue:   return 0xFF2244FFu;
                 case ColorSchool.Purple: return 0xFF8800CCu;
                 default:                 return 0xFFFFFFFFu;
+            }
+        }
+
+        // Attribute that scales spell power for each school.
+        // No school scales from its own penalty attribute; this is a strict bijection.
+        public static CharacterAttribute GetScaleAttribute(ColorSchool school)
+        {
+            switch (school)
+            {
+                case ColorSchool.Red:    return DefaultCharacterAttributes.Vigor;        // raw destructive force
+                case ColorSchool.Orange: return DefaultCharacterAttributes.Social;       // inspiring presence
+                case ColorSchool.Yellow: return DefaultCharacterAttributes.Cunning;      // manipulation of fear
+                case ColorSchool.Green:  return DefaultCharacterAttributes.Control;      // precise restorative touch
+                case ColorSchool.Blue:   return DefaultCharacterAttributes.Intelligence; // scholarly command of stillness
+                case ColorSchool.Purple: return DefaultCharacterAttributes.Endurance;    // enduring the weight of grief and time
+                default:                 return DefaultCharacterAttributes.Vigor;
             }
         }
 

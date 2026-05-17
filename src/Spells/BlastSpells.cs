@@ -36,6 +36,7 @@ namespace ColoursOfCalradia
         private static void SpellBlastRed()
         {
             if (Player == null) return;
+            float power = SpellPower(ColorSchool.Red);
             Vec3 fwd = Player.LookDirection.NormalizedCopy();
             var inCone = ConeAgents(Player.Position, fwd, 15f, 0.6f);
             if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Red); return; }
@@ -44,11 +45,11 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 40f);
+                    DamageAgent(a, 40f * power);
                     if (a.IsActive() && a.Health > 0f)
                     {
                         Vec3 dir = (a.Position - Player.Position).NormalizedCopy();
-                        Vec3 dest = a.Position + dir * 6f; dest.z = a.Position.z;
+                        Vec3 dest = a.Position + dir * (6f * power); dest.z = a.Position.z;
                         QueueMove(a, dest, 0.4f);
                     }
                     BeginAgentGlow(a, ColorSchool.Red, 1.5f);
@@ -63,6 +64,7 @@ namespace ColoursOfCalradia
         private static void SpellBlastOrange()
         {
             if (Player == null) return;
+            float power = SpellPower(ColorSchool.Orange);
             Vec3 fwd = Player.LookDirection.NormalizedCopy();
             var inCone = ConeAgents(Player.Position, fwd, 15f, 0.6f);
             if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Orange); return; }
@@ -71,7 +73,7 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 12f);
+                    DamageAgent(a, 12f * power);
                     if (!a.IsActive()) continue;
                     try { a.SetMorale(100f); } catch { }
                     BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
@@ -88,6 +90,7 @@ namespace ColoursOfCalradia
         private static void SpellBlastYellow()
         {
             if (Player == null) return;
+            float power = SpellPower(ColorSchool.Yellow);
             Vec3 fwd = Player.LookDirection.NormalizedCopy();
             var inCone = ConeAgents(Player.Position, fwd, 15f, 0.6f);
             if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Yellow); return; }
@@ -95,8 +98,8 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 14f);
-                    try { a.SetMorale(Math.Max(0f, a.GetMorale() - 55f)); } catch { }
+                    DamageAgent(a, 14f * power);
+                    try { a.SetMorale(Math.Max(0f, a.GetMorale() - 55f * power)); } catch { }
                     BeginAgentGlow(a, ColorSchool.Yellow, 1.5f);
                 }
                 catch { }
@@ -108,6 +111,7 @@ namespace ColoursOfCalradia
         private static void SpellBlastGreen()
         {
             if (Player == null) return;
+            float power = SpellPower(ColorSchool.Green);
             Vec3 fwd = Player.LookDirection.NormalizedCopy();
             var inCone = ConeAgents(Player.Position, fwd, 15f, 0.6f);
             int healed = 0;
@@ -117,7 +121,7 @@ namespace ColoursOfCalradia
                 if (a.Team != Player.Team) continue; // enemies excluded
                 try
                 {
-                    float h = Math.Min(15f, a.HealthLimit - a.Health);
+                    float h = Math.Min(15f * power, a.HealthLimit - a.Health);
                     if (h > 0f) { a.Health += h; healed++; }
                     BeginAgentGlow(a, ColorSchool.Green, 1.5f);
                 }
@@ -127,10 +131,12 @@ namespace ColoursOfCalradia
             else Msg($"Verdant Surge mends {healed} {(healed == 1 ? "ally" : "allies")} in the cone.", ColorSchool.Green);
         }
 
-        // Azure Arrest — damage + 2.5 s per-agent speed halt + dismount riders in cone
+        // Azure Arrest — damage + per-agent speed halt + dismount riders in cone
         private static void SpellBlastBlue()
         {
             if (Player == null) return;
+            float power = SpellPower(ColorSchool.Blue);
+            float haltDuration = 2.5f + (power - 1f) * 0.5f; // 2.3 s – 2.75 s, very gentle
             Vec3 fwd = Player.LookDirection.NormalizedCopy();
             var inCone = ConeAgents(Player.Position, fwd, 15f, 0.6f);
             if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Blue); return; }
@@ -139,13 +145,13 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 12f);
+                    DamageAgent(a, 12f * power);
                     if (!a.IsActive()) continue;
                     try { a.SetMorale(Math.Max(0f, a.GetMorale() - 25f)); } catch { }
                     if (a.MountAgent == null)
                     {
                         try { a.SetMaximumSpeedLimit(0f, false); } catch { }
-                        _haltedAgents[a.Index] = (2.5f, a.Position);
+                        _haltedAgents[a.Index] = (haltDuration, a.Position);
                     }
                     BeginAgentGlow(a, ColorSchool.Blue, 1.5f);
                     if (a.Formation != null) formations.Add(a.Formation);
@@ -170,6 +176,7 @@ namespace ColoursOfCalradia
             if (inCone.Count == 0) { Msg("No common souls in the cone — the purple passes over champions.", ColorSchool.Purple); return; }
             Agent target = inCone[_rng.Next(inCone.Count)];
             BeginAgentGlow(target, ColorSchool.Purple, 1.5f);
+            SpawnTempLight(target.Position, ColorSchool.Purple, 6f, 2f);
             KillAgent(target);
             Msg($"Grey Harvest — {target.Name} fades. The purple was always going to take them.", ColorSchool.Purple);
         }

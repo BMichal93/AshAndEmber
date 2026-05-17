@@ -248,7 +248,21 @@ namespace ColoursOfCalradia
 
             // Blue — Scholar's Weight: equipment grows heavier each cast, limiting speed
             if (spell.School == ColorSchool.Blue && inMission)
+            {
                 SpellEffects.ApplyBlueWeight();
+                // Grounded: 50 % chance to be thrown when casting from horseback
+                try
+                {
+                    if (Agent.Main?.MountAgent != null && new Random().Next(2) == 0)
+                    {
+                        Agent.Main.Formation?.SetRidingOrder(RidingOrder.RidingOrderDismount);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Grounded: The Scholar's Weight unsettles your mount — you are thrown from the saddle.",
+                            ColorSchoolData.GetMessageColor(ColorSchool.Blue)));
+                    }
+                }
+                catch { }
+            }
 
             // Purple — Waning Cost: ages the caster ~2 days; also quietly reduces fertility
             if (spell.School == ColorSchool.Purple)

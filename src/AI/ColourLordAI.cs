@@ -86,9 +86,10 @@ namespace ColoursOfCalradia
             // Self-heal with Green (Verdant Touch) when badly hurt
             if (hpPct < 0.35f && colors.Contains(ColorSchool.Green) && CanUseGreen(agent))
             {
+                float greenPower = SpellEffects.SpellPower(ColorSchool.Green, hero);
                 CastWithGlow(agent, hero, ColorSchool.Green, "Verdant Touch", () =>
                 {
-                    agent.Health = Math.Min(agent.Health + 20f, agent.HealthLimit);
+                    agent.Health = Math.Min(agent.Health + 20f * greenPower, agent.HealthLimit);
                 });
                 return;
             }
@@ -102,12 +103,13 @@ namespace ColoursOfCalradia
             {
                 if (colors.Contains(ColorSchool.Purple))
                 {
+                    float purplePower = SpellEffects.SpellPower(ColorSchool.Purple, hero);
                     CastWithGlow(agent, hero, ColorSchool.Purple, "Cinder Burst", () =>
                     {
                         foreach (Agent a in EnemiesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 8f).ToList())
                         {
                             if (SpellEffects.ProtectedByMirror(a)) continue;
-                            SpellEffects.DamageAgent(a, 45f);
+                            SpellEffects.DamageAgent(a, 45f * purplePower);
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Purple, 1.5f);
                         }
                     });
@@ -116,6 +118,7 @@ namespace ColoursOfCalradia
                 }
                 if (colors.Contains(ColorSchool.Red))
                 {
+                    float redPower = SpellEffects.SpellPower(ColorSchool.Red, hero);
                     CastWithGlow(agent, hero, ColorSchool.Red, "Crimson Torrent", () =>
                     {
                         Vec3 fwd = agent.LookDirection.NormalizedCopy();
@@ -123,7 +126,7 @@ namespace ColoursOfCalradia
                         {
                             Vec3 to = a.Position - agent.Position;
                             if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
-                            SpellEffects.DamageAgent(a, 40f);
+                            SpellEffects.DamageAgent(a, 40f * redPower);
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Red, 1.5f);
                         }
                     });
@@ -138,6 +141,7 @@ namespace ColoursOfCalradia
             {
                 if (colors.Contains(ColorSchool.Red))
                 {
+                    float redPower = SpellEffects.SpellPower(ColorSchool.Red, hero);
                     CastWithGlow(agent, hero, ColorSchool.Red, "Crimson Torrent", () =>
                     {
                         Vec3 fwd = agent.LookDirection.NormalizedCopy();
@@ -146,7 +150,7 @@ namespace ColoursOfCalradia
                             Vec3 to = a.Position - agent.Position;
                             if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
                             if (SpellEffects.ProtectedByMirror(a)) continue;
-                            SpellEffects.DamageAgent(a, 40f);
+                            SpellEffects.DamageAgent(a, 40f * redPower);
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Red, 1.5f);
                         }
                     });
@@ -181,6 +185,7 @@ namespace ColoursOfCalradia
                                                     a.Position.Distance(agent.Position) <= 15f);
                 if (allyHurt)
                 {
+                    float greenPower = SpellEffects.SpellPower(ColorSchool.Green, hero);
                     CastWithGlow(agent, hero, ColorSchool.Green, "Verdant Surge", () =>
                     {
                         Vec3 fwd = agent.LookDirection.NormalizedCopy();
@@ -188,7 +193,7 @@ namespace ColoursOfCalradia
                         {
                             Vec3 to = a.Position - agent.Position;
                             if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
-                            float h = Math.Min(15f, a.HealthLimit - a.Health);
+                            float h = Math.Min(15f * greenPower, a.HealthLimit - a.Health);
                             if (h > 0f) { a.Health += h; SpellEffects.BeginAgentGlow(a, ColorSchool.Green, 1.5f); }
                         }
                     });
@@ -199,6 +204,7 @@ namespace ColoursOfCalradia
             // Yellow — Tide of Dread morale drain
             if (colors.Contains(ColorSchool.Yellow))
             {
+                float yellowPower = SpellEffects.SpellPower(ColorSchool.Yellow, hero);
                 CastWithGlow(agent, hero, ColorSchool.Yellow, "Tide of Dread", () =>
                 {
                     Vec3 fwd = agent.LookDirection.NormalizedCopy();
@@ -206,7 +212,7 @@ namespace ColoursOfCalradia
                     {
                         Vec3 to = a.Position - agent.Position;
                         if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
-                        try { a.SetMorale(Math.Max(0f, a.GetMorale() - 30f)); } catch { }
+                        try { a.SetMorale(Math.Max(0f, a.GetMorale() - 30f * yellowPower)); } catch { }
                         SpellEffects.BeginAgentGlow(a, ColorSchool.Yellow, 1.5f);
                     }
                 });
@@ -248,11 +254,12 @@ namespace ColoursOfCalradia
                     });
                     return;
                 }
+                float orangePower = SpellEffects.SpellPower(ColorSchool.Orange, hero);
                 CastWithGlow(agent, hero, ColorSchool.Orange, "Warm Beacon", () =>
                 {
                     foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
                     {
-                        try { a.SetMorale(Math.Min(a.GetMorale() + 20f, 100f)); } catch { }
+                        try { a.SetMorale(Math.Min(a.GetMorale() + 20f * orangePower, 100f)); } catch { }
                         SpellEffects.BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
                     }
                 });
@@ -266,6 +273,8 @@ namespace ColoursOfCalradia
             switch (school)
             {
                 case ColorSchool.Red:
+                {
+                    float redPower = SpellEffects.SpellPower(ColorSchool.Red, hero);
                     CastWithGlow(agent, hero, ColorSchool.Red, "Crimson Torrent", () =>
                     {
                         Vec3 fwd = agent.LookDirection.NormalizedCopy();
@@ -274,23 +283,29 @@ namespace ColoursOfCalradia
                             Vec3 to = a.Position - agent.Position;
                             if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
                             if (SpellEffects.ProtectedByMirror(a)) continue;
-                            SpellEffects.DamageAgent(a, 40f);
+                            SpellEffects.DamageAgent(a, 40f * redPower);
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Red, 1.5f);
                         }
                     });
                     ApplyRedA1(agent); ApplyRedA2(agent);
                     break;
+                }
                 case ColorSchool.Orange:
+                {
+                    float orangePower = SpellEffects.SpellPower(ColorSchool.Orange, hero);
                     CastWithGlow(agent, hero, ColorSchool.Orange, "Warm Beacon", () =>
                     {
                         foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
                         {
-                            try { a.SetMorale(Math.Min(a.GetMorale() + 20f, 100f)); } catch { }
+                            try { a.SetMorale(Math.Min(a.GetMorale() + 20f * orangePower, 100f)); } catch { }
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
                         }
                     });
                     break;
+                }
                 case ColorSchool.Green when CanUseGreen(agent):
+                {
+                    float greenPower = SpellEffects.SpellPower(ColorSchool.Green, hero);
                     CastWithGlow(agent, hero, ColorSchool.Green, "Verdant Surge", () =>
                     {
                         Vec3 fwd = agent.LookDirection.NormalizedCopy();
@@ -298,11 +313,12 @@ namespace ColoursOfCalradia
                         {
                             Vec3 to = a.Position - agent.Position;
                             if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
-                            float h = Math.Min(15f, a.HealthLimit - a.Health);
+                            float h = Math.Min(15f * greenPower, a.HealthLimit - a.Health);
                             if (h > 0f) { a.Health += h; SpellEffects.BeginAgentGlow(a, ColorSchool.Green, 1.5f); }
                         }
                     });
                     break;
+                }
                 case ColorSchool.Blue:
                     CastWithGlow(agent, hero, ColorSchool.Blue, "Azure Arrest", () =>
                     {
@@ -311,12 +327,15 @@ namespace ColoursOfCalradia
                     });
                     break;
                 case ColorSchool.Yellow:
+                {
+                    float yellowPower = SpellEffects.SpellPower(ColorSchool.Yellow, hero);
                     CastWithGlow(agent, hero, ColorSchool.Yellow, "Tide of Dread", () =>
                     {
                         foreach (Agent a in EnemiesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 17f).ToList())
-                            try { a.SetMorale(Math.Max(0f, a.GetMorale() - 30f)); SpellEffects.BeginAgentGlow(a, ColorSchool.Yellow, 1.5f); } catch { }
+                            try { a.SetMorale(Math.Max(0f, a.GetMorale() - 30f * yellowPower)); SpellEffects.BeginAgentGlow(a, ColorSchool.Yellow, 1.5f); } catch { }
                     });
                     break;
+                }
                 case ColorSchool.Purple:
                     CastWithGlow(agent, hero, ColorSchool.Purple, "Grey Harvest", () =>
                     {

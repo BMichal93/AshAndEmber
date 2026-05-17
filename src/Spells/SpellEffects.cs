@@ -101,6 +101,21 @@ namespace ColoursOfCalradia
 
         public static bool IsDaytime() => GetLightLevel() == LightLevel.Bright;
 
+        // ── Spell power scaling ───────────────────────────────────────────────────
+        // Multiplier range: ×0.6 (attr 1) → ×1.0 (attr 5, mid-game base) → ×1.5 (attr 10).
+        // Pass null hero to use Hero.MainHero (player casts).
+        internal static float SpellPower(ColorSchool school, Hero hero = null)
+        {
+            try
+            {
+                var h = hero ?? Hero.MainHero;
+                if (h == null) return 1f;
+                int attr = h.GetAttributeValue(ColorSchoolData.GetScaleAttribute(school));
+                return 0.5f + Math.Min(Math.Max(attr, 1), 10) * 0.1f;
+            }
+            catch { return 1f; }
+        }
+
         // Returns true only during actual combat missions (battles, sieges).
         // Town/village visits have no active enemy agents, so this reliably excludes them.
         public static bool IsBattleMission()

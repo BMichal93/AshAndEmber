@@ -39,6 +39,7 @@ namespace ColoursOfCalradia
             public float  TickTimer;
             public float  Remaining;    // negative = no expiry (toggle-only)
             public float  DirTimer;     // Create Yellow direction-change timer
+            public float  Power = 1f;   // spell-power multiplier captured at cast time
             public GameEntity LightEntity; // coloured point light marking the effect area
         }
         private static readonly List<AreaEffect> _areaEffects = new List<AreaEffect>();
@@ -78,6 +79,20 @@ namespace ColoursOfCalradia
         }
 
         public static bool HasAreaEffect(string id) => _areaEffects.Any(e => e.Id == id);
+
+        // Spawns a coloured point light that expires after `duration` seconds with no gameplay effect.
+        internal static void SpawnTempLight(Vec3 position, ColorSchool school, float radius, float duration)
+        {
+            var node = new AreaEffect
+            {
+                Id = "temp_light", School = school,
+                Position = position, Radius = radius,
+                TickInterval = duration, TickTimer = duration,
+                Remaining = duration
+            };
+            node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
+            _areaEffects.Add(node);
+        }
 
         private static GameEntity SpawnAreaLight(Vec3 position, ColorSchool school, float radius)
         {
@@ -226,6 +241,7 @@ namespace ColoursOfCalradia
                     case "create_yellow": // Creeping Dread — damage agents in cloud
                     {
                         int dreadHit = 0;
+                        float dreadDmg = 30f * e.Power;
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())
@@ -233,14 +249,13 @@ namespace ColoursOfCalradia
                             if (ProtectedByMirror(a)) continue;
                             try
                             {
-                                const float DreadDmg = 30f;
-                                if (a.Health <= DreadDmg)
+                                if (a.Health <= dreadDmg)
                                 {
                                     KillAgent(a);
                                 }
                                 else
                                 {
-                                    a.Health -= DreadDmg;
+                                    a.Health -= dreadDmg;
                                     try { a.SetMorale(Math.Max(0f, a.GetMorale() - 10f)); } catch { }
                                 }
                                 BeginAgentGlow(a, e.School, 1.5f);
@@ -249,23 +264,26 @@ namespace ColoursOfCalradia
                             catch { }
                         }
                         if (dreadHit > 0)
-                            Msg($"Creeping Dread: {dreadHit} caught in the cloud. (−30 HP)", ColorSchool.Yellow);
+                            Msg($"Creeping Dread: {dreadHit} caught in the cloud. (−{dreadDmg:F0} HP)", ColorSchool.Yellow);
                         break;
                     }
 
                     case "create_green": // Emerald Font — heal all agents in area
+                    {
+                        float fontHeal = 10f * e.Power;
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())
                         {
                             try
                             {
-                                float h = Math.Min(10f, a.HealthLimit - a.Health);
+                                float h = Math.Min(fontHeal, a.HealthLimit - a.Health);
                                 if (h > 0f) { a.Health += h; BeginAgentGlow(a, e.School, 1.5f); }
                             }
                             catch { }
                         }
                         break;
+                    }
 
                     case "create_blue": // Sapphire Bastion — push all agents inside the radius every tick
                     {
@@ -291,6 +309,7 @@ namespace ColoursOfCalradia
                     case "self_yellow": // Nausea Bloom — drifting toxic cloud
                     {
                         int bloomHit = 0;
+                        float bloomDmg = 15f * e.Power;
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount && a != Player &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())
@@ -299,14 +318,14 @@ namespace ColoursOfCalradia
                             try
                             {
                                 float before = a.Health;
-                                DamageAgent(a, 15f);
+                                DamageAgent(a, bloomDmg);
                                 if (a.Health < before || a.Health <= 0f) bloomHit++;
                                 BeginAgentGlow(a, e.School, 1.5f);
                             }
                             catch { }
                         }
                         if (bloomHit > 0)
-                            Msg($"Nausea Bloom: {bloomHit} caught in the cloud. (−15 HP)", ColorSchool.Yellow);
+                            Msg($"Nausea Bloom: {bloomHit} caught in the cloud. (−{bloomDmg:F0} HP)", ColorSchool.Yellow);
                         break;
                     }
                 }

@@ -38,6 +38,7 @@ namespace ColoursOfCalradia
         private static void SpellCreateRed()
         {
             if (Player == null || Mission.Current == null) return;
+            float power = SpellPower(ColorSchool.Red);
             const float Radius = 10f;
             int count = 0;
             foreach (Agent a in Mission.Current.Agents
@@ -46,13 +47,14 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 50f);
+                    DamageAgent(a, 50f * power);
                     BeginAgentGlow(a, ColorSchool.Red, 1.5f);
                     count++;
                 }
                 catch { }
             }
             BeginAgentGlow(Player, ColorSchool.Red, 1.5f);
+            SpawnTempLight(Player.Position, ColorSchool.Red, Radius, 2f);
             Msg(count > 0 ? $"Cinder Burst destroys {count} {(count == 1 ? "creature" : "creatures")} within {Radius}m."
                           : "The burst finds nothing nearby.", ColorSchool.Red);
         }
@@ -116,6 +118,7 @@ namespace ColoursOfCalradia
                 Msg("The Creeping Dread dissipates. The air settles.", ColorSchool.Yellow);
                 return;
             }
+            float power = SpellPower(ColorSchool.Yellow);
             const float NodeRadius  = 5f;
             const float HalfSpacing = 4f;
             Vec3 fwd   = Player.LookDirection.NormalizedCopy();
@@ -137,7 +140,8 @@ namespace ColoursOfCalradia
                     Position = pos, Radius = NodeRadius,
                     Velocity = new Vec3(1f, 0f, 0f),
                     DirTimer = 3f,
-                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f
+                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
+                    Power = power
                 };
                 node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
                 _areaEffects.Add(node);
@@ -156,6 +160,7 @@ namespace ColoursOfCalradia
                 Msg("The Emerald Font closes.", ColorSchool.Green);
                 return;
             }
+            float power = SpellPower(ColorSchool.Green);
             const float NodeRadius  = 6f;
             const float NodeSpacing = 5f;
             Vec3 fwd   = Player.LookDirection.NormalizedCopy();
@@ -173,7 +178,8 @@ namespace ColoursOfCalradia
                 {
                     Id = "create_green", School = ColorSchool.Green,
                     Position = pos, Radius = NodeRadius,
-                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f
+                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
+                    Power = power
                 };
                 node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
                 _areaEffects.Add(node);

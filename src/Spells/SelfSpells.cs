@@ -99,7 +99,8 @@ namespace ColoursOfCalradia
                 Id = "self_yellow", School = ColorSchool.Yellow,
                 Position = Player.Position, Radius = 8f,
                 Velocity = new Vec3(1f, 0f, 0f), DirTimer = 3f,
-                TickInterval = 2f, TickTimer = 2f, Remaining = 30f
+                TickInterval = 2f, TickTimer = 2f, Remaining = 30f,
+                Power = SpellPower(ColorSchool.Yellow)
             });
             BeginAgentGlow(Player, ColorSchool.Yellow, 2f);
             ActiveEffectManager.Add(new ActiveEffect
@@ -114,12 +115,13 @@ namespace ColoursOfCalradia
             Msg("Nausea Bloom — something deeply wrong radiates from you for 30 seconds. All nearby will feel it.", ColorSchool.Yellow);
         }
 
-        // Verdant Touch — heal self 20 HP
+        // Verdant Touch — heal self
         private static void SpellSelfGreen()
         {
             if (Player == null) return;
-            float heal = Math.Min(20f, Player.HealthLimit - Player.Health);
-            Player.Health = Math.Min(Player.Health + 20f, Player.HealthLimit);
+            float power = SpellPower(ColorSchool.Green);
+            float heal = Math.Min(20f * power, Player.HealthLimit - Player.Health);
+            Player.Health = Math.Min(Player.Health + 20f * power, Player.HealthLimit);
             BeginAgentGlow(Player, ColorSchool.Green, 1.5f);
             Msg($"Verdant Touch — you restore {heal:F0} HP.", ColorSchool.Green);
         }
