@@ -49,6 +49,7 @@ namespace ColoursOfCalradia
             if (_tickAccum < TickInterval) return;
             _tickAccum = 0f;
 
+            if (!Mission.Current.AllowAiTicking) return;
             if (!SpellEffects.IsBattleMission()) return;
 
             foreach (string key in _cooldowns.Keys.ToList())
