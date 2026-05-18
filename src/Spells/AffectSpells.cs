@@ -255,23 +255,145 @@ namespace ColoursOfCalradia
         private static int _orangeCallCount    = 0;
         private static int _orangeCallFirstDay = -1;
 
-        // ── Red — Bloodprice ─────────────────────────────────────────────
-        // Sacrifice 20% HP → party morale +20×power. No situation lock.
+        // ── Red Invoke march tracking ────────────────────────────────────────
+        private static bool   _redMarchActive  = false;
+        private static double _redMarchEndHour = -1.0; // total campaign hours when march expires
+
+        // Lazy-resolved position setter for the party nudge. Tried once, result cached.
+        // Resolution order: named method → property with private setter → Vec2 field.
+        private static bool         _marchPosResolved;
+        private static MethodInfo   _marchPosMethod;    // SetMapPosition / TeleportToPoint(Vec2)
+        private static PropertyInfo _marchPosProp;      // Position2D property with private setter
+        private static FieldInfo    _marchPosField;     // Vec2 backing field for party position
+
+        // Tries to advance the party's map position 'nudge' units toward its current target.
+        // Returns true when position was actually moved.
+        private static bool TryNudgeParty(MobileParty party, float nudge)
+        {
+            if (!_marchPosResolved)
+            {
+                _marchPosResolved = true;
+                var bf = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+                // Method: look for a public/private SetMapPosition(Vec2) or similar
+                foreach (string mn in new[] { "SetMapPosition", "TeleportToPoint", "SetPosition2D" })
+                {
+                    _marchPosMethod = typeof(MobileParty).GetMethod(mn, bf, null, new[] { typeof(Vec2) }, null);
+                    if (_marchPosMethod != null) break;
+                }
+
+                if (_marchPosMethod == null)
+                {
+                    // Property: Position2D with a private setter
+                    var prop = typeof(MobileParty).GetProperty("Position2D", bf);
+                    if (prop?.GetSetMethod(nonPublic: true) != null && prop.PropertyType == typeof(Vec2))
+                        _marchPosProp = prop;
+                }
+
+                if (_marchPosMethod == null && _marchPosProp == null)
+                {
+                    // Field: a Vec2 field whose name suggests position (not a target/goal)
+                    foreach (FieldInfo fi in typeof(MobileParty).GetFields(bf))
+                    {
+                        if (fi.FieldType != typeof(Vec2)) continue;
+                        string nm = fi.Name.ToLowerInvariant();
+                        if ((nm.Contains("pos") || nm.Contains("location")) &&
+                            !nm.Contains("target") && !nm.Contains("goal") && !nm.Contains("prev"))
+                        { _marchPosField = fi; break; }
+                    }
+                }
+            }
+
+            // Find movement direction from current target
+            Vec2 cur = party.GetPosition2D;
+            Vec2 dst = cur;
+            bool hasDst = false;
+            try
+            {
+                if (party.TargetSettlement != null)
+                { dst = new Vec2(party.TargetSettlement.GatePosition.X, party.TargetSettlement.GatePosition.Y); hasDst = true; }
+                else if (party.TargetParty != null)
+                { dst = party.TargetParty.GetPosition2D; hasDst = true; }
+            }
+            catch { }
+            if (!hasDst) return false;
+
+            Vec2 diff = dst - cur;
+            float len = diff.Length;
+            if (len < 0.05f) return false; // at destination already
+            Vec2 newPos = cur + diff * (Math.Min(nudge, len) / len);
+
+            try
+            {
+                if (_marchPosMethod != null) { _marchPosMethod.Invoke(party, new object[] { newPos }); return true; }
+                if (_marchPosProp  != null) { _marchPosProp.SetValue(party, newPos); return true; }
+                if (_marchPosField != null) { _marchPosField.SetValue(party, newPos); return true; }
+            }
+            catch { }
+            return false;
+        }
+
+        // ── Red — Crimson March ──────────────────────────────────────────────
+        // Sacrifice 15% HP to start a forced march that lasts several hours.
+        // Each hourly tick: nudges the party's map position ~1.5 units toward its target
+        // (effectively +~1.5 km/h on top of normal speed), AND maintains morale above
+        // Bannerlord's speed-bonus threshold. Costs 5 HP per hour. No morale guard —
+        // the position nudge works regardless of current morale level.
         private static void SpellInvokeRed()
         {
             if (Hero.MainHero == null || MobileParty.MainParty == null) return;
+            if (_redMarchActive)
+            {
+                Msg("Crimson March — the blood already drives the march. It cannot be doubled.", ColorSchool.Red);
+                return;
+            }
             if (Hero.MainHero.HitPoints <= 5)
             {
-                Msg("Bloodprice — you are too weakened to bleed for your troops.", ColorSchool.Red);
+                Msg("Crimson March — you are too weakened to sustain the march.", ColorSchool.Red);
                 return;
             }
 
             float power = SpellPower(ColorSchool.Red);
-            int hpCost = Math.Max(1, (int)(Hero.MainHero.HitPoints * 0.20f));
+            int hpCost  = Math.Max(1, (int)(Hero.MainHero.HitPoints * 0.15f));
             Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - hpCost);
-            float moraleGain = 20f * power;
-            try { MobileParty.MainParty.RecentEventsMorale += moraleGain; } catch { }
-            Msg($"Bloodprice — HP −{hpCost}. Party morale +{moraleGain:F0}.", ColorSchool.Red);
+
+            int hours = Math.Max(4, (int)(8f * power));
+            try { _redMarchEndHour = CampaignTime.Now.ToHours + hours; } catch { return; }
+            _redMarchActive = true;
+
+            // Immediate morale push as secondary benefit
+            try { MobileParty.MainParty.RecentEventsMorale += 40f; } catch { }
+            Msg($"Crimson March — you bleed so they march. Position nudged toward destination each hour (+~1.5 km equivalent). {hours}h duration. HP −{hpCost}. 5 HP/hour.", ColorSchool.Red);
+        }
+
+        // Called from CampaignBehavior.OnHourlyTick.
+        public static void TickHourlyMapEffects()
+        {
+            if (!_redMarchActive) return;
+            try
+            {
+                var hero  = Hero.MainHero;
+                var party = MobileParty.MainParty;
+                if (hero == null || party == null || hero.HitPoints <= 1)
+                {
+                    _redMarchActive = false; _redMarchEndHour = -1.0;
+                    Msg("Crimson March collapses — you have nothing left to bleed.", ColorSchool.Red);
+                    return;
+                }
+                if (CampaignTime.Now.ToHours >= _redMarchEndHour)
+                {
+                    _redMarchActive = false; _redMarchEndHour = -1.0;
+                    Msg("Crimson March ends. The blood drive fades.", ColorSchool.Red);
+                    return;
+                }
+                // Primary: nudge position toward destination (~1.5 map units per hour)
+                TryNudgeParty(party, 1.5f);
+                // Secondary: keep morale above Bannerlord's speed-bonus threshold
+                if (party.Morale < 78f) try { party.RecentEventsMorale += 15f; } catch { }
+                // Hourly HP drain
+                hero.HitPoints = Math.Max(1, hero.HitPoints - 5);
+            }
+            catch { }
         }
 
         // ── Orange — Muster Call ─────────────────────────────────────────
@@ -431,52 +553,86 @@ namespace ColoursOfCalradia
             Msg($"Tend the Fallen — {totalHealed} {(totalHealed == 1 ? "soldier recovers" : "soldiers recover")} from wounds. HP −{hpCost}.", ColorSchool.Green);
         }
 
-        // ── Blue — Counter-Scheme ────────────────────────────────────────
-        // Spend 300 gold to drain 8 influence from the nearest enemy lord's clan.
-        // Kingdom required. Targets any non-player faction (no war required).
+        // ── Blue — Scholar's Blueprint ────────────────────────────────────
+        // Requires an active siege. Spends 500 gold and -3 renown to advance siege engine
+        // construction progress directly (one-time, not permanent). Uses field reflection to
+        // locate construction progress floats on SiegeEngines and BesiegerCamp. Gold is only
+        // charged if at least one progress field was successfully advanced.
         private static void SpellInvokeBlue()
         {
             if (Hero.MainHero == null || MobileParty.MainParty == null) return;
-            if (Hero.MainHero.Clan?.Kingdom == null)
+
+            Settlement besieged = MobileParty.MainParty.BesiegedSettlement;
+            if (besieged == null)
             {
-                Msg("Counter-Scheme — you must belong to a kingdom for your networks to reach.", ColorSchool.Blue);
+                Msg("Scholar's Blueprint — you must be conducting a siege to accelerate construction.", ColorSchool.Blue);
                 return;
             }
 
-            const int Cost = 300;
+            const int Cost = 500;
             if (Hero.MainHero.Gold < Cost)
             {
-                Msg($"Counter-Scheme — you need at least {Cost} gold to operate.", ColorSchool.Blue);
+                Msg($"Scholar's Blueprint — you need at least {Cost} gold to fund the work.", ColorSchool.Blue);
                 return;
             }
 
-            IFaction playerFaction = Hero.MainHero.MapFaction;
-            Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
+            float power = SpellPower(ColorSchool.Blue);
+            float bonus = 150f * power; // construction progress units to add
 
-            Hero targetLord = null;
-            float minDist = float.MaxValue;
+            // Scan SiegeEngines and BesiegerCamp for float fields whose name suggests
+            // construction work progress. All numeric values are one-time — not permanent.
+            bool advanced = false;
             try
             {
-                foreach (Hero h in Hero.AllAliveHeroes)
+                var siege   = besieged.SiegeEvent;
+                var camp    = siege?.BesiegerCamp;
+                var engines = camp?.SiegeEngines;
+
+                string[] keywords = { "work", "progress", "construct", "stage", "build" };
+                const float MaxSane = 50000f; // sanity cap: reject fields above this (clearly not progress)
+
+                foreach (object target in new object[] { engines, camp })
                 {
-                    if (!h.IsLord || h.Clan == null || !h.IsAlive) continue;
-                    if (h.MapFaction == null || h.MapFaction == playerFaction) continue;
-                    if (h.PartyBelongedTo == null) continue;
-                    float d = (h.PartyBelongedTo.GetPosition2D - playerPos).Length;
-                    if (d < minDist) { minDist = d; targetLord = h; }
+                    if (target == null) continue;
+                    foreach (FieldInfo fi in target.GetType().GetFields(
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                    {
+                        if (fi.FieldType != typeof(float) && fi.FieldType != typeof(double)) continue;
+                        string nm = fi.Name.ToLowerInvariant();
+                        bool relevant = false;
+                        foreach (string kw in keywords) if (nm.Contains(kw)) { relevant = true; break; }
+                        if (!relevant) continue;
+                        try
+                        {
+                            if (fi.FieldType == typeof(float))
+                            {
+                                float cur = (float)fi.GetValue(target);
+                                if (cur < 0f || cur > MaxSane) continue;
+                                fi.SetValue(target, cur + bonus);
+                            }
+                            else
+                            {
+                                double cur = (double)fi.GetValue(target);
+                                if (cur < 0.0 || cur > MaxSane) continue;
+                                fi.SetValue(target, cur + bonus);
+                            }
+                            advanced = true;
+                        }
+                        catch { }
+                    }
                 }
             }
             catch { }
 
-            if (targetLord == null)
+            if (!advanced)
             {
-                Msg("Counter-Scheme — no enemy lord found to undermine.", ColorSchool.Blue);
+                Msg("Scholar's Blueprint — the diagrams find no machines under construction.", ColorSchool.Blue);
                 return;
             }
 
             Hero.MainHero.ChangeHeroGold(-Cost);
-            try { ChangeClanInfluenceAction.Apply(targetLord.Clan, -8f); } catch { }
-            Msg($"Counter-Scheme — {Cost} gold spent. {targetLord.Name}'s clan influence −8.", ColorSchool.Blue);
+            try { Hero.MainHero.Clan?.AddRenown(-3f); } catch { }
+            Msg($"Scholar's Blueprint — {Cost}g spent. Construction progress +{(int)bonus}. Renown −3.", ColorSchool.Blue);
         }
 
         // ── Purple — Wither's Touch ──────────────────────────────────────

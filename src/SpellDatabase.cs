@@ -110,9 +110,9 @@ namespace ColoursOfCalradia
                 Flavour="One nearby enemy empties out. They stand. They do not move. They wait for nothing. Cast again to release them." },
 
             // ── INVOKE (LU prefix) — campaign map only, advanced forms ───────────
-            new SpellEntry { Name="Bloodprice",       Combo="LURR", School=ColorSchool.Red,
+            new SpellEntry { Name="Crimson March",     Combo="LURR", School=ColorSchool.Red,
                 Context=SpellContext.Map,
-                Flavour="Spill your own blood before the march. Your soldiers feel it — and they answer." },
+                Flavour="You bleed so they march harder. The road shortens beneath you — 5 HP each hour until the drive fades or your body gives out." },
             new SpellEntry { Name="Muster Call",      Combo="LURU", School=ColorSchool.Orange,
                 Context=SpellContext.Map,
                 Flavour="A warmth reaches outward to the nearest settlement. Voices answer before they know why they are moving." },
@@ -122,9 +122,9 @@ namespace ColoursOfCalradia
             new SpellEntry { Name="Tend the Fallen",  Combo="LULL", School=ColorSchool.Green,
                 Context=SpellContext.Map,
                 Flavour="The green does not ask who deserves healing. It simply flows to where life is thin." },
-            new SpellEntry { Name="Counter-Scheme",   Combo="LUUL", School=ColorSchool.Blue,
+            new SpellEntry { Name="Scholar's Blueprint", Combo="LUUL", School=ColorSchool.Blue,
                 Context=SpellContext.Map,
-                Flavour="The Scholar's networks are not only for building. Sometimes they are for unravelling." },
+                Flavour="Only usable while besieging. The Scholar's eye finds the inefficiency in every joint and lever. The machines rise faster." },
             new SpellEntry { Name="Wither's Touch",   Combo="LUUR", School=ColorSchool.Purple,
                 Context=SpellContext.Map,
                 Flavour="The grey reaches into another life and takes something small. They will not know what is gone — only that it is." },

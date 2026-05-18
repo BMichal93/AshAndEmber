@@ -266,6 +266,7 @@ namespace ColoursOfCalradia
         private void OnHourlyTick()
         {
             ColourLordRegistry.CheckRespawnTimers();
+            SpellEffects.TickHourlyMapEffects();
         }
 
         // ── Weekly tick ──────────────────────────────────────────────────────
