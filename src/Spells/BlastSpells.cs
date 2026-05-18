@@ -125,9 +125,13 @@ namespace ColoursOfCalradia
                 try
                 {
                     float h = Math.Min(15f * power, a.HealthLimit - a.Health);
-                    if (h > 0f) { a.Health += h; healed++; }
-                    BeginAgentGlow(a, ColorSchool.Green, 1.5f);
-                    SpawnTempLight(a.Position, ColorSchool.Green, 6f, 1.5f);
+                    if (h > 0f)
+                    {
+                        a.Health += h;
+                        healed++;
+                        BeginAgentGlow(a, ColorSchool.Green, 1.5f);
+                        SpawnTempLight(a.Position, ColorSchool.Green, 6f, 1.5f);
+                    }
                 }
                 catch { }
             }

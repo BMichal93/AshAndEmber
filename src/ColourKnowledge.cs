@@ -84,7 +84,10 @@ namespace ColoursOfCalradia
 
         public static void AddSchool(ColorSchool school)
         {
-            _chosenSchools.Add(school);
+            if (_chosenSchools.Add(school)) // Add returns false if already present
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"[DEBUG] School granted: {ColorSchoolData.Info[school].Name} — check the message above for context.",
+                    Color.FromUint(0xFFFF4400)));
         }
 
         public static bool IsChildGifted(string heroId) => _giftedChildIds.Contains(heroId);
