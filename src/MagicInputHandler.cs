@@ -74,7 +74,7 @@ namespace ColoursOfCalradia
                     else if (Input.IsKeyPressed(InputKey.D)) Append("R");
                     else if (Input.IsKeyPressed(InputKey.S))
                     {
-                        if (_buffer.Length == 0) ColourKnowledge.ShowGrimoire(inMission);
+                        if (_buffer.Length == 0) ColourKnowledge.ShowGrimoire(inMission, false);
                         else Append("D");
                     }
                 }
@@ -89,13 +89,13 @@ namespace ColoursOfCalradia
                     bool lRight = Input.IsKeyDown(InputKey.ControllerLStickRight);
 
                     if (lUp    && !_prevLUp)   Append("U");
-                    if (lDown  && !_prevLDown) { if (_buffer.Length == 0) ColourKnowledge.ShowGrimoire(inMission); else Append("D"); }
+                    if (lDown  && !_prevLDown) { if (_buffer.Length == 0) ColourKnowledge.ShowGrimoire(inMission, true); else Append("D"); }
                     if (lLeft  && !_prevLLeft) Append("L");
                     if (lRight && !_prevLRight) Append("R");
 
                     _prevLUp = lUp; _prevLDown = lDown; _prevLLeft = lLeft; _prevLRight = lRight;
 
-                    if (Input.IsKeyPressed(InputKey.ControllerLThumb)) ColourKnowledge.ShowGrimoire(inMission);
+                    if (Input.IsKeyPressed(InputKey.ControllerLThumb)) ColourKnowledge.ShowGrimoire(inMission, true);
                 }
 
                 if (_buffer.Length > 0 && _buffer != _lastDisplayedBuffer)

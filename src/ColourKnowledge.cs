@@ -150,7 +150,7 @@ namespace ColoursOfCalradia
         private static string ComboToArrows(string combo) =>
             combo.Replace("U", "↑").Replace("D", "↓").Replace("L", "←").Replace("R", "→");
 
-        public static void ShowGrimoire(bool inMission = false)
+        public static void ShowGrimoire(bool inMission = false, bool usingController = false)
         {
             if (!HasAnySchool)
             {
@@ -198,7 +198,10 @@ namespace ColoursOfCalradia
             }
 
             string active      = inBattle ? "battle" : "campaign map";
-            string description = $"Hold Left Alt + combo (W/A/D keys), then release.  Active: {active}.\n\n"
+            string inputHint   = usingController
+                ? "Hold LT + left stick (↑/←/→), then release."
+                : "Hold Left Alt + combo (W/A/D keys), then release.";
+            string description = $"{inputHint}  Active: {active}.\n\n"
                                + string.Join("\n", lines);
 
             InformationManager.ShowInquiry(new InquiryData(
