@@ -184,9 +184,6 @@ namespace ColoursOfCalradia
         {
             try
             {
-                // Try to make the blight hostile by assigning to a bandit clan
-                TrySetBanditClan(blight);
-
                 // Find any party template — looters preferred for hostile behavior
                 PartyTemplateObject template = null;
                 try
@@ -202,11 +199,14 @@ namespace ColoursOfCalradia
                 }
                 catch { }
 
-                MobileParty party = TaleWorlds.CampaignSystem.Party.PartyComponents.LordPartyComponent.CreateLordParty(
-                    "coc_blight_" + (int)school, blight, pos, 0f, null, blight);
+                Clan banditClan = Clan.BanditFactions?.FirstOrDefault();
+                if (banditClan == null) return;
+
+                MobileParty party = TaleWorlds.CampaignSystem.Party.PartyComponents.BanditPartyComponent.CreateBanditParty(
+                    "coc_blight_" + (int)school, banditClan, null, true, template, pos);
                 if (party == null) return;
 
-                try { party.InitializeMobilePartyAroundPosition(template, pos, 0f, 0f); } catch { }
+                try { party.PartyComponent?.ChangePartyLeader(blight); } catch { }
 
                 // Replace template troops with the blight hero
                 try { party.MemberRoster.Clear(); } catch { }
@@ -219,21 +219,6 @@ namespace ColoursOfCalradia
                     TryBoostSpeed(party);
 
                 try { party.IsVisible = true; } catch { }
-            }
-            catch { }
-        }
-
-        private static void TrySetBanditClan(Hero hero)
-        {
-            try
-            {
-                Clan banditClan = Clan.BanditFactions?.FirstOrDefault();
-                if (banditClan == null) return;
-                // Reflect onto the private _clan field — this makes the party IsBandit = true
-                // and therefore hostile to all non-bandit parties
-                var field = typeof(Hero).GetField("_clan",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                field?.SetValue(hero, banditClan);
             }
             catch { }
         }
