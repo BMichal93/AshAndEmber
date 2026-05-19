@@ -417,9 +417,12 @@ namespace ColoursOfCalradia
             catch { }
         }
 
-        public static void DamageAgent(Agent target, float damage)
+        public static void DamageAgent(Agent target, float damage, ColorSchool? damageSchool = null)
         {
             if (target == null || !target.IsActive()) return;
+            // Blights are immune to spells of their own colour school
+            if (damageSchool.HasValue && BlightSystem.IsBlight(target)
+                && BlightSystem.GetBlightSchool(target) == damageSchool.Value) return;
             // Use direct health assignment to avoid RegisterBlow's hit pipeline:
             // RegisterBlow with AttackCollisionData=default causes native crashes because
             // the engine reads weapon/body-part data from fields we leave at zero (OwnerId=-1,

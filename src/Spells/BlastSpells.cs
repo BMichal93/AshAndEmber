@@ -45,7 +45,7 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 40f * power);
+                    DamageAgent(a, 40f * power, ColorSchool.Red);
                     if (a.IsActive() && a.Health > 0f)
                     {
                         Vec3 dir = (a.Position - Player.Position).NormalizedCopy();
@@ -74,7 +74,7 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 12f * power);
+                    DamageAgent(a, 12f * power, ColorSchool.Orange);
                     if (!a.IsActive()) continue;
                     try { a.SetMorale(100f); } catch { }
                     BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
@@ -100,7 +100,7 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 14f * power);
+                    DamageAgent(a, 14f * power, ColorSchool.Yellow);
                     if (!a.IsActive()) continue;
                     try { a.SetMorale(Math.Max(0f, a.GetMorale() - 35f * power)); } catch { }
                     BeginAgentGlow(a, ColorSchool.Yellow, 1.5f);
@@ -154,7 +154,7 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 12f * power);
+                    DamageAgent(a, 12f * power, ColorSchool.Blue);
                     if (!a.IsActive()) continue;
                     try { a.SetMorale(Math.Max(0f, a.GetMorale() - 25f)); } catch { }
                     if (a.MountAgent == null)

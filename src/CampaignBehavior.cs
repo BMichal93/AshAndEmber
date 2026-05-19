@@ -30,6 +30,8 @@ namespace ColoursOfCalradia
     public class MagicCampaignBehavior : CampaignBehaviorBase
     {
         private bool _selectionDone;
+        private bool _blightLearnActive;
+        private static readonly Random _rng = new Random();
 
         private static readonly ColorSchool[] _allSchoolsOrdered =
         {
@@ -54,7 +56,6 @@ namespace ColoursOfCalradia
             CampaignEvents.OnCharacterCreationIsOverEvent.AddNonSerializedListener(this, OnNewGameCreated);
             CampaignEvents.HeroCreated.AddNonSerializedListener(this, OnHeroCreated);
             CampaignEvents.NewCompanionAdded.AddNonSerializedListener(this, OnCompanionAdded);
-            CampaignEvents.HeroLevelledUp.AddNonSerializedListener(this, OnHeroLevelledUp);
         }
 
         // ── New game: present colour selection ───────────────────────────────
@@ -62,6 +63,7 @@ namespace ColoursOfCalradia
         {
             ColourKnowledge.ResetForNewGame();
             SpellEffects.ResetCampaignCounters();
+            BlightSystem.ResetForNewGame();
 
             var elements = _allSchoolsOrdered.Select(school =>
             {
@@ -92,6 +94,7 @@ namespace ColoursOfCalradia
                     }
                     _selectionDone = true;
                     ColourLordRegistry.SeedInitialLords();
+                    BlightSystem.InitializeBlights();
                 },
                 _ =>
                 {
@@ -99,6 +102,7 @@ namespace ColoursOfCalradia
                     InformationManager.DisplayMessage(new InformationMessage(
                         "No colour calls to you. You walk an uncoloured path.", Color.FromUint(0xFFAAAAAA)));
                     ColourLordRegistry.SeedInitialLords();
+                    BlightSystem.InitializeBlights();
                 },
                 "", false
             ), false, true);
@@ -215,6 +219,7 @@ namespace ColoursOfCalradia
 
             ColourLordRegistry.SeedInitialLords();
             ColourLordRegistry.FlushAnnouncements();
+            BlightSystem.InitializeBlights();
             ColourLordRegistry.DailyMapCast();
             ColourUnitRegistry.SeedInitialUnits();
             ColourUnitRegistry.DailyMaintenance();
@@ -264,6 +269,7 @@ namespace ColoursOfCalradia
         private void OnHourlyTick()
         {
             ColourLordRegistry.CheckRespawnTimers();
+            BlightSystem.CheckRespawnTimers();
             SpellEffects.TickHourlyMapEffects();
         }
 
@@ -329,6 +335,20 @@ namespace ColoursOfCalradia
             SpellEffects.ClearMoves();         // releases stale agent refs from Bastion pushes
             SpellEffects.RestoreColourNamePrefixes();
             ColourUnitRegistry.OnMissionEnded();
+
+            // Offer colour learning for any blight the player personally killed this mission
+            if (ColourKnowledge.HasAnySchool)
+            {
+                foreach (ColorSchool school in BlightSystem.ConsumePlayerBlightKills())
+                {
+                    if (!ColourKnowledge.HasSchool(school))
+                        ShowBlightLearningPrompt(school);
+                }
+            }
+            else
+            {
+                BlightSystem.ConsumePlayerBlightKills(); // drain without offering (no attunement)
+            }
         }
 
         // ── Battle bonus: colour lords heal a fraction of wounded after each battle ──
@@ -376,8 +396,18 @@ namespace ColoursOfCalradia
         private void OnHeroKilled(Hero victim, Hero killer,
             KillCharacterAction.KillCharacterActionDetail detail, bool showNotification)
         {
-            if (!ColourLordRegistry.IsColourLord(victim)) return;
-            ColourLordRegistry.OnLordDied(victim);
+            if (ColourLordRegistry.IsColourLord(victim))
+                ColourLordRegistry.OnLordDied(victim);
+
+            if (BlightSystem.IsBlight(victim))
+            {
+                ColorSchool school = BlightSystem.GetBlightSchool(victim);
+                BlightSystem.OnBlightKilled(victim);
+                // NPC lord kills blight: 7% chance to absorb its colour
+                if (killer != null && killer != Hero.MainHero)
+                    BlightSystem.OnNpcKilledBlight(killer, school);
+                // Player kill is handled via mission-level flag → OnMissionEnded
+            }
         }
 
         // ── Children inherit colours ─────────────────────────────────────────
@@ -423,55 +453,41 @@ namespace ColoursOfCalradia
             catch { }
         }
 
-        // ── Level-up colour learning ──────────────────────────────────────────
-        private bool _levelUpPickActive;
-
-        private void OnHeroLevelledUp(Hero hero, bool shouldNotify)
+        // ── Blight colour learning prompt ─────────────────────────────────────
+        private void ShowBlightLearningPrompt(ColorSchool school)
         {
-            if (hero != Hero.MainHero) return;
-            if (!ColourKnowledge.HasAnySchool) return;
-            if (hero.Level % 10 != 0) return;
+            if (_blightLearnActive) return;
             if (ColourKnowledge.AllSchools.Count() >= 6) return;
-            if (_levelUpPickActive) return;
 
-            var available = _allSchoolsOrdered.Where(s => !ColourKnowledge.HasSchool(s)).ToList();
-            if (available.Count == 0) return;
-
-            _levelUpPickActive = true;
-
-            var elements = available.Select(school =>
-            {
-                var info = ColorSchoolData.Info[school];
-                string hint = $"{info.FlavorText}\n\nPenalty: {info.AttributePenalty}\n{info.LimitationA}\n{info.LimitationB}";
-                return new InquiryElement(school, info.Name, null, true, hint);
-            }).ToList();
+            _blightLearnActive = true;
+            var info = ColorSchoolData.Info[school];
+            string hint = $"{info.FlavorText}\n\nPenalty: {info.AttributePenalty}\n{info.LimitationA}\n{info.LimitationB}";
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                $"Level {hero.Level} — A Colour Stirs",
-                "Your growth opens new channels. Choose one colour to learn — or decline. Hover each colour to read its penalties.",
-                elements,
+                $"The Blight Falls — {info.Name} Awakens",
+                $"You have slain the {info.Name} Blight. Their colour seeps into your blood. Will you accept it?",
+                new List<InquiryElement> { new InquiryElement(school, info.Name, null, true, hint) },
                 false, 0, 1,
-                "This colour calls to me.",
-                "Not now.",
+                "Accept the colour.",
+                "Reject it.",
                 chosen =>
                 {
-                    _levelUpPickActive = false;
+                    _blightLearnActive = false;
                     if (chosen?.Count > 0)
                     {
-                        ColorSchool school = (ColorSchool)chosen[0].Identifier;
                         ColourKnowledge.AddSchool(school);
                         ApplySchoolPenalties(new List<ColorSchool> { school });
                         ShowStartingSpells(new List<ColorSchool> { school });
                     }
                     else
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The colour recedes. No new school learned.", Color.FromUint(0xFFAAAAAA)));
+                            "The colour recedes. You reject what the Blight offered.", Color.FromUint(0xFFAAAAAA)));
                 },
                 _ =>
                 {
-                    _levelUpPickActive = false;
+                    _blightLearnActive = false;
                     InformationManager.DisplayMessage(new InformationMessage(
-                        "The colour recedes. No new school learned.", Color.FromUint(0xFFAAAAAA)));
+                        "The colour recedes.", Color.FromUint(0xFFAAAAAA)));
                 },
                 "", false
             ), false, true);
@@ -489,6 +505,7 @@ namespace ColoursOfCalradia
             ColourKnowledge.Save(dataStore);
             ColourLordRegistry.Save(dataStore);
             ColourUnitRegistry.Save(dataStore);
+            BlightSystem.Save(dataStore);
         }
     }
 }

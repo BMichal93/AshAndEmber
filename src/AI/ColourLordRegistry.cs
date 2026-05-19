@@ -301,6 +301,22 @@ namespace ColoursOfCalradia
             }
         }
 
+        // ── Blight colour grant ───────────────────────────────────────────────
+        // Called when an NPC lord kills a blight and learns its colour school.
+        public static void GrantBlightColour(Hero hero, ColorSchool school)
+        {
+            if (hero == null) return;
+            if (!_lordColors.TryGetValue(hero.StringId, out var schools))
+                _lordColors[hero.StringId] = schools = new List<ColorSchool>();
+            if (schools.Contains(school)) return;
+            schools.Add(school);
+            try { ApplyColourTraits(hero, schools); } catch { }
+            try { ApplyColorRelationships(hero, schools); } catch { }
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{hero.Name} has absorbed a Blight's power — {ColorSchoolData.Info[school].Name} now stirs in them.",
+                ColorSchoolData.GetMessageColor(school)));
+        }
+
         // ── Children ──────────────────────────────────────────────────────────
         public static void GrantChildColours(Hero hero, List<ColorSchool> schools)
         {

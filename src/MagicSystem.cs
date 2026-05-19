@@ -171,6 +171,11 @@ namespace ColoursOfCalradia
             AgentState agentState, KillingBlow blow)
         {
             ColourUnitRegistry.OnAgentRemoved(affectedAgent);
+
+            // Track blight kills by the player so OnMissionEnded can prompt colour learning
+            if (affectorAgent == Agent.Main && affectedAgent != null
+                && BlightSystem.IsBlight(affectedAgent))
+                BlightSystem.RecordPlayerBlightKill(BlightSystem.GetBlightSchool(affectedAgent));
         }
     }
 }

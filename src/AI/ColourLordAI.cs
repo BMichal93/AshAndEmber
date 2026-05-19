@@ -32,8 +32,9 @@ namespace ColoursOfCalradia
     // =========================================================================
     public static class ColourLordAI
     {
-        private const float CastInterval      = 12f;
-        private const float PrismCastInterval = 4f;
+        private const float CastInterval       = 12f;
+        private const float PrismCastInterval  = 4f;
+        private const float BlightCastInterval = 2f;
         private static readonly Dictionary<string, float> _cooldowns = new Dictionary<string, float>();
         private static readonly Random _rng = new Random();
 
@@ -65,7 +66,17 @@ namespace ColoursOfCalradia
                 if (agent == Agent.Main) continue;
 
                 Hero hero = (agent.Character as CharacterObject)?.HeroObject;
-                if (hero == null || !ColourLordRegistry.IsColourLord(hero)) continue;
+                if (hero == null) continue;
+
+                // Blights cast much faster and without NPC limitations
+                if (BlightSystem.IsBlight(hero))
+                {
+                    if (!_cooldowns.ContainsKey(hero.StringId))
+                        CastBlightSpell(agent, hero);
+                    continue;
+                }
+
+                if (!ColourLordRegistry.IsColourLord(hero)) continue;
                 if (_cooldowns.ContainsKey(hero.StringId)) continue;
 
                 var colors = ColourLordRegistry.GetColors(hero);
@@ -361,6 +372,121 @@ namespace ColoursOfCalradia
                     ApplyPurpleHollowStanding(hero);
                     break;
             }
+        }
+
+        // ── Blight casting ────────────────────────────────────────────────────
+        // No NPC limitations, no light-level check, cast interval 2s.
+        // Returns false when no targets were affected — cooldown still applied but no message.
+        private static void CastBlightSpell(Agent agent, Hero hero)
+        {
+            ColorSchool school = BlightSystem.GetBlightSchool(hero);
+            float power = SpellEffects.SpellPower(school, hero);
+            bool hit = false;
+
+            switch (school)
+            {
+                case ColorSchool.Red:
+                {
+                    Vec3 fwd = agent.LookDirection.NormalizedCopy();
+                    foreach (Agent a in EnemiesOf(agent).ToList())
+                    {
+                        Vec3 to = a.Position - agent.Position;
+                        if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
+                        if (SpellEffects.ProtectedByMirror(a)) continue;
+                        SpellEffects.DamageAgent(a, 40f * power, school);
+                        SpellEffects.BeginAgentGlow(a, school, 1.5f);
+                        hit = true;
+                    }
+                    CastBlightWithGlow(agent, hero, school, "Crimson Torrent", hit);
+                    break;
+                }
+                case ColorSchool.Orange:
+                {
+                    foreach (Agent a in AlliesOf(agent)
+                        .Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
+                    {
+                        try { a.SetMorale(Math.Min(a.GetMorale() + 20f * power, 100f)); } catch { }
+                        SpellEffects.BeginAgentGlow(a, school, 1.5f);
+                        hit = true;
+                    }
+                    CastBlightWithGlow(agent, hero, school, "Warm Beacon", hit);
+                    break;
+                }
+                case ColorSchool.Yellow:
+                {
+                    Vec3 fwd = agent.LookDirection.NormalizedCopy();
+                    foreach (Agent a in EnemiesOf(agent).ToList())
+                    {
+                        Vec3 to = a.Position - agent.Position;
+                        if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
+                        try { a.SetMorale(Math.Max(0f, a.GetMorale() - 35f * power)); } catch { }
+                        SpellEffects.BeginAgentGlow(a, school, 1.5f);
+                        hit = true;
+                    }
+                    CastBlightWithGlow(agent, hero, school, "Tide of Dread", hit);
+                    break;
+                }
+                case ColorSchool.Green:
+                {
+                    Vec3 fwd = agent.LookDirection.NormalizedCopy();
+                    foreach (Agent a in AlliesOf(agent).ToList())
+                    {
+                        Vec3 to = a.Position - agent.Position;
+                        if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
+                        float h = Math.Min(15f * power, a.HealthLimit - a.Health);
+                        if (h <= 0f) continue;
+                        a.Health += h;
+                        SpellEffects.BeginAgentGlow(a, school, 1.5f);
+                        hit = true;
+                    }
+                    CastBlightWithGlow(agent, hero, school, "Verdant Surge", hit);
+                    break;
+                }
+                case ColorSchool.Blue:
+                {
+                    Vec3 fwd = agent.LookDirection.NormalizedCopy();
+                    foreach (Agent a in EnemiesOf(agent).ToList())
+                    {
+                        Vec3 to = a.Position - agent.Position;
+                        if (to.Length > 15f || Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.6f) continue;
+                        if (SpellEffects.ProtectedByMirror(a)) continue;
+                        SpellEffects.DamageAgent(a, 12f * power, school);
+                        try { a.SetMorale(0f); } catch { }
+                        SpellEffects.BeginAgentGlow(a, school, 1.5f);
+                        hit = true;
+                    }
+                    CastBlightWithGlow(agent, hero, school, "Azure Arrest", hit);
+                    break;
+                }
+                case ColorSchool.Purple:
+                {
+                    foreach (Agent a in EnemiesOf(agent)
+                        .Where(a => a.Position.Distance(agent.Position) <= 10f && !a.IsHero).ToList())
+                    {
+                        if (SpellEffects.ProtectedByMirror(a)) continue;
+                        SpellEffects.DamageAgent(a, 45f * power, school);
+                        SpellEffects.BeginAgentGlow(a, school, 1.5f);
+                        hit = true;
+                    }
+                    CastBlightWithGlow(agent, hero, school, "Grey Tide", hit);
+                    break;
+                }
+            }
+        }
+
+        // Applies cooldown + glow every cast; message only when the effect connected.
+        private static void CastBlightWithGlow(Agent agent, Hero hero, ColorSchool school,
+                                                string spellName, bool connected)
+        {
+            _cooldowns[hero.StringId] = BlightCastInterval;
+            // Glow duration > cast interval → permanent visible aura
+            SpellEffects.BeginAgentGlow(agent, school, BlightCastInterval * 1.5f);
+            SpellEffects.TryCastSound(agent.Position, school);
+            SpellEffects.TryCastAnimation(agent);
+            if (!connected) return;
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"✦ {agent.Name} channels {spellName} ({ColorSchoolData.Info[school].Name}). The Blight is upon you. ✦",
+                ColorSchoolData.GetMessageColor(school)));
         }
 
         // ── Limitation checks ─────────────────────────────────────────────────
