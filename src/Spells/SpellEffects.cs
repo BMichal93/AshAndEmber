@@ -1,6 +1,6 @@
 // =============================================================================
 // COLOURS OF CALRADIA — SpellEffects.cs
-// Mount & Blade II: Bannerlord Mod  v2.0
+// Mount & Blade II: Bannerlord Mod  v1.2.0.0.0
 // =============================================================================
 
 using System;

@@ -1,4 +1,4 @@
-# Colours of Calradia — v2.0
+# Colours of Calradia — v1.2.0.0.0
 
 A Mount & Blade II: Bannerlord magic overhaul built around six colour schools, named mage lords, persistent magical units, and a personality system that shifts with every cast.
 
