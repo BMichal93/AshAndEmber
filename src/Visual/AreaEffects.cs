@@ -213,7 +213,7 @@ namespace ColoursOfCalradia
                     case "create_yellow": // Creeping Dread — damage agents in cloud
                     {
                         int dreadHit = 0;
-                        float dreadDmg = 40f * e.Power;
+                        float dreadDmg = 30f * e.Power;
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())

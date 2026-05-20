@@ -301,7 +301,7 @@ The project targets `.NET Framework 4.7.2` to match the game's runtime. Logic is
 
 ## Starting the Mod — Colour Selection
 
-When a new campaign starts you will see a multi-selection screen titled **"The Colours of Calradia"**. Hover each colour to read its school flavour text, attribute penalty, and two permanent limitations.
+When a new campaign starts you will see a multi-selection screen titled **"The Colours of Calradia"**. Hover each colour to read its school flavour text, attribute penalty, and permanent limitation(s).
 
 - Select any combination of colours (including none — you walk an uncoloured path).
 - Your chosen colours are **permanent** for that playthrough.
@@ -452,32 +452,32 @@ Note: **D** (S key) is valid mid-combo. It cannot appear as the first character 
 
 | Spell | Combo | School | Effect |
 |-------|-------|--------|--------|
-| **Crimson Torrent** | `UURRR` | Red | 40 damage to all enemies in a forward cone (15 m); pushes them back 6 m (smooth lerp over 0.4 s). |
-| **Golden Tide** | `UURLR` | Orange | 12 damage to cone enemies (15 m); forces all enemy formations to Charge. |
-| **Tide of Dread** | `UUDLD` | Yellow | 14 damage to cone enemies (15 m); drains 55 morale from each. |
-| **Verdant Surge** | `UULDL` | Green | Heals allies in the cone (15 m) for up to 15 HP each. Player and enemies are not affected. |
-| **Azure Arrest** | `UUULU` | Blue | 12 damage to cone enemies (15 m); halts all enemy formations; dismounts riders. |
-| **Grey Harvest** | `UUDDD` | Purple | Instantly kills one random creature in the cone (15 m). |
+| **Crimson Torrent** | `UURRR` | Red | 55 damage to all enemies in a forward cone (15 m); pushes them back 6 m (smooth lerp over 0.4 s). |
+| **Golden Tide** | `UURLR` | Orange | 18 damage to cone enemies (15 m); forces all enemy formations to Charge. |
+| **Tide of Dread** | `UUDLD` | Yellow | 20 damage to cone enemies (15 m); drains 45 morale from each. |
+| **Verdant Surge** | `UULDL` | Green | Heals allies in the cone (15 m) for up to 22 HP each. Player and enemies are not affected. |
+| **Azure Arrest** | `UUULU` | Blue | 18 damage to cone enemies (15 m); drains 35 morale; halts all enemy formations; dismounts riders. |
+| **Grey Harvest** | `UUDDD` | Purple | Instantly kills 1–3 random creatures in the cone (15 m); kill count scales with Vigor. |
 
 ### Self Spells (RL prefix) — Caster-centred effects
 
 | Spell | Combo | School | Effect |
 |-------|-------|--------|--------|
-| **Scarlet Ward** | `RLRRR` | Red | Absorbs the next single physical blow — one strike, then the ward shatters. Expires after 8 s if nothing hits. |
+| **Scarlet Ward** | `RLRRR` | Red | Absorbs the next single physical blow — one strike, then the ward shatters. Expires after 12 s if nothing hits. |
 | **Warm Beacon** | `RLRLR` | Orange | Pulls all allies within 18 m to a ring around the caster (smooth lerp). |
-| **Nausea Bloom** | `RLDLD` | Yellow | Persistent 30 s aura (radius 8 m) that deals 15 damage every 2 s to all nearby creatures. |
-| **Verdant Touch** | `RLLDL` | Green | Heals the caster for 20 HP. |
-| **Cerulean Mirror** | `RLULU` | Blue | 12 s missile deflection — up to 3 volleys blocked; shatters after the 3rd block or when time expires. Physical attacks still connect. |
-| **Grief's Veil** | `RLDDD` | Purple | The grey folds you from sight for 12 s — you become invulnerable and nearby enemy formations halt momentarily. |
+| **Nausea Bloom** | `RLDLD` | Yellow | Persistent 30 s aura (radius 8 m) that deals 22 damage every 2 s to all nearby creatures. |
+| **Verdant Touch** | `RLLDL` | Green | Heals the caster for 28 HP. |
+| **Cerulean Mirror** | `RLULU` | Blue | 18 s missile deflection — up to 4 volleys blocked; shatters after the 4th block or when time expires. Physical attacks still connect. |
+| **Grief's Veil** | `RLDDD` | Purple | The grey folds you from sight for 12 s — you become invulnerable and nearby enemy formations lose their nerve. Shorter but stronger than the Mirror. |
 
 ### Create Spells (LR prefix) — Persistent battlefield effects
 
 | Spell | Combo | School | Effect |
 |-------|-------|--------|--------|
 | **Cinder Burst** | `LRRRR` | Red | Instant 50 damage to all creatures within 10 m. |
-| **Golden Recoil** | `LRRLR` | Orange | Toggle: zone of retribution — any creature that strikes while inside returns a portion of the blow to themselves. Cast again to dismiss. |
-| **Creeping Dread** | `LRDLD` | Yellow | Toggle: nine wandering clouds (3×3 grid, radius 7 m each) that roam the field, dealing damage every 2 s to creatures they pass through. Cast again to dismiss. |
-| **Emerald Font** | `LRLDL` | Green | Toggle: two healing pools that restore HP every 2 s to all within — friend and foe alike. Cast again to dismiss. |
+| **Golden Recoil** | `LRRLR` | Orange | Toggle: zone of retribution — any creature that strikes while inside returns the blow upon themselves. Cast again to dismiss. |
+| **Creeping Dread** | `LRDLD` | Yellow | Toggle: nine wandering clouds (3×3 grid, radius 7 m each) that roam the field, dealing 30 damage every 2 s to creatures they pass through. Cast again to dismiss. |
+| **Emerald Font** | `LRLDL` | Green | Toggle: two healing pools that restore 15 HP every 2 s to all within — friend and foe alike. Cast again to dismiss. |
 | **Sapphire Bastion** | `LRULU` | Blue | Toggle: four pillars of force in a line perpendicular to your facing, pushing creatures outward every 0.5 s. Cast again to dismiss. |
 | **Hollow Gaze** | `LRDDD` | Purple | Toggle: pins one random nearby non-hero enemy into a catatonic state — they stand still and do nothing. Cast again to release them. |
 
@@ -601,7 +601,7 @@ NPC mage lords cast in battle using a priority-driven AI:
 
 1. **Self-heal** with Verdant Touch if below 35 % HP (Green lords only, if not wielding a weapon).
 2. **8 % random wild cast** — fires a random applicable school spell.
-3. **Swarm response** — if 3+ enemies within 8 m, prefer Cinder Burst (Red) or Grey Tide (Purple).
+3. **Swarm response** — if 3+ enemies within 8 m, prefer Cinder Burst (Red) or Grey Harvest (Purple).
 4. **Cone attack** — Crimson Torrent (Red) or Azure Arrest (Blue) if enemies are in the forward arc.
 5. **Ally healing** — Verdant Surge (Green) if allies in the forward arc are wounded.
 6. **Morale drain** — Tide of Dread (Yellow).
@@ -712,12 +712,12 @@ Each Affect spell is tied to a specific situation or resource. No cooldowns — 
 
 | Spell | Combo | School | Effect | Cost / Limiter |
 |-------|-------|--------|--------|----------------|
-| **Ember Drive** | `ULRRR` | Red | +100×power gold during a village raid or hideout assault | −10% current HP per cast; blocked at ≤5 HP |
-| **Shared Feast** | `ULRLR` | Orange | Consume food → party morale +8×power | Food cost doubles each cast within the day (1→2→4→8…), resets at midnight |
-| **Dread Whisper** | `ULDLD` | Yellow | Nearest enemy party loses 15×power morale | No self-cost (limitation is Animal Fear: no horseback) |
+| **Ember Drive** | `ULRRR` | Red | +130×power gold during a village raid or hideout assault | −10% current HP per cast; blocked at ≤5 HP |
+| **Shared Feast** | `ULRLR` | Orange | Consume food → party morale +12×power | Food cost doubles each cast within the day (1→2→4→8…), resets at midnight |
+| **Dread Whisper** | `ULDLD` | Yellow | Nearest enemy party loses 22×power morale | No self-cost (limitation is Animal Fear: no horseback) |
 | **Verdant Hour** | `ULLDL` | Green | Produce 1–4 grain | −5% current HP per cast; blocked at ≤5 HP |
 | **Scholar's Gaze** | `ULULU` | Blue | Reveals all allied and enemy parties within 80 map units — shows direction, leader, and troop count in a popup | No cost |
-| **Grey Veil** | `ULDDD` | Purple | Scatter nearby enemy parties (radius 2); enemies lose your trail | −1% fertility + 1 day aging per cast |
+| **Grey Veil** | `ULDDD` | Purple | Scatter nearby enemy parties (within 2 map units); enemies lose your trail | −1% fertility + 1 day aging per cast |
 
 ### Invoke Spells (LU prefix) — advanced campaign effects
 
@@ -726,9 +726,9 @@ Invoke spells target heroes, rosters, and rival lords directly. No cooldowns —
 | Spell | Combo | School | Effect | Cost / Limiter |
 |-------|-------|--------|--------|----------------|
 | **Crimson March** | `LURRR` | Red | Sustains party morale above Bannerlord's march-speed threshold (≥78) each hour for the duration, keeping the engine's built-in +3% speed bonus active continuously | −8% current HP on cast; −2 HP per hour; 4–8 h duration scaled by power; blocked at ≤5 HP |
-| **Golden Word** | `LURLR` | Orange | Spend gold as patronage → +15×power influence | Gold cost 100→200→400 (capped at 400), resets at midnight; kingdom required |
+| **Golden Word** | `LURLR` | Orange | Spend gold as patronage → +20×power influence | Gold cost 100→200→400 (capped at 400), resets at midnight; kingdom required |
 | **Whispered Ruin** | `LUDLD` | Yellow | Nearest enemy lord (at war) clan renown −8 | −2 own clan renown per cast |
-| **Tend the Fallen** | `LULDL` | Green | Heal 3+(power×2) wounded troops in own party | −5% current HP per cast; blocked at ≤5 HP |
+| **Tend the Fallen** | `LULDL` | Green | Heal 5+(power×3) wounded troops in own party | −5% current HP per cast; blocked at ≤5 HP |
 | **Scholar's Blueprint** | `LUULU` | Blue | Advances siege engine construction progress (+150×power) on all machines currently being built | Renown −2 per cast; requires active siege; no effect if nothing is under construction |
 | **Wither's Touch** | `LUDDD` | Purple | Nearest enemy lord: party morale −10, clan renown −8 | −1% fertility + 1 day aging per cast |
 

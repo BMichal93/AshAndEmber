@@ -73,8 +73,8 @@ namespace ColoursOfCalradia
                 Flavour="A freezing wave of scholarly force. All before you halt; riders are unseated." },
             new SpellEntry { Name="Grey Harvest",     Combo="UUDDD", School=ColorSchool.Purple,
                 Context=SpellContext.Mission,
-                ShortDesc="Kills one in the cone.",
-                Flavour="The grey settles over one soul in the cone. They simply stop. The body follows the spirit out like a slow tide." },
+                ShortDesc="Kills 1–3 in the cone (scales with Vigor).",
+                Flavour="The grey settles over the weak souls in the cone. They simply stop. The body follows the spirit out like a slow tide." },
 
             // ── SELF (RL prefix) — creates a glowing aura around the caster ─────
             // Note: DD prefix cannot be used — S with empty buffer opens the spellbook.
@@ -96,12 +96,12 @@ namespace ColoursOfCalradia
                 Flavour="You lay hands upon yourself. The wounds knit closed." },
             new SpellEntry { Name="Cerulean Mirror",  Combo="RLULU", School=ColorSchool.Blue,
                 Context=SpellContext.Mission,
-                ShortDesc="Deflects missiles, 12s.",
-                Flavour="Missiles pass through you — three volleys at most, twelve seconds at most. Steel does not." },
+                ShortDesc="Deflects missiles, 18s or 4 volleys.",
+                Flavour="Missiles pass through you — four volleys at most, eighteen seconds at most. Steel does not." },
             new SpellEntry { Name="Grief's Veil",     Combo="RLDDD", School=ColorSchool.Purple,
                 Context=SpellContext.Mission,
-                ShortDesc="Invisible, 12s.",
-                Flavour="The grey folds you from sight for 12 seconds. Nearby enemies lose track of you and pause. You cannot be touched while the veil holds." },
+                ShortDesc="Invisible, 12s. Enemies near you lose nerve.",
+                Flavour="The grey folds you from sight for 12 seconds. Nearby enemies lose track of you and pause. You cannot be touched while the veil holds — but it fades fast." },
 
             // ── CREATE (LR prefix) — special area effect, specific to each colour ─
             new SpellEntry { Name="Cinder Burst",     Combo="LRRRR", School=ColorSchool.Red,
@@ -178,8 +178,8 @@ namespace ColoursOfCalradia
                 Flavour="The Scholar turns the mind's eye outward. All allied and enemy parties within range snap into focus — their leaders, numbers, and directions laid bare." },
             new SpellEntry { Name="Grey Veil",         Combo="ULDDD", School=ColorSchool.Purple,
                 Context=SpellContext.Map,
-                ShortDesc="Hides party, costs renown.",
-                Flavour="The grey hides you — at a price. Nearby enemies lose your trail. Something of your standing bleeds away with it." },
+                ShortDesc="Scatters nearby enemies; costs fertility and age.",
+                Flavour="The grey hides you — at a permanent price. Nearby enemies lose your trail. Something of your future bleeds away with it." },
         };
 
         public static SpellEntry Find(string combo) =>

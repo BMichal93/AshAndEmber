@@ -182,7 +182,7 @@ namespace ColoursOfCalradia
         {
             if (Player == null || Mission.Current == null) return;
             const float Radius = 20f;
-            const float Duration = 18f;
+            const float Duration = 12f;
             // Drain morale of nearby enemies — they falter and lose aggression
             var halted = new HashSet<Formation>();
             foreach (Agent a in Enemies().Where(a => a.Position.Distance(Player.Position) <= Radius).ToList())
@@ -229,12 +229,12 @@ namespace ColoursOfCalradia
                     }
                 });
             }
-            BeginAgentGlow(Player, ColorSchool.Purple, 18f);
+            BeginAgentGlow(Player, ColorSchool.Purple, 12f);
             SpawnTempLight(Player.Position, ColorSchool.Purple, 6f, 1.5f);
             string haltedMsg = halted.Count > 0
                 ? $" {halted.Count} nearby {(halted.Count == 1 ? "formation pauses" : "formations pause")}."
                 : string.Empty;
-            Msg($"Grief's Veil — the purple folds you from sight for 18s.{haltedMsg}", ColorSchool.Purple);
+            Msg($"Grief's Veil — the purple folds you from sight for 12s.{haltedMsg}", ColorSchool.Purple);
         }
     }
 }

@@ -47,7 +47,7 @@ namespace ColoursOfCalradia
             {
                 try
                 {
-                    DamageAgent(a, 65f * power);
+                    DamageAgent(a, 50f * power);
                     BeginAgentGlow(a, ColorSchool.Red, 1.5f);
                     count++;
                 }
