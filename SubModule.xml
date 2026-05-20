@@ -2,7 +2,7 @@
 <Module>
     <Name value="Colours of Calradia"/>
     <Id value="ColoursOfCalradia"/>
-    <Version value="v1.2.0.0.0"/>
+    <Version value="v1.2.0.0"/>
     <SingleplayerModule value="true"/>
     <MultiplayerModule value="false"/>
     <DependedModules>

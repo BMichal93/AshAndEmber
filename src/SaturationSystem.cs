@@ -1,6 +1,6 @@
 // =============================================================================
 // COLOURS OF CALRADIA — SaturationSystem.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0.0
+// Mount & Blade II: Bannerlord Mod  v1.2.0.0
 // =============================================================================
 // The mage absorbs light to split it into colour. Absorbing too much is dangerous.
 //
