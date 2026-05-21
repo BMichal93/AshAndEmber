@@ -36,21 +36,28 @@ namespace ColoursOfCalradia
         // =================================================================
 
         // ── Red — Pillager's Brand ────────────────────────────────────────
-        // During a raid or hideout assault: gain (50 + 100×power) gold.
+        // Curse a random enemy village: reduce hearth by 20%.
         private static void SpellAffectRed()
         {
-            var ev = MapEvent.PlayerMapEvent;
-            if (ev == null || (!ev.IsRaid && !ev.IsHideoutBattle))
+            if (Hero.MainHero == null) return;
+            IFaction playerFaction = Hero.MainHero.MapFaction;
+
+            var candidates = Settlement.All
+                .Where(s => s.IsVillage && s.Village != null
+                         && s.MapFaction != null && s.MapFaction != playerFaction
+                         && (playerFaction == null || playerFaction.IsAtWarWith(s.MapFaction)))
+                .ToList();
+
+            if (candidates.Count == 0)
             {
-                Msg("Pillager's Brand — only usable while raiding a village or clearing a hideout.", ColorSchool.Red);
+                Msg("Pillager's Brand — no enemy villages to curse.", ColorSchool.Red);
                 return;
             }
-            if (Hero.MainHero == null) return;
 
-            float power = SpellPower(ColorSchool.Red);
-            int gold = 50 + (int)(100f * power);
-            try { Hero.MainHero.ChangeHeroGold(gold); } catch { return; }
-            Msg($"Pillager's Brand — the red seizes +{gold} gold from the plunder.", ColorSchool.Red);
+            Settlement village = candidates[_rng.Next(candidates.Count)];
+            float before = village.Village.Hearth;
+            village.Village.Hearth = Math.Max(10f, before * 0.8f);
+            Msg($"Pillager's Brand — fire and ruin reach {village.Name}. Hearth falls from {before:F0} to {village.Village.Hearth:F0}.", ColorSchool.Red);
         }
 
         // ── Orange — Rallying Call ────────────────────────────────────────
@@ -84,10 +91,10 @@ namespace ColoursOfCalradia
             {
                 party.PrisonRoster.AddToCounts(element.Character, -1);
                 party.MemberRoster.AddToCounts(element.Character, 1);
-                party.RecentEventsMorale -= 3f;
+                party.RecentEventsMorale -= 2f;
             }
             catch { return; }
-            Msg($"Press Gang — a {element.Character.Name} is forced into the ranks. Your soldiers are unsettled. Morale −3.", ColorSchool.Yellow);
+            Msg($"Press Gang — a {element.Character.Name} is forced into the ranks. Your soldiers are unsettled. Morale −2.", ColorSchool.Yellow);
         }
 
         // ── Green — Mending Touch ─────────────────────────────────────────

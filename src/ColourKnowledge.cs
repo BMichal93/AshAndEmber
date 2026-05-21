@@ -250,7 +250,7 @@ namespace ColoursOfCalradia
 "  Yellow — Animal Fear: cannot cast from horseback.\n" +
 "  Green  — Pacifist: cannot cast while wielding a weapon.\n" +
 "  Blue   — Scholar's Weight: spells take 5 seconds to wind up in battle.\n" +
-"  Purple — The Slow Unravelling: each Purple (map) cast costs −1% fertility and +1 day of age.\n" +
+"  Purple — The Slow Unravelling: each Purple cast costs −1% fertility and +1 day of age.\n" +
 "\n" +
 "SATURATION\n" +
 "  Each cast gains 0–3 Saturation. Max = hero level + 10, minus any permanent oversaturation reductions (cap 30).\n" +

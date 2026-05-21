@@ -49,6 +49,10 @@ namespace ColoursOfCalradia
         private static readonly Dictionary<string, int> _campaignCooldowns
             = new Dictionary<string, int>();
 
+        // XP reflection for Inspired Word (resolved once, reused across all lord casts)
+        private static MethodInfo _lordXpMethod;
+        private static bool       _lordXpResolved;
+
         // Pending mage announcements — flushed on first daily tick so they're visible to the player
         private static readonly List<(string message, Color color)> _pendingAnnouncements
             = new List<(string, Color)>();
@@ -725,14 +729,35 @@ namespace ColoursOfCalradia
                     case ColorSchool.Red:
                         if (_rng.Next(2) == 0)
                         {
-                            spellName = "Rallying Call";
-                            if (lord.PartyBelongedTo != null)
-                            { lord.PartyBelongedTo.RecentEventsMorale += 10f; msg = $"{lord.Name}'s warband burns with purpose."; }
+                            // Mirror player Invoke Red: wound soldiers in a nearby enemy party
+                            spellName = "Withering Strike";
+                            var target = PickRandom(MobileParty.All.Where(
+                                p => p != lord.PartyBelongedTo && p.IsActive && p.MapFaction != null
+                                     && p.MapFaction != lord.MapFaction && lord.MapFaction != null
+                                     && lord.MapFaction.IsAtWarWith(p.MapFaction)
+                                     && p.MemberRoster.TotalRegulars > p.MemberRoster.TotalWounded));
+                            if (target != null)
+                            {
+                                var troops = target.MemberRoster.GetTroopRoster()
+                                    .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
+                                if (troops.Count > 0)
+                                {
+                                    int wounds = 1 + _rng.Next(3);
+                                    for (int i = 0; i < wounds; i++)
+                                    {
+                                        var e = troops[_rng.Next(troops.Count)];
+                                        try { target.MemberRoster.AddToCounts(e.Character, 0, false, 1); } catch { }
+                                    }
+                                    msg = $"{wounds} soldier{(wounds > 1 ? "s" : "")} in {target.Name} fall wounded.";
+                                }
+                            }
                         }
                         else
                         {
+                            // Mirror player Affect Red: plunder a village
                             spellName = "Pillager's Brand";
-                            var target = PickRandom(Settlement.All.Where(s => s.IsVillage && s.Village != null));
+                            var target = PickRandom(Settlement.All.Where(
+                                s => s.IsVillage && s.Village != null && s.MapFaction != lord.MapFaction));
                             if (target?.Village != null)
                             {
                                 target.Village.Hearth = Math.Max(10f, target.Village.Hearth * 0.8f);
@@ -744,33 +769,31 @@ namespace ColoursOfCalradia
                     case ColorSchool.Orange:
                         if (_rng.Next(2) == 0)
                         {
+                            // Mirror player Affect Orange: morale boost
                             spellName = "Rallying Call";
-                            var ownVillage = PickRandom(Settlement.All
-                                .Where(s => s.IsVillage && s.MapFaction == lord.MapFaction && s.Village != null));
-                            if (ownVillage?.Village != null)
-                            {
-                                ownVillage.Village.Hearth = Math.Min(2000f, ownVillage.Village.Hearth * 1.05f);
-                                msg = $"{ownVillage.Name} flourishes under {lord.Name}'s blessing.";
-                            }
+                            if (lord.PartyBelongedTo != null)
+                            { lord.PartyBelongedTo.RecentEventsMorale += 10f; msg = $"Warmth moves through {lord.Name}'s ranks."; }
                         }
                         else
                         {
+                            // Mirror player Invoke Orange: XP to a random own soldier
                             spellName = "Inspired Word";
-                            var rival = PickRandom(Hero.AllAliveHeroes.Where(
-                                h => h.IsLord && h.MapFaction != lord.MapFaction
-                                     && h.PartyBelongedTo != null && h.IsAlive));
-                            if (rival?.PartyBelongedTo != null && lord.PartyBelongedTo != null)
+                            if (lord.PartyBelongedTo != null)
                             {
-                                int take  = 1 + _rng.Next(2);
-                                var troops = rival.PartyBelongedTo.MemberRoster.GetTroopRoster()
+                                var troops = lord.PartyBelongedTo.MemberRoster.GetTroopRoster()
                                     .Where(e => !e.Character.IsHero && e.Number > 0).ToList();
                                 if (troops.Count > 0)
                                 {
-                                    var troop  = troops[_rng.Next(troops.Count)];
-                                    int actual = Math.Min(take, troop.Number);
-                                    rival.PartyBelongedTo.MemberRoster.RemoveTroop(troop.Character, actual);
-                                    lord.PartyBelongedTo.MemberRoster.AddToCounts(troop.Character, actual);
-                                    msg = $"{actual} soldier{(actual > 1 ? "s" : "")} desert {rival.Name} for {lord.Name}'s generosity.";
+                                    var element = troops[_rng.Next(troops.Count)];
+                                    if (!_lordXpResolved)
+                                    {
+                                        _lordXpResolved = true;
+                                        _lordXpMethod = typeof(TroopRoster).GetMethod("AddXpToTroop",
+                                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                                    }
+                                    if (_lordXpMethod != null)
+                                        try { _lordXpMethod.Invoke(lord.PartyBelongedTo.MemberRoster, new object[] { 200, element.Character }); } catch { }
+                                    msg = $"Inspiration stirs in {element.Character.Name} under {lord.Name}'s command.";
                                 }
                             }
                         }
@@ -779,24 +802,41 @@ namespace ColoursOfCalradia
                     case ColorSchool.Yellow:
                         if (_rng.Next(2) == 0)
                         {
-                            spellName = "Wither's Touch";
-                            var target = PickRandom(Hero.AllAliveHeroes.Where(
-                                h => h.IsLord && h.MapFaction != lord.MapFaction && h.Clan != null && h.IsAlive));
-                            if (target?.Clan != null)
+                            // Mirror player Affect Yellow: conscript a prisoner from an enemy party
+                            spellName = "Press Gang";
+                            var target = PickRandom(MobileParty.All.Where(
+                                p => p != lord.PartyBelongedTo && p.IsActive
+                                     && p.MapFaction != null && p.MapFaction != lord.MapFaction
+                                     && p.PrisonRoster.TotalRegulars > 0));
+                            if (target != null && lord.PartyBelongedTo != null)
                             {
-                                try { target.Clan.AddRenown(-10f); } catch { }
-                                msg = $"{target.Name}'s name grows quieter — {lord.Name}'s power reaches far.";
+                                var prisoners = target.PrisonRoster.GetTroopRoster()
+                                    .Where(e => !e.Character.IsHero && e.Number > 0).ToList();
+                                if (prisoners.Count > 0)
+                                {
+                                    var element = prisoners[_rng.Next(prisoners.Count)];
+                                    int count = Math.Min(1 + _rng.Next(2), element.Number);
+                                    try
+                                    {
+                                        target.PrisonRoster.AddToCounts(element.Character, -count);
+                                        lord.PartyBelongedTo.MemberRoster.AddToCounts(element.Character, count);
+                                    }
+                                    catch { }
+                                    msg = $"{count} {element.Character.Name}{(count > 1 ? "s" : "")} are coerced from {target.Name} into {lord.Name}'s service.";
+                                }
                             }
                         }
                         else
                         {
+                            // Mirror player Invoke Yellow: enemy party loses morale
                             spellName = "Creeping Fear";
-                            var target = PickRandom(Hero.AllAliveHeroes.Where(
-                                h => h.IsLord && h.MapFaction != lord.MapFaction
-                                     && h.PartyBelongedTo != null && h.IsAlive));
-                            if (target?.PartyBelongedTo != null)
+                            var target = PickRandom(MobileParty.All.Where(
+                                p => p != lord.PartyBelongedTo && p.IsActive && p.MapFaction != null
+                                     && p.MapFaction != lord.MapFaction && lord.MapFaction != null
+                                     && lord.MapFaction.IsAtWarWith(p.MapFaction)));
+                            if (target != null)
                             {
-                                target.PartyBelongedTo.RecentEventsMorale -= 15f;
+                                try { target.RecentEventsMorale -= 15f; } catch { }
                                 msg = $"Fear settles over {target.Name}'s ranks — {lord.Name} breathes terror into the world.";
                             }
                         }
@@ -805,6 +845,7 @@ namespace ColoursOfCalradia
                     case ColorSchool.Green:
                         if (_rng.Next(2) == 0)
                         {
+                            // Mirror player Affect Green: heal wounded in own party
                             spellName = "Mending Touch";
                             if (lord.PartyBelongedTo != null)
                             {
@@ -819,6 +860,7 @@ namespace ColoursOfCalradia
                         }
                         else
                         {
+                            // Mirror player Invoke Green: add grain to own party
                             spellName = "Green's Bounty";
                             if (lord.PartyBelongedTo != null)
                             {
@@ -832,6 +874,7 @@ namespace ColoursOfCalradia
                     case ColorSchool.Blue:
                         if (_rng.Next(2) == 0)
                         {
+                            // Mirror player Invoke Blue: own clan gains influence
                             spellName = "Scholar's Word";
                             if (lord.Clan != null)
                             {
@@ -841,7 +884,8 @@ namespace ColoursOfCalradia
                         }
                         else
                         {
-                            spellName = "Scholar's Word";
+                            // Negative mirror: enemy clan loses influence
+                            spellName = "Scholar's Scheme";
                             var target = PickRandom(Hero.AllAliveHeroes.Where(
                                 h => h.IsLord && h.MapFaction != lord.MapFaction && h.Clan != null && h.IsAlive));
                             if (target?.Clan != null)
@@ -855,6 +899,7 @@ namespace ColoursOfCalradia
                     case ColorSchool.Purple:
                         if (_rng.Next(2) == 0)
                         {
+                            // Mirror player Invoke Purple: enemy lord loses renown + morale
                             spellName = "Wither's Touch";
                             var target = PickRandom(Hero.AllAliveHeroes.Where(
                                 h => h.IsLord && h.MapFaction != lord.MapFaction
@@ -868,15 +913,25 @@ namespace ColoursOfCalradia
                         }
                         else
                         {
-                            spellName = "Press Gang";
+                            // Mirror player Affect Purple: scatter nearby enemy parties
+                            spellName = "Grey Veil";
                             if (lord.PartyBelongedTo != null)
                             {
-                                CharacterObject recruit = GetFactionRecruit(lord);
-                                if (recruit != null)
+                                Vec2 lordPos = lord.PartyBelongedTo.GetPosition2D;
+                                int scattered = 0;
+                                foreach (MobileParty p in MobileParty.All.ToList())
                                 {
-                                    lord.PartyBelongedTo.MemberRoster.AddToCounts(recruit, 10);
-                                    msg = $"10 soldiers are bound to {lord.Name}'s will.";
+                                    if (p == lord.PartyBelongedTo || !p.IsActive) continue;
+                                    if (p.MapFaction == null || p.MapFaction == lord.MapFaction) continue;
+                                    if (lord.MapFaction != null && !lord.MapFaction.IsAtWarWith(p.MapFaction)) continue;
+                                    if ((p.GetPosition2D - lordPos).Length > 15f) continue;
+                                    Vec2 away = p.GetPosition2D - lordPos;
+                                    if (away.Length < 0.01f) away = new Vec2(1f, 0f); else away = away.Normalized();
+                                    Vec2 dest = p.GetPosition2D + away * 10f;
+                                    try { p.SetMoveGoToPoint(new CampaignVec2(dest, true), MobileParty.NavigationType.Default); scattered++; } catch { }
                                 }
+                                if (scattered > 0)
+                                    msg = $"{lord.Name} vanishes from their pursuers. {scattered} {(scattered == 1 ? "party" : "parties")} scatter.";
                             }
                         }
                         break;
@@ -889,16 +944,6 @@ namespace ColoursOfCalradia
             InformationManager.DisplayMessage(new InformationMessage(
                 $"✦ {lord.Name} channels {spellName} ({ColorSchoolData.Info[school].Name}). {msg} ✦",
                 ColorSchoolData.GetMessageColor(school)));
-        }
-
-        private static CharacterObject GetFactionRecruit(Hero lord)
-        {
-            string culture = (lord.MapFaction as Kingdom)?.Culture?.StringId ?? "";
-            CharacterObject r = null;
-            foreach (CharacterObject c in CharacterObject.All)
-                if (!c.IsHero && c.Tier == 1 && c.Culture?.StringId == culture)
-                { r = c; break; }
-            return r;
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────
