@@ -69,12 +69,11 @@ namespace ColoursOfCalradia
             if (_playerMaxSaturation <= 0) return;
 
             int gain = _rng.Next(0, 4); // 0, 1, 2, or 3
-            if (gain == 0) return;
-
             _playerSaturation = Math.Min(_playerSaturation + gain, _playerMaxSaturation);
 
+            string gainStr = gain > 0 ? $" (+{gain})" : "";
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Saturation: {_playerSaturation}/{_playerMaxSaturation} (+{gain})",
+                $"Saturation: {_playerSaturation}/{_playerMaxSaturation}{gainStr}",
                 new Color(0.6f, 0.4f, 0.9f)));
 
             if (_playerSaturation >= _playerMaxSaturation)

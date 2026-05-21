@@ -264,7 +264,9 @@ namespace ColoursOfCalradia
                 return;
             }
 
-            bool success = SpellEffects.Execute(combo);
+            bool success;
+            try { success = SpellEffects.Execute(combo); }
+            catch { success = true; } // spell threw internally — cast was attempted
 
             // Visual: caster glow + charge animation + sound
             if (inMission && Agent.Main != null)
