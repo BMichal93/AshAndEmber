@@ -222,6 +222,7 @@ namespace ColoursOfCalradia
 
         // ── Red — Withering Strike ────────────────────────────────────────
         // Wound one random non-hero soldier in the nearest enemy party at war.
+        // Prefers kingdom enemies over bandits/looters when the player is in a kingdom.
         private static void SpellInvokeRed()
         {
             if (Hero.MainHero == null || MobileParty.MainParty == null) return;
@@ -231,13 +232,30 @@ namespace ColoursOfCalradia
 
             MobileParty target = null;
             float minDist = float.MaxValue;
-            foreach (MobileParty p in MobileParty.All)
+
+            if (Hero.MainHero.Clan?.Kingdom != null)
             {
-                if (p == MobileParty.MainParty || !p.IsActive) continue;
-                if (p.MapFaction == null || p.MapFaction == playerFaction) continue;
-                if (playerFaction != null && !playerFaction.IsAtWarWith(p.MapFaction)) continue;
-                float d = (p.GetPosition2D - playerPos).Length;
-                if (d < minDist) { minDist = d; target = p; }
+                foreach (MobileParty p in MobileParty.All)
+                {
+                    if (p == MobileParty.MainParty || !p.IsActive) continue;
+                    if (p.MapFaction == null || p.MapFaction == playerFaction) continue;
+                    if (playerFaction != null && !playerFaction.IsAtWarWith(p.MapFaction)) continue;
+                    if (!(p.MapFaction is Kingdom)) continue;
+                    float d = (p.GetPosition2D - playerPos).Length;
+                    if (d < minDist) { minDist = d; target = p; }
+                }
+            }
+
+            if (target == null)
+            {
+                foreach (MobileParty p in MobileParty.All)
+                {
+                    if (p == MobileParty.MainParty || !p.IsActive) continue;
+                    if (p.MapFaction == null || p.MapFaction == playerFaction) continue;
+                    if (playerFaction != null && !playerFaction.IsAtWarWith(p.MapFaction)) continue;
+                    float d = (p.GetPosition2D - playerPos).Length;
+                    if (d < minDist) { minDist = d; target = p; }
+                }
             }
 
             if (target == null) { Msg("Withering Strike — no enemy party at war found.", ColorSchool.Red); return; }
@@ -290,6 +308,7 @@ namespace ColoursOfCalradia
 
         // ── Yellow — Creeping Fear ────────────────────────────────────────
         // The nearest enemy party at war loses 3 morale.
+        // Prefers kingdom enemies over bandits/looters when the player is in a kingdom.
         private static void SpellInvokeYellow()
         {
             if (Hero.MainHero == null || MobileParty.MainParty == null) return;
@@ -299,13 +318,30 @@ namespace ColoursOfCalradia
 
             MobileParty target = null;
             float minDist = float.MaxValue;
-            foreach (MobileParty p in MobileParty.All)
+
+            if (Hero.MainHero.Clan?.Kingdom != null)
             {
-                if (p == MobileParty.MainParty || !p.IsActive) continue;
-                if (p.MapFaction == null || p.MapFaction == playerFaction) continue;
-                if (playerFaction != null && !playerFaction.IsAtWarWith(p.MapFaction)) continue;
-                float d = (p.GetPosition2D - playerPos).Length;
-                if (d < minDist) { minDist = d; target = p; }
+                foreach (MobileParty p in MobileParty.All)
+                {
+                    if (p == MobileParty.MainParty || !p.IsActive) continue;
+                    if (p.MapFaction == null || p.MapFaction == playerFaction) continue;
+                    if (playerFaction != null && !playerFaction.IsAtWarWith(p.MapFaction)) continue;
+                    if (!(p.MapFaction is Kingdom)) continue;
+                    float d = (p.GetPosition2D - playerPos).Length;
+                    if (d < minDist) { minDist = d; target = p; }
+                }
+            }
+
+            if (target == null)
+            {
+                foreach (MobileParty p in MobileParty.All)
+                {
+                    if (p == MobileParty.MainParty || !p.IsActive) continue;
+                    if (p.MapFaction == null || p.MapFaction == playerFaction) continue;
+                    if (playerFaction != null && !playerFaction.IsAtWarWith(p.MapFaction)) continue;
+                    float d = (p.GetPosition2D - playerPos).Length;
+                    if (d < minDist) { minDist = d; target = p; }
+                }
             }
 
             if (target == null) { Msg("Creeping Fear — no enemy party at war found.", ColorSchool.Yellow); return; }
