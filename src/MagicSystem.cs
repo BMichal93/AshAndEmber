@@ -79,22 +79,6 @@ namespace ColoursOfCalradia
             SpellEffects.TickHaltedAgents(dt);
             SpellEffects.TickRandomUnitMagic(dt);
             SaturationSystem.TickKnockdown(dt);
-
-            // Blue delay: fire queued spell when timer expires
-            string readyBlue = SpellEffects.TickBlueDelay(dt);
-            if (readyBlue != null)
-            {
-                SpellEntry blueSpell = SpellDatabase.Find(readyBlue);
-                if (blueSpell != null)
-                {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"[Blue — {blueSpell.Name}] The stillness releases.",
-                        ColorSchoolData.GetMessageColor(ColorSchool.Blue)));
-                    SpellEffects.Execute(readyBlue);
-                    if (Agent.Main != null) SpellEffects.CastGlow(Agent.Main, ColorSchool.Blue);
-                    SaturationSystem.GainSaturation();
-                }
-            }
         }
 
         private void TryRegisterOrderHook()

@@ -40,7 +40,7 @@ namespace ColoursOfCalradia
 
         // Form prefixes that can be released early to trigger a random known spell of that form
         private static readonly HashSet<string> _formPrefixes =
-            new HashSet<string> { "UU", "RL", "LR", "UL", "LU" };
+            new HashSet<string> { "UU", "RL", "LR", "UL", "LU", "UR" };
 
         public static bool InputSuppressed { get; private set; }
 
@@ -53,7 +53,7 @@ namespace ColoursOfCalradia
             // OS level, so both can be true simultaneously when using a controller. Checking
             // the controller key first and excluding it from the keyboard path prevents face
             // buttons (Y→W, X→A, A→S) from bleeding into the spell buffer.
-            bool focusingPad = Input.IsKeyDown(InputKey.ControllerLTrigger);
+            bool focusingPad = Input.IsKeyDown(InputKey.ControllerLBumper);
             bool focusingKb  = Input.IsKeyDown(InputKey.LeftAlt) && !focusingPad;
             bool focusing    = focusingKb || focusingPad;
 
@@ -169,8 +169,8 @@ namespace ColoursOfCalradia
             }
 
 
-            // Green — Pacifist: no weapon in hand
-            if (spell.School == ColorSchool.Green && inMission && Agent.Main != null)
+            // Blue — Scholar's Craft: no weapon in hand
+            if (spell.School == ColorSchool.Blue && inMission && Agent.Main != null)
             {
                 try
                 {
@@ -180,7 +180,21 @@ namespace ColoursOfCalradia
                         wielded.CurrentUsageItem?.IsShield != true;
                     if (hasWeapon)
                     {
-                        Fizzle("Pacifist: Sheathe your weapon before casting Green magic.");
+                        Fizzle("Scholar's Craft: Sheathe your weapon before casting Blue magic.");
+                        return;
+                    }
+                }
+                catch { }
+            }
+
+            // Green — Nature's Calling: cannot cast inside settlements (campaign map only)
+            if (spell.School == ColorSchool.Green && !inMission)
+            {
+                try
+                {
+                    if (Settlement.CurrentSettlement != null)
+                    {
+                        Fizzle("Nature's Calling: Green magic will not flow within settlement walls — step outside.");
                         return;
                     }
                 }
@@ -254,15 +268,6 @@ namespace ColoursOfCalradia
             InformationManager.DisplayMessage(new InformationMessage(
                 $"[{ColorSchoolData.Info[spell.School].Name} — {spell.Name}]  {spell.Flavour}",
                 ColorSchoolData.GetMessageColor(spell.School)));
-
-            // Blue — Scholar's Weight: 5-second delay in battle; queue and return
-            // Saturation gained in MagicSystem when spell actually fires, not here
-            if (spell.School == ColorSchool.Blue && inMission)
-            {
-                SpellEffects.BeginBlueDelay(combo);
-                ColourKnowledge.RecordCast(spell.School);
-                return;
-            }
 
             bool success;
             try { success = SpellEffects.Execute(combo); }
@@ -348,6 +353,7 @@ namespace ColoursOfCalradia
                 case "LR": return "Create";
                 case "UL": return "Affect";
                 case "LU": return "Invoke";
+                case "UR": return "Commune";
                 default:   return prefix;
             }
         }

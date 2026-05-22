@@ -78,19 +78,19 @@ namespace ColoursOfCalradia
             {
                 Name             = "Green",
                 FlavorText       = "Gentle Burden — Kind, mending magic of life and restoration. Green mages sustain their companions through battle. " +
-                                   "Their pacifist heart cannot act while holding a blade — violence and the living current cannot coexist in the same hands.",
+                                   "The green flows from open sky and living earth; stone walls and city streets choke it. Step beyond the walls before calling on it.",
                 PersonalityEffect= "Repeated casting increases your Mercy — slow to strike, quick to spare.",
-                LimitationA      = "Pacifist: You cannot use Green magic while wielding a weapon — sheathe your blade before the green will answer.",
+                LimitationA      = "Nature's Calling: You cannot cast Green campaign magic inside settlements — not in cities, castles, or villages. The colour requires open sky and living earth.",
                 LimitationB      = "",
                 AttributePenalty = "-1 Control"
             },
             [ColorSchool.Blue] = new SchoolInfo
             {
                 Name             = "Blue",
-                FlavorText       = "Scholar's Weight — Cold, distanced magic of order and stillness. Blue mages freeze formations and conjure spectral shields. " +
-                                   "But stillness demands time — the spell settles into the caster's limbs before it reaches the world, and those 5 seconds feel like an age.",
+                FlavorText       = "The Scholar's Craft — Cold, precise magic of clarity and form. Blue mages freeze formations and conjure spectral barriers. " +
+                                   "The art demands empty hands: a mind armed with a blade cannot hold the delicate geometry of the colour. Lay down your weapon, and the blue may answer.",
                 PersonalityEffect= "Repeated casting increases your Calculating trait — measured, deliberate, distant.",
-                LimitationA      = "Scholar's Weight: Blue spells take 5 seconds to wind up in battle — magic stiffens your limbs to a standstill before it releases.",
+                LimitationA      = "Scholar's Craft: Cannot cast Blue magic in battle while wielding a weapon — the colour requires empty hands and a focused mind.",
                 LimitationB      = "",
                 AttributePenalty = "-1 Vigor"
             },

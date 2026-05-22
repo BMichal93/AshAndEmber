@@ -27,8 +27,9 @@ namespace ColoursOfCalradia
     // =========================================================================
     // 10. COLOUR LORD AI
     //     Finds hero agents with colour schools and has them cast spells in battle.
-    //     NPC limitations: Green → no weapon, Yellow → no horseback,
-    //     Orange → party morale ≥ 45.
+    //     NPC limitations: Blue → no weapon (Scholar's Craft), Yellow → no horseback,
+    //     Orange → party morale ≥ 45. Green has no battle limitation (Nature's Calling
+    //     is campaign-map only: cannot cast inside settlements).
     //     5% chance of 3s interruption after each cast (non-Blight, non-Prism lords).
     //     Impulsive lords cast more often; Calculating lords less often.
     // =========================================================================
@@ -87,10 +88,6 @@ namespace ColoursOfCalradia
                 var colors = ColourLordRegistry.GetColors(hero);
                 if (colors.Count == 0) continue;
 
-                // Green lords fight unarmed — sheathe weapon every tick so CanUseGreen passes
-                if (colors.Contains(ColorSchool.Green))
-                    TrySheathWeapon(agent);
-
                 // Prism lord casts randomly and very often
                 if (ColourLordRegistry.IsPrismLord(hero))
                 {
@@ -109,7 +106,7 @@ namespace ColoursOfCalradia
             float hpPct = agent.Health / Math.Max(agent.HealthLimit, 1f);
 
             // Self-heal with Green (Verdant Touch) when badly hurt
-            if (hpPct < 0.35f && colors.Contains(ColorSchool.Green) && CanUseGreen(agent))
+            if (hpPct < 0.35f && colors.Contains(ColorSchool.Green))
             {
                 float greenPower = SpellEffects.SpellPower(ColorSchool.Green, hero);
                 CastWithGlow(agent, hero, ColorSchool.Green, "Verdant Touch", () =>
@@ -160,7 +157,7 @@ namespace ColoursOfCalradia
                 }
             }
 
-            // Cone enemies — Crimson Torrent (Red) or Azure Arrest (Blue)
+            // Cone enemies — Crimson Torrent (Red) or Azure Arrest (Blue, requires no weapon)
             int coneEnemies = CountEnemiesInCone(agent, 15f, 0.6f);
             if (coneEnemies >= 2)
             {
@@ -182,7 +179,7 @@ namespace ColoursOfCalradia
                     ApplyRedA1(agent); ApplyRedA2(agent);
                     return;
                 }
-                if (colors.Contains(ColorSchool.Blue))
+                if (colors.Contains(ColorSchool.Blue) && CanUseBlue(agent))
                 {
                     CastWithGlow(agent, hero, ColorSchool.Blue, "Azure Arrest", () =>
                     {
@@ -203,8 +200,8 @@ namespace ColoursOfCalradia
                 }
             }
 
-            // Ally support — Verdant Surge (Green) cone heal
-            if (colors.Contains(ColorSchool.Green) && CanUseGreen(agent))
+            // Ally support — Verdant Surge (Green) cone heal (no battle limitation)
+            if (colors.Contains(ColorSchool.Green))
             {
                 bool allyHurt = AlliesOf(agent).Any(a => a.Health < a.HealthLimit * 0.6f &&
                                                     a.Position.Distance(agent.Position) <= 15f);
@@ -328,7 +325,7 @@ namespace ColoursOfCalradia
                     });
                     break;
                 }
-                case ColorSchool.Green when CanUseGreen(agent):
+                case ColorSchool.Green:
                 {
                     float greenPower = SpellEffects.SpellPower(ColorSchool.Green, hero);
                     CastWithGlow(agent, hero, ColorSchool.Green, "Verdant Surge", () =>
@@ -344,7 +341,7 @@ namespace ColoursOfCalradia
                     });
                     break;
                 }
-                case ColorSchool.Blue:
+                case ColorSchool.Blue when CanUseBlue(agent):
                     CastWithGlow(agent, hero, ColorSchool.Blue, "Azure Arrest", () =>
                     {
                         foreach (Agent a in EnemiesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 30f).ToList())
@@ -504,10 +501,17 @@ namespace ColoursOfCalradia
             return !SpellEffects.RollDimFizzle(); // 33 % fizzle for Dim or Dark-with-affinity
         }
 
-        private static bool CanUseGreen(Agent agent)
+        private static bool CanUseBlue(Agent agent)
         {
-            if (agent == null) return false;
-            try { return agent.WieldedWeapon.IsEmpty || agent.WieldedWeapon.CurrentUsageItem?.IsShield == true; }
+            if (agent == null) return true;
+            try
+            {
+                var wielded = agent.WieldedWeapon;
+                if (wielded.IsEmpty) return true;
+                if (wielded.CurrentUsageItem?.IsShield == true) return true;
+                if (wielded.CurrentUsageItem?.WeaponClass == WeaponClass.Boulder) return true;
+                return false;
+            }
             catch { return true; }
         }
 
@@ -522,17 +526,6 @@ namespace ColoursOfCalradia
         {
             try { return (hero?.PartyBelongedTo?.RecentEventsMorale ?? 100f) >= 45f; }
             catch { return true; }
-        }
-
-        private static void TrySheathWeapon(Agent agent)
-        {
-            try
-            {
-                if (agent.WieldedWeapon.IsEmpty || agent.WieldedWeapon.CurrentUsageItem?.IsShield == true) return;
-                agent.TryToSheathWeaponInHand(Agent.HandIndex.MainHand,
-                    Agent.WeaponWieldActionType.WithAnimationUninterruptible);
-            }
-            catch { }
         }
 
         // ── Post-cast limitation side effects ─────────────────────────────────

@@ -36,7 +36,7 @@ namespace ColoursOfCalradia
         // =================================================================
 
         // ── Red — Pillager's Brand ────────────────────────────────────────
-        // Curse a random enemy village: reduce hearth by 20%.
+        // Curse a random enemy village: reduce hearth by 10%.
         private static void SpellAffectRed()
         {
             if (Hero.MainHero == null) return;
@@ -56,8 +56,8 @@ namespace ColoursOfCalradia
 
             Settlement village = candidates[_rng.Next(candidates.Count)];
             float before = village.Village.Hearth;
-            village.Village.Hearth = Math.Max(10f, before * 0.8f);
-            Msg($"Pillager's Brand — fire and ruin reach {village.Name}. Hearth falls from {before:F0} to {village.Village.Hearth:F0}.", ColorSchool.Red);
+            village.Village.Hearth = Math.Max(10f, before * 0.9f);
+            Msg($"Pillager's Brand — the red reaches {village.Name}. Hearth falls from {before:F0} to {village.Village.Hearth:F0}.", ColorSchool.Red);
         }
 
         // ── Orange — Rallying Call ────────────────────────────────────────
@@ -67,8 +67,8 @@ namespace ColoursOfCalradia
             var party = MobileParty.MainParty;
             if (party == null) return;
 
-            try { party.RecentEventsMorale += 3f; } catch { return; }
-            Msg("Rallying Call — your soldiers find new resolve. Morale +3.", ColorSchool.Orange);
+            try { party.RecentEventsMorale += 2f; } catch { return; }
+            Msg("Rallying Call — your soldiers find new resolve. Morale +2.", ColorSchool.Orange);
         }
 
         // ── Yellow — Press Gang ───────────────────────────────────────────
@@ -98,7 +98,7 @@ namespace ColoursOfCalradia
         }
 
         // ── Green — Mending Touch ─────────────────────────────────────────
-        // Heal one random wounded soldier to full (1 troop removed from wounded).
+        // 50% chance to heal one random wounded soldier.
         private static void SpellAffectGreen()
         {
             var party = MobileParty.MainParty;
@@ -113,77 +113,34 @@ namespace ColoursOfCalradia
             }
 
             var element = wounded[_rng.Next(wounded.Count)];
+            if (_rng.Next(2) == 0)
+            {
+                Msg($"Mending Touch — the green reaches {element.Character.Name} but cannot fully close the wound.", ColorSchool.Green);
+                return;
+            }
             try { party.MemberRoster.AddToCounts(element.Character, 0, false, -1); } catch { return; }
-            Msg($"Mending Touch — one {element.Character.Name} is restored to full health.", ColorSchool.Green);
+            Msg($"Mending Touch — one {element.Character.Name} is mended.", ColorSchool.Green);
         }
 
-        // ── Blue — Scholar's Blueprint ────────────────────────────────────
-        // Requires an active siege. Advances construction of siege engines via
-        // field reflection (construction float fields on SiegeEngines / BesiegerCamp).
+        // ── Blue — Philosopher's Stone ────────────────────────────────────
+        // Generate gold per cast (scaled by Blue spell power); caster becomes 1 day younger (min age 22).
         private static void SpellAffectBlue()
         {
-            if (Hero.MainHero == null || MobileParty.MainParty == null) return;
-
-            Settlement besieged = MobileParty.MainParty.BesiegedSettlement;
-            if (besieged == null)
-            {
-                Msg("Scholar's Blueprint — you must be conducting a siege to accelerate construction.", ColorSchool.Blue);
-                return;
-            }
+            if (Hero.MainHero == null) return;
 
             float power = SpellPower(ColorSchool.Blue);
-            float bonus = 150f * power;
+            int gold = (int)(50f * power);
+            try { Hero.MainHero.ChangeHeroGold(gold); } catch { }
 
-            bool advanced = false;
-            try
+            if (Hero.MainHero.Age > 22f)
             {
-                var siege   = besieged.SiegeEvent;
-                var camp    = siege?.BesiegerCamp;
-                var engines = camp?.SiegeEngines;
-
-                string[] keywords = { "work", "progress", "construct", "stage", "build" };
-                const float MaxSane = 50000f;
-
-                foreach (object target in new object[] { engines, camp })
-                {
-                    if (target == null) continue;
-                    foreach (FieldInfo fi in target.GetType().GetFields(
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-                    {
-                        if (fi.FieldType != typeof(float) && fi.FieldType != typeof(double)) continue;
-                        string nm = fi.Name.ToLowerInvariant();
-                        bool relevant = false;
-                        foreach (string kw in keywords) if (nm.Contains(kw)) { relevant = true; break; }
-                        if (!relevant) continue;
-                        try
-                        {
-                            if (fi.FieldType == typeof(float))
-                            {
-                                float cur = (float)fi.GetValue(target);
-                                if (cur < 0f || cur > MaxSane) continue;
-                                fi.SetValue(target, cur + bonus);
-                            }
-                            else
-                            {
-                                double cur = (double)fi.GetValue(target);
-                                if (cur < 0.0 || cur > MaxSane) continue;
-                                fi.SetValue(target, cur + bonus);
-                            }
-                            advanced = true;
-                        }
-                        catch { }
-                    }
-                }
+                Hero.MainHero.SetBirthDay(Hero.MainHero.BirthDay + CampaignTime.Days(1));
+                Msg($"Philosopher's Stone — gold flows: +{gold}. Time ebbs. | Age: {(int)Hero.MainHero.Age}", ColorSchool.Blue);
             }
-            catch { }
-
-            if (!advanced)
+            else
             {
-                Msg("Scholar's Blueprint — the diagrams find no machines under construction.", ColorSchool.Blue);
-                return;
+                Msg($"Philosopher's Stone — gold flows: +{gold}. Already at the minimum age.", ColorSchool.Blue);
             }
-
-            Msg($"Scholar's Blueprint — construction progress +{(int)bonus}.", ColorSchool.Blue);
         }
 
         // ── Purple — Grey Veil ────────────────────────────────────────────
@@ -346,25 +303,36 @@ namespace ColoursOfCalradia
 
             if (target == null) { Msg("Creeping Fear — no enemy party at war found.", ColorSchool.Yellow); return; }
 
-            try { target.RecentEventsMorale -= 3f; } catch { return; }
-            Msg($"Creeping Fear — {target.Name} loses 3 morale ({minDist:F1} km).", ColorSchool.Yellow);
+            try { target.RecentEventsMorale -= 2f; } catch { return; }
+            Msg($"Creeping Fear — {target.Name} loses 2 morale ({minDist:F1} km).", ColorSchool.Yellow);
         }
 
         // ── Green — Green's Bounty ────────────────────────────────────────
-        // Add 1 grain to the party.
+        // 80% grain, 10% sheep, 10% cow.
         private static void SpellInvokeGreen()
         {
             var party = MobileParty.MainParty;
             if (party == null) return;
 
+            int roll = _rng.Next(10);
+            string itemId, itemName;
+            if      (roll < 8) { itemId = "grain"; itemName = "1 unit of grain"; }
+            else if (roll < 9) { itemId = "sheep"; itemName = "a sheep"; }
+            else               { itemId = "cow";   itemName = "a cow"; }
+
             try
             {
-                ItemObject grain = Game.Current.ObjectManager.GetObject<ItemObject>("grain");
-                if (grain == null) { Msg("Green's Bounty — the green stirs, but nothing takes form.", ColorSchool.Green); return; }
-                party.ItemRoster.AddToCounts(new EquipmentElement(grain), 1);
+                ItemObject item = Game.Current.ObjectManager.GetObject<ItemObject>(itemId);
+                if (item == null)
+                {
+                    item = Game.Current.ObjectManager.GetObject<ItemObject>("grain");
+                    if (item == null) { Msg("Green's Bounty — the green stirs, but nothing takes form.", ColorSchool.Green); return; }
+                    itemName = "1 unit of grain";
+                }
+                party.ItemRoster.AddToCounts(new EquipmentElement(item), 1);
             }
             catch { Msg("Green's Bounty — the green stirs, but nothing takes form.", ColorSchool.Green); return; }
-            Msg("Green's Bounty — 1 unit of grain ripens at your touch.", ColorSchool.Green);
+            Msg($"Green's Bounty — {itemName} ripens at your touch.", ColorSchool.Green);
         }
 
         // ── Blue — Scholar's Word ─────────────────────────────────────────
@@ -399,6 +367,146 @@ namespace ColoursOfCalradia
             try { target.Clan.AddRenown(-2f); } catch { return; }
 
             Msg($"Wither's Touch — {target.Name}'s clan loses 2 renown.", ColorSchool.Purple);
+        }
+
+        // =================================================================
+        // COMMUNE SPELLS (UR prefix) — campaign map only, ambient effects
+        // =================================================================
+
+        // ── Red — Crimson Tithe ───────────────────────────────────────────
+        // Sacrifice a soldier for skill XP. Party morale −1.
+        private static void SpellCommuneRed()
+        {
+            var party = MobileParty.MainParty;
+            if (party == null || Hero.MainHero == null) return;
+
+            var troops = party.MemberRoster.GetTroopRoster()
+                .Where(e => !e.Character.IsHero && e.Number > 0).ToList();
+            if (troops.Count == 0) { Msg("Crimson Tithe — no soldiers to sacrifice.", ColorSchool.Red); return; }
+
+            var element = troops[_rng.Next(troops.Count)];
+            try { party.MemberRoster.AddToCounts(element.Character, -1); } catch { return; }
+            try { party.RecentEventsMorale -= 1f; } catch { }
+
+            var skills = new[]
+            {
+                DefaultSkills.OneHanded, DefaultSkills.TwoHanded, DefaultSkills.Polearm,
+                DefaultSkills.Bow, DefaultSkills.Crossbow, DefaultSkills.Throwing,
+                DefaultSkills.Riding, DefaultSkills.Athletics, DefaultSkills.Tactics, DefaultSkills.Leadership
+            };
+            SkillObject chosenSkill = skills[_rng.Next(skills.Length)];
+            float power = SpellPower(ColorSchool.Red);
+            int xp = (int)(200f * power);
+            try { Hero.MainHero.HeroDeveloper.AddSkillXp(chosenSkill, xp); } catch { }
+            Msg($"Crimson Tithe — a {element.Character.Name} is spent. {chosenSkill.Name} +{xp} XP. Morale −1.", ColorSchool.Red);
+        }
+
+        // ── Orange — Good Word ────────────────────────────────────────────
+        // Improve relations with a random lord or notable by +1.
+        private static void SpellCommuneOrange()
+        {
+            if (Hero.MainHero == null) return;
+
+            var candidates = new List<Hero>();
+            candidates.AddRange(Hero.AllAliveHeroes
+                .Where(h => h.IsLord && h != Hero.MainHero && h.IsAlive && h.Clan != null));
+            candidates.AddRange(Hero.AllAliveHeroes
+                .Where(h => h.IsNotable && h != Hero.MainHero && h.IsAlive));
+
+            if (candidates.Count == 0) { Msg("Good Word — no one to speak well of you.", ColorSchool.Orange); return; }
+
+            Hero target = candidates[_rng.Next(candidates.Count)];
+            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, target, 1, false); } catch { return; }
+            Msg($"Good Word — your warmth reaches {target.Name}. Relations +1.", ColorSchool.Orange);
+        }
+
+        // ── Yellow — Sow Doubt ────────────────────────────────────────────
+        // Enemy settlement loyalty −10.
+        private static void SpellCommuneYellow()
+        {
+            if (Hero.MainHero == null) return;
+
+            IFaction playerFaction = Hero.MainHero.MapFaction;
+            var candidates = Settlement.All
+                .Where(s => s.IsTown && s.Town != null
+                         && s.MapFaction != null && s.MapFaction != playerFaction)
+                .ToList();
+
+            if (candidates.Count == 0) { Msg("Sow Doubt — no enemy towns to unsettle.", ColorSchool.Yellow); return; }
+
+            Settlement target = candidates[_rng.Next(candidates.Count)];
+            float before = target.Town.Loyalty;
+            try { target.Town.Loyalty = Math.Max(0f, before - 10f); } catch { return; }
+            Msg($"Sow Doubt — unease spreads through {target.Name}. Loyalty falls from {before:F0} to {target.Town.Loyalty:F0}.", ColorSchool.Yellow);
+        }
+
+        // ── Green — Verdant Bond ──────────────────────────────────────────
+        // Friendly village hearth +20.
+        private static void SpellCommuneGreen()
+        {
+            if (Hero.MainHero == null) return;
+
+            IFaction playerFaction = Hero.MainHero.MapFaction;
+            var candidates = Settlement.All
+                .Where(s => s.IsVillage && s.Village != null
+                         && (s.MapFaction == playerFaction || s.OwnerClan == Hero.MainHero.Clan))
+                .ToList();
+
+            if (candidates.Count == 0) { Msg("Verdant Bond — no friendly villages to bless.", ColorSchool.Green); return; }
+
+            Settlement target = candidates[_rng.Next(candidates.Count)];
+            float before = target.Village.Hearth;
+            target.Village.Hearth += 20f;
+            Msg($"Verdant Bond — the green breathes into {target.Name}. Hearth {before:F0} → {target.Village.Hearth:F0}.", ColorSchool.Green);
+        }
+
+        // ── Blue — Arcane Sight ───────────────────────────────────────────
+        // List the 10 nearest colour lords and their distances.
+        private static void SpellCommuneBlue()
+        {
+            if (Hero.MainHero == null || MobileParty.MainParty == null) return;
+
+            Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
+
+            var colourLords = ColourLordRegistry.GetAllColourLords()
+                .Where(h => h != Hero.MainHero && h.IsAlive && h.PartyBelongedTo != null)
+                .Select(h => new
+                {
+                    Hero   = h,
+                    Dist   = (h.PartyBelongedTo.GetPosition2D - playerPos).Length,
+                    Colors = ColourLordRegistry.GetColors(h)
+                })
+                .OrderBy(x => x.Dist)
+                .Take(10)
+                .ToList();
+
+            if (colourLords.Count == 0) { Msg("Arcane Sight — no colour lords detected.", ColorSchool.Blue); return; }
+
+            Msg("Arcane Sight — the Scholar's eye opens:", ColorSchool.Blue);
+            foreach (var entry in colourLords)
+            {
+                string colours = string.Join(", ", entry.Colors.Select(c => ColorSchoolData.Info[c].Name));
+                Msg($"  {entry.Hero.Name} [{colours}] — {entry.Dist:F1} km", ColorSchool.Blue);
+            }
+        }
+
+        // ── Purple — Grey Curse ───────────────────────────────────────────
+        // A random enemy lord ages 3 days; their clan loses 2 renown.
+        private static void SpellCommunePurple()
+        {
+            if (Hero.MainHero == null) return;
+
+            IFaction playerFaction = Hero.MainHero.MapFaction;
+            var enemies = Hero.AllAliveHeroes
+                .Where(h => h.IsLord && h.IsAlive && h.Clan != null
+                         && h.MapFaction != null && h.MapFaction != playerFaction)
+                .ToList();
+            if (enemies.Count == 0) { Msg("Grey Curse — no enemy lords to curse.", ColorSchool.Purple); return; }
+
+            Hero target = enemies[_rng.Next(enemies.Count)];
+            try { target.SetBirthDay(target.BirthDay - CampaignTime.Days(3)); } catch { }
+            try { target.Clan.AddRenown(-2f); } catch { return; }
+            Msg($"Grey Curse — {target.Name} ages three days. Clan renown dims. | {target.Name} age: {(int)target.Age}", ColorSchool.Purple);
         }
 
     }

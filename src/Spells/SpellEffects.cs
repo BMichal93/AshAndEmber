@@ -173,47 +173,6 @@ namespace ColoursOfCalradia
             BeginAgentGlow(_hollowGazeTarget, ColorSchool.Purple, HollowGazeInterval * 4);
         }
 
-        // ── Blue: 5-second delay before spell fires ───────────────────────────
-        // When a Blue battle spell is input, the animation holds for 5 s before executing.
-        private static string _pendingBlueCombo = null;
-        private static float  _pendingBlueDelay = 0f;
-        private const  float  BlueDelayDuration = 5f;
-
-        public static bool IsBluePending => _pendingBlueCombo != null;
-
-        // Returns true if the delay was accepted. False if one is already pending.
-        public static bool BeginBlueDelay(string combo)
-        {
-            if (_pendingBlueCombo != null)
-            {
-                Msg("The Scholar's Weight is already winding up — wait for it to resolve.", ColorSchool.Blue);
-                return false;
-            }
-            _pendingBlueCombo = combo;
-            _pendingBlueDelay = BlueDelayDuration;
-            TryCastAnimation(Player);
-            Msg($"Scholar's Weight — magic stiffens your limbs. The weave resolves in {(int)BlueDelayDuration}s.", ColorSchool.Blue);
-            return true;
-        }
-
-        // Called from MagicMissionBehavior.OnMissionTick.
-        // Returns the combo string when the delay expires; null otherwise.
-        public static string TickBlueDelay(float dt)
-        {
-            if (_pendingBlueCombo == null) return null;
-            _pendingBlueDelay -= dt;
-            if (_pendingBlueDelay > 0f) return null;
-            string combo = _pendingBlueCombo;
-            _pendingBlueCombo = null;
-            return combo;
-        }
-
-        public static void CancelBlueDelay()
-        {
-            _pendingBlueCombo = null;
-            _pendingBlueDelay = 0f;
-        }
-
         public static void TickHaltedAgents(float dt)
         {
             if (_haltedAgents.Count == 0 || Mission.Current == null) return;
@@ -266,7 +225,6 @@ namespace ColoursOfCalradia
             _hollowGazeTarget = null;
             try { _hollowGazeLight?.Remove(0); } catch { }
             _hollowGazeLight  = null;
-            CancelBlueDelay();
             _haltedAgents.Clear();
         }
 
@@ -432,7 +390,7 @@ namespace ColoursOfCalradia
         }
 
         // ── Execute switch ───────────────────────────────────────────────────
-        // Combos: first 2 chars = form (UU=Blast, RL=Self, LR=Create, UL=Affect, LU=Invoke),
+        // Combos: first 2 chars = form (UU=Blast, RL=Self, LR=Create, UL=Affect, LU=Invoke, UR=Commune),
         //         last 2 chars = colour (RR=Red, LD=Orange, DD=Yellow, LL=Green, RU=Blue, DU=Purple)
         public static bool Execute(string combo)
         {
@@ -473,6 +431,13 @@ namespace ColoursOfCalradia
                 case "LULL": SpellInvokeGreen();  break;
                 case "LURU": SpellInvokeBlue();   break;
                 case "LUDU": SpellInvokePurple(); break;
+                // COMMUNE (UR)
+                case "URRR": SpellCommuneRed();    break;
+                case "URLD": SpellCommuneOrange(); break;
+                case "URDD": SpellCommuneYellow(); break;
+                case "URLL": SpellCommuneGreen();  break;
+                case "URRU": SpellCommuneBlue();   break;
+                case "URDU": SpellCommunePurple(); break;
                 default: return false;
             }
             return true;

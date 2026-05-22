@@ -25,7 +25,7 @@ using TaleWorlds.CampaignSystem.MapEvents;
 namespace ColoursOfCalradia
 {
     // =========================================================================
-    // 3. SPELL DATABASE  (18 battle spells + 12 campaign map spells (6 Affect + 6 Invoke), 4-char combos)
+    // 3. SPELL DATABASE  (18 battle spells + 18 campaign map spells (6 Affect + 6 Invoke + 6 Commune), 4-char combos)
     // =========================================================================
     public enum SpellContext { Mission, Map }
 
@@ -43,7 +43,7 @@ namespace ColoursOfCalradia
     {
         // Combos follow a strict structure: first 2 chars = Form, last 2 chars = Colour.
         // Forms: UU = Blast (cone), RL = Self (aura), LR = Create (area effect),
-        //        UL = Affect (campaign map), LU = Invoke (campaign map, advanced)
+        //        UL = Affect (campaign map), LU = Invoke (campaign map, advanced), UR = Commune (campaign map, ambient)
         // Note: D (S key) is only registered when the buffer is non-empty and opens the spellbook.
         // Colours: RR = Red, LD = Orange, DD = Yellow, LL = Green, RU = Blue, DU = Purple
         // Note: D (S key) is valid mid-combo — only the first buffer character cannot be D.
@@ -138,12 +138,12 @@ namespace ColoursOfCalradia
                 Flavour="Words of warmth and purpose flow through your ranks. One soldier feels them land — and grows." },
             new SpellEntry { Name="Creeping Fear",     Combo="LUDD", School=ColorSchool.Yellow,
                 Context=SpellContext.Map,
-                ShortDesc="Nearest enemy party loses 3 morale.",
+                ShortDesc="Nearest enemy party loses 2 morale.",
                 Flavour="You do not shout. You do not threaten. Something quieter moves through the air toward them — and they feel it." },
             new SpellEntry { Name="Green's Bounty",    Combo="LULL", School=ColorSchool.Green,
                 Context=SpellContext.Map,
-                ShortDesc="Gain 1 grain.",
-                Flavour="The green asks nothing of the soil. A handful of grain ripens in your pack, conjured from patience and living magic." },
+                ShortDesc="Gain 1 grain (80%), a sheep (10%), or a cow (10%).",
+                Flavour="The green asks nothing of the soil. Something ripens in your pack, conjured from patience and living magic." },
             new SpellEntry { Name="Scholar's Word",    Combo="LURU", School=ColorSchool.Blue,
                 Context=SpellContext.Map,
                 ShortDesc="Gain 1 influence. Kingdom only.",
@@ -156,11 +156,11 @@ namespace ColoursOfCalradia
             // ── AFFECT (UL prefix) — campaign map only, situation-dependent ─────
             new SpellEntry { Name="Pillager's Brand",  Combo="ULRR", School=ColorSchool.Red,
                 Context=SpellContext.Map,
-                ShortDesc="Curses a random enemy village. Hearth −20%.",
+                ShortDesc="Curses a random enemy village. Hearth −10%.",
                 Flavour="The red does not need to be present to destroy. It reaches across the distance and finds something worth ruining." },
             new SpellEntry { Name="Rallying Call",     Combo="ULLD", School=ColorSchool.Orange,
                 Context=SpellContext.Map,
-                ShortDesc="Party morale +3.",
+                ShortDesc="Party morale +2.",
                 Flavour="A warmth moves through the ranks. They stand a little straighter. The road ahead looks a little shorter." },
             new SpellEntry { Name="Press Gang",        Combo="ULDD", School=ColorSchool.Yellow,
                 Context=SpellContext.Map,
@@ -168,16 +168,42 @@ namespace ColoursOfCalradia
                 Flavour="One prisoner is made to understand that their options have narrowed. They join the march." },
             new SpellEntry { Name="Mending Touch",     Combo="ULLL", School=ColorSchool.Green,
                 Context=SpellContext.Map,
-                ShortDesc="Heals one wounded soldier.",
-                Flavour="The green finds the nearest wound and closes it. One soldier walks away whole." },
-            new SpellEntry { Name="Scholar's Blueprint", Combo="ULRU", School=ColorSchool.Blue,
+                ShortDesc="50% chance to heal one wounded soldier.",
+                Flavour="The green finds the nearest wound and tries to close it. Sometimes the magic holds. Sometimes it fades." },
+            new SpellEntry { Name="Philosopher's Stone", Combo="ULRU", School=ColorSchool.Blue,
                 Context=SpellContext.Map,
-                ShortDesc="Faster siege engines. Siege only.",
-                Flavour="Only usable while besieging. The Scholar's eye finds the inefficiency in every joint and lever. The machines rise faster." },
+                ShortDesc="Generate gold (scales with Blue attribute). Become 1 day younger (min age 22).",
+                Flavour="The Scholar turns the great wheel: base matter becomes coin, and time concedes a small step back. The minimum is twenty-two years — the stone does not grant true immortality." },
             new SpellEntry { Name="Grey Veil",         Combo="ULDU", School=ColorSchool.Purple,
                 Context=SpellContext.Map,
                 ShortDesc="Scatters nearby enemies.",
                 Flavour="The grey settles over the field. Those who were hunting you suddenly forget where they were going." },
+
+            // ── COMMUNE (UR prefix) — campaign map only, ambient effects ─────────
+            new SpellEntry { Name="Crimson Tithe",    Combo="URRR", School=ColorSchool.Red,
+                Context=SpellContext.Map,
+                ShortDesc="Sacrifice a soldier for skill XP. Morale −1.",
+                Flavour="Blood spent is never wasted if spent wisely. One life becomes many lessons." },
+            new SpellEntry { Name="Good Word",        Combo="URLD", School=ColorSchool.Orange,
+                Context=SpellContext.Map,
+                ShortDesc="Random lord or notable gains +1 relations.",
+                Flavour="A warmth in the right ear at the right moment. The recipient may not know why they think of you fondly — but they do." },
+            new SpellEntry { Name="Sow Doubt",        Combo="URDD", School=ColorSchool.Yellow,
+                Context=SpellContext.Map,
+                ShortDesc="Enemy settlement loyalty −10.",
+                Flavour="You do not need to be present. Rumour, shadow, and the slow crawl of unnamed dread do the work. One enemy town grows uneasy." },
+            new SpellEntry { Name="Verdant Bond",     Combo="URLL", School=ColorSchool.Green,
+                Context=SpellContext.Map,
+                ShortDesc="Friendly village hearth +20.",
+                Flavour="Life calls to life. The green finds a friendly field and breathes into it — the soil loosens, the animals grow calm, the harvest thickens." },
+            new SpellEntry { Name="Arcane Sight",     Combo="URRU", School=ColorSchool.Blue,
+                Context=SpellContext.Map,
+                ShortDesc="Locate the 10 nearest colour lords.",
+                Flavour="The Scholar's eye opens wide. Colour leaves a trace — and the Sight follows it, mapping who is near, how many colours they carry, and how far they roam." },
+            new SpellEntry { Name="Grey Curse",       Combo="URDU", School=ColorSchool.Purple,
+                Context=SpellContext.Map,
+                ShortDesc="Random enemy lord ages 3 days. Clan renown −2.",
+                Flavour="The grey does not need a blade. It reaches into another life, takes three quiet days from them, and dims the reputation their clan spent years building." },
         };
 
         public static SpellEntry Find(string combo) =>
