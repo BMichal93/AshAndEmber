@@ -201,10 +201,14 @@ namespace ColoursOfCalradia
                     _expiredHaltKeys.Add(idx);
                     continue;
                 }
-                if (remaining <= 0f)
+                bool usingEquip = false;
+                try { usingEquip = a.IsUsingGameObject; } catch { }
+
+                if (remaining <= 0f || usingEquip)
                 {
                     _expiredHaltKeys.Add(idx);
-                    try { a.SetMaximumSpeedLimit(10f, false); } catch { }
+                    if (!usingEquip)
+                        try { a.SetMaximumSpeedLimit(10f, false); } catch { }
                 }
                 else
                 {
@@ -578,7 +582,9 @@ namespace ColoursOfCalradia
                     {
                         bool mounted = false;
                         try { mounted = a.MountAgent != null; } catch { }
-                        if (!mounted)
+                        bool usingEquip2 = false;
+                        try { usingEquip2 = a.IsUsingGameObject; } catch { }
+                        if (!mounted && !usingEquip2)
                             try { a.SetActionChannel(1, _castAnimClearCache, true, 0UL); } catch { }
                     }
                     _animClearTimers.RemoveAt(i);
@@ -594,6 +600,7 @@ namespace ColoursOfCalradia
         {
             if (agent == null || !agent.IsActive()) return;
             try { if (agent.MountAgent != null) return; } catch { }
+            try { if (agent.IsUsingGameObject) return; } catch { }
             try
             {
                 agent.SetActionChannel(1, _castAnimCache, false, 0UL);

@@ -51,6 +51,7 @@ namespace ColoursOfCalradia
                 var m = _pendingMoves[i];
                 if (m.Agent == null || !m.Agent.IsActive()) { _pendingMoves.RemoveAt(i); continue; }
                 try { if (m.Agent.MountAgent != null) { _pendingMoves.RemoveAt(i); continue; } } catch { }
+                try { if (m.Agent.IsUsingGameObject) { _pendingMoves.RemoveAt(i); continue; } } catch { }
                 float elapsed = m.Elapsed + dt;
                 float t = Math.Min(elapsed / m.Duration, 1f);
                 float smooth = t * t * (3f - 2f * t); // smoothstep

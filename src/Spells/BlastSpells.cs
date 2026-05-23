@@ -157,7 +157,9 @@ namespace ColoursOfCalradia
                     DamageAgent(a, 18f * power, ColorSchool.Blue);
                     if (!a.IsActive()) continue;
                     try { a.SetMorale(Math.Max(0f, a.GetMorale() - 35f)); } catch { }
-                    if (a.MountAgent == null)
+                    bool usingEquip = false;
+                    try { usingEquip = a.IsUsingGameObject; } catch { }
+                    if (a.MountAgent == null && !usingEquip)
                     {
                         try { a.SetMaximumSpeedLimit(0f, false); } catch { }
                         _haltedAgents[a.Index] = (haltDuration, a.Position);
