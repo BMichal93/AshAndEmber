@@ -83,8 +83,9 @@ namespace ColoursOfCalradia
                 }
                 catch { }
             }
-            foreach (Formation f in formations)
-                try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+            if (!IsSiegeActive())
+                foreach (Formation f in formations)
+                    try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
             Msg($"Golden Tide washes over {inCone.Count} {(inCone.Count == 1 ? "creature" : "creatures")} — they surge forward!", ColorSchool.Orange);
         }
 
@@ -170,11 +171,12 @@ namespace ColoursOfCalradia
                 }
                 catch { }
             }
-            foreach (Formation f in formations)
-            {
-                try { f.SetMovementOrder(MovementOrder.MovementOrderStop); } catch { }
-                try { if (f.HasAnyMountedUnit) f.SetRidingOrder(RidingOrder.RidingOrderDismount); } catch { }
-            }
+            if (!IsSiegeActive())
+                foreach (Formation f in formations)
+                {
+                    try { f.SetMovementOrder(MovementOrder.MovementOrderStop); } catch { }
+                    try { if (f.HasAnyMountedUnit) f.SetRidingOrder(RidingOrder.RidingOrderDismount); } catch { }
+                }
             Msg($"Azure Arrest freezes {inCone.Count} {(inCone.Count == 1 ? "creature" : "creatures")} for {haltDuration:F1}s. Riders unseated.", ColorSchool.Blue);
         }
 

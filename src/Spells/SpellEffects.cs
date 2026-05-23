@@ -121,6 +121,19 @@ namespace ColoursOfCalradia
             catch { return 1f; }
         }
 
+        // Returns true if any agent on the field is operating siege equipment.
+        // Used to gate Formation.SetMovementOrder calls that crash on siege formations.
+        public static bool IsSiegeActive()
+        {
+            if (Mission.Current == null) return false;
+            foreach (Agent a in Mission.Current.Agents)
+            {
+                if (!a.IsActive()) continue;
+                try { if (a.IsUsingGameObject) return true; } catch { }
+            }
+            return false;
+        }
+
         // Returns true only during actual combat missions (battles, sieges).
         // Town/village visits have no active enemy agents, so this reliably excludes them.
         public static bool IsBattleMission()
@@ -255,6 +268,7 @@ namespace ColoursOfCalradia
         public static void IssueChargeToOwnFormations(Agent caster)
         {
             if (caster == null || Mission.Current == null || caster.Team == null) return;
+            if (IsSiegeActive()) return;
             try
             {
                 foreach (Team t in Mission.Current.Teams)
@@ -287,7 +301,11 @@ namespace ColoursOfCalradia
             if (_rng.Next(1000) >= 7) return;
 
             var candidates = Mission.Current.Agents
-                .Where(a => a.IsActive() && !a.IsMount && !a.IsHero).ToList();
+                .Where(a => {
+                    if (!a.IsActive() || a.IsMount || a.IsHero) return false;
+                    try { if (a.IsUsingGameObject) return false; } catch { }
+                    return true;
+                }).ToList();
             if (candidates.Count == 0) return;
 
             Agent unit  = candidates[_rng.Next(candidates.Count)];
@@ -362,6 +380,15 @@ namespace ColoursOfCalradia
                 // Heroes go unconscious via normal battle logic — never call Die() on them.
                 // Just wound them; the battle system handles incapacitation when health hits 0.
                 try { target.Health = Math.Max(1f, target.Health - 2f); } catch { }
+                return;
+            }
+            // Die() on siege-equipment operators corrupts native engine state.
+            // Reduce to near-death instead; they'll be cleaned up when they leave the equipment.
+            bool usingEquip = false;
+            try { usingEquip = target.IsUsingGameObject; } catch { }
+            if (usingEquip)
+            {
+                try { target.Health = 1f; } catch { }
                 return;
             }
             try
@@ -513,10 +540,10 @@ namespace ColoursOfCalradia
                             foreach (Agent fa in Mission.Current.Agents
                                 .Where(a => a.IsActive() && a.Formation == f).ToList())
                                 try { fa.SetMorale(100f); } catch { }
-                            try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+                            if (!IsSiegeActive()) try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
                             affected++; break;
                         case BattleCommandKind.Dismount:
-                            if (f.HasAnyMountedUnit) { f.SetRidingOrder(RidingOrder.RidingOrderDismount); affected++; } break;
+                            if (f.HasAnyMountedUnit && !IsSiegeActive()) { f.SetRidingOrder(RidingOrder.RidingOrderDismount); affected++; } break;
                         case BattleCommandKind.StopArrows:
                             if (f.GetCountOfUnitsBelongingToLogicalClass(TaleWorlds.Core.FormationClass.Ranged) > 0 ||
                                 f.GetCountOfUnitsBelongingToLogicalClass(TaleWorlds.Core.FormationClass.HorseArcher) > 0)

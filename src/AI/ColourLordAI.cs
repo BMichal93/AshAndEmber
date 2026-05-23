@@ -225,8 +225,9 @@ namespace ColoursOfCalradia
                             SpellEffects.BeginAgentGlow(a, ColorSchool.Blue, 1.5f);
                             if (a.Formation != null) formations.Add(a.Formation);
                         }
-                        foreach (Formation f in formations)
-                            try { f.SetMovementOrder(MovementOrder.MovementOrderStop); } catch { }
+                        if (!SpellEffects.IsSiegeActive())
+                            foreach (Formation f in formations)
+                                try { f.SetMovementOrder(MovementOrder.MovementOrderStop); } catch { }
                     });
                     return;
                 }
@@ -564,6 +565,7 @@ namespace ColoursOfCalradia
         private static void ApplyRedA1(Agent agent)
         {
             if (agent?.Team == null || Mission.Current == null) return;
+            if (SpellEffects.IsSiegeActive()) return;
             foreach (Formation f in agent.Team.FormationsIncludingSpecialAndEmpty)
                 try { if (f.CountOfUnits > 0) f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
         }

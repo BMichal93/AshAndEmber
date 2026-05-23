@@ -106,8 +106,9 @@ namespace ColoursOfCalradia
                 : MovementOrder.MovementOrderStop;
             string name = charge ? "Charge" : "Halt";
 
-            foreach (Formation f in formations)
-                try { f.SetMovementOrder(replacement); } catch { }
+            if (!SpellEffects.IsSiegeActive())
+                foreach (Formation f in formations)
+                    try { f.SetMovementOrder(replacement); } catch { }
 
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Madness: Your command slips — {name} issued instead.",
