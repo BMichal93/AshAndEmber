@@ -317,6 +317,14 @@ namespace ColoursOfCalradia
         public static void FlushPendingDeaths()
         {
             if (_pendingDeaths.Count == 0) return;
+            var mission = Mission.Current;
+            // Skip during auto-resolve or mission teardown — Die() on agents in these states
+            // can produce native engine crashes that C# try/catch cannot intercept.
+            if (mission == null || mission.CurrentState != Mission.State.Continuing)
+            {
+                _pendingDeaths.Clear();
+                return;
+            }
             foreach (Agent a in _pendingDeaths)
                 if (a?.IsActive() == true) KillAgent(a);
             _pendingDeaths.Clear();

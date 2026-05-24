@@ -410,7 +410,9 @@ NPC mage lords require full daylight and will not cast during dim or dark condit
 
 Press **S** (keyboard) or **Left stick Down / L3** (gamepad) while holding the focus key to open the spellbook. The spellbook shows each spell's name, combo (with arrow symbols), and effect, grouped by school and context (Battle / Campaign).
 
-A **Guide** button on the spellbook opens the full mechanics reference. A **Back** button returns to the spellbook from the guide.
+**On the campaign map:** a **Cast a Spell** button opens a selection list of all known campaign map spells. Hover each entry to see its full description and flavour text. Select one and click **Cast** to execute it — preconditions and limitations apply as normal.
+
+**In battle:** a **Guide** button opens the full mechanics reference. A **Back** button returns from the guide.
 
 Controller hint: **Hold LB** then push the left stick.
 
@@ -467,7 +469,7 @@ Note: **D** (S key) is valid mid-combo. It cannot appear as the first character 
 | Spell | Combo | School | Effect |
 |-------|-------|--------|--------|
 | **Scarlet Barrier** | `RRRR` | Red | Toggle: six crimson pillars erupt in a ring (radius 4 m) around the caster; any creature inside the ring takes 20 damage every second. Cast again to dismiss. |
-| **Warm Beacon** | `RRLD` | Orange | Pulls all allies within 18 m to a ring around the caster (smooth lerp). |
+| **Gilded Words** | `RRLD` | Orange | Converts one random nearby unmounted non-hero enemy (15 m) to fight for you. |
 | **Nausea Bloom** | `RRDD` | Yellow | Persistent 30 s aura (radius 8 m) that deals 35 damage every 2 s to all nearby creatures. |
 | **Verdant Touch** | `RRLL` | Green | Heals the caster for 40 HP. |
 | **Cerulean Burst** | `RRRU` | Blue | Instant AoE (15 m radius): deals 28 damage to all nearby enemies, drains 35 morale each, halts their formations, and dismounts riders. |
@@ -747,7 +749,7 @@ Commune spells reach beyond your immediate position to reshape the world around 
 | **Good Word** | `URLD` | Orange | Your warmth reaches a random lord or notable — relations +1. |
 | **Sow Doubt** | `URDD` | Yellow | Unease spreads through a random enemy town — loyalty −10. |
 | **Verdant Bond** | `URLL` | Green | A friendly village is blessed — hearth +20. |
-| **Arcane Sight** | `URRU` | Blue | The Scholar's eye opens — lists the 10 nearest colour lords with their schools and distances. |
+| **Arcane Sight** | `URRU` | Blue | The Scholar's eye opens — shows the 10 nearest colour lords with their schools and distances in a popup dialog. |
 | **Grey Curse** | `URDU` | Purple | A random enemy lord ages 3 days and their clan loses 2 renown. Cost: −1% fertility + 1 day aging. |
 
 ### Notes

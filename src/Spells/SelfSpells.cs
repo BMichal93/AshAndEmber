@@ -61,32 +61,55 @@ namespace ColoursOfCalradia
             Msg("Scarlet Barrier — a ring of crimson pillars erupts around you. Any who step inside burn. Cast again to dismiss.", ColorSchool.Red);
         }
 
-        // Warm Beacon — teleport all nearby allies to your side
+        // Gilded Words — turn one random nearby unmounted non-hero enemy to fight for the player
         private static void SpellSelfOrange()
         {
-            if (Mission.Current == null || Player == null) return;
-            const float Radius = 18f;
-            const float LandDist = 3f;
-            var nearAllies = Allies().Where(a => a.Position.Distance(Player.Position) <= Radius).ToList();
-            if (nearAllies.Count == 0) { Msg("No allies within range.", ColorSchool.Orange); return; }
-            float angle = 0f;
-            float step = nearAllies.Count > 0 ? (2f * (float)Math.PI / nearAllies.Count) : 0f;
-            foreach (Agent a in nearAllies)
+            if (Mission.Current == null || Player == null || !Player.IsActive()) return;
+            const float Radius = 15f;
+
+            // Exclude mounted enemies — mount would stay on enemy team, creating split state.
+            // Exclude heroes — hero team membership is tied to campaign data.
+            var candidates = Enemies()
+                .Where(a => a.MountAgent == null && a.Position.Distance(Player.Position) <= Radius)
+                .ToList();
+
+            if (candidates.Count == 0)
             {
-                try
-                {
-                    Vec3 offset = new Vec3((float)Math.Cos(angle) * LandDist, (float)Math.Sin(angle) * LandDist, 0f);
-                    Vec3 dest   = Player.Position + offset; dest.z = Player.Position.z;
-                    QueueMove(a, dest, 0.4f);
-                    BeginAgentGlow(a, ColorSchool.Orange, 1.5f);
-                    SpawnTempLight(a.Position, ColorSchool.Orange, 6f, 1.5f);
-                }
-                catch { }
-                angle += step;
+                Msg("Gilded Words — no unguarded souls within reach.", ColorSchool.Orange);
+                return;
             }
+
+            Agent target = candidates[_rng.Next(candidates.Count)];
+            string targetName = target.Name?.ToString() ?? "the creature";
+            bool converted = false;
+
+            try
+            {
+                // Try to move the agent to the player's team via the internal SetTeam method.
+                var setTeam = typeof(Agent).GetMethod("SetTeam",
+                    BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+                if (setTeam != null)
+                {
+                    setTeam.Invoke(target, new object[] { Player.Team, true });
+                    converted = true;
+                }
+            }
+            catch { }
+
+            if (!converted)
+            {
+                // Fallback: remove from formation and set a long halt so they stop fighting
+                try { if (target.Formation != null) target.Formation = null; } catch { }
+                try { target.SetMaximumSpeedLimit(0f, false); } catch { }
+                _haltedAgents[target.Index] = (30f, target.Position);
+            }
+
+            try { target.SetWatchState(Agent.WatchState.Alarmed); } catch { }
+            BeginAgentGlow(target, ColorSchool.Orange, 2f);
+            SpawnTempLight(target.Position, ColorSchool.Orange, 6f, 1.5f);
             BeginAgentGlow(Player, ColorSchool.Orange, 1.5f);
             SpawnTempLight(Player.Position, ColorSchool.Orange, 6f, 1.5f);
-            Msg($"Warm Beacon — {nearAllies.Count} {(nearAllies.Count == 1 ? "ally slides" : "allies slide")} to your side.", ColorSchool.Orange);
+            Msg($"Gilded Words — {targetName} is swayed. They fight for you now.", ColorSchool.Orange);
         }
 
         // Nausea Bloom — 30-second aura that slowly damages everything nearby

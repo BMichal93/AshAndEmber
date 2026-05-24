@@ -213,16 +213,75 @@ namespace ColoursOfCalradia
             string inputHint   = usingController
                 ? "Hold LB + left stick (↑/←/→), then release."
                 : "Hold Left Alt + combo (W/A/D keys), then release.";
-            string description = $"{inputHint}  Active: {active} (W=↑, A=←, D=→, S mid-combo=↓).\n\n"
+            string closeHint   = !inMission
+                ? (usingController ? "  A=Cast  B=Guide  (Guide→Back to return here)."
+                                   : "  Escape to close.")
+                : "";
+            string description = $"{inputHint}  Active: {active} (W=↑, A=←, D=→, S mid-combo=↓).{closeHint}\n\n"
                                + string.Join("\n", lines);
 
-            InformationManager.ShowInquiry(new InquiryData(
-                "Spell Prism",
-                description,
-                true, true,
-                "Close", "Guide",
-                () => { }, () => { _deferredInquiry = () => ShowGuide(inMission, usingController); }
-            ), true, true);
+            if (!inMission)
+            {
+                // Campaign map: offer spell cast button in place of Guide
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Spell Prism",
+                    description,
+                    true, true,
+                    "Cast a Spell", "Guide",
+                    () => { _deferredInquiry = ShowCampaignCastMenu; },
+                    () => { _deferredInquiry = () => ShowGuide(false, usingController); }
+                ), true, true);
+            }
+            else
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Spell Prism",
+                    description,
+                    true, true,
+                    "Close", "Guide",
+                    () => { }, () => { _deferredInquiry = () => ShowGuide(inMission, usingController); }
+                ), true, true);
+            }
+        }
+
+        private static void ShowCampaignCastMenu()
+        {
+            var mapSpells = SpellDatabase.All
+                .Where(s => s.Context == SpellContext.Map && HasSchool(s.School))
+                .OrderBy(s => (int)s.School)
+                .ToList();
+
+            if (mapSpells.Count == 0)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "No campaign map spells available.", Color.FromUint(0xFFAAAAAA)));
+                return;
+            }
+
+            var elements = mapSpells.Select(s => new InquiryElement(
+                s.Combo,
+                $"{s.Name}  [{ComboToArrows(s.Combo)}]",
+                null, true,
+                $"{s.ShortDesc}\n\n{s.Flavour}"
+            )).ToList();
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "Cast a Campaign Spell",
+                "Select a spell to cast. Requirements and limitations apply as normal.",
+                elements,
+                true, 1, 1,
+                "Cast", "Cancel",
+                chosen =>
+                {
+                    if (chosen?.Count > 0)
+                    {
+                        string combo = chosen[0].Identifier?.ToString();
+                        if (!string.IsNullOrEmpty(combo))
+                            _deferredInquiry = () => SpellEffects.Execute(combo);
+                    }
+                },
+                null, "", false
+            ), false, true);
         }
 
         private static void ShowGuide(bool inMission, bool usingController)

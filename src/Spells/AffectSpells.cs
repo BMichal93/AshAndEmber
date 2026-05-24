@@ -506,7 +506,7 @@ namespace ColoursOfCalradia
         }
 
         // ── Blue — Arcane Sight ───────────────────────────────────────────
-        // List the 10 nearest colour lords and their distances.
+        // List the 10 nearest colour lords and their distances in a popup dialog.
         private static void SpellCommuneBlue()
         {
             if (Hero.MainHero == null || MobileParty.MainParty == null) return;
@@ -525,14 +525,27 @@ namespace ColoursOfCalradia
                 .Take(10)
                 .ToList();
 
-            if (colourLords.Count == 0) { Msg("Arcane Sight — no colour lords detected.", ColorSchool.Blue); return; }
-
-            Msg("Arcane Sight — the Scholar's eye opens:", ColorSchool.Blue);
-            foreach (var entry in colourLords)
+            if (colourLords.Count == 0)
             {
-                string colours = string.Join(", ", entry.Colors.Select(c => ColorSchoolData.Info[c].Name));
-                Msg($"  {entry.Hero.Name} [{colours}] — {entry.Dist:F1} km", ColorSchool.Blue);
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Arcane Sight",
+                    "The Scholar's eye opens across Calradia — and finds no colour lords near you.",
+                    true, false, "Close", "", () => { }, () => { }
+                ), true, true);
+                return;
             }
+
+            var lines = colourLords.Select(e =>
+            {
+                string colours = string.Join(", ", e.Colors.Select(c => ColorSchoolData.Info[c].Name));
+                return $"  {e.Hero.Name}  [{colours}]  —  {e.Dist:F1} km";
+            });
+
+            InformationManager.ShowInquiry(new InquiryData(
+                "Arcane Sight — Colour Lords Nearby",
+                string.Join("\n", lines),
+                true, false, "Close", "", () => { }, () => { }
+            ), true, true);
         }
 
         // ── Purple — The Waning ───────────────────────────────────────────

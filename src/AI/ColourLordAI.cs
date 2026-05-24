@@ -274,12 +274,12 @@ namespace ColoursOfCalradia
                 return;
             }
 
-            // Orange — Calling (summon) if outnumbered, else Warm Beacon (ally pull) (morale ≥ 45)
+            // Orange — Calling (summon) if outnumbered, else Gilded Words (ally pull) (morale ≥ 45)
             if (colors.Contains(ColorSchool.Orange) && CanUseOrange(hero))
             {
                 int nearAllies  = AlliesOf(agent).Count(a => a.Position.Distance(agent.Position) <= 20f);
                 int nearEnemies = EnemiesOf(agent).Count(a => a.Position.Distance(agent.Position) <= 20f);
-                if (nearEnemies > nearAllies && !SpellEffects.IsSiegeActive())
+                if (nearEnemies > nearAllies && !SpellEffects.IsSiegeActive() && Agent.Main?.IsActive() == true)
                 {
                     CastWithGlow(agent, hero, ColorSchool.Orange, "Calling", () =>
                     {
@@ -310,7 +310,7 @@ namespace ColoursOfCalradia
                     return;
                 }
                 float orangePower = SpellEffects.SpellPower(ColorSchool.Orange, hero);
-                CastWithGlow(agent, hero, ColorSchool.Orange, "Warm Beacon", () =>
+                CastWithGlow(agent, hero, ColorSchool.Orange, "Gilded Words", () =>
                 {
                     foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
                     {
@@ -348,7 +348,7 @@ namespace ColoursOfCalradia
                 case ColorSchool.Orange when CanUseOrange(hero):
                 {
                     float orangePower = SpellEffects.SpellPower(ColorSchool.Orange, hero);
-                    CastWithGlow(agent, hero, ColorSchool.Orange, "Warm Beacon", () =>
+                    CastWithGlow(agent, hero, ColorSchool.Orange, "Gilded Words", () =>
                     {
                         foreach (Agent a in AlliesOf(agent).Where(a => a.Position.Distance(agent.Position) <= 20f).ToList())
                         {
@@ -441,7 +441,7 @@ namespace ColoursOfCalradia
                         SpellEffects.BeginAgentGlow(a, school, 1.5f);
                         hit = true;
                     }
-                    CastBlightWithGlow(agent, hero, school, "Warm Beacon", hit);
+                    CastBlightWithGlow(agent, hero, school, "Gilded Words", hit);
                     break;
                 }
                 case ColorSchool.Yellow:
