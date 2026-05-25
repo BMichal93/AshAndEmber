@@ -522,12 +522,13 @@ namespace ColoursOfCalradia
                                 || BlightSystem.IsBlight(leader)
                                 || ColourLordRegistry.IsPrismLord(leader)) continue;
 
-                            if (_rng.Next(100) >= 5) continue;
+                            if (_rng.Next(100) >= 10) continue;
 
+                            // Within the 10% trigger: 70% strain / 15% scatter / 15% blight
+                            // → 7% / 1.5% / 1.5% of all battles
                             int severityRoll = _rng.Next(100);
-                            if (severityRoll < 60)
+                            if (severityRoll < 70)
                             {
-                                // Most likely: physical strain — HP drops to 25%
                                 try
                                 {
                                     leader.HitPoints = Math.Max(1, leader.HitPoints / 4);
@@ -538,10 +539,13 @@ namespace ColoursOfCalradia
                                 }
                                 catch { }
                             }
+                            else if (severityRoll < 85)
+                            {
+                                try { ColourLordRegistry.ScatterLordColours(leader); } catch { }
+                            }
                             else
                             {
-                                // Less likely: full oversaturation — colours scatter or lord becomes a blight
-                                try { ColourLordRegistry.OnLordOversaturated(leader); } catch { }
+                                try { ColourLordRegistry.OversaturateToBlight(leader); } catch { }
                             }
                         }
                         catch { }

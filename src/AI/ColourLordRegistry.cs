@@ -566,6 +566,31 @@ namespace ColoursOfCalradia
             }
         }
 
+        public static void ScatterLordColours(Hero hero)
+        {
+            if (!_lordColors.ContainsKey(hero?.StringId ?? "")) return;
+            string factionId = (hero.MapFaction as Kingdom)?.StringId;
+            _lordColors.Remove(hero.StringId);
+            _campaignCooldowns.Remove(hero.StringId);
+            if (factionId != null) _respawnHours[factionId] = 168;
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{hero.Name} is destroyed by Oversaturation — their colours scatter.",
+                new Color(0.6f, 0.4f, 0.9f)));
+        }
+
+        public static void OversaturateToBlight(Hero hero)
+        {
+            if (!_lordColors.TryGetValue(hero?.StringId ?? "", out var schools)) return;
+            ColorSchool blightSchool = schools[_rng.Next(schools.Count)];
+            _lordColors.Remove(hero.StringId);
+            _campaignCooldowns.Remove(hero.StringId);
+            _deferredKills.Add((hero.StringId, blightSchool));
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{hero.Name} is consumed by Oversaturation — they will not survive the night. " +
+                $"The {ColorSchoolData.Info[blightSchool].Name} Blight stirs.",
+                new Color(0.6f, 0.4f, 0.9f)));
+        }
+
         // Called from CampaignBehavior.OnDailyTick — safe context for KillCharacterAction
         public static void FlushDeferredKills()
         {
