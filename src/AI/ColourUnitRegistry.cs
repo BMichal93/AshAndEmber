@@ -564,20 +564,28 @@ namespace ColoursOfCalradia
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────
-        private static IEnumerable<Agent> EnemiesOf(Agent agent)
+        private static List<Agent> EnemiesOf(Agent agent)
         {
-            if (Mission.Current == null || agent?.Team == null) yield break;
-            foreach (Agent a in Mission.Current.Agents)
-                if (a != agent && !a.IsMount && a.IsActive() && a.Team != null && a.Team != agent.Team)
-                    yield return a;
+            if (Mission.Current == null || agent?.Team == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != agent && !a.IsMount && a.IsActive() && a.Team != null && a.Team != agent.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
         }
 
-        private static IEnumerable<Agent> AlliesOf(Agent agent)
+        private static List<Agent> AlliesOf(Agent agent)
         {
-            if (Mission.Current == null || agent?.Team == null) yield break;
-            foreach (Agent a in Mission.Current.Agents)
-                if (a != agent && !a.IsMount && a.IsActive() && a.Team != null && a.Team == agent.Team)
-                    yield return a;
+            if (Mission.Current == null || agent?.Team == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != agent && !a.IsMount && a.IsActive() && a.Team != null && a.Team == agent.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────

@@ -78,7 +78,9 @@ namespace ColoursOfCalradia
                 if (_cooldowns[key] <= 0f) _cooldowns.Remove(key);
             }
 
-            var agents = Mission.Current.Agents.ToList();
+            List<Agent> agents;
+            try { agents = Mission.Current.Agents.ToList(); }
+            catch { return; }
 
             // Blights are exempt from warmup — they act immediately.
             foreach (Agent agent in agents)

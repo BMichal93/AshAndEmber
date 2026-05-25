@@ -193,12 +193,14 @@ namespace ColoursOfCalradia
                 e.TickTimer = e.TickInterval;
 
                 // Apply the area effect this tick
+                try
+                {
                 switch (e.Id)
                 {
                     case "self_red_barrier": // Scarlet Barrier — damage all agents inside the node
                     {
                         float barrierDmg = 45f * e.Power;
-                        foreach (Agent a in Mission.Current.Agents)
+                        foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount || a == Player) continue;
                             if (a.Position.Distance(e.Position) > e.Radius) continue;
@@ -215,7 +217,7 @@ namespace ColoursOfCalradia
                     case "create_orange": // Gilded Refuge — +100 morale and 2 HP/sec to all inside
                     {
                         float refugeHeal = 2f * e.TickInterval;
-                        foreach (Agent a in Mission.Current.Agents)
+                        foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount || a.Position.Distance(e.Position) > e.Radius) continue;
                             try
@@ -263,7 +265,7 @@ namespace ColoursOfCalradia
                     case "create_green": // Emerald Font — heal all agents in area
                     {
                         float fontHeal = 25f * e.Power;
-                        foreach (Agent a in Mission.Current.Agents)
+                        foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount || a.Position.Distance(e.Position) > e.Radius) continue;
                             try
@@ -276,20 +278,21 @@ namespace ColoursOfCalradia
                         break;
                     }
 
-                    case "create_blue": // Sapphire Bastion — push all agents inside the radius every tick
+                    case "create_blue": // Sapphire Bastion — push enemy agents outside radius every tick
                     {
-                        foreach (Agent a in Mission.Current.Agents)
+                        foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount || a.MountAgent != null) continue;
+                            if (a.Team == Player?.Team) continue; // don't push own side
                             if (a.Position.Distance(e.Position) > e.Radius) continue;
                             try
                             {
                                 Vec3 dir = (a.Position - e.Position);
                                 if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
                                 else dir = dir.NormalizedCopy();
-                                Vec3 dest = e.Position + dir * (e.Radius + 1f);
+                                Vec3 dest = e.Position + dir * (e.Radius + 2f);
                                 dest.z = a.Position.z;
-                                QueueMove(a, dest, 0.3f);
+                                a.TeleportToPosition(dest);
                                 BeginAgentGlow(a, e.School, 1.5f);
                             }
                             catch { }
@@ -339,7 +342,7 @@ namespace ColoursOfCalradia
                     case "npc_green_font": // NPC Emerald Font — heal caster-side allies in area
                     {
                         float fontHeal = 25f * e.Power;
-                        foreach (Agent a in Mission.Current.Agents)
+                        foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount || a.Position.Distance(e.Position) > e.Radius) continue;
                             // Only heal the caster's own team (if team is known)
@@ -356,7 +359,7 @@ namespace ColoursOfCalradia
 
                     case "npc_blue_wall": // NPC Sapphire Wall — push enemy agents outward
                     {
-                        foreach (Agent a in Mission.Current.Agents)
+                        foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount || a.MountAgent != null) continue;
                             if (a.Position.Distance(e.Position) > e.Radius) continue;
@@ -367,9 +370,9 @@ namespace ColoursOfCalradia
                                 Vec3 dir = (a.Position - e.Position);
                                 if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
                                 else dir = dir.NormalizedCopy();
-                                Vec3 dest = e.Position + dir * (e.Radius + 1f);
+                                Vec3 dest = e.Position + dir * (e.Radius + 2f);
                                 dest.z = a.Position.z;
-                                QueueMove(a, dest, 0.3f);
+                                a.TeleportToPosition(dest);
                                 BeginAgentGlow(a, e.School, 1.5f);
                             }
                             catch { }
@@ -401,6 +404,7 @@ namespace ColoursOfCalradia
                         break;
                     }
                 }
+                } catch { } // guard: Mission.Agents modified during switch case
             }
         }
 

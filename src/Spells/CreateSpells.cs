@@ -234,7 +234,7 @@ namespace ColoursOfCalradia
                 {
                     Id = "create_blue", School = ColorSchool.Blue,
                     Position = pos, Radius = NodeRadius,
-                    TickInterval = 0.5f, TickTimer = 0.5f, Remaining = -1f
+                    TickInterval = 0.15f, TickTimer = 0.15f, Remaining = -1f
                 };
                 node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
                 _areaEffects.Add(node);

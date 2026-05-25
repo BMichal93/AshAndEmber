@@ -138,14 +138,14 @@ namespace ColoursOfCalradia
             // Clear all mission state. The scene is still alive here so GameEntity/agent
             // calls are safe. Without this, stale GameEntity references from area effect
             // lights survive into the next battle where they are freed memory → crash.
-            SpellEffects.ClearAnimTimers();
-            SpellEffects.ClearPendingDeaths();
-            SpellEffects.ClearAreaEffects();
-            SpellEffects.ClearGlows();
-            SpellEffects.ClearMoves();
-            ColourLordAI.ClearCooldowns();
-            ColourUnitRegistry.OnMissionEnded();
-            SaturationSystem.ClearKnockdowns();
+            try { SpellEffects.ClearAnimTimers();     } catch { }
+            try { SpellEffects.ClearPendingDeaths();  } catch { }
+            try { SpellEffects.ClearAreaEffects();    } catch { }
+            try { SpellEffects.ClearGlows();          } catch { }
+            try { SpellEffects.ClearMoves();          } catch { }
+            try { ColourLordAI.ClearCooldowns();      } catch { }
+            try { ColourUnitRegistry.OnMissionEnded(); } catch { }
+            try { SaturationSystem.ClearKnockdowns(); } catch { }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,

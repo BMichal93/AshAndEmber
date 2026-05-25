@@ -126,11 +126,15 @@ namespace ColoursOfCalradia
         public static bool IsSiegeActive()
         {
             if (Mission.Current == null) return false;
-            foreach (Agent a in Mission.Current.Agents)
+            try
             {
-                if (!a.IsActive()) continue;
-                try { if (a.IsUsingGameObject) return true; } catch { }
+                foreach (Agent a in Mission.Current.Agents)
+                {
+                    if (!a.IsActive()) continue;
+                    try { if (a.IsUsingGameObject) return true; } catch { }
+                }
             }
+            catch { }
             return false;
         }
 
@@ -266,12 +270,17 @@ namespace ColoursOfCalradia
             // 0.7% chance per minute
             if (_rng.Next(1000) >= 7) return;
 
-            var candidates = Mission.Current.Agents
-                .Where(a => {
-                    if (!a.IsActive() || a.IsMount || a.IsHero) return false;
-                    try { if (a.IsUsingGameObject) return false; } catch { }
-                    return true;
-                }).ToList();
+            List<Agent> candidates;
+            try
+            {
+                candidates = Mission.Current.Agents
+                    .Where(a => {
+                        if (!a.IsActive() || a.IsMount || a.IsHero) return false;
+                        try { if (a.IsUsingGameObject) return false; } catch { }
+                        return true;
+                    }).ToList();
+            }
+            catch { return; }
             if (candidates.Count == 0) return;
 
             Agent unit  = candidates[_rng.Next(candidates.Count)];
@@ -369,22 +378,30 @@ namespace ColoursOfCalradia
 
         public static void ClearPendingDeaths() => _pendingDeaths.Clear();
 
-        private static IEnumerable<Agent> Enemies()
+        private static List<Agent> Enemies()
         {
-            if (Mission.Current == null || Player == null) yield break;
-            foreach (Agent a in Mission.Current.Agents)
-                if (a != Player && !a.IsMount && a.IsActive() &&
-                    a.Team != null && a.Team != Player.Team)
-                    yield return a;
+            if (Mission.Current == null || Player == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != Player && !a.IsMount && a.IsActive() &&
+                                a.Team != null && a.Team != Player.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
         }
 
-        private static IEnumerable<Agent> Allies()
+        private static List<Agent> Allies()
         {
-            if (Mission.Current == null || Player == null) yield break;
-            foreach (Agent a in Mission.Current.Agents)
-                if (a != Player && !a.IsMount && a.IsActive() &&
-                    a.Team != null && a.Team == Player.Team)
-                    yield return a;
+            if (Mission.Current == null || Player == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != Player && !a.IsMount && a.IsActive() &&
+                                a.Team != null && a.Team == Player.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
         }
 
         public static void KillAgent(Agent target)

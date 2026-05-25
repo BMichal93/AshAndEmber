@@ -214,14 +214,18 @@ namespace ColoursOfCalradia
         {
             if (Mission.Current == null) return new List<Agent>();
             var result = new List<Agent>();
-            foreach (Agent a in Mission.Current.Agents)
+            try
             {
-                if (!a.IsActive() || a.IsMount || a == Player) continue;
-                Vec3 to = a.Position - origin;
-                if (to.Length > range) continue;
-                if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
-                result.Add(a);
+                foreach (Agent a in Mission.Current.Agents)
+                {
+                    if (!a.IsActive() || a.IsMount || a == Player) continue;
+                    Vec3 to = a.Position - origin;
+                    if (to.Length > range) continue;
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
+                    result.Add(a);
+                }
             }
+            catch { }
             return result;
         }
     }
