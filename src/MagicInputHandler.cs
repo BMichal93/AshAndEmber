@@ -215,15 +215,15 @@ namespace ColoursOfCalradia
                 catch { }
             }
 
-            // Orange — Joyful Cast: party morale must be ≥ 45
+            // Orange — Joyful Cast: party morale must be ≥ 51
             if (spell.School == ColorSchool.Orange)
             {
                 try
                 {
                     float morale = MobileParty.MainParty?.RecentEventsMorale ?? 100f;
-                    if (morale < 45f)
+                    if (morale < 51f)
                     {
-                        Fizzle($"Joyful Cast: Party morale too low ({morale:F0}/45) — the warmth will not flow through misery.");
+                        Fizzle($"Joyful Cast: Party morale too low ({morale:F0}/51) — the warmth will not flow through misery.");
                         return;
                     }
                 }

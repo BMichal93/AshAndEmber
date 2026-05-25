@@ -60,7 +60,7 @@ namespace ColoursOfCalradia
                 FlavorText       = "Generous Hunger — Joyful, generous magic of warmth and plenty. Orange mages inspire and conjure allies from nothing. " +
                                    "The warmth only flows when the heart is light — misery chokes the golden current before it can form.",
                 PersonalityEffect= "Repeated casting increases your Generosity — open-handed and free with what you have.",
-                LimitationA      = "Joyful Cast: You cannot cast Orange magic if your party morale is below 45 — the warmth will not flow through misery.",
+                LimitationA      = "Joyful Cast: You cannot cast Orange magic if your party morale is below 51 — the warmth will not flow through misery.",
                 LimitationB      = "",
                 AttributePenalty = "-1 Intelligence"
             },
