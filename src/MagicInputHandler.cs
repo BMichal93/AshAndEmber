@@ -265,6 +265,9 @@ namespace ColoursOfCalradia
             }
 
             // ── Cast ─────────────────────────────────────────────────────────
+            // Snapshot dismiss state before Execute flips the toggle.
+            bool isDismiss = SpellEffects.IsToggleDismiss(combo);
+
             InformationManager.DisplayMessage(new InformationMessage(
                 $"[{ColorSchoolData.Info[spell.School].Name} — {spell.Name}]  {spell.Flavour}",
                 ColorSchoolData.GetMessageColor(spell.School)));
@@ -315,11 +318,14 @@ namespace ColoursOfCalradia
                 }
             }
 
-            // Saturation gain + personality drift
-            if (inMission)
-                SaturationSystem.GainSaturation();
-            else
-                SaturationSystem.GainSaturationCampaign();
+            // Saturation gain + personality drift (skipped when dismissing a toggle effect)
+            if (!isDismiss)
+            {
+                if (inMission)
+                    SaturationSystem.GainSaturation();
+                else
+                    SaturationSystem.GainSaturationCampaign();
+            }
             ColourKnowledge.RecordCast(spell.School);
         }
 

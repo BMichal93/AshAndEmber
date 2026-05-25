@@ -155,6 +155,22 @@ namespace ColoursOfCalradia
         // Returns false — Cerulean Mirror replaced by Cerulean Burst (instant AoE, no deflection)
         public static bool ProtectedByMirror(Agent a) => false;
 
+        // Maps toggle-spell combos to their area-effect IDs so callers can detect a dismiss cast.
+        private static readonly Dictionary<string, string> _toggleComboToId = new Dictionary<string, string>
+        {
+            { "RRRR", "self_red_barrier"   },
+            { "RRDD", "self_yellow"        },
+            { "LLLD", "create_orange"      },
+            { "LLDD", "create_yellow"      },
+            { "LLLL", "create_green"       },
+            { "LLRU", "create_blue"        },
+            { "LLDU", "create_purple_mist" },
+        };
+
+        // Returns true when casting combo would dismiss an already-active toggle effect.
+        public static bool IsToggleDismiss(string combo) =>
+            _toggleComboToId.TryGetValue(combo, out string id) && HasAreaEffect(id);
+
         public static void TickHaltedAgents(float dt)
         {
             if (_haltedAgents.Count == 0 || Mission.Current == null) return;
