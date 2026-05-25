@@ -522,18 +522,27 @@ namespace ColoursOfCalradia
                                 || BlightSystem.IsBlight(leader)
                                 || ColourLordRegistry.IsPrismLord(leader)) continue;
 
-                            if (_rng.Next(100) >= 3) continue;
+                            if (_rng.Next(100) >= 5) continue;
 
-                            // Casting strain: hero's body pays the cost of channelling in battle
-                            try
+                            int severityRoll = _rng.Next(100);
+                            if (severityRoll < 60)
                             {
-                                leader.HitPoints = Math.Max(1, leader.HitPoints / 4);
-                                if (playerInvolved)
-                                    InformationManager.DisplayMessage(new InformationMessage(
-                                        $"{leader.Name} is strained by the colour — the casting takes its toll.",
-                                        Color.FromUint(0xFFCCAA22)));
+                                // Most likely: physical strain — HP drops to 25%
+                                try
+                                {
+                                    leader.HitPoints = Math.Max(1, leader.HitPoints / 4);
+                                    if (playerInvolved)
+                                        InformationManager.DisplayMessage(new InformationMessage(
+                                            $"{leader.Name} is strained by the colour — the casting takes its toll.",
+                                            Color.FromUint(0xFFCCAA22)));
+                                }
+                                catch { }
                             }
-                            catch { }
+                            else
+                            {
+                                // Less likely: full oversaturation — colours scatter or lord becomes a blight
+                                try { ColourLordRegistry.OnLordOversaturated(leader); } catch { }
+                            }
                         }
                         catch { }
                     }
