@@ -114,31 +114,27 @@ namespace ColoursOfCalradia
             Msg($"Gilded Words — {targetName} is swayed. They fight for you now.", ColorSchool.Orange);
         }
 
-        // Nausea Bloom — 30-second aura that slowly damages everything nearby
+        // Nausea Bloom — persistent toxic aura; toggle to dismiss
         private static void SpellSelfYellow()
         {
             if (Player == null) return;
-            if (HasAreaEffect("self_yellow")) { Msg("Nausea Bloom is already active.", ColorSchool.Yellow); return; }
+            if (HasAreaEffect("self_yellow"))
+            {
+                RemoveAreaEffect("self_yellow");
+                Msg("Nausea Bloom dismissed. The wrongness fades.", ColorSchool.Yellow);
+                return;
+            }
             ToggleAreaEffect("self_yellow", new AreaEffect
             {
                 Id = "self_yellow", School = ColorSchool.Yellow,
                 Position = Player.Position, Radius = 8f,
                 Velocity = new Vec3(1f, 0f, 0f), DirTimer = 3f,
-                TickInterval = 2f, TickTimer = 2f, Remaining = 30f,
+                TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
                 Power = SpellPower(ColorSchool.Yellow)
             });
             BeginAgentGlow(Player, ColorSchool.Yellow, 2f);
             SpawnTempLight(Player.Position, ColorSchool.Yellow, 6f, 1.5f);
-            ActiveEffectManager.Add(new ActiveEffect
-            {
-                Name = "_nausea_bloom", Duration = 30f, IsMissionEffect = true,
-                OnExpire = () =>
-                {
-                    RemoveAreaEffect("self_yellow");
-                    Msg("The Nausea Bloom passes. The wrongness fades.", ColorSchool.Yellow);
-                }
-            });
-            Msg("Nausea Bloom — something deeply wrong radiates from you for 30 seconds. All nearby will feel it.", ColorSchool.Yellow);
+            Msg("Nausea Bloom — something deeply wrong radiates from you. All nearby will feel it. Cast again to dismiss.", ColorSchool.Yellow);
         }
 
         // Verdant Touch — heal self

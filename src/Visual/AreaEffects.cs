@@ -197,7 +197,7 @@ namespace ColoursOfCalradia
                 {
                     case "self_red_barrier": // Scarlet Barrier — damage all agents inside the node
                     {
-                        float barrierDmg = 20f * e.Power;
+                        float barrierDmg = 45f * e.Power;
                         foreach (Agent a in Mission.Current.Agents)
                         {
                             if (!a.IsActive() || a.IsMount || a == Player) continue;
@@ -233,7 +233,7 @@ namespace ColoursOfCalradia
                     case "create_yellow": // Creeping Dread — damage agents in cloud
                     {
                         int dreadHit = 0;
-                        float dreadDmg = 45f * e.Power;
+                        float dreadDmg = 20f * e.Power;
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())
@@ -316,7 +316,7 @@ namespace ColoursOfCalradia
                     case "self_yellow": // Nausea Bloom — drifting toxic cloud
                     {
                         int bloomHit = 0;
-                        float bloomDmg = 35f * e.Power;
+                        float bloomDmg = 8f * e.Power;
                         foreach (Agent a in Mission.Current.Agents
                             .Where(a => a.IsActive() && !a.IsMount && a != Player &&
                                         a.Position.Distance(e.Position) <= e.Radius).ToList())
