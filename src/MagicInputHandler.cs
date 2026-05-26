@@ -152,6 +152,17 @@ namespace ColoursOfCalradia
 
             // ── Pre-cast limitation checks ────────────────────────────────────
 
+            // Captive guard: a prisoner cannot weave the colours.
+            try
+            {
+                if (Hero.MainHero != null && Hero.MainHero.IsPrisoner)
+                {
+                    Fizzle("You are a captive. Magic cannot be woven in chains.");
+                    return;
+                }
+            }
+            catch { }
+
             // Global: magic requires light — the mage acts as a prism.
             // School affinity (season/city) can upgrade Dark → Dim for specific schools.
             var lightLevel = inMission

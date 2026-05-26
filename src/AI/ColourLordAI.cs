@@ -797,6 +797,14 @@ namespace ColoursOfCalradia
         // Dark is only passable if at least one of the agent's schools has a seasonal/city affinity.
         private static bool CanCastAny(Agent agent, IReadOnlyList<ColorSchool> colors)
         {
+            // Captive lords cannot cast in battle.
+            try
+            {
+                Hero hero = (agent?.Character as CharacterObject)?.HeroObject;
+                if (hero != null && hero.IsPrisoner) return false;
+            }
+            catch { }
+
             var light = SpellEffects.GetLightLevel();
             if (light == SpellEffects.LightLevel.Bright) return true;
             if (light == SpellEffects.LightLevel.Dark)

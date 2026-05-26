@@ -752,10 +752,16 @@ namespace ColoursOfCalradia
                 if (_rng.Next(100) < 20)
                 {
                     Hero prism = GetPrismLord();
-                    if (prism != null && _lordColors.TryGetValue(_prismLordId, out var pcols) && pcols.Count > 0)
+                    if (prism != null && !prism.IsPrisoner && _lordColors.TryGetValue(_prismLordId, out var pcols) && pcols.Count > 0)
                     {
-                        _campaignCooldowns[_prismLordId] = 4 + _rng.Next(3);
-                        CastLordMapSpell(prism, pcols[_rng.Next(pcols.Count)]);
+                        ColorSchool prismSchool = pcols[_rng.Next(pcols.Count)];
+                        var prismLight = SpellEffects.GetEffectiveLightLevel(prismSchool);
+                        if (prismLight != SpellEffects.LightLevel.Dark &&
+                            !(prismLight == SpellEffects.LightLevel.Dim && SpellEffects.RollDimFizzle()))
+                        {
+                            _campaignCooldowns[_prismLordId] = 4 + _rng.Next(3);
+                            CastLordMapSpell(prism, prismSchool);
+                        }
                     }
                 }
             }
@@ -787,8 +793,14 @@ namespace ColoursOfCalradia
 
                 if (_rng.Next(100) >= 5) continue; // 5% chance per day
 
-                _campaignCooldowns[kvp.Key] = 12 + _rng.Next(5);
+                if (hero.IsPrisoner) continue;
+
                 ColorSchool school = kvp.Value[_rng.Next(kvp.Value.Count)];
+                var lightLevel = SpellEffects.GetEffectiveLightLevel(school);
+                if (lightLevel == SpellEffects.LightLevel.Dark) continue;
+                if (lightLevel == SpellEffects.LightLevel.Dim && SpellEffects.RollDimFizzle()) continue;
+
+                _campaignCooldowns[kvp.Key] = 12 + _rng.Next(5);
                 CastLordMapSpell(hero, school);
                 castsToday++;
 
@@ -796,12 +808,20 @@ namespace ColoursOfCalradia
                 if (_prismLordId != null && _prismLordId != kvp.Key)
                 {
                     Hero prism = GetPrismLord();
-                    if (prism != null && (!_campaignCooldowns.TryGetValue(_prismLordId, out int pcd) || pcd <= 0))
+                    if (prism != null && !prism.IsPrisoner && (!_campaignCooldowns.TryGetValue(_prismLordId, out int pcd) || pcd <= 0))
                     {
-                        _campaignCooldowns[_prismLordId] = 6 + _rng.Next(4);
                         var prismColors = _lordColors.TryGetValue(_prismLordId, out var pcols) ? pcols : null;
                         if (prismColors != null && prismColors.Count > 0)
-                            CastLordMapSpell(prism, prismColors[_rng.Next(prismColors.Count)]);
+                        {
+                            ColorSchool reactSchool = prismColors[_rng.Next(prismColors.Count)];
+                            var reactLight = SpellEffects.GetEffectiveLightLevel(reactSchool);
+                            if (reactLight != SpellEffects.LightLevel.Dark &&
+                                !(reactLight == SpellEffects.LightLevel.Dim && SpellEffects.RollDimFizzle()))
+                            {
+                                _campaignCooldowns[_prismLordId] = 6 + _rng.Next(4);
+                                CastLordMapSpell(prism, reactSchool);
+                            }
+                        }
                     }
                 }
             }
