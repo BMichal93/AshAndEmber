@@ -178,7 +178,6 @@ namespace ColoursOfCalradia
                         _haltedAgents[a.Index] = (haltDuration, a.Position, a);
                     }
                     BeginAgentGlow(a, ColorSchool.Blue, 1.5f);
-                    SpawnTempLight(a.Position, ColorSchool.Blue, 6f, 3f);
                     if (a.Formation != null) formations.Add(a.Formation);
                 }
                 catch { }
@@ -190,7 +189,7 @@ namespace ColoursOfCalradia
                     try { if (f.HasAnyMountedUnit) f.SetRidingOrder(RidingOrder.RidingOrderDismount); } catch { }
                 }
             BeginAgentGlow(Player, ColorSchool.Blue, 2f);
-            SpawnTempLight(Player.Position, ColorSchool.Blue, 8f, 2f);
+            SpawnCircleLights(Player.Position, ColorSchool.Blue, Radius, 3f);
             Msg($"Cerulean Burst — a blue shockwave halts {enemies.Count} {(enemies.Count == 1 ? "enemy" : "enemies")} for {haltDuration:F1}s.", ColorSchool.Blue);
         }
 
@@ -222,7 +221,6 @@ namespace ColoursOfCalradia
                 try
                 {
                     BeginAgentGlow(target, ColorSchool.Purple, 1.5f);
-                    SpawnTempLight(target.Position, ColorSchool.Purple, 6f, 1.5f);
                     QueueKill(target);
                     kills++;
                 }
@@ -230,7 +228,7 @@ namespace ColoursOfCalradia
             }
 
             BeginAgentGlow(Player, ColorSchool.Purple, 2f);
-            SpawnTempLight(Player.Position, ColorSchool.Purple, 6f, 1.5f);
+            SpawnCircleLights(Player.Position, ColorSchool.Purple, Radius, 1.5f);
 
             string killMsg  = kills  > 0 ? $" {kills} {(kills == 1 ? "soul" : "souls")} snuffed." : "";
             string drainMsg = drained > 0 ? $" {drained} {(drained == 1 ? "enemy loses" : "enemies lose")} their nerve." : " No enemies within range.";

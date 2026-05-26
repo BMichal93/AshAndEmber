@@ -54,7 +54,7 @@ namespace ColoursOfCalradia
                 catch { }
             }
             BeginAgentGlow(Player, ColorSchool.Red, 1.5f);
-            SpawnTempLight(Player.Position, ColorSchool.Red, Radius, 3f);
+            SpawnCircleLights(Player.Position, ColorSchool.Red, Radius, 3f);
             Msg(count > 0 ? $"Cinder Burst scorches {count} {(count == 1 ? "creature" : "creatures")} within {Radius}m."
                           : "The burst finds nothing nearby.", ColorSchool.Red);
         }

@@ -120,6 +120,39 @@ namespace ColoursOfCalradia
         private static GameEntity SpawnAreaLight(Vec3 position, ColorSchool school, float radius)
             => SpawnAreaLightRaw(position, SchoolToLightColor(school), radius);
 
+        // Lights a circular AoE with a centre node plus an evenly spaced ring.
+        // Ring radius is 75% of aoeRadius, capped at 8m so nodes stay within the engine light limit.
+        // Larger AoE (>10m) gets 6 ring nodes; smaller gets 5.
+        internal static void SpawnCircleLights(Vec3 origin, ColorSchool school, float aoeRadius, float duration)
+        {
+            SpawnTempLight(origin, school, 5f, duration);
+            int   count = aoeRadius > 10f ? 6 : 5;
+            float ringR = Math.Min(aoeRadius * 0.75f, 8f);
+            for (int i = 0; i < count; i++)
+            {
+                double angle = Math.PI * 2.0 / count * i;
+                Vec3 pos = origin + new Vec3((float)Math.Cos(angle) * ringR, (float)Math.Sin(angle) * ringR, 0f);
+                SpawnTempLight(pos, school, 5f, duration);
+            }
+        }
+
+        // Lights a cone shape with 5 temp lights — near centre, two mid-flanks, two far-flanks.
+        // Matches the blast-spell cone geometry: 7m range, ≈±33° half-angle (dot 0.84).
+        internal static void SpawnConeLights(Vec3 origin, Vec3 fwd, ColorSchool school, float duration)
+        {
+            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
+            right = right.Length < 0.01f ? new Vec3(1f, 0f, 0f) : right.NormalizedCopy();
+            Vec3[] pts = {
+                origin,
+                origin + fwd * 3.5f - right * 2f,
+                origin + fwd * 3.5f + right * 2f,
+                origin + fwd * 6.5f - right * 4f,
+                origin + fwd * 6.5f + right * 4f,
+            };
+            foreach (Vec3 pos in pts)
+                SpawnTempLight(pos, school, 4f, duration);
+        }
+
         internal static void SpawnTempLightWhite(Vec3 position, float radius, float duration)
         {
             var node = new AreaEffect
