@@ -98,7 +98,7 @@ namespace ColoursOfCalradia
                     TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
                     Power = power
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
+                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
                 _areaEffects.Add(node);
             }
             BeginAgentGlow(Player, ColorSchool.Orange, 2f);
@@ -150,7 +150,7 @@ namespace ColoursOfCalradia
                     TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
                     Power = power
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
+                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
                 _areaEffects.Add(node);
             }
             BeginAgentGlow(Player, ColorSchool.Yellow, 2f);
@@ -191,7 +191,7 @@ namespace ColoursOfCalradia
                     TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
                     Power = power
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
+                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
                 _areaEffects.Add(node);
             }
             BeginAgentGlow(Player, ColorSchool.Green, 2f);
@@ -211,7 +211,7 @@ namespace ColoursOfCalradia
             }
 
             const float NodeRadius  = 3f;
-            const float NodeSpacing = 5f; // wider spacing for broader wall coverage
+            const float NodeSpacing = 3f; // finer spacing for a continuous wall of light
 
             Vec3 fwd   = Player.LookDirection.NormalizedCopy();
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
@@ -220,12 +220,15 @@ namespace ColoursOfCalradia
 
             Vec3 centre = Player.Position;
             Vec3[] nodePos = {
-                centre - right * (NodeSpacing * 2.5f),
-                centre - right * (NodeSpacing * 1.5f),
-                centre - right * (NodeSpacing * 0.5f),
-                centre + right * (NodeSpacing * 0.5f),
-                centre + right * (NodeSpacing * 1.5f),
-                centre + right * (NodeSpacing * 2.5f),
+                centre - right * (NodeSpacing * 4f),
+                centre - right * (NodeSpacing * 3f),
+                centre - right * (NodeSpacing * 2f),
+                centre - right * (NodeSpacing * 1f),
+                centre,
+                centre + right * (NodeSpacing * 1f),
+                centre + right * (NodeSpacing * 2f),
+                centre + right * (NodeSpacing * 3f),
+                centre + right * (NodeSpacing * 4f),
             };
 
             foreach (Vec3 pos in nodePos)
@@ -236,13 +239,13 @@ namespace ColoursOfCalradia
                     Position = pos, Radius = NodeRadius,
                     TickInterval = 0.15f, TickTimer = 0.15f, Remaining = -1f
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, node.Radius);
+                node.LightEntity = SpawnAreaLight(node.Position, node.School, 7f);
                 _areaEffects.Add(node);
             }
 
             BeginAgentGlow(Player, ColorSchool.Blue, 2f);
             SpawnTempLight(Player.Position, ColorSchool.Blue, 6f, 1.5f);
-            Msg("Sapphire Bastion rises — six pillars of force seal a wide line. Cast again to dismiss.", ColorSchool.Blue);
+            Msg("Sapphire Bastion rises — a wall of force seals a wide line. Cast again to dismiss.", ColorSchool.Blue);
         }
 
         // Purple Mist — 3×3 grid of death nodes; any agent inside has 10% instakill chance per tick; toggle
@@ -284,7 +287,7 @@ namespace ColoursOfCalradia
                     TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
                     Power = power
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, 7f);
+                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
                 _areaEffects.Add(node);
             }
             BeginAgentGlow(Player, ColorSchool.Purple, 2f);
@@ -310,7 +313,7 @@ namespace ColoursOfCalradia
                     Position = pos, Radius = 3f,
                     TickInterval = 0.5f, TickTimer = 0.5f, Remaining = 25f
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Blue, node.Radius);
+                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Blue, 7f);
                 _areaEffects.Add(node);
             }
         }
@@ -333,7 +336,7 @@ namespace ColoursOfCalradia
                     TickInterval = 2f, TickTimer = 2f, Remaining = 30f,
                     Power = power, CasterTeam = casterTeam
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, school, 6f);
+                node.LightEntity = SpawnAreaLight(node.Position, school, 8f);
                 _areaEffects.Add(node);
             }
         }
@@ -348,7 +351,9 @@ namespace ColoursOfCalradia
             else right = right.NormalizedCopy();
             Vec3[] pts = {
                 centre + fwd * 5f - right * 4f,
+                centre + fwd * 5f - right * 2f,
                 centre + fwd * 5f,
+                centre + fwd * 5f + right * 2f,
                 centre + fwd * 5f + right * 4f,
             };
             foreach (Vec3 pos in pts)
@@ -360,7 +365,7 @@ namespace ColoursOfCalradia
                     TickInterval = 0.5f, TickTimer = 0.5f, Remaining = 30f,
                     CasterTeam = casterTeam
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Blue, 5f);
+                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Blue, 7f);
                 _areaEffects.Add(node);
             }
         }
@@ -382,7 +387,7 @@ namespace ColoursOfCalradia
                     TickInterval = 2f, TickTimer = 2f, Remaining = 30f,
                     Power = power, CasterTeam = casterTeam
                 };
-                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Yellow, 7f);
+                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Yellow, 8f);
                 _areaEffects.Add(node);
             }
         }
