@@ -1,4 +1,4 @@
-# Colours of Calradia — v1.3.0.0
+# Ash and Ember — v0.9
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn.
 
@@ -7,7 +7,7 @@ A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a singl
 ## Package Structure
 
 ```
-ColoursOfCalradia/
+AshAndEmber/
 ├── SubModule.xml                    mod manifest
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
@@ -32,9 +32,9 @@ ColoursOfCalradia/
 │   │   ├── ColourLordRegistry.cs    marks lords as mages or blight lords
 │   │   ├── ColourLordAI.cs          priority-driven battle AI for mage lords
 │   │   └── BanditMageAI.cs          rare bandit unit spellcasters
-│   └── TheWitheringArt.csproj       build project (outputs ColoursOfCalradia.dll)
+│   └── TheWitheringArt.csproj       build project (outputs AshAndEmber.dll)
 ├── tests/
-│   ├── ColoursOfCalradia.Tests.csproj
+│   ├── AshAndEmber.Tests.csproj
 │   └── PureLogicTests.cs
 └── README.md
 ```
@@ -51,7 +51,7 @@ ColoursOfCalradia/
 
 ### Step 1 — Download
 
-Download the latest release ZIP. Extract it anywhere. You get a single `ColoursOfCalradia` folder.
+Download the latest release ZIP. Extract it anywhere. You get a single `AshAndEmber` folder.
 
 ### Step 2 — Install
 
@@ -72,17 +72,17 @@ The script finds your Bannerlord installation automatically (Steam registry, def
 
 #### Option B — Manual
 
-Copy the `ColoursOfCalradia` folder (the one containing `SubModule.xml`) into:
+Copy the `AshAndEmber` folder (the one containing `SubModule.xml`) into:
 
 ```
-<BannerlordRoot>\Modules\ColoursOfCalradia\
+<BannerlordRoot>\Modules\AshAndEmber\
 ```
 
-`SubModule.xml` must be directly inside `Modules\ColoursOfCalradia\`, not one level deeper.
+`SubModule.xml` must be directly inside `Modules\AshAndEmber\`, not one level deeper.
 
 ### Step 3 — Enable in launcher
 
-Open the Bannerlord launcher → Mods → tick **Colours of Calradia** → Play.
+Open the Bannerlord launcher → Mods → tick **Ash and Ember** → Play.
 
 ### Step 4 — Verify
 
@@ -317,9 +317,9 @@ $env:BannerlordPath = "C:\Program Files (x86)\Steam\steamapps\common\Mount & Bla
 dotnet build src\TheWitheringArt.csproj
 ```
 
-Output DLL: `src\bin\Debug\ColoursOfCalradia.dll`
+Output DLL: `src\bin\Debug\AshAndEmber.dll`
 
-The build copies the DLL to `<BannerlordRoot>\Modules\ColoursOfCalradia\bin\<platform>\` automatically on each successful compile.
+The build copies the DLL to `<BannerlordRoot>\Modules\AshAndEmber\bin\<platform>\` automatically on each successful compile.
 
 ### Creating a release package
 
@@ -328,7 +328,7 @@ $env:BannerlordPath = "..."
 .\tools\pack.ps1
 ```
 
-Produces `dist\ColoursOfCalradia_v<version>.zip` with DLLs for both platforms.
+Produces `dist\AshAndEmber_v<version>.zip` with DLLs for both platforms.
 
 ---
 
@@ -343,8 +343,8 @@ You may be in a tournament (casting kills you), in a prisoner state ("You are bo
 **Script reports "Could not auto-detect your Bannerlord installation"**
 Pass the path manually: `.\install.ps1 -BannerlordPath "D:\Games\Mount & Blade II Bannerlord"`
 
-**The mod list does not show Colours of Calradia**
-Verify `SubModule.xml` is at `<BannerlordRoot>\Modules\ColoursOfCalradia\SubModule.xml` exactly. Restart the launcher after copying.
+**The mod list does not show Ash and Ember**
+Verify `SubModule.xml` is at `<BannerlordRoot>\Modules\AshAndEmber\SubModule.xml` exactly. Restart the launcher after copying.
 
 **Game crashes on load**
 The DLL must match the game's .NET runtime. Check the Releases page for a compatibility update if the crash started after a game patch.

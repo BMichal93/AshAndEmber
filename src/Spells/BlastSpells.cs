@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — BlastSpells.cs
 // BLAST FORM: forward cone, 2m range per U input, 37° half-angle (dot 0.80).
 // Effects are applied to all agents in the cone regardless of team.
@@ -12,7 +12,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static partial class SpellEffects
     {

@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — AI/ColourLordAI.cs
 // NPC mage battle AI. Uses SpellEffects.ExecuteNpcBlast/ExecuteNpcBurst with
 // pre-prepared SpellCast recipes. Impulsive lords cast more, Calculating less.
@@ -14,7 +14,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class ColourLordAI
     {

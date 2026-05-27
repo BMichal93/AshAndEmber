@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — ColourUnitRegistry.cs
 // Named magical unit system removed in v2.0.
 // Stub retained for compilation compatibility.
@@ -6,7 +6,7 @@
 
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class ColourUnitRegistry
     {

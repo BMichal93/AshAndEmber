@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — CampaignBehavior.cs
 // New game prompt, inheritance, population regulation, aging, save/load.
 // =============================================================================
@@ -15,7 +15,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public class MagicCampaignBehavior : CampaignBehaviorBase
     {

@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — SpellEffects.cs
 // Core partial class: helpers, per-form execution entry points,
 // visual utilities, and the engine-safe deferred-death queue.
@@ -23,9 +23,9 @@ using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
 using TaleWorlds.CampaignSystem.MapEvents;
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("ColoursOfCalradia.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("AshAndEmber.Tests")]
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static partial class SpellEffects
     {

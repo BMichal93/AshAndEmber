@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — MageKnowledge.cs
 // Tracks whether the player carries the gift, manages the grimoire UI,
 // and provides the talent learning menu.
@@ -13,7 +13,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class MageKnowledge
     {
@@ -90,7 +90,7 @@ namespace ColoursOfCalradia
                     try
                     {
                         if (Hero.MainHero?.Clan?.Kingdom != null)
-                            TaleWorlds.CampaignSystem.Actions.LeaveClanFromKingdomAction.Apply(
+                            TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction.ApplyByLeaveKingdom(
                                 Hero.MainHero.Clan, false);
                     }
                     catch { }

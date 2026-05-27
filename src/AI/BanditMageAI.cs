@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — AI/BanditMageAI.cs
 // Gives 12% of eligible bandit units minor spellcasting ability.
 // Casters are seeded once per mission at warmup and tracked by Agent reference.
@@ -12,7 +12,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class BanditMageAI
     {

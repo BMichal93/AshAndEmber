@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — AgingSystem.cs
 // Aging cost mechanic: each battle spell costs (totalInputs / 4) days,
 // each campaign spell costs 1 day (Resonance: 25% chance to skip).
@@ -12,7 +12,7 @@ using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class AgingSystem
     {

@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // COLOURS OF CALRADIA — PureLogicTests.cs
 // Mount & Blade II: Bannerlord Mod  v2.0
 // =============================================================================
@@ -6,9 +6,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using ColoursOfCalradia;
+using AshAndEmber;
 
-namespace ColoursOfCalradia.Tests
+namespace AshAndEmber.Tests
 {
     [TestFixture]
     public class PureLogicTests

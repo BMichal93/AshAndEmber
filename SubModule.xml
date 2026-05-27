@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Module>
-    <Name value="Colours of Calradia"/>
-    <Id value="ColoursOfCalradia"/>
-    <Version value="v1.2.0.0"/>
+    <Name value="Ash and Ember"/>
+    <Id value="AshAndEmber"/>
+    <Version value="v0.9.0.0"/>
     <SingleplayerModule value="true"/>
     <MultiplayerModule value="false"/>
     <DependedModules>
@@ -13,9 +13,9 @@
     </DependedModules>
     <SubModules>
         <SubModule>
-            <Name value="ColoursOfCalradia"/>
-            <DLLName value="ColoursOfCalradia.dll"/>
-            <SubModuleClassType value="ColoursOfCalradia.MainSubModule"/>
+            <Name value="AshAndEmber"/>
+            <DLLName value="AshAndEmber.dll"/>
+            <SubModuleClassType value="AshAndEmber.MainSubModule"/>
             <Tags>
                 <Tag key="DedicatedServerType" value="none"/>
             </Tags>

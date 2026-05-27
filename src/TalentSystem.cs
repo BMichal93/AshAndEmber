@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — TalentSystem.cs
 // Talent definitions, purchase logic, lore text, and save/load.
 // =============================================================================
@@ -15,7 +15,7 @@ using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public enum TalentId
     {
@@ -181,28 +181,6 @@ namespace ColoursOfCalradia
                 {
                     hero.HeroDeveloper.UnspentFocusPoints -= cost;
                     spent = true;
-                }
-                else
-                {
-                    // Try to spend an attribute point from any attribute that has > 1
-                    var attrs = new[]
-                    {
-                        TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultCharacterAttributes.Vigor,
-                        TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultCharacterAttributes.Control,
-                        TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultCharacterAttributes.Endurance,
-                        TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultCharacterAttributes.Intelligence,
-                        TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultCharacterAttributes.Cunning,
-                        TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultCharacterAttributes.Social,
-                    };
-                    foreach (var attr in attrs)
-                    {
-                        if (hero.GetAttributeValue(attr) > 1)
-                        {
-                            hero.HeroDeveloper.AddAttribute(attr, -1, false);
-                            spent = true;
-                            break;
-                        }
-                    }
                 }
             }
             catch { }
@@ -391,7 +369,7 @@ namespace ColoursOfCalradia
             {
                 Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
                 var target = MobileParty.All
-                    .Where(p => p.IsActive && p.IsEnemy(MobileParty.MainParty) && p.LeaderHero != null
+                    .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction) && p.LeaderHero != null
                              && (p.GetPosition2D - playerPos).Length < 60f)
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
@@ -457,7 +435,7 @@ namespace ColoursOfCalradia
             {
                 Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
                 var target = MobileParty.All
-                    .Where(p => p.IsActive && p.IsEnemy(MobileParty.MainParty)
+                    .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)
                              && p.MemberRoster.TotalRegulars > 0
                              && (p.GetPosition2D - playerPos).Length < 60f)
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
@@ -509,7 +487,7 @@ namespace ColoursOfCalradia
         {
             Vec2 pos = caster.PartyBelongedTo?.GetPosition2D ?? Vec2.Zero;
             var target = MobileParty.All
-                .Where(p => p.IsActive && p.IsEnemy(caster.PartyBelongedTo)
+                .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, caster.PartyBelongedTo?.MapFaction)
                          && (p.GetPosition2D - pos).Length < 50f)
                 .OrderBy(p => (p.GetPosition2D - pos).Length)
                 .FirstOrDefault();
@@ -537,7 +515,7 @@ namespace ColoursOfCalradia
         {
             Vec2 pos = caster.PartyBelongedTo?.GetPosition2D ?? Vec2.Zero;
             var target = MobileParty.All
-                .Where(p => p.IsActive && p.IsEnemy(caster.PartyBelongedTo)
+                .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, caster.PartyBelongedTo?.MapFaction)
                          && p.MemberRoster.TotalRegulars > 2
                          && (p.GetPosition2D - pos).Length < 60f)
                 .OrderBy(p => (p.GetPosition2D - pos).Length)

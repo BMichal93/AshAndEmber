@@ -1,10 +1,10 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — AffectSpells.cs
 // Old campaign map spell implementations replaced by TalentSystem.
 // This file is retained for the partial class structure.
 // =============================================================================
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static partial class SpellEffects
     {

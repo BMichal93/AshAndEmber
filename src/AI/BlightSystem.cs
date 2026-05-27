@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — BlightSystem.cs
 // Blight system removed in v2.0. Stub retained so the project compiles
 // against any lingering call-sites during the transition build.
@@ -7,7 +7,7 @@
 using System.Collections.Generic;
 using TaleWorlds.CampaignSystem;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class BlightSystem
     {
@@ -22,7 +22,6 @@ namespace ColoursOfCalradia
         public static void ResetForNewGame() { }
         public static void SpawnBlightFromOversaturation(ColorSchool school) { }
         public static void CheckRespawnTimers() { }
-        public static void Save(TaleWorlds.CampaignSystem.GameState.IDataStore store) { }
         public static void Save(object store) { }
     }
 }

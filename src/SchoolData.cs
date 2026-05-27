@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — MagicData.cs (SchoolData.cs)
 // Mount & Blade II: Bannerlord Mod  v2.0.0
 // Reflavoured: colour magic → life and death magic, manipulation of life energies.
@@ -7,7 +7,7 @@
 using System.Collections.Generic;
 using TaleWorlds.Library;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     // Visual colour identifiers used by glow / light systems.
     // Warm, fiery palette: Red/Orange/Yellow/Amber/Ember/Crimson/White.
@@ -51,9 +51,9 @@ namespace ColoursOfCalradia
             switch (base_school)
             {
                 case ColorSchool.Red:    return 0xFFFFCCBBu; // warm cream (healing)
-                case ColorSchool.Orange: return 0xFFFFDDAA u; // pale gold
+                case ColorSchool.Orange: return 0xFFFFDDAAu; // pale gold
                 case ColorSchool.Yellow: return 0xFFFFEE99u; // bright warm yellow (kindle)
-                case ColorSchool.Green:  return 0xFFFFCCAA u; // pale amber
+                case ColorSchool.Green:  return 0xFFFFCCAAu; // pale amber
                 case ColorSchool.Blue:   return 0xFFFFDD88u; // gold-draw
                 case ColorSchool.Purple: return 0xFFCC8844u; // bronze
                 case ColorSchool.White:  return 0xFFFFFFEEu;

@@ -1,12 +1,12 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Builds a release-ready distributable ZIP for Colours of Calradia.
+    Builds a release-ready distributable ZIP for Ash and Ember.
 
 .DESCRIPTION
-    Compiles ColoursOfCalradia.dll against the specified Bannerlord installation
+    Compiles AshAndEmber.dll against the specified Bannerlord installation
     (Release configuration) then assembles the distributable folder structure and
-    zips it as dist\ColoursOfCalradia_v<version>.zip.
+    zips it as dist\AshAndEmber_v<version>.zip.
 
     The resulting ZIP contains bin\ folders for both Steam and Xbox platforms so
     a single archive works for all users.
@@ -34,7 +34,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot   # tools\ is one level below repo root
-$ModName  = "ColoursOfCalradia"
+$ModName  = "AshAndEmber"
 
 # ── Validate ──────────────────────────────────────────────────────────────────
 
@@ -120,5 +120,5 @@ Write-Host "  $zipPath"
 Write-Host ""
 Write-Host "Contents:"
 Get-ChildItem $stagingDir -Recurse | ForEach-Object {
-    "  " + $_.FullName.Replace($stagingDir, "ColoursOfCalradia")
+    "  " + $_.FullName.Replace($stagingDir, "AshAndEmber")
 }

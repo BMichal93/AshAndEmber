@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — CreateSpells.cs
 // BARRIER FORM: wall of nodes in front of caster, 1 node per R input.
 // BURST FORM   : instant circle around caster, 2m radius per D input.
@@ -11,7 +11,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static partial class SpellEffects
     {
@@ -133,11 +133,11 @@ namespace ColoursOfCalradia
                         try { isMounted = a.MountAgent != null; } catch { }
                         if (!isMounted)
                         {
-                            float dist = cast.PushCount * 2f;
+                            float pushDist = cast.PushCount * 2f;
                             Vec3 dir = rev
                                 ? (src.Position - a.Position).NormalizedCopy()
                                 : (a.Position - e.Position).NormalizedCopy();
-                            Vec3 dest = a.Position + dir * dist; dest.z = a.Position.z;
+                            Vec3 dest = a.Position + dir * pushDist; dest.z = a.Position.z;
                             QueueMove(a, dest, 0.3f);
                         }
                     }

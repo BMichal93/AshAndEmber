@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — SelfSpells.cs
 // WAVE FORM (L keys): a gridSize×gridSize block of fire that advances forward.
 //   gridSize  = 3 + max(0, (formCount - 5) / 5)  — grows +1 per 5 inputs above 5
@@ -12,9 +12,10 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.Engine;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static partial class SpellEffects
     {
@@ -215,6 +216,7 @@ namespace ColoursOfCalradia
         // Forwards to Wave so any residual call-sites compile.
         private const string AuraId = "spell_aura";
         public static void ExecuteAura(SpellCast cast) => ExecuteWave(cast);
+        internal static void TickAuraNode(AreaEffect e) { }
 
         // ── Ward state ────────────────────────────────────────────────────────
         // Keyed by Agent reference, not index — avoids inheriting protection when

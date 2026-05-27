@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — SpellBuilder.cs
 // Parses the two-part input buffer (forms + effects) into a SpellCast and
 // dispatches it to the appropriate SpellEffects execution method.
@@ -23,7 +23,7 @@
 using System;
 using System.Linq;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public enum SpellForm { None, Blast, Aura, Barrier, Burst }
 

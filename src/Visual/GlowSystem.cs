@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // COLOURS OF CALRADIA — GlowSystem.cs
 // Mount & Blade II: Bannerlord Mod  v1.2.0.0
 // =============================================================================
@@ -22,7 +22,7 @@ using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
 using TaleWorlds.CampaignSystem.MapEvents;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static partial class SpellEffects
     {

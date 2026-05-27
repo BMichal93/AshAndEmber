@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — MagicInputHandler.cs
 // Two-phase input: form keys before Break, effect keys after Break.
 //
@@ -22,7 +22,7 @@ using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class MagicInputHandler
     {

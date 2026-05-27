@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — MagicSystem.cs
 // Module entry point. Wires up the campaign behaviour and mission behaviour.
 // =============================================================================
@@ -11,7 +11,7 @@ using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     // =========================================================================
     // MODULE ENTRY POINT

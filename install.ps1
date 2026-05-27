@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Installs Colours of Calradia into your Bannerlord Modules folder.
+    Installs Ash and Ember into your Bannerlord Modules folder.
 
 .DESCRIPTION
     Auto-detects your Bannerlord installation (Steam via registry, Steam via default
@@ -31,7 +31,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$ModName    = "ColoursOfCalradia"
+$ModName    = "AshAndEmber"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # ── Locate game root ─────────────────────────────────────────────────────────
@@ -158,4 +158,4 @@ Write-Host ""
 Write-Host "Next steps:"
 Write-Host "  1. Launch Mount & Blade II: Bannerlord"
 Write-Host "  2. Click Mods in the launcher"
-Write-Host "  3. Enable 'Colours of Calradia' and click Play"
+Write-Host "  3. Enable 'Ash and Ember' and click Play"

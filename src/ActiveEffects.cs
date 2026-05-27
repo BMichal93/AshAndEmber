@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // COLOURS OF CALRADIA — ActiveEffects.cs
 // Mount & Blade II: Bannerlord Mod  v1.2.0.0
 // =============================================================================
@@ -22,7 +22,7 @@ using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
 using TaleWorlds.CampaignSystem.MapEvents;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     // =========================================================================
     // 5. ACTIVE EFFECT MANAGER  — timed buffs & debuffs (unchanged from v1)

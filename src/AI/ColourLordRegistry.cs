@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // LIFE & DEATH MAGIC — AI/ColourLordRegistry.cs
 // Tracks which NPC lords carry the gift (isMage).
 // Population target: ~20% of all lords. Weekly regulator keeps it stable.
@@ -16,7 +16,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 
-namespace ColoursOfCalradia
+namespace AshAndEmber
 {
     public static class ColourLordRegistry
     {
@@ -74,7 +74,7 @@ namespace ColoursOfCalradia
                 try
                 {
                     if (hero.Clan?.Kingdom != null)
-                        TaleWorlds.CampaignSystem.Actions.LeaveClanFromKingdomAction.Apply(hero.Clan, false);
+                        TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction.ApplyByLeaveKingdom(hero.Clan, false);
                 }
                 catch { }
             }

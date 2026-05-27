@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>ColoursOfCalradia</AssemblyName>
-    <RootNamespace>ColoursOfCalradia</RootNamespace>
+    <AssemblyName>AshAndEmber</AssemblyName>
+    <RootNamespace>AshAndEmber</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <Optimize>true</Optimize>
@@ -86,6 +86,7 @@
     <Compile Include="TalentSystem.cs"/>
     <Compile Include="MagicInputHandler.cs"/>
     <Compile Include="CampaignBehavior.cs"/>
+    <Compile Include="AI\BanditMageAI.cs"/>
     <Compile Include="AI\ColourLordRegistry.cs"/>
     <Compile Include="AI\ColourLordAI.cs"/>
     <Compile Include="AI\BlightSystem.cs"/>
@@ -104,7 +105,7 @@
   <!-- Auto-copy DLL into the game's Modules folder after every successful build. -->
   <Target Name="DeployToGame" AfterTargets="Build">
     <PropertyGroup>
-      <_ModuleBinDir>$(BannerlordPath)\Modules\ColoursOfCalradia\bin\$(BannerlordBin)</_ModuleBinDir>
+      <_ModuleBinDir>$(BannerlordPath)\Modules\AshAndEmber\bin\$(BannerlordBin)</_ModuleBinDir>
     </PropertyGroup>
     <MakeDir Directories="$(_ModuleBinDir)" Condition="!Exists('$(_ModuleBinDir)')"/>
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
