@@ -125,6 +125,7 @@ namespace AshAndEmber
                 return;
             }
 
+            string breakKey   = usingController ? "L3" : "X";
             string inputHint = usingController
                 ? "Hold LB + left stick (↑/←/→/↓), press L3 to Break. Release LB to cast. LB+RB to open grimoire."
                 : "Hold Left Alt + W/A/D/S, press X to Break, release to cast. Alt+X opens grimoire (when no form started).";
@@ -136,7 +137,7 @@ namespace AshAndEmber
             string desc =
                 $"{inputHint}\n\n" +
                 "Channelling\n" +
-                "  Form keys → Break (E/L3) → effect keys → release focus.\n" +
+                $"  Form keys → Break ({breakKey}) → effect keys → release focus.\n" +
                 "  Mixed form inputs fumble. Effects stack.\n\n" +
                 "Forms  (before Break)\n" +
                 "  ↑  Blast   — forward cone, 2m per ↑\n" +

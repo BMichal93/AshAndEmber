@@ -109,9 +109,9 @@ Once you carry the Gift, the grimoire is available at any time. Without it, spel
 |--------|-------|
 | Enter spell mode | Hold **Left Alt** |
 | Shape form / effect | **W** (↑)  **A** (←)  **D** (→)  **S** (↓) while holding Alt |
-| Switch to effect phase | Press **E** (Break) |
+| Switch to effect phase | Press **X** (Break) |
 | Cast | Release **Left Alt** |
-| Open grimoire | **Alt + B** |
+| Open grimoire | **Alt + X** (only when no form has been started) |
 
 ### Gamepad
 
@@ -127,7 +127,7 @@ Once you carry the Gift, the grimoire is available at any time. Without it, spel
 
 1. **Hold the focus key.** The buffer is empty.
 2. **Input form keys** — each press adds one count of the chosen form (e.g. three W presses = Blast, formCount 3).
-3. **Press Break (E / L3).** The input switches to the effect phase.
+3. **Press Break (X / L3).** The input switches to the effect phase.
 4. **Input effect keys** after Break.
 5. **Release the focus key.** The spell fires.
 
@@ -201,6 +201,10 @@ Every spell draws on your lifespan. The cost is based on the **total input count
 | 4–5 | 1 day |
 | 6–7 | 2 days |
 | 8–9 | 3 days |
+| 10–11 | 4 days |
+| 12–13 | 5 days |
+| 14–15 | 6 days |
+| +2 inputs | +1 day |
 
 The **Tempered** talent raises the free threshold from 4 to 5. The **Resonance** talent gives a 1-in-4 chance that any cast costs nothing.
 
@@ -223,7 +227,7 @@ Casting **any** spell during a tournament **kills and disqualifies you instantly
 
 ## Talents
 
-Talents are learned through the grimoire (Alt+B → *Talents*). The **Gift** is free. Each subsequent talent costs Focus points or, if those are exhausted, an attribute point. The cost equals the number of talents already known (Gift = 0 cost, 2nd talent = 1 point, 3rd = 2 points, etc.).
+Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. Each subsequent talent costs **focus points**, capped at 3 per talent (Gift = 0, 2nd talent = 1 point, 3rd = 2 points, 4th onward = 3 points).
 
 ### Passive talents
 
@@ -231,10 +235,10 @@ Talents are learned through the grimoire (Alt+B → *Talents*). The **Gift** is 
 |--------|--------|
 | **Gift** | You carry the fire. Battle casting enabled. |
 | **Tempered** | Free casting threshold raised from 4 inputs to 5. |
-| **Resonance** | 1-in-4 casts cost no days. |
+| **Resonance** | 1-in-4 campaign map casts cost no days. |
 | **Ember** | 5% chance per battle kill to restore 1 day of youth. |
-| **Harvest** | Executing a captured lord restores 150 days of youth. |
-| **Reap** | Raiding a village restores 5 days. Each discarded prisoner has a 5% chance to restore 1 day. Marks you (−1 Mercy, −1 Honor, +30 criminal rating). |
+| **Harvest** | Executing a captured lord restores 100 days of youth. |
+| **Reap** | Raiding a village restores 5 days (7-day cooldown between raids). Each discarded prisoner has a 5% chance to restore 1 day. Marks you (−1 Mercy, −1 Honor, +30 criminal rating). |
 | **Kinship** | +10 relations with other mages; relation cannot fall below −10 with them. |
 
 ### Campaign map spells

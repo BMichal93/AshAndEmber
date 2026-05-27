@@ -75,8 +75,6 @@ namespace AshAndEmber
                 CasterTeam = caster.Team,
             };
 
-            SpawnWaveLights(_wave);
-
             ColorSchool col = cast.VisualColor;
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
@@ -115,24 +113,6 @@ namespace AshAndEmber
             _wave.Position  += _wave.Forward * moved;
             _wave.TravelLeft -= moved;
 
-            // Reposition lights
-            int idx = 0;
-            for (int row = 0; row < _wave.GridSize; row++)
-            for (int col = 0; col < _wave.GridSize; col++)
-            {
-                if (idx < _wave.Lights.Count && _wave.Lights[idx] != null)
-                {
-                    Vec3 p = WaveNodePos(_wave, row, col) + new Vec3(0f, 0f, 0.5f);
-                    try
-                    {
-                        var f = new MatrixFrame(Mat3.Identity, p);
-                        _wave.Lights[idx].SetGlobalFrame(in f, true);
-                    }
-                    catch { }
-                }
-                idx++;
-            }
-
             if (_wave.TravelLeft <= 0f) { ClearWave(); return; }
 
             _wave.TickTimer -= dt;
@@ -147,18 +127,16 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
 
-            // Persistent fire trail — spawn across the full width of the wave front
-            // every tick so the wave stays visible for its entire travel distance.
-            float half = (w.GridSize - 1) * 0.5f;
+            // Spawn temp lights at every grid node each tick — no persistent entities,
+            // since SetGlobalFrame does not reliably reposition them in Bannerlord.
+            // Duration is 3× tick interval so consecutive ticks overlap solidly.
+            for (int row = 0; row < w.GridSize; row++)
             for (int col = 0; col < w.GridSize; col++)
             {
-                Vec3 nodePos = WaveNodePos(w, 0, col);
-                SpawnTempLight(nodePos, w.Cast.VisualColor, 6f, WaveState.TickInterval * 3.5f);
-                if (col == 0 || col == w.GridSize - 1 || col == w.GridSize / 2)
-                {
-                    if (w.Cast.VisualColor != ColorSchool.Blight)
-                        SpawnTempFireParticle(nodePos, WaveState.TickInterval * 3f);
-                }
+                Vec3 nodePos = WaveNodePos(w, row, col);
+                SpawnTempLight(nodePos, w.Cast.VisualColor, 7f, WaveState.TickInterval * 3f);
+                if (w.Cast.VisualColor != ColorSchool.Blight)
+                    SpawnTempFireParticle(nodePos, WaveState.TickInterval * 2.5f);
             }
 
             List<Agent> all;

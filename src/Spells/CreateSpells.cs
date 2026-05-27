@@ -70,7 +70,17 @@ namespace AshAndEmber
                 Power        = token,
                 CasterTeam   = casterTeam
             };
-            node.LightEntity = SpawnAreaLight(node.Position, cast.VisualColor, 6f);
+            node.LightEntity = SpawnAreaLight(node.Position, cast.VisualColor, 12f);
+            // Column of fire lights visible immediately when the barrier goes up
+            SpawnTempLight(pos,                          cast.VisualColor, 10f, 6f);
+            SpawnTempLight(pos + new Vec3(0f, 0f, 1f),  cast.VisualColor, 10f, 6f);
+            SpawnTempLight(pos + new Vec3(0f, 0f, 2f),  cast.VisualColor, 10f, 6f);
+            if (cast.VisualColor != ColorSchool.Blight)
+            {
+                SpawnTempFireParticle(pos,                          6f);
+                SpawnTempFireParticle(pos + new Vec3(0f, 0f, 1f),  6f);
+                SpawnTempFireParticle(pos + new Vec3(0f, 0f, 2f),  6f);
+            }
             _areaEffects.Add(node);
         }
 
@@ -80,11 +90,16 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
 
-            // Persistent visual: re-spawn a flame and a bright flash at the node each tick
-            // so the barrier stays visually clear for its entire lifetime.
-            SpawnTempLight(e.Position, e.School, 6f, 2.2f);
+            // Column of fire at three heights every tick; 3.5 s duration gives solid overlap beyond the 2 s tick.
+            SpawnTempLight(e.Position,                          e.School, 10f, 3.5f);
+            SpawnTempLight(e.Position + new Vec3(0f, 0f, 1f),  e.School, 10f, 3.5f);
+            SpawnTempLight(e.Position + new Vec3(0f, 0f, 2f),  e.School, 10f, 3.5f);
             if (e.School != ColorSchool.Blight)
-                SpawnTempFireParticle(e.Position, 2.5f);
+            {
+                SpawnTempFireParticle(e.Position,                          3f);
+                SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 1f),  3f);
+                SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 2f),  3f);
+            }
             int token   = (int)e.Power;
             int dmg     = token / 1000;
             int push    = (token % 1000) / 100;

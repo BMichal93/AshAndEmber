@@ -47,6 +47,11 @@ namespace AshAndEmber
             }
             catch { }
 
+            ColorSchool glowColor = cast.VisualColor;
+            SpawnConeLights(caster.Position, fwd, glowColor, 3f);
+            TryCastSound(caster.Position, glowColor);
+            TryCastAnimation(caster);
+
             if (targets.Count == 0)
             {
                 if (caster == Agent.Main)
@@ -54,11 +59,6 @@ namespace AshAndEmber
                         "Nothing in range.", new Color(0.7f, 0.7f, 0.7f)));
                 return;
             }
-
-            ColorSchool glowColor = cast.VisualColor;
-            SpawnConeLights(caster.Position, fwd, glowColor, 3f);
-            TryCastSound(caster.Position, glowColor);
-            TryCastAnimation(caster);
 
             int affected = 0;
             foreach (Agent a in targets)
