@@ -244,7 +244,7 @@ namespace ColoursOfCalradia
                 case ColorSchool.Blue:   return new Vec3(1f,    0.40f, 0.02f); // hot ember-orange (was cold blue)
                 case ColorSchool.Purple: return new Vec3(0.87f, 0.07f, 0.02f); // deep crimson (was purple)
                 case ColorSchool.White:  return new Vec3(1f,    0.93f, 0.75f); // pale warm flame
-                case ColorSchool.Blight: return new Vec3(0.15f, 0.25f, 0.80f); // cold ash-blue
+                case ColorSchool.Blight: return new Vec3(0.28f, 0.32f, 0.42f); // dim ash grey-blue
                 default:                 return new Vec3(1f,    0.70f, 0.30f);
             }
         }

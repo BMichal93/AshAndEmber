@@ -39,7 +39,7 @@ namespace ColoursOfCalradia
                 case ColorSchool.Blue:   return 0xFFFF6600u; // hot ember-orange
                 case ColorSchool.Purple: return 0xFFDD1100u; // deep crimson
                 case ColorSchool.White:  return 0xFFFFEECCu; // pale warm flame
-                case ColorSchool.Blight: return 0xFF2233AAu; // cold ash-blue
+                case ColorSchool.Blight: return 0xFF4A5566u; // ash grey-blue
                 default:                 return 0xFFFFEECCu;
             }
         }
@@ -57,7 +57,7 @@ namespace ColoursOfCalradia
                 case ColorSchool.Blue:   return 0xFFFFDD88u; // gold-draw
                 case ColorSchool.Purple: return 0xFFCC8844u; // bronze
                 case ColorSchool.White:  return 0xFFFFFFEEu;
-                case ColorSchool.Blight: return 0xFF334455u; // cold dark grey
+                case ColorSchool.Blight: return 0xFF2A3340u; // deep cold ash
                 default:                 return 0xFFFFEEDDu;
             }
         }
@@ -73,7 +73,7 @@ namespace ColoursOfCalradia
                 case ColorSchool.Blue:   return new Color(1.0f,  0.40f, 0.0f);
                 case ColorSchool.Purple: return new Color(0.87f, 0.07f, 0.0f);
                 case ColorSchool.White:  return new Color(1.0f,  0.93f, 0.8f);
-                case ColorSchool.Blight: return new Color(0.2f,  0.3f,  0.7f);
+                case ColorSchool.Blight: return new Color(0.42f, 0.48f, 0.58f);
                 default:                 return Color.White;
             }
         }
