@@ -376,6 +376,7 @@ namespace AshAndEmber
         {
             try
             {
+                if (MobileParty.MainParty == null) return;
                 Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
                 var target = MobileParty.All
                     .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction) && p.LeaderHero != null
@@ -442,6 +443,7 @@ namespace AshAndEmber
         {
             try
             {
+                if (MobileParty.MainParty == null) return;
                 Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
                 var target = MobileParty.All
                     .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)

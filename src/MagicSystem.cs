@@ -78,9 +78,11 @@ namespace AshAndEmber
             try { SpellEffects.ClearGlows();         } catch { }
             try { SpellEffects.ClearColourCooldown();} catch { }
             try { SpellEffects.ClearMoves();         } catch { }
-            try { ColourLordAI.ClearCooldowns();     } catch { }
-            try { BanditMageAI.OnMissionEnd();       } catch { }
-            try { AgingSystem.ClearKnockdowns();     } catch { }
+            try { ColourLordAI.ClearCooldowns();            } catch { }
+            try { BanditMageAI.OnMissionEnd();             } catch { }
+            try { AgingSystem.ClearKnockdowns();           } catch { }
+            try { ActiveEffectManager.ClearMissionEffects(); } catch { }
+            try { MagicInputHandler.ResetInputState();       } catch { }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,

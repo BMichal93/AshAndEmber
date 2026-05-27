@@ -37,6 +37,7 @@ namespace AshAndEmber
         {
             _cooldowns.Clear();
             _battleCasts.Clear();
+            _tickAccum   = 0f;
             _warmupDone  = false;
             _warmupTimer = 0f;
         }

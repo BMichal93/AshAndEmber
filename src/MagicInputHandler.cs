@@ -155,6 +155,18 @@ namespace AshAndEmber
             }
         }
 
+        public static void ResetInputState()
+        {
+            _formBuffer    = "";
+            _effectBuffer  = "";
+            _inEffectPhase = false;
+            _wasFocusing   = false;
+            _lastDisplayed = "";
+            _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
+            _prevBreakPad  = false;
+            InputSuppressed = false;
+        }
+
         private static void AppendForm(string dir)
         {
             if (_formBuffer.Length < MaxLen) _formBuffer += dir;

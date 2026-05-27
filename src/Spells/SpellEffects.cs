@@ -179,7 +179,7 @@ namespace AshAndEmber
                 else
                 {
                     _haltedAgents[idx] = (remaining, frozenPos, srcAgent);
-                    try { a.SetMaximumSpeedLimit(0f, false); } catch { }
+                    if (a.MountAgent == null) try { a.SetMaximumSpeedLimit(0f, false); } catch { }
                     if (doTeleport && a.MountAgent == null) try { a.TeleportToPosition(frozenPos); } catch { }
                 }
             }

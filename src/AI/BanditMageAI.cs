@@ -86,7 +86,7 @@ namespace AshAndEmber
             // Remove dead/invalid mages
             _mageAgents.RemoveWhere(a => a == null || !a.IsActive());
 
-            foreach (Agent mage in _mageAgents)
+            foreach (Agent mage in _mageAgents.ToList())
             {
                 if (_cooldowns.ContainsKey(mage)) continue;
                 TryCast(mage);
