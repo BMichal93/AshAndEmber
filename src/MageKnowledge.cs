@@ -127,7 +127,7 @@ namespace AshAndEmber
 
             string inputHint = usingController
                 ? "Hold LB + left stick (↑/←/→/↓), press L3 to Break. Release LB to cast. LB+RB to open grimoire."
-                : "Hold Left Alt + W/A/D/S, press E to Break, release to cast. Alt+B opens grimoire.";
+                : "Hold Left Alt + W/A/D/S, press X to Break, release to cast. Alt+X opens grimoire (when no form started).";
 
             string blightNote = _isBlight
                 ? "\n[Ash-cold] Each cast adds criminal rating instead of aging.\n"
@@ -159,8 +159,8 @@ namespace AshAndEmber
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Threshold raised to 5.\n" : "") +
                 blightNote +
                 "\nExample\n" +
-                "  ↑↑↑  Break  ↑↑↑↑↑  =  Blast (6m), 40 flame, 2 days.\n" +
-                "  ↑↑↑↑↑  Break  ↑↑↑↑↑↑↑↑↑↑  =  Blast (10m), 80 flame, 7 days.";
+                "  ↑↑↑  X  ↑↑↑↑↑  =  Blast (6m), 40 flame, 3 days  (8 inputs: (8−4)/2+1).\n" +
+                "  ↑↑↑↑↑  X  ↑↑↑↑↑↑↑↑↑↑  =  Blast (10m), 80 flame, 6 days  (15 inputs).";
 
             string title = _isBlight ? "The Ashen Fire" : "The Inner Fire";
 

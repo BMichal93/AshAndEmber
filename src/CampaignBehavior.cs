@@ -22,6 +22,7 @@ namespace AshAndEmber
         private bool _selectionDone;
         private int  _prisonerCountSnapshot = -1;
         private int  _dayCounter            = 0;
+        private int  _reapRaidCooldown      = 0;
         private static readonly Random _rng = new Random();
 
         private static readonly string[] _premonitions =
@@ -73,10 +74,10 @@ namespace AshAndEmber
                     if (isMage)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The gift stirs. Hold Alt, type form keys (WASD), press E to Break, type effect keys, release Alt to cast.",
+                            "The gift stirs. Hold Alt, type form keys (WASD), press X to Break, type effect keys, release Alt to cast.",
                             new Color(0.7f, 0.5f, 1.0f)));
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "Forms: W=Blast  A=Aura  D=Barrier  S=Burst  |  Effects: W=Damage  A=Push  D=Morale  S=Reverse  |  Alt+B = Grimoire",
+                            "Forms: W=Blast  A=Wave  D=Barrier  S=Burst  |  Effects: W=Damage  A=Push  D=Morale  S=Reverse  |  Alt+X = Grimoire",
                             new Color(0.6f, 0.6f, 0.8f)));
                     }
                     else
@@ -110,6 +111,7 @@ namespace AshAndEmber
             try { ColourLordRegistry.DailyMapCast(); } catch { }
             try { AgingSystem.DailyAgeCheck(); } catch { }
             try { CheckReapPrisonerYield(); } catch { }
+            if (_reapRaidCooldown > 0) _reapRaidCooldown--;
             _dayCounter++;
             if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
         }
@@ -172,11 +174,12 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Reap: raid yield ──────────────────────────────────────────────────
+        // ── Reap: raid yield (7-day cooldown) ────────────────────────────────
         private void CheckReapRaidYield(MapEvent mapEvent)
         {
             if (!MageKnowledge.IsMage || !TalentSystem.Has(TalentId.Reap)) return;
             if (mapEvent.EventType != MapEvent.BattleTypes.Raid) return;
+            if (_reapRaidCooldown > 0) return;
 
             bool playerAttacker = mapEvent.AttackerSide?.Parties
                 .Any(p => p.Party == PartyBase.MainParty) == true;
@@ -184,6 +187,7 @@ namespace AshAndEmber
             if (mapEvent.WinningSide != BattleSideEnum.Attacker) return;
 
             AgingSystem.RejuvenateHero(Hero.MainHero, 5);
+            _reapRaidCooldown = 7;
         }
 
         // ── Reap: prisoner discard yield ──────────────────────────────────────
@@ -236,7 +240,9 @@ namespace AshAndEmber
                             int casts = ColourLordAI.ConsumeBattleCasts(leader);
                             if (casts <= 0) continue;
 
-                            int agingDays = AgingSystem.ComputeBattleAgingCost(casts * 4, false);
+                            // 1 aging day per spell cast — formula-independent, keeps NPC
+                            // mage lord lifespan stable regardless of player formula tuning.
+                            int agingDays = casts;
                             if (agingDays <= 0) continue;
 
                             AgingSystem.AgeHero(leader, agingDays);
@@ -295,9 +301,20 @@ namespace AshAndEmber
             if (ColourLordRegistry.IsColourLord(victim))
                 try { ColourLordRegistry.OnLordDied(victim); } catch { }
 
-            // Devour Life: Merciless/Devious mage executioner absorbs life from a kill
-            if (detail == KillCharacterAction.KillCharacterActionDetail.Executed && killer != null
-                && killer != Hero.MainHero && ColourLordRegistry.IsColourLord(killer)
+            if (detail != KillCharacterAction.KillCharacterActionDetail.Executed) return;
+            if (killer == null || !victim.IsLord) return;
+
+            // Player DevourLife: executing a captured lord draws back 100 days
+            if (killer == Hero.MainHero
+                && MageKnowledge.IsMage
+                && TalentSystem.Has(TalentId.DevourLife))
+            {
+                try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
+            }
+
+            // NPC DevourLife: merciless/devious mage lord executioner absorbs 1 day
+            if (killer != Hero.MainHero
+                && ColourLordRegistry.IsColourLord(killer)
                 && ColourLordRegistry.HasTalent(killer, TalentId.DevourLife))
             {
                 try
@@ -305,10 +322,7 @@ namespace AshAndEmber
                     int merciless = killer.GetTraitLevel(DefaultTraits.Mercy);
                     int devious   = killer.GetTraitLevel(DefaultTraits.Honor);
                     if (merciless < 0 || devious < 0)
-                    {
-                        // Absorb 1 day — rejuvenate by setting birthday forward
                         killer.SetBirthDay(killer.BirthDay + CampaignTime.Days(1));
-                    }
                 }
                 catch { }
             }
@@ -362,6 +376,7 @@ namespace AshAndEmber
             dataStore.SyncData("LDM_SelectionDone",        ref _selectionDone);
             dataStore.SyncData("LDM_PrisonerSnapshot",     ref _prisonerCountSnapshot);
             dataStore.SyncData("LDM_DayCounter",           ref _dayCounter);
+            dataStore.SyncData("LDM_ReapRaidCooldown",     ref _reapRaidCooldown);
             MageKnowledge.Save(dataStore);      // also saves TalentSystem internally
             ColourLordRegistry.Save(dataStore);
         }

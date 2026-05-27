@@ -70,7 +70,7 @@ namespace AshAndEmber
             {
                 Id = TalentId.Sorcerer, IsSpell = false, Name = "Resonance",
                 Lore = "Some days the fire gives back what it takes. You cannot predict it — only listen for it.",
-                MechanicDesc = "Passive. One in four castings costs no days."
+                MechanicDesc = "Passive. One in four campaign map castings costs no days."
             },
             new TalentDef
             {
@@ -89,7 +89,7 @@ namespace AshAndEmber
             {
                 Id = TalentId.Rejuvenate, IsSpell = true, Name = "Rejuvenate",
                 Lore = "You press a sliver of your own fire into a wound, just enough to wake theirs. They will not know what was given. You will feel it, briefly.",
-                MechanicDesc = "Several wounded soldiers in your army recover. Costs 1 day."
+                MechanicDesc = "Up to 15 wounded soldiers across your ranks recover. Costs 1 day."
             },
             new TalentDef
             {
@@ -133,13 +133,13 @@ namespace AshAndEmber
             {
                 Id = TalentId.DevourLife, IsSpell = false, Name = "Harvest",
                 Lore = "You take the last warmth from a life you have ended. The fire knows no guilt — it only spreads.",
-                MechanicDesc = "Passive. Executing a captured lord draws back 150 days of youth."
+                MechanicDesc = "Passive. Executing a captured lord draws back 100 days of youth."
             },
             new TalentDef
             {
                 Id = TalentId.Reap, IsSpell = false, Name = "Reap",
                 Lore = "Every life spent in your shadow leaves something behind — a warmth, a residue, the last gasp of a flame that burned for your purpose. You have learned to hold a vessel for it.",
-                MechanicDesc = "Passive. Raiding a village draws back 5 days of youth. Each prisoner discarded has a 5% chance to draw back 1 day. Learning this talent marks you."
+                MechanicDesc = "Passive. Raiding a village draws back 5 days of youth (7-day cooldown between yields). Each prisoner discarded has a 5% chance to draw back 1 day. Learning this talent marks you."
             },
             // ── Social ───────────────────────────────────────────────────────
             new TalentDef
@@ -172,8 +172,9 @@ namespace AshAndEmber
                 new Color(1f, 0.8f, 0.2f)));
         }
 
-        // Cost = number of talents already learned (Gift is free, every subsequent costs 1 point)
-        public static int PurchaseCost() => Math.Max(1, _purchased.Count);
+        // Cost rises with each talent learned, capped at 3 focus points so late talents remain reachable.
+        // Gift(free) → 2nd=1pt → 3rd=2pt → 4th+=3pt
+        public static int PurchaseCost() => Math.Min(3, Math.Max(1, _purchased.Count));
 
         public static bool TryPurchase(TalentId id, Hero hero)
         {
@@ -353,10 +354,14 @@ namespace AshAndEmber
                     .ToList();
                 if (wounded.Count == 0) { Msg("Rejuvenate — no wounded soldiers in your ranks."); return; }
 
-                var entry = wounded[_rng.Next(wounded.Count)];
-                int healed = Math.Max(1, Math.Min(entry.WoundedNumber, 3));
-                roster.AddToCounts(entry.Character, 0, false, -healed);
-                Msg($"Rejuvenate — {healed} {entry.Character.Name} rise from their wounds.");
+                int totalHealed = 0;
+                foreach (var entry in wounded.Take(3))
+                {
+                    int healed = Math.Max(1, Math.Min(entry.WoundedNumber, 5));
+                    roster.AddToCounts(entry.Character, 0, false, -healed);
+                    totalHealed += healed;
+                }
+                Msg($"Rejuvenate — {totalHealed} soldier{(totalHealed != 1 ? "s" : "")} rise from their wounds.");
             }
             catch { }
         }

@@ -7,9 +7,9 @@
 //   A = L (form: Aura  / effect: Push)
 //   D = R (form: Barrier / effect: Morale)
 //   S = D (form: Burst / effect: Reverse)
-//   E = Break (keyboard)  — switches from form phase to effect phase
+//   X = Break (keyboard, while form buffer has input)
 //   L3 click = Break (gamepad)
-//   B = Spellbook (keyboard, while Alt held)
+//   X = Spellbook (keyboard, while form buffer is empty)
 //   LB + RB = Spellbook (gamepad)
 //
 // Release Alt/LB → SpellBuilder.Parse + SpellBuilder.Execute
@@ -63,8 +63,9 @@ namespace AshAndEmber
                     return;
                 }
 
-                // Spellbook: Alt + B (keyboard)
-                if (focusingKb && Input.IsKeyPressed(InputKey.B))
+                // Spellbook: Alt + X (keyboard, only when no form has been started)
+                if (focusingKb && Input.IsKeyPressed(InputKey.X)
+                    && _formBuffer.Length == 0 && !_inEffectPhase)
                 {
                     ColourKnowledge.ShowGrimoire(inMission, false);
                     return;
@@ -74,7 +75,8 @@ namespace AshAndEmber
                 {
                     if (!_inEffectPhase)
                     {
-                        if (Input.IsKeyPressed(InputKey.E))
+                        // X acts as Break once any form key has been pressed
+                        if (Input.IsKeyPressed(InputKey.X))
                         {
                             if (_formBuffer.Length > 0) _inEffectPhase = true;
                         }

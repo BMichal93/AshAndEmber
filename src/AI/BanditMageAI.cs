@@ -151,9 +151,9 @@ namespace AshAndEmber
             try
             {
                 if (useBurst)
-                    SpellEffects.ExecuteNpcBurst(mage, 1, 1, 0, 1, false, mage.Team);
+                    SpellEffects.ExecuteNpcBurst(mage, 2, 1, 0, 1, false, mage.Team);
                 else
-                    SpellEffects.ExecuteNpcBlast(mage, 1, 1, 0, 0, false, mage.Team);
+                    SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, 0, false, mage.Team);
 
                 SpellEffects.BeginAgentGlow(mage, ColorSchool.Red, 2f);
                 SpellEffects.TryCastSound(mage.Position, ColorSchool.Red);

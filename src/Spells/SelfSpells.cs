@@ -142,9 +142,24 @@ namespace AshAndEmber
             TickWaveEffects(_wave);
         }
 
+        // Wave lifetime: range / 4 m/s  (e.g. 3 L-keys = 5 m → 1.25 s, 10 L-keys = 19 m → 4.75 s)
         private static void TickWaveEffects(WaveState w)
         {
             if (Mission.Current == null) return;
+
+            // Persistent fire trail — spawn across the full width of the wave front
+            // every tick so the wave stays visible for its entire travel distance.
+            float half = (w.GridSize - 1) * 0.5f;
+            for (int col = 0; col < w.GridSize; col++)
+            {
+                Vec3 nodePos = WaveNodePos(w, 0, col);
+                SpawnTempLight(nodePos, w.Cast.VisualColor, 6f, WaveState.TickInterval * 3.5f);
+                if (col == 0 || col == w.GridSize - 1 || col == w.GridSize / 2)
+                {
+                    if (w.Cast.VisualColor != ColorSchool.Blight)
+                        SpawnTempFireParticle(nodePos, WaveState.TickInterval * 3f);
+                }
+            }
 
             List<Agent> all;
             try { all = Mission.Current.Agents.ToList(); } catch { return; }

@@ -74,10 +74,17 @@ namespace AshAndEmber
             _areaEffects.Add(node);
         }
 
-        // Called from AreaEffects.cs tick
+        // Called from AreaEffects.cs tick (every 2 s per node)
+        // Barrier lives indefinitely (Remaining = -1) until cast again.
         internal static void TickBarrierNode(AreaEffect e)
         {
             if (Mission.Current == null) return;
+
+            // Persistent visual: re-spawn a flame and a bright flash at the node each tick
+            // so the barrier stays visually clear for its entire lifetime.
+            SpawnTempLight(e.Position, e.School, 6f, 2.2f);
+            if (e.School != ColorSchool.Blight)
+                SpawnTempFireParticle(e.Position, 2.5f);
             int token   = (int)e.Power;
             int dmg     = token / 1000;
             int push    = (token % 1000) / 100;
