@@ -21,7 +21,7 @@ namespace AshAndEmber
         private const float DefaultCooldown     = 25f;
         private const float ImpulsiveCooldown   = 15f;
         private const float CalculatingCooldown = 35f;
-        private const float BlightCooldown      = 6f;  // blight lords cast ~4× more often
+        private const float AshenCooldown      = 6f;  // Ashen lords cast ~4× more often
 
         private static readonly Dictionary<string, float> _cooldowns   = new Dictionary<string, float>();
         private static readonly Dictionary<string, int>   _battleCasts = new Dictionary<string, int>();
@@ -96,13 +96,13 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
 
-            bool isBlight = ColourLordRegistry.IsBlightLord(hero);
+            bool isAshen = ColourLordRegistry.IsAshenLord(hero);
 
             var enemies = SpellEffects.EnemiesOf(agent);
             var allies  = SpellEffects.AlliesOf(agent);
 
             // Blight lords cast proactively even if no one is obviously endangered
-            if (!isBlight && enemies.Count == 0 && allies.All(a => a.Health >= a.HealthLimit * 0.9f)) return;
+            if (!isAshen && enemies.Count == 0 && allies.All(a => a.Health >= a.HealthLimit * 0.9f)) return;
 
             float hpPct = agent.Health / Math.Max(agent.HealthLimit, 1f);
             int closeEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < 8f);
@@ -133,10 +133,10 @@ namespace AshAndEmber
                 return;
             }
 
-            if (nearEnemies == 0 && !isBlight) return;
+            if (nearEnemies == 0 && !isAshen) return;
 
-            // 3. Choose attack recipe — blight lords use wider dice (more aggressive combos)
-            int roll = isBlight ? _rng.Next(6) : _rng.Next(4);
+            // 3. Choose attack recipe — Ashen lords use wider dice (more aggressive combos)
+            int roll = isAshen ? _rng.Next(6) : _rng.Next(4);
             if (closeEnemies >= 3)
             {
                 // Surrounded — use Burst to push or damage
@@ -144,8 +144,8 @@ namespace AshAndEmber
                     CastBurst(agent, hero, 2, 0, 1, 0, false); // Burst+Push
                 else if (roll < 4)
                     CastBurst(agent, hero, 2, 2, 0, 0, false); // Burst+Damage
-                else if (isBlight)
-                    CastBurst(agent, hero, 3, 2, 1, 0, false); // Blight: heavier Burst+Dmg+Push
+                else if (isAshen)
+                    CastBurst(agent, hero, 3, 2, 1, 0, false); // Ashen: heavier Burst+Dmg+Push
                 else
                     CastBurst(agent, hero, 2, 2, 0, 0, false);
             }
@@ -163,12 +163,12 @@ namespace AshAndEmber
                         CastBlast(agent, hero, 2, 0, 1, 0, false); // Blast+Push
                     else if (roll == 3)
                         CastBurst(agent, hero, 2, 1, 0, 1, false); // Burst+Dmg+Morale
-                    else if (roll == 4 && isBlight)
-                        CastBlast(agent, hero, 3, 3, 0, 0, false); // Blight: heavy Blast
+                    else if (roll == 4 && isAshen)
+                        CastBlast(agent, hero, 3, 3, 0, 0, false); // Ashen: heavy Blast
                     else
-                        CastBlast(agent, hero, 3, 0, 0, 3, false); // Blight: mass morale blast
+                        CastBlast(agent, hero, 3, 0, 0, 3, false); // Ashen: mass morale blast
                 }
-                else if (isBlight)
+                else if (isAshen)
                 {
                     // Blight lords launch morale blasts even without cone alignment
                     CastBurst(agent, hero, 2, 0, 0, 3, false);
@@ -252,9 +252,9 @@ namespace AshAndEmber
         {
             try
             {
-                if (ColourLordRegistry.IsBlightLord(hero))
+                if (ColourLordRegistry.IsAshenLord(hero))
                 {
-                    _cooldowns[hero.StringId] = BlightCooldown;
+                    _cooldowns[hero.StringId] = AshenCooldown;
                     return;
                 }
                 float cd = DefaultCooldown;

@@ -28,7 +28,8 @@ namespace AshAndEmber
         {
             if (caster == null || !caster.IsActive() || Mission.Current == null) return;
 
-            float range = Math.Max(4f, cast.FormCount * 2f);
+            int blastCnt = cast.BlastCount > 0 ? cast.BlastCount : cast.FormCount;
+            float range = Math.Max(4f, blastCnt * 2.5f);
             Vec3  fwd   = caster.LookDirection.NormalizedCopy();
             // Project forward vector to horizontal for cone test — vertical pitch would otherwise
             // shrink the apparent cone angle when looking slightly up or down.
@@ -43,11 +44,9 @@ namespace AshAndEmber
                 {
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     if (casterTeam != null && a.Team == casterTeam) continue; // skip allies
-                    // Check range to agent mid-body (foot position + 0.8 m) so crouched or
-                    // uphill targets aren't missed; cone test uses horizontal angle only.
-                    Vec3 toMid = (a.Position + new Vec3(0f, 0f, 0.8f)) - caster.Position;
-                    if (toMid.Length > range) continue;
-                    Vec3 toH = new Vec3(toMid.x, toMid.y, 0f);
+                    // Horizontal range check so mounted riders at elevation are not missed.
+                    Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
+                    if (toH.Length > range) continue;
                     if (toH.Length < 0.01f) continue;
                     if (Vec3.DotProduct(fwdH, toH.NormalizedCopy()) < 0.65f) continue;
                     targets.Add(a);

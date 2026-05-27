@@ -18,12 +18,12 @@ namespace AshAndEmber
     public static class MageKnowledge
     {
         private static bool   _isMage            = false;
-        private static bool   _isBlight          = false;
+        private static bool   _isAshen          = false;
         internal static Action _deferredInquiry  = null;
         private static readonly HashSet<string> _giftedChildIds = new HashSet<string>();
 
         public static bool IsMage         => _isMage;
-        public static bool IsBlight       => _isBlight;
+        public static bool IsAshen         => _isAshen;
         // Backward-compat shims used by old call sites
         public static bool HasAnySchool   => _isMage;
         public static IEnumerable<ColorSchool> AllSchools => System.Array.Empty<ColorSchool>();
@@ -33,12 +33,12 @@ namespace AshAndEmber
         public static float PurpleFertilityLevel   => 1f;
 
         public static void SetMage(bool value)   { _isMage = value; }
-        public static void SetBlight(bool value) { _isBlight = value; }
+        public static void SetAshen(bool value) { _isAshen = value; }
 
         public static void ResetForNewGame()
         {
             _isMage          = false;
-            _isBlight        = false;
+            _isAshen        = false;
             _deferredInquiry = null;
             _giftedChildIds.Clear();
             TalentSystem.ResetForNewGame();
@@ -65,12 +65,12 @@ namespace AshAndEmber
         /// Called by AgingSystem when the player would die at 100.
         /// Queues the blight-or-death inquiry for the next map-layer flush.
         /// </summary>
-        public static void QueueBlightPrompt(Action onResolved)
+        public static void QueueAshenPrompt(Action onResolved)
         {
-            _deferredInquiry = () => ShowBlightPrompt(onResolved);
+            _deferredInquiry = () => ShowAshenPrompt(onResolved);
         }
 
-        private static void ShowBlightPrompt(Action onResolved)
+        private static void ShowAshenPrompt(Action onResolved)
         {
             InformationManager.ShowInquiry(new InquiryData(
                 "The Last Ember",
@@ -82,7 +82,9 @@ namespace AshAndEmber
                 () =>
                 {
                     onResolved?.Invoke();
-                    _isBlight = true;
+                    _isAshen = true;
+                    ApplyAshenAppearance(Hero.MainHero);
+                    try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The fire dies. Something colder and older takes its place. The world will see it in your eyes.",
                         new Color(0.3f, 0.35f, 0.7f)));
@@ -113,6 +115,35 @@ namespace AshAndEmber
             ), true, true);
         }
 
+        // ── Ashen appearance ─────────────────────────────────────────────────
+        // Called whenever a hero becomes Ashen. Modifies StaticBodyProperties
+        // bit fields to approximate ash-white hair. The exact bit layout is
+        // Bannerlord-version-dependent so the whole method is wrapped in try/catch.
+        internal static void ApplyAshenAppearance(Hero hero)
+        {
+            if (hero == null) return;
+            try
+            {
+                var bp = hero.BodyProperties;
+                var sp = bp.StaticProperties;
+                // Hair color is encoded in KeyPart4 (bits 32-39 ≈ saturation, bits 40-47 ≈ hue).
+                // Clearing the saturation bits and setting near-maximum brightness approximates
+                // white/ash hair. Bit layout is empirical; exact positions vary by game version.
+                ulong k4 = sp.KeyPart4;
+                k4 = (k4 & ~0x00FFFF0000000000UL) | 0x0000010000000000UL;
+                var newStatic = new StaticBodyProperties(
+                    sp.KeyPart1, sp.KeyPart2, sp.KeyPart3, k4,
+                    sp.KeyPart5, sp.KeyPart6, sp.KeyPart7, sp.KeyPart8);
+                var newBp = new BodyProperties(bp.DynamicProperties, newStatic);
+                // Hero.BodyProperties has a non-public setter in most Bannerlord builds
+                typeof(Hero).GetProperty("BodyProperties",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                    ?.GetSetMethod(nonPublic: true)
+                    ?.Invoke(hero, new object[] { newBp });
+            }
+            catch { }
+        }
+
         // ── Spellbook / Grimoire ──────────────────────────────────────────────
 
         public static void ShowGrimoire(bool inMission, bool usingController)
@@ -130,25 +161,25 @@ namespace AshAndEmber
                 ? "Hold LB + left stick (↑/←/→/↓), press L3 to Break. Release LB to cast. LB+RB to open grimoire."
                 : "Hold Left Alt + W/A/D/S, press X to Break, release to cast. Alt+X opens grimoire (when no form started).";
 
-            string blightNote = _isBlight
-                ? "\n[Ash-cold] Each cast adds criminal rating instead of aging.\n"
+            string ashenNote = _isAshen
+                ? "\n[Ashen] Each cast adds criminal rating instead of aging.\n"
                 : "";
 
             string desc =
                 $"{inputHint}\n\n" +
                 "Channelling\n" +
                 $"  Form keys → Break ({breakKey}) → effect keys → release focus.\n" +
-                "  Mixed form inputs fumble. Effects stack.\n\n" +
-                "Forms  (before Break)\n" +
-                "  ↑  Blast   — forward cone, 2m per ↑\n" +
+                "  Mixed forms all fire simultaneously. Effects stack.\n\n" +
+                "Forms  (before Break, mix freely)\n" +
+                "  ↑  Blast   — forward cone, 2.5m per ↑\n" +
                 "  ←  Wave    — 3×3 fire grid, +2m per ←, +1 size per 5←\n" +
-                "  →  Barrier — wall of nodes, 1 per →\n" +
-                "  ↓  Burst   — circle around self, 2m radius per ↓\n\n" +
+                "  →  Barrier — wall of nodes, 1 per →; cast again to release\n" +
+                "  ↓  Burst   — circle around self, 2.5m radius per ↓\n\n" +
                 "Effects  (after Break)\n" +
-                "  ↑  Flame     — 8 damage per ↑\n" +
-                "  ←  Surge     — 3m push per ←\n" +
-                "  →  Smoulder  — 5 morale lost per →\n" +
-                "  ↓  Reverse   — flips all effects\n\n" +
+                "  ↑  Flame     — 12 damage per ↑  (+surge side: ×3, +smoulder side: ×4)\n" +
+                "  ←  Surge     — 4m push per ←  (+3 side damage per ←)\n" +
+                "  →  Smoulder  — 7 morale lost per →  (+4 side damage per →)\n" +
+                "  ↓  Reverse   — flips all effects (heal / pull / morale boost)\n\n" +
                 "Combined fires\n" +
                 "  Flame+Smoulder = Scorch  |  Surge+Flame = Cinder  |  Smoulder+Surge = Ember Surge\n\n" +
                 "Sigil  (no Break needed, repeat to expand)\n" +
@@ -158,12 +189,12 @@ namespace AshAndEmber
                 "Burning cost  (form inputs + effect inputs combined)\n" +
                 "  Below 4 — free  |  4–5 = 1 day  |  6–7 = 2 days  |  8–9 = 3 days  |  10–11 = 4 days  |  …\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Threshold raised to 5.\n" : "") +
-                blightNote +
+                ashenNote +
                 "\nExample\n" +
-                "  ↑↑↑  X  ↑↑↑↑↑  =  Blast (6m), 40 flame, 3 days  (8 inputs: (8−4)/2+1).\n" +
-                "  ↑↑↑↑↑  X  ↑↑↑↑↑↑↑↑↑↑  =  Blast (10m), 80 flame, 6 days  (15 inputs).";
+                "  ↑↑↑  X  ↑↑↑↑↑  =  Blast (7.5m), 60 flame, 3 days  (8 inputs).\n" +
+                "  ↑↑  ↓↓  X  ↑↑  =  Blast (5m) + Burst (5m) + 24 flame, 3 days  (6 inputs).";
 
-            string title = _isBlight ? "The Ashen Fire" : "The Inner Fire";
+            string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
 
             if (!inMission)
             {
@@ -284,7 +315,7 @@ namespace AshAndEmber
         {
             var giftedList = _giftedChildIds.ToList();
             store.SyncData("LDM_IsMage",        ref _isMage);
-            store.SyncData("LDM_IsBlight",      ref _isBlight);
+            store.SyncData("LDM_IsAshen",        ref _isAshen);
             store.SyncData("LDM_GiftedChildren", ref giftedList);
             TalentSystem.Save(store);
 

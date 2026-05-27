@@ -49,6 +49,20 @@ namespace AshAndEmber
             CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
             CampaignEvents.HeroCreated.AddNonSerializedListener(this, OnHeroCreated);
             CampaignEvents.NewCompanionAdded.AddNonSerializedListener(this, OnCompanionAdded);
+            CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener(this, OnClanChangedKingdom);
+            CampaignEvents.MobilePartyCreated.AddNonSerializedListener(this, OnMobilePartyCreated);
+        }
+
+        // ── Ashen city clans + Fire Worshippers ──────────────────────────────
+        private void OnClanChangedKingdom(Clan clan, Kingdom oldKingdom, Kingdom newKingdom,
+            ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification)
+        {
+            try { AshenCitySystem.OnClanChangedKingdom(clan, oldKingdom, newKingdom, detail, showNotification); } catch { }
+        }
+
+        private void OnMobilePartyCreated(MobileParty party)
+        {
+            try { FireWorshippersSystem.OnPartyCreated(party); } catch { }
         }
 
         // ── New game prompt ───────────────────────────────────────────────────
@@ -110,6 +124,8 @@ namespace AshAndEmber
                 try { ColourLordRegistry.SeedInitialLords(); } catch { }
             }
             try { ColourLordRegistry.SeedInitialLords(); } catch { }
+            try { AshenCitySystem.Initialize(); } catch { }
+            try { AshenCitySystem.DailyTick(); } catch { }
             try { ColourLordRegistry.DailyMapCast(); } catch { }
             try { AgingSystem.DailyAgeCheck(); } catch { }
             try { CheckReapPrisonerYield(); } catch { }
@@ -437,6 +453,8 @@ namespace AshAndEmber
             dataStore.SyncData("LDM_LordAnnounceDone",     ref _lordAnnouncementDone);
             MageKnowledge.Save(dataStore);      // also saves TalentSystem internally
             ColourLordRegistry.Save(dataStore);
+            AshenCitySystem.Save(dataStore);
+            FireWorshippersSystem.Save(dataStore);
         }
     }
 }

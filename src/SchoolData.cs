@@ -12,7 +12,7 @@ namespace AshAndEmber
     // Visual colour identifiers used by glow / light systems.
     // Warm, fiery palette: Red/Orange/Yellow/Amber/Ember/Crimson/White.
     // Green, Blue, Purple are retained as enum values but render as warm colours.
-    // Blight is an ash-cold variant used only by blight mages.
+    // Ashen is an ash-cold variant used only by Ashen mages.
     public enum ColorSchool
     {
         Red    = 0,  // Flame  — damage
@@ -22,7 +22,7 @@ namespace AshAndEmber
         Blue   = 4,  // Ember  — push / surge
         Purple = 5,  // Crimson — push + damage
         White  = 6,  // Pale Flame — reversal / heal
-        Blight = 7,  // Ash-cold — blight mages only
+        Ashen  = 7,  // Ash-cold — Ashen mages only
     }
 
     public static class ColorSchoolData
@@ -39,7 +39,7 @@ namespace AshAndEmber
                 case ColorSchool.Blue:   return 0xFFFF6600u; // hot ember-orange
                 case ColorSchool.Purple: return 0xFFDD1100u; // deep crimson
                 case ColorSchool.White:  return 0xFFFFEECCu; // pale warm flame
-                case ColorSchool.Blight: return 0xFF4A5566u; // ash grey-blue
+                case ColorSchool.Ashen:  return 0xFF4A5566u; // ash grey-blue
                 default:                 return 0xFFFFEECCu;
             }
         }
@@ -57,7 +57,7 @@ namespace AshAndEmber
                 case ColorSchool.Blue:   return 0xFFFFDD88u; // gold-draw
                 case ColorSchool.Purple: return 0xFFCC8844u; // bronze
                 case ColorSchool.White:  return 0xFFFFFFEEu;
-                case ColorSchool.Blight: return 0xFF2A3340u; // deep cold ash
+                case ColorSchool.Ashen:  return 0xFF2A3340u; // deep cold ash
                 default:                 return 0xFFFFEEDDu;
             }
         }
@@ -73,7 +73,7 @@ namespace AshAndEmber
                 case ColorSchool.Blue:   return new Color(1.0f,  0.40f, 0.0f);
                 case ColorSchool.Purple: return new Color(0.87f, 0.07f, 0.0f);
                 case ColorSchool.White:  return new Color(1.0f,  0.93f, 0.8f);
-                case ColorSchool.Blight: return new Color(0.42f, 0.48f, 0.58f);
+                case ColorSchool.Ashen:  return new Color(0.42f, 0.48f, 0.58f);
                 default:                 return Color.White;
             }
         }
@@ -106,7 +106,7 @@ namespace AshAndEmber
                 case ColorSchool.Blue:   return "Surge";
                 case ColorSchool.Purple: return "Cinder";
                 case ColorSchool.White:  return "Kindle";
-                case ColorSchool.Blight: return "Ash";
+                case ColorSchool.Ashen:  return "Ash";
                 default:                 return "Fire";
             }
         }

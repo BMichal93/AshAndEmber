@@ -203,7 +203,7 @@ namespace AshAndEmber
                 int cost = dCount - 1; // DD=1day, DDD=2days, DDDD=3days
                 if (cost > 0)
                 {
-                    if (MageKnowledge.IsBlight) ApplyBlightCastCost(cost);
+                    if (MageKnowledge.IsAshen) ApplyBlightCastCost(cost);
                     else AgingSystem.AgeHero(Hero.MainHero, cost);
                 }
                 return;
@@ -270,7 +270,7 @@ namespace AshAndEmber
                 int agingDays = cast.AgingDays(hasBattleMage);
                 if (agingDays > 0)
                 {
-                    if (MageKnowledge.IsBlight)
+                    if (MageKnowledge.IsAshen)
                         ApplyBlightCastCost(agingDays);
                     else
                         AgingSystem.AgeHero(Hero.MainHero, agingDays);

@@ -131,7 +131,7 @@ Once you carry the Gift, the grimoire is available at any time. Without it, spel
 4. **Input effect keys** after Break.
 5. **Release the focus key.** The spell fires.
 
-Only one form type may appear before Break. Mixed forms cause a **Fumble** (the focus drops with no effect and no cost).
+Different form types may be mixed freely before Break — all of them fire simultaneously when you release the focus key.
 
 The buffer is shown in brackets in the message log while you hold the focus key: `[ UUU ▷ UU ]` means Blast formCount=3, Flame effect count=2.
 
@@ -139,14 +139,18 @@ The buffer is shown in brackets in the message log while you hold the focus key:
 
 ## Spell Forms (before Break)
 
-Each key press adds one count. More counts = stronger or larger effect.
+Each key press adds one count. More counts = stronger or larger effect. Mix form types freely — all fire at once.
 
 | Key | Arrow | Form | What it does |
 |-----|-------|------|--------------|
-| W | ↑ | **Blast** | Forward cone. Range = formCount × 2 m. |
+| W | ↑ | **Blast** | Forward cone. Range = formCount × 2.5 m (min 4 m). |
 | A | ← | **Wave** | A gridSize × gridSize wall of fire advancing forward. Range = max(3, formCount × 2 − 1) m. GridSize = 3 + max(0, (formCount − 5) / 5). |
-| D | → | **Barrier** | A wall of stationary fire nodes perpendicular to your facing. One node per press, spaced 1.5 m apart. |
-| S | ↓ | **Burst** | A circle centred on the caster. Radius = formCount × 2 m. |
+| D | → | **Barrier** | A wall of stationary fire nodes perpendicular to your facing. One node per press, spaced 1.5 m apart. Cast again to release (dispelling costs no days). |
+| S | ↓ | **Burst** | A circle centred on the caster. Radius = formCount × 2.5 m (min 2 m). |
+
+### Multi-form example
+
+`WW SS X UUU` — Blast (5 m) + Burst (5 m), simultaneously, 36 flame damage. 6 inputs = 2 days cost.
 
 ---
 
@@ -156,9 +160,9 @@ Multiple effect types may be combined freely. Each key press adds one count.
 
 | Key | Arrow | Effect | Per count |
 |-----|-------|--------|-----------|
-| W | ↑ | **Flame** | 8 damage |
-| A | ← | **Surge** | 3 m push (away from caster) |
-| D | → | **Smoulder** | 5 morale drained |
+| W | ↑ | **Flame** | 12 damage (+3 per Surge count, +4 per Smoulder count as side damage) |
+| A | ← | **Surge** | 4 m push (away from caster) + 3 side damage per count |
+| D | → | **Smoulder** | 7 morale drained + 4 side damage per count |
 | S | ↓ | **Reverse** | Flips all effects (damage → heal, push → pull, morale drain → boost) |
 
 ### Combined fires
@@ -210,14 +214,14 @@ The **Tempered** talent raises the free threshold from 4 to 5. The **Resonance**
 
 Ward sigils cost `N − 1` days (↓↓ = 1 day, ↓↓↓ = 2 days, etc.).
 
-### Blight
+### Ashen
 
 At age 100 a prompt appears: *The Last Ember*. You may:
 
-- **Take the cold** — become Blight. Aging stops permanently. Every cast instead raises your criminal rating by `cost × 5`. You are expelled from your kingdom.
+- **Take the cold** — become Ashen. Aging stops permanently. Every cast instead raises your criminal rating by `cost × 5`. You are expelled from your kingdom. Your appearance changes: ash-white hair.
 - **Let it end** — die of old age.
 
-Blight mages are immune to the aging cost but accumulate notoriety with every cast.
+Ashen mages are immune to the aging cost but accumulate notoriety with every cast.
 
 ### Tournament
 
@@ -243,7 +247,7 @@ Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is 
 
 ### Campaign map spells
 
-These are cast from the grimoire on the campaign map. Each costs 1 day (or criminal rating if Blight). Resonance applies.
+These are cast from the grimoire on the campaign map. Each costs 1 day (or criminal rating if Ashen). Resonance applies.
 
 | Talent/Spell | Effect |
 |--------------|--------|
@@ -260,7 +264,17 @@ These are cast from the grimoire on the campaign map. Each costs 1 day (or crimi
 
 ## NPC Mage Lords
 
-At campaign start a proportion of lords are seeded as mages by `ColourLordRegistry`. A smaller fraction are **Blight lords** — they cast with no aging cost, have a much shorter cooldown, and use more aggressive spell combinations.
+At campaign start a proportion of lords are seeded as mages by `ColourLordRegistry`. A smaller fraction are **Ashen lords** — they cast with no aging cost, have a much shorter cooldown, and use more aggressive spell combinations.
+
+### Ashen City Clans
+
+Three clans — from the settlements of **Tyal**, **Sibir**, and **Baltakhand** — are marked Ashen at the start of every campaign. Their heroes:
+
+- Are removed from their kingdoms permanently (rejoin attempts are blocked).
+- Do not age (birth day is reset daily to keep them near age 35).
+- Bear the title **Ashen Lord** or **Ashen Lady**.
+- Start with maximum relations with the player.
+- Carry both the gift and the Ashen path — they will never die of old age.
 
 ### Battle AI
 
@@ -278,7 +292,7 @@ Cooldowns by personality:
 | Default | 25 s |
 | Impulsive (Calculating < 0) | 15 s |
 | Calculating (Calculating > 0) | 35 s |
-| Blight lord | 6 s |
+| Ashen lord | 6 s |
 
 Lords wait 12 seconds at battle start before their first cast. They do not cast during the first 12 seconds even if endangered.
 
@@ -286,16 +300,21 @@ Lords wait 12 seconds at battle start before their first cast. They do not cast 
 
 ## Bandit Mages
 
-About 4% of eligible bandit units — forest bandits, sea raiders, mountain bandits, steppe bandits, and desert bandits — carry a stolen fragment of the fire. They cast once per 18 seconds using simple blast or burst recipes.
+About 4% of eligible bandit units carry a stolen fragment of the fire. They cast once per 18 seconds using simple blast or burst recipes.
 
 **The fire punishes those who borrow it without the gift.** After each cast there is a 25% chance the bandit is consumed and dies instantly.
 
-Each type has a title:
+### Fire Worshippers & Ashen Spawn
+
+Roughly 10% of newly created Looter and forest bandit parties are renamed **Fire Worshippers**. Roughly 10% of sea raider and mountain bandit parties become **Ashen Spawn**. Both types are guaranteed to have at least one bandit mage.
+
+Each troop type has a title:
 
 | Troop | Title |
 |-------|-------|
+| Looter | Fire Prophet |
 | Forest bandit | Hedge Witch |
-| Sea raider | Storm Caller |
+| Sea raider | Ashen Caller |
 | Mountain bandit | Ash Shaman |
 | Steppe bandit | Wind Binder |
 | Desert bandit | Ember Prophet |

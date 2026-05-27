@@ -21,7 +21,7 @@ namespace AshAndEmber
     public static class ColourLordRegistry
     {
         private static readonly HashSet<string> _mageIds  = new HashSet<string>();
-        private static readonly HashSet<string> _blightIds = new HashSet<string>();
+        private static readonly HashSet<string> _ashenIds  = new HashSet<string>();
         // Subset of spell talents each mage lord knows (1-2 random)
         private static readonly Dictionary<string, List<int>> _lordTalents
             = new Dictionary<string, List<int>>();
@@ -45,8 +45,8 @@ namespace AshAndEmber
         public static bool IsColourLord(Hero hero) =>
             hero != null && _mageIds.Contains(hero.StringId);
 
-        public static bool IsBlightLord(Hero hero) =>
-            hero != null && _blightIds.Contains(hero.StringId);
+        public static bool IsAshenLord(Hero hero) =>
+            hero != null && _ashenIds.Contains(hero.StringId);
 
         public static void SetMage(Hero hero, bool value)
         {
@@ -64,13 +64,14 @@ namespace AshAndEmber
             }
         }
 
-        public static void SetBlight(Hero hero, bool value)
+        public static void SetAshen(Hero hero, bool value)
         {
             if (hero == null) return;
             if (value)
             {
-                _blightIds.Add(hero.StringId);
-                // Blight lords are kicked from their kingdom
+                _ashenIds.Add(hero.StringId);
+                MageKnowledge.ApplyAshenAppearance(hero);
+                // Ashen lords are kicked from their kingdom
                 try
                 {
                     if (hero.Clan?.Kingdom != null)
@@ -80,7 +81,7 @@ namespace AshAndEmber
             }
             else
             {
-                _blightIds.Remove(hero.StringId);
+                _ashenIds.Remove(hero.StringId);
             }
         }
 
@@ -232,7 +233,7 @@ namespace AshAndEmber
         {
             if (hero == null) return;
             _mageIds.Remove(hero.StringId);
-            _blightIds.Remove(hero.StringId);
+            _ashenIds.Remove(hero.StringId);
             _lordTalents.Remove(hero.StringId);
             _campaignCooldowns.Remove(hero.StringId);
         }
@@ -247,7 +248,7 @@ namespace AshAndEmber
         public static void Save(IDataStore store)
         {
             var ids      = _mageIds.ToList();
-            var blightIds = _blightIds.ToList();
+            var ashenIds = _ashenIds.ToList();
             bool seeded  = _seeded;
             var cdKeys = _campaignCooldowns.Keys.ToList();
             var cdVals = _campaignCooldowns.Values.ToList();
@@ -258,7 +259,7 @@ namespace AshAndEmber
             var talentFlat  = _lordTalents.Values.SelectMany(v => v).ToList();
 
             store.SyncData("LDM_MageIds",     ref ids);
-            store.SyncData("LDM_BlightIds",   ref blightIds);
+            store.SyncData("LDM_AshenIds",    ref ashenIds);
             store.SyncData("LDM_MageSeeded",  ref seeded);
             store.SyncData("LDM_CdKeys",      ref cdKeys);
             store.SyncData("LDM_CdVals",      ref cdVals);
@@ -268,8 +269,8 @@ namespace AshAndEmber
 
             _mageIds.Clear();
             if (ids != null) foreach (var id in ids) _mageIds.Add(id);
-            _blightIds.Clear();
-            if (blightIds != null) foreach (var id in blightIds) _blightIds.Add(id);
+            _ashenIds.Clear();
+            if (ashenIds != null) foreach (var id in ashenIds) _ashenIds.Add(id);
             _seeded = seeded;
 
             _campaignCooldowns.Clear();
