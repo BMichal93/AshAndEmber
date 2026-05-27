@@ -10,49 +10,55 @@ using TaleWorlds.Library;
 namespace ColoursOfCalradia
 {
     // Visual colour identifiers used by glow / light systems.
-    // These now represent effect colours, not mage schools.
+    // Warm, fiery palette: Red/Orange/Yellow/Amber/Ember/Crimson/White.
+    // Green, Blue, Purple are retained as enum values but render as warm colours.
+    // Blight is an ash-cold variant used only by blight mages.
     public enum ColorSchool
     {
-        Red    = 0,  // Damage effect
-        Orange = 1,  // Damage + Morale combined
-        Yellow = 2,  // Morale drain effect
-        Green  = 3,  // Morale + Push combined
-        Blue   = 4,  // Push effect
-        Purple = 5,  // Push + Damage combined
-        White  = 6,  // Reverse / heal
+        Red    = 0,  // Flame  — damage
+        Orange = 1,  // Scorch — damage + morale
+        Yellow = 2,  // Smoulder — morale drain
+        Green  = 3,  // Amber  — morale + push combined
+        Blue   = 4,  // Ember  — push / surge
+        Purple = 5,  // Crimson — push + damage
+        White  = 6,  // Pale Flame — reversal / heal
+        Blight = 7,  // Ash-cold — blight mages only
     }
 
     public static class ColorSchoolData
     {
-        // ARGB hex glow colours
+        // ARGB hex glow colours — all warm (fire, ember, ash)
         public static uint GetGlowColor(ColorSchool school)
         {
             switch (school)
             {
-                case ColorSchool.Red:    return 0xFFFF2200u;
-                case ColorSchool.Orange: return 0xFFFF8800u;
-                case ColorSchool.Yellow: return 0xFFFFFF00u;
-                case ColorSchool.Green:  return 0xFF00CC44u;
-                case ColorSchool.Blue:   return 0xFF2244FFu;
-                case ColorSchool.Purple: return 0xFF8800CCu;
-                case ColorSchool.White:  return 0xFFFFFFFFu;
-                default:                 return 0xFFFFFFFFu;
+                case ColorSchool.Red:    return 0xFFFF2200u; // bright fire-red
+                case ColorSchool.Orange: return 0xFFFF7700u; // deep orange
+                case ColorSchool.Yellow: return 0xFFFFCC00u; // amber-gold
+                case ColorSchool.Green:  return 0xFFFF9900u; // warm amber
+                case ColorSchool.Blue:   return 0xFFFF6600u; // hot ember-orange
+                case ColorSchool.Purple: return 0xFFDD1100u; // deep crimson
+                case ColorSchool.White:  return 0xFFFFEECCu; // pale warm flame
+                case ColorSchool.Blight: return 0xFF2233AAu; // cold ash-blue
+                default:                 return 0xFFFFEECCu;
             }
         }
 
-        // Lighter reversed-effect glow colours
+        // Reversed-effect glow: softer, tending toward gold/cream (life returning)
+        // Blight reversed is darker ash
         public static uint GetReversedGlowColor(ColorSchool base_school)
         {
             switch (base_school)
             {
-                case ColorSchool.Red:    return 0xFFFFAABBu; // pink (heal)
-                case ColorSchool.Orange: return 0xFFFFCC99u; // light orange
-                case ColorSchool.Yellow: return 0xFFFFFFAAu; // light yellow
-                case ColorSchool.Green:  return 0xFF99FFCCu; // light green
-                case ColorSchool.Blue:   return 0xFF88AAFFu; // light blue (pull)
-                case ColorSchool.Purple: return 0xFFCC99FFu; // light purple
-                case ColorSchool.White:  return 0xFFFFFFFFu;
-                default:                 return 0xFFDDDDDDu;
+                case ColorSchool.Red:    return 0xFFFFCCBBu; // warm cream (healing)
+                case ColorSchool.Orange: return 0xFFFFDDAA u; // pale gold
+                case ColorSchool.Yellow: return 0xFFFFEE99u; // bright warm yellow (kindle)
+                case ColorSchool.Green:  return 0xFFFFCCAA u; // pale amber
+                case ColorSchool.Blue:   return 0xFFFFDD88u; // gold-draw
+                case ColorSchool.Purple: return 0xFFCC8844u; // bronze
+                case ColorSchool.White:  return 0xFFFFFFEEu;
+                case ColorSchool.Blight: return 0xFF334455u; // cold dark grey
+                default:                 return 0xFFFFEEDDu;
             }
         }
 
@@ -60,49 +66,48 @@ namespace ColoursOfCalradia
         {
             switch (school)
             {
-                case ColorSchool.Red:    return new Color(1.0f, 0.13f, 0.0f);
-                case ColorSchool.Orange: return new Color(1.0f, 0.53f, 0.0f);
-                case ColorSchool.Yellow: return new Color(1.0f, 1.0f,  0.0f);
-                case ColorSchool.Green:  return new Color(0.0f, 0.8f,  0.27f);
-                case ColorSchool.Blue:   return new Color(0.13f, 0.27f, 1.0f);
-                case ColorSchool.Purple: return new Color(0.53f, 0.0f, 0.8f);
-                case ColorSchool.White:  return new Color(0.9f, 0.9f, 0.9f);
+                case ColorSchool.Red:    return new Color(1.0f,  0.13f, 0.0f);
+                case ColorSchool.Orange: return new Color(1.0f,  0.47f, 0.0f);
+                case ColorSchool.Yellow: return new Color(1.0f,  0.80f, 0.0f);
+                case ColorSchool.Green:  return new Color(1.0f,  0.60f, 0.0f);
+                case ColorSchool.Blue:   return new Color(1.0f,  0.40f, 0.0f);
+                case ColorSchool.Purple: return new Color(0.87f, 0.07f, 0.0f);
+                case ColorSchool.White:  return new Color(1.0f,  0.93f, 0.8f);
+                case ColorSchool.Blight: return new Color(0.2f,  0.3f,  0.7f);
                 default:                 return Color.White;
             }
         }
 
-        // Compute the display colour for a spell's effect mix
+        // Compute display colour from effect mix
         public static ColorSchool ComputeEffectColor(int damageCount, int pushCount, int moraleCount, bool reversed)
         {
             bool hasDmg    = damageCount > 0;
             bool hasPush   = pushCount   > 0;
             bool hasMorale = moraleCount > 0;
 
-            ColorSchool primary;
-            if (hasDmg && hasMorale && !hasPush)       primary = ColorSchool.Orange;
-            else if (hasPush && hasDmg && !hasMorale)  primary = ColorSchool.Purple;
-            else if (hasPush && hasMorale && !hasDmg)  primary = ColorSchool.Green;
-            else if (hasDmg)                           primary = ColorSchool.Red;
-            else if (hasPush)                          primary = ColorSchool.Blue;
-            else if (hasMorale)                        primary = ColorSchool.Yellow;
-            else                                       primary = ColorSchool.White;
-
-            return reversed ? primary : primary; // reversed visual handled at glow time
+            if (hasDmg && hasMorale && !hasPush)       return ColorSchool.Orange;
+            if (hasPush && hasDmg   && !hasMorale)     return ColorSchool.Purple;
+            if (hasPush && hasMorale && !hasDmg)       return ColorSchool.Green;
+            if (hasDmg)                                return ColorSchool.Red;
+            if (hasPush)                               return ColorSchool.Blue;
+            if (hasMorale)                             return ColorSchool.Yellow;
+            return ColorSchool.White;
         }
 
-        // Magic flavour name used in messages
+        // Flavour name used in display strings
         public static string GetEffectName(ColorSchool school)
         {
             switch (school)
             {
-                case ColorSchool.Red:    return "Vitality";
-                case ColorSchool.Orange: return "Sapping";
-                case ColorSchool.Yellow: return "Will-Breaking";
-                case ColorSchool.Green:  return "Restoration";
-                case ColorSchool.Blue:   return "Force";
-                case ColorSchool.Purple: return "Oblivion";
-                case ColorSchool.White:  return "Reversal";
-                default:                 return "Arcane";
+                case ColorSchool.Red:    return "Flame";
+                case ColorSchool.Orange: return "Scorch";
+                case ColorSchool.Yellow: return "Smoulder";
+                case ColorSchool.Green:  return "Ember Surge";
+                case ColorSchool.Blue:   return "Surge";
+                case ColorSchool.Purple: return "Cinder";
+                case ColorSchool.White:  return "Kindle";
+                case ColorSchool.Blight: return "Ash";
+                default:                 return "Fire";
             }
         }
     }

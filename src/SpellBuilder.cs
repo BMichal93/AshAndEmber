@@ -55,16 +55,16 @@ namespace ColoursOfCalradia
             var parts = new System.Collections.Generic.List<string>();
             if (DamageCount > 0)
                 parts.Add(Reversed
-                    ? $"+{DamageCount * 5} healing (Reversed Vitality)"
-                    : $"{DamageCount * 5} damage (Vitality)");
+                    ? $"+{DamageCount * 8} kindled (Reversed Flame)"
+                    : $"{DamageCount * 8} flame (Flame)");
             if (PushCount > 0)
                 parts.Add(Reversed
-                    ? $"{PushCount * 2}m pull (Reversed Force)"
-                    : $"{PushCount * 2}m push (Force)");
+                    ? $"{PushCount * 3}m draw (Reversed Surge)"
+                    : $"{PushCount * 3}m surge (Surge)");
             if (MoraleCount > 0)
                 parts.Add(Reversed
-                    ? $"+{MoraleCount * 3} morale bonus (Reversed Will-Break)"
-                    : $"-{MoraleCount * 3} morale (Will-Break)");
+                    ? $"+{MoraleCount * 5} kindled morale (Reversed Smoulder)"
+                    : $"-{MoraleCount * 5} smoulder (Smoulder)");
             return string.Join(", ", parts);
         }
 

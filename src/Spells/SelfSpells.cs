@@ -120,27 +120,32 @@ namespace ColoursOfCalradia
                     BeginAgentGlowRaw(a, raw, 2f);
                     if (cast.DamageCount > 0)
                     {
-                        float amt = cast.DamageCount * 5f * 0.5f; // halved for persistent
+                        float amt = cast.DamageCount * 8f * 0.5f; // halved for persistent
                         if (rev) HealAgent(a, amt); else DamageAgent(a, amt);
                     }
                     if (cast.MoraleCount > 0)
                     {
-                        float delta = cast.MoraleCount * 3f;
+                        float delta = cast.MoraleCount * 5f;
                         float cur   = a.GetMorale();
                         a.SetMorale(rev ? Math.Min(cur + delta, 100f) : Math.Max(cur - delta, 0f));
                     }
-                    // Push/pull in aura is gentle
+                    // Push/pull in aura — skip mounted riders
                     if (cast.PushCount > 0)
                     {
-                        float dist = cast.PushCount * 0.5f;
-                        Agent src = Agent.Main;
-                        if (src != null)
+                        bool isMounted = false;
+                        try { isMounted = a.MountAgent != null; } catch { }
+                        if (!isMounted)
                         {
-                            Vec3 dir = rev
-                                ? (src.Position - a.Position).NormalizedCopy()
-                                : (a.Position - src.Position).NormalizedCopy();
-                            Vec3 dest = a.Position + dir * dist; dest.z = a.Position.z;
-                            QueueMove(a, dest, 0.4f);
+                            float dist = cast.PushCount * 1.5f;
+                            Agent src = Agent.Main;
+                            if (src != null)
+                            {
+                                Vec3 dir = rev
+                                    ? (src.Position - a.Position).NormalizedCopy()
+                                    : (a.Position - src.Position).NormalizedCopy();
+                                Vec3 dest = a.Position + dir * dist; dest.z = a.Position.z;
+                                QueueMove(a, dest, 0.4f);
+                            }
                         }
                     }
                 }

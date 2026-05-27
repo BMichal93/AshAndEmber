@@ -395,36 +395,41 @@ namespace ColoursOfCalradia
             // Damage or Heal
             if (cast.DamageCount > 0)
             {
-                float amount = cast.DamageCount * 5f;
+                float amount = cast.DamageCount * 8f;
                 if (cast.Reversed)
                     HealAgent(target, amount);
                 else
                     DamageAgent(target, amount);
             }
 
-            // Push or Pull
+            // Push or Pull — skip mounted riders to avoid horse/rider split
             if (cast.PushCount > 0)
             {
-                float dist = cast.PushCount * 2f;
-                try
+                bool isMounted = false;
+                try { isMounted = target.MountAgent != null; } catch { }
+                if (!isMounted)
                 {
-                    Vec3 dir;
-                    if (cast.Reversed)
-                        dir = (caster != null ? caster.Position - target.Position : Vec3.Zero).NormalizedCopy();
-                    else
-                        dir = (caster != null ? target.Position - caster.Position : Vec3.Zero).NormalizedCopy();
+                    float dist = cast.PushCount * 3f;
+                    try
+                    {
+                        Vec3 dir;
+                        if (cast.Reversed)
+                            dir = (caster != null ? caster.Position - target.Position : Vec3.Zero).NormalizedCopy();
+                        else
+                            dir = (caster != null ? target.Position - caster.Position : Vec3.Zero).NormalizedCopy();
 
-                    Vec3 dest = target.Position + dir * dist;
-                    dest.z = target.Position.z;
-                    QueueMove(target, dest, 0.4f);
+                        Vec3 dest = target.Position + dir * dist;
+                        dest.z = target.Position.z;
+                        QueueMove(target, dest, 0.4f);
+                    }
+                    catch { }
                 }
-                catch { }
             }
 
             // Morale drain or boost
             if (cast.MoraleCount > 0)
             {
-                float delta = cast.MoraleCount * 3f;
+                float delta = cast.MoraleCount * 5f;
                 try
                 {
                     float cur = target.GetMorale();

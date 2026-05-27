@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -32,6 +33,7 @@ namespace ColoursOfCalradia
         Sorcerer    = 11,  // Passive
         Camaraderie = 12,  // Passive
         Reap        = 13,  // Passive
+        Ember       = 14,  // Passive — battle kill spark
     }
 
     public class TalentDef
@@ -47,91 +49,104 @@ namespace ColoursOfCalradia
     {
         private static readonly Random _rng = new Random();
 
+        // Display order: Foundation → Battle passives → Campaign support → Campaign offensive → Dark passives → Social
         public static readonly IReadOnlyList<TalentDef> All = new List<TalentDef>
         {
+            // ── Foundation ──────────────────────────────────────────────────
             new TalentDef
             {
                 Id = TalentId.Gift, IsSpell = false, Name = "Gift",
-                Lore = "You were born with a thread of something older than language running through your blood — a current that hums against your bones when the dying are near. Most never feel it. You do.",
-                MechanicDesc = "You carry the gift. In battle, shape the current: form keys, Break, effect keys."
+                Lore = "The fire ran in your blood before you understood what fire was. Not warmth — something older. The kind that burns without consuming, and holds the world together at its edges.",
+                MechanicDesc = "You carry the inner fire. In battle, shape it: form keys, Break, effect keys."
             },
-            new TalentDef
-            {
-                Id = TalentId.Subjugate, IsSpell = true, Name = "Subjugate",
-                Lore = "The will bends before the life it most fears losing. You reach into a captive's dread and offer them a worse fate than service — and they choose service.",
-                MechanicDesc = "A prisoner yields to your will and joins your ranks. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Rejuvenate, IsSpell = true, Name = "Rejuvenate",
-                Lore = "You take the spare warmth of the living world and press it into a wound, pushing the body toward what it still remembers: wholeness.",
-                MechanicDesc = "Several wounded soldiers in your army recover. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.PlantGrowth, IsSpell = true, Name = "Quicken",
-                Lore = "The soil is never empty — it is merely waiting. You ask it to stop waiting.",
-                MechanicDesc = "20 grain grows where you ask it. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.BreakWills, IsSpell = true, Name = "Unsettle",
-                Lore = "Courage is a fragile thing, built on the belief that survival is still possible. You whisper to the part of a man that has always known it is not.",
-                MechanicDesc = "The nearest enemy party loses 20 morale. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Inspire, IsSpell = true, Name = "Kindle",
-                Lore = "You let them feel it briefly — the warmth that says the world cares whether they live. It is a lie, but a merciful one, and it holds long enough to matter.",
-                MechanicDesc = "Your party gains 20 morale. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Plague, IsSpell = true, Name = "Wither",
-                Lore = "Life is not a gift. It is a density — and you know exactly how to thin it. You breathe something old and patient into the fields of your enemies.",
-                MechanicDesc = "An enemy village loses a fifth of its hearth. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Clairvoyance, IsSpell = true, Name = "Clairvoyance",
-                Lore = "You press your awareness outward along the threads of life that connect every breathing thing. What others call intelligence, you simply read from the world itself.",
-                MechanicDesc = "Gain 20 influence. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Curse, IsSpell = true, Name = "Curse",
-                Lore = "You mark a thread and pull. The body follows where the life energy leads — and you are leading it toward ruin.",
-                MechanicDesc = "2–4 soldiers in the nearest enemy party are wounded or killed. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.DevourLife, IsSpell = false, Name = "Harvest",
-                Lore = "Death is not waste — it is density returned to the flow. When you take a life deliberately, with your hands and your intent, something comes back to you.",
-                MechanicDesc = "Passive. Executing a captured lord draws back 150 days of youth."
-            },
+            // ── Battle passives ──────────────────────────────────────────────
             new TalentDef
             {
                 Id = TalentId.BattleMage, IsSpell = false, Name = "Tempered",
-                Lore = "You have learned to draw more from less — to find the same depth of working with a lighter gesture, a shorter reach into the current.",
-                MechanicDesc = "Passive. The aging threshold rises from 4 inputs to 5."
+                Lore = "The forge teaches patience. A slow hand draws more from less; a careful reach into the fire takes without burning.",
+                MechanicDesc = "Passive. The burning threshold rises from 4 inputs to 5."
             },
             new TalentDef
             {
                 Id = TalentId.Sorcerer, IsSpell = false, Name = "Resonance",
-                Lore = "Sometimes the current gives back what it takes. You have learned to listen for the moment when the flow is generous.",
+                Lore = "Some days the fire gives back what it takes. You cannot predict it — only listen for it.",
                 MechanicDesc = "Passive. One in four castings costs no days."
             },
             new TalentDef
             {
-                Id = TalentId.Camaraderie, IsSpell = false, Name = "Kinship",
-                Lore = "You know what it is to carry the weight of the gift alone. So do they. That understanding moves faster than politics.",
-                MechanicDesc = "Passive. +10 relations with those who carry the gift. Never falls below −10."
+                Id = TalentId.Ember, IsSpell = false, Name = "Ember",
+                Lore = "In the moment of killing, when fire passes from one vessel to another, some scatters. Sometimes a spark finds you. You have learned, not to seek it, but to cup your hands.",
+                MechanicDesc = "Passive. Each kill on the battlefield has a 5% chance to restore 1 day of youth."
+            },
+            // ── Campaign support spells ──────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.Subjugate, IsSpell = true, Name = "Subjugate",
+                Lore = "The fire bends toward those who fear losing it most. You press yours against a captive's fear, and they choose service over what you are silently offering instead.",
+                MechanicDesc = "A prisoner yields and joins your ranks. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Rejuvenate, IsSpell = true, Name = "Rejuvenate",
+                Lore = "You press a sliver of your own fire into a wound, just enough to wake theirs. They will not know what was given. You will feel it, briefly.",
+                MechanicDesc = "Several wounded soldiers in your army recover. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Inspire, IsSpell = true, Name = "Kindle",
+                Lore = "You let them feel it briefly — the warmth that says the world cares whether they live. It may be a lie. The fire does not ask.",
+                MechanicDesc = "Your party gains 20 morale. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.PlantGrowth, IsSpell = true, Name = "Quicken",
+                Lore = "Seeds carry fire in them — a very old, very patient kind. You ask that patience to end.",
+                MechanicDesc = "20 grain grows where you ask it. Costs 1 day."
+            },
+            // ── Campaign offensive spells ────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.BreakWills, IsSpell = true, Name = "Unsettle",
+                Lore = "You let them feel how thin their fire is. Most men have never faced that knowledge directly. Courage is easier when you cannot see the dark.",
+                MechanicDesc = "The nearest enemy party loses 20 morale. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Plague, IsSpell = true, Name = "Wither",
+                Lore = "Fire leaves places slowly, or quickly, depending on who tends it. You remove the tender.",
+                MechanicDesc = "An enemy village loses a fifth of its hearth. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Curse, IsSpell = true, Name = "Curse",
+                Lore = "A thread of flame, pulled. The body follows where the fire leads — and you are leading it toward ash.",
+                MechanicDesc = "2–4 soldiers in the nearest enemy party are wounded or killed. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Clairvoyance, IsSpell = true, Name = "Clairvoyance",
+                Lore = "The lines of fire connect every living thing to every other. You read them the way a navigator reads stars — imperfectly, but well enough.",
+                MechanicDesc = "Gain 20 influence. Costs 1 day."
+            },
+            // ── Dark passives ────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.DevourLife, IsSpell = false, Name = "Harvest",
+                Lore = "You take the last warmth from a life you have ended. The fire knows no guilt — it only spreads.",
+                MechanicDesc = "Passive. Executing a captured lord draws back 150 days of youth."
             },
             new TalentDef
             {
                 Id = TalentId.Reap, IsSpell = false, Name = "Reap",
-                Lore = "Every life spent in your shadow leaves something behind — a warmth, a residue, a small debt paid forward. You have learned to collect.",
-                MechanicDesc = "Passive. Raiding a village draws back 5 days of youth. Each prisoner discarded has a 5% chance to draw back 1 day."
+                Lore = "Every life spent in your shadow leaves something behind — a warmth, a residue, the last gasp of a flame that burned for your purpose. You have learned to hold a vessel for it.",
+                MechanicDesc = "Passive. Raiding a village draws back 5 days of youth. Each prisoner discarded has a 5% chance to draw back 1 day. Learning this talent marks you."
+            },
+            // ── Social ───────────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.Camaraderie, IsSpell = false, Name = "Kinship",
+                Lore = "Those who carry the fire recognise each other from across a room. There is something almost like trust in that. Almost.",
+                MechanicDesc = "Passive. +10 relations with those who carry the fire. Never falls below −10."
             },
         };
 
@@ -206,11 +221,37 @@ namespace ColoursOfCalradia
             if (id == TalentId.Camaraderie)
                 ApplyCamaraderie(hero);
 
+            // Passive: Reap — marks the caster with cruelty and poor reputation
+            if (id == TalentId.Reap)
+                ApplyReapTraits(hero);
+
             var def = GetDef(id);
             InformationManager.DisplayMessage(new InformationMessage(
                 $"You have learned {def.Name}. {def.MechanicDesc}",
                 new Color(0.7f, 0.9f, 0.7f)));
             return true;
+        }
+
+        private static void ApplyReapTraits(Hero hero)
+        {
+            try
+            {
+                // Shift toward merciless
+                int mercy = hero.GetTraitLevel(DefaultTraits.Mercy);
+                if (mercy > -3)
+                    hero.SetTraitLevel(DefaultTraits.Mercy, mercy - 1);
+                // Shift toward calculating/devious
+                int honor = hero.GetTraitLevel(DefaultTraits.Honor);
+                if (honor > -3)
+                    hero.SetTraitLevel(DefaultTraits.Honor, honor - 1);
+                // Criminal rating spike in current kingdom
+                if (hero.MapFaction is Kingdom k)
+                    try { ChangeCrimeRatingAction.Apply(k, 30f, true); } catch { }
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "The fire darkens with hunger. Those who witness what you do will remember.",
+                    new Color(0.8f, 0.4f, 0.2f)));
+            }
+            catch { }
         }
 
         private static void ApplyCamaraderie(Hero player)
@@ -252,17 +293,35 @@ namespace ColoursOfCalradia
             var def = GetDef(id);
             if (!def.IsSpell) return;
 
-            // Sorcerer: 25% chance to skip aging; without Sorcerer always age
-            bool skipAging = Has(TalentId.Sorcerer) && _rng.Next(4) == 0;
-            if (skipAging)
+            // Blight path: criminal rating instead of aging
+            if (MageKnowledge.IsBlight)
             {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "The current gives back.",
-                    new Color(0.7f, 0.9f, 0.7f)));
+                try
+                {
+                    if (Hero.MainHero?.MapFaction is Kingdom blightK)
+                    {
+                        ChangeCrimeRatingAction.Apply(blightK, 5f, false);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The ash spreads.",
+                            new Color(0.3f, 0.35f, 0.7f)));
+                    }
+                }
+                catch { }
             }
             else
             {
-                AgingSystem.AgeHero(Hero.MainHero, 1);
+                // Sorcerer: 25% chance to skip aging; without Sorcerer always age
+                bool skipAging = Has(TalentId.Sorcerer) && _rng.Next(4) == 0;
+                if (skipAging)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The fire gives back.",
+                        new Color(0.9f, 0.6f, 0.3f)));
+                }
+                else
+                {
+                    AgingSystem.AgeHero(Hero.MainHero, 1);
+                }
             }
 
             switch (id)

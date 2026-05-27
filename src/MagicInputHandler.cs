@@ -192,7 +192,7 @@ namespace ColoursOfCalradia
             {
                 if (Hero.MainHero != null && Hero.MainHero.IsPrisoner)
                 {
-                    Fizzle("You are bound. The current cannot reach you.");
+                    Fizzle("You are bound. The fire cannot kindle.");
                     return;
                 }
             }
@@ -228,7 +228,12 @@ namespace ColoursOfCalradia
             {
                 int agingDays = cast.AgingDays(hasBattleMage);
                 if (agingDays > 0)
-                    AgingSystem.AgeHero(Hero.MainHero, agingDays);
+                {
+                    if (MageKnowledge.IsBlight)
+                        ApplyBlightCastCost(agingDays);
+                    else
+                        AgingSystem.AgeHero(Hero.MainHero, agingDays);
+                }
             }
         }
 
@@ -240,8 +245,29 @@ namespace ColoursOfCalradia
             return false;
         }
 
+        private static void ApplyBlightCastCost(int days)
+        {
+            try
+            {
+                if (Hero.MainHero?.MapFaction is TaleWorlds.CampaignSystem.Kingdom k)
+                {
+                    TaleWorlds.CampaignSystem.Actions.ChangeCrimeRatingAction.Apply(k, days * 5f, false);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"The ash spreads. Eyes turn toward you. (+{days * 5} criminal rating)",
+                        new Color(0.3f, 0.35f, 0.7f)));
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The cold fire stirs. The ash spreads.",
+                        new Color(0.3f, 0.35f, 0.7f)));
+                }
+            }
+            catch { }
+        }
+
         private static void Fizzle(string msg) =>
             InformationManager.DisplayMessage(new InformationMessage(
-                msg, Color.FromUint(0xFF996644)));
+                msg, Color.FromUint(0xFF997755)));
     }
 }

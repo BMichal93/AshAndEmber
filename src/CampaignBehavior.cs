@@ -21,7 +21,20 @@ namespace ColoursOfCalradia
     {
         private bool _selectionDone;
         private int  _prisonerCountSnapshot = -1;
+        private int  _dayCounter            = 0;
         private static readonly Random _rng = new Random();
+
+        private static readonly string[] _premonitions =
+        {
+            "The fire in you whispers tonight — something distant is ending.",
+            "On the road, you pass the ruins of a great pyre. The air still carries old smoke. Something in you recognises it.",
+            "You wake with the taste of ash on your tongue. The inner fire is restless.",
+            "Your shadow moves a half-step behind you. The fire inside is watching something you cannot see.",
+            "You watch a forge-fire die to coals. For a moment, you understand exactly what you are.",
+            "A child in the village stares at your hands as you pass. She sees something there that you do not show others.",
+            "The fire does not sleep when you do. You feel it turning in its sleep, searching.",
+            "You smell smoke where there is none. An old instinct — the fire recognising itself in the distance.",
+        };
 
         public override void RegisterEvents()
         {
@@ -97,6 +110,8 @@ namespace ColoursOfCalradia
             try { ColourLordRegistry.DailyMapCast(); } catch { }
             try { AgingSystem.DailyAgeCheck(); } catch { }
             try { CheckReapPrisonerYield(); } catch { }
+            _dayCounter++;
+            if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
         }
 
         // ── Weekly tick ───────────────────────────────────────────────────────
@@ -125,6 +140,36 @@ namespace ColoursOfCalradia
             try { CheckReapRaidYield(mapEvent); } catch { }
             // Refresh snapshot so battle-captured prisoners don't count as discards
             try { _prisonerCountSnapshot = MobileParty.MainParty?.PrisonRoster?.TotalManCount ?? _prisonerCountSnapshot; } catch { }
+        }
+
+        // ── Monthly atmospheric events ────────────────────────────────────────
+        private void OnMonthlyTick()
+        {
+            if (!MageKnowledge.IsMage) return;
+            // Random premonition message
+            if (_rng.Next(3) == 0) // ~33% chance each month
+            {
+                string msg = _premonitions[_rng.Next(_premonitions.Length)];
+                InformationManager.DisplayMessage(new InformationMessage(
+                    msg, new Color(0.75f, 0.55f, 0.3f)));
+            }
+
+            // If near a mage lord, sense their fire
+            try
+            {
+                if (Hero.MainHero?.PartyBelongedTo == null) return;
+                Vec2 pos = Hero.MainHero.PartyBelongedTo.GetPosition2D;
+                Hero nearMage = Hero.AllAliveHeroes.FirstOrDefault(h =>
+                    h != Hero.MainHero && h.IsLord && h.IsAlive &&
+                    ColourLordRegistry.IsColourLord(h) &&
+                    h.PartyBelongedTo != null &&
+                    (h.PartyBelongedTo.GetPosition2D - pos).Length < 30f);
+                if (nearMage != null)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"You sense another fire nearby — {nearMage.Name} burns with it.",
+                        new Color(0.9f, 0.6f, 0.2f)));
+            }
+            catch { }
         }
 
         // ── Reap: raid yield ──────────────────────────────────────────────────
@@ -316,6 +361,7 @@ namespace ColoursOfCalradia
         {
             dataStore.SyncData("LDM_SelectionDone",        ref _selectionDone);
             dataStore.SyncData("LDM_PrisonerSnapshot",     ref _prisonerCountSnapshot);
+            dataStore.SyncData("LDM_DayCounter",           ref _dayCounter);
             MageKnowledge.Save(dataStore);      // also saves TalentSystem internally
             ColourLordRegistry.Save(dataStore);
         }

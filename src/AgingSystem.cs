@@ -16,6 +16,9 @@ namespace ColoursOfCalradia
 {
     public static class AgingSystem
     {
+        private static readonly Random _rng = new Random();
+        private static bool _pendingBlightDecision = false;
+
         // ── Core aging ────────────────────────────────────────────────────────
 
         /// <summary>
@@ -31,13 +34,16 @@ namespace ColoursOfCalradia
 
                 if (hero == Hero.MainHero)
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"The current takes its toll — {days} day{(days > 1 ? "s" : "")} older. Age: {(int)hero.Age}.",
-                        new Color(0.6f, 0.6f, 0.9f)));
+                        $"The fire burns its cost — {days} day{(days > 1 ? "s" : "")} older. Age: {(int)hero.Age}.",
+                        new Color(0.7f, 0.5f, 0.3f)));
 
                 CheckAgeLimit(hero);
             }
             catch { }
         }
+
+        // Legacy stub; clear any per-mission knockdown state
+        public static void ClearKnockdowns() { }
 
         /// <summary>
         /// Battle spell aging cost formula:
@@ -67,8 +73,8 @@ namespace ColoursOfCalradia
 
                 if (hero == Hero.MainHero)
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"Life flows back — {days} day{(days > 1 ? "s" : "")} younger. Age: {(int)hero.Age}.",
-                        new Color(0.5f, 0.9f, 0.6f)));
+                        $"The fire gives back — {days} day{(days > 1 ? "s" : "")} younger. Age: {(int)hero.Age}.",
+                        new Color(0.9f, 0.6f, 0.3f)));
             }
             catch { }
         }
@@ -79,17 +85,33 @@ namespace ColoursOfCalradia
         {
             if (hero == null || !hero.IsAlive) return;
             if (hero.Age < 100f) return;
+            // Blight mages are immune to age-death
+            if (hero == Hero.MainHero && MageKnowledge.IsBlight) return;
+            if (hero != Hero.MainHero && ColourLordRegistry.IsBlightLord(hero)) return;
             try
             {
                 if (hero == Hero.MainHero)
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "A century of years — the current reclaims what it gave.",
-                        new Color(0.4f, 0.4f, 0.8f)));
-                else
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{hero.Name} — a century spent. The current takes what remains.",
-                        new Color(0.4f, 0.4f, 0.8f)));
+                {
+                    if (_pendingBlightDecision) return;
+                    _pendingBlightDecision = true;
+                    // Defer the choice to the campaign layer
+                    MageKnowledge.QueueBlightPrompt(() => _pendingBlightDecision = false);
+                    return;
+                }
 
+                // NPC mage: 5% chance to become blight instead of dying
+                if (ColourLordRegistry.IsColourLord(hero) && _rng.Next(100) < 5)
+                {
+                    ColourLordRegistry.SetBlight(hero, true);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{hero.Name} — the fire does not die. Something colder burns in its place.",
+                        new Color(0.3f, 0.35f, 0.7f)));
+                    return;
+                }
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{hero.Name} — a century spent. The fire burns to ash at last.",
+                    new Color(0.6f, 0.5f, 0.35f)));
                 KillCharacterAction.ApplyByOldAge(hero, true);
             }
             catch { }

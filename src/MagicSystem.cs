@@ -44,6 +44,7 @@ namespace ColoursOfCalradia
     public class MagicMissionBehavior : MissionBehavior
     {
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
+        private static readonly Random _rng = new Random();
 
         public override void OnMissionTick(float dt)
         {
@@ -82,6 +83,16 @@ namespace ColoursOfCalradia
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent,
             AgentState agentState, KillingBlow blow)
         {
+            try
+            {
+                if (affectorAgent != Agent.Main) return;
+                if (affectedAgent == null || affectedAgent.IsMount) return;
+                if (agentState != AgentState.Killed) return;
+                if (!MageKnowledge.IsMage || !TalentSystem.Has(TalentId.Ember)) return;
+                if (_rng.NextDouble() < 0.05)
+                    AgingSystem.RejuvenateHero(Hero.MainHero, 1);
+            }
+            catch { }
         }
     }
 }

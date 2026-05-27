@@ -20,7 +20,8 @@ namespace ColoursOfCalradia
 {
     public static class ColourLordRegistry
     {
-        private static readonly HashSet<string> _mageIds = new HashSet<string>();
+        private static readonly HashSet<string> _mageIds  = new HashSet<string>();
+        private static readonly HashSet<string> _blightIds = new HashSet<string>();
         // Subset of spell talents each mage lord knows (1-2 random)
         private static readonly Dictionary<string, List<int>> _lordTalents
             = new Dictionary<string, List<int>>();
@@ -44,6 +45,9 @@ namespace ColoursOfCalradia
         public static bool IsColourLord(Hero hero) =>
             hero != null && _mageIds.Contains(hero.StringId);
 
+        public static bool IsBlightLord(Hero hero) =>
+            hero != null && _blightIds.Contains(hero.StringId);
+
         public static void SetMage(Hero hero, bool value)
         {
             if (hero == null) return;
@@ -57,6 +61,26 @@ namespace ColoursOfCalradia
             {
                 _mageIds.Remove(hero.StringId);
                 _lordTalents.Remove(hero.StringId);
+            }
+        }
+
+        public static void SetBlight(Hero hero, bool value)
+        {
+            if (hero == null) return;
+            if (value)
+            {
+                _blightIds.Add(hero.StringId);
+                // Blight lords are kicked from their kingdom
+                try
+                {
+                    if (hero.Clan?.Kingdom != null)
+                        TaleWorlds.CampaignSystem.Actions.LeaveClanFromKingdomAction.Apply(hero.Clan, false);
+                }
+                catch { }
+            }
+            else
+            {
+                _blightIds.Remove(hero.StringId);
             }
         }
 
@@ -190,6 +214,8 @@ namespace ColoursOfCalradia
                     {
                         TalentSystem.ExecuteNpcMapSpell(hero, chosen);
                         _campaignCooldowns[id] = 5 + _rng.Next(5);
+                        // Mage lords gain renown for exercising their gift
+                        if (hero.Clan != null) hero.Clan.Renown += 3f;
                     }
                     catch { }
                 }
@@ -202,6 +228,7 @@ namespace ColoursOfCalradia
         {
             if (hero == null) return;
             _mageIds.Remove(hero.StringId);
+            _blightIds.Remove(hero.StringId);
             _lordTalents.Remove(hero.StringId);
             _campaignCooldowns.Remove(hero.StringId);
         }
@@ -215,8 +242,9 @@ namespace ColoursOfCalradia
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
         {
-            var ids    = _mageIds.ToList();
-            bool seeded = _seeded;
+            var ids      = _mageIds.ToList();
+            var blightIds = _blightIds.ToList();
+            bool seeded  = _seeded;
             var cdKeys = _campaignCooldowns.Keys.ToList();
             var cdVals = _campaignCooldowns.Values.ToList();
 
@@ -226,6 +254,7 @@ namespace ColoursOfCalradia
             var talentFlat  = _lordTalents.Values.SelectMany(v => v).ToList();
 
             store.SyncData("LDM_MageIds",     ref ids);
+            store.SyncData("LDM_BlightIds",   ref blightIds);
             store.SyncData("LDM_MageSeeded",  ref seeded);
             store.SyncData("LDM_CdKeys",      ref cdKeys);
             store.SyncData("LDM_CdVals",      ref cdVals);
@@ -235,6 +264,8 @@ namespace ColoursOfCalradia
 
             _mageIds.Clear();
             if (ids != null) foreach (var id in ids) _mageIds.Add(id);
+            _blightIds.Clear();
+            if (blightIds != null) foreach (var id in blightIds) _blightIds.Add(id);
             _seeded = seeded;
 
             _campaignCooldowns.Clear();
