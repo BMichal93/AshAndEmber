@@ -153,9 +153,13 @@ namespace ColoursOfCalradia
             };
             foreach (Vec3 pos in pts)
                 SpawnTempLight(pos, school, 4f, duration);
+            // Fire particle at the cast origin
+            if (school != ColorSchool.Blight)
+                SpawnTempFireParticle(origin, duration * 2f);
         }
 
         // Three-light burst at an impact point — centre flash plus two random scatter offsets.
+        // Also spawns a brief fire particle if school is warm (non-blight).
         internal static void SpawnImpactBurst(Vec3 origin, ColorSchool school, float duration)
         {
             SpawnTempLight(origin, school, 4f, duration);
@@ -165,6 +169,54 @@ namespace ColoursOfCalradia
                 float dist  = 0.8f + (float)_rng.NextDouble() * 1.5f;
                 Vec3  off   = new Vec3((float)Math.Cos(angle) * dist, (float)Math.Sin(angle) * dist, 0f);
                 SpawnTempLight(origin + off, school, 3f, duration * 0.6f);
+            }
+            if (school != ColorSchool.Blight)
+                SpawnTempFireParticle(origin, duration * 1.5f);
+        }
+
+        // ── Fire particle effects ──────────────────────────────────────────────
+        // Particle names are wrapped in try/catch — silently skipped if the asset
+        // does not exist in the running version of the game.
+        private static readonly string[] _fireParticleNames =
+        {
+            "psys_campfire",
+            "psys_game_fire_torch_small",
+            "psys_env_fire_medium_01",
+        };
+
+        private static GameEntity SpawnParticleEntity(Vec3 position, string particleName)
+        {
+            try
+            {
+                var scene = Mission.Current?.Scene;
+                if (scene == null) return null;
+                var entity = GameEntity.CreateEmpty(scene, false, false, false);
+                var frame  = new MatrixFrame(Mat3.Identity, position);
+                entity.SetGlobalFrame(in frame, true);
+                entity.AddParticleSystemComponent(particleName);
+                return entity;
+            }
+            catch { return null; }
+        }
+
+        // Tries each candidate particle name in order; stops at the first that works.
+        internal static void SpawnTempFireParticle(Vec3 position, float duration)
+        {
+            foreach (string name in _fireParticleNames)
+            {
+                GameEntity entity = SpawnParticleEntity(position, name);
+                if (entity == null) continue;
+                _areaEffects.Add(new AreaEffect
+                {
+                    Id          = "temp_particle",
+                    Position    = position,
+                    School      = ColorSchool.Red,
+                    TickInterval = duration,
+                    TickTimer   = duration,
+                    Remaining   = duration,
+                    LightEntity = entity,
+                });
+                return;
             }
         }
 
@@ -185,13 +237,15 @@ namespace ColoursOfCalradia
         {
             switch (school)
             {
-                case ColorSchool.Red:    return new Vec3(1f,    0.15f, 0.05f);
-                case ColorSchool.Orange: return new Vec3(1f,    0.50f, 0.05f);
-                case ColorSchool.Yellow: return new Vec3(1f,    0.90f, 0.10f);
-                case ColorSchool.Green:  return new Vec3(0.15f, 0.80f, 0.15f);
-                case ColorSchool.Blue:   return new Vec3(0.10f, 0.35f, 1f);
-                case ColorSchool.Purple: return new Vec3(0.60f, 0.10f, 0.90f);
-                default:                 return new Vec3(1f,    1f,    1f);
+                case ColorSchool.Red:    return new Vec3(1f,    0.15f, 0.02f); // bright fire-red
+                case ColorSchool.Orange: return new Vec3(1f,    0.47f, 0.02f); // deep orange
+                case ColorSchool.Yellow: return new Vec3(1f,    0.80f, 0.05f); // amber-gold
+                case ColorSchool.Green:  return new Vec3(1f,    0.60f, 0.02f); // warm amber (was cold green)
+                case ColorSchool.Blue:   return new Vec3(1f,    0.40f, 0.02f); // hot ember-orange (was cold blue)
+                case ColorSchool.Purple: return new Vec3(0.87f, 0.07f, 0.02f); // deep crimson (was purple)
+                case ColorSchool.White:  return new Vec3(1f,    0.93f, 0.75f); // pale warm flame
+                case ColorSchool.Blight: return new Vec3(0.15f, 0.25f, 0.80f); // cold ash-blue
+                default:                 return new Vec3(1f,    0.70f, 0.30f);
             }
         }
 
