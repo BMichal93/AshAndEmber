@@ -66,7 +66,7 @@ namespace AshAndEmber
                 try
                 {
                     ApplyEffectsToAgent(a, cast, caster, applyPush: true, applyPull: true);
-                    SpawnImpactBurst(a.Position, glowColor, 2f);
+                    SpawnImpactBurst(a.Position, glowColor, 5f);
                     affected++;
                 }
                 catch { }

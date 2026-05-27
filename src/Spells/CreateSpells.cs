@@ -173,7 +173,7 @@ namespace AshAndEmber
             catch { }
 
             ColorSchool col = cast.VisualColor;
-            SpawnCircleLights(caster.Position, col, radius, 3f);
+            SpawnCircleLights(caster.Position, col, radius, 6f);
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
 
@@ -183,7 +183,7 @@ namespace AshAndEmber
                 try
                 {
                     ApplyEffectsToAgent(a, cast, caster, applyPush: true, applyPull: true);
-                    SpawnImpactBurst(a.Position, col, 1.5f);
+                    SpawnImpactBurst(a.Position, col, 4f);
                     affected++;
                 }
                 catch { }

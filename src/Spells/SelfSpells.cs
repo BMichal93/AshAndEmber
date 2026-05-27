@@ -93,7 +93,7 @@ namespace AshAndEmber
             for (int col = 0; col < w.GridSize; col++)
             {
                 Vec3 pos = WaveNodePos(w, row, col);
-                w.Lights.Add(SpawnAreaLight(pos, w.Cast.VisualColor, 3f));
+                w.Lights.Add(SpawnAreaLight(pos, w.Cast.VisualColor, 7f));
             }
         }
 
@@ -176,7 +176,7 @@ namespace AshAndEmber
                         if (!IsWarded(a))
                         {
                             ApplyEffectsToAgent(a, w.Cast, Agent.Main, applyPush: true, applyPull: false);
-                            SpawnImpactBurst(a.Position, w.Cast.VisualColor, 0.5f);
+                            SpawnImpactBurst(a.Position, w.Cast.VisualColor, 2.5f);
                         }
                         hit.Add(a);
                     }

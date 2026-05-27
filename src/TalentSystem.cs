@@ -182,7 +182,7 @@ namespace AshAndEmber
 
             int cost = PurchaseCost();
 
-            // Spend Focus points if available, otherwise spend an attribute point
+            // Spend focus points
             bool spent = false;
             try
             {
@@ -197,7 +197,7 @@ namespace AshAndEmber
             if (!spent)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "Not enough Focus points or attribute points to learn this talent.",
+                    $"Not enough focus points. Cost: {cost} point{(cost != 1 ? "s" : "")}.",
                     new Color(0.8f, 0.5f, 0.2f)));
                 return false;
             }

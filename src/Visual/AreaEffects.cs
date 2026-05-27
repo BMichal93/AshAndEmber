@@ -105,10 +105,10 @@ namespace AshAndEmber
                 var entity = GameEntity.CreateEmpty(scene, false, false, false);
                 var frame  = new MatrixFrame(Mat3.Identity, position + new Vec3(0f, 0f, 0.5f));
                 entity.SetGlobalFrame(in frame, true);
-                float lightRadius = Math.Min(radius, 8f);
+                float lightRadius = Math.Min(radius, 20f);
                 var light = Light.CreatePointLight(lightRadius);
                 light.Radius        = lightRadius;
-                light.Intensity     = 3000f;
+                light.Intensity     = 25000f;
                 light.LightColor    = rgb;
                 light.ShadowEnabled = false;
                 entity.AddLight(light);
@@ -125,15 +125,17 @@ namespace AshAndEmber
         // Larger AoE (>10m) gets 6 ring nodes; smaller gets 5.
         internal static void SpawnCircleLights(Vec3 origin, ColorSchool school, float aoeRadius, float duration)
         {
-            SpawnTempLight(origin, school, 5f, duration);
+            SpawnTempLight(origin, school, 10f, duration);
             int   count = aoeRadius > 10f ? 6 : 5;
-            float ringR = Math.Min(aoeRadius * 0.75f, 8f);
+            float ringR = Math.Min(aoeRadius * 0.75f, 12f);
             for (int i = 0; i < count; i++)
             {
                 double angle = Math.PI * 2.0 / count * i;
                 Vec3 pos = origin + new Vec3((float)Math.Cos(angle) * ringR, (float)Math.Sin(angle) * ringR, 0f);
-                SpawnTempLight(pos, school, 5f, duration);
+                SpawnTempLight(pos, school, 7f, duration);
             }
+            if (school != ColorSchool.Blight)
+                SpawnTempFireParticle(origin, duration * 1.5f);
         }
 
         // Lights a cone shape with 7 temp lights.
@@ -152,26 +154,33 @@ namespace AshAndEmber
                 origin + fwd * 7.5f + right * 5f,            // far right edge
             };
             foreach (Vec3 pos in pts)
-                SpawnTempLight(pos, school, 4f, duration);
-            // Fire particle at the cast origin
+                SpawnTempLight(pos, school, 8f, duration);
+            // Fire particles spread along the cone
             if (school != ColorSchool.Blight)
-                SpawnTempFireParticle(origin, duration * 2f);
+            {
+                SpawnTempFireParticle(origin,              duration * 2.5f);
+                SpawnTempFireParticle(origin + fwd * 4f,  duration * 2f);
+                SpawnTempFireParticle(origin + fwd * 7.5f, duration * 1.5f);
+            }
         }
 
         // Three-light burst at an impact point — centre flash plus two random scatter offsets.
         // Also spawns a brief fire particle if school is warm (non-blight).
         internal static void SpawnImpactBurst(Vec3 origin, ColorSchool school, float duration)
         {
-            SpawnTempLight(origin, school, 4f, duration);
-            for (int i = 0; i < 2; i++)
+            SpawnTempLight(origin, school, 10f, duration);
+            for (int i = 0; i < 3; i++)
             {
                 float angle = (float)(_rng.NextDouble() * Math.PI * 2);
-                float dist  = 0.8f + (float)_rng.NextDouble() * 1.5f;
+                float dist  = 0.8f + (float)_rng.NextDouble() * 2f;
                 Vec3  off   = new Vec3((float)Math.Cos(angle) * dist, (float)Math.Sin(angle) * dist, 0f);
-                SpawnTempLight(origin + off, school, 3f, duration * 0.6f);
+                SpawnTempLight(origin + off, school, 6f, duration * 0.8f);
             }
             if (school != ColorSchool.Blight)
-                SpawnTempFireParticle(origin, duration * 1.5f);
+            {
+                SpawnTempFireParticle(origin, duration * 2f);
+                SpawnTempFireParticle(origin + new Vec3(0.4f, 0.2f, 0f), duration * 1.5f);
+            }
         }
 
         // ── Fire particle effects ──────────────────────────────────────────────
@@ -179,9 +188,11 @@ namespace AshAndEmber
         // does not exist in the running version of the game.
         private static readonly string[] _fireParticleNames =
         {
-            "psys_campfire",
-            "psys_game_fire_torch_small",
             "psys_env_fire_medium_01",
+            "psys_campfire",
+            "psys_env_fire_big_01",
+            "psys_game_fire_torch_small",
+            "psys_campfire_small",
         };
 
         private static GameEntity SpawnParticleEntity(Vec3 position, string particleName)
@@ -199,23 +210,37 @@ namespace AshAndEmber
             catch { return null; }
         }
 
-        // Tries each candidate particle name in order; stops at the first that works.
+        // Spawns a cluster of fire particles at the given position.
+        // Tries each candidate name; on first success spawns a main + two offset flames.
         internal static void SpawnTempFireParticle(Vec3 position, float duration)
         {
             foreach (string name in _fireParticleNames)
             {
                 GameEntity entity = SpawnParticleEntity(position, name);
                 if (entity == null) continue;
+
                 _areaEffects.Add(new AreaEffect
                 {
-                    Id          = "temp_particle",
-                    Position    = position,
-                    School      = ColorSchool.Red,
-                    TickInterval = duration,
-                    TickTimer   = duration,
-                    Remaining   = duration,
+                    Id = "temp_particle", Position = position, School = ColorSchool.Red,
+                    TickInterval = duration, TickTimer = duration, Remaining = duration,
                     LightEntity = entity,
                 });
+
+                // Two scattered companion flames for a fuller fire effect
+                for (int i = 0; i < 2; i++)
+                {
+                    float a = (float)(_rng.NextDouble() * Math.PI * 2);
+                    float r = 0.3f + (float)_rng.NextDouble() * 0.7f;
+                    Vec3  off = new Vec3((float)Math.Cos(a) * r, (float)Math.Sin(a) * r, 0f);
+                    GameEntity extra = SpawnParticleEntity(position + off, name);
+                    if (extra != null)
+                        _areaEffects.Add(new AreaEffect
+                        {
+                            Id = "temp_particle", Position = position + off, School = ColorSchool.Red,
+                            TickInterval = duration * 0.75f, TickTimer = duration * 0.75f,
+                            Remaining = duration * 0.75f, LightEntity = extra,
+                        });
+                }
                 return;
             }
         }

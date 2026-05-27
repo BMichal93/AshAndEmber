@@ -154,12 +154,13 @@ namespace AshAndEmber
                 "  ↓↓         Ward — self only,        1 day\n" +
                 "  ↓↓↓        Ward — 2m radius,        2 days\n" +
                 "  ↓↓↓↓       Ward — 4m radius,        3 days\n\n" +
-                "Burning cost  (form inputs + effect inputs)\n" +
-                "  Below 4 — free  |  4–5 = 1 day  |  6–7 = 2 days  |  8–9 = 3 days\n" +
+                "Burning cost  (form inputs + effect inputs combined)\n" +
+                "  Below 4 — free  |  4–5 = 1 day  |  6–7 = 2 days  |  8–9 = 3 days  |  10–11 = 4 days  |  …\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Threshold raised to 5.\n" : "") +
                 blightNote +
                 "\nExample\n" +
-                "  ↑↑↑  Break  ↑↑↑↑↑  =  Blast (6m), 40 flame, 2 days.";
+                "  ↑↑↑  Break  ↑↑↑↑↑  =  Blast (6m), 40 flame, 2 days.\n" +
+                "  ↑↑↑↑↑  Break  ↑↑↑↑↑↑↑↑↑↑  =  Blast (10m), 80 flame, 7 days.";
 
             string title = _isBlight ? "The Ashen Fire" : "The Inner Fire";
 
@@ -242,20 +243,25 @@ namespace AshAndEmber
         {
             var all = TalentSystem.All.ToList();
             int cost = TalentSystem.PurchaseCost();
-            string costStr = $"1 focus or attribute point ({cost}pt)";
+            string costStr = $"{cost} focus point{(cost != 1 ? "s" : "")}";
 
             var elements = all.Select(d =>
             {
-                bool owned = TalentSystem.Has(d.Id);
-                string label = (owned ? "✓ " : "") + d.Name + (d.IsSpell ? "  [spell]" : "  [passive]");
-                string hint  = $"{d.MechanicDesc}\n\n{d.Lore}\n\n" +
-                               (owned ? "Known." : $"Cost: {costStr}");
+                bool   owned = TalentSystem.Has(d.Id);
+                string icon  = d.IsSpell ? "✦" : "◆";
+                string tag   = d.IsSpell ? "spell" : "passive";
+                string check = owned ? "✓ " : "   ";
+                string label = $"{check}{icon}  {d.Name}   [{tag}]";
+                string hint  = $"【 {d.Name} 】  {tag}\n\n" +
+                               $"{d.MechanicDesc}\n\n" +
+                               $"{d.Lore}\n\n" +
+                               (owned ? "— Already known —" : $"Cost: {costStr}");
                 return new InquiryElement((int)d.Id, label, null, !owned, hint);
             }).ToList();
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Talents",
-                $"Choose what to learn. Gift is free; each after costs {cost}pt.",
+                "Talents  —  The Inner Fire",
+                $"✦ = spell   ◆ = passive   Cost: {costStr} each. Gift is free.",
                 elements,
                 true, 0, 1,
                 "Learn", "Close",

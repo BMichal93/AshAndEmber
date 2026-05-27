@@ -114,8 +114,8 @@ namespace AshAndEmber
             if (caster == null) return;
             try
             {
-                BeginAgentGlow(caster, school, 5.0f);
-                SpawnTempLight(caster.Position, school, 10f, 4f);
+                BeginAgentGlow(caster, school, 8.0f);
+                SpawnTempLight(caster.Position, school, 18f, 7f);
                 TryCastSound(caster.Position, school);
                 TryCastAnimation(caster);
             }

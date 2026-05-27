@@ -31,7 +31,7 @@ namespace AshAndEmber
         private static bool   _inEffectPhase  = false;
         private static bool   _wasFocusing    = false;
         private static string _lastDisplayed  = "";
-        private const  int    MaxLen          = 12; // raised to allow up to 3×ULDR ward repetitions
+        private const  int    MaxLen          = 20;
 
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
         private static bool _prevBreakPad;

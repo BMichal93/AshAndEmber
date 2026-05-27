@@ -50,14 +50,14 @@ namespace AshAndEmber
         ///   totalInputs &lt; 4  → 0 days
         ///   4–5             → 1 day
         ///   6–7             → 2 days
-        ///   8–9             → 3 days  etc.
-        /// With BattleMage talent the denominator shifts from 4 to 5.
+        ///   8–9             → 3 days  (each +2 inputs adds 1 day)
+        /// With BattleMage talent the threshold shifts from 4 to 5.
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
             int threshold = hasBattleMageTalent ? 5 : 4;
             if (totalInputs < threshold) return 0;
-            return totalInputs / threshold;
+            return (totalInputs - threshold) / 2 + 1;
         }
 
         /// <summary>
