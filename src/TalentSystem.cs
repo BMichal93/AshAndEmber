@@ -83,50 +83,50 @@ namespace AshAndEmber
             {
                 Id = TalentId.Subjugate, IsSpell = true, Name = "Subjugate",
                 Lore = "The fire bends toward those who fear losing it most. You press yours against a captive's fear, and they choose service over what you are silently offering instead.",
-                MechanicDesc = "A prisoner yields and joins your ranks. Costs 1 day."
+                MechanicDesc = "All prisoners of your largest captive group yield and join your ranks. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Rejuvenate, IsSpell = true, Name = "Rejuvenate",
                 Lore = "You press a sliver of your own fire into a wound, just enough to wake theirs. They will not know what was given. You will feel it, briefly.",
-                MechanicDesc = "Up to 15 wounded soldiers across your ranks recover. Costs 1 day."
+                MechanicDesc = "Up to 8 wounded soldiers of each type across all your ranks recover. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Inspire, IsSpell = true, Name = "Kindle",
                 Lore = "You let them feel it briefly — the warmth that says the world cares whether they live. It may be a lie. The fire does not ask.",
-                MechanicDesc = "Your party gains 20 morale. Costs 1 day."
+                MechanicDesc = "Your party gains 40 morale and 5 wounded soldiers recover. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.PlantGrowth, IsSpell = true, Name = "Quicken",
                 Lore = "Seeds carry fire in them — a very old, very patient kind. You ask that patience to end.",
-                MechanicDesc = "20 grain grows where you ask it. Costs 1 day."
+                MechanicDesc = "Grain grows in proportion to your party's need — one measure per soldier. Costs 1 day."
             },
             // ── Campaign offensive spells ────────────────────────────────────
             new TalentDef
             {
                 Id = TalentId.BreakWills, IsSpell = true, Name = "Unsettle",
                 Lore = "You let them feel how thin their fire is. Most men have never faced that knowledge directly. Courage is easier when you cannot see the dark.",
-                MechanicDesc = "The nearest enemy party loses 20 morale. Costs 1 day."
+                MechanicDesc = "The nearest enemy party within 100m loses 35 morale. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Plague, IsSpell = true, Name = "Wither",
                 Lore = "Fire leaves places slowly, or quickly, depending on who tends it. You remove the tender.",
-                MechanicDesc = "An enemy village loses a fifth of its hearth. Costs 1 day."
+                MechanicDesc = "The nearest enemy village loses a fifth of its hearth. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Curse, IsSpell = true, Name = "Curse",
                 Lore = "A thread of flame, pulled. The body follows where the fire leads — and you are leading it toward ash.",
-                MechanicDesc = "2–4 soldiers in the nearest enemy party are wounded or killed. Costs 1 day."
+                MechanicDesc = "5–12 soldiers in the nearest enemy party are wounded or killed, and their courage breaks. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Clairvoyance, IsSpell = true, Name = "Clairvoyance",
                 Lore = "The lines of fire connect every living thing to every other. You read them the way a navigator reads stars — imperfectly, but well enough.",
-                MechanicDesc = "Gain 20 influence. Costs 1 day."
+                MechanicDesc = "Gain 40 influence. Without a kingdom, the insight becomes gold instead. Costs 1 day."
             },
             // ── Dark passives ────────────────────────────────────────────────
             new TalentDef
@@ -333,12 +333,14 @@ namespace AshAndEmber
                     .Where(e => !e.Character.IsHero && e.Number > 0)
                     .ToList();
                 if (prisoners == null || prisoners.Count == 0)
-                { Msg("No prisoners to subjugate."); return; }
+                { Msg("Subjugate — no prisoners to subjugate."); return; }
 
-                var entry = prisoners[_rng.Next(prisoners.Count)];
-                MobileParty.MainParty.PrisonRoster.AddToCounts(entry.Character, -1);
-                MobileParty.MainParty.MemberRoster.AddToCounts(entry.Character,  1);
-                Msg($"Subjugate — {entry.Character.Name} bends the knee and joins your ranks.");
+                // Convert the entire largest captive group
+                var entry = prisoners.OrderByDescending(e => e.Number).First();
+                int count = entry.Number;
+                MobileParty.MainParty.PrisonRoster.AddToCounts(entry.Character, -count);
+                MobileParty.MainParty.MemberRoster.AddToCounts(entry.Character,  count);
+                Msg($"Subjugate — {count} {entry.Character.Name}{(count != 1 ? "s" : "")} bend the knee and join your ranks.");
             }
             catch { Msg("Subjugate — no suitable prisoners found."); }
         }
@@ -355,9 +357,10 @@ namespace AshAndEmber
                 if (wounded.Count == 0) { Msg("Rejuvenate — no wounded soldiers in your ranks."); return; }
 
                 int totalHealed = 0;
-                foreach (var entry in wounded.Take(3))
+                // Heal up to 8 per wounded unit type across all types (no cap on types)
+                foreach (var entry in wounded)
                 {
-                    int healed = Math.Max(1, Math.Min(entry.WoundedNumber, 5));
+                    int healed = Math.Max(1, Math.Min(entry.WoundedNumber, 8));
                     roster.AddToCounts(entry.Character, 0, false, -healed);
                     totalHealed += healed;
                 }
@@ -370,11 +373,13 @@ namespace AshAndEmber
         {
             try
             {
+                int partySize = MobileParty.MainParty?.MemberRoster?.TotalManCount ?? 50;
+                int grain = Math.Max(50, Math.Min(partySize, 200));
                 MobileParty.MainParty?.ItemRoster?.AddToCounts(
-                    TaleWorlds.ObjectSystem.MBObjectManager.Instance.GetObject<TaleWorlds.Core.ItemObject>("grain"), 20);
-                Msg("Plant Growth — the soil answers. 20 grain added.");
+                    TaleWorlds.ObjectSystem.MBObjectManager.Instance.GetObject<TaleWorlds.Core.ItemObject>("grain"), grain);
+                Msg($"Quicken — the soil answers. {grain} grain added.");
             }
-            catch { Msg("Plant Growth — the fields are generous. 20 grain added."); }
+            catch { Msg("Quicken — the fields are generous."); }
         }
 
         private static void CastBreakWills()
@@ -385,12 +390,12 @@ namespace AshAndEmber
                 Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
                 var target = MobileParty.All
                     .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction) && p.LeaderHero != null
-                             && (p.GetPosition2D - playerPos).Length < 60f)
+                             && (p.GetPosition2D - playerPos).Length < 100f)
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
-                if (target == null) { Msg("Break Wills — no enemy party in range."); return; }
-                target.RecentEventsMorale -= 20f;
-                Msg($"Break Wills — despair seeps into {target.Name}. -20 morale.");
+                if (target == null) { Msg("Unsettle — no enemy party in range."); return; }
+                target.RecentEventsMorale -= 35f;
+                Msg($"Unsettle — dread settles over {target.Name}. -35 morale.");
             }
             catch { }
         }
@@ -399,9 +404,27 @@ namespace AshAndEmber
         {
             try
             {
-                if (MobileParty.MainParty != null)
-                    MobileParty.MainParty.RecentEventsMorale += 20f;
-                Msg("Inspire — warmth floods your ranks. +20 morale.");
+                if (MobileParty.MainParty == null) return;
+                MobileParty.MainParty.RecentEventsMorale += 40f;
+
+                // Also rouse a handful of wounded soldiers — inspired troops push through pain
+                var roster = MobileParty.MainParty.MemberRoster;
+                var wounded = roster.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero && e.WoundedNumber > 0)
+                    .ToList();
+                int roused = 0;
+                foreach (var entry in wounded)
+                {
+                    if (roused >= 5) break;
+                    int heal = Math.Min(entry.WoundedNumber, 5 - roused);
+                    roster.AddToCounts(entry.Character, 0, false, -heal);
+                    roused += heal;
+                }
+
+                string msg = roused > 0
+                    ? $"Kindle — warmth floods your ranks. +40 morale, {roused} soldier{(roused != 1 ? "s" : "")} roused."
+                    : "Kindle — warmth floods your ranks. +40 morale.";
+                Msg(msg);
             }
             catch { }
         }
@@ -410,21 +433,23 @@ namespace AshAndEmber
         {
             try
             {
-                var enemies = Hero.AllAliveHeroes
-                    .Where(h => h.IsLord && h.IsAlive && h.MapFaction != null
-                             && h.MapFaction != Hero.MainHero?.MapFaction)
-                    .ToList();
-                if (enemies.Count == 0) { Msg("Plague — no enemy villages found."); return; }
+                if (MobileParty.MainParty == null) return;
+                Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
 
-                var enemy = enemies[_rng.Next(enemies.Count)];
-                var villages = Settlement.All.Where(s => s.IsVillage
-                    && s.MapFaction == enemy.MapFaction && s.Village != null).ToList();
-                if (villages.Count == 0) { Msg("Plague — no enemy villages found."); return; }
+                // Target the nearest enemy village; no range cap so it always finds something
+                var playerFaction = MobileParty.MainParty.MapFaction;
+                var target = Settlement.All
+                    .Where(s => s.IsVillage && s.Village != null && s.MapFaction != null
+                             && s.MapFaction != playerFaction
+                             && FactionManager.IsAtWarAgainstFaction(s.MapFaction, playerFaction))
+                    .OrderBy(s => (s.GetPosition2D - playerPos).Length)
+                    .FirstOrDefault();
 
-                var village = villages[_rng.Next(villages.Count)];
-                float before = village.Village.Hearth;
-                village.Village.Hearth = Math.Max(10f, before * 0.80f);
-                Msg($"Plague — something old settles over {village.Name}. Hearth reduced by 20%.");
+                if (target == null) { Msg("Wither — no enemy villages found."); return; }
+
+                float before = target.Village.Hearth;
+                target.Village.Hearth = Math.Max(10f, before * 0.80f);
+                Msg($"Wither — something old settles over {target.Name}. Hearth reduced by 20%.");
             }
             catch { }
         }
@@ -435,11 +460,15 @@ namespace AshAndEmber
             {
                 if (Hero.MainHero?.Clan?.Kingdom != null)
                 {
-                    GainKingdomInfluenceAction.ApplyForDefault(Hero.MainHero, 20);
-                    Msg("Clairvoyance — the threads of power revealed. +20 influence.");
+                    GainKingdomInfluenceAction.ApplyForDefault(Hero.MainHero, 40);
+                    Msg("Clairvoyance — the threads of power revealed. +40 influence.");
                 }
                 else
-                    Msg("Clairvoyance — influence gained (kingdom required for full benefit).");
+                {
+                    // Without a kingdom, the insight finds no political channel — gold instead
+                    Hero.MainHero.ChangeHeroGold(1000);
+                    Msg("Clairvoyance — no throne to bend, but the fire finds other currents. +1000 gold.");
+                }
             }
             catch { Msg("Clairvoyance — insight granted."); }
         }
@@ -458,7 +487,7 @@ namespace AshAndEmber
                     .FirstOrDefault();
                 if (target == null) { Msg("Curse — no enemy party in range."); return; }
 
-                int count = 2 + _rng.Next(3); // 2–4
+                int count = 5 + _rng.Next(8); // 5–12
                 int actual = 0;
                 var troops = target.MemberRoster.GetTroopRoster()
                     .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber)
@@ -474,7 +503,10 @@ namespace AshAndEmber
                     }
                     catch { }
                 }
-                Msg($"Curse — {actual} soul{(actual != 1 ? "s" : "")} marked in {target.Name}.");
+
+                // Shatter their courage alongside their flesh
+                target.RecentEventsMorale -= 25f;
+                Msg($"Curse — {actual} soul{(actual != 1 ? "s" : "")} marked in {target.Name}. Their courage breaks. -25 morale.");
             }
             catch { }
         }
