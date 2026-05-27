@@ -281,14 +281,14 @@ namespace AshAndEmber
             var def = GetDef(id);
             if (!def.IsSpell) return;
 
-            // Blight path: criminal rating instead of aging
+            // Blight path: criminal rating instead of aging, scaled by spell weight
             if (MageKnowledge.IsBlight)
             {
                 try
                 {
                     if (Hero.MainHero?.MapFaction is Kingdom blightK)
                     {
-                        ChangeCrimeRatingAction.Apply(blightK, 5f, false);
+                        ChangeCrimeRatingAction.Apply(blightK, GetBlightCrimeCost(id), false);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The ash spreads.",
                             new Color(0.3f, 0.35f, 0.7f)));
@@ -511,6 +511,22 @@ namespace AshAndEmber
             catch { }
         }
 
+        // Tiered infamy so Ashen players can't spam high-impact spells for free
+        private static float GetBlightCrimeCost(TalentId id)
+        {
+            switch (id)
+            {
+                case TalentId.Curse:
+                case TalentId.Clairvoyance:
+                    return 15f;
+                case TalentId.BreakWills:
+                case TalentId.Plague:
+                    return 10f;
+                default: // Subjugate, Rejuvenate, Inspire, PlantGrowth
+                    return 5f;
+            }
+        }
+
         // ── NPC campaign map spell execution ─────────────────────────────────
         public static void ExecuteNpcMapSpell(Hero caster, TalentId id)
         {
@@ -528,7 +544,9 @@ namespace AshAndEmber
                 }
             }
             catch { }
-            AgingSystem.AgeHero(caster, 1);
+            // Blight lords draw on cold fire; campaign workings cost them nothing
+            if (!ColourLordRegistry.IsBlightLord(caster))
+                AgingSystem.AgeHero(caster, 1);
         }
 
         private static void NpcBreakWills(Hero caster)

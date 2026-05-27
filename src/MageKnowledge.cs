@@ -131,7 +131,7 @@ namespace AshAndEmber
                 : "Hold Left Alt + W/A/D/S, press X to Break, release to cast. Alt+X opens grimoire (when no form started).";
 
             string blightNote = _isBlight
-                ? "\n[Ash-cold] Each cast adds criminal rating instead of aging.\n"
+                ? "\n[Ash-cold] Casting costs infamy instead of aging: 5 for minor workings (Subjugate, Rejuvenate, Kindle, Quicken), 10 for Unsettle and Wither, 15 for Curse and Clairvoyance.\n"
                 : "";
 
             string desc =

@@ -77,6 +77,17 @@ namespace AshAndEmber
                         TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction.ApplyByLeaveKingdom(hero.Clan, false);
                 }
                 catch { }
+                // Cold fire hungers for harm — ensure Blight lords have offensive workings
+                if (!_lordTalents.TryGetValue(hero.StringId, out var current))
+                {
+                    current = new List<int>();
+                    _lordTalents[hero.StringId] = current;
+                }
+                foreach (TalentId t in new[] { TalentId.Curse, TalentId.BreakWills, TalentId.Plague })
+                {
+                    if (!current.Contains((int)t))
+                        current.Add((int)t);
+                }
             }
             else
             {
@@ -202,8 +213,12 @@ namespace AshAndEmber
                     if (_campaignCooldowns.TryGetValue(id, out int cd) && cd > 0)
                     { _campaignCooldowns[id] = cd - 1; continue; }
 
-                    // Older lords cast less often — the fire has cost them too much before
-                    int castChance = hero.Age < 50f ? 8
+                    bool isBlight = IsBlightLord(hero);
+
+                    // Blight lords cast hungrily — cold fire demands expression and costs them nothing
+                    // Normal lords slow down as age accumulates
+                    int castChance = isBlight ? 35
+                                   : hero.Age < 50f ? 8
                                    : hero.Age < 70f ? 4
                                    : 2;
                     if (_rng.Next(100) >= castChance) continue;
@@ -217,8 +232,8 @@ namespace AshAndEmber
                     try
                     {
                         TalentSystem.ExecuteNpcMapSpell(hero, chosen);
-                        _campaignCooldowns[id] = 5 + _rng.Next(5);
-                        // Mage lords gain renown for exercising their gift
+                        // Blight lords recover quickly; normal lords need several days
+                        _campaignCooldowns[id] = isBlight ? 1 + _rng.Next(3) : 5 + _rng.Next(5);
                         if (hero.Clan != null) hero.Clan.Renown += 3f;
                     }
                     catch { }
