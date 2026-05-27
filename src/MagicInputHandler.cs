@@ -31,7 +31,7 @@ namespace ColoursOfCalradia
         private static bool   _inEffectPhase  = false;
         private static bool   _wasFocusing    = false;
         private static string _lastDisplayed  = "";
-        private const  int    MaxLen          = 8;
+        private const  int    MaxLen          = 12; // raised to allow up to 3×ULDR ward repetitions
 
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
         private static bool _prevBreakPad;
@@ -169,14 +169,17 @@ namespace ColoursOfCalradia
         {
             if (_formBuffer.Length == 0) return;
 
-            // Sigil: ULDR → Ward (no Break or effects required, just the 4-key sequence)
-            if (_formBuffer == "ULDR")
+            // Sigil: ULDR×N → Ward (no Break required)
+            //   1× ULDR = self only,  3m radius;  cost 1 day
+            //   2× ULDRULDR          = 6m radius;  cost 2 days
+            //   3× ULDRULDRULDR      = 9m radius;  cost 3 days
+            int uldrReps = CountUldrReps(_formBuffer);
+            if (uldrReps > 0)
             {
                 if (!inMission) { Fizzle("The ward only holds in battle."); return; }
                 try { if (Hero.MainHero?.IsPrisoner == true) { Fizzle("You are bound. The fire cannot kindle."); return; } } catch { }
-                SpellEffects.ExecuteWard();
-                bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
-                int cost = AgingSystem.ComputeBattleAgingCost(4, hasBattleMage); // 4 inputs = 1 day
+                SpellEffects.ExecuteWard(uldrReps);
+                int cost = uldrReps; // 1 day per ULDR repetition
                 if (cost > 0)
                 {
                     if (MageKnowledge.IsBlight) ApplyBlightCastCost(cost);
@@ -281,6 +284,15 @@ namespace ColoursOfCalradia
                 }
             }
             catch { }
+        }
+
+        // Returns N if buf is exactly N repetitions of "ULDR", 0 otherwise.
+        private static int CountUldrReps(string buf)
+        {
+            if (buf.Length == 0 || buf.Length % 4 != 0) return 0;
+            for (int i = 0; i < buf.Length; i += 4)
+                if (buf[i] != 'U' || buf[i+1] != 'L' || buf[i+2] != 'D' || buf[i+3] != 'R') return 0;
+            return buf.Length / 4;
         }
 
         private static void Fizzle(string msg) =>

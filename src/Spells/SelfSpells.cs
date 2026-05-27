@@ -219,29 +219,68 @@ namespace ColoursOfCalradia
             return _wardedAgents.TryGetValue(a.Index, out float t) && t > 0f;
         }
 
-        // Player sigil ULDR — 10 s immunity, costs 1 day
-        public static void ExecuteWard()
+        // Player sigil ULDR×reps — wards caster + all allies within reps×3 m for 10 s
+        public static void ExecuteWard(int reps)
         {
             Agent caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return;
+
+            float radius = reps * 3f;
             _wardedAgents[caster.Index] = 10f;
             BeginAgentGlow(caster, ColorSchool.White, 10f);
-            SpawnCircleLights(caster.Position, ColorSchool.White, 2f, 3f);
+            SpawnCircleLights(caster.Position, ColorSchool.White, Math.Max(2f, radius), 3f);
             TryCastSound(caster.Position, ColorSchool.White);
             TryCastAnimation(caster);
+
+            int count = 1;
+            if (radius > 0f && Mission.Current != null)
+            {
+                try
+                {
+                    foreach (Agent ally in Mission.Current.Agents.ToList())
+                    {
+                        if (ally == caster || !ally.IsActive() || ally.IsMount) continue;
+                        if (caster.Team != null && ally.Team != caster.Team) continue;
+                        if (ally.Position.Distance(caster.Position) > radius) continue;
+                        _wardedAgents[ally.Index] = 10f;
+                        BeginAgentGlow(ally, ColorSchool.White, 10f);
+                        count++;
+                    }
+                }
+                catch { }
+            }
+
+            string msg = count > 1
+                ? $"Ward ({radius:F0}m) — {count} protected for 10 seconds."
+                : "Ward — magic cannot touch you for 10 seconds.";
             InformationManager.DisplayMessage(new InformationMessage(
-                "Ward — magic cannot touch you for 10 seconds.",
-                ColorSchoolData.GetMessageColor(ColorSchool.White)));
+                msg, ColorSchoolData.GetMessageColor(ColorSchool.White)));
         }
 
-        // NPC ward — same protection without the player HUD message
-        public static void ExecuteWardFromAgent(Agent caster)
+        // NPC ward — wards caster and optionally nearby allies within allyRadius
+        public static void ExecuteWardFromAgent(Agent caster, float allyRadius = 0f)
         {
             if (caster == null || !caster.IsActive()) return;
             _wardedAgents[caster.Index] = 10f;
             BeginAgentGlow(caster, ColorSchool.White, 10f);
             TryCastSound(caster.Position, ColorSchool.White);
             TryCastAnimation(caster);
+
+            if (allyRadius > 0f && Mission.Current != null)
+            {
+                try
+                {
+                    foreach (Agent ally in Mission.Current.Agents.ToList())
+                    {
+                        if (ally == caster || !ally.IsActive() || ally.IsMount) continue;
+                        if (ally.Team != caster.Team) continue;
+                        if (ally.Position.Distance(caster.Position) > allyRadius) continue;
+                        _wardedAgents[ally.Index] = 10f;
+                        BeginAgentGlow(ally, ColorSchool.White, 10f);
+                    }
+                }
+                catch { }
+            }
         }
 
         public static void TickWard(float dt)

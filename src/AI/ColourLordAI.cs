@@ -209,7 +209,18 @@ namespace ColoursOfCalradia
         {
             try
             {
-                SpellEffects.ExecuteWardFromAgent(agent);
+                // Honorable or merciful lords extend the ward to nearby troops;
+                // merciless/dishonorable lords protect only themselves.
+                float allyRadius = 0f;
+                try
+                {
+                    bool noble = hero.GetTraitLevel(DefaultTraits.Honor) > 0
+                              || hero.GetTraitLevel(DefaultTraits.Mercy) > 0;
+                    if (noble) allyRadius = 6f;
+                }
+                catch { }
+
+                SpellEffects.ExecuteWardFromAgent(agent, allyRadius);
                 SetCooldown(hero);
                 RecordCast(hero);
             }
