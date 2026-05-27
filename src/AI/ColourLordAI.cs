@@ -107,8 +107,10 @@ namespace ColoursOfCalradia
             int closeEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < 8f);
             int nearEnemies  = enemies.Count(a => a.Position.Distance(agent.Position) < 20f);
 
-            // 0. Ward self when endangered and not already warded
-            if (hpPct < 0.40f && !SpellEffects.IsWarded(agent))
+            // 0. Ward self when health is low OR magic was recently cast nearby
+            bool endangered = hpPct < 0.40f
+                           || SpellEffects.HasRecentMagicNearby(agent.Position, 20f);
+            if (endangered && !SpellEffects.IsWarded(agent))
             {
                 CastWard(agent, hero);
                 return;
@@ -231,6 +233,7 @@ namespace ColoursOfCalradia
             SpellEffects.BeginAgentGlow(agent, ColorSchool.Purple, 3f);
             SpellEffects.TryCastSound(agent.Position, ColorSchool.Purple);
             SpellEffects.TryCastAnimation(agent);
+            SpellEffects.RecordMagicCast(agent.Position);
         }
 
         private static void SetCooldown(Hero hero)

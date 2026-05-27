@@ -242,6 +242,7 @@ namespace ColoursOfCalradia
 
             if (success)
             {
+                try { if (Agent.Main != null) SpellEffects.RecordMagicCast(Agent.Main.Position); } catch { }
                 int agingDays = cast.AgingDays(hasBattleMage);
                 if (agingDays > 0)
                 {

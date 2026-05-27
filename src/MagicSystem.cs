@@ -61,6 +61,7 @@ namespace ColoursOfCalradia
             SpellEffects.TickAreaEffects(dt);
             SpellEffects.TickWave(dt);
             SpellEffects.TickWard(dt);
+            SpellEffects.TickMagicMemory(dt);
             SpellEffects.TickHaltedAgents(dt);
             SpellEffects.FlushPendingDeaths();
         }
@@ -72,6 +73,7 @@ namespace ColoursOfCalradia
             try { SpellEffects.ClearAreaEffects();   } catch { }
             try { SpellEffects.ClearWave();          } catch { }
             try { SpellEffects.ClearWard();          } catch { }
+            try { SpellEffects.ClearMagicMemory();   } catch { }
             try { SpellEffects.ClearGlows();         } catch { }
             try { SpellEffects.ClearColourCooldown();} catch { }
             try { SpellEffects.ClearMoves();         } catch { }

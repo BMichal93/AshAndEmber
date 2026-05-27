@@ -471,6 +471,37 @@ namespace ColoursOfCalradia
             catch { }
         }
 
+        // ── Magic-event memory ─────────────────────────────────────────────────
+        // Records positions of recent non-ward spell casts so NPC lords can
+        // react defensively.  Entries expire after 8 seconds.
+        private static readonly List<(Vec3 Pos, float Left)> _recentMagicEvents
+            = new List<(Vec3, float)>();
+        private const float MagicMemoryDuration = 8f;
+
+        public static void RecordMagicCast(Vec3 position)
+        {
+            _recentMagicEvents.Add((position, MagicMemoryDuration));
+        }
+
+        public static bool HasRecentMagicNearby(Vec3 position, float radius)
+        {
+            foreach (var e in _recentMagicEvents)
+                if (e.Pos.Distance(position) <= radius) return true;
+            return false;
+        }
+
+        public static void TickMagicMemory(float dt)
+        {
+            for (int i = _recentMagicEvents.Count - 1; i >= 0; i--)
+            {
+                float left = _recentMagicEvents[i].Left - dt;
+                if (left <= 0f) _recentMagicEvents.RemoveAt(i);
+                else _recentMagicEvents[i] = (_recentMagicEvents[i].Pos, left);
+            }
+        }
+
+        public static void ClearMagicMemory() => _recentMagicEvents.Clear();
+
         // ── Siege check ────────────────────────────────────────────────────────
         public static void IssueChargeToOwnFormations(Agent caster) { } // removed mechanic
 
