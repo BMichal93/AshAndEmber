@@ -18,9 +18,10 @@ namespace ColoursOfCalradia
 {
     public static class ColourLordAI
     {
-        private const float DefaultCooldown    = 25f;
-        private const float ImpulsiveCooldown  = 15f;
+        private const float DefaultCooldown     = 25f;
+        private const float ImpulsiveCooldown   = 15f;
         private const float CalculatingCooldown = 35f;
+        private const float BlightCooldown      = 6f;  // blight lords cast ~4× more often
 
         private static readonly Dictionary<string, float> _cooldowns   = new Dictionary<string, float>();
         private static readonly Dictionary<string, int>   _battleCasts = new Dictionary<string, int>();
@@ -94,14 +95,24 @@ namespace ColoursOfCalradia
         {
             if (Mission.Current == null) return;
 
+            bool isBlight = ColourLordRegistry.IsBlightLord(hero);
+
             var enemies = SpellEffects.EnemiesOf(agent);
             var allies  = SpellEffects.AlliesOf(agent);
 
-            if (enemies.Count == 0 && allies.All(a => a.Health >= a.HealthLimit * 0.9f)) return;
+            // Blight lords cast proactively even if no one is obviously endangered
+            if (!isBlight && enemies.Count == 0 && allies.All(a => a.Health >= a.HealthLimit * 0.9f)) return;
 
             float hpPct = agent.Health / Math.Max(agent.HealthLimit, 1f);
             int closeEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < 8f);
             int nearEnemies  = enemies.Count(a => a.Position.Distance(agent.Position) < 20f);
+
+            // 0. Ward self when endangered and not already warded
+            if (hpPct < 0.40f && !SpellEffects.IsWarded(agent))
+            {
+                CastWard(agent, hero);
+                return;
+            }
 
             // 1. Heal when badly hurt
             if (hpPct < 0.30f)
@@ -119,17 +130,21 @@ namespace ColoursOfCalradia
                 return;
             }
 
-            if (nearEnemies == 0) return;
+            if (nearEnemies == 0 && !isBlight) return;
 
-            // 3. Choose attack recipe based on situation
-            int roll = _rng.Next(4);
+            // 3. Choose attack recipe — blight lords use wider dice (more aggressive combos)
+            int roll = isBlight ? _rng.Next(6) : _rng.Next(4);
             if (closeEnemies >= 3)
             {
                 // Surrounded — use Burst to push or damage
                 if (roll < 2)
                     CastBurst(agent, hero, 2, 0, 1, 0, false); // Burst+Push
-                else
+                else if (roll < 4)
                     CastBurst(agent, hero, 2, 2, 0, 0, false); // Burst+Damage
+                else if (isBlight)
+                    CastBurst(agent, hero, 3, 2, 1, 0, false); // Blight: heavier Burst+Dmg+Push
+                else
+                    CastBurst(agent, hero, 2, 2, 0, 0, false);
             }
             else
             {
@@ -143,12 +158,20 @@ namespace ColoursOfCalradia
                         CastBlast(agent, hero, 2, 0, 0, 2, false); // Blast+Morale
                     else if (roll == 2)
                         CastBlast(agent, hero, 2, 0, 1, 0, false); // Blast+Push
-                    else
+                    else if (roll == 3)
                         CastBurst(agent, hero, 2, 1, 0, 1, false); // Burst+Dmg+Morale
+                    else if (roll == 4 && isBlight)
+                        CastBlast(agent, hero, 3, 3, 0, 0, false); // Blight: heavy Blast
+                    else
+                        CastBlast(agent, hero, 3, 0, 0, 3, false); // Blight: mass morale blast
+                }
+                else if (isBlight)
+                {
+                    // Blight lords launch morale blasts even without cone alignment
+                    CastBurst(agent, hero, 2, 0, 0, 3, false);
                 }
                 else
                 {
-                    // No cone targets — morale drain burst
                     CastBurst(agent, hero, 2, 0, 0, 2, false);
                 }
             }
@@ -180,6 +203,17 @@ namespace ColoursOfCalradia
             catch { }
         }
 
+        private static void CastWard(Agent agent, Hero hero)
+        {
+            try
+            {
+                SpellEffects.ExecuteWardFromAgent(agent);
+                SetCooldown(hero);
+                RecordCast(hero);
+            }
+            catch { }
+        }
+
         private static void CastHealZone(Agent agent, Hero hero)
         {
             try
@@ -201,15 +235,20 @@ namespace ColoursOfCalradia
 
         private static void SetCooldown(Hero hero)
         {
-            float cd = DefaultCooldown;
             try
             {
+                if (ColourLordRegistry.IsBlightLord(hero))
+                {
+                    _cooldowns[hero.StringId] = BlightCooldown;
+                    return;
+                }
+                float cd = DefaultCooldown;
                 int calc = hero.GetTraitLevel(DefaultTraits.Calculating);
                 if (calc < 0) cd = ImpulsiveCooldown;
                 else if (calc > 0) cd = CalculatingCooldown;
+                _cooldowns[hero.StringId] = cd;
             }
             catch { }
-            _cooldowns[hero.StringId] = cd;
         }
 
         private static void RecordCast(Hero hero)

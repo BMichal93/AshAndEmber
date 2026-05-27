@@ -39,9 +39,40 @@ namespace ColoursOfCalradia
         public static void QueueMove(Agent a, Vec3 target, float duration)
         {
             if (a == null) return;
+            target = ValidatePushTarget(a.Position, target);
             for (int i = _pendingMoves.Count - 1; i >= 0; i--)
                 if (_pendingMoves[i].Agent == a) _pendingMoves.RemoveAt(i);
             _pendingMoves.Add(new PendingMove { Agent = a, Start = a.Position, Target = target, Duration = duration, Elapsed = 0f });
+        }
+
+        // Walk from the raw push target back toward the agent's current position in 1 m steps
+        // until we find a point with valid terrain height.  Guards against off-map pushes.
+        private static Vec3 ValidatePushTarget(Vec3 from, Vec3 to)
+        {
+            try
+            {
+                var scene = Mission.Current?.Scene;
+                if (scene == null) return to;
+
+                Vec3 dir = from - to;
+                float len = dir.Length;
+                if (len < 0.01f) return to;
+                dir = dir.NormalizedCopy();
+
+                for (float d = 0f; d <= len + 0.1f; d += 1f)
+                {
+                    Vec3 c = to + dir * d;
+                    try
+                    {
+                        float h = scene.GetGroundHeightAtPosition(c);
+                        if (h > -500f && h < 9000f && !float.IsNaN(h) && !float.IsInfinity(h))
+                            return c;
+                    }
+                    catch { return c; } // API unavailable — assume position is valid
+                }
+                return from; // no valid point found — cancel push
+            }
+            catch { return to; }
         }
 
         public static void TickMoves(float dt)

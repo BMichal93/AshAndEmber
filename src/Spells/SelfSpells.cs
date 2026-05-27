@@ -208,5 +208,56 @@ namespace ColoursOfCalradia
         // Forwards to Wave so any residual call-sites compile.
         private const string AuraId = "spell_aura";
         public static void ExecuteAura(SpellCast cast) => ExecuteWave(cast);
+
+        // ── Ward state ────────────────────────────────────────────────────────
+        // agentIndex → seconds remaining; prevents magic from affecting the warded agent
+        private static readonly Dictionary<int, float> _wardedAgents = new Dictionary<int, float>();
+
+        public static bool IsWarded(Agent a)
+        {
+            if (a == null) return false;
+            return _wardedAgents.TryGetValue(a.Index, out float t) && t > 0f;
+        }
+
+        // Player sigil ULDR — 10 s immunity, costs 1 day
+        public static void ExecuteWard()
+        {
+            Agent caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+            _wardedAgents[caster.Index] = 10f;
+            BeginAgentGlow(caster, ColorSchool.White, 10f);
+            SpawnCircleLights(caster.Position, ColorSchool.White, 2f, 3f);
+            TryCastSound(caster.Position, ColorSchool.White);
+            TryCastAnimation(caster);
+            InformationManager.DisplayMessage(new InformationMessage(
+                "Ward — magic cannot touch you for 10 seconds.",
+                ColorSchoolData.GetMessageColor(ColorSchool.White)));
+        }
+
+        // NPC ward — same protection without the player HUD message
+        public static void ExecuteWardFromAgent(Agent caster)
+        {
+            if (caster == null || !caster.IsActive()) return;
+            _wardedAgents[caster.Index] = 10f;
+            BeginAgentGlow(caster, ColorSchool.White, 10f);
+            TryCastSound(caster.Position, ColorSchool.White);
+            TryCastAnimation(caster);
+        }
+
+        public static void TickWard(float dt)
+        {
+            var keys = _wardedAgents.Keys.ToList();
+            foreach (int k in keys)
+            {
+                float t = _wardedAgents[k] - dt;
+                if (t <= 0f) _wardedAgents.Remove(k);
+                else _wardedAgents[k] = t;
+            }
+        }
+
+        public static void ClearWard()
+        {
+            _wardedAgents.Clear();
+        }
     }
 }

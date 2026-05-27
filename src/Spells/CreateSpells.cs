@@ -39,7 +39,7 @@ namespace ColoursOfCalradia
             for (int i = 0; i < count; i++)
             {
                 // Spread nodes left to right across the forward direction
-                float offset = (i - (count - 1) * 0.5f) * 2f;
+                float offset = (i - (count - 1) * 0.5f) * 1.5f; // 1.5m = hit radius → solid wall, no gaps
                 Vec3 pos = caster.Position + fwd * 3f + right * offset;
                 AddBarrierNode(pos, cast, caster.Team);
             }

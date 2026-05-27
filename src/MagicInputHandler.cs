@@ -169,6 +169,22 @@ namespace ColoursOfCalradia
         {
             if (_formBuffer.Length == 0) return;
 
+            // Sigil: ULDR → Ward (no Break or effects required, just the 4-key sequence)
+            if (_formBuffer == "ULDR")
+            {
+                if (!inMission) { Fizzle("The ward only holds in battle."); return; }
+                try { if (Hero.MainHero?.IsPrisoner == true) { Fizzle("You are bound. The fire cannot kindle."); return; } } catch { }
+                SpellEffects.ExecuteWard();
+                bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
+                int cost = AgingSystem.ComputeBattleAgingCost(4, hasBattleMage); // 4 inputs = 1 day
+                if (cost > 0)
+                {
+                    if (MageKnowledge.IsBlight) ApplyBlightCastCost(cost);
+                    else AgingSystem.AgeHero(Hero.MainHero, cost);
+                }
+                return;
+            }
+
             if (!_inEffectPhase)
             {
                 Fizzle("No Break — focus dropped.");

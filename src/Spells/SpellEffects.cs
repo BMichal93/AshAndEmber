@@ -386,6 +386,7 @@ namespace ColoursOfCalradia
             Agent caster, bool applyPush, bool applyPull)
         {
             if (target == null || !target.IsActive()) return;
+            if (IsWarded(target)) return;
 
             ColorSchool glowColor = cast.VisualColor;
             uint raw = cast.Reversed
@@ -403,11 +404,19 @@ namespace ColoursOfCalradia
                     DamageAgent(target, amount);
             }
 
-            // Push or Pull — skip mounted riders to avoid horse/rider split
+            // Push or Pull
             if (cast.PushCount > 0)
             {
                 bool isMounted = false;
                 try { isMounted = target.MountAgent != null; } catch { }
+
+                // Overwhelming push (≥10) dismounts the rider before pushing
+                if (cast.PushCount >= 10 && isMounted)
+                {
+                    ForceDismount(target);
+                    isMounted = false;
+                }
+
                 if (!isMounted)
                 {
                     float dist = cast.PushCount * 3f;
@@ -440,7 +449,26 @@ namespace ColoursOfCalradia
                     target.SetMorale(next);
                 }
                 catch { }
+
+                // Overwhelming morale bane (≥10) panics affected unit into charging headlong
+                if (cast.MoraleCount >= 10 && !cast.Reversed)
+                {
+                    try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+                }
             }
+        }
+
+        private static void ForceDismount(Agent a)
+        {
+            Agent mount = null;
+            try { mount = a.MountAgent; } catch { }
+            if (mount == null || !mount.IsActive()) return;
+            try
+            {
+                Blow b = BuildBlow(mount, DamageTypes.Blunt, mount.HealthLimit + 1f);
+                mount.Die(b, (Agent.KillInfo)0);
+            }
+            catch { }
         }
 
         // ── Siege check ────────────────────────────────────────────────────────
