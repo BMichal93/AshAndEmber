@@ -153,7 +153,7 @@ namespace AshAndEmber
                 {
                     case SpellForm.Blast:   SpellEffects.ExecuteBlast(cast);   break;
                     case SpellForm.Aura:    SpellEffects.ExecuteWave(cast);    break;
-                    case SpellForm.Barrier: SpellEffects.ExecuteBarrier(cast); break;
+                    case SpellForm.Barrier: return SpellEffects.ExecuteBarrier(cast);
                     case SpellForm.Burst:   SpellEffects.ExecuteBurst(cast);   break;
                     default: return false;
                 }

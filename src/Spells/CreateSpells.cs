@@ -18,18 +18,18 @@ namespace AshAndEmber
         private const string BarrierId = "spell_barrier";
 
         // ── BARRIER ───────────────────────────────────────────────────────────
-        public static void ExecuteBarrier(SpellCast cast)
+        public static bool ExecuteBarrier(SpellCast cast)
         {
             Agent caster = Agent.Main;
-            if (caster == null || !caster.IsActive()) return;
+            if (caster == null || !caster.IsActive()) return false;
 
-            // Toggle off
+            // Toggle off — dispelling costs no aging days
             if (HasAreaEffect(BarrierId))
             {
                 RemoveAreaEffect(BarrierId);
                 InformationManager.DisplayMessage(new InformationMessage(
                     "Barrier released.", new Color(0.7f, 0.7f, 0.7f)));
-                return;
+                return false;
             }
 
             Vec3 fwd   = caster.LookDirection.NormalizedCopy();
@@ -52,6 +52,7 @@ namespace AshAndEmber
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Barrier — {cast.EffectSummary()}. Cast again to release.",
                 ColorSchoolData.GetMessageColor(col)));
+            return true;
         }
 
         private static void AddBarrierNode(Vec3 pos, SpellCast cast, Team casterTeam)
@@ -64,8 +65,8 @@ namespace AshAndEmber
                 School       = cast.VisualColor,
                 Position     = pos,
                 Radius       = 1.5f,
-                TickInterval = 2f,
-                TickTimer    = 2f,
+                TickInterval = 0.5f,
+                TickTimer    = 0.5f,
                 Remaining    = -1f,
                 Power        = token,
                 CasterTeam   = casterTeam
@@ -130,7 +131,10 @@ namespace AshAndEmber
                     }
                 }
 
-                if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                bool isAlly = e.CasterTeam != null && a.Team == e.CasterTeam;
+                // Normal barrier: damage enemies only.
+                // Reversed barrier: heal/buff allies only (player included).
+                if (rev ? !isAlly : isAlly) continue;
                 if (dist > e.Radius) continue;
                 try
                 {
@@ -140,12 +144,14 @@ namespace AshAndEmber
                     BeginAgentGlowRaw(a, raw, 1.5f);
                     if (cast.DamageCount > 0)
                     {
-                        float amt = cast.DamageCount * 8f * 0.5f;
+                        // 1f per 0.5s tick = same DPS as the old 4f per 2s tick
+                        float amt = cast.DamageCount * 1f;
                         if (rev) HealAgent(a, amt); else DamageAgent(a, amt);
                     }
                     if (cast.MoraleCount > 0)
                     {
-                        float delta = cast.MoraleCount * 5f;
+                        // 1.25f per 0.5s tick = same rate as old 5f per 2s tick
+                        float delta = cast.MoraleCount * 1.25f;
                         float cur   = a.GetMorale();
                         a.SetMorale(rev ? Math.Min(cur + delta, 100f) : Math.Max(cur - delta, 0f));
                     }
@@ -162,6 +168,13 @@ namespace AshAndEmber
                             Vec3 dest = a.Position + dir * pushDist; dest.z = a.Position.z;
                             QueueMove(a, dest, 0.3f);
                         }
+                        // Kinetic side damage per tick (0.5f/tick = 1 DPS per push count)
+                        if (!rev) DamageAgent(a, cast.PushCount * 0.5f);
+                    }
+                    if (cast.MoraleCount > 0 && !rev)
+                    {
+                        // Smoulder side damage per tick (0.75f/tick = 1.5 DPS per morale count)
+                        DamageAgent(a, cast.MoraleCount * 0.75f);
                     }
                 }
                 catch { }

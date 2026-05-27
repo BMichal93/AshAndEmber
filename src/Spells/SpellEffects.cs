@@ -434,6 +434,10 @@ namespace AshAndEmber
                     }
                     catch { }
                 }
+
+                // Kinetic side damage — surge force bruises on impact (not on pull)
+                if (!cast.Reversed)
+                    DamageAgent(target, cast.PushCount * 2f);
             }
 
             // Morale drain or boost
@@ -455,6 +459,10 @@ namespace AshAndEmber
                 {
                     try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
                 }
+
+                // Smoulder side damage — the will-breaking fire scorches as it breaks spirit (not on boost)
+                if (!cast.Reversed)
+                    DamageAgent(target, cast.MoraleCount * 3f);
             }
         }
 
