@@ -544,9 +544,43 @@ namespace AshAndEmber
                 }
             }
             catch { }
-            // Blight lords draw on cold fire; campaign workings cost them nothing
-            if (!ColourLordRegistry.IsBlightLord(caster))
+            if (ColourLordRegistry.IsBlightLord(caster))
+                ApplyBlightDrain(caster);
+            else
                 AgingSystem.AgeHero(caster, 1);
+        }
+
+        // The cold fire takes something from the world whenever it works.
+        // 50% chance: wound one of the caster's own soldiers.
+        // 50% (or fallback): shave 3% from the nearest village's hearth.
+        private static void ApplyBlightDrain(Hero caster)
+        {
+            try
+            {
+                var party = caster.PartyBelongedTo;
+                if (_rng.Next(2) == 0 && party != null)
+                {
+                    var troops = party.MemberRoster.GetTroopRoster()
+                        .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber)
+                        .ToList();
+                    if (troops.Count > 0)
+                    {
+                        var entry = troops[_rng.Next(troops.Count)];
+                        try { party.MemberRoster.AddToCounts(entry.Character, 0, false, 1); } catch { }
+                        return;
+                    }
+                }
+
+                Vec2 pos = party?.GetPosition2D ?? Vec2.Zero;
+                var village = Settlement.All
+                    .Where(s => s.IsVillage && s.Village != null)
+                    .OrderBy(s => (s.GetPosition2D - pos).Length)
+                    .FirstOrDefault();
+                if (village != null)
+                    village.Village.Hearth = Math.Max(10f, village.Village.Hearth * 0.97f);
+            }
+            catch { }
+        }
         }
 
         private static void NpcBreakWills(Hero caster)
