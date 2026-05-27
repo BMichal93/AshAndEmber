@@ -163,6 +163,15 @@ namespace AshAndEmber
             _purchased.Add(TalentId.Gift);
         }
 
+        public static void UnlockAll()
+        {
+            foreach (TalentId id in Enum.GetValues(typeof(TalentId)))
+                _purchased.Add(id);
+            InformationManager.DisplayMessage(new InformationMessage(
+                "All talents unlocked.",
+                new Color(1f, 0.8f, 0.2f)));
+        }
+
         // Cost = number of talents already learned (Gift is free, every subsequent costs 1 point)
         public static int PurchaseCost() => Math.Max(1, _purchased.Count);
 
