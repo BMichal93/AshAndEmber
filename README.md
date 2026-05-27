@@ -11,12 +11,12 @@ ColoursOfCalradia/
 ├── SubModule.xml                    mod manifest
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
-│   └── troops.xml                   (reserved)
+│   └── troops.xml                   (reserved) 
 ├── src/                             ~5 000 lines across 20 source files
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
 │   ├── SpellBuilder.cs              two-phase input parser → SpellCast
-│   ├── TalentSystem.cs              15 talents, purchase logic, map spells
+│   ├── TalentSystem.cs              15 talents, learning logic, map spells
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
 │   ├── Spells/
