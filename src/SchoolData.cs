@@ -1,112 +1,30 @@
 // =============================================================================
-// COLOURS OF CALRADIA — SchoolData.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0
+// LIFE & DEATH MAGIC — MagicData.cs (SchoolData.cs)
+// Mount & Blade II: Bannerlord Mod  v2.0.0
+// Reflavoured: colour magic → life and death magic, manipulation of life energies.
 // =============================================================================
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Roster;
-using TaleWorlds.CampaignSystem.Settlements;
-using TaleWorlds.Core;
-using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
-using TaleWorlds.Engine;
-using TaleWorlds.Localization;
-using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
 
 namespace ColoursOfCalradia
 {
-    // =========================================================================
-    // 2. COLOUR SCHOOLS
-    // =========================================================================
-    public enum ColorSchool { Red, Orange, Yellow, Green, Blue, Purple }
+    // Visual colour identifiers used by glow / light systems.
+    // These now represent effect colours, not mage schools.
+    public enum ColorSchool
+    {
+        Red    = 0,  // Damage effect
+        Orange = 1,  // Damage + Morale combined
+        Yellow = 2,  // Morale drain effect
+        Green  = 3,  // Morale + Push combined
+        Blue   = 4,  // Push effect
+        Purple = 5,  // Push + Damage combined
+        White  = 6,  // Reverse / heal
+    }
 
     public static class ColorSchoolData
     {
-        public struct SchoolInfo
-        {
-            public string Name;
-            public string FlavorText;
-            public string PersonalityEffect;
-            public string LimitationA;
-            public string LimitationB;
-            public string AttributePenalty;
-        }
-
-        public static readonly Dictionary<ColorSchool, SchoolInfo> Info =
-            new Dictionary<ColorSchool, SchoolInfo>
-        {
-            [ColorSchool.Red] = new SchoolInfo
-            {
-                Name             = "Red",
-                FlavorText       = "Blood Price — Magic of hatred and burning fury. Red mages draw from the white-hot core of loathing, pouring spite into waves of searing destruction. " +
-                                   "The art feeds on hate — and what it cannot find in the world, it scorches out of the caster's own flesh: every cast drives your soldiers into a frenzy and burns the hatred back into you.",
-                PersonalityEffect= "Repeated casting makes you less Calculating — more instinctive, more impulsive.",
-                LimitationA      = "Furious: Each Red spell automatically issues a Charge order to your formations.",
-                LimitationB      = "Blood Price: Each Red spell deals 2 damage to the caster — magic always takes its due.",
-                AttributePenalty = "-1 Cunning"
-            },
-            [ColorSchool.Orange] = new SchoolInfo
-            {
-                Name             = "Orange",
-                FlavorText       = "Generous Hunger — Joyful, generous magic of warmth and plenty. Orange mages inspire and conjure allies from nothing. " +
-                                   "The warmth only flows when the heart is light — misery chokes the golden current before it can form.",
-                PersonalityEffect= "Repeated casting increases your Generosity — open-handed and free with what you have.",
-                LimitationA      = "Joyful Cast: You cannot cast Orange magic if your party morale is below 65 — the warmth will not flow through misery.",
-                LimitationB      = "",
-                AttributePenalty = "-1 Intelligence"
-            },
-            [ColorSchool.Yellow] = new SchoolInfo
-            {
-                Name             = "Yellow",
-                FlavorText       = "The Fearful Eye — Visceral, stomach-turning magic of dread and revulsion. Yellow mages poison courage and stir the deep animal panic beneath every soldier's composure. " +
-                                   "Animals sense the wrongness in the Yellow mage and will not carry them — every mount feels it and throws them.",
-                PersonalityEffect= "Repeated casting erodes your Mercy — disgust curdles into indifference; pity becomes revulsion.",
-                LimitationA      = "Animal Fear: You cannot cast Yellow magic from horseback — animals sense the wrongness and refuse to carry you while you channel it.",
-                LimitationB      = "",
-                AttributePenalty = "-1 Social"
-            },
-            [ColorSchool.Green] = new SchoolInfo
-            {
-                Name             = "Green",
-                FlavorText       = "Gentle Burden — Kind, mending magic of life and restoration. Green mages sustain their companions through battle. " +
-                                   "The green flows from open sky and living earth; stone walls and city streets choke it. Step beyond the walls before calling on it.",
-                PersonalityEffect= "Repeated casting increases your Mercy — slow to strike, quick to spare.",
-                LimitationA      = "Nature's Calling: You cannot cast Green campaign magic inside settlements — not in cities, castles, or villages. The colour requires open sky and living earth.",
-                LimitationB      = "",
-                AttributePenalty = "-1 Control"
-            },
-            [ColorSchool.Blue] = new SchoolInfo
-            {
-                Name             = "Blue",
-                FlavorText       = "The Scholar's Craft — Cold, crystalline magic of stillness and form. Blue mages freeze formations and conjure spectral barriers, shaping the colour through precise, flowing gestures — " +
-                                   "the hands must move freely, tracing the intricate crystal patterns the art demands. A weapon gripped in the hand breaks the working before it can form.",
-                PersonalityEffect= "Repeated casting increases your Calculating trait — measured, deliberate, distant.",
-                LimitationA      = "Scholar's Craft: Cannot cast Blue magic in battle while wielding a weapon — the colour requires free hands to trace its crystalline forms.",
-                LimitationB      = "",
-                AttributePenalty = "-1 Vigor"
-            },
-            [ColorSchool.Purple] = new SchoolInfo
-            {
-                Name             = "Purple",
-                FlavorText       = "The Waning Art — Melancholic, fading magic of grief and hollow quietude. Purple mages touch the deep sadness beneath living things, drawing on resignation and loss. " +
-                                   "The purple does not take violently — it takes steadily. Each working costs a piece of the future: fertility dims and the body quietly ages.",
-                PersonalityEffect= "Repeated casting hollows out all personality — grief erodes every trait toward a silent zero.",
-                LimitationA      = "The Slow Unravelling: Each Purple cast reduces the caster's fertility by 1% and ages them by 1 day — both are permanent. The future, sacrificed piece by piece.",
-                LimitationB      = "",
-                AttributePenalty = "-1 Endurance"
-            }
-        };
-
-        // ARGB hex glow colors per school
+        // ARGB hex glow colours
         public static uint GetGlowColor(ColorSchool school)
         {
             switch (school)
@@ -117,57 +35,27 @@ namespace ColoursOfCalradia
                 case ColorSchool.Green:  return 0xFF00CC44u;
                 case ColorSchool.Blue:   return 0xFF2244FFu;
                 case ColorSchool.Purple: return 0xFF8800CCu;
+                case ColorSchool.White:  return 0xFFFFFFFFu;
                 default:                 return 0xFFFFFFFFu;
             }
         }
 
-        // Attribute that scales spell power for each school.
-        // No school scales from its own penalty attribute; this is a strict bijection.
-        public static CharacterAttribute GetScaleAttribute(ColorSchool school)
+        // Lighter reversed-effect glow colours
+        public static uint GetReversedGlowColor(ColorSchool base_school)
         {
-            switch (school)
+            switch (base_school)
             {
-                case ColorSchool.Red:    return DefaultCharacterAttributes.Vigor;        // raw destructive force
-                case ColorSchool.Orange: return DefaultCharacterAttributes.Social;       // inspiring presence
-                case ColorSchool.Yellow: return DefaultCharacterAttributes.Cunning;      // manipulation of fear
-                case ColorSchool.Green:  return DefaultCharacterAttributes.Endurance;    // healing draws on inner resilience
-                case ColorSchool.Blue:   return DefaultCharacterAttributes.Intelligence; // scholarly command of stillness
-                case ColorSchool.Purple: return DefaultCharacterAttributes.Control;      // grief's precise, careful touch
-                default:                 return DefaultCharacterAttributes.Vigor;
+                case ColorSchool.Red:    return 0xFFFFAABBu; // pink (heal)
+                case ColorSchool.Orange: return 0xFFFFCC99u; // light orange
+                case ColorSchool.Yellow: return 0xFFFFFFAAu; // light yellow
+                case ColorSchool.Green:  return 0xFF99FFCCu; // light green
+                case ColorSchool.Blue:   return 0xFF88AAFFu; // light blue (pull)
+                case ColorSchool.Purple: return 0xFFCC99FFu; // light purple
+                case ColorSchool.White:  return 0xFFFFFFFFu;
+                default:                 return 0xFFDDDDDDu;
             }
         }
 
-        // Attribute that receives -1 penalty when school is chosen
-        public static CharacterAttribute GetPenaltyAttribute(ColorSchool school)
-        {
-            switch (school)
-            {
-                case ColorSchool.Red:    return DefaultCharacterAttributes.Cunning;
-                case ColorSchool.Orange: return DefaultCharacterAttributes.Intelligence;
-                case ColorSchool.Yellow: return DefaultCharacterAttributes.Social;
-                case ColorSchool.Green:  return DefaultCharacterAttributes.Control;
-                case ColorSchool.Blue:   return DefaultCharacterAttributes.Vigor;
-                case ColorSchool.Purple: return DefaultCharacterAttributes.Endurance;
-                default:                 return DefaultCharacterAttributes.Vigor;
-            }
-        }
-
-        // Trait affected by casting and direction (+1 = increase, -1 = decrease)
-        public static (TraitObject trait, int direction) GetTraitEffect(ColorSchool school)
-        {
-            switch (school)
-            {
-                case ColorSchool.Red:    return (DefaultTraits.Calculating, -1);
-                case ColorSchool.Orange: return (DefaultTraits.Generosity,  +1);
-                case ColorSchool.Yellow: return (DefaultTraits.Mercy,       -1);
-                case ColorSchool.Green:  return (DefaultTraits.Mercy,       +1);
-                case ColorSchool.Blue:   return (DefaultTraits.Calculating, +1);
-                case ColorSchool.Purple: return (DefaultTraits.Valor,       -1);
-                default:                 return (DefaultTraits.Valor,        0);
-            }
-        }
-
-        // Informational color for messages about each school
         public static Color GetMessageColor(ColorSchool school)
         {
             switch (school)
@@ -178,7 +66,43 @@ namespace ColoursOfCalradia
                 case ColorSchool.Green:  return new Color(0.0f, 0.8f,  0.27f);
                 case ColorSchool.Blue:   return new Color(0.13f, 0.27f, 1.0f);
                 case ColorSchool.Purple: return new Color(0.53f, 0.0f, 0.8f);
+                case ColorSchool.White:  return new Color(0.9f, 0.9f, 0.9f);
                 default:                 return Color.White;
+            }
+        }
+
+        // Compute the display colour for a spell's effect mix
+        public static ColorSchool ComputeEffectColor(int damageCount, int pushCount, int moraleCount, bool reversed)
+        {
+            bool hasDmg    = damageCount > 0;
+            bool hasPush   = pushCount   > 0;
+            bool hasMorale = moraleCount > 0;
+
+            ColorSchool primary;
+            if (hasDmg && hasMorale && !hasPush)       primary = ColorSchool.Orange;
+            else if (hasPush && hasDmg && !hasMorale)  primary = ColorSchool.Purple;
+            else if (hasPush && hasMorale && !hasDmg)  primary = ColorSchool.Green;
+            else if (hasDmg)                           primary = ColorSchool.Red;
+            else if (hasPush)                          primary = ColorSchool.Blue;
+            else if (hasMorale)                        primary = ColorSchool.Yellow;
+            else                                       primary = ColorSchool.White;
+
+            return reversed ? primary : primary; // reversed visual handled at glow time
+        }
+
+        // Magic flavour name used in messages
+        public static string GetEffectName(ColorSchool school)
+        {
+            switch (school)
+            {
+                case ColorSchool.Red:    return "Vitality";
+                case ColorSchool.Orange: return "Sapping";
+                case ColorSchool.Yellow: return "Will-Breaking";
+                case ColorSchool.Green:  return "Restoration";
+                case ColorSchool.Blue:   return "Force";
+                case ColorSchool.Purple: return "Oblivion";
+                case ColorSchool.White:  return "Reversal";
+                default:                 return "Arcane";
             }
         }
     }

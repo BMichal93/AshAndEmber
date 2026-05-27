@@ -1,407 +1,179 @@
 // =============================================================================
-// COLOURS OF CALRADIA — CreateSpells.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0
+// LIFE & DEATH MAGIC — CreateSpells.cs
+// BARRIER FORM: wall of nodes in front of caster, 1 node per R input.
+// BURST FORM   : instant circle around caster, 2m radius per D input.
 // =============================================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Roster;
-using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
-using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
-using TaleWorlds.Engine;
-using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
 
 namespace ColoursOfCalradia
 {
     public static partial class SpellEffects
     {
-        // =================================================================
-        // CREATE SPELLS — persistent area effects on the battlefield
-        // Casting again toggles off the existing effect (marked "Cast again to dismiss").
-        // Glow is re-applied on each effect tick (~every 2s) — no per-frame FPS cost.
-        // Visual note: particle effects not available; glow on affected agents indicates
-        //              the area. Actual ground patches cannot be rendered by this mod.
-        // =================================================================
+        private const string BarrierId = "spell_barrier";
 
-        // Cinder Burst — moderate explosion around the caster (no toggle, instant)
-        private static void SpellCreateRed()
+        // ── BARRIER ───────────────────────────────────────────────────────────
+        public static void ExecuteBarrier(SpellCast cast)
         {
-            if (Player == null || Mission.Current == null) return;
-            float power = SpellPower(ColorSchool.Red);
-            const float Radius = 8f;
-            int count = 0;
-            foreach (Agent a in Mission.Current.Agents
-                .Where(a => a.IsActive() && !a.IsMount && a != Player &&
-                            a.Position.Distance(Player.Position) <= Radius).ToList())
+            Agent caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+
+            // Toggle off
+            if (HasAreaEffect(BarrierId))
             {
+                RemoveAreaEffect(BarrierId);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "[Barrier] Dismissed.", new Color(0.7f, 0.7f, 0.7f)));
+                return;
+            }
+
+            Vec3 fwd   = caster.LookDirection.NormalizedCopy();
+            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();
+            int  count = Math.Max(1, cast.FormCount);
+
+            for (int i = 0; i < count; i++)
+            {
+                // Spread nodes left to right across the forward direction
+                float offset = (i - (count - 1) * 0.5f) * 2f;
+                Vec3 pos = caster.Position + fwd * 3f + right * offset;
+                AddBarrierNode(pos, cast, caster.Team);
+            }
+
+            ColorSchool col = cast.VisualColor;
+            SpawnConeLights(caster.Position, fwd, col, 3f);
+            TryCastSound(caster.Position, col);
+            TryCastAnimation(caster);
+
+            string reverseTag = cast.Reversed ? " [Reversed]" : "";
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"[Barrier{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — cast again to dismiss.",
+                ColorSchoolData.GetMessageColor(col)));
+        }
+
+        private static void AddBarrierNode(Vec3 pos, SpellCast cast, Team casterTeam)
+        {
+            float token = cast.DamageCount * 1000f + cast.PushCount * 100f
+                        + cast.MoraleCount * 10f   + (cast.Reversed ? 1f : 0f);
+            var node = new AreaEffect
+            {
+                Id           = BarrierId,
+                School       = cast.VisualColor,
+                Position     = pos,
+                Radius       = 1.5f,
+                TickInterval = 2f,
+                TickTimer    = 2f,
+                Remaining    = -1f,
+                Power        = token,
+                CasterTeam   = casterTeam
+            };
+            node.LightEntity = SpawnAreaLight(node.Position, cast.VisualColor, 6f);
+            _areaEffects.Add(node);
+        }
+
+        // Called from AreaEffects.cs tick
+        internal static void TickBarrierNode(AreaEffect e)
+        {
+            if (Mission.Current == null) return;
+            int token   = (int)e.Power;
+            int dmg     = token / 1000;
+            int push    = (token % 1000) / 100;
+            int morale  = (token % 100) / 10;
+            bool rev    = (token % 10) == 1;
+
+            var cast = new SpellCast { DamageCount = dmg, PushCount = push, MoraleCount = morale, Reversed = rev };
+            Agent src = Agent.Main;
+
+            foreach (Agent a in Mission.Current.Agents.ToList())
+            {
+                if (!a.IsActive() || a.IsMount) continue;
+                if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                if (a.Position.Distance(e.Position) > e.Radius) continue;
                 try
                 {
-                    DamageAgent(a, 50f * power);
-                    BeginAgentGlow(a, ColorSchool.Red, 1.5f);
-                    count++;
+                    uint raw = rev
+                        ? ColorSchoolData.GetReversedGlowColor(e.School)
+                        : ColorSchoolData.GetGlowColor(e.School);
+                    BeginAgentGlowRaw(a, raw, 1.5f);
+                    if (cast.DamageCount > 0)
+                    {
+                        float amt = cast.DamageCount * 5f * 0.5f;
+                        if (rev) HealAgent(a, amt); else DamageAgent(a, amt);
+                    }
+                    if (cast.MoraleCount > 0)
+                    {
+                        float delta = cast.MoraleCount * 3f;
+                        float cur   = a.GetMorale();
+                        a.SetMorale(rev ? Math.Min(cur + delta, 100f) : Math.Max(cur - delta, 0f));
+                    }
+                    if (cast.PushCount > 0 && src != null)
+                    {
+                        float dist = cast.PushCount * 1f;
+                        Vec3 dir = rev
+                            ? (src.Position - a.Position).NormalizedCopy()
+                            : (a.Position - e.Position).NormalizedCopy();
+                        Vec3 dest = a.Position + dir * dist; dest.z = a.Position.z;
+                        QueueMove(a, dest, 0.3f);
+                    }
                 }
                 catch { }
             }
-            BeginAgentGlow(Player, ColorSchool.Red, 1.5f);
-            SpawnCircleLights(Player.Position, ColorSchool.Red, Radius, 3f);
-            Msg(count > 0 ? $"Cinder Burst scorches {count} {(count == 1 ? "creature" : "creatures")} within {Radius}m."
-                          : "The burst finds nothing nearby.", ColorSchool.Red);
         }
 
-        // Gilded Refuge — large inspiring zone: flat +100 morale and 2 HP/sec passive healing; toggle
-        private static void SpellCreateOrange()
+        // ── BURST ─────────────────────────────────────────────────────────────
+        public static void ExecuteBurst(SpellCast cast)
         {
-            if (Player == null) return;
-            const string Id = "create_orange";
-            if (HasAreaEffect(Id))
+            Agent caster = Agent.Main;
+            if (caster == null) return;
+            ExecuteBurstFromAgent(caster, cast, caster.Team);
+        }
+
+        internal static void ExecuteBurstFromAgent(Agent caster, SpellCast cast, Team casterTeam)
+        {
+            if (caster == null || !caster.IsActive() || Mission.Current == null) return;
+
+            float radius = Math.Max(2f, cast.FormCount * 2f);
+            var targets  = new List<Agent>();
+            try
             {
-                RemoveAreaEffect(Id);
-                Msg("The Gilded Refuge fades. The warmth departs.", ColorSchool.Orange);
-                return;
-            }
-            float power = SpellPower(ColorSchool.Orange);
-            const float NodeRadius  = 7f;
-            const float NodeSpacing = 7f;
-            Vec3 fwd   = Player.LookDirection.NormalizedCopy();
-            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
-            if (right.Length < 0.01f) right = new Vec3(1f, 0f, 0f);
-            else right = right.NormalizedCopy();
-            Vec3 centre = Player.Position;
-            Vec3[] nodePos = {
-                centre - right * NodeSpacing - fwd * NodeSpacing,
-                centre                       - fwd * NodeSpacing,
-                centre + right * NodeSpacing - fwd * NodeSpacing,
-                centre - right * NodeSpacing,
-                centre,
-                centre + right * NodeSpacing,
-                centre - right * NodeSpacing + fwd * NodeSpacing,
-                centre                       + fwd * NodeSpacing,
-                centre + right * NodeSpacing + fwd * NodeSpacing,
-            };
-            foreach (Vec3 pos in nodePos)
-            {
-                var node = new AreaEffect
+                foreach (Agent a in Mission.Current.Agents)
                 {
-                    Id = Id, School = ColorSchool.Orange,
-                    Position = pos, Radius = NodeRadius,
-                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
-                    Power = power
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
-                _areaEffects.Add(node);
+                    if (!a.IsActive() || a.IsMount || a == caster) continue;
+                    if (casterTeam != null && a.Team == casterTeam) continue; // skip allies
+                    if (a.Position.Distance(caster.Position) > radius) continue;
+                    targets.Add(a);
+                }
             }
-            BeginAgentGlow(Player, ColorSchool.Orange, 2f);
-            SpawnCircleLights(Player.Position, ColorSchool.Orange, 14f, 4f);
-            Msg("Gilded Refuge — a vast warmth settles across the field. Those inside hold the line with iron resolve and close wounds faster. Cast again to dismiss.", ColorSchool.Orange);
-        }
+            catch { }
 
-        // Creeping Dread — moving clouds of revulsion that damage agents they pass through
-        private static void SpellCreateYellow()
-        {
-            if (Player == null) return;
-            if (HasAreaEffect("create_yellow"))
+            ColorSchool col = cast.VisualColor;
+            SpawnCircleLights(caster.Position, col, radius, 3f);
+            TryCastSound(caster.Position, col);
+            TryCastAnimation(caster);
+
+            int affected = 0;
+            foreach (Agent a in targets)
             {
-                RemoveAreaEffect("create_yellow");
-                Msg("The Creeping Dread dissipates. The air settles.", ColorSchool.Yellow);
-                return;
-            }
-            float power = SpellPower(ColorSchool.Yellow);
-            const float NodeRadius = 7f;
-            const float Spacing    = 5f;
-            Vec3 fwd   = Player.LookDirection.NormalizedCopy();
-            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
-            if (right.Length < 0.01f) right = new Vec3(1f, 0f, 0f);
-            else right = right.NormalizedCopy();
-            Vec3 centre = Player.Position;
-            // 3×3 grid of nine drifting nodes
-            Vec3[] nodePos = {
-                centre - right * Spacing - fwd * Spacing,
-                centre                  - fwd * Spacing,
-                centre + right * Spacing - fwd * Spacing,
-                centre - right * Spacing,
-                centre,
-                centre + right * Spacing,
-                centre - right * Spacing + fwd * Spacing,
-                centre                  + fwd * Spacing,
-                centre + right * Spacing + fwd * Spacing,
-            };
-            float cloudAngle = (float)(_rng.NextDouble() * Math.PI * 2);
-            Vec3  cloudVel   = new Vec3((float)Math.Cos(cloudAngle) * 2f, (float)Math.Sin(cloudAngle) * 2f, 0f);
-            float cloudTimer = 2f + (float)_rng.NextDouble() * 3f;
-            foreach (Vec3 pos in nodePos)
-            {
-                var node = new AreaEffect
+                try
                 {
-                    Id = "create_yellow", School = ColorSchool.Yellow,
-                    Position = pos, Radius = NodeRadius,
-                    Velocity = cloudVel,
-                    DirTimer = cloudTimer,
-                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
-                    Power = power
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
-                _areaEffects.Add(node);
+                    ApplyEffectsToAgent(a, cast, caster, applyPush: true, applyPull: true);
+                    SpawnImpactBurst(a.Position, col, 1.5f);
+                    affected++;
+                }
+                catch { }
             }
-            BeginAgentGlow(Player, ColorSchool.Yellow, 2f);
-            SpawnCircleLights(Player.Position, ColorSchool.Yellow, 14f, 4f);
-            Msg("Creeping Dread takes shape — nine clouds of formless terror drift across the field. Cast again to dismiss.", ColorSchool.Yellow);
-        }
 
-        // Emerald Font — three healing pools in a triangle around the caster
-        private static void SpellCreateGreen()
-        {
-            if (Player == null) return;
-            if (HasAreaEffect("create_green"))
+            if (caster == Agent.Main)
             {
-                RemoveAreaEffect("create_green");
-                Msg("The Emerald Font closes.", ColorSchool.Green);
-                return;
+                string reverseTag = cast.Reversed ? " [Reversed]" : "";
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"[Burst{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
+                    ColorSchoolData.GetMessageColor(col)));
             }
-            float power = SpellPower(ColorSchool.Green);
-            const float NodeRadius  = 6f;
-            const float NodeSpacing = 5f;
-            Vec3 fwd   = Player.LookDirection.NormalizedCopy();
-            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
-            if (right.Length < 0.01f) right = new Vec3(1f, 0f, 0f);
-            else right = right.NormalizedCopy();
-            Vec3 centre = Player.Position;
-            // Triangle: one node forward, two back-flanking
-            Vec3[] nodePos = {
-                centre + fwd  * (NodeSpacing * 0.8f),
-                centre - fwd  * (NodeSpacing * 0.4f) - right * NodeSpacing,
-                centre - fwd  * (NodeSpacing * 0.4f) + right * NodeSpacing,
-            };
-            foreach (Vec3 pos in nodePos)
-            {
-                var node = new AreaEffect
-                {
-                    Id = "create_green", School = ColorSchool.Green,
-                    Position = pos, Radius = NodeRadius,
-                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
-                    Power = power
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
-                _areaEffects.Add(node);
-            }
-            BeginAgentGlow(Player, ColorSchool.Green, 2f);
-            SpawnCircleLights(Player.Position, ColorSchool.Green, 14f, 4f);
-            Msg("The Emerald Font opens — three points of living light mend all who stand within. Cast again to dismiss.", ColorSchool.Green);
-        }
-
-        // Sapphire Bastion — six repulsion nodes in a wide line perpendicular to the caster's look direction.
-        private static void SpellCreateBlue()
-        {
-            if (Player == null) return;
-            if (HasAreaEffect("create_blue"))
-            {
-                RemoveAreaEffect("create_blue");
-                Msg("The Sapphire Bastion crumbles.", ColorSchool.Blue);
-                return;
-            }
-
-            const float NodeRadius  = 3f;
-            const float NodeSpacing = 3f; // finer spacing for a continuous wall of light
-
-            Vec3 fwd   = Player.LookDirection.NormalizedCopy();
-            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
-            if (right.Length < 0.01f) right = new Vec3(1f, 0f, 0f);
-            else right = right.NormalizedCopy();
-
-            Vec3 centre = Player.Position;
-            Vec3[] nodePos = {
-                centre - right * (NodeSpacing * 4f),
-                centre - right * (NodeSpacing * 3f),
-                centre - right * (NodeSpacing * 2f),
-                centre - right * (NodeSpacing * 1f),
-                centre,
-                centre + right * (NodeSpacing * 1f),
-                centre + right * (NodeSpacing * 2f),
-                centre + right * (NodeSpacing * 3f),
-                centre + right * (NodeSpacing * 4f),
-            };
-
-            foreach (Vec3 pos in nodePos)
-            {
-                var node = new AreaEffect
-                {
-                    Id = "create_blue", School = ColorSchool.Blue,
-                    Position = pos, Radius = NodeRadius,
-                    TickInterval = 0.15f, TickTimer = 0.15f, Remaining = -1f
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, 7f);
-                _areaEffects.Add(node);
-            }
-
-            BeginAgentGlow(Player, ColorSchool.Blue, 2f);
-            SpawnCircleLights(Player.Position, ColorSchool.Blue, 14f, 4f);
-            Msg("Sapphire Bastion rises — a wall of force seals a wide line. Cast again to dismiss.", ColorSchool.Blue);
-        }
-
-        // Purple Mist — 3×3 grid of death nodes; any agent inside has 10% instakill chance per tick; toggle
-        private static void SpellCreatePurple()
-        {
-            if (Player == null) return;
-            const string Id = "create_purple_mist";
-            if (HasAreaEffect(Id))
-            {
-                RemoveAreaEffect(Id);
-                Msg("The Purple Mist disperses. The grey withdraws.", ColorSchool.Purple);
-                return;
-            }
-            float power = SpellPower(ColorSchool.Purple);
-            const float NodeRadius  = 4f;
-            const float NodeSpacing = 5f;
-            Vec3 fwd   = Player.LookDirection.NormalizedCopy();
-            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
-            if (right.Length < 0.01f) right = new Vec3(1f, 0f, 0f);
-            else right = right.NormalizedCopy();
-            Vec3 centre = Player.Position;
-            Vec3[] nodePos = {
-                centre - right * NodeSpacing - fwd * NodeSpacing,
-                centre                       - fwd * NodeSpacing,
-                centre + right * NodeSpacing - fwd * NodeSpacing,
-                centre - right * NodeSpacing,
-                centre,
-                centre + right * NodeSpacing,
-                centre - right * NodeSpacing + fwd * NodeSpacing,
-                centre                       + fwd * NodeSpacing,
-                centre + right * NodeSpacing + fwd * NodeSpacing,
-            };
-            foreach (Vec3 pos in nodePos)
-            {
-                var node = new AreaEffect
-                {
-                    Id = Id, School = ColorSchool.Purple,
-                    Position = pos, Radius = NodeRadius,
-                    TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
-                    Power = power
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, 8f);
-                _areaEffects.Add(node);
-            }
-            BeginAgentGlow(Player, ColorSchool.Purple, 2f);
-            SpawnCircleLights(Player.Position, ColorSchool.Purple, 14f, 4f);
-            Msg("Purple Mist — nine dim wisps settle across the ground. Those who step through them may simply stop. Cast again to dismiss.", ColorSchool.Purple);
-        }
-
-        // Spawns random Sapphire Bastion repulsion nodes for battle events (not player-cast)
-        public static void SpawnBattleEventBlueWalls(Vec3 centre)
-        {
-            if (Mission.Current == null) return;
-            int count = 4 + _rng.Next(3); // 4-6 nodes
-            for (int i = 0; i < count; i++)
-            {
-                double angle = _rng.NextDouble() * Math.PI * 2;
-                float  dist  = 8f + (float)(_rng.NextDouble() * 20f);
-                Vec3 pos = centre + new Vec3((float)Math.Cos(angle) * dist,
-                                             (float)Math.Sin(angle) * dist, 0f);
-                pos.z = centre.z;
-                var node = new AreaEffect
-                {
-                    Id = "create_blue", School = ColorSchool.Blue,
-                    Position = pos, Radius = 3f,
-                    TickInterval = 0.5f, TickTimer = 0.5f, Remaining = 25f
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Blue, 7f);
-                _areaEffects.Add(node);
-            }
-        }
-
-        // ── NPC area-effect spawners ──────────────────────────────────────────
-        // Called from ColourLordAI for timed (30s) area effects — same tick logic
-        // as player create spells, but auto-expire instead of requiring dismissal.
-
-        public static void SpawnNpcHealZone(Vec3 centre, ColorSchool school, float power, Team casterTeam = null)
-        {
-            if (Mission.Current == null) return;
-            for (int i = 0; i < 2; i++)
-            {
-                double a = Math.PI * i;
-                Vec3 pos = centre + new Vec3((float)Math.Cos(a) * 3.5f, (float)Math.Sin(a) * 3.5f, 0f);
-                var node = new AreaEffect
-                {
-                    Id = "npc_green_font", School = school,
-                    Position = pos, Radius = 6f,
-                    TickInterval = 2f, TickTimer = 2f, Remaining = 30f,
-                    Power = power, CasterTeam = casterTeam
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, school, 8f);
-                _areaEffects.Add(node);
-            }
-        }
-
-        public static void SpawnNpcBlueWall(Vec3 centre, Vec3 fwd, Team casterTeam = null)
-        {
-            if (Mission.Current == null) return;
-            if (fwd.Length < 0.01f) fwd = new Vec3(1f, 0f, 0f);
-            else fwd = fwd.NormalizedCopy();
-            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
-            if (right.Length < 0.01f) right = new Vec3(1f, 0f, 0f);
-            else right = right.NormalizedCopy();
-            Vec3[] pts = {
-                centre + fwd * 5f - right * 4f,
-                centre + fwd * 5f - right * 2f,
-                centre + fwd * 5f,
-                centre + fwd * 5f + right * 2f,
-                centre + fwd * 5f + right * 4f,
-            };
-            foreach (Vec3 pos in pts)
-            {
-                var node = new AreaEffect
-                {
-                    Id = "npc_blue_wall", School = ColorSchool.Blue,
-                    Position = pos, Radius = 3f,
-                    TickInterval = 0.5f, TickTimer = 0.5f, Remaining = 30f,
-                    CasterTeam = casterTeam
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Blue, 7f);
-                _areaEffects.Add(node);
-            }
-        }
-
-        public static void SpawnNpcYellowCloud(Vec3 centre, float power, Team casterTeam = null)
-        {
-            if (Mission.Current == null) return;
-            float baseAngle = (float)(_rng.NextDouble() * Math.PI * 2);
-            Vec3 vel = new Vec3((float)Math.Cos(baseAngle) * 2f, (float)Math.Sin(baseAngle) * 2f, 0f);
-            for (int i = 0; i < 3; i++)
-            {
-                double a = Math.PI * 2 / 3 * i;
-                Vec3 pos = centre + new Vec3((float)Math.Cos(a) * 4f, (float)Math.Sin(a) * 4f, 0f);
-                var node = new AreaEffect
-                {
-                    Id = "npc_yellow_cloud", School = ColorSchool.Yellow,
-                    Position = pos, Radius = 7f,
-                    Velocity = vel, DirTimer = 2f + (float)(_rng.NextDouble() * 3f),
-                    TickInterval = 2f, TickTimer = 2f, Remaining = 30f,
-                    Power = power, CasterTeam = casterTeam
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Yellow, 8f);
-                _areaEffects.Add(node);
-            }
-        }
-
-        // Recruit helpers (used by Calling and NPC AI)
-        public static CharacterObject FindRecruit(Agent agent)
-        {
-            string cultureId = agent?.Character?.Culture?.StringId;
-            if (!string.IsNullOrEmpty(cultureId))
-                foreach (CharacterObject c in CharacterObject.All)
-                    if (!c.IsHero && c.Tier == 1 && c.Culture?.StringId == cultureId) return c;
-            foreach (CharacterObject c in CharacterObject.All)
-                if (!c.IsHero && c.Tier == 1) return c;
-            return null;
         }
     }
 }

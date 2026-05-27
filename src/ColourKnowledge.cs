@@ -1,48 +1,46 @@
-﻿// =============================================================================
-// COLOURS OF CALRADIA â€” ColourKnowledge.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0
+// =============================================================================
+// LIFE & DEATH MAGIC — MageKnowledge.cs  (ColourKnowledge.cs)
+// Tracks whether the player is a mage, manages the spellbook UI,
+// and provides the talent Learning tab.
 // =============================================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Roster;
-using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
-using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
-using TaleWorlds.Engine;
-using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
 
 namespace ColoursOfCalradia
 {
-    // =========================================================================
-    // 4. COLOUR KNOWLEDGE  â€” tracks chosen schools, cast counts, grimoire
-    // =========================================================================
-    public static class ColourKnowledge
+    public static class MageKnowledge
     {
-        private static readonly HashSet<ColorSchool> _chosenSchools = new HashSet<ColorSchool>();
-        // Accumulated casts per school â€” every 25 casts shifts the associated trait
-        private static readonly Dictionary<ColorSchool, int> _castCounters =
-            new Dictionary<ColorSchool, int>
-            {
-                [ColorSchool.Red]    = 0,
-                [ColorSchool.Orange] = 0,
-                [ColorSchool.Yellow] = 0,
-                [ColorSchool.Green]  = 0,
-                [ColorSchool.Blue]   = 0,
-                [ColorSchool.Purple] = 0,
-            };
+        private static bool   _isMage            = false;
+        private static Action _deferredInquiry   = null;
         private static readonly HashSet<string> _giftedChildIds = new HashSet<string>();
-        private static Action _deferredInquiry = null;
+
+        public static bool IsMage         => _isMage;
+        // Backward-compat shims used by old call sites
+        public static bool HasAnySchool   => _isMage;
+        public static IEnumerable<ColorSchool> AllSchools => System.Array.Empty<ColorSchool>();
+        public static bool HasSchool(ColorSchool s) => false;
+        public static int  GetMadnessOrderChance() => 0;
+        public static bool ReducePurpleFertility() => false;
+        public static float PurpleFertilityLevel   => 1f;
+
+        public static void SetMage(bool value) { _isMage = value; }
+
+        public static void ResetForNewGame()
+        {
+            _isMage          = false;
+            _deferredInquiry = null;
+            _giftedChildIds.Clear();
+            TalentSystem.ResetForNewGame();
+        }
+
+        public static bool IsChildGifted(string id) => _giftedChildIds.Contains(id);
+        public static void AddGiftedChild(string id) => _giftedChildIds.Add(id);
 
         public static void FlushDeferredInquiry()
         {
@@ -51,231 +49,110 @@ namespace ColoursOfCalradia
             pending?.Invoke();
         }
 
-        private static float _purpleFertilityLevel  = 1.0f;
+        // Legacy no-op kept for CampaignBehavior references
+        public static void AddSchool(ColorSchool s) { }
+        public static void ClearAllSchools() { }
+        public static void RecordCast(ColorSchool s) { }
 
-        public static bool  HasAnySchool            => _chosenSchools.Count > 0;
-        public static bool  HasSchool(ColorSchool school) => _chosenSchools.Contains(school);
-        public static IEnumerable<ColorSchool> AllSchools => _chosenSchools;
-        public static float PurpleFertilityLevel    => _purpleFertilityLevel;
+        // ── Spellbook / Grimoire ──────────────────────────────────────────────
 
-        // Returns the % chance that a player formation order is scrambled by madness.
-        // 5% for non-contiguous colours, 10% for 5 colours, 20% for 6 colours.
-        public static int GetMadnessOrderChance()
+        public static void ShowGrimoire(bool inMission, bool usingController)
         {
-            int count = _chosenSchools.Count;
-            if (count == 6) return 7;
-            if (count == 5) return 5;
-            if (count >= 2)
-            {
-                var positions = _chosenSchools.Select(s => (int)s).ToHashSet();
-                int min = positions.Min();
-                int max = positions.Max();
-                bool contiguous = true;
-                for (int i = min; i <= max; i++)
-                    if (!positions.Contains(i)) { contiguous = false; break; }
-                if (contiguous) return 0;
-                return 3;
-            }
-            return 0;
-        }
-
-        public static bool ReducePurpleFertility()
-        {
-            if (_purpleFertilityLevel <= 0.01f) return false;
-            _purpleFertilityLevel = Math.Max(0.01f, _purpleFertilityLevel - 0.01f);
-            return true;
-        }
-
-        public static void AddSchool(ColorSchool school) => _chosenSchools.Add(school);
-
-        public static void ClearAllSchools() => _chosenSchools.Clear();
-
-        public static void ResetForNewGame()
-        {
-            _chosenSchools.Clear();
-            foreach (var key in _castCounters.Keys.ToList()) _castCounters[key] = 0;
-            _giftedChildIds.Clear();
-            _purpleFertilityLevel = 1.0f;
-            _deferredInquiry = null;
-        }
-
-        public static bool IsChildGifted(string heroId) => _giftedChildIds.Contains(heroId);
-        public static void AddGiftedChild(string heroId) => _giftedChildIds.Add(heroId);
-
-        // Called after each successful cast to drift personality and track stats
-        public static void RecordCast(ColorSchool school)
-        {
-            if (!_castCounters.ContainsKey(school)) return;
-            _castCounters[school]++;
-
-            if (_castCounters[school] % 25 != 0) return;
-
-            if (school == ColorSchool.Purple)
-            {
-                // Purple hollows out all personality â€” each threshold nudges every trait toward 0
-                try
-                {
-                    if (Hero.MainHero == null) return;
-                    var traits = new[] { DefaultTraits.Calculating, DefaultTraits.Generosity,
-                                         DefaultTraits.Mercy, DefaultTraits.Valor };
-                    bool anyChanged = false;
-                    foreach (var trait in traits)
-                    {
-                        int current = Hero.MainHero.GetTraitLevel(trait);
-                        if (current == 0) continue;
-                        int next = current > 0 ? current - 1 : current + 1;
-                        Hero.MainHero.SetTraitLevel(trait, next);
-                        anyChanged = true;
-                    }
-                    if (anyChanged)
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "The grey hollows you out. Your personality fades toward nothing.",
-                            ColorSchoolData.GetMessageColor(ColorSchool.Purple)));
-                }
-                catch { }
-                return;
-            }
-
-            // All other schools shift their associated trait in one direction
-            try
-            {
-                var (trait, direction) = ColorSchoolData.GetTraitEffect(school);
-                if (trait == null || direction == 0 || Hero.MainHero == null) return;
-                int current = Hero.MainHero.GetTraitLevel(trait);
-                int next = Math.Max(-2, Math.Min(2, current + direction));
-                if (next != current)
-                {
-                    Hero.MainHero.SetTraitLevel(trait, next);
-                    string dir = direction > 0 ? "increased" : "decreased";
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"Your {trait.StringId} trait has {dir} from repeated {ColorSchoolData.Info[school].Name} casting.",
-                        ColorSchoolData.GetMessageColor(school)));
-                }
-            }
-            catch { }
-        }
-
-        private static string ComboToArrows(string combo) =>
-            combo.Replace("U", "↑").Replace("D", "↓").Replace("L", "←").Replace("R", "→");
-
-        public static void ShowGrimoire(bool inMission = false, bool usingController = false)
-        {
-            if (!HasAnySchool)
+            if (!_isMage)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "No colour calls to you.", Color.FromUint(0xFFAAAAAA)));
+                    "You feel nothing. The current does not stir for you.",
+                    Color.FromUint(0xFFAAAAAA)));
                 return;
             }
 
-            bool inBattle = inMission && SpellEffects.IsBattleMission();
-            var lines     = new List<string>();
+            string inputHint = usingController
+                ? "Hold LB + left stick (↑/←/→/↓), press L3 to Break. Release LB to cast. LB+RB to open spellbook."
+                : "Hold Left Alt + W/A/D/S, press E to Break, release to cast. Alt+B opens spellbook.";
 
-            // Saturation status at the top
-            if (!SaturationSystem.IsPlayerPrism && !SaturationSystem.IsPlayerBlight)
-                lines.Add($"Saturation: {SaturationSystem.PlayerSaturation}/{SaturationSystem.PlayerMaxSaturation}  (resets at nightfall)");
-
-            var allKnown = SpellDatabase.All
-                .Where(s => HasSchool(s.School))
-                .OrderBy(s => (int)s.School).ToList();
-
-            foreach (var grp in allKnown.GroupBy(s => s.School))
-            {
-                if (lines.Count > 0) lines.Add("");
-                string schoolName = ColorSchoolData.Info[grp.Key].Name;
-                lines.Add($"── {schoolName} ──");
-
-                var battle = grp.Where(s => s.Context == SpellContext.Mission).ToList();
-                var map    = grp.Where(s => s.Context == SpellContext.Map).ToList();
-
-                if (battle.Count > 0)
-                {
-                    lines.Add("  [ Battle ]");
-                    foreach (var s in battle)
-                        lines.Add($"      {s.Name} [{ComboToArrows(s.Combo)}]: {s.ShortDesc}");
-                }
-                if (map.Count > 0)
-                {
-                    if (battle.Count > 0) lines.Add("");
-                    lines.Add("  [ Campaign ]");
-                    foreach (var s in map)
-                        lines.Add($"      {s.Name} [{ComboToArrows(s.Combo)}]: {s.ShortDesc}");
-                }
-            }
-
-            if (lines.Count == 0)
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "No spells available.", Color.FromUint(0xFFAAAAAA)));
-                return;
-            }
-
-            string active      = inBattle ? "battle" : "campaign map";
-            string inputHint   = usingController
-                ? "Hold LB + left stick (↑/←/→), then release."
-                : "Hold Left Alt + combo (W/A/D keys), then release.";
-            string closeHint   = !inMission
-                ? (usingController ? "  A=Cast  B=Guide  (Guide→Back to return here)."
-                                   : "  Escape to close.")
-                : "";
-            string description = $"{inputHint}  Active: {active} (W=↑, A=←, D=→, S mid-combo=↓).{closeHint}\n\n"
-                               + string.Join("\n", lines);
+            string desc =
+                "[LIFE & DEATH MAGIC]\n" +
+                $"{inputHint}\n\n" +
+                "CASTING\n" +
+                "  Input form keys → press Break (E/L3) → input effect keys → release focus key.\n" +
+                "  Mixed form inputs = fumble. Effects stack freely.\n\n" +
+                "FORMS (before Break)\n" +
+                "  ↑  Blast  — forward cone, 2m per ↑\n" +
+                "  ←  Aura   — expanding cloud, +1 node per ←\n" +
+                "  →  Barrier — wall nodes, 1 node per →\n" +
+                "  ↓  Burst  — circle around self, 2m radius per ↓\n\n" +
+                "EFFECTS (after Break)\n" +
+                "  ↑  Vitality  — 5 damage per ↑ (Red)\n" +
+                "  ←  Force     — 2m pushback per ← (Blue)\n" +
+                "  →  Will-Break — -3 morale per → (Yellow)\n" +
+                "  ↓  Reverse   — flip all effects (heal/pull/boost morale)\n\n" +
+                "COMBINED COLOURS\n" +
+                "  Vitality+Will-Break = Orange  |  Force+Vitality = Purple  |  Will-Break+Force = Green\n" +
+                "  Reversed effects appear in lighter shades.\n\n" +
+                "AGING COST  (total inputs = form + effect)\n" +
+                "  <4 inputs — free  |  4–5 = 1 day  |  6–7 = 2 days  |  8–9 = 3 days\n" +
+                (TalentSystem.Has(TalentId.BattleMage) ? "  [Battle Mage] Cost lowered: threshold 5 instead of 4.\n" : "") +
+                "\nEXAMPLE\n" +
+                "  ↑↑↑  Break  ↑↑↑↑↑  =  Blast (6m cone), 25 damage, ages 2 days.";
 
             if (!inMission)
             {
-                // Campaign map: offer spell cast button in place of Guide
                 InformationManager.ShowInquiry(new InquiryData(
-                    "Spell Prism",
-                    description,
+                    "Life & Death Magic",
+                    desc,
                     true, true,
-                    "Cast a Spell", "Guide",
+                    "Cast a Spell", "Talents",
                     () => { _deferredInquiry = ShowCampaignCastMenu; },
-                    () => { _deferredInquiry = () => ShowGuide(false, usingController); }
+                    () => { _deferredInquiry = ShowTalentMenu; }
                 ), true, true);
             }
             else
             {
                 InformationManager.ShowInquiry(new InquiryData(
-                    "Spell Prism",
-                    description,
+                    "Life & Death Magic",
+                    desc,
                     true, true,
-                    "Close", "Guide",
-                    () => { }, () => { _deferredInquiry = () => ShowGuide(inMission, usingController); }
+                    "Close", "Talents",
+                    () => { },
+                    () => { _deferredInquiry = () => ShowTalentMenu(); }
                 ), true, true);
             }
         }
 
-        private static void ShowCampaignCastMenu()
+        // ── Campaign cast menu ────────────────────────────────────────────────
+
+        internal static void ShowCampaignCastMenu()
         {
             if (Hero.MainHero?.IsPrisoner == true)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "You are a captive. Magic cannot be woven in chains.",
+                    "You are a captive. Life energy cannot flow in chains.",
                     Color.FromUint(0xFFAAAAAA)));
                 return;
             }
 
-            var mapSpells = SpellDatabase.All
-                .Where(s => s.Context == SpellContext.Map && HasSchool(s.School))
-                .OrderBy(s => (int)s.School)
+            var spells = TalentSystem.All
+                .Where(d => d.IsSpell && TalentSystem.Has(d.Id))
                 .ToList();
 
-            if (mapSpells.Count == 0)
+            if (spells.Count == 0)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "No campaign map spells available.", Color.FromUint(0xFFAAAAAA)));
+                    "No campaign spells available. Learn Spell talents first.",
+                    Color.FromUint(0xFFAAAAAA)));
                 return;
             }
 
-            var elements = mapSpells.Select(s => new InquiryElement(
-                s.Combo,
-                $"{s.Name}  [{ComboToArrows(s.Combo)}]",
+            var elements = spells.Select(d => new InquiryElement(
+                (int)d.Id,
+                d.Name,
                 null, true,
-                $"{s.ShortDesc}\n\n{s.Flavour}"
+                $"{d.MechanicDesc}\n\n{d.Lore}"
             )).ToList();
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Cast a Campaign Spell",
-                "Select a spell to cast. Requirements and limitations apply as normal.",
+                "Cast a Life & Death Spell",
+                "Choose a spell to cast. Each Spell talent ages you by 1 day (Sorcerer: 25% chance to avoid).",
                 elements,
                 true, 1, 1,
                 "Cast", "Cancel",
@@ -283,133 +160,84 @@ namespace ColoursOfCalradia
                 {
                     if (chosen?.Count > 0)
                     {
-                        string combo = chosen[0].Identifier?.ToString();
-                        if (!string.IsNullOrEmpty(combo))
-                            _deferredInquiry = () =>
-                            {
-                                bool success;
-                                try { success = SpellEffects.Execute(combo); } catch { success = true; }
-                                if (success)
-                                {
-                                    SaturationSystem.GainSaturationCampaign();
-                                    var spell = SpellDatabase.Find(combo);
-                                    if (spell != null) RecordCast(spell.School);
-                                }
-                            };
+                        var id = (TalentId)(int)chosen[0].Identifier;
+                        _deferredInquiry = () => TalentSystem.ExecuteMapSpell(id);
                     }
                 },
                 null, "", false
             ), false, true);
         }
 
-        private static void ShowGuide(bool inMission, bool usingController)
-        {
-            const string guide =
-"HOW TO CAST\n" +
-"  Hold focus key, input a 4-key combo, release to cast.\n" +
-"  Keyboard : Hold Left Alt + W/A/D (S with empty buffer opens spellbook).\n" +
-"  Controller: Hold LB + left stick. L3 opens spellbook.\n" +
-"  Shortcut  : Release after 2-key form prefix for a random known spell of that form.\n" +
-"\n" +
-"COMBO STRUCTURE  (first 2 keys = Form | last 2 keys = Colour)\n" +
-"  ↑↑  Blast   — cone attack forward\n" +
-"  →→  Self    — aura on caster\n" +
-"  ←←  Create  — area effect, toggleable\n" +
-"  ↑←  Affect  — campaign map, situational\n" +
-"  ←↑  Invoke  — campaign map, advanced\n" +
-"  ↑→  Commune — campaign map, ambient effects\n" +
-"\n" +
-"COLOUR SUFFIXES (last 2 keys)\n" +
-"  Red →→  Orange ←↓  Yellow ↓↓  Green ←←  Blue →↑  Purple ↓↑\n" +
-"\n" +
-"COLOUR LIMITATIONS\n" +
-"  Red    — Furious: each cast auto-issues a Charge order. Blood Price: −2 HP per cast.\n" +
-"  Orange — Joyful Cast: cannot cast if party morale is below 65.\n" +
-"  Yellow — Animal Fear: cannot cast from horseback.\n" +
-"  Green  — Nature's Calling: cannot cast Green campaign spells inside settlements.\n" +
-"  Blue   — Scholar's Craft: cannot cast Blue in battle while wielding a weapon.\n" +
-"  Purple — The Slow Unravelling: each Purple cast costs −1% fertility and +1 day of age.\n" +
-"\n" +
-"SATURATION\n" +
-"  Each cast gains 0–4 Saturation. Max = hero level + 10, minus any permanent oversaturation reductions (no upper cap).\n" +
-"  Resets to 0 when darkness falls (night or dark locations).\n" +
-"  Oversaturation: knocked down 3s, random trait shift, Max −1 (permanent).\n" +
-"  Leveling up restores 1 max Saturation per level, but never removes prior reductions.\n" +
-"  Max reaches 0: choose to lose all colours OR embrace the Blight (−100 relations, immune).\n" +
-"  Prism and Blights are immune to all Oversaturation effects.\n" +
-"\n" +
-"PERSONALITY DRIFT\n" +
-"  Every 25 casts nudges the school's associated trait by 1. Purple hollows all toward 0.\n" +
-"\n" +
-"MADNESS\n" +
-"  Non-adjacent colour schools conflict. On each cast:\n" +
-"  Non-contiguous mix — 3% chance the spell fires as a random other-colour spell.\n" +
-"  5 schools — 5% chance. Weekly trait fracture.\n" +
-"  6 schools — 7% chance. Weekly trait fracture.\n" +
-"  Adjacent colours (e.g. Red+Orange+Yellow) never trigger madness.\n" +
-"\n" +
-"DAY / NIGHT\n" +
-"  Bright (07:00–20:00) — full casting.\n" +
-"  Dim   (05:00–07:00 and 20:00–22:00) — 33% fizzle chance.\n" +
-"  Dark  (22:00–05:00) — casting blocked entirely. Saturation resets.\n" +
-"\n" +
-"LORDS & COLOURS\n" +
-"  Colour lords cast in battle and on the campaign map.\n" +
-"  Lords sharing a colour (1–2 schools each) are drawn together — higher relations.\n" +
-"  Lords with 5+ schools are feared and distrusted by all magical peers.\n" +
-"  Colour lords maintain a morale floor before battle (10 per colour, max 60) and recover\n" +
-"  wounded troops after battle (5% per colour of wounded healed).\n" +
-"  Weekly: 5% chance a random colour lord oversaturates — 79% lose colours (re-seeded in\n" +
-"  one week), 21% die and spawn a Blight of their colour. Blights no longer auto-respawn.\n" +
-"\n" +
-"MAGICAL EVENTS\n" +
-"  Battle: ~8% of battles trigger a colour phenomenon at start. A sky event (season-\n" +
-"  weighted) names the effect and affects all fighters on the field equally.\n" +
-"  Campaign: each week, a colour-ambient event may touch a random party, settlement,\n" +
-"  or lord anywhere in Calradia, independent of colour lords' own spellcasting.\n" +
-"\n" +
-"THE PRISM\n" +
-"  One lord carries all six colours. They cast constantly in battle and on the campaign\n" +
-"  map (20% independent daily chance + reaction to every other lord cast). Their\n" +
-"  personality shifts each week. When slain, if you hold all six colours, you may\n" +
-"  inherit the mantle (30% chance). Otherwise a new Prism rises within a month.\n" +
-"  As the Prism you are immune to Madness and Oversaturation.\n" +
-"  At character creation you may also choose 'I am a Prism' (easy mode) to start with\n" +
-"  all six colours and full immunity, with no attribute penalties.";
+        // ── Talent menu ───────────────────────────────────────────────────────
 
-            InformationManager.ShowInquiry(new InquiryData(
-                "Mechanics — Colours of Calradia",
-                guide,
-                true, true,
-                "Close", "Back",
-                () => { }, () => { _deferredInquiry = () => ShowGrimoire(inMission, usingController); }
-            ), true, true);
+        public static void ShowTalentMenu()
+        {
+            var all = TalentSystem.All.ToList();
+            int cost = TalentSystem.PurchaseCost();
+            string costStr = $"1 Focus point or attribute point (currently: {cost}pt per talent)";
+
+            var elements = all.Select(d =>
+            {
+                bool owned = TalentSystem.Has(d.Id);
+                string label = (owned ? "✓ " : "") + d.Name + (d.IsSpell ? " [Spell]" : " [Passive]");
+                string hint  = $"{d.MechanicDesc}\n\n{d.Lore}\n\n" +
+                               (owned ? "Already learned." : $"Cost: {costStr}");
+                return new InquiryElement((int)d.Id, label, null, !owned, hint);
+            }).ToList();
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "Life & Death Talents",
+                $"Select a talent to learn. Cost: {costStr}.\n" +
+                "Talents can be learned in any order. 'Gift' is free and already learned.",
+                elements,
+                true, 0, 1,
+                "Learn", "Close",
+                chosen =>
+                {
+                    if (chosen?.Count > 0)
+                    {
+                        var id = (TalentId)(int)chosen[0].Identifier;
+                        _deferredInquiry = () => TalentSystem.TryPurchase(id, Hero.MainHero);
+                    }
+                },
+                null, "", false
+            ), false, true);
         }
+
+        // ── Save / Load ───────────────────────────────────────────────────────
 
         public static void Save(IDataStore store)
         {
-            var schoolList = _chosenSchools.Select(s => (int)s).ToList();
-            var ccKeys     = _castCounters.Keys.Select(k => (int)k).ToList();
-            var ccVals     = _castCounters.Values.ToList();
             var giftedList = _giftedChildIds.ToList();
-
-            store.SyncData("COC_ChosenSchools",    ref schoolList);
-            store.SyncData("COC_CastCounterKeys",  ref ccKeys);
-            store.SyncData("COC_CastCounterVals",  ref ccVals);
-            store.SyncData("COC_GiftedChildIds",   ref giftedList);
-            store.SyncData("COC_PurpleFertility",  ref _purpleFertilityLevel);
-
-            _chosenSchools.Clear();
-            if (schoolList != null)
-                foreach (int v in schoolList) _chosenSchools.Add((ColorSchool)v);
-
-            if (ccKeys != null && ccVals != null)
-                for (int i = 0; i < Math.Min(ccKeys.Count, ccVals.Count); i++)
-                    _castCounters[(ColorSchool)ccKeys[i]] = ccVals[i];
+            store.SyncData("LDM_IsMage",        ref _isMage);
+            store.SyncData("LDM_GiftedChildren", ref giftedList);
+            TalentSystem.Save(store);
 
             _giftedChildIds.Clear();
             if (giftedList != null)
                 foreach (var id in giftedList) _giftedChildIds.Add(id);
         }
+    }
+
+    // Legacy alias — keeps old call-sites compiling without breaking changes
+    public static class ColourKnowledge
+    {
+        public static bool HasAnySchool   => MageKnowledge.IsMage;
+        public static bool HasSchool(ColorSchool s) => false;
+        public static IEnumerable<ColorSchool> AllSchools => System.Array.Empty<ColorSchool>();
+        public static int  GetMadnessOrderChance() => 0;
+        public static bool ReducePurpleFertility() => false;
+        public static float PurpleFertilityLevel   => 1f;
+        public static void AddSchool(ColorSchool s) { }
+        public static void ClearAllSchools() { }
+        public static void RecordCast(ColorSchool s) { }
+        public static bool IsChildGifted(string id) => MageKnowledge.IsChildGifted(id);
+        public static void AddGiftedChild(string id) => MageKnowledge.AddGiftedChild(id);
+        public static void FlushDeferredInquiry()    => MageKnowledge.FlushDeferredInquiry();
+        public static void ResetForNewGame()         => MageKnowledge.ResetForNewGame();
+        public static void ShowGrimoire(bool inMission, bool usingController)
+            => MageKnowledge.ShowGrimoire(inMission, usingController);
+        public static void ShowCampaignCastMenu()    => MageKnowledge.ShowCampaignCastMenu();
+        public static void Save(IDataStore store)    => MageKnowledge.Save(store);
     }
 }

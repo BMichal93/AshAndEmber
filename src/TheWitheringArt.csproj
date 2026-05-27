@@ -82,6 +82,8 @@
     <Compile Include="SpellDatabase.cs"/>
     <Compile Include="ColourKnowledge.cs"/>
     <Compile Include="ActiveEffects.cs"/>
+    <Compile Include="SpellBuilder.cs"/>
+    <Compile Include="TalentSystem.cs"/>
     <Compile Include="MagicInputHandler.cs"/>
     <Compile Include="CampaignBehavior.cs"/>
     <Compile Include="AI\ColourLordRegistry.cs"/>

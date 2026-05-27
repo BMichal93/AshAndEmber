@@ -1,238 +1,152 @@
 // =============================================================================
-// COLOURS OF CALRADIA — SelfSpells.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0
+// LIFE & DEATH MAGIC — SelfSpells.cs
+// AURA FORM: expanding cloud centred on caster, radius = formCount * 2m.
+// Persistent toggle: cast again to dismiss. Glow marks affected agents each tick.
+// Uses the existing area-effect infrastructure with IDs "spell_aura".
 // =============================================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Roster;
-using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
-using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
-using TaleWorlds.Engine;
-using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
 
 namespace ColoursOfCalradia
 {
     public static partial class SpellEffects
     {
-        // =================================================================
-        // SELF SPELLS — glowing aura around the caster
-        // =================================================================
+        private const string AuraId = "spell_aura";
 
-        // Scarlet Barrier — 6-node ring wall; anyone inside takes 20 dmg/tick; toggle
-        private static void SpellSelfRed()
+        // ── Player Aura ───────────────────────────────────────────────────────
+        public static void ExecuteAura(SpellCast cast)
         {
-            if (Player == null || !Player.IsActive()) return;
-            const string Id = "self_red_barrier";
-            if (HasAreaEffect(Id))
+            Agent caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+
+            // Toggle off
+            if (HasAreaEffect(AuraId))
             {
-                RemoveAreaEffect(Id);
-                Msg("Scarlet Barrier dismissed.", ColorSchool.Red);
+                RemoveAreaEffect(AuraId);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "[Aura] Dismissed.", new Color(0.7f, 0.7f, 0.7f)));
                 return;
             }
-            float power = SpellPower(ColorSchool.Red);
-            Vec3  centre = Player.Position;
-            const float Ring = 4f;
-            for (int i = 0; i < 6; i++)
-            {
-                double angle = Math.PI * 2.0 / 6 * i;
-                Vec3 pos = centre + new Vec3((float)Math.Cos(angle) * Ring, (float)Math.Sin(angle) * Ring, 0f);
-                var node = new AreaEffect
-                {
-                    Id = Id, School = ColorSchool.Red,
-                    Position = pos, Radius = 1.5f,
-                    TickInterval = 1f, TickTimer = 1f, Remaining = -1f,
-                    Power = power
-                };
-                node.LightEntity = SpawnAreaLight(node.Position, node.School, 7f);
-                _areaEffects.Add(node);
-            }
-            BeginAgentGlow(Player, ColorSchool.Red, 3f);
-            SpawnTempLight(centre, ColorSchool.Red, 8f, 2f);
-            Msg("Scarlet Barrier — a ring of crimson pillars erupts around you. Any who step inside burn. Cast again to dismiss.", ColorSchool.Red);
+
+            float radius = Math.Max(2f, cast.FormCount * 2f);
+            SpawnAuraNodes(caster.Position, radius, cast, caster.Team);
+
+            ColorSchool col = cast.VisualColor;
+            BeginAgentGlow(caster, col, 3f);
+            SpawnCircleLights(caster.Position, col, radius, 3f);
+            TryCastSound(caster.Position, col);
+            TryCastAnimation(caster);
+
+            string reverseTag = cast.Reversed ? " [Reversed]" : "";
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"[Aura{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — cast again to dismiss.",
+                ColorSchoolData.GetMessageColor(col)));
         }
 
-        // Gilded Words — turn one random nearby unmounted non-hero enemy to fight for the player
-        private static void SpellSelfOrange()
+        private static void SpawnAuraNodes(Vec3 centre, float radius, SpellCast cast, Team casterTeam)
         {
-            if (Mission.Current == null || Player == null || !Player.IsActive()) return;
-            const float Radius = 15f;
-
-            // Exclude mounted enemies — mount would stay on enemy team, creating split state.
-            // Exclude heroes — hero team membership is tied to campaign data.
-            var candidates = Enemies()
-                .Where(a => a.MountAgent == null && a.Position.Distance(Player.Position) <= Radius)
-                .ToList();
-
-            if (candidates.Count == 0)
+            int nodeCount = Math.Max(1, cast.FormCount);
+            // Centre node
+            AddAuraNode(centre, radius, cast, casterTeam);
+            // Ring nodes (for larger auras)
+            if (nodeCount > 1)
             {
-                Msg("Gilded Words — no unguarded souls within reach.", ColorSchool.Orange);
-                return;
-            }
-
-            Agent target = candidates[_rng.Next(candidates.Count)];
-            string targetName = target.Name?.ToString() ?? "the creature";
-            bool converted = false;
-
-            try
-            {
-                // Try to move the agent to the player's team via the internal SetTeam method.
-                var setTeam = typeof(Agent).GetMethod("SetTeam",
-                    BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
-                if (setTeam != null)
+                int ring = nodeCount - 1;
+                float ringR = Math.Min(radius * 0.6f, 8f);
+                for (int i = 0; i < ring; i++)
                 {
-                    setTeam.Invoke(target, new object[] { Player.Team, true });
-                    converted = true;
+                    double angle = Math.PI * 2.0 / ring * i;
+                    Vec3 pos = centre + new Vec3((float)Math.Cos(angle) * ringR, (float)Math.Sin(angle) * ringR, 0f);
+                    AddAuraNode(pos, radius / 2f, cast, casterTeam);
                 }
             }
-            catch { }
-
-            if (!converted)
-            {
-                // Fallback: remove from formation and set a long halt so they stop fighting
-                try { if (target.Formation != null) target.Formation = null; } catch { }
-                try { target.SetMaximumSpeedLimit(0f, false); } catch { }
-                _haltedAgents[target.Index] = (30f, target.Position, target);
-            }
-
-            try { target.SetWatchState(Agent.WatchState.Alarmed); } catch { }
-            BeginAgentGlow(target, ColorSchool.Orange, 2f);
-            SpawnTempLight(target.Position, ColorSchool.Orange, 6f, 1.5f);
-            BeginAgentGlow(Player, ColorSchool.Orange, 1.5f);
-            SpawnTempLight(Player.Position, ColorSchool.Orange, 6f, 1.5f);
-            Msg($"Gilded Words — {targetName} is swayed. They fight for you now.", ColorSchool.Orange);
         }
 
-        // Nausea Bloom — persistent toxic aura; toggle to dismiss
-        private static void SpellSelfYellow()
+        private static void AddAuraNode(Vec3 pos, float radius, SpellCast cast, Team casterTeam)
         {
-            if (Player == null) return;
-            if (HasAreaEffect("self_yellow"))
+            // Store cast parameters inside the Power field (encode as a token)
+            // We store DamageCount, PushCount, MoraleCount, Reversed as encoded float
+            // Format: (damage * 1000 + push * 100 + morale * 10 + (reversed?1:0)) as float
+            float token = cast.DamageCount * 1000f + cast.PushCount * 100f
+                        + cast.MoraleCount * 10f   + (cast.Reversed ? 1f : 0f);
+            var node = new AreaEffect
             {
-                RemoveAreaEffect("self_yellow");
-                Msg("Nausea Bloom dismissed. The wrongness fades.", ColorSchool.Yellow);
-                return;
-            }
-            ToggleAreaEffect("self_yellow", new AreaEffect
-            {
-                Id = "self_yellow", School = ColorSchool.Yellow,
-                Position = Player.Position, Radius = 8f,
-                Velocity = new Vec3(1f, 0f, 0f), DirTimer = 3f,
-                TickInterval = 2f, TickTimer = 2f, Remaining = -1f,
-                Power = SpellPower(ColorSchool.Yellow)
-            });
-            BeginAgentGlow(Player, ColorSchool.Yellow, 2f);
-            SpawnTempLight(Player.Position, ColorSchool.Yellow, 6f, 1.5f);
-            Msg("Nausea Bloom — something deeply wrong radiates from you. All nearby will feel it. Cast again to dismiss.", ColorSchool.Yellow);
+                Id           = AuraId,
+                School       = cast.VisualColor,
+                Position     = pos,
+                Radius       = radius,
+                TickInterval = 2f,
+                TickTimer    = 2f,
+                Remaining    = -1f,  // toggle-only, no expiry
+                Power        = token,
+                CasterTeam   = casterTeam
+            };
+            node.LightEntity = SpawnAreaLight(node.Position, cast.VisualColor, radius);
+            _areaEffects.Add(node);
         }
 
-        // Verdant Touch — heal self
-        private static void SpellSelfGreen()
+        // Called from AreaEffects.cs tick
+        internal static void TickAuraNode(AreaEffect e)
         {
-            if (Player == null) return;
-            float power = SpellPower(ColorSchool.Green);
-            float heal = Math.Min(34f * power, Player.HealthLimit - Player.Health);
-            Player.Health = Math.Min(Player.Health + 34f * power, Player.HealthLimit);
-            BeginAgentGlow(Player, ColorSchool.Green, 1.5f);
-            SpawnTempLight(Player.Position, ColorSchool.Green, 6f, 1.5f);
-            Msg($"Verdant Touch — you restore {heal:F0} HP.", ColorSchool.Green);
-        }
+            if (Mission.Current == null) return;
+            // Decode cast parameters from Power token
+            int token    = (int)e.Power;
+            int dmg      = token / 1000;
+            int push     = (token % 1000) / 100;
+            int morale   = (token % 100) / 10;
+            bool rev     = (token % 10) == 1;
 
-        // Cerulean Burst — instant AoE (10m): damages, halts, and drains morale of all enemies
-        private static void SpellSelfBlue()
-        {
-            if (Player == null || !Player.IsActive()) return;
-            float power = SpellPower(ColorSchool.Blue);
-            float haltDuration = 2f + power * 1.5f;
-            const float Radius = 10f;
-            var enemies = Mission.Current?.Agents
-                .Where(a => a.IsActive() && !a.IsMount && a != Player
-                         && a.Team != Player.Team
-                         && a.Position.Distance(Player.Position) <= Radius)
-                .ToList();
-            if (enemies == null || enemies.Count == 0) { Msg("No enemies within burst range.", ColorSchool.Blue); return; }
-            var formations = new HashSet<Formation>();
-            foreach (Agent a in enemies)
+            var cast = new SpellCast
             {
+                DamageCount = dmg, PushCount = push,
+                MoraleCount = morale, Reversed = rev
+            };
+
+            Vec3 origin = e.Position;
+            foreach (Agent a in Mission.Current.Agents.ToList())
+            {
+                if (!a.IsActive() || a.IsMount) continue;
+                if (e.CasterTeam != null && a.Team == e.CasterTeam) continue; // friendly fire off
+                if (a.Position.Distance(origin) > e.Radius) continue;
                 try
                 {
-                    DamageAgent(a, 10f * power, ColorSchool.Blue);
-                    if (!a.IsActive()) continue;
-                    try { a.SetMorale(Math.Max(0f, a.GetMorale() - 35f)); } catch { }
-                    bool usingEquip = false;
-                    try { usingEquip = a.IsUsingGameObject; } catch { }
-                    if (a.MountAgent == null && !usingEquip)
+                    uint raw = rev
+                        ? ColorSchoolData.GetReversedGlowColor(e.School)
+                        : ColorSchoolData.GetGlowColor(e.School);
+                    BeginAgentGlowRaw(a, raw, 2f);
+                    if (cast.DamageCount > 0)
                     {
-                        try { a.SetMaximumSpeedLimit(0f, false); } catch { }
-                        _haltedAgents[a.Index] = (haltDuration, a.Position, a);
+                        float amt = cast.DamageCount * 5f * 0.5f; // halved for persistent
+                        if (rev) HealAgent(a, amt); else DamageAgent(a, amt);
                     }
-                    BeginAgentGlow(a, ColorSchool.Blue, 1.5f);
-                    if (a.Formation != null) formations.Add(a.Formation);
+                    if (cast.MoraleCount > 0)
+                    {
+                        float delta = cast.MoraleCount * 3f;
+                        float cur   = a.GetMorale();
+                        a.SetMorale(rev ? Math.Min(cur + delta, 100f) : Math.Max(cur - delta, 0f));
+                    }
+                    // Push/pull in aura is gentle
+                    if (cast.PushCount > 0)
+                    {
+                        float dist = cast.PushCount * 0.5f;
+                        Agent src = Agent.Main;
+                        if (src != null)
+                        {
+                            Vec3 dir = rev
+                                ? (src.Position - a.Position).NormalizedCopy()
+                                : (a.Position - src.Position).NormalizedCopy();
+                            Vec3 dest = a.Position + dir * dist; dest.z = a.Position.z;
+                            QueueMove(a, dest, 0.4f);
+                        }
+                    }
                 }
                 catch { }
             }
-            if (!IsSiegeActive())
-                foreach (Formation f in formations)
-                {
-                    try { f.SetMovementOrder(MovementOrder.MovementOrderStop); } catch { }
-                    try { if (f.HasAnyMountedUnit) f.SetRidingOrder(RidingOrder.RidingOrderDismount); } catch { }
-                }
-            BeginAgentGlow(Player, ColorSchool.Blue, 2f);
-            SpawnCircleLights(Player.Position, ColorSchool.Blue, Radius, 3f);
-            Msg($"Cerulean Burst — a blue shockwave halts {enemies.Count} {(enemies.Count == 1 ? "enemy" : "enemies")} for {haltDuration:F1}s.", ColorSchool.Blue);
-        }
-
-        // Grey Reaping — snuffs 1–2 nearby souls; those who remain lose all nerve
-        private static void SpellSelfPurple()
-        {
-            if (Player == null || Mission.Current == null) return;
-            float power = SpellPower(ColorSchool.Purple);
-            const float Radius = 15f;
-
-            // Drain morale of all nearby enemies
-            int drained = 0;
-            foreach (Agent a in Enemies().Where(a => a.Position.Distance(Player.Position) <= Radius).ToList())
-            {
-                try { a.SetMorale(0f); BeginAgentGlow(a, ColorSchool.Purple, 1.5f); drained++; } catch { }
-            }
-
-            // Kill 1 (or 2 at high power) random non-hero enemies within radius
-            int killCount = power >= 1.0f ? 2 : 1;
-            var candidates = Enemies()
-                .Where(a => !a.IsHero && a.IsActive() && a.Position.Distance(Player.Position) <= Radius)
-                .ToList();
-            int kills = 0;
-            for (int i = 0; i < killCount && candidates.Count > 0; i++)
-            {
-                int idx = _rng.Next(candidates.Count);
-                Agent target = candidates[idx];
-                candidates.RemoveAt(idx);
-                try
-                {
-                    BeginAgentGlow(target, ColorSchool.Purple, 1.5f);
-                    QueueKill(target);
-                    kills++;
-                }
-                catch { }
-            }
-
-            BeginAgentGlow(Player, ColorSchool.Purple, 2f);
-            SpawnCircleLights(Player.Position, ColorSchool.Purple, Radius, 1.5f);
-
-            string killMsg  = kills  > 0 ? $" {kills} {(kills == 1 ? "soul" : "souls")} snuffed." : "";
-            string drainMsg = drained > 0 ? $" {drained} {(drained == 1 ? "enemy loses" : "enemies lose")} their nerve." : " No enemies within range.";
-            Msg($"Grey Reaping —{killMsg}{drainMsg}", ColorSchool.Purple);
         }
     }
 }

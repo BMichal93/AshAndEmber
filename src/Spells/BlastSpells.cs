@@ -1,238 +1,85 @@
 // =============================================================================
-// COLOURS OF CALRADIA — BlastSpells.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0
+// LIFE & DEATH MAGIC — BlastSpells.cs
+// BLAST FORM: forward cone, 2m range per U input, 37° half-angle (dot 0.80).
+// Effects are applied to all agents in the cone regardless of team.
+// Player: enemies only; NPC version accepts a casterTeam parameter.
 // =============================================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Roster;
-using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
-using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
-using TaleWorlds.Engine;
-using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
 
 namespace ColoursOfCalradia
 {
     public static partial class SpellEffects
     {
-        // =================================================================
-        // BLAST SPELLS — medium cone in front of the caster
-        // Cone: 9m range, dot >= 0.80 (≈37° half-angle)
-        // Glow applied to all affected agents to show the area of effect.
-        // =================================================================
-
-        // Crimson Torrent — moderate damage + pushback in cone
-        private static void SpellBlastRed()
+        // ── Player Blast ───────────────────────────────────────────────────────
+        public static void ExecuteBlast(SpellCast cast)
         {
-            if (Player == null) return;
-            float power = SpellPower(ColorSchool.Red);
-            Vec3 fwd = Player.LookDirection.NormalizedCopy();
-            var inCone = ConeAgents(Player.Position, fwd, 9f, 0.80f);
-            if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Red); return; }
-            int affected = 0;
-            foreach (Agent a in inCone)
-            {
-                try
-                {
-                    DamageAgent(a, 64f * power, ColorSchool.Red);
-                    if (a.IsActive() && a.Health > 0f)
-                    {
-                        Vec3 dir = (a.Position - Player.Position).NormalizedCopy();
-                        Vec3 dest = a.Position + dir * (6f * power); dest.z = a.Position.z;
-                        QueueMove(a, dest, 0.4f);
-                    }
-                    BeginAgentGlow(a, ColorSchool.Red, 3f);
-                    SpawnImpactBurst(a.Position, ColorSchool.Red, 3f);
-                    affected++;
-                }
-                catch { }
-            }
-            SpawnConeLights(Player.Position, fwd, ColorSchool.Red, 5f);
-            Msg($"Crimson Torrent tears through {affected} {(affected == 1 ? "creature" : "creatures")}.", ColorSchool.Red);
+            if (Agent.Main == null) return;
+            ExecuteBlastFromAgent(Agent.Main, cast, Agent.Main.Team);
         }
 
-        // Golden Tide — tiny damage + force enemies in cone to charge
-        private static void SpellBlastOrange()
+        // ── Shared implementation (player + NPC) ──────────────────────────────
+        internal static void ExecuteBlastFromAgent(Agent caster, SpellCast cast, Team casterTeam)
         {
-            if (Player == null) return;
-            float power = SpellPower(ColorSchool.Orange);
-            Vec3 fwd = Player.LookDirection.NormalizedCopy();
-            var inCone = ConeAgents(Player.Position, fwd, 9f, 0.80f);
-            if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Orange); return; }
-            var formations = new HashSet<Formation>();
-            foreach (Agent a in inCone)
-            {
-                try
-                {
-                    DamageAgent(a, 38f * power, ColorSchool.Orange);
-                    if (!a.IsActive()) continue;
-                    try { a.SetMorale(100f); } catch { }
-                    BeginAgentGlow(a, ColorSchool.Orange, 3f);
-                    SpawnImpactBurst(a.Position, ColorSchool.Orange, 3f);
-                    if (a.Formation != null) formations.Add(a.Formation);
-                }
-                catch { }
-            }
-            SpawnConeLights(Player.Position, fwd, ColorSchool.Orange, 5f);
-            if (!IsSiegeActive())
-                foreach (Formation f in formations)
-                    try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
-            Msg($"Golden Tide washes over {inCone.Count} {(inCone.Count == 1 ? "creature" : "creatures")} — they surge forward!", ColorSchool.Orange);
-        }
+            if (caster == null || !caster.IsActive() || Mission.Current == null) return;
 
-        // Tide of Dread — tiny damage + morale reduction in cone
-        private static void SpellBlastYellow()
-        {
-            if (Player == null) return;
-            float power = SpellPower(ColorSchool.Yellow);
-            Vec3 fwd = Player.LookDirection.NormalizedCopy();
-            var inCone = ConeAgents(Player.Position, fwd, 9f, 0.80f);
-            if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Yellow); return; }
-            foreach (Agent a in inCone)
-            {
-                try
-                {
-                    DamageAgent(a, 25f * power, ColorSchool.Yellow);
-                    if (!a.IsActive()) continue;
-                    try { a.SetMorale(Math.Max(0f, a.GetMorale() - 60f * power)); } catch { }
-                    BeginAgentGlow(a, ColorSchool.Yellow, 3f);
-                    SpawnImpactBurst(a.Position, ColorSchool.Yellow, 3f);
-                }
-                catch { }
-            }
-            SpawnConeLights(Player.Position, fwd, ColorSchool.Yellow, 5f);
-            Msg($"Tide of Dread — {inCone.Count} {(inCone.Count == 1 ? "creature loses" : "creatures lose")} their nerve.", ColorSchool.Yellow);
-        }
+            float range = cast.FormCount * 2f;
+            Vec3  fwd   = caster.LookDirection.NormalizedCopy();
 
-        // Verdant Surge — heal allies in cone (player and enemies excluded)
-        private static void SpellBlastGreen()
-        {
-            if (Player == null) return;
-            float power = SpellPower(ColorSchool.Green);
-            Vec3 fwd = Player.LookDirection.NormalizedCopy();
-            var inCone = ConeAgents(Player.Position, fwd, 9f, 0.80f);
-            int healed = 0;
-            foreach (Agent a in inCone)
-            {
-                if (a == Player) continue;
-                if (a.Team != Player.Team) continue; // enemies excluded
-                try
-                {
-                    float h = Math.Min(50f * power, a.HealthLimit - a.Health);
-                    if (h > 0f)
-                    {
-                        a.Health += h;
-                        healed++;
-                        BeginAgentGlow(a, ColorSchool.Green, 3f);
-                        SpawnImpactBurst(a.Position, ColorSchool.Green, 3f);
-                    }
-                }
-                catch { }
-            }
-            SpawnConeLights(Player.Position, fwd, ColorSchool.Green, 5f);
-            if (healed == 0) Msg("Verdant Surge — no allies in the cone to mend.", ColorSchool.Green);
-            else Msg($"Verdant Surge mends {healed} {(healed == 1 ? "ally" : "allies")} in the cone.", ColorSchool.Green);
-        }
-
-        // Azure Arrest — damage + per-agent speed halt + dismount riders in cone
-        private static void SpellBlastBlue()
-        {
-            if (Player == null) return;
-            float power = SpellPower(ColorSchool.Blue);
-            float haltDuration = 2f + power * 1.5f; // attr 1 ≈ 2.9 s, attr 5 ≈ 3.5 s, attr 10 ≈ 4.25 s
-            Vec3 fwd = Player.LookDirection.NormalizedCopy();
-            var inCone = ConeAgents(Player.Position, fwd, 9f, 0.80f);
-            if (inCone.Count == 0) { Msg("No one in the cone.", ColorSchool.Blue); return; }
-            var formations = new HashSet<Formation>();
-            foreach (Agent a in inCone)
-            {
-                try
-                {
-                    DamageAgent(a, 13f * power, ColorSchool.Blue);
-                    if (!a.IsActive()) continue;
-                    try { a.SetMorale(Math.Max(0f, a.GetMorale() - 35f)); } catch { }
-                    bool usingEquip = false;
-                    try { usingEquip = a.IsUsingGameObject; } catch { }
-                    if (a.MountAgent == null && !usingEquip)
-                    {
-                        try { a.SetMaximumSpeedLimit(0f, false); } catch { }
-                        _haltedAgents[a.Index] = (haltDuration, a.Position, a);
-                    }
-                    BeginAgentGlow(a, ColorSchool.Blue, 3f);
-                    SpawnImpactBurst(a.Position, ColorSchool.Blue, 3f);
-                    if (a.Formation != null) formations.Add(a.Formation);
-                }
-                catch { }
-            }
-            SpawnConeLights(Player.Position, fwd, ColorSchool.Blue, 5f);
-            if (!IsSiegeActive())
-                foreach (Formation f in formations)
-                {
-                    try { f.SetMovementOrder(MovementOrder.MovementOrderStop); } catch { }
-                    try { if (f.HasAnyMountedUnit) f.SetRidingOrder(RidingOrder.RidingOrderDismount); } catch { }
-                }
-            Msg($"Azure Arrest freezes {inCone.Count} {(inCone.Count == 1 ? "creature" : "creatures")} for {haltDuration:F1}s. Riders unseated.", ColorSchool.Blue);
-        }
-
-        // Grey Harvest — 1–3 non-hero creatures in cone fade and die (scales with Purple attribute)
-        // attr 1–4 (power <1.0): 1 kill; attr 5–7 (power 1.0–1.2): 2 kills; attr 8–10 (power ≥1.3): 3 kills
-        private static void SpellBlastPurple()
-        {
-            if (Player == null) return;
-            Vec3 fwd = Player.LookDirection.NormalizedCopy();
-            // Exclude heroes — Die() with OwnerId=-1 on a hero crashes Bannerlord's death processing
-            var inCone = ConeAgents(Player.Position, fwd, 9f, 0.80f).Where(a => !a.IsHero).ToList();
-            if (inCone.Count == 0) { Msg("No common souls in the cone — the purple passes over champions.", ColorSchool.Purple); return; }
-            float power = SpellPower(ColorSchool.Purple);
-            int killCount = Math.Min(inCone.Count, power >= 1.3f ? 3 : power >= 1.0f ? 2 : 1);
-            // Pick killCount distinct targets via partial Fisher-Yates
-            for (int i = 0; i < killCount; i++)
-            {
-                int j = i + _rng.Next(inCone.Count - i);
-                Agent tmp = inCone[i]; inCone[i] = inCone[j]; inCone[j] = tmp;
-            }
-            for (int i = 0; i < killCount; i++)
-            {
-                BeginAgentGlow(inCone[i], ColorSchool.Purple, 3f);
-                SpawnImpactBurst(inCone[i].Position, ColorSchool.Purple, 3f);
-                QueueKill(inCone[i]);
-            }
-            SpawnConeLights(Player.Position, fwd, ColorSchool.Purple, 5f);
-            if (killCount == 1)
-                Msg($"Grey Harvest — {inCone[0].Name} fades. The purple was always going to take them.", ColorSchool.Purple);
-            else
-                Msg($"Grey Harvest — {killCount} souls fade. The purple does not discriminate.", ColorSchool.Purple);
-        }
-
-        // Helper: returns all active non-mount agents in a cone (both allies and enemies)
-        private static List<Agent> ConeAgents(Vec3 origin, Vec3 fwd, float range, float dot)
-        {
-            if (Mission.Current == null) return new List<Agent>();
-            var result = new List<Agent>();
+            // Gather targets — enemies of the caster
+            var targets = new List<Agent>();
             try
             {
                 foreach (Agent a in Mission.Current.Agents)
                 {
-                    if (!a.IsActive() || a.IsMount || a == Player) continue;
-                    Vec3 to = a.Position - origin;
+                    if (!a.IsActive() || a.IsMount || a == caster) continue;
+                    if (casterTeam != null && a.Team == casterTeam) continue; // skip allies
+                    Vec3 to = a.Position - caster.Position;
                     if (to.Length > range) continue;
-                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
-                    result.Add(a);
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < 0.80f) continue;
+                    targets.Add(a);
                 }
             }
             catch { }
-            return result;
+
+            if (targets.Count == 0)
+            {
+                if (caster == Agent.Main)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "[Blast] No targets in the cone.", new Color(0.7f, 0.7f, 0.7f)));
+                return;
+            }
+
+            ColorSchool glowColor = cast.VisualColor;
+            SpawnConeLights(caster.Position, fwd, glowColor, 3f);
+            TryCastSound(caster.Position, glowColor);
+            TryCastAnimation(caster);
+
+            int affected = 0;
+            foreach (Agent a in targets)
+            {
+                try
+                {
+                    ApplyEffectsToAgent(a, cast, caster, applyPush: true, applyPull: true);
+                    SpawnImpactBurst(a.Position, glowColor, 2f);
+                    affected++;
+                }
+                catch { }
+            }
+
+            if (caster == Agent.Main)
+            {
+                string colorName = ColorSchoolData.GetEffectName(glowColor);
+                string reverseTag = cast.Reversed ? " [Reversed]" : "";
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"[Blast{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
+                    ColorSchoolData.GetMessageColor(glowColor)));
+            }
         }
     }
 }

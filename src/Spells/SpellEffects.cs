@@ -1,6 +1,7 @@
 // =============================================================================
-// COLOURS OF CALRADIA — SpellEffects.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0
+// LIFE & DEATH MAGIC — SpellEffects.cs
+// Core partial class: helpers, per-form execution entry points,
+// visual utilities, and the engine-safe deferred-death queue.
 // =============================================================================
 
 using System;
@@ -30,104 +31,32 @@ namespace ColoursOfCalradia
     {
         private static readonly Random _rng = new Random();
 
-        // ── Colour-switch cooldown (player only) ─────────────────────────────
-        private const float ColourSwitchCooldown = 5f;
-        private static ColorSchool? _lastCastSchool;
-        private static float _colourCooldownTimer = 0f;
-
-
+        // ── Light-level helpers (kept for legacy compatibility, no longer blocks casting) ──
         internal enum LightLevel { Bright, Dim, Dark }
 
         internal static LightLevel GetCampaignLightLevel()
         {
             if (Campaign.Current == null) return LightLevel.Bright;
-
             try
             {
                 float hour = (float)(CampaignTime.Now.ToHours % 24.0);
-                if (hour < 5f  || hour >= 22f) return LightLevel.Dark;
-                if (hour < 7f  || hour >= 20f) return LightLevel.Dim;
+                if (hour < 5f || hour >= 22f) return LightLevel.Dark;
+                if (hour < 7f || hour >= 20f) return LightLevel.Dim;
                 return LightLevel.Bright;
             }
             catch { return LightLevel.Bright; }
         }
 
-        internal static LightLevel GetLightLevel()
-        {
-            // Scene-based check takes priority over time of day
-            try
-            {
-                var scene = Mission.Current?.Scene;
-                if (scene != null)
-                {
-                    string sn = scene.GetName()?.ToLowerInvariant() ?? "";
-                    if (sn.Contains("cave") || sn.Contains("mine") || sn.Contains("dungeon"))
-                        return LightLevel.Dark;
-                    if (sn.Contains("hideout"))
-                        return LightLevel.Dim;
-                }
-            }
-            catch { }
+        internal static LightLevel GetLightLevel() => LightLevel.Bright; // No longer restricts
+        internal static bool RollDimFizzle() => false;
+        internal static bool HasDarkAffinity(ColorSchool s) => false;
+        internal static LightLevel GetEffectiveLightLevel(ColorSchool s) => LightLevel.Bright;
+        public static bool IsDaytime() => true;
 
-            return GetCampaignLightLevel();
-        }
+        // ── Spell power — flat 1.0 (attribute scaling removed) ────────────────
+        internal static float SpellPower(ColorSchool school, Hero hero = null) => 1f;
 
-        // 33 % chance used when casting in Dim light.
-        internal static bool RollDimFizzle() => _rng.Next(3) == 0;
-
-        // True when the given school has a contextual affinity that upgrades Dark → Dim.
-        // Season: 84-day year, 21 days per season (Spring=0, Summer=1, Autumn=2, Winter=3).
-        internal static bool HasDarkAffinity(ColorSchool school)
-        {
-            try
-            {
-                var s = Settlement.CurrentSettlement;
-                if (s?.IsTown == true || s?.IsCastle == true) return true; // torchlight
-            }
-            catch { }
-
-            if (Campaign.Current == null) return false;
-            try
-            {
-                switch (CampaignTime.Now.GetSeasonOfYear)
-                {
-                    case CampaignTime.Seasons.Spring: return school == ColorSchool.Green;
-                    case CampaignTime.Seasons.Summer: return school == ColorSchool.Yellow || school == ColorSchool.Red;
-                    case CampaignTime.Seasons.Autumn: return school == ColorSchool.Orange || school == ColorSchool.Red;
-                    case CampaignTime.Seasons.Winter: return school == ColorSchool.Blue   || school == ColorSchool.Purple;
-                    default: return false;
-                }
-            }
-            catch { return false; }
-        }
-
-        // School-aware effective light level: upgrades Dark → Dim when the school has affinity.
-        internal static LightLevel GetEffectiveLightLevel(ColorSchool school)
-        {
-            var level = GetLightLevel();
-            if (level == LightLevel.Dark && HasDarkAffinity(school)) return LightLevel.Dim;
-            return level;
-        }
-
-        public static bool IsDaytime() => GetLightLevel() == LightLevel.Bright;
-
-        // ── Spell power scaling ───────────────────────────────────────────────────
-        // Multiplier range: ×0.6 (attr 1) → ×1.0 (attr 5, mid-game base) → ×1.5 (attr 10).
-        // Pass null hero to use Hero.MainHero (player casts).
-        internal static float SpellPower(ColorSchool school, Hero hero = null)
-        {
-            try
-            {
-                var h = hero ?? Hero.MainHero;
-                if (h == null) return 1f;
-                int attr = h.GetAttributeValue(ColorSchoolData.GetScaleAttribute(school));
-                return 0.5f + Math.Min(Math.Max(attr, 1), 10) * 0.1f;
-            }
-            catch { return 1f; }
-        }
-
-        // Returns true if any agent on the field is operating siege equipment.
-        // Used to gate Formation.SetMovementOrder calls that crash on siege formations.
+        // ── Siege / battle checks ─────────────────────────────────────────────
         public static bool IsSiegeActive()
         {
             if (Mission.Current == null) return false;
@@ -143,43 +72,77 @@ namespace ColoursOfCalradia
             return false;
         }
 
-        // Returns true only during actual combat missions (battles, sieges).
-        // Town/village visits have no active enemy agents, so this reliably excludes them.
         public static bool IsBattleMission()
         {
             try
             {
                 if (Mission.Current == null || Mission.Current.PlayerTeam == null) return false;
-                Team playerTeam = Mission.Current.PlayerTeam;
+                Team pt = Mission.Current.PlayerTeam;
                 foreach (Agent a in Mission.Current.Agents)
                 {
                     if (!a.IsActive() || a.IsMount || a.Team == null) continue;
-                    if (a.Team != playerTeam && playerTeam.IsEnemyOf(a.Team)) return true;
+                    if (a.Team != pt && pt.IsEnemyOf(a.Team)) return true;
                 }
             }
             catch { }
             return false;
         }
 
-        // Returns false — Cerulean Mirror replaced by Cerulean Burst (instant AoE, no deflection)
         public static bool ProtectedByMirror(Agent a) => false;
 
-        // Maps toggle-spell combos to their area-effect IDs so callers can detect a dismiss cast.
-        private static readonly Dictionary<string, string> _toggleComboToId = new Dictionary<string, string>
-        {
-            { "RRRR", "self_red_barrier"   },
-            { "RRDD", "self_yellow"        },
-            { "LLLD", "create_orange"      },
-            { "LLDD", "create_yellow"      },
-            { "LLLL", "create_green"       },
-            { "LLRU", "create_blue"        },
-            { "LLDU", "create_purple_mist" },
-        };
+        // ── Toggle-dismiss (legacy stubs) ──────────────────────────────────────
+        private static readonly Dictionary<string, string> _toggleComboToId
+            = new Dictionary<string, string>();
 
-        // Returns true when casting combo would dismiss an already-active toggle effect.
         public static bool IsToggleDismiss(string combo) =>
-            _toggleComboToId.TryGetValue(combo, out string id) && HasAreaEffect(id);
+            _toggleComboToId.TryGetValue(combo ?? "", out string id) && HasAreaEffect(id);
 
+        // ── Colour switch cooldown (removed) ──────────────────────────────────
+        public static void TickColourCooldown(float dt) { }
+        public static void ClearColourCooldown() { }
+
+        // ── Dispatch from player input ─────────────────────────────────────────
+        // Called by MagicInputHandler after SpellBuilder.Parse
+        // Legacy Execute(combo) no longer used — kept for build compatibility
+        public static bool Execute(string combo) => false;
+
+        // ── Per-form execution entry points ───────────────────────────────────
+        // Implemented in BlastSpells.cs / SelfSpells.cs / CreateSpells.cs
+
+        // ── NPC spell execution ───────────────────────────────────────────────
+        public static void ExecuteNpcBlast(Agent caster, int formCount,
+            int damageCount, int pushCount, int moraleCount, bool reversed, Team casterTeam)
+        {
+            var cast = new SpellCast
+            {
+                Form = SpellForm.Blast, FormCount = formCount,
+                DamageCount = damageCount, PushCount = pushCount,
+                MoraleCount = moraleCount, Reversed = reversed
+            };
+            ExecuteBlastFromAgent(caster, cast, casterTeam);
+        }
+
+        public static void ExecuteNpcBurst(Agent caster, int formCount,
+            int damageCount, int pushCount, int moraleCount, bool reversed, Team casterTeam)
+        {
+            var cast = new SpellCast
+            {
+                Form = SpellForm.Burst, FormCount = formCount,
+                DamageCount = damageCount, PushCount = pushCount,
+                MoraleCount = moraleCount, Reversed = reversed
+            };
+            ExecuteBurstFromAgent(caster, cast, casterTeam);
+        }
+
+        // ── Self-effects clear ─────────────────────────────────────────────────
+        public static void ClearSelfEffects()
+        {
+            RemoveAreaEffect("spell_aura");
+            RemoveAreaEffect("spell_barrier");
+            _haltedAgents.Clear();
+        }
+
+        // ── Halted-agent tick (Blue push freeze) ─────────────────────────────
         public static void TickHaltedAgents(float dt)
         {
             if (_haltedAgents.Count == 0 || Mission.Current == null) return;
@@ -187,7 +150,6 @@ namespace ColoursOfCalradia
             bool doTeleport = _haltTeleportTimer <= 0f;
             if (doTeleport) _haltTeleportTimer = HaltTeleportInterval;
 
-            // Reuse static collections to keep TickHaltedAgents allocation-free
             _haltAgentMap.Clear();
             try
             {
@@ -204,24 +166,14 @@ namespace ColoursOfCalradia
                 var (remaining, frozenPos, srcAgent) = _haltedAgents[idx];
                 remaining -= dt;
                 if (!_haltAgentMap.TryGetValue(idx, out Agent a))
-                {
-                    _expiredHaltKeys.Add(idx);
-                    continue;
-                }
-                // Reinforcements reuse dead agents' indices — skip if the live agent is not the original.
-                if (a != srcAgent)
-                {
-                    _expiredHaltKeys.Add(idx);
-                    continue;
-                }
+                { _expiredHaltKeys.Add(idx); continue; }
+                if (a != srcAgent) { _expiredHaltKeys.Add(idx); continue; }
                 bool usingEquip = false;
                 try { usingEquip = a.IsUsingGameObject; } catch { }
-
                 if (remaining <= 0f || usingEquip)
                 {
                     _expiredHaltKeys.Add(idx);
-                    if (!usingEquip)
-                        try { a.SetMaximumSpeedLimit(10f, false); } catch { }
+                    if (!usingEquip) try { a.SetMaximumSpeedLimit(10f, false); } catch { }
                 }
                 else
                 {
@@ -233,155 +185,11 @@ namespace ColoursOfCalradia
             foreach (int idx in _expiredHaltKeys) _haltedAgents.Remove(idx);
         }
 
-        public static void ClearSelfEffects()
-        {
-            RemoveAreaEffect("self_red_barrier");
-            _haltedAgents.Clear();
-        }
+        // ── Random unit ambient magic (removed, stub kept) ────────────────────
+        public static void TickRandomUnitMagic(float dt) { }
 
-        // Issue Charge to own formations (Red post-cast limitation)
-        public static void IssueChargeToOwnFormations(Agent caster)
-        {
-            if (caster == null || Mission.Current == null || caster.Team == null) return;
-            if (IsSiegeActive()) return;
-            try
-            {
-                foreach (Team t in Mission.Current.Teams)
-                {
-                    if (t != caster.Team) continue;
-                    foreach (Formation f in t.FormationsIncludingSpecialAndEmpty)
-                    {
-                        if (f.CountOfUnits <= 0) continue;
-                        try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
-                    }
-                }
-            }
-            catch { }
-        }
-
-        // Random unit magic timer
-        private static float _randomMagicTimer = 0f;
-        private const  float RandomMagicInterval = 60f;
-
-        public static void TickRandomUnitMagic(float dt)
-        {
-            if (Mission.Current == null) return;
-            _randomMagicTimer += dt;
-            if (_randomMagicTimer < RandomMagicInterval) return;
-            _randomMagicTimer = 0f;
-
-            if (!IsBattleMission()) return;
-
-            // 0.7% chance per minute
-            if (_rng.Next(1000) >= 7) return;
-
-            List<Agent> candidates;
-            try
-            {
-                candidates = Mission.Current.Agents
-                    .Where(a => {
-                        if (!a.IsActive() || a.IsMount || a.IsHero) return false;
-                        try { if (a.IsUsingGameObject) return false; } catch { }
-                        return true;
-                    }).ToList();
-            }
-            catch { return; }
-            if (candidates.Count == 0) return;
-
-            Agent unit  = candidates[_rng.Next(candidates.Count)];
-            var schools = Enum.GetValues(typeof(ColorSchool));
-            ColorSchool school = (ColorSchool)schools.GetValue(_rng.Next(schools.Length));
-
-            try
-            {
-                BeginAgentGlow(unit, school, 3f);
-                // Simple effect: small area damage if it's a combat school
-                if (school == ColorSchool.Red || school == ColorSchool.Purple)
-                {
-                    foreach (Agent near in Mission.Current.Agents
-                        .Where(a => a != unit && a.IsActive() && !a.IsMount &&
-                                    a.Team != unit.Team &&
-                                    a.Position.Distance(unit.Position) <= 5f).ToList())
-                    {
-                        DamageAgent(near, 20f);
-                        BeginAgentGlow(near, school, 1.5f);
-                    }
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"A flicker of {ColorSchoolData.Info[school].Name} colour — {unit.Name} unleashes something wild.",
-                        ColorSchoolData.GetMessageColor(school)));
-                }
-                else
-                {
-                    // Supportive schools: small morale or HP burst
-                    if (unit.Team != null)
-                    {
-                        foreach (Agent near in Mission.Current.Agents
-                            .Where(a => a.IsActive() && !a.IsMount && a.Team == unit.Team &&
-                                        a.Position.Distance(unit.Position) <= 5f).ToList())
-                        {
-                            near.Health = Math.Min(near.HealthLimit, near.Health + 13f);
-                            BeginAgentGlow(near, school, 1.5f);
-                        }
-                    }
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"A flicker of {ColorSchoolData.Info[school].Name} colour ripples through {unit.Name}.",
-                        ColorSchoolData.GetMessageColor(school)));
-                }
-            }
-            catch { }
-        }
-
-        // ── Helpers ──────────────────────────────────────────────────────────
+        // ── Agent helpers ──────────────────────────────────────────────────────
         private static Agent Player => Agent.Main;
-
-        // ── Deferred death queue ──────────────────────────────────────────────
-        // Die() called from within OnMissionTick callbacks causes native engine crashes
-        // in large sieges when many agents are killed simultaneously (engine reads weapon/
-        // animation state that is mid-update). Queue kills and flush at end of each tick.
-        private static readonly List<Agent> _pendingDeaths = new List<Agent>();
-
-        public static void QueueKill(Agent target)
-        {
-            if (target == null || target.IsHero) return;
-            bool usingEquip = false;
-            try { usingEquip = target.IsUsingGameObject; } catch { }
-            if (usingEquip) { try { target.Health = 1f; } catch { } return; }
-            if (target.IsActive() && !_pendingDeaths.Contains(target))
-                _pendingDeaths.Add(target);
-        }
-
-        public static void FlushPendingDeaths()
-        {
-            if (_pendingDeaths.Count == 0) return;
-            var mission = Mission.Current;
-            // Skip during auto-resolve or mission teardown — Die() on agents in these states
-            // can produce native engine crashes that C# try/catch cannot intercept.
-            if (mission == null || mission.CurrentState != Mission.State.Continuing)
-            {
-                _pendingDeaths.Clear();
-                return;
-            }
-            // Skip when player is dead: battle result is being sealed and our kills would
-            // decrement team counts that are already at or near zero, producing negative values.
-            if (Agent.Main == null || !Agent.Main.IsActive())
-            {
-                _pendingDeaths.Clear();
-                return;
-            }
-            // Snapshot so we can clear immediately and avoid iteration-over-modified-list risk.
-            var snapshot = _pendingDeaths.ToList();
-            _pendingDeaths.Clear();
-            foreach (Agent a in snapshot)
-            {
-                // Re-check after every kill: a Die() call can fire OnAgentRemoved which may
-                // change battle state (e.g. last enemy killed), making subsequent Die() unsafe.
-                if (mission.CurrentState != Mission.State.Continuing) return;
-                if (Agent.Main == null || !Agent.Main.IsActive()) return;
-                if (a?.IsActive() == true) KillAgent(a);
-            }
-        }
-
-        public static void ClearPendingDeaths() => _pendingDeaths.Clear();
 
         private static List<Agent> Enemies()
         {
@@ -409,21 +217,74 @@ namespace ColoursOfCalradia
             catch { return new List<Agent>(); }
         }
 
+        // Generic enemy/ally lists relative to any agent (for NPC AI)
+        internal static List<Agent> EnemiesOf(Agent source)
+        {
+            if (Mission.Current == null || source?.Team == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != source && !a.IsMount && a.IsActive() &&
+                                a.Team != null && source.Team.IsEnemyOf(a.Team))
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
+        }
+
+        internal static List<Agent> AlliesOf(Agent source)
+        {
+            if (Mission.Current == null || source?.Team == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != source && !a.IsMount && a.IsActive() &&
+                                a.Team == source.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
+        }
+
+        // ── Deferred death queue ───────────────────────────────────────────────
+        private static readonly List<Agent> _pendingDeaths = new List<Agent>();
+
+        public static void QueueKill(Agent target)
+        {
+            if (target == null || target.IsHero) return;
+            bool usingEquip = false;
+            try { usingEquip = target.IsUsingGameObject; } catch { }
+            if (usingEquip) { try { target.Health = 1f; } catch { } return; }
+            if (target.IsActive() && !_pendingDeaths.Contains(target))
+                _pendingDeaths.Add(target);
+        }
+
+        public static void FlushPendingDeaths()
+        {
+            if (_pendingDeaths.Count == 0) return;
+            var mission = Mission.Current;
+            if (mission == null || mission.CurrentState != Mission.State.Continuing)
+            { _pendingDeaths.Clear(); return; }
+            if (Agent.Main == null || !Agent.Main.IsActive())
+            { _pendingDeaths.Clear(); return; }
+            var snapshot = _pendingDeaths.ToList();
+            _pendingDeaths.Clear();
+            foreach (Agent a in snapshot)
+            {
+                if (mission.CurrentState != Mission.State.Continuing) return;
+                if (Agent.Main == null || !Agent.Main.IsActive()) return;
+                if (a?.IsActive() == true) KillAgent(a);
+            }
+        }
+
+        public static void ClearPendingDeaths() => _pendingDeaths.Clear();
+
         public static void KillAgent(Agent target)
         {
             if (target == null || !target.IsActive()) return;
             if (target.IsHero)
-            {
-                try { target.Health = Math.Max(1f, target.Health - 2f); } catch { }
-                return;
-            }
+            { try { target.Health = Math.Max(1f, target.Health - 2f); } catch { } return; }
             bool usingEquip = false;
             try { usingEquip = target.IsUsingGameObject; } catch { }
-            if (usingEquip)
-            {
-                try { target.Health = 1f; } catch { }
-                return;
-            }
+            if (usingEquip) { try { target.Health = 1f; } catch { } return; }
             try
             {
                 Blow blow = BuildBlow(target, DamageTypes.Cut, 2000f);
@@ -431,190 +292,174 @@ namespace ColoursOfCalradia
                 return;
             }
             catch { }
-            // Die() may have fired OnAgentRemoved (decrementing party counts) before throwing.
-            // If the agent is already inactive, calling MakeDead would fire OnAgentRemoved again
-            // and push party counts negative. Skip MakeDead when Die() already finished the kill.
             if (!target.IsActive()) return;
-            try { target.MakeDead(true, ActionIndexCache.Create("act_strike_walk_right_stance"), 0); }
-            catch { }
+            try { target.MakeDead(true, ActionIndexCache.Create("act_strike_walk_right_stance"), 0); } catch { }
         }
 
-        public static void DamageAgent(Agent target, float damage, ColorSchool? damageSchool = null)
+        public static void DamageAgent(Agent target, float damage, ColorSchool? school = null)
         {
             if (target == null || !target.IsActive()) return;
-            if (damageSchool.HasValue && BlightSystem.IsBlight(target)
-                && BlightSystem.GetBlightSchool(target) == damageSchool.Value) return;
             float newHealth = target.Health - damage;
             if (newHealth <= 0f)
             {
-                if (!target.IsHero) QueueKill(target); // deferred — safe during mission tick
+                if (!target.IsHero) QueueKill(target);
                 else try { target.Health = 1f; } catch { }
             }
-            else
-            {
-                try { target.Health = newHealth; } catch { }
-            }
+            else try { target.Health = newHealth; } catch { }
+        }
+
+        public static void HealAgent(Agent target, float amount)
+        {
+            if (target == null || !target.IsActive()) return;
+            try { target.Health = Math.Min(target.HealthLimit, target.Health + amount); } catch { }
         }
 
         private static Blow BuildBlow(Agent target, DamageTypes type, float magnitude)
         {
             Blow blow = new Blow();
-            // OwnerId must be a valid agent index. -1 causes native null-deref at +0x18
-            // inside CheckMissionEnded when it resolves the killer for battle result accounting.
-            blow.OwnerId          = Agent.Main?.Index ?? 0;
-            blow.DamageType       = type;
-            blow.BaseMagnitude    = magnitude;
-            blow.InflictedDamage  = (int)magnitude;
-            blow.GlobalPosition   = target.Position;
-            blow.Direction        = new Vec3(0f, 0f, 1f);
-            blow.WeaponRecord     = new BlowWeaponRecord();
-            blow.DamageCalculated = true;
-            blow.NoIgnore         = true;
-            blow.StrikeType       = StrikeType.Invalid;
-            blow.VictimBodyPart   = BoneBodyPartType.Chest;
-            blow.AttackType       = AgentAttackType.Standard;
-            blow.BlowFlag         = BlowFlags.NoSound;
+            blow.OwnerId         = Agent.Main?.Index ?? 0;
+            blow.DamageType      = type;
+            blow.BaseMagnitude   = magnitude;
+            blow.InflictedDamage = (int)magnitude;
+            blow.GlobalPosition  = target.Position;
+            blow.Direction       = new Vec3(0f, 0f, 1f);
+            blow.WeaponRecord    = new BlowWeaponRecord();
+            blow.DamageCalculated= true;
+            blow.NoIgnore        = true;
+            blow.StrikeType      = StrikeType.Invalid;
+            blow.VictimBodyPart  = BoneBodyPartType.Chest;
+            blow.AttackType      = AgentAttackType.Standard;
+            blow.BlowFlag        = BlowFlags.NoSound;
             return blow;
         }
 
-        // ── Execute switch ───────────────────────────────────────────────────
-        // Combos: first 2 chars = form (UU=Blast, RR=Self, LL=Create, UL=Affect, LU=Invoke, UR=Commune),
-        //         last 2 chars = colour (RR=Red, LD=Orange, DD=Yellow, LL=Green, RU=Blue, DU=Purple)
-        public static bool Execute(string combo)
+        // ── Cone geometry (reused by Blast form and NPC AI) ───────────────────
+        internal static List<Agent> ConeAgents(Vec3 origin, Vec3 fwd, float range, float dot)
         {
-            if (Mission.Current != null && combo.Length == 4 && !SaturationSystem.IsPlayerPrism)
+            if (Mission.Current == null) return new List<Agent>();
+            var result = new List<Agent>();
+            try
             {
-                ColorSchool? incoming = SchoolFromCombo(combo);
-                if (incoming.HasValue && _colourCooldownTimer > 0f &&
-                    _lastCastSchool.HasValue && incoming.Value != _lastCastSchool.Value)
+                foreach (Agent a in Mission.Current.Agents)
                 {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"The previous colour has not yet dispersed ({_colourCooldownTimer:F1}s remaining).",
-                        Color.FromUint(0xFFFFAAFF)));
-                    return false;
+                    if (!a.IsActive() || a.IsMount || a == Player) continue;
+                    Vec3 to = a.Position - origin;
+                    if (to.Length > range) continue;
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
+                    result.Add(a);
                 }
             }
+            catch { }
+            return result;
+        }
 
-            switch (combo)
+        // Cone agents relative to any source agent (for NPC)
+        internal static List<Agent> ConeAgentsFrom(Agent source, float range, float dot)
+        {
+            if (Mission.Current == null || source == null) return new List<Agent>();
+            Vec3 fwd = source.LookDirection.NormalizedCopy();
+            var result = new List<Agent>();
+            try
             {
-                // BLAST (UU)
-                case "UURR": SpellBlastRed();    break;
-                case "UULD": SpellBlastOrange(); break;
-                case "UUDD": SpellBlastYellow(); break;
-                case "UULL": SpellBlastGreen();  break;
-                case "UURU": SpellBlastBlue();   break;
-                case "UUDU": SpellBlastPurple(); break;
-                // SELF (RR)
-                case "RRRR": SpellSelfRed();     break;
-                case "RRLD": SpellSelfOrange();  break;
-                case "RRDD": SpellSelfYellow();  break;
-                case "RRLL": SpellSelfGreen();   break;
-                case "RRRU": SpellSelfBlue();    break;
-                case "RRDU": SpellSelfPurple();  break;
-                // CREATE (LL)
-                case "LLRR": SpellCreateRed();    break;
-                case "LLLD": SpellCreateOrange(); break;
-                case "LLDD": SpellCreateYellow(); break;
-                case "LLLL": SpellCreateGreen();  break;
-                case "LLRU": SpellCreateBlue();   break;
-                case "LLDU": SpellCreatePurple(); break;
-                // AFFECT (UL)
-                case "ULRR": SpellAffectRed();    break;
-                case "ULLD": SpellAffectOrange(); break;
-                case "ULDD": SpellAffectYellow(); break;
-                case "ULLL": SpellAffectGreen();  break;
-                case "ULRU": SpellAffectBlue();   break;
-                case "ULDU": SpellAffectPurple(); break;
-                // INVOKE (LU)
-                case "LURR": SpellInvokeRed();    break;
-                case "LULD": SpellInvokeOrange(); break;
-                case "LUDD": SpellInvokeYellow(); break;
-                case "LULL": SpellInvokeGreen();  break;
-                case "LURU": SpellInvokeBlue();   break;
-                case "LUDU": SpellInvokePurple(); break;
-                // COMMUNE (UR)
-                case "URRR": SpellCommuneRed();    break;
-                case "URLD": SpellCommuneOrange(); break;
-                case "URDD": SpellCommuneYellow(); break;
-                case "URLL": SpellCommuneGreen();  break;
-                case "URRU": SpellCommuneBlue();   break;
-                case "URDU": SpellCommunePurple(); break;
-                default: return false;
-            }
-
-            if (Mission.Current != null && combo.Length == 4)
-            {
-                ColorSchool? school = SchoolFromCombo(combo);
-                if (school.HasValue)
+                foreach (Agent a in Mission.Current.Agents)
                 {
-                    _lastCastSchool     = school.Value;
-                    _colourCooldownTimer = ColourSwitchCooldown;
+                    if (!a.IsActive() || a.IsMount || a == source) continue;
+                    if (source.Team != null && a.Team == source.Team) continue;
+                    Vec3 to = a.Position - source.Position;
+                    if (to.Length > range) continue;
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
+                    result.Add(a);
                 }
             }
-            return true;
+            catch { }
+            return result;
         }
 
-        private static ColorSchool? SchoolFromCombo(string combo)
+        // Count enemies in cone from source
+        internal static int CountEnemiesInCone(Agent source, float range, float dot)
+            => ConeAgentsFrom(source, range, dot).Count;
+
+        // ── Apply effect to one agent ─────────────────────────────────────────
+        // Used by all forms (Blast, Aura, Barrier, Burst)
+        internal static void ApplyEffectsToAgent(Agent target, SpellCast cast,
+            Agent caster, bool applyPush, bool applyPull)
         {
-            if (combo == null || combo.Length < 2) return null;
-            string colour = combo.Substring(combo.Length - 2);
-            switch (colour)
+            if (target == null || !target.IsActive()) return;
+
+            ColorSchool glowColor = cast.VisualColor;
+            uint raw = cast.Reversed
+                ? ColorSchoolData.GetReversedGlowColor(glowColor)
+                : ColorSchoolData.GetGlowColor(glowColor);
+            BeginAgentGlowRaw(target, raw, 2f);
+
+            // Damage or Heal
+            if (cast.DamageCount > 0)
             {
-                case "RR": return ColorSchool.Red;
-                case "LD": return ColorSchool.Orange;
-                case "DD": return ColorSchool.Yellow;
-                case "LL": return ColorSchool.Green;
-                case "RU": return ColorSchool.Blue;
-                case "DU": return ColorSchool.Purple;
-                default:   return null;
+                float amount = cast.DamageCount * 5f;
+                if (cast.Reversed)
+                    HealAgent(target, amount);
+                else
+                    DamageAgent(target, amount);
+            }
+
+            // Push or Pull
+            if (cast.PushCount > 0)
+            {
+                float dist = cast.PushCount * 2f;
+                try
+                {
+                    Vec3 dir;
+                    if (cast.Reversed)
+                        dir = (caster != null ? caster.Position - target.Position : Vec3.Zero).NormalizedCopy();
+                    else
+                        dir = (caster != null ? target.Position - caster.Position : Vec3.Zero).NormalizedCopy();
+
+                    Vec3 dest = target.Position + dir * dist;
+                    dest.z = target.Position.z;
+                    QueueMove(target, dest, 0.4f);
+                }
+                catch { }
+            }
+
+            // Morale drain or boost
+            if (cast.MoraleCount > 0)
+            {
+                float delta = cast.MoraleCount * 3f;
+                try
+                {
+                    float cur = target.GetMorale();
+                    float next = cast.Reversed
+                        ? Math.Min(cur + delta, 100f)
+                        : Math.Max(cur - delta, 0f);
+                    target.SetMorale(next);
+                }
+                catch { }
             }
         }
 
-        public static void TickColourCooldown(float dt)
-        {
-            if (_colourCooldownTimer <= 0f) return;
-            _colourCooldownTimer = Math.Max(0f, _colourCooldownTimer - dt);
-            if (_colourCooldownTimer <= 0f) _lastCastSchool = null;
-        }
+        // ── Siege check ────────────────────────────────────────────────────────
+        public static void IssueChargeToOwnFormations(Agent caster) { } // removed mechanic
 
-        public static void ClearColourCooldown()
-        {
-            _colourCooldownTimer = 0f;
-            _lastCastSchool      = null;
-        }
-
-        // =================================================================
-        // BATTLE COMMAND HELPER  (shared with lord AI)
-        // =================================================================
+        // ── Battle command (kept for NPC AI compatibility) ─────────────────────
         public enum BattleCommandKind { Halt, Enrage, Dismount, StopArrows }
 
         public static void IssueBattleCommand(Agent source, BattleCommandKind kind,
-                                              string successText, ColorSchool school)
+            string successText, ColorSchool school)
         {
-            if (source == null || Mission.Current == null || Mission.Current.Scene == null)
-            {
-                Msg("No battle active.", school);
-                return;
-            }
-
+            if (source == null || Mission.Current == null || Mission.Current.Scene == null) return;
             var formations = new HashSet<Formation>();
             var scene = Mission.Current.Scene;
-
-            foreach (Agent a in Enemies().ToList())
+            foreach (Agent a in EnemiesOf(source).ToList())
             {
                 if (a.Formation == null) continue;
                 if (a.Position.Distance(source.Position) > 500f) continue;
                 bool visible = true;
-                try { visible = scene.CheckPointCanSeePoint(source.Position, a.Position, 500f); }
-                catch { }
+                try { visible = scene.CheckPointCanSeePoint(source.Position, a.Position, 500f); } catch { }
                 if (!visible) continue;
                 formations.Add(a.Formation);
                 BeginAgentGlow(a, school, 1.5f);
             }
-
-            if (formations.Count == 0) { Msg("No visible enemy formations.", school); return; }
-
-            int affected = 0;
+            if (formations.Count == 0) return;
             foreach (Formation f in formations)
             {
                 try
@@ -622,34 +467,21 @@ namespace ColoursOfCalradia
                     switch (kind)
                     {
                         case BattleCommandKind.Halt:
-                            foreach (Agent fa in Mission.Current.Agents
-                                .Where(a => a.IsActive() && a.Formation == f).ToList())
+                            foreach (Agent fa in Mission.Current.Agents.Where(a => a.IsActive() && a.Formation == f).ToList())
                                 try { fa.SetMorale(0f); } catch { }
-                            affected++; break;
+                            break;
                         case BattleCommandKind.Enrage:
-                            foreach (Agent fa in Mission.Current.Agents
-                                .Where(a => a.IsActive() && a.Formation == f).ToList())
+                            foreach (Agent fa in Mission.Current.Agents.Where(a => a.IsActive() && a.Formation == f).ToList())
                                 try { fa.SetMorale(100f); } catch { }
                             if (!IsSiegeActive()) try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
-                            affected++; break;
-                        case BattleCommandKind.Dismount:
-                            if (f.HasAnyMountedUnit && !IsSiegeActive()) { f.SetRidingOrder(RidingOrder.RidingOrderDismount); affected++; } break;
-                        case BattleCommandKind.StopArrows:
-                            if (f.GetCountOfUnitsBelongingToLogicalClass(TaleWorlds.Core.FormationClass.Ranged) > 0 ||
-                                f.GetCountOfUnitsBelongingToLogicalClass(TaleWorlds.Core.FormationClass.HorseArcher) > 0)
-                            { f.SetFiringOrder(FiringOrder.FiringOrderHoldYourFire); affected++; }
                             break;
                     }
                 }
                 catch { }
             }
-
-            Msg(affected > 0
-                ? string.Format(successText, affected, affected == 1 ? "" : "s")
-                : "No matching formations responded.", school);
         }
 
-        // Sound event cache
+        // ── Sound ──────────────────────────────────────────────────────────────
         private static MethodInfo _soundGetId;
 
         private static bool TryResolveSoundEvent()
@@ -657,8 +489,7 @@ namespace ColoursOfCalradia
             if (_soundGetId != null) return true;
             try
             {
-                foreach (System.Reflection.Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
-                {
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                     foreach (string candidate in new[] { "TaleWorlds.MountAndBlade.SoundEvent", "TaleWorlds.Engine.SoundEvent" })
                     {
                         Type t = asm.GetType(candidate);
@@ -668,7 +499,6 @@ namespace ColoursOfCalradia
                         _soundGetId = m;
                         return true;
                     }
-                }
             }
             catch { }
             return false;
@@ -680,7 +510,6 @@ namespace ColoursOfCalradia
             string[] candidates = school == ColorSchool.Red || school == ColorSchool.Purple
                 ? new[] { "event:/mission/ambient/detail/wind_hit", "event:/ui/panels/open" }
                 : new[] { "event:/ui/notifications/quest_update", "event:/ui/panels/open" };
-
             foreach (string path in candidates)
             {
                 try
@@ -696,9 +525,9 @@ namespace ColoursOfCalradia
             }
         }
 
-        private static readonly ActionIndexCache _castAnimCache = ActionIndexCache.Create("act_cheer_1");
-        private static readonly ActionIndexCache _castAnimClearCache = ActionIndexCache.Create("act_none");
-
+        // ── Cast animation ──────────────────────────────────────────────────────
+        private static readonly ActionIndexCache _castAnimCache     = ActionIndexCache.Create("act_cheer_1");
+        private static readonly ActionIndexCache _castAnimClearCache= ActionIndexCache.Create("act_none");
         private static readonly List<(Agent agent, float remaining)> _animClearTimers
             = new List<(Agent, float)>();
 
@@ -712,17 +541,14 @@ namespace ColoursOfCalradia
                     var a = _animClearTimers[i].agent;
                     if (a != null && a.IsActive() && a.Health > 0f)
                     {
-                        bool mounted = false;
-                        try { mounted = a.MountAgent != null; } catch { }
-                        bool usingEquip2 = false;
-                        try { usingEquip2 = a.IsUsingGameObject; } catch { }
-                        if (!mounted && !usingEquip2)
+                        bool mounted = false; try { mounted = a.MountAgent != null; } catch { }
+                        bool usingEquip = false; try { usingEquip = a.IsUsingGameObject; } catch { }
+                        if (!mounted && !usingEquip)
                             try { a.SetActionChannel(0, _castAnimClearCache, true, 0UL); } catch { }
                     }
                     _animClearTimers.RemoveAt(i);
                 }
-                else
-                    _animClearTimers[i] = (_animClearTimers[i].agent, t);
+                else _animClearTimers[i] = (_animClearTimers[i].agent, t);
             }
         }
 
@@ -741,8 +567,6 @@ namespace ColoursOfCalradia
             try { if (agent.IsUsingGameObject) return; } catch { }
             try
             {
-                // Channel 0 immediate: briefly overrides the combat animation so the cast is visible.
-                // act_none clears it 0.8 s later and the combat AI resumes normally.
                 agent.SetActionChannel(0, _castAnimCache, true, 0UL);
                 int idx = _animClearTimers.FindIndex(x => x.agent == agent);
                 if (idx >= 0) _animClearTimers.RemoveAt(idx);
@@ -751,14 +575,7 @@ namespace ColoursOfCalradia
             catch { }
         }
 
-        // Battery multiplier: 1.0 normally (kept for compatibility, unused in colour system)
-        private static float MageUnitBattery(Agent agent) => 1.0f;
-
-        private static void Msg(string text, ColorSchool school) =>
-            InformationManager.DisplayMessage(new InformationMessage(
-                text, ColorSchoolData.GetMessageColor(school)));
-
-        // Militia reflection helper (reused from v1)
+        // ── Militia helper (unchanged) ─────────────────────────────────────────
         private static MethodInfo _setMilitiaSetter;
         private static bool _setMilitiaResolved;
 
@@ -772,8 +589,67 @@ namespace ColoursOfCalradia
                 _setMilitiaSetter = prop?.GetSetMethod(nonPublic: true);
             }
             if (_setMilitiaSetter == null) return false;
-            try { _setMilitiaSetter.Invoke(v, new object[] { value }); return true; }
-            catch { return false; }
+            try { _setMilitiaSetter.Invoke(v, new object[] { value }); return true; } catch { return false; }
+        }
+
+        private static void Msg(string text, ColorSchool school) =>
+            InformationManager.DisplayMessage(new InformationMessage(
+                text, ColorSchoolData.GetMessageColor(school)));
+
+        // ── NPC-specific visual helpers reused from old AI ────────────────────
+        public static void SpawnNpcBlueWall(Vec3 position, Vec3 fwd, Team casterTeam)
+        {
+            // Create a 3-node blue barrier for NPC (using existing Barrier node area effect)
+            for (int i = 0; i < 3; i++)
+            {
+                Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();
+                Vec3 pos = position + fwd * 2f + right * ((i - 1) * 2f);
+                var node = new AreaEffect
+                {
+                    Id = "npc_barrier", School = ColorSchool.Blue, Position = pos,
+                    Radius = 1.5f, TickInterval = 2f, TickTimer = 2f,
+                    Remaining = 15f, Power = 1f, CasterTeam = casterTeam
+                };
+                node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Blue, 5f);
+                _areaEffects.Add(node);
+            }
+        }
+
+        public static void SpawnNpcHealZone(Vec3 position, ColorSchool school, float power, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id = "npc_heal_zone", School = school, Position = position,
+                Radius = 5f, TickInterval = 2f, TickTimer = 2f,
+                Remaining = 12f, Power = power, CasterTeam = casterTeam
+            };
+            node.LightEntity = SpawnAreaLight(node.Position, school, 5f);
+            _areaEffects.Add(node);
+        }
+
+        public static void SpawnNpcYellowCloud(Vec3 position, float power, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id = "npc_yellow_cloud", School = ColorSchool.Yellow, Position = position,
+                Radius = 5f, TickInterval = 2f, TickTimer = 2f,
+                Remaining = 10f, Power = power, CasterTeam = casterTeam,
+                DirTimer = 3f
+            };
+            node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Yellow, 5f);
+            _areaEffects.Add(node);
+        }
+
+        public static void SpawnNpcMoraleAura(Vec3 position, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id = "npc_morale_aura", School = ColorSchool.Yellow, Position = position,
+                Radius = 8f, TickInterval = 3f, TickTimer = 3f,
+                Remaining = 15f, Power = 1f, CasterTeam = casterTeam
+            };
+            node.LightEntity = SpawnAreaLight(node.Position, ColorSchool.Yellow, 6f);
+            _areaEffects.Add(node);
         }
     }
 }

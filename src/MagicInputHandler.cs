@@ -1,58 +1,48 @@
 // =============================================================================
-// COLOURS OF CALRADIA — MagicInputHandler.cs
-// Mount & Blade II: Bannerlord Mod  v1.2.0.0
+// LIFE & DEATH MAGIC — MagicInputHandler.cs
+// Two-phase input: form keys before Break, effect keys after Break.
+//
+// KEYS (while holding Left Alt / LB):
+//   W = U (form: Blast / effect: Damage)
+//   A = L (form: Aura  / effect: Push)
+//   D = R (form: Barrier / effect: Morale)
+//   S = D (form: Burst / effect: Reverse)
+//   E = Break (keyboard)  — switches from form phase to effect phase
+//   L3 click = Break (gamepad)
+//   B = Spellbook (keyboard, while Alt held)
+//   LB + RB = Spellbook (gamepad)
+//
+// Release Alt/LB → SpellBuilder.Parse + SpellBuilder.Execute
 // =============================================================================
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Roster;
-using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
-using TaleWorlds.Engine;
-using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
-using TaleWorlds.ObjectSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
 
 namespace ColoursOfCalradia
 {
-    // =========================================================================
-    // 7. INPUT HANDLER  — 4-key combo system (focus = Left Alt / LT)
-    // =========================================================================
     public static class MagicInputHandler
     {
-        private static string _buffer              = "";
-        private static bool   _wasFocusing         = false;
-        private static string _lastDisplayedBuffer = "";
-        private const  int    MaxLen               = 10;
-        private static readonly Random _rng = new Random();
+        private static string _formBuffer   = "";
+        private static string _effectBuffer = "";
+        private static bool   _inEffectPhase  = false;
+        private static bool   _wasFocusing    = false;
+        private static string _lastDisplayed  = "";
+        private const  int    MaxLen          = 8;
 
-        // Previous-frame state for L-stick directions (IsKeyPressed unreliable for analog axes)
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
-
-        // Form prefixes that can be released early to trigger a random known spell of that form
-        private static readonly HashSet<string> _formPrefixes =
-            new HashSet<string> { "UU", "RR", "LL", "UL", "LU", "UR" };
+        private static bool _prevBreakPad;
 
         public static bool InputSuppressed { get; private set; }
 
         public static void Tick(bool inMission)
         {
             ColourKnowledge.FlushDeferredInquiry();
-            if (!ColourKnowledge.HasAnySchool) { InputSuppressed = false; return; }
+            if (!MageKnowledge.IsMage) { InputSuppressed = false; return; }
 
-            // ControllerLTrigger takes priority — Bannerlord maps L-trigger to LeftAlt at the
-            // OS level, so both can be true simultaneously when using a controller. Checking
-            // the controller key first and excluding it from the keyboard path prevents face
-            // buttons (Y→W, X→A, A→S) from bleeding into the spell buffer.
             bool focusingPad = Input.IsKeyDown(InputKey.ControllerLBumper);
             bool focusingKb  = Input.IsKeyDown(InputKey.LeftAlt) && !focusingPad;
             bool focusing    = focusingKb || focusingPad;
@@ -66,93 +56,138 @@ namespace ColoursOfCalradia
                 if (!inMission && Campaign.Current != null)
                     Campaign.Current.TimeControlMode = CampaignTimeControlMode.UnstoppablePlay;
 
-                // Keyboard path: only when Left Alt is the focus key, so controller face-button
-                // virtual keys (Y→W, X→A, A→S) don't bleed into the spell buffer.
+                // Spellbook: LB + RB (gamepad)
+                if (focusingPad && Input.IsKeyPressed(InputKey.ControllerRBumper))
+                {
+                    ColourKnowledge.ShowGrimoire(inMission, true);
+                    return;
+                }
+
+                // Spellbook: Alt + B (keyboard)
+                if (focusingKb && Input.IsKeyPressed(InputKey.B))
+                {
+                    ColourKnowledge.ShowGrimoire(inMission, false);
+                    return;
+                }
+
                 if (focusingKb)
                 {
-                    if      (Input.IsKeyPressed(InputKey.W)) Append("U");
-                    else if (Input.IsKeyPressed(InputKey.A)) Append("L");
-                    else if (Input.IsKeyPressed(InputKey.D)) Append("R");
-                    else if (Input.IsKeyPressed(InputKey.S))
+                    if (!_inEffectPhase)
                     {
-                        if (_buffer.Length == 0) ColourKnowledge.ShowGrimoire(inMission, false);
-                        else Append("D");
+                        if (Input.IsKeyPressed(InputKey.E))
+                        {
+                            if (_formBuffer.Length > 0) _inEffectPhase = true;
+                        }
+                        else
+                        {
+                            if (Input.IsKeyPressed(InputKey.W)) AppendForm("U");
+                            else if (Input.IsKeyPressed(InputKey.A)) AppendForm("L");
+                            else if (Input.IsKeyPressed(InputKey.D)) AppendForm("R");
+                            else if (Input.IsKeyPressed(InputKey.S)) AppendForm("D");
+                        }
+                    }
+                    else
+                    {
+                        if (Input.IsKeyPressed(InputKey.W)) AppendEffect("U");
+                        else if (Input.IsKeyPressed(InputKey.A)) AppendEffect("L");
+                        else if (Input.IsKeyPressed(InputKey.D)) AppendEffect("R");
+                        else if (Input.IsKeyPressed(InputKey.S)) AppendEffect("D");
                     }
                 }
 
-                // Gamepad: L-stick directions via manual edge detection (IsKeyDown + prev-state)
-                // Only runs when L-trigger is the focus key.
                 if (focusingPad)
                 {
                     bool lUp    = Input.IsKeyDown(InputKey.ControllerLStickUp);
                     bool lDown  = Input.IsKeyDown(InputKey.ControllerLStickDown);
                     bool lLeft  = Input.IsKeyDown(InputKey.ControllerLStickLeft);
                     bool lRight = Input.IsKeyDown(InputKey.ControllerLStickRight);
+                    bool l3     = Input.IsKeyDown(InputKey.ControllerLThumb);
 
-                    if (lUp    && !_prevLUp)   Append("U");
-                    if (lDown  && !_prevLDown) { if (_buffer.Length == 0) ColourKnowledge.ShowGrimoire(inMission, true); else Append("D"); }
-                    if (lLeft  && !_prevLLeft) Append("L");
-                    if (lRight && !_prevLRight) Append("R");
+                    // L3 = Break
+                    if (!_inEffectPhase && l3 && !_prevBreakPad && _formBuffer.Length > 0)
+                        _inEffectPhase = true;
+
+                    if (!_inEffectPhase)
+                    {
+                        if (lUp    && !_prevLUp)   AppendForm("U");
+                        if (lDown  && !_prevLDown)  AppendForm("D");
+                        if (lLeft  && !_prevLLeft)  AppendForm("L");
+                        if (lRight && !_prevLRight) AppendForm("R");
+                    }
+                    else
+                    {
+                        if (lUp    && !_prevLUp)   AppendEffect("U");
+                        if (lDown  && !_prevLDown)  AppendEffect("D");
+                        if (lLeft  && !_prevLLeft)  AppendEffect("L");
+                        if (lRight && !_prevLRight) AppendEffect("R");
+                    }
 
                     _prevLUp = lUp; _prevLDown = lDown; _prevLLeft = lLeft; _prevLRight = lRight;
-
-                    if (Input.IsKeyPressed(InputKey.ControllerLThumb)) ColourKnowledge.ShowGrimoire(inMission, true);
+                    _prevBreakPad = l3;
                 }
 
-                if (_buffer.Length > 0 && _buffer != _lastDisplayedBuffer)
+                // Buffer display
+                string display = _inEffectPhase
+                    ? $"{_formBuffer} ▷ {_effectBuffer}"
+                    : _formBuffer;
+                if (display.Length > 0 && display != _lastDisplayed)
                 {
-                    _lastDisplayedBuffer = _buffer;
+                    _lastDisplayed = display;
                     InformationManager.DisplayMessage(new InformationMessage(
-                        "[ " + _buffer + " ]", new Color(0.7f, 0.7f, 0.7f)));
+                        "[ " + display + " ]", new Color(0.7f, 0.7f, 0.7f)));
                 }
             }
             else if (_wasFocusing)
             {
                 _wasFocusing = false;
                 _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
+                _prevBreakPad = false;
+                _lastDisplayed = "";
 
                 if (!inMission && Campaign.Current != null)
                     Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop;
 
-                _lastDisplayedBuffer = "";
+                TryCast(inMission);
 
-                if (_buffer.Length >= 4)
-                    TryCast(_buffer, inMission);
-                else if (_buffer.Length == 2 && _formPrefixes.Contains(_buffer))
-                    TryRandomFormCast(_buffer, inMission);
-                else if (_buffer.Length > 0)
-                    Fizzle("Incantation too short — colour magic requires four keys.");
-
-                _buffer = "";
+                _formBuffer    = "";
+                _effectBuffer  = "";
+                _inEffectPhase = false;
             }
         }
 
-        private static void Append(string dir)
+        private static void AppendForm(string dir)
         {
-            if (_buffer.Length < MaxLen) _buffer += dir;
+            if (_formBuffer.Length < MaxLen) _formBuffer += dir;
         }
 
-        private static void TryCast(string combo, bool inMission)
+        private static void AppendEffect(string dir)
         {
-            SpellEntry spell = SpellDatabase.Find(combo);
-            if (spell == null) { Fizzle("The colours do not answer."); return; }
+            if (_effectBuffer.Length < MaxLen) _effectBuffer += dir;
+        }
 
-            // School access check
-            if (!ColourKnowledge.HasSchool(spell.School))
+        private static void TryCast(bool inMission)
+        {
+            if (_formBuffer.Length == 0) return;
+
+            if (!_inEffectPhase)
             {
-                Fizzle($"You have not chosen the {ColorSchoolData.Info[spell.School].Name} school.");
+                Fizzle("No Break pressed — type form keys, press E (Break), then type effect keys.");
                 return;
             }
 
-            // Context check
-            if (spell.Context == SpellContext.Mission && !inMission)
-            { Fizzle($"{spell.Name} can only be cast in battle."); return; }
-            if (spell.Context == SpellContext.Map && inMission)
-            { Fizzle($"{spell.Name} can only be cast on the campaign map."); return; }
+            if (_effectBuffer.Length == 0)
+            {
+                Fizzle("No effects typed after Break.");
+                return;
+            }
 
-            // ── Pre-cast limitation checks ────────────────────────────────────
+            if (!inMission)
+            {
+                // Campaign map — show talent menu instead of battle spells
+                ColourKnowledge.ShowCampaignCastMenu();
+                return;
+            }
 
-            // Captive guard: a prisoner cannot weave the colours.
             try
             {
                 if (Hero.MainHero != null && Hero.MainHero.IsPrisoner)
@@ -163,86 +198,7 @@ namespace ColoursOfCalradia
             }
             catch { }
 
-            // Global: magic requires light — the mage acts as a prism.
-            // School affinity (season/city) can upgrade Dark → Dim for specific schools.
-            var lightLevel = inMission
-                ? SpellEffects.GetEffectiveLightLevel(spell.School)
-                : SpellEffects.GetCampaignLightLevel();
-            if (lightLevel == SpellEffects.LightLevel.Dark)
-            {
-                Fizzle("The colours require light. Magic cannot be woven in deep night or dark places.");
-                return;
-            }
-            if (lightLevel == SpellEffects.LightLevel.Dim && SpellEffects.RollDimFizzle())
-            {
-                Fizzle("The fading light weakens the weave. The spell unravels before taking shape.");
-                return;
-            }
-
-
-            // Blue — Scholar's Craft: no weapon in hand
-            if (spell.School == ColorSchool.Blue && inMission && Agent.Main != null)
-            {
-                try
-                {
-                    var wielded = Agent.Main.WieldedWeapon;
-                    bool hasWeapon = !wielded.IsEmpty &&
-                        wielded.CurrentUsageItem?.WeaponClass != WeaponClass.Boulder &&
-                        wielded.CurrentUsageItem?.IsShield != true;
-                    if (hasWeapon)
-                    {
-                        Fizzle("Scholar's Craft: Sheathe your weapon before casting Blue magic.");
-                        return;
-                    }
-                }
-                catch { }
-            }
-
-            // Green — Nature's Calling: cannot cast inside settlements (campaign map only)
-            if (spell.School == ColorSchool.Green && !inMission)
-            {
-                try
-                {
-                    if (Settlement.CurrentSettlement != null)
-                    {
-                        Fizzle("Nature's Calling: Green magic will not flow within settlement walls — step outside.");
-                        return;
-                    }
-                }
-                catch { }
-            }
-
-            // Yellow — Animal Fear: cannot cast on horseback
-            if (spell.School == ColorSchool.Yellow && inMission && Agent.Main != null)
-            {
-                try
-                {
-                    if (Agent.Main.MountAgent != null)
-                    {
-                        Fizzle("Animal Fear: Yellow magic will not flow while you ride — dismount first.");
-                        return;
-                    }
-                }
-                catch { }
-            }
-
-            // Orange — Joyful Cast: party morale must be ≥ 65
-            if (spell.School == ColorSchool.Orange)
-            {
-                try
-                {
-                    float morale = MobileParty.MainParty?.RecentEventsMorale ?? 100f;
-                    if (morale < 65f)
-                    {
-                        Fizzle($"Joyful Cast: Party morale too low ({morale:F0}/65) — the warmth will not flow through misery.");
-                        return;
-                    }
-                }
-                catch { }
-            }
-
-            // ── Tournament guard ──────────────────────────────────────────────
-            if (inMission && IsInTournament())
+            if (IsInTournament())
             {
                 InformationManager.DisplayMessage(new InformationMessage(
                     "Sorcery in the tournament — you are disqualified!",
@@ -251,130 +207,37 @@ namespace ColoursOfCalradia
                 return;
             }
 
-            // ── Madness redirect ─────────────────────────────────────────────
-            // Chance to misfire as a random different-colour spell of the same form.
-            // Uses the same threshold as battle-order scrambling.
-            int madnessChance = ColourKnowledge.GetMadnessOrderChance();
-            if (madnessChance > 0 && _rng.Next(100) < madnessChance)
+            SpellCast cast = SpellBuilder.Parse(_formBuffer, _effectBuffer);
+
+            if (cast.IsFumble)
             {
-                string prefix = combo.Substring(0, 2);
-                var alts = SpellDatabase.All
-                    .Where(s => s.Combo.StartsWith(prefix)
-                             && s.School != spell.School
-                             && ColourKnowledge.HasSchool(s.School)
-                             && s.Context == spell.Context)
-                    .ToList();
-                if (alts.Count > 0)
-                {
-                    SpellEntry redirect = alts[_rng.Next(alts.Count)];
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"Madness twists the weave — {spell.Name} unravels into {redirect.Name}!",
-                        Color.FromUint(0xFFAA44FF)));
-                    combo = redirect.Combo;
-                    spell = redirect;
-                }
-            }
-
-            // ── Cast ─────────────────────────────────────────────────────────
-            // Snapshot dismiss state before Execute flips the toggle.
-            bool isDismiss = SpellEffects.IsToggleDismiss(combo);
-
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"[{ColorSchoolData.Info[spell.School].Name} — {spell.Name}]  {spell.Flavour}",
-                ColorSchoolData.GetMessageColor(spell.School)));
-
-            bool success;
-            try { success = SpellEffects.Execute(combo); }
-            catch { success = true; } // spell threw internally — cast was attempted
-
-            // Visual: caster glow + charge animation + sound
-            if (inMission && Agent.Main != null)
-                SpellEffects.CastGlow(Agent.Main, spell.School);
-
-            if (!success) return;
-
-            // ── Post-cast limitation side effects ─────────────────────────────
-
-            // Red A1 — Furious: issue Charge to own formations
-            if (spell.School == ColorSchool.Red && inMission && Agent.Main != null)
-                SpellEffects.IssueChargeToOwnFormations(Agent.Main);
-
-            // Red A2 — Blood Price: 2 self-damage
-            if (spell.School == ColorSchool.Red && inMission && Agent.Main != null)
-            {
-                try { Agent.Main.Health = Math.Max(1f, Agent.Main.Health - 2f); }
-                catch { }
-            }
-
-            // Purple — The Slow Unravelling: −1% fertility + 1 day aging per cast
-            if (spell.School == ColorSchool.Purple)
-            {
-                try
-                {
-                    if (Hero.MainHero != null)
-                    {
-                        Hero.MainHero.SetBirthDay(Hero.MainHero.BirthDay - CampaignTime.Days(1));
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"The Slow Unravelling: A day fades from you. | Age: {(int)Hero.MainHero.Age}",
-                            ColorSchoolData.GetMessageColor(ColorSchool.Purple)));
-                    }
-                }
-                catch { }
-                if (ColourKnowledge.ReducePurpleFertility())
-                {
-                    int pct = (int)(ColourKnowledge.PurpleFertilityLevel * 100f);
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"The Slow Unravelling: Something within grows quieter. Fertility: {pct}%",
-                        ColorSchoolData.GetMessageColor(ColorSchool.Purple)));
-                }
-            }
-
-            // Saturation gain + personality drift (skipped when dismissing a toggle effect)
-            if (!isDismiss)
-            {
-                if (inMission)
-                    SaturationSystem.GainSaturation();
-                else
-                    SaturationSystem.GainSaturationCampaign();
-            }
-            ColourKnowledge.RecordCast(spell.School);
-        }
-
-        // Picks a random known spell whose combo starts with `prefix` and matches context,
-        // then casts it via TryCast (which applies all normal validation + madness checks).
-        private static void TryRandomFormCast(string prefix, bool inMission)
-        {
-            var context = inMission ? SpellContext.Mission : SpellContext.Map;
-            var candidates = SpellDatabase.All
-                .Where(s => s.Combo.StartsWith(prefix)
-                         && ColourKnowledge.HasSchool(s.School)
-                         && s.Context == context)
-                .ToList();
-
-            if (candidates.Count == 0)
-            {
-                Fizzle($"No known {FormName(prefix)} spells for this context.");
+                Fizzle("Fumble — mixed form inputs. Use a single direction for forms (all W, all A, etc.).");
                 return;
             }
 
-            SpellEntry chosen = candidates[_rng.Next(candidates.Count)];
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"[ {prefix} → {chosen.Combo} ]",
-                new Color(0.7f, 0.7f, 0.7f)));
-            TryCast(chosen.Combo, inMission);
-        }
-
-        private static string FormName(string prefix)
-        {
-            switch (prefix)
+            if (!cast.HasAnyEffect)
             {
-                case "UU": return "Blast";
-                case "RR": return "Self";
-                case "LL": return "Create";
-                case "UL": return "Affect";
-                case "LU": return "Invoke";
-                case "UR": return "Commune";
-                default:   return prefix;
+                Fizzle("No recognizable effects. Use W=Damage, A=Push, D=Morale, S=Reverse after Break.");
+                return;
+            }
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"[{cast.FormSummary()}] → Break → [{cast.EffectSummary()}]",
+                ColorSchoolData.GetMessageColor(cast.VisualColor)));
+
+            bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
+            bool success = SpellBuilder.Execute(cast, inMission);
+
+            if (success)
+            {
+                int agingDays = cast.AgingDays(hasBattleMage);
+                if (agingDays > 0)
+                {
+                    AgingSystem.AgeHero(Hero.MainHero, agingDays);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"[Aging] The casting costs {agingDays} day{(agingDays > 1 ? "s" : "")}. Age: {(int)(Hero.MainHero?.Age ?? 0)}",
+                        new Color(0.5f, 0.4f, 0.7f)));
+                }
             }
         }
 
