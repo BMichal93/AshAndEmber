@@ -23,6 +23,8 @@ namespace AshAndEmber
         private int  _prisonerCountSnapshot = -1;
         private int  _dayCounter            = 0;
         private int  _reapRaidCooldown      = 0;
+        private int  _lordAnnounceCountdown = -1;
+        private bool _lordAnnouncementDone  = false;
         private static readonly Random _rng = new Random();
 
         private static readonly string[] _premonitions =
@@ -112,6 +114,7 @@ namespace AshAndEmber
             try { AgingSystem.DailyAgeCheck(); } catch { }
             try { CheckReapPrisonerYield(); } catch { }
             if (_reapRaidCooldown > 0) _reapRaidCooldown--;
+            try { TickLordAnnouncement(); } catch { }
             _dayCounter++;
             if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
         }
@@ -170,6 +173,59 @@ namespace AshAndEmber
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"You sense another fire nearby — {nearMage.Name} burns with it.",
                         new Color(0.9f, 0.6f, 0.2f)));
+            }
+            catch { }
+        }
+
+        // ── Lord flame announcement (fires once, ~3 days after game start) ──────
+        private void TickLordAnnouncement()
+        {
+            if (_lordAnnouncementDone) return;
+            if (_lordAnnounceCountdown < 0)
+            {
+                _lordAnnounceCountdown = 1; // start 1-day countdown; fires on day 3
+                return;
+            }
+            if (_lordAnnounceCountdown > 0)
+            {
+                _lordAnnounceCountdown--;
+                return;
+            }
+            // countdown == 0 → announce
+            _lordAnnouncementDone = true;
+            AnnounceMageLords();
+        }
+
+        private void AnnounceMageLords()
+        {
+            if (!MageKnowledge.IsMage) return;
+            try
+            {
+                var lords = Hero.AllAliveHeroes
+                    .Where(h => h.IsLord && h != Hero.MainHero && h.IsAlive
+                             && ColourLordRegistry.IsColourLord(h))
+                    .ToList();
+                if (lords.Count == 0) return;
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"The fire stirs — you sense other flames across Calradia. " +
+                    $"{lords.Count} lord{(lords.Count != 1 ? "s" : "")} carr{(lords.Count != 1 ? "y" : "ies")} the gift.",
+                    new Color(0.7f, 0.5f, 1.0f)));
+
+                const int maxNamed = 5;
+                var named = lords.Take(maxNamed).Select(h =>
+                {
+                    string place = h.Clan?.Kingdom?.Name?.ToString()
+                                ?? h.Clan?.Name?.ToString()
+                                ?? "the wilds";
+                    return $"{h.Name} ({place})";
+                });
+                string tail = lords.Count > maxNamed
+                    ? $" — and {lords.Count - maxNamed} others."
+                    : ".";
+                InformationManager.DisplayMessage(new InformationMessage(
+                    string.Join(", ", named) + tail,
+                    new Color(0.6f, 0.45f, 0.9f)));
             }
             catch { }
         }
@@ -377,6 +433,8 @@ namespace AshAndEmber
             dataStore.SyncData("LDM_PrisonerSnapshot",     ref _prisonerCountSnapshot);
             dataStore.SyncData("LDM_DayCounter",           ref _dayCounter);
             dataStore.SyncData("LDM_ReapRaidCooldown",     ref _reapRaidCooldown);
+            dataStore.SyncData("LDM_LordAnnounceCD",       ref _lordAnnounceCountdown);
+            dataStore.SyncData("LDM_LordAnnounceDone",     ref _lordAnnouncementDone);
             MageKnowledge.Save(dataStore);      // also saves TalentSystem internally
             ColourLordRegistry.Save(dataStore);
         }
