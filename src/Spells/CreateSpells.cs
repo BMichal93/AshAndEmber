@@ -28,7 +28,7 @@ namespace ColoursOfCalradia
             {
                 RemoveAreaEffect(BarrierId);
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "[Barrier] Dismissed.", new Color(0.7f, 0.7f, 0.7f)));
+                    "Barrier released.", new Color(0.7f, 0.7f, 0.7f)));
                 return;
             }
 
@@ -49,9 +49,8 @@ namespace ColoursOfCalradia
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
 
-            string reverseTag = cast.Reversed ? " [Reversed]" : "";
             InformationManager.DisplayMessage(new InformationMessage(
-                $"[Barrier{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — cast again to dismiss.",
+                $"Barrier — {cast.EffectSummary()}. Cast again to release.",
                 ColorSchoolData.GetMessageColor(col)));
         }
 
@@ -169,9 +168,8 @@ namespace ColoursOfCalradia
 
             if (caster == Agent.Main)
             {
-                string reverseTag = cast.Reversed ? " [Reversed]" : "";
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"[Burst{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
+                    $"{cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
                     ColorSchoolData.GetMessageColor(col)));
             }
         }

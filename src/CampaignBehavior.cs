@@ -40,14 +40,14 @@ namespace ColoursOfCalradia
             MageKnowledge.ResetForNewGame();
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Life and Death Magic",
-                "As a child, you sometimes sensed things others could not — warmth ebbing from the wounded, the weight behind dying eyes. Do you feel the power?",
+                "The Gift",
+                "As a child, you sometimes sensed things others could not — warmth ebbing from the wounded, the weight behind dying eyes. Do you feel it still?",
                 new List<InquiryElement>
                 {
-                    new InquiryElement("yes", "Yes — I feel it.", null, true,
-                        "You begin with the Gift talent. Casting costs aging (4 inputs = 1 day). Open the spellbook with Alt+B to learn more talents."),
-                    new InquiryElement("no", "No — I am ordinary.", null, true,
-                        "You walk without the gift. Magic passes you by."),
+                    new InquiryElement("yes", "I feel it still.", null, true,
+                        "The current stirs in you. Press Alt+B to open your grimoire."),
+                    new InquiryElement("no", "I feel nothing.", null, true,
+                        "The current passes you by."),
                 },
                 false, 1, 1,
                 "Choose.",
@@ -59,16 +59,16 @@ namespace ColoursOfCalradia
                     if (isMage)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The gift stirs. Hold Left Alt, type form keys (WASD), press E (Break), type effect keys, release Alt to cast.",
+                            "The gift stirs. Hold Alt, type form keys (WASD), press E to Break, type effect keys, release Alt to cast.",
                             new Color(0.7f, 0.5f, 1.0f)));
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "Forms: W=Blast, A=Aura, D=Barrier, S=Burst  |  Effects: W=Damage, A=Push, D=Morale, S=Reverse  |  Alt+B = Spellbook",
+                            "Forms: W=Blast  A=Aura  D=Barrier  S=Burst  |  Effects: W=Damage  A=Push  D=Morale  S=Reverse  |  Alt+B = Grimoire",
                             new Color(0.6f, 0.6f, 0.8f)));
                     }
                     else
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "You walk an ordinary path. The power passes you by.",
+                            "The current passes you by.",
                             new Color(0.6f, 0.6f, 0.6f)));
                     }
                     _selectionDone = true;
@@ -155,7 +155,7 @@ namespace ColoursOfCalradia
                             AgingSystem.AgeHero(leader, agingDays);
                             if (playerInvolved)
                                 InformationManager.DisplayMessage(new InformationMessage(
-                                    $"{leader.Name} ages {agingDays} day{(agingDays > 1 ? "s" : "")} from battle casting.",
+                                    $"{leader.Name} is spent by the working — {agingDays} day{(agingDays > 1 ? "s" : "")} older.",
                                     new Color(0.5f, 0.4f, 0.7f)));
                         }
                         catch { }

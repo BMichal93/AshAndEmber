@@ -51,7 +51,7 @@ namespace ColoursOfCalradia
 
                 if (hero == Hero.MainHero)
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"[Life & Death] The casting takes its toll — you are {days} day{(days > 1 ? "s" : "")} older. Age: {(int)hero.Age}",
+                        $"The current takes its toll — {days} day{(days > 1 ? "s" : "")} older. Age: {(int)hero.Age}.",
                         new Color(0.6f, 0.6f, 0.9f)));
 
                 CheckAgeLimit(hero);
@@ -84,11 +84,11 @@ namespace ColoursOfCalradia
             {
                 if (hero == Hero.MainHero)
                     InformationManager.DisplayMessage(new InformationMessage(
-                        "[Life & Death] A century of years — the current reclaims what it gave. Your body yields at last.",
+                        "A century of years — the current reclaims what it gave.",
                         new Color(0.4f, 0.4f, 0.8f)));
                 else
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"{hero.Name} has reached a century of years. The life energy is exhausted — they are gone.",
+                        $"{hero.Name} — a century spent. The current takes what remains.",
                         new Color(0.4f, 0.4f, 0.8f)));
 
                 KillCharacterAction.ApplyByOldAge(hero, true);

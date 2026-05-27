@@ -29,7 +29,7 @@ namespace ColoursOfCalradia
             {
                 RemoveAreaEffect(AuraId);
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "[Aura] Dismissed.", new Color(0.7f, 0.7f, 0.7f)));
+                    "Aura released.", new Color(0.7f, 0.7f, 0.7f)));
                 return;
             }
 
@@ -42,9 +42,8 @@ namespace ColoursOfCalradia
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
 
-            string reverseTag = cast.Reversed ? " [Reversed]" : "";
             InformationManager.DisplayMessage(new InformationMessage(
-                $"[Aura{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — cast again to dismiss.",
+                $"Aura — {cast.EffectSummary()}. Cast again to release.",
                 ColorSchoolData.GetMessageColor(col)));
         }
 

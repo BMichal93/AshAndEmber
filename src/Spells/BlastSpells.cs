@@ -51,7 +51,7 @@ namespace ColoursOfCalradia
             {
                 if (caster == Agent.Main)
                     InformationManager.DisplayMessage(new InformationMessage(
-                        "[Blast] No targets in the cone.", new Color(0.7f, 0.7f, 0.7f)));
+                        "Nothing in range.", new Color(0.7f, 0.7f, 0.7f)));
                 return;
             }
 
@@ -74,10 +74,8 @@ namespace ColoursOfCalradia
 
             if (caster == Agent.Main)
             {
-                string colorName = ColorSchoolData.GetEffectName(glowColor);
-                string reverseTag = cast.Reversed ? " [Reversed]" : "";
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"[Blast{reverseTag}] {cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
+                    $"{cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
                     ColorSchoolData.GetMessageColor(glowColor)));
             }
         }

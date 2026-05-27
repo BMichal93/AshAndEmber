@@ -52,79 +52,79 @@ namespace ColoursOfCalradia
             {
                 Id = TalentId.Gift, IsSpell = false, Name = "Gift",
                 Lore = "You were born with a thread of something older than language running through your blood — a current that hums against your bones when the dying are near. Most never feel it. You do.",
-                MechanicDesc = "Starting talent. You can feel and manipulate life energies."
+                MechanicDesc = "You carry the gift. In battle, shape the current: form keys, Break, effect keys."
             },
             new TalentDef
             {
                 Id = TalentId.Subjugate, IsSpell = true, Name = "Subjugate",
                 Lore = "The will bends before the life it most fears losing. You reach into a captive's dread and offer them a worse fate than service — and they choose service.",
-                MechanicDesc = "A random non-hero prisoner joins your ranks. Ages you by 1 day."
+                MechanicDesc = "A prisoner yields to your will and joins your ranks. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Rejuvenate, IsSpell = true, Name = "Rejuvenate",
                 Lore = "You take the spare warmth of the living world and press it into a wound, pushing the body toward what it still remembers: wholeness.",
-                MechanicDesc = "Heals a random wounded unit in your army. Ages you by 1 day."
+                MechanicDesc = "Several wounded soldiers in your army recover. Costs 1 day."
             },
             new TalentDef
             {
-                Id = TalentId.PlantGrowth, IsSpell = true, Name = "Plant Growth",
+                Id = TalentId.PlantGrowth, IsSpell = true, Name = "Quicken",
                 Lore = "The soil is never empty — it is merely waiting. You ask it to stop waiting.",
-                MechanicDesc = "Gain 20 grain. Ages you by 1 day."
+                MechanicDesc = "20 grain grows where you ask it. Costs 1 day."
             },
             new TalentDef
             {
-                Id = TalentId.BreakWills, IsSpell = true, Name = "Break Wills",
+                Id = TalentId.BreakWills, IsSpell = true, Name = "Unsettle",
                 Lore = "Courage is a fragile thing, built on the belief that survival is still possible. You whisper to the part of a man that has always known it is not.",
-                MechanicDesc = "The nearest enemy party suffers -20 morale. Ages you by 1 day."
+                MechanicDesc = "The nearest enemy party loses 20 morale. Costs 1 day."
             },
             new TalentDef
             {
-                Id = TalentId.Inspire, IsSpell = true, Name = "Inspire",
+                Id = TalentId.Inspire, IsSpell = true, Name = "Kindle",
                 Lore = "You let them feel it briefly — the warmth that says the world cares whether they live. It is a lie, but a merciful one, and it holds long enough to matter.",
-                MechanicDesc = "Your party gains +20 morale. Ages you by 1 day."
+                MechanicDesc = "Your party gains 20 morale. Costs 1 day."
             },
             new TalentDef
             {
-                Id = TalentId.Plague, IsSpell = true, Name = "Plague",
+                Id = TalentId.Plague, IsSpell = true, Name = "Wither",
                 Lore = "Life is not a gift. It is a density — and you know exactly how to thin it. You breathe something old and patient into the fields of your enemies.",
-                MechanicDesc = "A random enemy village loses 20% of its hearth. Ages you by 1 day."
+                MechanicDesc = "An enemy village loses a fifth of its hearth. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Clairvoyance, IsSpell = true, Name = "Clairvoyance",
                 Lore = "You press your awareness outward along the threads of life that connect every breathing thing. What others call intelligence, you simply read from the world itself.",
-                MechanicDesc = "Gain 20 influence. Ages you by 1 day."
+                MechanicDesc = "Gain 20 influence. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Curse, IsSpell = true, Name = "Curse",
                 Lore = "You mark a thread and pull. The body follows where the life energy leads — and you are leading it toward ruin.",
-                MechanicDesc = "2–4 random units in the nearest enemy party are wounded or killed. Ages you by 1 day."
+                MechanicDesc = "2–4 soldiers in the nearest enemy party are wounded or killed. Costs 1 day."
             },
             new TalentDef
             {
-                Id = TalentId.DevourLife, IsSpell = false, Name = "Devour Life",
+                Id = TalentId.DevourLife, IsSpell = false, Name = "Harvest",
                 Lore = "Death is not waste — it is density returned to the flow. When you take a life deliberately, with your hands and your intent, something comes back to you.",
-                MechanicDesc = "Passive. Executing a captured lord restores 150 days of your youth."
+                MechanicDesc = "Passive. Executing a captured lord draws back 150 days of youth."
             },
             new TalentDef
             {
-                Id = TalentId.BattleMage, IsSpell = false, Name = "Battle Mage",
+                Id = TalentId.BattleMage, IsSpell = false, Name = "Tempered",
                 Lore = "You have learned to draw more from less — to find the same depth of working with a lighter gesture, a shorter reach into the current.",
-                MechanicDesc = "Passive. Battle spell aging cost reduced: 1 day per 5 inputs instead of 4."
+                MechanicDesc = "Passive. The aging threshold rises from 4 inputs to 5."
             },
             new TalentDef
             {
-                Id = TalentId.Sorcerer, IsSpell = false, Name = "Sorcerer",
+                Id = TalentId.Sorcerer, IsSpell = false, Name = "Resonance",
                 Lore = "Sometimes the current gives back what it takes. You have learned to listen for the moment when the flow is generous.",
-                MechanicDesc = "Passive. 25% chance campaign spells do not age you."
+                MechanicDesc = "Passive. One in four castings costs no days."
             },
             new TalentDef
             {
-                Id = TalentId.Camaraderie, IsSpell = false, Name = "Camaraderie",
+                Id = TalentId.Camaraderie, IsSpell = false, Name = "Kinship",
                 Lore = "You know what it is to carry the weight of the gift alone. So do they. That understanding moves faster than politics.",
-                MechanicDesc = "Passive. +10 relations with all mage lords on learning. Relations with mage lords cannot drop below -10."
+                MechanicDesc = "Passive. +10 relations with those who carry the gift. Never falls below −10."
             },
         };
 
@@ -201,7 +201,7 @@ namespace ColoursOfCalradia
 
             var def = GetDef(id);
             InformationManager.DisplayMessage(new InformationMessage(
-                $"[Life & Death Magic] Talent learned: {def.Name}. {def.MechanicDesc}",
+                $"You have learned {def.Name}. {def.MechanicDesc}",
                 new Color(0.7f, 0.9f, 0.7f)));
             return true;
         }
@@ -250,7 +250,7 @@ namespace ColoursOfCalradia
             if (skipAging)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "[Sorcerer] The current gives back — no aging this time.",
+                    "The current gives back.",
                     new Color(0.7f, 0.9f, 0.7f)));
             }
             else
@@ -496,7 +496,7 @@ namespace ColoursOfCalradia
 
         private static void Msg(string text) =>
             InformationManager.DisplayMessage(new InformationMessage(
-                $"[Life & Death Magic] {text}", new Color(0.7f, 0.9f, 0.7f)));
+                text, new Color(0.7f, 0.9f, 0.7f)));
 
         // ── Save / Load ────────────────────────────────────────────────────────
         public static void Save(IDataStore store)

@@ -82,9 +82,7 @@ namespace ColoursOfCalradia
                     _mageIds.Add(lords[i].StringId);
                     AssignRandomTalents(lords[i].StringId);
                 }
-                InformationManager.DisplayMessage(new InformationMessage(
-                    $"Life and death magic stirs — {Math.Min(target, lords.Count)} lords walk with the gift.",
-                    new Color(0.7f, 0.5f, 1.0f)));
+                // seeding is silent — no announcement
             }
             catch { }
         }
@@ -126,10 +124,7 @@ namespace ColoursOfCalradia
                         AssignRandomTalents(candidates[i].StringId);
                         added++;
                     }
-                    if (added > 0)
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"Life energy seeks new vessels — {added} new mage lord{(added > 1 ? "s" : "")} emerge.",
-                            new Color(0.6f, 0.5f, 0.8f)));
+                    // population adjustment is silent
                 }
                 else if (pct > UpperBound)
                 {
@@ -160,7 +155,7 @@ namespace ColoursOfCalradia
                     try
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"{h.Name} has been consumed by a century of life-energy. The gift burns out.",
+                            $"{h.Name} — a century spent. The current takes what remains.",
                             new Color(0.5f, 0.3f, 0.7f)));
                         KillCharacterAction.ApplyByOldAge(h, true);
                     }

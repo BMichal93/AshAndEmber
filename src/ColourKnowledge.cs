@@ -61,7 +61,7 @@ namespace ColoursOfCalradia
             if (!_isMage)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "You feel nothing. The current does not stir for you.",
+                    "The current does not stir.",
                     Color.FromUint(0xFFAAAAAA)));
                 return;
             }
@@ -71,37 +71,35 @@ namespace ColoursOfCalradia
                 : "Hold Left Alt + W/A/D/S, press E to Break, release to cast. Alt+B opens spellbook.";
 
             string desc =
-                "[LIFE & DEATH MAGIC]\n" +
                 $"{inputHint}\n\n" +
-                "CASTING\n" +
-                "  Input form keys → press Break (E/L3) → input effect keys → release focus key.\n" +
-                "  Mixed form inputs = fumble. Effects stack freely.\n\n" +
-                "FORMS (before Break)\n" +
-                "  ↑  Blast  — forward cone, 2m per ↑\n" +
-                "  ←  Aura   — expanding cloud, +1 node per ←\n" +
-                "  →  Barrier — wall nodes, 1 node per →\n" +
-                "  ↓  Burst  — circle around self, 2m radius per ↓\n\n" +
-                "EFFECTS (after Break)\n" +
-                "  ↑  Vitality  — 5 damage per ↑ (Red)\n" +
-                "  ←  Force     — 2m pushback per ← (Blue)\n" +
-                "  →  Will-Break — -3 morale per → (Yellow)\n" +
-                "  ↓  Reverse   — flip all effects (heal/pull/boost morale)\n\n" +
-                "COMBINED COLOURS\n" +
-                "  Vitality+Will-Break = Orange  |  Force+Vitality = Purple  |  Will-Break+Force = Green\n" +
-                "  Reversed effects appear in lighter shades.\n\n" +
-                "AGING COST  (total inputs = form + effect)\n" +
-                "  <4 inputs — free  |  4–5 = 1 day  |  6–7 = 2 days  |  8–9 = 3 days\n" +
-                (TalentSystem.Has(TalentId.BattleMage) ? "  [Battle Mage] Cost lowered: threshold 5 instead of 4.\n" : "") +
-                "\nEXAMPLE\n" +
-                "  ↑↑↑  Break  ↑↑↑↑↑  =  Blast (6m cone), 25 damage, ages 2 days.";
+                "Casting\n" +
+                "  Form keys → Break (E/L3) → effect keys → release focus.\n" +
+                "  Mixed form inputs fumble. Effects stack.\n\n" +
+                "Forms  (before Break)\n" +
+                "  ↑  Blast   — forward cone, 2m per ↑\n" +
+                "  ←  Aura    — expanding cloud, +1 node per ←\n" +
+                "  →  Barrier — wall of nodes, 1 per →\n" +
+                "  ↓  Burst   — circle around self, 2m radius per ↓\n\n" +
+                "Effects  (after Break)\n" +
+                "  ↑  Vitality   — 5 damage per ↑\n" +
+                "  ←  Force      — 2m push per ←\n" +
+                "  →  Will-Break — 3 morale lost per →\n" +
+                "  ↓  Reverse    — flips all effects\n\n" +
+                "Combined colours\n" +
+                "  Vitality+Will-Break = Orange  |  Force+Vitality = Purple  |  Will-Break+Force = Green\n\n" +
+                "Aging cost  (form inputs + effect inputs)\n" +
+                "  Below 4 — free  |  4–5 = 1 day  |  6–7 = 2 days  |  8–9 = 3 days\n" +
+                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Threshold raised to 5.\n" : "") +
+                "\nExample\n" +
+                "  ↑↑↑  Break  ↑↑↑↑↑  =  Blast (6m), 25 damage, 2 days.";
 
             if (!inMission)
             {
                 InformationManager.ShowInquiry(new InquiryData(
-                    "Life & Death Magic",
+                    "The Current",
                     desc,
                     true, true,
-                    "Cast a Spell", "Talents",
+                    "Cast", "Talents",
                     () => { _deferredInquiry = ShowCampaignCastMenu; },
                     () => { _deferredInquiry = ShowTalentMenu; }
                 ), true, true);
@@ -109,7 +107,7 @@ namespace ColoursOfCalradia
             else
             {
                 InformationManager.ShowInquiry(new InquiryData(
-                    "Life & Death Magic",
+                    "The Current",
                     desc,
                     true, true,
                     "Close", "Talents",
@@ -126,7 +124,7 @@ namespace ColoursOfCalradia
             if (Hero.MainHero?.IsPrisoner == true)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "You are a captive. Life energy cannot flow in chains.",
+                    "You are bound. The current cannot reach you.",
                     Color.FromUint(0xFFAAAAAA)));
                 return;
             }
@@ -138,7 +136,7 @@ namespace ColoursOfCalradia
             if (spells.Count == 0)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "No campaign spells available. Learn Spell talents first.",
+                    "No workings known. Learn spell talents first.",
                     Color.FromUint(0xFFAAAAAA)));
                 return;
             }
@@ -151,8 +149,8 @@ namespace ColoursOfCalradia
             )).ToList();
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Cast a Life & Death Spell",
-                "Choose a spell to cast. Each Spell talent ages you by 1 day (Sorcerer: 25% chance to avoid).",
+                "Cast",
+                "Choose a working. Each costs 1 day. Resonance may spare you once in four.",
                 elements,
                 true, 1, 1,
                 "Cast", "Cancel",
@@ -174,21 +172,20 @@ namespace ColoursOfCalradia
         {
             var all = TalentSystem.All.ToList();
             int cost = TalentSystem.PurchaseCost();
-            string costStr = $"1 Focus point or attribute point (currently: {cost}pt per talent)";
+            string costStr = $"1 focus or attribute point ({cost}pt)";
 
             var elements = all.Select(d =>
             {
                 bool owned = TalentSystem.Has(d.Id);
-                string label = (owned ? "✓ " : "") + d.Name + (d.IsSpell ? " [Spell]" : " [Passive]");
+                string label = (owned ? "✓ " : "") + d.Name + (d.IsSpell ? "  [spell]" : "  [passive]");
                 string hint  = $"{d.MechanicDesc}\n\n{d.Lore}\n\n" +
-                               (owned ? "Already learned." : $"Cost: {costStr}");
+                               (owned ? "Known." : $"Cost: {costStr}");
                 return new InquiryElement((int)d.Id, label, null, !owned, hint);
             }).ToList();
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Life & Death Talents",
-                $"Select a talent to learn. Cost: {costStr}.\n" +
-                "Talents can be learned in any order. 'Gift' is free and already learned.",
+                "Talents",
+                $"Choose what to learn. Gift is free; each after costs {cost}pt.",
                 elements,
                 true, 0, 1,
                 "Learn", "Close",

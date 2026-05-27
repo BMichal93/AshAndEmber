@@ -171,13 +171,13 @@ namespace ColoursOfCalradia
 
             if (!_inEffectPhase)
             {
-                Fizzle("No Break pressed — type form keys, press E (Break), then type effect keys.");
+                Fizzle("No Break — focus dropped.");
                 return;
             }
 
             if (_effectBuffer.Length == 0)
             {
-                Fizzle("No effects typed after Break.");
+                Fizzle("Nothing shaped after the Break.");
                 return;
             }
 
@@ -192,7 +192,7 @@ namespace ColoursOfCalradia
             {
                 if (Hero.MainHero != null && Hero.MainHero.IsPrisoner)
                 {
-                    Fizzle("You are a captive. Magic cannot be woven in chains.");
+                    Fizzle("You are bound. The current cannot reach you.");
                     return;
                 }
             }
@@ -211,19 +211,15 @@ namespace ColoursOfCalradia
 
             if (cast.IsFumble)
             {
-                Fizzle("Fumble — mixed form inputs. Use a single direction for forms (all W, all A, etc.).");
+                Fizzle("Fumble — the form slipped.");
                 return;
             }
 
             if (!cast.HasAnyEffect)
             {
-                Fizzle("No recognizable effects. Use W=Damage, A=Push, D=Morale, S=Reverse after Break.");
+                Fizzle("Nothing resolved.");
                 return;
             }
-
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"[{cast.FormSummary()}] → Break → [{cast.EffectSummary()}]",
-                ColorSchoolData.GetMessageColor(cast.VisualColor)));
 
             bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
             bool success = SpellBuilder.Execute(cast, inMission);
@@ -232,12 +228,7 @@ namespace ColoursOfCalradia
             {
                 int agingDays = cast.AgingDays(hasBattleMage);
                 if (agingDays > 0)
-                {
                     AgingSystem.AgeHero(Hero.MainHero, agingDays);
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"[Aging] The casting costs {agingDays} day{(agingDays > 1 ? "s" : "")}. Age: {(int)(Hero.MainHero?.Age ?? 0)}",
-                        new Color(0.5f, 0.4f, 0.7f)));
-                }
             }
         }
 
