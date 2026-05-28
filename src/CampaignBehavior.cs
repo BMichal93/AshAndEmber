@@ -11,6 +11,7 @@ using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -66,7 +67,8 @@ namespace AshAndEmber
             CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener(this, OnClanChangedKingdom);
             CampaignEvents.MobilePartyCreated.AddNonSerializedListener(this, OnMobilePartyCreated);
             CampaignEvents.MakePeace.AddNonSerializedListener(this, OnMakePeace);
-            // Settlement encounter events — tracked via DailyTick state diff
+            CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
+            CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeft);
         }
 
         // ── Ashen city clans + Fire Worshippers ──────────────────────────────
@@ -92,6 +94,16 @@ namespace AshAndEmber
         private void OnMobilePartyCreated(MobileParty party)
         {
             try { FireWorshippersSystem.OnPartyCreated(party); } catch { }
+        }
+
+        private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
+        {
+            try { SettlementEncounters.OnPartyEnteredSettlement(party, settlement); } catch { }
+        }
+
+        private void OnSettlementLeft(MobileParty party, Settlement settlement)
+        {
+            try { SettlementEncounters.OnPartyLeftSettlement(party, settlement); } catch { }
         }
 
         // ── New game prompt ───────────────────────────────────────────────────

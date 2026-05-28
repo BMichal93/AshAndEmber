@@ -73,15 +73,15 @@ namespace AshAndEmber
     public static class SettlementEncounters
     {
         // ── Tuning ────────────────────────────────────────────────────────────
-        public const float EncounterChance       = 0.20f;  // per settlement transition (~1 per 25 days)
-        public const int   MinDaysBetween        = 5;      // shared cooldown between any encounter
-        public const float BattleEncounterChance = 0.30f;  // per field battle
-        public const float SiegeEncounterChance  = 0.45f;  // per siege
-        public const float RaidEncounterChance   = 0.50f;  // per raid
+        public const float EncounterChance       = 0.35f;  // per settlement transition
+        public const int   MinDaysBetween        = 3;      // shared cooldown between any encounter
+        public const float BattleEncounterChance = 0.35f;  // per field battle
+        public const float SiegeEncounterChance  = 0.50f;  // per siege
+        public const float RaidEncounterChance   = 0.55f;  // per raid
 
         // ── State ─────────────────────────────────────────────────────────────
         private static int    _cooldown              = 0;
-        private static string _lastSettlementId      = null; // null = not in settlement
+        private static string _lastSettlementId      = null; // last settlement entered (for leave detection)
         private static bool   _lastBattleWon         = false;
         private static bool   _lastBattleAsAttacker  = false;
         private static readonly Random _rng          = new Random();
@@ -104,54 +104,43 @@ namespace AshAndEmber
 
         public static void Save(IDataStore store)
         {
-            store.SyncData("SE_Cooldown",        ref _cooldown);
-            store.SyncData("SE_LastSettlement",  ref _lastSettlementId);
+            store.SyncData("SE_Cooldown", ref _cooldown);
         }
 
-        /// Called from MagicCampaignBehavior.OnDailyTick.
-        public static void DailyTick()
+        /// Called from CampaignEvents.SettlementEntered — fires immediately when the
+        /// player's party steps into any settlement.
+        public static void OnPartyEnteredSettlement(MobileParty party, Settlement settlement)
         {
-            if (_cooldown > 0) { _cooldown--; return; }
+            if (party != MobileParty.MainParty || settlement == null) return;
             try
             {
-                Hero player = Hero.MainHero;
-                if (player == null) return;
-
-                string currentId = player.CurrentSettlement?.StringId;
-                bool wasIn  = _lastSettlementId != null;
-                bool isIn   = currentId != null;
-
-                if (isIn && !wasIn)
-                {
-                    // Just entered a settlement
-                    var s = player.CurrentSettlement;
-                    _lastSettlementId = currentId;
-                    if (_rng.NextDouble() < EncounterChance)
-                        TryFireEnter(s);
-                }
-                else if (!isIn && wasIn)
-                {
-                    // Just left — find settlement by saved id
-                    string leftId = _lastSettlementId;
-                    _lastSettlementId = null;
-                    var s = Settlement.Find(leftId);
-                    if (s != null && _rng.NextDouble() < EncounterChance)
-                        TryFireLeave(s);
-                }
-                else if (isIn && wasIn && currentId != _lastSettlementId)
-                {
-                    // Moved directly between settlements
-                    var s = player.CurrentSettlement;
-                    _lastSettlementId = currentId;
-                    if (_rng.NextDouble() < EncounterChance)
-                        TryFireEnter(s);
-                }
-                else
-                {
-                    _lastSettlementId = currentId;
-                }
+                _lastSettlementId = settlement.StringId;
+                if (_cooldown > 0) return;
+                if (_rng.NextDouble() < EncounterChance)
+                    TryFireEnter(settlement);
             }
             catch { }
+        }
+
+        /// Called from CampaignEvents.OnSettlementLeftEvent — fires immediately when the
+        /// player's party leaves any settlement.
+        public static void OnPartyLeftSettlement(MobileParty party, Settlement settlement)
+        {
+            if (party != MobileParty.MainParty || settlement == null) return;
+            try
+            {
+                _lastSettlementId = null;
+                if (_cooldown > 0) return;
+                if (_rng.NextDouble() < EncounterChance)
+                    TryFireLeave(settlement);
+            }
+            catch { }
+        }
+
+        /// Called from MagicCampaignBehavior.OnDailyTick — only decrements cooldown.
+        public static void DailyTick()
+        {
+            if (_cooldown > 0) _cooldown--;
         }
 
         /// Called from MagicCampaignBehavior.OnMapEventEnded.
@@ -336,7 +325,6 @@ namespace AshAndEmber
         private static void Fire(List<Action<Settlement>> pool, Settlement s)
         {
             if (pool.Count == 0) return;
-            if (MageKnowledge._deferredInquiry != null) return; // don't overwrite a pending inquiry
             _cooldown = MinDaysBetween;
             Action<Settlement> chosen = pool[_rng.Next(pool.Count)];
             MageKnowledge._deferredInquiry = () => { try { chosen(s); } catch { } };
@@ -345,7 +333,6 @@ namespace AshAndEmber
         private static void FireBattle(List<Action> pool)
         {
             if (pool.Count == 0) return;
-            if (MageKnowledge._deferredInquiry != null) return;
             _cooldown = MinDaysBetween;
             Action chosen = pool[_rng.Next(pool.Count)];
             MageKnowledge._deferredInquiry = () => { try { chosen(); } catch { } };
