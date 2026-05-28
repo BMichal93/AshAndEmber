@@ -184,6 +184,7 @@ namespace AshAndEmber
             {
                 var toKill = Hero.AllAliveHeroes
                     .Where(h => h != Hero.MainHero && h.IsAlive && _mageIds.Contains(h.StringId)
+                             && !_ashenIds.Contains(h.StringId)
                              && h.Age >= 100f)
                     .ToList();
                 foreach (Hero h in toKill)

@@ -77,7 +77,7 @@ namespace AshAndEmber
                 {
                     new InquiryElement("yes", "I feel it still.", null, true,
                         "The current stirs in you. Press Alt+B to open your grimoire."),
-                    new InquiryElement("no", "I feel nothing.", null, true,
+                    new InquiryElement("no", "I don't feel it.", null, true,
                         "The current passes you by."),
                 },
                 false, 1, 1,
@@ -104,12 +104,14 @@ namespace AshAndEmber
                     }
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                    try { AshenCitySystem.Initialize(); } catch { }
                 },
                 _ =>
                 {
                     MageKnowledge.SetMage(false);
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                    try { AshenCitySystem.Initialize(); } catch { }
                 },
                 "", false
             ), false, true);

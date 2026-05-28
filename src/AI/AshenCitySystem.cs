@@ -45,9 +45,9 @@ namespace AshAndEmber
         {
             if (_initialized) return;
             _initialized = true;
-            try
+            foreach (string name in _targetSettlementNames)
             {
-                foreach (string name in _targetSettlementNames)
+                try
                 {
                     var settlement = Settlement.All.FirstOrDefault(s =>
                         s.Name.ToString().IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
@@ -59,8 +59,8 @@ namespace AshAndEmber
                     _ashenClanIds.Add(clan.StringId);
                     MarkClanAshen(clan);
                 }
+                catch { }
             }
-            catch { }
         }
 
         private static void MarkClanAshen(Clan clan)
@@ -116,6 +116,19 @@ namespace AshAndEmber
         public static void DailyTick()
         {
             if (_ashenClanIds.Count == 0) return;
+
+            // Re-eject any Ashen clan that drifted back into a kingdom
+            foreach (string clanId in _ashenClanIds)
+            {
+                try
+                {
+                    Clan clan = Clan.All.FirstOrDefault(c => c.StringId == clanId);
+                    if (clan?.Kingdom != null)
+                        ChangeKingdomAction.ApplyByLeaveKingdom(clan, false);
+                }
+                catch { }
+            }
+
             bool playerIsAshen = MageKnowledge.IsAshen;
             try
             {
