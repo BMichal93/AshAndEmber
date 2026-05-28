@@ -65,6 +65,7 @@ namespace AshAndEmber
             CampaignEvents.NewCompanionAdded.AddNonSerializedListener(this, OnCompanionAdded);
             CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener(this, OnClanChangedKingdom);
             CampaignEvents.MobilePartyCreated.AddNonSerializedListener(this, OnMobilePartyCreated);
+            CampaignEvents.MakePeace.AddNonSerializedListener(this, OnMakePeace);
         }
 
         // ── Ashen city clans + Fire Worshippers ──────────────────────────────
@@ -72,6 +73,19 @@ namespace AshAndEmber
             ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification)
         {
             try { AshenCitySystem.OnClanChangedKingdom(clan, oldKingdom, newKingdom, detail, showNotification); } catch { }
+        }
+
+        // The Ashen make no peace. If the engine forces a peace involving the Ashen
+        // kingdom, immediately redeclare war.
+        private void OnMakePeace(IFaction faction1, IFaction faction2,
+            MakePeaceAction.MakePeaceDetail detail)
+        {
+            const string id = "ashen_kingdom";
+            bool ashenInvolved =
+                (faction1 is Kingdom k1 && k1.StringId == id) ||
+                (faction2 is Kingdom k2 && k2.StringId == id);
+            if (!ashenInvolved) return;
+            try { AshenCitySystem.DeclareWarWithAllKingdoms(); } catch { }
         }
 
         private void OnMobilePartyCreated(MobileParty party)
@@ -83,7 +97,42 @@ namespace AshAndEmber
         private void OnNewGameCreated()
         {
             MageKnowledge.ResetForNewGame();
+            ShowLoreIntro();
+        }
 
+        private void ShowLoreIntro()
+        {
+            const string loreText =
+                "Calradia remembers fire.\n\n" +
+                "The mages of the old world did not merely wield it — they were made of it, bone-deep and blood-warm. " +
+                "When the Empire stretched from coast to coast, there were those who could feel the life ebbing from the wounded, " +
+                "who spoke to failing crops and were heard. The Empire was built on this, and you can still see it " +
+                "in the old aqueducts, the long roads, the cities placed with knowing precision.\n\n" +
+                "The Empire is gone, in the way empires always go — slowly, then all at once. " +
+                "Three heirs, three courts, three armies that have forgotten what they are fighting over. " +
+                "Rhagaea calculates. Lucon prays. Derthert counts his horsemen. None of them look north.\n\n" +
+                "In the north, fire has been dying for a long time.\n\n" +
+                "It began at Tyal. Then Sibir. Then Baltakhand. The Sturgian outriders who rode to investigate did not return. " +
+                "Those who turned back before the treeline speak of lords who walked through arrows without slowing. " +
+                "Of soldiers whose eyes held no warmth. Of a cold that had nothing to do with the season.\n\n" +
+                "They call themselves the Ashen. They were mages once — men and women who faced the extinction of their gift " +
+                "and chose the cold instead. What burns in them now is the memory of warmth. It is hungry, and it is moving south.\n\n" +
+                "The clans are scattered. The Empire bleeds. No kingdom is ready.\n\n" +
+                "And you — whether the fire stirs in you or not — are about to enter a world that is ending.";
+
+            InformationManager.ShowInquiry(new InquiryData(
+                "Embers and Ash",
+                loreText,
+                true, false,
+                "Enter the dark.",
+                "",
+                ShowGiftPrompt,
+                ShowGiftPrompt
+            ), true, true);
+        }
+
+        private void ShowGiftPrompt()
+        {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "The Gift",
                 "As a child, you sometimes sensed things others could not — warmth ebbing from the wounded, the weight behind dying eyes. Do you feel it still?",

@@ -59,12 +59,14 @@ namespace AshAndEmber
         private static readonly string[] _targetSettlementNames =
         {
             // Core Ashen cities
-            "Tyal", "Sibir", "Baltakhand",
+            "Tyal", "Sibir", "Baltakhand", "Amprela",
             // Original castles
             "Urikskala", "Kaysar", "Dinar", "Vladiv",
             // Extended Ashen zone (nearby towns & castles — skipped automatically
             // if their clan also owns settlements outside this list)
             "Varnovapol", "Tepes", "Epinosa", "Takor", "Khimli",
+            // Castles near Amprela (Lochana ~27, Syratos ~44; Epinosa already above)
+            "Lochana", "Syratos",
         };
 
         public static void ResetForNewGame()
@@ -81,9 +83,10 @@ namespace AshAndEmber
         {
             if (_initialized) return;
 
-            bool     foundAny      = false;
+            bool foundAny = false;
             Settlement homeSettlement = null;
 
+            // First pass: process settlements whose clans exclusively own Ashen settlements.
             foreach (string name in _targetSettlementNames)
             {
                 try
@@ -96,8 +99,7 @@ namespace AshAndEmber
                     if (clan == null) continue;
 
                     // Skip clans that own settlements outside our target list —
-                    // moving them to the Ashen kingdom would drag those extra
-                    // settlements (Vercheng, Balagad, etc.) in as well.
+                    // those extra settlements (Vercheng, Balagad, etc.) must not be dragged in.
                     bool hasNonTarget = clan.Settlements.Any(s =>
                         (s.IsTown || s.IsCastle) &&
                         !_targetSettlementNames.Any(n =>
@@ -105,10 +107,7 @@ namespace AshAndEmber
                     if (hasNonTarget) continue;
 
                     if (homeSettlement == null) homeSettlement = settlement;
-
-                    // Create the Ashen kingdom on first found settlement
-                    if (_ashenKingdom == null)
-                        CreateOrFindAshenKingdom(homeSettlement);
+                    if (_ashenKingdom == null) CreateOrFindAshenKingdom(homeSettlement);
 
                     if (_ashenClanIds.Add(clan.StringId))
                     {
@@ -120,7 +119,38 @@ namespace AshAndEmber
                 catch { }
             }
 
-            if (foundAny)
+            // Second pass: any target settlement whose clan failed the check above is still
+            // claimed — transfer it directly to the first Ashen clan so it doesn't float free
+            // and get snatched by another faction.
+            if (_ashenClanIds.Count > 0)
+            {
+                var ashenClan = Clan.All.FirstOrDefault(c => _ashenClanIds.Contains(c.StringId) && !c.IsEliminated);
+                if (ashenClan != null)
+                {
+                    Hero ashenLord = ashenClan.Leader
+                                  ?? ashenClan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
+
+                    foreach (string name in _targetSettlementNames)
+                    {
+                        try
+                        {
+                            var settlement = Settlement.All.FirstOrDefault(s =>
+                                s.Name.ToString().IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+                            if (settlement == null) continue;
+                            if (_settlementClanMap.ContainsKey(settlement.StringId)) continue;
+
+                            _settlementClanMap[settlement.StringId] = ashenClan.StringId;
+                            if (ashenLord != null)
+                                try { ChangeOwnerOfSettlementAction.ApplyByDefault(ashenLord, settlement); } catch { }
+                            try { EnsureGarrison(settlement); } catch { }
+                            foundAny = true;
+                        }
+                        catch { }
+                    }
+                }
+            }
+
+            if (foundAny || _ashenKingdom != null)
             {
                 try { DeclareWarWithAllKingdoms(); } catch { }
                 _initialized = true;
@@ -256,7 +286,7 @@ namespace AshAndEmber
         }
 
         // ── War maintenance ───────────────────────────────────────────────────
-        private static void DeclareWarWithAllKingdoms()
+        public static void DeclareWarWithAllKingdoms()
         {
             if (_ashenKingdom == null) return;
             foreach (Kingdom k in Kingdom.All.ToList())
@@ -395,6 +425,52 @@ namespace AshAndEmber
             }
         }
 
+        // ── Criminal status ───────────────────────────────────────────────────
+        // Non-Ashen players are permanent criminals in Ashen lands; Ashen players
+        // are welcomed (crime rating reset to 0).
+        private static void MaintainCriminalStatus()
+        {
+            if (_ashenKingdom == null) return;
+            try
+            {
+                bool playerIsAshen = MageKnowledge.IsAshen;
+                float current = _ashenKingdom.MainHeroCrimeRating;
+                if (playerIsAshen)
+                {
+                    if (current > 0f)
+                        ChangeCrimeRatingAction.Apply(_ashenKingdom, -current, false);
+                }
+                else
+                {
+                    if (current < 100f)
+                        ChangeCrimeRatingAction.Apply(_ashenKingdom, 100f - current, false);
+                }
+            }
+            catch { }
+        }
+
+        // Apply Ashen appearance to any hero (lord/wanderer) currently residing
+        // inside an Ashen settlement. This affects their BodyProperties so the
+        // look is active the next time a scene with them loads. Common citizens
+        // (non-hero NPCs) require Harmony patching to modify — not done here.
+        private static void ApplyAshenLookToSettlementHeroes()
+        {
+            if (_settlementClanMap.Count == 0) return;
+            try
+            {
+                foreach (Hero h in Hero.AllAliveHeroes.ToList())
+                {
+                    if (h == Hero.MainHero) continue;
+                    if (!h.IsLord && !h.IsWanderer) continue;
+                    if (h.CurrentSettlement == null) continue;
+                    if (!_settlementClanMap.ContainsKey(h.CurrentSettlement.StringId)) continue;
+                    if (ColourLordRegistry.IsAshenLord(h)) continue; // already handled by SetAshen
+                    try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
+                }
+            }
+            catch { }
+        }
+
         // ── Daily tick ────────────────────────────────────────────────────────
         public static void DailyTick()
         {
@@ -405,6 +481,8 @@ namespace AshAndEmber
             RefillGarrisons();
             RefillHeroGold();
             TickSettlementRecovery();
+            MaintainCriminalStatus();
+            ApplyAshenLookToSettlementHeroes();
 
             bool playerIsAshen = MageKnowledge.IsAshen;
             try
@@ -458,6 +536,9 @@ namespace AshAndEmber
             if (hero == null || hero.Clan == null) return false;
             return _ashenClanIds.Contains(hero.Clan.StringId);
         }
+
+        public static bool IsAshenSettlement(Settlement settlement) =>
+            settlement != null && _settlementClanMap.ContainsKey(settlement.StringId);
 
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
