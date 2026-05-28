@@ -121,15 +121,21 @@ namespace AshAndEmber
                 "The clans are scattered. The Empire bleeds. No kingdom is ready.\n\n" +
                 "And you — whether the fire stirs in you or not — are about to enter a world that is ending.";
 
-            InformationManager.ShowInquiry(new InquiryData(
+            // MultiSelectionInquiry has a proper scrollable text area and a confirm button
+            // at the bottom — InquiryData's small dialog can't handle long text reliably.
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "Embers and Ash",
                 loreText,
-                true, false,
-                "Enter the dark.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("continue", "Enter the dark.", null, true, ""),
+                },
+                false, 1, 1,
+                "Continue",
                 "",
-                ShowGiftPrompt,
-                ShowGiftPrompt
-            ), true, true);
+                _ => ShowGiftPrompt(),
+                _ => ShowGiftPrompt()
+            ), false, true);
         }
 
         private void ShowGiftPrompt()
