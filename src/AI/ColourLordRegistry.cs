@@ -71,13 +71,8 @@ namespace AshAndEmber
             {
                 _ashenIds.Add(hero.StringId);
                 MageKnowledge.ApplyAshenAppearance(hero);
-                // Ashen lords are kicked from their kingdom
-                try
-                {
-                    if (hero.Clan?.Kingdom != null)
-                        TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction.ApplyByLeaveKingdom(hero.Clan, false);
-                }
-                catch { }
+                // Move clan to the Ashen kingdom (or eject if kingdom isn't ready yet)
+                try { AshenCitySystem.OnHeroSetAshen(hero); } catch { }
                 // Cold fire hungers for harm — ensure Blight lords have offensive workings
                 if (!_lordTalents.TryGetValue(hero.StringId, out var current))
                 {
