@@ -544,7 +544,7 @@ namespace AshAndEmber
                 }
             }
             catch { }
-            if (ColourLordRegistry.IsBlightLord(caster))
+            if (ColourLordRegistry.IsAshenLord(caster))
                 ApplyBlightDrain(caster);
             else
                 AgingSystem.AgeHero(caster, 1);
@@ -580,7 +580,6 @@ namespace AshAndEmber
                     village.Village.Hearth = Math.Max(10f, village.Village.Hearth * 0.97f);
             }
             catch { }
-        }
         }
 
         private static void NpcBreakWills(Hero caster)

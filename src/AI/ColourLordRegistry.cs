@@ -214,7 +214,7 @@ namespace AshAndEmber
                     if (_campaignCooldowns.TryGetValue(id, out int cd) && cd > 0)
                     { _campaignCooldowns[id] = cd - 1; continue; }
 
-                    bool isBlight = IsBlightLord(hero);
+                    bool isBlight = IsAshenLord(hero);
 
                     // Blight lords cast hungrily — cold fire demands expression and costs them nothing
                     // Normal lords slow down as age accumulates
