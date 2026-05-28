@@ -66,6 +66,7 @@ namespace AshAndEmber
             CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener(this, OnClanChangedKingdom);
             CampaignEvents.MobilePartyCreated.AddNonSerializedListener(this, OnMobilePartyCreated);
             CampaignEvents.MakePeace.AddNonSerializedListener(this, OnMakePeace);
+            // Settlement encounter events — tracked via DailyTick state diff
         }
 
         // ── Ashen city clans + Fire Worshippers ──────────────────────────────
@@ -98,6 +99,7 @@ namespace AshAndEmber
         {
             MageKnowledge.ResetForNewGame();
             CampaignMapEvents.ResetForNewGame();
+            SettlementEncounters.ResetForNewGame();
             ShowLoreIntro();
         }
 
@@ -190,6 +192,7 @@ namespace AshAndEmber
             try { ColourLordRegistry.DailyMapCast(); } catch { }
             try { AgingSystem.DailyAgeCheck(); } catch { }
             try { CampaignMapEvents.DailyTick(); } catch { }
+            try { SettlementEncounters.DailyTick(); } catch { }
             try { CheckReapPrisonerYield(); } catch { }
             if (_reapRaidCooldown > 0) _reapRaidCooldown--;
             try { TickLordAnnouncement(); } catch { }
@@ -520,6 +523,7 @@ namespace AshAndEmber
             AshenCitySystem.Save(dataStore);
             FireWorshippersSystem.Save(dataStore);
             CampaignMapEvents.Save(dataStore);
+            SettlementEncounters.Save(dataStore);
         }
     }
 }

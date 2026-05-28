@@ -87,6 +87,7 @@
     <Compile Include="MagicInputHandler.cs"/>
     <Compile Include="CampaignBehavior.cs"/>
     <Compile Include="CampaignMapEvents.cs"/>
+    <Compile Include="SettlementEncounters.cs"/>
     <Compile Include="BattleEvents.cs"/>
     <Compile Include="AI\BanditMageAI.cs"/>
     <Compile Include="AI\ColourLordRegistry.cs"/>
