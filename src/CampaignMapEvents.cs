@@ -42,6 +42,7 @@ using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Party.PartyComponents;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -361,16 +362,20 @@ namespace AshAndEmber
                 Clan banditClan = Clan.BanditFactions.FirstOrDefault(c => c != null && !c.IsEliminated);
                 if (banditClan == null) return null;
 
-                string partyId = "ashen_spawn_evt_" + _rng.Next(999999).ToString("D6");
-                MobileParty party = BanditPartyComponent.CreateBanditParty(partyId, banditClan, null, false);
-                if (party == null) return null;
+                var pt = banditClan.DefaultPartyTemplate;
+                if (pt == null) return null;
 
                 // Scatter spawn point around the anchor (radius ≈ 4 map units)
                 const float scatter = 4f;
-                party.Position2D = anchorPos + new Vec2(
+                Vec2 spawnPos = anchorPos + new Vec2(
                     (float)(_rng.NextDouble() - 0.5) * scatter * 2f,
                     (float)(_rng.NextDouble() - 0.5) * scatter * 2f
                 );
+                var spawnCVec = new CampaignVec2(spawnPos, true);
+
+                string partyId = "ashen_spawn_evt_" + _rng.Next(999999).ToString("D6");
+                MobileParty party = BanditPartyComponent.CreateBanditParty(partyId, banditClan, null, false, pt, spawnCVec);
+                if (party == null) return null;
 
                 // Prefer sea_raider (matches the Ashen Spawn troop-type check in
                 // FireWorshippersSystem._ashenSpawnTroops); fall back to mountain_bandit
@@ -385,7 +390,7 @@ namespace AshAndEmber
                 if (minStrength > 0f)
                 {
                     int guard = 20; // safety cap — 20 × 5 = max 100 extra troops
-                    while (party.Party.TotalStrength < minStrength && guard-- > 0)
+                    while (party.Party.EstimatedStrength < minStrength && guard-- > 0)
                         party.MemberRoster.AddToCounts(troop, 5);
                 }
 
