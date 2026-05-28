@@ -225,6 +225,7 @@ namespace AshAndEmber
             try { ApplyNpcBattleAging(mapEvent); } catch { }
             try { ApplyNpcBattleMoraleBonus(mapEvent); } catch { }
             try { CheckReapRaidYield(mapEvent); } catch { }
+            try { SettlementEncounters.OnMapEventEnded(mapEvent); } catch { }
             // Refresh snapshot so battle-captured prisoners don't count as discards
             try { _prisonerCountSnapshot = MobileParty.MainParty?.PrisonRoster?.TotalManCount ?? _prisonerCountSnapshot; } catch { }
         }
