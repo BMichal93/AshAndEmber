@@ -86,6 +86,7 @@
     <Compile Include="TalentSystem.cs"/>
     <Compile Include="MagicInputHandler.cs"/>
     <Compile Include="CampaignBehavior.cs"/>
+    <Compile Include="CampaignMapEvents.cs"/>
     <Compile Include="AI\BanditMageAI.cs"/>
     <Compile Include="AI\ColourLordRegistry.cs"/>
     <Compile Include="AI\ColourLordAI.cs"/>
