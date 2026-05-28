@@ -1,6 +1,6 @@
 # Ash and Ember — v0.9
 
-A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn.
+A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
 ---
 
@@ -11,14 +11,17 @@ AshAndEmber/
 ├── SubModule.xml                    mod manifest
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
-│   └── troops.xml                   (reserved) 
-├── src/                             ~5 000 lines across 20 source files
+│   └── troops.xml                   (reserved)
+├── src/                             ~6 000 lines across 25 source files
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
 │   ├── SpellBuilder.cs              two-phase input parser → SpellCast
 │   ├── TalentSystem.cs              15 talents, learning logic, map spells
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
+│   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks
+│   ├── CampaignMapEvents.cs         seven rare world events (weekly tick)
+│   ├── BattleEvents.cs              rare per-battle battlefield events
 │   ├── Spells/
 │   │   ├── SpellEffects.cs          core partial: helpers, effects, magic memory
 │   │   ├── BlastSpells.cs           Blast form execution
@@ -31,7 +34,9 @@ AshAndEmber/
 │   ├── AI/
 │   │   ├── ColourLordRegistry.cs    marks lords as mages or blight lords
 │   │   ├── ColourLordAI.cs          priority-driven battle AI for mage lords
-│   │   └── BanditMageAI.cs          rare bandit unit spellcasters
+│   │   ├── BanditMageAI.cs          rare bandit unit spellcasters
+│   │   ├── FireWorshippersSystem.cs renames qualifying bandit parties
+│   │   └── AshenCitySystem.cs       Ashen kingdom, settlements, war maintenance
 │   └── TheWitheringArt.csproj       build project (outputs AshAndEmber.dll)
 ├── tests/
 │   ├── AshAndEmber.Tests.csproj
@@ -86,7 +91,19 @@ Open the Bannerlord launcher → Mods → tick **Ash and Ember** → Play.
 
 ### Step 4 — Verify
 
-Start a new campaign. If the **"The Inner Fire"** prompt appears during character creation, the mod is installed correctly.
+Start a new Sandbox campaign. A lore introduction screen appears. If the **"The Inner Fire"** gift prompt appears shortly after, the mod is installed correctly.
+
+---
+
+## Lore Introduction
+
+When starting a new Sandbox campaign, a short lore screen appears before play begins. It describes the world state:
+
+- The fire gives life. The Ashen chose the cold instead.
+- Three Empire factions fight over Calradia's bones while ash moves south.
+- Some mages, tempted by unliving, may answer the cold's call.
+
+The prompt closes immediately on the button press. The gift selection follows on the next frame.
 
 ---
 
@@ -94,7 +111,7 @@ Start a new campaign. If the **"The Inner Fire"** prompt appears during characte
 
 The Inner Fire must be *found*, not chosen at a menu.
 
-- During character creation a prompt may appear asking if the fire has always been there. Accepting it grants the Gift.
+- At campaign start a prompt appears asking if the fire has always been there. Accepting grants the Gift.
 - The Gift can also arrive through certain in-game events (aging, bloodline, encounters).
 
 Once you carry the Gift, the grimoire is available at any time. Without it, spellcasting does nothing.
@@ -189,7 +206,7 @@ Hold the focus key and press **S (↓) twice or more without pressing Break**. R
 | ↓↓↓ | Ward — 2 m radius (protects nearby allies) | 2 days |
 | ↓↓↓↓ | Ward — 4 m radius | 3 days |
 
-A ward makes the protected agent **immune to all magic effects for 10 seconds**. Warded agents cannot be hit by the player's spells, NPC lord spells, or wave/barrier node impacts. They are also not nudged by the wave's avoidance system.
+A ward makes the protected agent **immune to all magic effects for 10 seconds**. Warded agents cannot be hit by the player's spells, NPC lord spells, or wave/barrier node impacts.
 
 NPC lords cast wards reactively when their HP drops below 40% or when they detect a magic cast nearby. Honorable or merciful lords extend the ward to allies within 6 m; others protect only themselves.
 
@@ -264,17 +281,23 @@ These are cast from the grimoire on the campaign map. Each costs 1 day (or crimi
 
 ## NPC Mage Lords
 
-At campaign start a proportion of lords are seeded as mages by `ColourLordRegistry`. A smaller fraction are **Ashen lords** — they cast with no aging cost, have a much shorter cooldown, and use more aggressive spell combinations.
+At campaign start roughly 20% of lords are seeded as mages by `ColourLordRegistry`. A smaller fraction are **Ashen lords** — they cast with no aging cost, have a much shorter cooldown, and use more aggressive spell combinations.
 
-### Ashen City Clans
+### Battle notifications
 
-Three clans — from the settlements of **Tyal**, **Sibir**, and **Baltakhand** — are marked Ashen at the start of every campaign. Their heroes:
+When an enemy mage lord casts in battle, a message appears in the combat log describing the working. Colour is purple for ordinary lords, blue-grey for Ashen.
 
-- Are removed from their kingdoms permanently (rejoin attempts are blocked).
-- Do not age (birth day is reset daily to keep them near age 35).
-- Bear the title **Ashen Lord** or **Ashen Lady**.
-- Start with maximum relations with the player.
-- Carry both the gift and the Ashen path — they will never die of old age.
+### Aging cost (NPC)
+
+NPC lords age after every battle in which they cast. The cost scales with the power of spells used:
+
+```
+aging days = max(1, total formCount / 3)
+```
+
+A single moderate blast (formCount 3) costs 1 day. Two heavy Ashen blasts (formCount 4 each) cost 2–3 days. Ashen lords do not age regardless.
+
+Lords die of old age when they reach 100. Their deaths are announced in the campaign log.
 
 ### Battle AI
 
@@ -283,7 +306,14 @@ NPC lords follow a priority order each tick:
 1. **Ward** themselves if HP < 40% or a magic cast was detected within 20 m recently.
 2. **Heal** (spawn a healing zone) if HP < 30%.
 3. **Heal zone** for allies who are below 50% HP within 15 m.
-4. **Attack** — Burst (when surrounded by 3+ enemies) or Blast (when enemies are in the forward cone). Blight lords use heavier recipes and roll from a wider attack set.
+4. **Attack** — Burst (when surrounded by 3+ enemies) or Blast (when enemies are in the forward cone). Ashen lords use heavier recipes and roll from a wider attack set.
+
+Spell power by lord type:
+
+| Lord type | Typical formCount | Notes |
+|-----------|-------------------|-------|
+| Regular mage lord | 3 | Blast or Burst with 3 damage/morale/push |
+| Ashen lord | 3–4 | Heavier combos; morale-first |
 
 Cooldowns by personality:
 
@@ -294,21 +324,23 @@ Cooldowns by personality:
 | Calculating (Calculating > 0) | 35 s |
 | Ashen lord | 6 s |
 
-Lords wait 12 seconds at battle start before their first cast. They do not cast during the first 12 seconds even if endangered.
+Lords wait 12 seconds at battle start before their first cast.
 
 ---
 
 ## Bandit Mages
 
-About 4% of eligible bandit units carry a stolen fragment of the fire. They cast once per 18 seconds using simple blast or burst recipes.
+About 4% of eligible bandit units carry a stolen fragment of the fire. They cast once per 18 seconds. **The fire punishes those who borrow it without the gift** — after each cast there is a chance the caster burns out and dies instantly.
 
-**The fire punishes those who borrow it without the gift.** After each cast there is a 25% chance the bandit is consumed and dies instantly.
+Spell power and burnout chance scale with the unit's training:
 
-### Fire Worshippers & Ashen Spawn
+| Tier | Troop types | formCount | Burnout chance |
+|------|-------------|-----------|----------------|
+| Untrained | Looter | 1 | 35% |
+| Bandit | forest_bandit, sea_raider, mountain_bandit, steppe_bandit, desert_bandit | 2 | 25% |
+| Cultist | Fire Worshippers / Ashen Spawn | 3 | 15% |
 
-Roughly 10% of newly created Looter and forest bandit parties are renamed **Fire Worshippers**. Roughly 10% of sea raider and mountain bandit parties become **Ashen Spawn**. Both types are guaranteed to have at least one bandit mage.
-
-Each troop type has a title:
+Each bandit mage type has a title shown in the combat log:
 
 | Troop | Title |
 |-------|-------|
@@ -318,6 +350,82 @@ Each troop type has a title:
 | Mountain bandit | Ash Shaman |
 | Steppe bandit | Wind Binder |
 | Desert bandit | Ember Prophet |
+
+### Fire Worshippers & Ashen Spawn
+
+Roughly 10% of newly created Looter and forest bandit parties are renamed **Fire Worshippers**. Roughly 10% of sea raider and mountain bandit parties become **Ashen Spawn**. Both are guaranteed at least one mage caster and use the strongest bandit-tier spells (formCount 3, 15% burnout).
+
+---
+
+## Battlefield Events
+
+Occasionally a battle begins under cursed conditions. Each event rolls independently; most battles have none.
+
+| Event | Chance | Effect |
+|-------|--------|--------|
+| **Cinder Rain** | 10% | Every non-Ashen agent takes 5 damage every 20 seconds. |
+| **Ember Tithe** | 7% | Every Ashen agent takes 5 damage every 20 seconds. |
+| **The Rising** | 12% | Spawns 4 units on the Ashen side every 30 seconds (only if Ashen side present). |
+| **Dread** | 8% | All non-Ashen agents lose 30 morale (fires once, 5 s after battle start). |
+| **Last Light** | 5% | Sets time-of-day to midnight (fires once). |
+| **Ashen Ground** | 7% | All mounted agents are dismounted every 20 seconds. |
+| **Frenzy** | 7% | Charge order issued to every formation on both sides every 20 seconds. |
+
+Expected events per battle: ~0.5 on average. About 60% of battles have no events; having two at once is rare (~5%).
+
+Active events are announced in the message log at battle start.
+
+---
+
+## The Ashen Kingdom
+
+The Ashen are a faction of lords who refused to let their fire die. They chose the cold instead. They do not age, they do not negotiate, and they are permanently at war with every other kingdom.
+
+### Ashen settlements
+
+At campaign start the following settlements are Ashen. Their clans are moved into the **Ashen Kingdom** automatically. Any settlement lost to another faction is reclaimed on the next daily tick.
+
+**Core cities:** Tyal, Sibir, Baltakhand, Amprela
+
+**Ashen castles and towns:** Urikskala, Kaysar, Dinar, Vladiv, Varnovapol, Tepes, Epinosa, Takor, Khimli, Lochana, Syratos
+
+### Ashen lords
+
+Every hero in an Ashen clan:
+
+- Bears the title **Ashen Lord** or **Ashen Lady**.
+- Does not age — birth day is reset daily to keep them near age 35.
+- Casts spells with no aging cost and on a short 6-second cooldown.
+- Uses darker, morale-focused spell recipes in battle.
+- Carries **Curse**, **Break Wills**, and **Plague** as map-cast talents.
+
+### Criminal status
+
+Non-Ashen players are treated as permanent criminals (max crime rating) in Ashen lands. Ashen players have their crime rating cleared daily.
+
+### Permanent war
+
+The Ashen never make peace. Any peace deal involving the Ashen kingdom is immediately revoked and war is re-declared.
+
+### NPCs in Ashen settlements
+
+Hero-type NPCs (lords, wanderers) currently residing in an Ashen settlement gradually take on the Ashen appearance. The effect applies to their body properties the next time a scene with them loads.
+
+---
+
+## Campaign World Events
+
+Seven rare events fire randomly on the weekly tick. Each has an independent chance and fires at most once per week.
+
+| Event | Chance/week | Effect |
+|-------|-------------|--------|
+| **Ashen Plague** | 8% | Wounds the entire garrison of a random settlement; spawns 3 Ashen Spawn parties nearby. |
+| **Great Withering** | 10% | Destroys 80% of a random village's hearth, or halves the prosperity of a random city. |
+| **Ashen March** | 5% | Spawns 6 Ashen Spawn parties (strength ≥ 70) across a random non-Ashen kingdom. |
+| **Long Night** | 3% | Forces the mod's light-level logic to Dark for 7 days. |
+| **Ashen Tide** | 3% | A random non-Ashen castle is seized by a random Ashen lord. |
+| **Fire Fades** | 1.5% | 50% of non-Ashen lords under age 18 die. |
+| **Darkened Roads** | 6% | All caravans of a random kingdom are destroyed. Ashen caravans are immune. |
 
 ---
 
@@ -371,3 +479,6 @@ Verify `SubModule.xml` is at `<BannerlordRoot>\Modules\AshAndEmber\SubModule.xml
 
 **Game crashes on load**
 The DLL must match the game's .NET runtime. Check the Releases page for a compatibility update if the crash started after a game patch.
+
+**Ashen settlements show as unclaimed for the first day**
+This is expected. Ownership is asserted on the first daily tick (~24 in-game hours). Settlements show Ashen colours from day 2 onward.

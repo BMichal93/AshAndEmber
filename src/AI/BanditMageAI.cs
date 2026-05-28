@@ -40,7 +40,10 @@ namespace AshAndEmber
         private const float CooldownDuration = 18f;
         private const float WarmupDuration   = 8f;
         private const float MageChance       = 0.04f;  // ~1 caster per 25 eligible bandits
-        private const float BurnoutChance    = 0.25f;  // 25% chance the fire consumes them after casting
+        // Burnout chance varies by tier: looters barely control fire (high), Fire Worshippers are practiced (low)
+        private const float BurnoutLooter   = 0.35f;
+        private const float BurnoutBandit   = 0.25f;
+        private const float BurnoutSpecial  = 0.15f;
         private const float TickInterval     = 0.5f;
 
         private static readonly HashSet<Agent>            _mageAgents = new HashSet<Agent>();
@@ -50,14 +53,16 @@ namespace AshAndEmber
         private static float _tickAccum  = 0f;
         private static float _warmupTimer = 0f;
         private static bool  _seeded     = false;
+        private static bool  _isSpecialBattle = false; // Fire Worshippers / Ashen Spawn
 
         public static void OnMissionEnd()
         {
             _mageAgents.Clear();
             _cooldowns.Clear();
-            _tickAccum  = 0f;
-            _warmupTimer = 0f;
-            _seeded     = false;
+            _tickAccum      = 0f;
+            _warmupTimer    = 0f;
+            _seeded         = false;
+            _isSpecialBattle = false;
         }
 
         public static void MissionTick(float dt)
@@ -110,12 +115,14 @@ namespace AshAndEmber
             }
             catch { return; }
 
+            _isSpecialBattle = IsSpecialBanditBattle();
+
             foreach (Agent a in candidates)
                 if (_rng.NextDouble() < MageChance)
                     _mageAgents.Add(a);
 
             // Fire Worshippers and Ashen Spawn guarantee at least one mage caster
-            if (_mageAgents.Count == 0 && candidates.Count > 0 && IsSpecialBanditBattle())
+            if (_mageAgents.Count == 0 && candidates.Count > 0 && _isSpecialBattle)
                 _mageAgents.Add(candidates[_rng.Next(candidates.Count)]);
         }
 
@@ -172,15 +179,39 @@ namespace AshAndEmber
 
             if (nearEnemies == 0) return;
 
-            // Simple two-option decision: surrounded → burst, otherwise → blast
+            // Surrounded → burst, otherwise → blast
             bool useBurst = closeEnemies >= 2 || _rng.Next(2) == 0;
+
+            // Spell power tiers:
+            //   Looter (untrained):       formCount=1, minimal effect — fire barely obeys them
+            //   Regular bandit casters:   formCount=2, modest damage or morale
+            //   Fire Worshippers / Ashen: formCount=3, real damage + secondary effect
+            string troopId = (mage.Character as TaleWorlds.CampaignSystem.CharacterObject)?.StringId ?? "";
+            bool isLooter  = troopId == "looter";
 
             try
             {
-                if (useBurst)
-                    SpellEffects.ExecuteNpcBurst(mage, 2, 1, 0, 1, false, mage.Team);
+                if (_isSpecialBattle)
+                {
+                    if (useBurst)
+                        SpellEffects.ExecuteNpcBurst(mage, 3, 2, 1, 0, false, mage.Team);
+                    else
+                        SpellEffects.ExecuteNpcBlast(mage, 3, 2, 0, 1, false, mage.Team);
+                }
+                else if (isLooter)
+                {
+                    if (useBurst)
+                        SpellEffects.ExecuteNpcBurst(mage, 1, 1, 0, 0, false, mage.Team);
+                    else
+                        SpellEffects.ExecuteNpcBlast(mage, 1, 0, 0, 1, false, mage.Team);
+                }
                 else
-                    SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, 0, false, mage.Team);
+                {
+                    if (useBurst)
+                        SpellEffects.ExecuteNpcBurst(mage, 2, 1, 0, 1, false, mage.Team);
+                    else
+                        SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, 0, false, mage.Team);
+                }
 
                 SpellEffects.BeginAgentGlow(mage, ColorSchool.Red, 2f);
                 SpellEffects.TryCastSound(mage.Position, ColorSchool.Red);
@@ -194,8 +225,12 @@ namespace AshAndEmber
                     $"The {title} channels dark fire!",
                     new Color(0.85f, 0.35f, 0.15f)));
 
-                // The fire burns those who borrow it without the gift
-                if (_rng.NextDouble() < BurnoutChance)
+                // The fire burns those who borrow it without the gift.
+                // Practiced cultists survive more often than raw looters.
+                float burnout = _isSpecialBattle ? BurnoutSpecial
+                              : isLooter          ? BurnoutLooter
+                              :                    BurnoutBandit;
+                if (_rng.NextDouble() < burnout)
                 {
                     _mageAgents.Remove(mage);
                     SpellEffects.QueueKill(mage);

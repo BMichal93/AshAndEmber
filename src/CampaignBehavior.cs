@@ -372,12 +372,12 @@ namespace AshAndEmber
                             if (leader == null || leader == Hero.MainHero
                                 || !ColourLordRegistry.IsColourLord(leader)) continue;
 
-                            int casts = ColourLordAI.ConsumeBattleCasts(leader);
-                            if (casts <= 0) continue;
+                            int weight = ColourLordAI.ConsumeBattleCasts(leader);
+                            if (weight <= 0) continue;
 
-                            // 1 aging day per spell cast — formula-independent, keeps NPC
-                            // mage lord lifespan stable regardless of player formula tuning.
-                            int agingDays = casts;
+                            // Aging scales with total formCount weight: 1 day per 3 weight.
+                            // A single formCount=3 cast = 1 day; two formCount=4 casts = 2 days.
+                            int agingDays = Math.Max(1, weight / 3);
                             if (agingDays <= 0) continue;
 
                             if (!ColourLordRegistry.IsAshenLord(leader))

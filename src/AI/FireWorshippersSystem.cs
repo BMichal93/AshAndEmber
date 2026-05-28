@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
@@ -68,19 +67,9 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static readonly MethodInfo _setCustomName = typeof(MobileParty)
-            .GetMethod("SetCustomName", BindingFlags.Public | BindingFlags.Instance);
-        private static readonly FieldInfo _nameField = typeof(MobileParty)
-            .GetField("_name", BindingFlags.NonPublic | BindingFlags.Instance);
-
         private static void TryRenameParty(MobileParty party, string name)
         {
-            var txt = new TextObject(name);
-            try
-            {
-                if (_setCustomName != null) { _setCustomName.Invoke(party, new object[] { txt }); return; }
-                _nameField?.SetValue(party, txt);
-            }
+            try { party.Party.SetCustomName(new TextObject(name)); }
             catch { }
         }
 

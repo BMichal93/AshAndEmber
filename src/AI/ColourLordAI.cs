@@ -141,13 +141,13 @@ namespace AshAndEmber
             {
                 // Surrounded — use Burst to push or damage
                 if (roll < 2)
-                    CastBurst(agent, hero, 2, 0, 1, 0, false); // Burst+Push
+                    CastBurst(agent, hero, 3, 0, 2, 0, false); // Burst+Push (stronger)
                 else if (roll < 4)
-                    CastBurst(agent, hero, 2, 2, 0, 0, false); // Burst+Damage
+                    CastBurst(agent, hero, 3, 3, 0, 0, false); // Burst+Damage (stronger)
                 else if (isAshen)
-                    CastBurst(agent, hero, 3, 2, 1, 0, false); // Ashen: heavier Burst+Dmg+Push
+                    CastBurst(agent, hero, 4, 3, 1, 0, false); // Ashen: heavy Burst+Dmg+Push
                 else
-                    CastBurst(agent, hero, 2, 2, 0, 0, false);
+                    CastBurst(agent, hero, 3, 3, 0, 0, false);
             }
             else
             {
@@ -156,26 +156,26 @@ namespace AshAndEmber
                 if (coneCount >= 1)
                 {
                     if (roll == 0)
-                        CastBlast(agent, hero, 2, 2, 0, 0, false); // Blast+Damage
+                        CastBlast(agent, hero, 3, 3, 0, 0, false); // Blast+Damage
                     else if (roll == 1)
-                        CastBlast(agent, hero, 2, 0, 0, 2, false); // Blast+Morale
+                        CastBlast(agent, hero, 3, 0, 0, 3, false); // Blast+Morale
                     else if (roll == 2)
-                        CastBlast(agent, hero, 2, 0, 1, 0, false); // Blast+Push
+                        CastBlast(agent, hero, 3, 0, 2, 0, false); // Blast+Push
                     else if (roll == 3)
-                        CastBurst(agent, hero, 2, 1, 0, 1, false); // Burst+Dmg+Morale
+                        CastBurst(agent, hero, 3, 2, 0, 2, false); // Burst+Dmg+Morale
                     else if (roll == 4 && isAshen)
-                        CastBlast(agent, hero, 3, 3, 0, 0, false); // Ashen: heavy Blast
+                        CastBlast(agent, hero, 4, 4, 0, 0, false); // Ashen: devastating Blast
                     else
-                        CastBlast(agent, hero, 3, 0, 0, 3, false); // Ashen: mass morale blast
+                        CastBlast(agent, hero, 4, 0, 0, 4, false); // Ashen: mass fear blast
                 }
                 else if (isAshen)
                 {
                     // Blight lords launch morale blasts even without cone alignment
-                    CastBurst(agent, hero, 2, 0, 0, 3, false);
+                    CastBurst(agent, hero, 3, 0, 0, 4, false);
                 }
                 else
                 {
-                    CastBurst(agent, hero, 2, 0, 0, 2, false);
+                    CastBurst(agent, hero, 3, 0, 0, 2, false);
                 }
             }
         }
@@ -188,7 +188,13 @@ namespace AshAndEmber
                 SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, push, morale, reversed, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero);
+                RecordCast(hero, formCount);
+
+                bool isAshen = ColourLordRegistry.IsAshenLord(hero);
+                string blurb = formCount >= 4
+                    ? (isAshen ? "cold fire tears forward." : "channels a devastating blast.")
+                    : (isAshen ? "cold fire lashes out." : "shapes fire into a forward blade.");
+                AnnounceEnemyCast(agent, hero, blurb);
             }
             catch { }
         }
@@ -201,7 +207,13 @@ namespace AshAndEmber
                 SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, push, morale, reversed, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero);
+                RecordCast(hero, formCount);
+
+                bool isAshen = ColourLordRegistry.IsAshenLord(hero);
+                string blurb = formCount >= 4
+                    ? (isAshen ? "tears the veil — cold fire erupts." : "channels a great eruption.")
+                    : (isAshen ? "erupts with cold fire." : "fire bursts outward.");
+                AnnounceEnemyCast(agent, hero, blurb);
             }
             catch { }
         }
@@ -223,7 +235,8 @@ namespace AshAndEmber
 
                 SpellEffects.ExecuteWardFromAgent(agent, allyRadius);
                 SetCooldown(hero);
-                RecordCast(hero);
+                RecordCast(hero, 2);
+                AnnounceEnemyCast(agent, hero, "wraps themselves in the working.");
             }
             catch { }
         }
@@ -235,7 +248,8 @@ namespace AshAndEmber
                 SpellEffects.SpawnNpcHealZone(agent.Position, ColorSchool.Green, 1f, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero);
+                RecordCast(hero, 2);
+                AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
             }
             catch { }
         }
@@ -266,11 +280,30 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void RecordCast(Hero hero)
+        // Accumulates total formCount weight so post-battle aging scales with spell power.
+        private static void RecordCast(Hero hero, int weight = 1)
         {
             if (!_battleCasts.ContainsKey(hero.StringId))
                 _battleCasts[hero.StringId] = 0;
-            _battleCasts[hero.StringId]++;
+            _battleCasts[hero.StringId] += weight;
+        }
+
+        // Shows a combat-log message when an NPC lord casts against the player.
+        // Silent when the caster is on the player's side (no ally spam).
+        private static void AnnounceEnemyCast(Agent agent, Hero hero, string blurb)
+        {
+            try
+            {
+                if (Agent.Main == null) return;
+                if (agent.Team == Agent.Main.Team) return;
+                bool isAshen = ColourLordRegistry.IsAshenLord(hero);
+                Color c = isAshen
+                    ? new Color(0.45f, 0.45f, 0.65f)   // cold blue-grey for Blight
+                    : new Color(0.65f, 0.45f, 0.75f);   // violet for colour lords
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{hero.Name} — {blurb}", c));
+            }
+            catch { }
         }
     }
 }
