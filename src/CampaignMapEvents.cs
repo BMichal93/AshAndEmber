@@ -310,32 +310,38 @@ namespace AshAndEmber
         }
 
         // ── Event 6: Fire Fades ───────────────────────────────────────────────
-        // Half of all non-Ashen lords under 18 years old are killed.
-        // Uses ApplyByOldAge(hero, false) — notification suppressed because
-        // we show a single aggregate message instead.
-        // The player hero is always spared.
+        // Half of all non-Ashen lords under 18 who are NOT clan leaders are
+        // killed. Player hero is always spared.
+        //
+        // Safety constraints:
+        //   • !IsChild  — Bannerlord's ApplyByOldAge/succession code is not safe
+        //                 for child heroes; IsChild is the engine's own flag.
+        //   • not clan leader — killing a ruling-clan leader triggers complex
+        //                 succession that can corrupt campaign state mid-event.
+        //   • ApplyByMurder(null, false) — neutral "mystery death", no killer
+        //                 assigned, no notification; avoids old-age succession path.
         private static void TryFireFireFades()
         {
             if (_rng.NextDouble() >= ChanceFireFades) return;
             try
             {
-                var youngLords = Hero.AllAliveHeroes
+                var candidates = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive
+                             && !h.IsChild                          // skip engine-flagged children
                              && h.Age < 18f
-                             && !(h == Hero.MainHero
-                                    ? MageKnowledge.IsAshen
-                                    : ColourLordRegistry.IsAshenLord(h)))
+                             && (h.Clan == null || h.Clan.Leader != h) // skip clan leaders
+                             && h != Hero.MainHero
+                             && !ColourLordRegistry.IsAshenLord(h))
                     .ToList();
-                if (youngLords.Count == 0) return;
+                if (candidates.Count == 0) return;
 
                 int killed = 0;
-                foreach (var hero in youngLords)
+                foreach (var hero in candidates)
                 {
                     if (_rng.Next(2) == 0) continue; // 50% survive
                     try
                     {
-                        // false = suppress individual notification; aggregate message below
-                        KillCharacterAction.ApplyByOldAge(hero, false);
+                        KillCharacterAction.ApplyByMurder(hero, null, false);
                         killed++;
                     }
                     catch { }

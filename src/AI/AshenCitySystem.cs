@@ -24,8 +24,14 @@
 //     clan (initial setup or post-conquest), reclaims it on the next daily tick.
 //   - Blocks natural aging of Ashen heroes.
 //
+// Daily maintenance also includes:
+//   - TickAshenClanKingdoms: ejects Ashen clans from foreign kingdoms and
+//     re-adds them to the Ashen kingdom. Done here (not in OnClanChangedKingdom)
+//     to avoid re-entrancy: calling ApplyByLeaveKingdom inside ClanChangedKingdom
+//     fires the same event again and can crash the campaign state.
+//
 // Event hook (ClanChangedKingdom):
-//   - Ejects Ashen clans that try to join a non-Ashen kingdom.
+//   - Intentionally empty (no-op). See TickAshenClanKingdoms above.
 // =============================================================================
 
 using System;
@@ -458,12 +464,51 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Ashen clan kingdom enforcement ────────────────────────────────────
+        // Called from DailyTick. If any Ashen clan has drifted into a foreign
+        // kingdom (through AI diplomacy or Bannerlord's own assignment logic),
+        // eject and re-add them here rather than inside event callbacks to avoid
+        // ClanChangedKingdom re-entrancy crashes.
+        private static void TickAshenClanKingdoms()
+        {
+            if (_ashenKingdom == null || _ashenKingdom.IsEliminated) return;
+            foreach (string clanId in _ashenClanIds.ToList())
+            {
+                try
+                {
+                    var clan = Clan.All.FirstOrDefault(c => c.StringId == clanId);
+                    if (clan == null || clan.IsEliminated) continue;
+                    if (clan.Kingdom?.StringId == AshenKingdomId) continue; // already home
+
+                    // Eject from whatever kingdom grabbed them
+                    if (clan.Kingdom != null)
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+
+                    // Re-add to the Ashen kingdom
+                    if (_ashenKingdom != null && !_ashenKingdom.IsEliminated)
+                    {
+                        bool needsRuler = _ashenKingdom.RulingClan == null;
+                        if (needsRuler)
+                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch { }
+                        else
+                            try { ChangeKingdomAction.ApplyByJoinToKingdom(
+                                    clan, _ashenKingdom,
+                                    CampaignTime.Now + CampaignTime.Years(1000),
+                                    false); }
+                            catch { }
+                    }
+                }
+                catch { }
+            }
+        }
+
         // ── Daily tick ────────────────────────────────────────────────────────
         public static void DailyTick()
         {
             if (_ashenClanIds.Count == 0) return;
 
             EnsureKingdomAlive();
+            TickAshenClanKingdoms();
             DeclareWarWithAllKingdoms();
             RefillGarrisons();
             RefillHeroGold();
@@ -494,15 +539,11 @@ namespace AshAndEmber
         }
 
         // ── Kingdom rejoin prevention ─────────────────────────────────────────
+        // Intentionally empty: calling ApplyByLeaveKingdom here would fire the
+        // ClanChangedKingdom event again (re-entrancy). Ejection is handled
+        // instead by TickAshenClanKingdoms(), which runs on the daily tick.
         public static void OnClanChangedKingdom(Clan clan, Kingdom oldKingdom, Kingdom newKingdom,
-            ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification)
-        {
-            if (newKingdom == null) return;
-            if (clan == null || !_ashenClanIds.Contains(clan.StringId)) return;
-            // Joining the Ashen kingdom is fine; joining anything else is not
-            if (newKingdom.StringId == AshenKingdomId) return;
-            try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-        }
+            ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification) { }
 
         // ── Max relations when player goes Ashen ──────────────────────────────
         public static void OnPlayerBecameAshen()
