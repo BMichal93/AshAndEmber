@@ -54,12 +54,14 @@ namespace AshAndEmber
         // ── Tuning constants ──────────────────────────────────────────────────
         // Per-week fire probability for each event. Adjust here without
         // touching event logic.
-        public const float ChanceAshenPlague    = 0.15f;  // ~every 7 weeks
-        public const float ChanceGreatWithering = 0.20f;  // ~every 5 weeks
-        public const float ChanceAshenMarch     = 0.08f;  // ~every 12 weeks
-        public const float ChanceLongNight      = 0.05f;  // ~every 20 weeks
-        public const float ChanceAshenTide      = 0.05f;  // ~every 20 weeks
-        public const float ChanceFireFades      = 0.03f;  // ~every 33 weeks
+        // Bannerlord has ~12 weekly ticks per year (84 days / 7).
+        // Expected fires per year = chance × 12.
+        public const float ChanceAshenPlague    = 0.05f;  // ~every 20 weeks  (~2–3× per campaign)
+        public const float ChanceGreatWithering = 0.06f;  // ~every 17 weeks  (~3–4× per campaign)
+        public const float ChanceAshenMarch     = 0.03f;  // ~every 33 weeks  (~1–2× per campaign)
+        public const float ChanceLongNight      = 0.02f;  // ~every 50 weeks  (~1× per campaign)
+        public const float ChanceAshenTide      = 0.02f;  // ~every 50 weeks  (~1× per campaign)
+        public const float ChanceFireFades      = 0.01f;  // ~every 100 weeks (rare — once per era)
 
         // Ashen Plague: parties spawned near the afflicted settlement
         public const int AshenPlagueSpawnCount  = 3;
