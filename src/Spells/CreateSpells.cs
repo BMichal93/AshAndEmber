@@ -144,14 +144,14 @@ namespace AshAndEmber
                     BeginAgentGlowRaw(a, raw, 1.5f);
                     if (cast.DamageCount > 0)
                     {
-                        // 1.5f per 0.5s tick = 3 DPS per damage count (scales with new 12/hit values)
-                        float amt = cast.DamageCount * 1.5f;
+                        // 2.5f per 0.5s tick = 5 DPS per damage count (scales with new 25/hit values)
+                        float amt = cast.DamageCount * 2.5f;
                         if (rev) HealAgent(a, amt); else DamageAgent(a, amt);
                     }
                     if (cast.MoraleCount > 0)
                     {
-                        // 1.75f per 0.5s tick (~3.5 morale/s per count, matches new 7-per-hit rate)
-                        float delta = cast.MoraleCount * 1.75f;
+                        // 3f per 0.5s tick (6 morale/s per count, matches new 12-per-hit rate)
+                        float delta = cast.MoraleCount * 3f;
                         float cur   = a.GetMorale();
                         a.SetMorale(rev ? Math.Min(cur + delta, 100f) : Math.Max(cur - delta, 0f));
                     }
@@ -161,20 +161,20 @@ namespace AshAndEmber
                         try { isMounted = a.MountAgent != null; } catch { }
                         if (!isMounted)
                         {
-                            float pushDist = cast.PushCount * 2f;
+                            float pushDist = cast.PushCount * 2.5f;
                             Vec3 dir = rev
                                 ? (src.Position - a.Position).NormalizedCopy()
                                 : (a.Position - e.Position).NormalizedCopy();
                             Vec3 dest = a.Position + dir * pushDist; dest.z = a.Position.z;
                             QueueMove(a, dest, 0.3f);
                         }
-                        // Kinetic side damage per tick (0.75f/tick per push count)
-                        if (!rev) DamageAgent(a, cast.PushCount * 0.75f);
+                        // Kinetic side damage per tick (1f/tick per push count)
+                        if (!rev) DamageAgent(a, cast.PushCount * 1f);
                     }
                     if (cast.MoraleCount > 0 && !rev)
                     {
-                        // Smoulder side damage per tick (1f/tick per morale count)
-                        DamageAgent(a, cast.MoraleCount * 1f);
+                        // Smoulder side damage per tick (1.25f/tick per morale count)
+                        DamageAgent(a, cast.MoraleCount * 1.25f);
                     }
                 }
                 catch { }
