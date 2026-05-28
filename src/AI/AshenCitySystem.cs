@@ -40,11 +40,19 @@ namespace AshAndEmber
             "Tyal", "Sibir", "Baltakhand",
         };
 
+        public static void ResetForNewGame()
+        {
+            _initialized = false;
+            _ashenClanIds.Clear();
+        }
+
         // ── Initialization ────────────────────────────────────────────────────
+        // Only marks initialized once at least one clan is found.
+        // If settlements aren't loaded yet on first call, retries on subsequent calls.
         public static void Initialize()
         {
             if (_initialized) return;
-            _initialized = true;
+            bool foundAny = false;
             foreach (string name in _targetSettlementNames)
             {
                 try
@@ -56,11 +64,15 @@ namespace AshAndEmber
                     Clan clan = settlement.OwnerClan;
                     if (clan == null) continue;
 
-                    _ashenClanIds.Add(clan.StringId);
-                    MarkClanAshen(clan);
+                    if (_ashenClanIds.Add(clan.StringId))
+                    {
+                        MarkClanAshen(clan);
+                        foundAny = true;
+                    }
                 }
                 catch { }
             }
+            if (foundAny) _initialized = true;
         }
 
         private static void MarkClanAshen(Clan clan)
@@ -77,10 +89,11 @@ namespace AshAndEmber
                 {
                     try { ColourLordRegistry.SetAshen(hero, true); } catch { }
                     try { RenameAshenHero(hero); } catch { }
-                    try { MaxRelationsWithPlayer(hero); } catch { }
                     // Ensure they're also mage lords
                     try { ColourLordRegistry.SetMage(hero, true); } catch { }
                 }
+                // Relations are set when the player becomes Ashen — not at world init,
+                // because ChangeRelationAction awards Charm XP and causes level-up inflation.
             }
             catch { }
         }

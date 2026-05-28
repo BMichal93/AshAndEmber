@@ -42,6 +42,8 @@ namespace AshAndEmber
             _deferredInquiry = null;
             _giftedChildIds.Clear();
             TalentSystem.ResetForNewGame();
+            ColourLordRegistry.ResetForNewGame();
+            AshenCitySystem.ResetForNewGame();
         }
 
         public static bool IsChildGifted(string id) => _giftedChildIds.Contains(id);

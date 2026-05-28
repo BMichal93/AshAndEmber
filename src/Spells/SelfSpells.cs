@@ -26,14 +26,16 @@ namespace AshAndEmber
             public Vec3   Forward;
             public Vec3   Right;
             public int    GridSize;
-            public const float NodeSpacing  = 2f;
-            public const float Speed        = 4f;
-            public const float HitRadius    = 1.5f;
-            public const float TickInterval = 0.5f;
+            public const float NodeSpacing    = 2f;
+            public const float Speed          = 4f;
+            public const float HitRadius      = 1.5f;
+            public const float TickInterval   = 0.5f;
+            public const float VisualInterval = 0.12f;
             public float  TravelLeft;
             public SpellCast Cast;
             public Team   CasterTeam;
-            public float  TickTimer = 0f;
+            public float  TickTimer   = 0f;
+            public float  VisualTimer = 0f;
             public readonly List<GameEntity> Lights = new List<GameEntity>();
         }
 
@@ -80,6 +82,7 @@ namespace AshAndEmber
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
             BeginAgentGlow(caster, col, 1.5f);
+            SpawnWaveLights(_wave);
 
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Wave ({gridSize}×{gridSize}, {range:F0}m) — {cast.EffectSummary()}.",
@@ -116,6 +119,31 @@ namespace AshAndEmber
 
             if (_wave.TravelLeft <= 0f) { ClearWave(); return; }
 
+            // Reposition persistent lights to follow the advancing wave every frame
+            for (int row = 0; row < _wave.GridSize; row++)
+            for (int col = 0; col < _wave.GridSize; col++)
+            {
+                int idx = row * _wave.GridSize + col;
+                if (idx >= _wave.Lights.Count) break;
+                GameEntity light = _wave.Lights[idx];
+                if (light == null) continue;
+                try
+                {
+                    Vec3 pos = WaveNodePos(_wave, row, col);
+                    var lf = new MatrixFrame(Mat3.Identity, pos + new Vec3(0f, 0f, 0.5f));
+                    light.SetGlobalFrame(in lf, true);
+                }
+                catch { }
+            }
+
+            // Spawn short-lived fire particles at the current grid positions
+            _wave.VisualTimer -= dt;
+            if (_wave.VisualTimer <= 0f)
+            {
+                _wave.VisualTimer = WaveState.VisualInterval;
+                SpawnWaveFireVisuals(_wave);
+            }
+
             _wave.TickTimer -= dt;
             if (_wave.TickTimer > 0f) return;
             _wave.TickTimer = WaveState.TickInterval;
@@ -123,22 +151,36 @@ namespace AshAndEmber
             TickWaveEffects(_wave);
         }
 
-        // Wave lifetime: range / 4 m/s  (e.g. 3 L-keys = 5 m → 1.25 s, 10 L-keys = 19 m → 4.75 s)
-        private static void TickWaveEffects(WaveState w)
+        // One short-lived fire particle per grid node — called every VisualInterval.
+        // Particles can't be repositioned, so we respawn them frequently (every 0.12s)
+        // with a lifetime of 2.5× the interval so consecutive spawns overlap smoothly.
+        private static void SpawnWaveFireVisuals(WaveState w)
         {
-            if (Mission.Current == null) return;
-
-            // Spawn temp lights at every grid node each tick — no persistent entities,
-            // since SetGlobalFrame does not reliably reposition them in Bannerlord.
-            // Duration is 3× tick interval so consecutive ticks overlap solidly.
+            if (w.Cast.VisualColor == ColorSchool.Ashen) return;
             for (int row = 0; row < w.GridSize; row++)
             for (int col = 0; col < w.GridSize; col++)
             {
                 Vec3 nodePos = WaveNodePos(w, row, col);
-                SpawnTempLight(nodePos, w.Cast.VisualColor, 7f, WaveState.TickInterval * 3f);
-                if (w.Cast.VisualColor != ColorSchool.Ashen)
-                    SpawnTempFireParticle(nodePos, WaveState.TickInterval * 2.5f);
+                foreach (string name in _fireParticleNames)
+                {
+                    GameEntity entity = SpawnParticleEntity(nodePos, name);
+                    if (entity == null) continue;
+                    float dur = WaveState.VisualInterval * 2.5f;
+                    _areaEffects.Add(new AreaEffect
+                    {
+                        Id = "temp_particle", Position = nodePos, School = w.Cast.VisualColor,
+                        TickInterval = dur, TickTimer = dur, Remaining = dur,
+                        LightEntity  = entity,
+                    });
+                    break;
+                }
             }
+        }
+
+        // Wave lifetime: range / 4 m/s  (e.g. 3 L-keys = 5 m → 1.25 s, 10 L-keys = 19 m → 4.75 s)
+        private static void TickWaveEffects(WaveState w)
+        {
+            if (Mission.Current == null) return;
 
             List<Agent> all;
             try { all = Mission.Current.Agents.ToList(); } catch { return; }

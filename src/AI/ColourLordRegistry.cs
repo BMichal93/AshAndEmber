@@ -101,6 +101,15 @@ namespace AshAndEmber
             _lordTalents.TryGetValue(hero.StringId, out var list) &&
             list.Contains((int)id);
 
+        public static void ResetForNewGame()
+        {
+            _seeded = false;
+            _mageIds.Clear();
+            _ashenIds.Clear();
+            _lordTalents.Clear();
+            _campaignCooldowns.Clear();
+        }
+
         // ── Seeding ───────────────────────────────────────────────────────────
         public static void SeedInitialLords()
         {

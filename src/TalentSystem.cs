@@ -460,7 +460,7 @@ namespace AshAndEmber
             {
                 if (Hero.MainHero?.Clan?.Kingdom != null)
                 {
-                    GainKingdomInfluenceAction.ApplyForDefault(Hero.MainHero, 40);
+                    Hero.MainHero.Clan.Influence += 40f;
                     Msg("Clairvoyance — the threads of power revealed. +40 influence.");
                 }
                 else

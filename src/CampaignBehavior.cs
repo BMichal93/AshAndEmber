@@ -37,6 +37,20 @@ namespace AshAndEmber
             "A child in the village stares at your hands as you pass. She sees something there that you do not show others.",
             "The fire does not sleep when you do. You feel it turning in its sleep, searching.",
             "You smell smoke where there is none. An old instinct — the fire recognising itself in the distance.",
+            "Rain falls, but where you stand the ground stays dry. You notice. You always notice.",
+            "The torches in the hall burn a shade too orange tonight. The innkeeper doesn't see it. You do.",
+            "Someone is watching you from across the market — no, not watching. Sensing. You feel it the same way they do.",
+            "A wound on your hand heals overnight. You have stopped being surprised by this.",
+            "The dying man reaches for your hand. You let him. The fire passes between you — not much, but some.",
+            "You dream of a battlefield long before it happens. The details are wrong. The ending is not.",
+            "An old mage-lord rides past on the road. Neither of you slows. Both of you know.",
+            "Animals grow quiet when you enter the stable. Not frightened — still. As if listening.",
+            "You stand at the edge of a river and the water pulls slightly toward you. You step back.",
+            "The fire shows you a face tonight. Someone you haven't met yet. Or someone you have, changed by time.",
+            "You press your palm against cold stone and feel it remember warmth. Every stone remembers something.",
+            "A soldier dies in the battle beside you. For a moment, his fire is visible — a last guttering. Then nothing.",
+            "The stars are wrong tonight. Not the positions — the light. Too old. Too far. The fire knows things you don't, and it is not telling you.",
+            "You catch yourself speaking to the campfire, asking nothing in particular. It doesn't answer. But it listens.",
         };
 
         public override void RegisterEvents()
@@ -76,9 +90,9 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("yes", "I feel it still.", null, true,
-                        "The current stirs in you. Press Alt+B to open your grimoire."),
+                        "The fire stirs in you. Press Alt+B to open your grimoire."),
                     new InquiryElement("no", "I don't feel it.", null, true,
-                        "The current passes you by."),
+                        "The fire faded. You live as others do, and the world will treat you as it treats them."),
                 },
                 false, 1, 1,
                 "Choose.",
@@ -90,7 +104,7 @@ namespace AshAndEmber
                     if (isMage)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The gift stirs. Hold Alt, type form keys (WASD), press X to Break, type effect keys, release Alt to cast.",
+                            "The fire stirs. Hold Alt, type form keys (WASD), press X to Break, type effect keys, release Alt to cast.",
                             new Color(0.7f, 0.5f, 1.0f)));
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Forms: W=Blast  A=Wave  D=Barrier  S=Burst  |  Effects: W=Damage  A=Push  D=Morale  S=Reverse  |  Alt+X = Grimoire",
@@ -105,6 +119,7 @@ namespace AshAndEmber
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
+                    try { AshenCitySystem.DailyTick(); } catch { }
                 },
                 _ =>
                 {
@@ -112,6 +127,7 @@ namespace AshAndEmber
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
+                    try { AshenCitySystem.DailyTick(); } catch { }
                 },
                 "", false
             ), false, true);
@@ -319,7 +335,8 @@ namespace AshAndEmber
                             int agingDays = casts;
                             if (agingDays <= 0) continue;
 
-                            AgingSystem.AgeHero(leader, agingDays);
+                            if (!ColourLordRegistry.IsAshenLord(leader))
+                                AgingSystem.AgeHero(leader, agingDays);
                             if (playerInvolved)
                                 InformationManager.DisplayMessage(new InformationMessage(
                                     $"{leader.Name} is spent by the working — {agingDays} day{(agingDays > 1 ? "s" : "")} older.",
