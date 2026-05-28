@@ -27,7 +27,7 @@
 // │                 │ with notification suppressed; aggregate message shown).  │
 // ├─────────────────┼──────────────────────────────────────────────────────────┤
 // │ Darkened Roads  │ All caravans in a random kingdom are destroyed via       │
-// │                 │ DestroyPartyAction. Player-clan caravans are spared.     │
+// │                 │ DestroyPartyAction. Ashen-kingdom caravans are immune.   │
 // └─────────────────┴──────────────────────────────────────────────────────────┘
 //
 // DEBUGGING GUIDE:
@@ -319,10 +319,11 @@ namespace AshAndEmber
             try
             {
                 var youngLords = Hero.AllAliveHeroes
-                    .Where(h => h != Hero.MainHero
-                             && h.IsLord && h.IsAlive
-                             && !ColourLordRegistry.IsAshenLord(h)
-                             && h.Age < 18f)
+                    .Where(h => h.IsLord && h.IsAlive
+                             && h.Age < 18f
+                             && !(h == Hero.MainHero
+                                    ? MageKnowledge.IsAshen
+                                    : ColourLordRegistry.IsAshenLord(h)))
                     .ToList();
                 if (youngLords.Count == 0) return;
 
@@ -350,7 +351,7 @@ namespace AshAndEmber
 
         // ── Event 7: Darkened Roads ───────────────────────────────────────────
         // All caravans operating in a random non-Ashen kingdom are destroyed.
-        // Player-clan caravans are spared. Uses DestroyPartyAction which is the
+        // Uses DestroyPartyAction which is the
         // clean campaign-system way to remove a mobile party; the owning merchant
         // heroes survive and may rebuild their caravans later.
         private static void TryFireDarkenedRoads()
@@ -374,8 +375,6 @@ namespace AshAndEmber
                 int destroyed = 0;
                 foreach (var caravan in caravans)
                 {
-                    // Never destroy the player's own caravans
-                    if (caravan.Owner?.Clan == Clan.PlayerClan) continue;
                     try
                     {
                         DestroyPartyAction.Apply(caravan, null);
