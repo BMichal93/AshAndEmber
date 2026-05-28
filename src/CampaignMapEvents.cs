@@ -378,7 +378,7 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        DestroyPartyAction.Apply(caravan, null);
+                        DestroyPartyAction.Apply(caravan.Party, null);
                         destroyed++;
                     }
                     catch { }

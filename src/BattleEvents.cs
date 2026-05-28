@@ -33,6 +33,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
+using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
@@ -133,7 +134,7 @@ namespace AshAndEmber
                 foreach (var agent in Mission.Current.Agents)
                 {
                     if (!agent.IsHero) continue;
-                    var hero = agent.Character?.HeroObject;
+                    var hero = (agent.Character as CharacterObject)?.HeroObject;
                     if (hero == null) continue;
                     bool isAshen = hero == Hero.MainHero
                         ? MageKnowledge.IsAshen
@@ -358,12 +359,12 @@ namespace AshAndEmber
                         }
                         catch { }
 
-                        var origin    = new SimpleAgentOrigin(troop);
+                        var origin    = new BasicBattleAgentOrigin(troop);
                         var agentData = new AgentBuildData(origin)
                             .Team(_ashenTeam)
-                            .Controller(Agent.ControllerType.AI)
-                            .InitialPosition(ref pos)
-                            .InitialDirection(ref dir);
+                            .Controller(AgentControllerType.AI)
+                            .InitialPosition(in pos)
+                            .InitialDirection(in dir);
 
                         Mission.Current.SpawnAgent(agentData, false);
                     }
@@ -382,7 +383,7 @@ namespace AshAndEmber
         {
             if (_ashenTeam != null) return agent.Team == _ashenTeam;
             if (!agent.IsHero) return false;
-            var hero = agent.Character?.HeroObject;
+            var hero = (agent.Character as CharacterObject)?.HeroObject;
             if (hero == null) return false;
             return hero == Hero.MainHero
                 ? MageKnowledge.IsAshen
