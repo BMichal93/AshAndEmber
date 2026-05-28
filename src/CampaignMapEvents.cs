@@ -1,6 +1,6 @@
 // =============================================================================
 // ASH AND EMBER — CampaignMapEvents.cs
-// Six rare world events themed around fire, ash, and fading. Each has an
+// Seven rare world events themed around fire, ash, and fading. Each has an
 // independent chance to trigger on the weekly tick.
 //
 // ┌─────────────────┬──────────────────────────────────────────────────────────┐
@@ -25,6 +25,9 @@
 // ├─────────────────┼──────────────────────────────────────────────────────────┤
 // │ Fire Fades      │ 50% of non-Ashen lords under age 18 die (old-age action │
 // │                 │ with notification suppressed; aggregate message shown).  │
+// ├─────────────────┼──────────────────────────────────────────────────────────┤
+// │ Darkened Roads  │ All caravans in a random kingdom are destroyed via       │
+// │                 │ DestroyPartyAction. Player-clan caravans are spared.     │
 // └─────────────────┴──────────────────────────────────────────────────────────┘
 //
 // DEBUGGING GUIDE:
@@ -62,6 +65,7 @@ namespace AshAndEmber
         public const float ChanceLongNight      = 0.03f;  // ~every 33 weeks  (~1–2× per campaign)
         public const float ChanceAshenTide      = 0.03f;  // ~every 33 weeks  (~1–2× per campaign)
         public const float ChanceFireFades      = 0.015f; // ~every 67 weeks  (rare — once per era)
+        public const float ChanceDarkenedRoads  = 0.06f;  // ~every 17 weeks  (~3–4× per campaign)
 
         // Ashen Plague: parties spawned near the afflicted settlement
         public const int AshenPlagueSpawnCount  = 3;
@@ -105,6 +109,7 @@ namespace AshAndEmber
             TryFireLongNight();
             TryFireAshenTide();
             TryFireFireFades();
+            TryFireDarkenedRoads();
         }
 
         /// Resets state for a fresh new game (called from OnNewGameCreated).
@@ -339,6 +344,51 @@ namespace AshAndEmber
                         $"Fire Fades — {killed} young lord{(killed != 1 ? "s" : "")} did not wake this morning. " +
                         "Something ancient has moved through the realm.",
                         new Color(0.4f, 0.3f, 0.5f)));
+            }
+            catch { }
+        }
+
+        // ── Event 7: Darkened Roads ───────────────────────────────────────────
+        // All caravans operating in a random non-Ashen kingdom are destroyed.
+        // Player-clan caravans are spared. Uses DestroyPartyAction which is the
+        // clean campaign-system way to remove a mobile party; the owning merchant
+        // heroes survive and may rebuild their caravans later.
+        private static void TryFireDarkenedRoads()
+        {
+            if (_rng.NextDouble() >= ChanceDarkenedRoads) return;
+            try
+            {
+                var kingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated && k.StringId != AshenKingdomId)
+                    .ToList();
+                if (kingdoms.Count == 0) return;
+
+                var kingdom = kingdoms[_rng.Next(kingdoms.Count)];
+
+                // Collect all active caravans whose faction is this kingdom
+                var caravans = MobileParty.All
+                    .Where(p => p.IsActive && p.IsCaravan && p.MapFaction == kingdom)
+                    .ToList();
+                if (caravans.Count == 0) return;
+
+                int destroyed = 0;
+                foreach (var caravan in caravans)
+                {
+                    // Never destroy the player's own caravans
+                    if (caravan.Owner?.Clan == Clan.PlayerClan) continue;
+                    try
+                    {
+                        DestroyPartyAction.Apply(caravan, null);
+                        destroyed++;
+                    }
+                    catch { }
+                }
+
+                if (destroyed > 0)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Darkened Roads — {destroyed} caravan{(destroyed != 1 ? "s" : "")} " +
+                        $"vanish on the roads of {kingdom.Name}. Nothing is found of them.",
+                        new Color(0.5f, 0.35f, 0.2f)));
             }
             catch { }
         }
