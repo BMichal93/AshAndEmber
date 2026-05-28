@@ -20,8 +20,8 @@
 //   - Redeclares war with any kingdom that made peace.
 //   - Refills garrisons below the minimum threshold.
 //   - Refills hero gold below the minimum threshold.
-//   - 7-day settlement recovery: if a settlement was conquered, restores it
-//     after 7 days (fallback — the kingdom's own AI should retake it first).
+//   - Settlement recovery: if a settlement is not owned by the expected Ashen
+//     clan (initial setup or post-conquest), reclaims it on the next daily tick.
 //   - Blocks natural aging of Ashen heroes.
 //
 // Event hook (ClanChangedKingdom):
@@ -53,7 +53,6 @@ namespace AshAndEmber
         private const int    MinGarrisonCity   = 500;
         private const int    MinGarrisonCastle = 350;
         private const int    MinHeroGold       = 150_000;
-        private const int    RecoveryDays      = 7;
         private const string AshenKingdomId    = "ashen_kingdom";
 
         private static readonly string[] _targetSettlementNames =
@@ -375,7 +374,11 @@ namespace AshAndEmber
                 try { _ashenKingdom.ReactivateKingdom(); } catch { }
         }
 
-        // ── 7-day settlement recovery (fallback) ──────────────────────────────
+        // ── Settlement ownership recovery ──────────────────────────────────────
+        // Runs every daily tick. If any mapped settlement is not owned by the expected
+        // Ashen clan (due to initial setup timing, AI redistribution, or conquest),
+        // force-reclaim it immediately. The OwnerClan check makes this a no-op when
+        // ownership is already correct, so daily overhead is minimal.
         private static void TickSettlementRecovery()
         {
             foreach (var kvp in _settlementClanMap.ToList())
@@ -384,42 +387,26 @@ namespace AshAndEmber
                 {
                     var settlement = Settlement.All.FirstOrDefault(s => s.StringId == kvp.Key);
                     if (settlement == null) continue;
+                    if (settlement.OwnerClan?.StringId == kvp.Value) continue;
 
-                    if (settlement.OwnerClan?.StringId == kvp.Value)
-                    {
-                        _conqueredDays.Remove(kvp.Key);
-                        continue;
-                    }
+                    var clan = Clan.All.FirstOrDefault(c => c.StringId == kvp.Value);
+                    if (clan == null || clan.IsEliminated) continue;
+                    Hero lord = clan.Leader
+                             ?? clan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
+                    if (lord == null) continue;
 
-                    _conqueredDays.TryGetValue(kvp.Key, out int days);
-                    days++;
+                    ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement);
 
-                    if (days >= RecoveryDays)
-                    {
-                        var clan = Clan.All.FirstOrDefault(c => c.StringId == kvp.Value);
-                        if (clan == null || clan.IsEliminated) continue;
-                        Hero lord = clan.Leader
-                                 ?? clan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
-                        if (lord == null) continue;
-
-                        ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement);
-                        // Eject from any foreign kingdom the restoration may have triggered
-                        if (clan.Kingdom != null && clan.Kingdom.StringId != AshenKingdomId)
-                            try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                        // Re-add to Ashen kingdom if lost
-                        if (clan.Kingdom?.StringId != AshenKingdomId && _ashenKingdom != null)
-                            try { ChangeKingdomAction.ApplyByJoinToKingdom(
-                                    clan, _ashenKingdom,
-                                    CampaignTime.Now + CampaignTime.Years(1000),
-                                    false); }
-                            catch { }
-
-                        _conqueredDays.Remove(kvp.Key);
-                    }
-                    else
-                    {
-                        _conqueredDays[kvp.Key] = days;
-                    }
+                    // Eject from any foreign kingdom the restoration may have triggered
+                    if (clan.Kingdom != null && clan.Kingdom.StringId != AshenKingdomId)
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                    // Re-add to Ashen kingdom if lost
+                    if (clan.Kingdom?.StringId != AshenKingdomId && _ashenKingdom != null)
+                        try { ChangeKingdomAction.ApplyByJoinToKingdom(
+                                clan, _ashenKingdom,
+                                CampaignTime.Now + CampaignTime.Years(1000),
+                                false); }
+                        catch { }
                 }
                 catch { }
             }
