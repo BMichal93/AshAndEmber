@@ -97,6 +97,7 @@ namespace AshAndEmber
         private void OnNewGameCreated()
         {
             MageKnowledge.ResetForNewGame();
+            CampaignMapEvents.ResetForNewGame();
             ShowLoreIntro();
         }
 
@@ -195,6 +196,7 @@ namespace AshAndEmber
             try { AshenCitySystem.DailyTick(); } catch { }
             try { ColourLordRegistry.DailyMapCast(); } catch { }
             try { AgingSystem.DailyAgeCheck(); } catch { }
+            try { CampaignMapEvents.DailyTick(); } catch { }
             try { CheckReapPrisonerYield(); } catch { }
             if (_reapRaidCooldown > 0) _reapRaidCooldown--;
             try { TickLordAnnouncement(); } catch { }
@@ -207,6 +209,7 @@ namespace AshAndEmber
         {
             try { ColourLordRegistry.CheckPopulationBounds(); } catch { }
             try { ColourLordRegistry.CheckAgeLimit(); } catch { }
+            try { CampaignMapEvents.WeeklyTick(); } catch { }
         }
 
         // ── Mission ended ─────────────────────────────────────────────────────
@@ -523,6 +526,7 @@ namespace AshAndEmber
             ColourLordRegistry.Save(dataStore);
             AshenCitySystem.Save(dataStore);
             FireWorshippersSystem.Save(dataStore);
+            CampaignMapEvents.Save(dataStore);
         }
     }
 }

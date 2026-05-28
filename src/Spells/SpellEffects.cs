@@ -37,6 +37,8 @@ namespace AshAndEmber
         internal static LightLevel GetCampaignLightLevel()
         {
             if (Campaign.Current == null) return LightLevel.Bright;
+            // Long Night event forces perpetual darkness for its duration
+            if (CampaignMapEvents.IsLongNight()) return LightLevel.Dark;
             try
             {
                 float hour = (float)(CampaignTime.Now.ToHours % 24.0);

@@ -108,6 +108,17 @@ namespace AshAndEmber
             return false;
         }
 
+        // ── Event-spawned party registration ─────────────────────────────────
+        // Called by CampaignMapEvents.SpawnAshenSpawnParty() to register and
+        // rename parties that were created programmatically (not via the normal
+        // bandit-spawn hook) so that IsAshenSpawn() returns true for them.
+        public static void ForceMarkAsAshenSpawn(MobileParty party)
+        {
+            if (party == null) return;
+            TryRenameParty(party, "Ashen Spawn");
+            _ashenSpawnIds.Add(party.StringId);
+        }
+
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(TaleWorlds.CampaignSystem.IDataStore store)
         {
