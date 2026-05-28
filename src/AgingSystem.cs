@@ -17,7 +17,7 @@ namespace AshAndEmber
     public static class AgingSystem
     {
         private static readonly Random _rng = new Random();
-        private static bool _pendingBlightDecision = false;
+        private static bool _pendingAshenDecision = false;
 
         // ── Core aging ────────────────────────────────────────────────────────
 
@@ -85,24 +85,24 @@ namespace AshAndEmber
         {
             if (hero == null || !hero.IsAlive) return;
             if (hero.Age < 100f) return;
-            // Blight mages are immune to age-death
-            if (hero == Hero.MainHero && MageKnowledge.IsBlight) return;
-            if (hero != Hero.MainHero && ColourLordRegistry.IsBlightLord(hero)) return;
+            // Ashen mages are immune to age-death
+            if (hero == Hero.MainHero && MageKnowledge.IsAshen) return;
+            if (hero != Hero.MainHero && ColourLordRegistry.IsAshenLord(hero)) return;
             try
             {
                 if (hero == Hero.MainHero)
                 {
-                    if (_pendingBlightDecision) return;
-                    _pendingBlightDecision = true;
+                    if (_pendingAshenDecision) return;
+                    _pendingAshenDecision = true;
                     // Defer the choice to the campaign layer
-                    MageKnowledge.QueueBlightPrompt(() => _pendingBlightDecision = false);
+                    MageKnowledge.QueueAshenPrompt(() => _pendingAshenDecision = false);
                     return;
                 }
 
-                // NPC mage: 5% chance to become blight instead of dying
+                // NPC mage: 5% chance to become Ashen instead of dying
                 if (ColourLordRegistry.IsColourLord(hero) && _rng.Next(100) < 5)
                 {
-                    ColourLordRegistry.SetBlight(hero, true);
+                    ColourLordRegistry.SetAshen(hero, true);
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{hero.Name} — the fire does not die. Something colder burns in its place.",
                         new Color(0.3f, 0.35f, 0.7f)));

@@ -115,7 +115,7 @@ namespace AshAndEmber
         {
             var cast = new SpellCast
             {
-                Form = SpellForm.Blast, FormCount = formCount,
+                Form = SpellForm.Blast, FormCount = formCount, BlastCount = formCount,
                 DamageCount = damageCount, PushCount = pushCount,
                 MoraleCount = moraleCount, Reversed = reversed
             };
@@ -127,7 +127,7 @@ namespace AshAndEmber
         {
             var cast = new SpellCast
             {
-                Form = SpellForm.Burst, FormCount = formCount,
+                Form = SpellForm.Burst, FormCount = formCount, BurstCount = formCount,
                 DamageCount = damageCount, PushCount = pushCount,
                 MoraleCount = moraleCount, Reversed = reversed
             };
@@ -397,7 +397,7 @@ namespace AshAndEmber
             // Damage or Heal
             if (cast.DamageCount > 0)
             {
-                float amount = cast.DamageCount * 8f;
+                float amount = cast.DamageCount * 12f;
                 if (cast.Reversed)
                     HealAgent(target, amount);
                 else
@@ -419,7 +419,7 @@ namespace AshAndEmber
 
                 if (!isMounted)
                 {
-                    float dist = cast.PushCount * 3f;
+                    float dist = cast.PushCount * 4f;
                     try
                     {
                         Vec3 dir;
@@ -437,13 +437,13 @@ namespace AshAndEmber
 
                 // Kinetic side damage — surge force bruises on impact (not on pull)
                 if (!cast.Reversed)
-                    DamageAgent(target, cast.PushCount * 2f);
+                    DamageAgent(target, cast.PushCount * 3f);
             }
 
             // Morale drain or boost
             if (cast.MoraleCount > 0)
             {
-                float delta = cast.MoraleCount * 5f;
+                float delta = cast.MoraleCount * 7f;
                 try
                 {
                     float cur = target.GetMorale();
@@ -462,7 +462,7 @@ namespace AshAndEmber
 
                 // Smoulder side damage — the will-breaking fire scorches as it breaks spirit (not on boost)
                 if (!cast.Reversed)
-                    DamageAgent(target, cast.MoraleCount * 3f);
+                    DamageAgent(target, cast.MoraleCount * 4f);
             }
         }
 

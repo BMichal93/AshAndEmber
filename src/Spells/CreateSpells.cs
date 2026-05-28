@@ -34,7 +34,7 @@ namespace AshAndEmber
 
             Vec3 fwd   = caster.LookDirection.NormalizedCopy();
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();
-            int  count = Math.Max(1, cast.FormCount);
+            int  count = Math.Max(1, cast.BarrierCount > 0 ? cast.BarrierCount : cast.FormCount);
 
             for (int i = 0; i < count; i++)
             {
@@ -76,7 +76,7 @@ namespace AshAndEmber
             SpawnTempLight(pos,                          cast.VisualColor, 10f, 6f);
             SpawnTempLight(pos + new Vec3(0f, 0f, 1f),  cast.VisualColor, 10f, 6f);
             SpawnTempLight(pos + new Vec3(0f, 0f, 2f),  cast.VisualColor, 10f, 6f);
-            if (cast.VisualColor != ColorSchool.Blight)
+            if (cast.VisualColor != ColorSchool.Ashen)
             {
                 SpawnTempFireParticle(pos,                          6f);
                 SpawnTempFireParticle(pos + new Vec3(0f, 0f, 1f),  6f);
@@ -95,7 +95,7 @@ namespace AshAndEmber
             SpawnTempLight(e.Position,                          e.School, 10f, 3.5f);
             SpawnTempLight(e.Position + new Vec3(0f, 0f, 1f),  e.School, 10f, 3.5f);
             SpawnTempLight(e.Position + new Vec3(0f, 0f, 2f),  e.School, 10f, 3.5f);
-            if (e.School != ColorSchool.Blight)
+            if (e.School != ColorSchool.Ashen)
             {
                 SpawnTempFireParticle(e.Position,                          3f);
                 SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 1f),  3f);
@@ -114,7 +114,9 @@ namespace AshAndEmber
             {
                 if (!a.IsActive() || a.IsMount) continue;
 
-                float dist = a.Position.Distance(e.Position);
+                // Horizontal distance so mounted riders at elevation are hit correctly
+                Vec3 toH = new Vec3(a.Position.x - e.Position.x, a.Position.y - e.Position.y, 0f);
+                float dist = toH.Length;
 
                 if (!a.IsHero && dist > e.Radius && dist < e.Radius + 3f)
                 {
@@ -122,9 +124,7 @@ namespace AshAndEmber
                     try { isMounted = a.MountAgent != null; } catch { }
                     if (!isMounted)
                     {
-                        Vec3 nudge = a.Position - e.Position;
-                        if (nudge.Length < 0.01f) nudge = new Vec3(1f, 0f, 0f);
-                        else nudge = nudge.NormalizedCopy();
+                        Vec3 nudge = toH.Length < 0.01f ? new Vec3(1f, 0f, 0f) : toH.NormalizedCopy();
                         Vec3 dest = a.Position + nudge * 1.5f;
                         dest.z = a.Position.z;
                         try { QueueMove(a, dest, 0.35f); } catch { }
@@ -144,14 +144,14 @@ namespace AshAndEmber
                     BeginAgentGlowRaw(a, raw, 1.5f);
                     if (cast.DamageCount > 0)
                     {
-                        // 1f per 0.5s tick = same DPS as the old 4f per 2s tick
-                        float amt = cast.DamageCount * 1f;
+                        // 1.5f per 0.5s tick = 3 DPS per damage count (scales with new 12/hit values)
+                        float amt = cast.DamageCount * 1.5f;
                         if (rev) HealAgent(a, amt); else DamageAgent(a, amt);
                     }
                     if (cast.MoraleCount > 0)
                     {
-                        // 1.25f per 0.5s tick = same rate as old 5f per 2s tick
-                        float delta = cast.MoraleCount * 1.25f;
+                        // 1.75f per 0.5s tick (~3.5 morale/s per count, matches new 7-per-hit rate)
+                        float delta = cast.MoraleCount * 1.75f;
                         float cur   = a.GetMorale();
                         a.SetMorale(rev ? Math.Min(cur + delta, 100f) : Math.Max(cur - delta, 0f));
                     }
@@ -168,13 +168,13 @@ namespace AshAndEmber
                             Vec3 dest = a.Position + dir * pushDist; dest.z = a.Position.z;
                             QueueMove(a, dest, 0.3f);
                         }
-                        // Kinetic side damage per tick (0.5f/tick = 1 DPS per push count)
-                        if (!rev) DamageAgent(a, cast.PushCount * 0.5f);
+                        // Kinetic side damage per tick (0.75f/tick per push count)
+                        if (!rev) DamageAgent(a, cast.PushCount * 0.75f);
                     }
                     if (cast.MoraleCount > 0 && !rev)
                     {
-                        // Smoulder side damage per tick (0.75f/tick = 1.5 DPS per morale count)
-                        DamageAgent(a, cast.MoraleCount * 0.75f);
+                        // Smoulder side damage per tick (1f/tick per morale count)
+                        DamageAgent(a, cast.MoraleCount * 1f);
                     }
                 }
                 catch { }
@@ -193,7 +193,8 @@ namespace AshAndEmber
         {
             if (caster == null || !caster.IsActive() || Mission.Current == null) return;
 
-            float radius = Math.Max(2f, cast.FormCount * 2f);
+            int burstCnt = cast.BurstCount > 0 ? cast.BurstCount : cast.FormCount;
+            float radius = Math.Max(2f, burstCnt * 2.5f);
             var targets  = new List<Agent>();
             try
             {
@@ -201,7 +202,9 @@ namespace AshAndEmber
                 {
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     if (casterTeam != null && a.Team == casterTeam) continue; // skip allies
-                    if (a.Position.Distance(caster.Position) > radius) continue;
+                    // Horizontal distance so mounted riders at elevation are hit correctly
+                    Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
+                    if (toH.Length > radius) continue;
                     targets.Add(a);
                 }
             }

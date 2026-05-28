@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -18,6 +19,7 @@ namespace AshAndEmber
     {
         private static readonly HashSet<string> _eligibleTroops = new HashSet<string>
         {
+            "looter",
             "forest_bandit",
             "sea_raider",
             "mountain_bandit",
@@ -27,8 +29,9 @@ namespace AshAndEmber
 
         private static readonly Dictionary<string, string> _titles = new Dictionary<string, string>
         {
+            { "looter",           "Fire Prophet"   },
             { "forest_bandit",    "Hedge Witch"    },
-            { "sea_raider",       "Storm Caller"   },
+            { "sea_raider",       "Ashen Caller"   },
             { "mountain_bandit",  "Ash Shaman"     },
             { "steppe_bandit",    "Wind Binder"    },
             { "desert_bandit",    "Ember Prophet"  },
@@ -110,6 +113,30 @@ namespace AshAndEmber
             foreach (Agent a in candidates)
                 if (_rng.NextDouble() < MageChance)
                     _mageAgents.Add(a);
+
+            // Fire Worshippers and Ashen Spawn guarantee at least one mage caster
+            if (_mageAgents.Count == 0 && candidates.Count > 0 && IsSpecialBanditBattle())
+                _mageAgents.Add(candidates[_rng.Next(candidates.Count)]);
+        }
+
+        private static bool IsSpecialBanditBattle()
+        {
+            try
+            {
+                var mapEvent = TaleWorlds.CampaignSystem.MapEvents.MapEvent.PlayerMapEvent;
+                if (mapEvent == null) return false;
+                foreach (var side in new[] { mapEvent.AttackerSide, mapEvent.DefenderSide })
+                {
+                    if (side == null) continue;
+                    foreach (var mp in side.Parties)
+                    {
+                        var p = mp?.Party?.MobileParty;
+                        if (p != null && FireWorshippersSystem.IsSpecialParty(p)) return true;
+                    }
+                }
+            }
+            catch { }
+            return false;
         }
 
         private static bool IsEligible(Agent a)

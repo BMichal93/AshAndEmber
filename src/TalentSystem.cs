@@ -281,14 +281,14 @@ namespace AshAndEmber
             var def = GetDef(id);
             if (!def.IsSpell) return;
 
-            // Blight path: criminal rating instead of aging, scaled by spell weight
-            if (MageKnowledge.IsBlight)
+            // Ashen path: criminal rating instead of aging
+            if (MageKnowledge.IsAshen)
             {
                 try
                 {
-                    if (Hero.MainHero?.MapFaction is Kingdom blightK)
+                    if (Hero.MainHero?.MapFaction is Kingdom ashenK)
                     {
-                        ChangeCrimeRatingAction.Apply(blightK, GetBlightCrimeCost(id), false);
+                        ChangeCrimeRatingAction.Apply(ashenK, 5f, false);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The ash spreads.",
                             new Color(0.3f, 0.35f, 0.7f)));

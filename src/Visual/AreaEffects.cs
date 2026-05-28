@@ -134,7 +134,7 @@ namespace AshAndEmber
                 Vec3 pos = origin + new Vec3((float)Math.Cos(angle) * ringR, (float)Math.Sin(angle) * ringR, 0f);
                 SpawnTempLight(pos, school, 7f, duration);
             }
-            if (school != ColorSchool.Blight)
+            if (school != ColorSchool.Ashen)
                 SpawnTempFireParticle(origin, duration * 1.5f);
         }
 
@@ -156,7 +156,7 @@ namespace AshAndEmber
             foreach (Vec3 pos in pts)
                 SpawnTempLight(pos, school, 8f, duration);
             // Fire particles spread along the cone
-            if (school != ColorSchool.Blight)
+            if (school != ColorSchool.Ashen)
             {
                 SpawnTempFireParticle(origin,              duration * 2.5f);
                 SpawnTempFireParticle(origin + fwd * 4f,  duration * 2f);
@@ -176,7 +176,7 @@ namespace AshAndEmber
                 Vec3  off   = new Vec3((float)Math.Cos(angle) * dist, (float)Math.Sin(angle) * dist, 0f);
                 SpawnTempLight(origin + off, school, 6f, duration * 0.8f);
             }
-            if (school != ColorSchool.Blight)
+            if (school != ColorSchool.Ashen)
             {
                 SpawnTempFireParticle(origin, duration * 2f);
                 SpawnTempFireParticle(origin + new Vec3(0.4f, 0.2f, 0f), duration * 1.5f);
@@ -269,7 +269,7 @@ namespace AshAndEmber
                 case ColorSchool.Blue:   return new Vec3(1f,    0.40f, 0.02f); // hot ember-orange (was cold blue)
                 case ColorSchool.Purple: return new Vec3(0.87f, 0.07f, 0.02f); // deep crimson (was purple)
                 case ColorSchool.White:  return new Vec3(1f,    0.93f, 0.75f); // pale warm flame
-                case ColorSchool.Blight: return new Vec3(0.28f, 0.32f, 0.42f); // dim ash grey-blue
+                case ColorSchool.Ashen: return new Vec3(0.28f, 0.32f, 0.42f); // dim ash grey-blue
                 default:                 return new Vec3(1f,    0.70f, 0.30f);
             }
         }

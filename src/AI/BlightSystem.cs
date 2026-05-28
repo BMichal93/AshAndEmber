@@ -1,7 +1,7 @@
 ﻿// =============================================================================
 // LIFE & DEATH MAGIC — BlightSystem.cs
-// Blight system removed in v2.0. Stub retained so the project compiles
-// against any lingering call-sites during the transition build.
+// Legacy stub — retained for build compatibility only (system removed in v2.0).
+// Ashen path is now handled by MageKnowledge.IsAshen / ColourLordRegistry.IsAshenLord.
 // =============================================================================
 
 using System.Collections.Generic;

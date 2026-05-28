@@ -57,8 +57,9 @@ namespace AshAndEmber
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
             right = right.Length < 0.01f ? new Vec3(1f, 0f, 0f) : right.NormalizedCopy();
 
-            int   gridSize = 3 + Math.Max(0, (cast.FormCount - 5) / 5);
-            float range    = Math.Max(3f, cast.FormCount * 2f - 1f);
+            int waveCnt    = cast.WaveCount > 0 ? cast.WaveCount : cast.FormCount;
+            int   gridSize = 3 + Math.Max(0, (waveCnt - 5) / 5);
+            float range    = Math.Max(3f, waveCnt * 2f - 1f);
 
             // Place wave front so that back row clears the caster
             float halfDepth = (gridSize - 1) * WaveState.NodeSpacing * 0.5f;
@@ -135,7 +136,7 @@ namespace AshAndEmber
             {
                 Vec3 nodePos = WaveNodePos(w, row, col);
                 SpawnTempLight(nodePos, w.Cast.VisualColor, 7f, WaveState.TickInterval * 3f);
-                if (w.Cast.VisualColor != ColorSchool.Blight)
+                if (w.Cast.VisualColor != ColorSchool.Ashen)
                     SpawnTempFireParticle(nodePos, WaveState.TickInterval * 2.5f);
             }
 
@@ -153,7 +154,8 @@ namespace AshAndEmber
                 {
                     if (!a.IsActive() || a.IsMount) continue;
 
-                    float dist = a.Position.Distance(nodePos);
+                    // Horizontal distance so mounted riders at elevation are hit correctly
+                    float dist = new Vec3(a.Position.x - nodePos.x, a.Position.y - nodePos.y, 0f).Length;
 
                     // Avoidance: non-hero agents in warning zone sidestep the wave
                     if (!a.IsHero && dist > WaveState.HitRadius && dist < WaveState.HitRadius + 3f)
