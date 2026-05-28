@@ -58,8 +58,13 @@ namespace AshAndEmber
 
         private static readonly string[] _targetSettlementNames =
         {
+            // Core Ashen cities
             "Tyal", "Sibir", "Baltakhand",
+            // Original castles
             "Urikskala", "Kaysar", "Dinar", "Vladiv",
+            // Extended Ashen zone (nearby towns & castles — skipped automatically
+            // if their clan also owns settlements outside this list)
+            "Varnovapol", "Tepes", "Epinosa", "Takor", "Khimli",
         };
 
         public static void ResetForNewGame()
@@ -89,6 +94,15 @@ namespace AshAndEmber
 
                     Clan clan = settlement.OwnerClan;
                     if (clan == null) continue;
+
+                    // Skip clans that own settlements outside our target list —
+                    // moving them to the Ashen kingdom would drag those extra
+                    // settlements (Vercheng, Balagad, etc.) in as well.
+                    bool hasNonTarget = clan.Settlements.Any(s =>
+                        (s.IsTown || s.IsCastle) &&
+                        !_targetSettlementNames.Any(n =>
+                            s.Name.ToString().IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0));
+                    if (hasNonTarget) continue;
 
                     if (homeSettlement == null) homeSettlement = settlement;
 
