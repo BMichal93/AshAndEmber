@@ -65,6 +65,7 @@ namespace AshAndEmber
             SpellEffects.TickHaltedAgents(dt);
             SpellEffects.FlushPendingDeaths();
             BanditMageAI.MissionTick(dt);
+            BattleEvents.MissionTick(dt);
         }
 
         protected override void OnEndMission()
@@ -83,6 +84,7 @@ namespace AshAndEmber
             try { AgingSystem.ClearKnockdowns();           } catch { }
             try { ActiveEffectManager.ClearMissionEffects(); } catch { }
             try { MagicInputHandler.ResetInputState();       } catch { }
+            try { BattleEvents.OnMissionEnd();               } catch { }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
