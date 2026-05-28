@@ -214,6 +214,7 @@ namespace AshAndEmber
                 pool.Add(EV4_EmptyVillage);
                 pool.Add(EV4_VillageTrial);
                 pool.Add(EV4_FleeingFamily);
+                pool.Add(EV5_WolvesCircling);
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
@@ -222,6 +223,7 @@ namespace AshAndEmber
                     pool.Add(E_ShrineGoesOut);
                     pool.Add(E_WarmthMerchant);
                     pool.Add(EV4_GiftedChild);
+                    pool.Add(EV5_FrozenFord);
                 }
                 if (ashen) pool.Add(EV2_DogWontStop);
             }
@@ -234,6 +236,7 @@ namespace AshAndEmber
                 pool.Add(EC2_AshenGraffiti);
                 if (ren >= 300f) pool.Add(EC2_SellswordChallenge);
                 if (ren >= 400f) pool.Add(EC2_NoblewomansInvitation);
+                if (ren >= 400f) pool.Add(EC5_PortraitPainter);
                 if (ren >= 700f) pool.Add(E_TradeCouncil);
                 pool.Add(EC3_GuardsExtorting);
                 pool.Add(EC3_Philosopher);
@@ -247,6 +250,7 @@ namespace AshAndEmber
                     pool.Add(EC2_StreetPreacher);
                     pool.Add(EC3_SickNoble);
                     pool.Add(EC4_FakeMage);
+                    pool.Add(EC5_PhysiciansEye);
                     if (ren >= 1000f) pool.Add(E_CrowdWantsSign);
                 }
                 if (ashen)
@@ -287,6 +291,8 @@ namespace AshAndEmber
                 pool.Add(LV4_DyingTraveler);
                 pool.Add(LV4_EscapedPrisoner);
                 pool.Add(LV4_DeserterSoldier);
+                pool.Add(LV5_TroopFever);
+                pool.Add(LV5_WrongSong);
                 if (mage)
                 {
                     pool.Add(E_MothersPlea);
@@ -313,6 +319,7 @@ namespace AshAndEmber
                 pool.Add(LC3_MercenaryOffer);
                 pool.Add(LC4_RunawayServant);
                 pool.Add(LC4_OldDebt);
+                pool.Add(LC5_OldAlly);
                 if (mage)
                 {
                     pool.Add(E_VeteransQuestion);
@@ -364,6 +371,7 @@ namespace AshAndEmber
             pool.Add(EB3_TriageDecision);
             pool.Add(EB3_PrisonerNobleClaim);
             pool.Add(EB3_TheyCarriedHim);
+            pool.Add(EB4_WarHorse);
             if (mage) pool.Add(EB_EnemyMageJournal);
             if (mage) pool.Add(EB2_FireReveals);
 
@@ -389,6 +397,7 @@ namespace AshAndEmber
                 pool.Add(ES3_PoisonedWell);
                 pool.Add(ES3_LongPrisoner);
                 if (mage) pool.Add(ES_OldScorchmarks);
+                if (mage) pool.Add(ES4_AshenCrystal);
             }
             else
             {
@@ -413,6 +422,7 @@ namespace AshAndEmber
             pool.Add(ER2_ElderNegotiates);
             pool.Add(ER2_AshenEvidence);
             pool.Add(ER3_CellarSurvivors);
+            pool.Add(ER4_AshenChild);
             if (mage) pool.Add(ER_ShrineBurning);
 
             FireBattle(pool);
@@ -5246,6 +5256,393 @@ namespace AshAndEmber
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, -1);
                             Msg("Your party moves out. The four of them stand in the light of the burned cottage and watch you go. The youngest child does not know to be afraid yet. She is still at the age where she assumes the adults around her know what is happening.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // EVENTS 121–130 — FIFTH BATCH
+        // ═══════════════════════════════════════════════════════════════════
+
+        // 121. The Wolves
+        private static void EV5_WolvesCircling(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Wolves",
+                "A pack has been circling the village since last night — driven south by the cold or by something further north that displaced them. One child went to the stream at dawn and hasn't returned. The men have formed a search party, but they're going into the treeline against something faster than they are.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Lead the search yourself.", null, true,
+                        "Gain Merciful. Renown +5. 50/50 outcome."),
+                    new InquiryElement("b", "Send your men with your party's weapons and expertise.", null, true,
+                        "Gain Merciful. Your men handle it."),
+                    new InquiryElement("c", "Ride on — villages have dealt with wolves since before there were villages.", null, true,
+                        "Lose Honor."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            ChangeRenown(5f);
+                            if (_rng.Next(2) == 0)
+                                Msg("The child is found in a hollow oak, frightened but whole. The wolves retreated before the party reached them — something about your column's size and noise was enough. The village will tell this story for years. You will be taller in each telling.", GoodColor);
+                            else
+                                Msg("The child is found, but not unharmed. The wolves had time. Your party drives them north and the child lives. What that means for the family is longer than this road. You ride on carrying the specific weight of almost-enough.", DimColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("Your men go in efficiently. The wolves break off when they meet something that knows how to move in a treeline. The child is found cold but breathing. Your men come back tasting the particular satisfaction of a thing done for no reward but the doing.", GoodColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            Msg("You ride past the treeline. Behind you the search party disappears into the trees. You don't hear how it ends.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 122. The Ford (mage-gated)
+        private static void EV5_FrozenFord(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Ford",
+                "The river ford near the village has frozen solid. The wrong season for it, the wrong temperature by ten degrees. The villagers are staring at it with an expression that sits between grateful and afraid. You know the exact moment it froze: last night, when you were cold and tired and thinking about the road ahead.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Check the ice and tell them it's safe to cross.", null, true,
+                        "Gain Merciful. You made it; you take responsibility for it."),
+                    new InquiryElement("b", "Say nothing. A frozen ford is a frozen ford.", null, true,
+                        "Nothing. The fire doesn't apologise."),
+                    new InquiryElement("c", "Melt it again quietly before anyone asks questions.", null, true,
+                        "Costs 1 day. Back to normal. The village will wonder for years."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You test the ice thoroughly and tell them it will hold a cart. The headman squints at you. He is doing arithmetic in his head about the season and the temperature and your arrival. He does not say what he concludes. He thanks you and sends the first cart across.", DimColor);
+                            break;
+                        case "b":
+                            Msg("You ride past the staring villagers and across the ford yourself, first, without comment. Your horse's hooves ring on the ice. The village watches. The fire doesn't explain itself and neither do you.", FireColor);
+                            break;
+                        case "c":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            Msg("Before the village wakes fully, you unseal it. The ice cracks and thins and is gone by the time the first villager reaches the bank. They find running water and muddy tracks leading away. You are already on the road. They will talk about it as a dream.", FireColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 123. The Fever
+        private static void LV5_TroopFever(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Fever",
+                "The column is ready to move when your sergeant pulls you aside: one of your men collapsed in the inn stable this morning. Not wounded. Fever. He is not contagious — the surgeon thinks — but he cannot sit a horse, and the way he looks at the ceiling suggests he is not going to be able to for several days.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Leave him with coin to recover and rejoin you later.", null, true,
+                        "Lose 200 gold. Gain Merciful. He will catch up."),
+                    new InquiryElement("b", "Delay until he can ride.", null, true,
+                        "Morale +3. Your men note the decision."),
+                    new InquiryElement("c", "Have him secured to his horse and push on.", null, true,
+                        "Morale -5. He will be worse when you arrive. Some men won't forget."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ChangeGold(-200);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("Coin left with the innkeeper, instructions given. He watches you ride out from the stable door with the expression of a man memorising the moment he was not left. He will catch up in a week. Your men file past him without comment, which is its own form of respect.", GoodColor);
+                            break;
+                        case "b":
+                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            Msg("You wait two days. The men use the time without complaint. On the third day he walks out under his own power, embarrassed and grateful in equal measure. The delay costs something. The decision costs nothing.", GoodColor);
+                            break;
+                        case "c":
+                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            Msg("He is secured and he rides. He says nothing and neither does anyone else. Three men check on him every hour and file their reports to you without eye contact. He makes it to the next town. He is worse. That information travels through your camp faster than orders.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 124. The Wrong Song
+        private static void LV5_WrongSong(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Wrong Song",
+                "The village inn has a bard performing a ballad about you. It has your name, your approximate description, and three specific incidents that are entirely wrong — in one you slew a dragon, in another you appeared at a battle you were not at, and in the third you apparently said something wise that you have no memory of saying. He is mid-verse when he sees you standing in the doorway.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Let him finish. The audience is enjoying it.", null, true,
+                        "Morale +5. Renown +3. The story is already out there."),
+                    new InquiryElement("b", "Correct the record afterward — buy him a drink and give him the truth.", null, true,
+                        "Lose 100 gold. Renown +5. The song improves."),
+                    new InquiryElement("c", "Ask him where he heard it.", null, true,
+                        "Flavor only. The story is three tellings removed and has developed opinions of its own."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            ChangeRenown(3f);
+                            Msg("He finishes. The crowd applauds. He catches your eye across the room and his expression moves through three stages: recognition, panic, and then — when you don't stop him — relief. He takes his coin. The song will continue to be wrong in all the same ways. That is how legend works.", DimColor);
+                            break;
+                        case "b":
+                            ChangeGold(-100);
+                            ChangeRenown(5f);
+                            Msg("You sit with him afterward and give him the actual account of each incident. He listens, makes notes, and looks genuinely delighted at how much better the truth is than the invention. The revised version will travel faster and be wrong in new ways within a month. But for now it's accurate.", GoodColor);
+                            break;
+                        case "c":
+                            Msg("He traced it through four sources before finding a merchant who heard it from a soldier who claimed to have been there. The soldier was not at any of those events. He embellished freely. You are now the protagonist of a story about yourself that you never participated in. This is apparently normal.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 125. The Likeness (renown≥400)
+        private static void EC5_PortraitPainter(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Likeness",
+                "A painter in the city market is selling small portrait copies of you — worked from a verbal description, apparently, but unnervingly accurate in the eyes and the set of the jaw. He has sold six. He bows elaborately when you appear, which draws a crowd.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Pose for a corrected version — if it exists, let it be right.", null, true,
+                        "Renown +10. The authorised portrait becomes the standard."),
+                    new InquiryElement("b", "Approve his enterprise and wish him well.", null, true,
+                        "Renown +5. Gain Honor — grace costs nothing."),
+                    new InquiryElement("c", "Buy all the existing copies.", null, true,
+                        "Lose 300 gold. He will make more. You know this."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ChangeRenown(10f);
+                            Msg("You give him an hour. He makes adjustments with the focused urgency of a man who has been handed a professional second chance. The corrected version is better than the original and has your face exactly. He sells twelve before you leave the city.", GoodColor);
+                            break;
+                        case "b":
+                            ChangeRenown(5f);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You tell him it is good work and ride on. He calls after you that he will include this endorsement in his pitch. The portrait trade continues. You have been told your likeness is now selling well in three other cities, which is either a compliment or a warning.", DimColor);
+                            break;
+                        case "c":
+                            ChangeGold(-300);
+                            Msg("You buy the six. He takes the coin and reaches under his stall for the stock he keeps for exactly this eventuality. There are four more. You buy those too. He smiles the smile of a man doing arithmetic. You ride on. He begins a new batch before the hour is out.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 126. The Physician's Question (mage-gated)
+        private static void EC5_PhysiciansEye(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Physician's Question",
+                "A city physician stops you at the gate — not for medical reasons, she says, but because she has been studying aging for twenty years and your face has done something irreparable to her professional certainty. She says it carefully: \"You look forty and you look eighty. At the same time. I have been trying to understand that since you entered the gate.\"",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Give her an honest explanation.", null, true,
+                        "Costs 1 day. Renown +5. She understands something true."),
+                    new InquiryElement("b", "Deflect kindly. The fire is not a medical subject.", null, true,
+                        "Nothing. She writes it in her notes anyway."),
+                    new InquiryElement("c", "Tell her she is mistaken.", null, true,
+                        "Lose Honor. She does not believe you and notes that too."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            ChangeRenown(5f);
+                            Msg("You tell her what it costs and what it gives. She listens with the complete attention of someone updating a life's framework in real time. She asks three questions that are so specific you have to think before answering. When you leave, she is already writing. Something in you is satisfied by being understood precisely.", FireColor);
+                            break;
+                        case "b":
+                            Msg("\"It is an unusual condition,\" you say. She nods with the expression of someone who has been told a polite version of something real and is already translating it. She will write something true about you from the deflection alone. That is the hazard of doctors.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            Msg("She looks at you for a moment. Then she looks at her notes. \"Mistaken,\" she repeats, the way people repeat a word they are storing. She thanks you for your time and goes back inside. You have given her more data than an honest answer would have.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 127. An Old Face
+        private static void LC5_OldAlly(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "An Old Face",
+                "Someone calls your name from near the gate. It takes a moment — you knew him as a capable captain, sharp, well-regarded in his clan. He is less than that now. The uniform is gone, the bearing mostly. He is not quite begging. He is finding reasons to stand near you.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Give him money and offer him work if he wants it.", null, true,
+                        "Lose 400 gold. Gain Merciful. Morale +3 if he joins."),
+                    new InquiryElement("b", "Give him coin and part ways.", null, true,
+                        "Lose 200 gold. Gain Merciful."),
+                    new InquiryElement("c", "Walk past. You don't know what you would even say.", null, true,
+                        "Lose Honor. The distance is easier than the conversation."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ChangeGold(-400);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            Msg("You press the coin on him first, then name the offer. He straightens up slightly — not all the way, but enough. He falls in at the column's rear. Your veterans give him space without being instructed to. He knows what that means.", GoodColor);
+                            break;
+                        case "b":
+                            ChangeGold(-200);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You give him what you have in your belt. He takes it without the elaborate gratitude of someone who has been doing this for a while, which suggests he hasn't been doing this for a while. The money surprises him. You ride on before the surprise turns into conversation.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            Msg("You keep walking. He watches you go with the expression of a man who has had this conversation before and knows exactly how it ends. You will think about his face at odd moments for several weeks.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 128. The Horse That Stayed (after battle)
+        private static void EB4_WarHorse()
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Horse That Stayed",
+                "One horse on the field is not yours. All the others have bolted or been taken. This one is standing beside its dead rider, still saddled, and will not move for anyone in your party — not from fear, not from stubbornness. It simply has not been given permission to go.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Approach it yourself and take its reins.", null, true,
+                        "It comes with you. A good horse. Morale +3."),
+                    new InquiryElement("b", "Send your most gentle rider.", null, true,
+                        "50/50: it accepts or it goes its own way."),
+                    new InquiryElement("c", "Leave it. Some loyalties should finish on their own terms.", null, true,
+                        "Gain Honor. It stands there until nightfall."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            Msg("It watches you come. When you take the reins it drops its head once — not in defeat, in acknowledgement. Your men give it a name before you have cleared the field. They will argue about the name for three days.", GoodColor);
+                            break;
+                        case "b":
+                            if (_rng.Next(2) == 0)
+                            {
+                                MobileParty.MainParty.RecentEventsMorale += 3f;
+                                Msg("It accepts the gentle approach and the gentle hands. It comes. It is a very good horse. Your rider looks as if he has been given something he did not expect to deserve.", GoodColor);
+                            }
+                            else
+                                Msg("It allows the approach, considers the hand, and then simply walks north at an angle that suggests a destination. Your rider watches it go. You all do.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You leave it. At nightfall, when you look back, it is still there — a dark shape against the field. By morning it is gone. Where is not your knowledge, and probably not your business.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 129. Left Behind (mage, after siege)
+        private static void ES4_AshenCrystal()
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "Left Behind",
+                "In a room off the keep's great hall, placed on a shelf between two books as if it belonged there: a small object of grey stone that is cold in a way that has nothing to do with temperature. The Ashen put this here before the siege began — possibly years before. It is a marker. It means: we were here. We will return for it.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Destroy it completely.", null, true,
+                        "Costs 1 day. The working is precise and costs accordingly. The marker is gone."),
+                    new InquiryElement("b", "Keep it. Knowing it exists is an advantage.", null, true,
+                        "Cold intel artifact. The Ashen will eventually notice its silence."),
+                    new InquiryElement("c", "Leave it in place — let them think nothing was found.", null, true,
+                        "Gain Calculating. The deception is yours to manage."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            Msg("You work at it for an hour. The fire does not like what it touches — there is a resistance that is not physical, the cold pushing back against the warmth. Eventually it yields. The stone cracks and the cold in it is gone. The room is just a room. The cost is in your hands and in your years.", FireColor);
+                            break;
+                        case "b":
+                            Msg("You wrap it in cloth and keep it separate from everything else. It will be cold to the touch for as long as you carry it. The Ashen use these to locate each other across distances. You now own a gap in their network. How long before the gap is noticed is a question without an answer yet.", AshenColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You leave it exactly where it is, touching nothing. When the Ashen return — and they will return — they will find the keep changed but the marker undisturbed. They will conclude their absence was unnoticed. You will know they concluded that. That is a small and specific advantage.", DarkColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // 130. The Marked Child (after raid)
+        private static void ER4_AshenChild()
+        {
+            bool mage = MageKnowledge.IsMage;
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Marked Child",
+                "In the aftermath, one of your men finds a hidden cache in a burned cottage — cold tools, a correspondence in the Ashen dialect, and what looks like the beginning of marks on a child's clothes left behind. The family says their son has not been seen for two days. The marks are not birthmarks. They are made.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Tell the family what the marks mean and what to watch for.", null, true,
+                        "Gain Merciful. They will be devastated. They need to know."),
+                    new InquiryElement("b", mage ? "Read the fire-echo of what was done here." : "Search the area before the trail goes cold.", null, true,
+                        mage ? "Costs 1 day. Ashen intel about who made the marks." : "Renown +5. Uncover something useful."),
+                    new InquiryElement("c", "Report it to the nearest lord — this is beyond what you can address alone.", null, true,
+                        "Relation +5. Renown +5. The machinery of authority begins."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You tell them as directly as you can what the marks mean and who makes them and what they want. The father sits down in the mud. The mother asks one question: can he come back from it? You tell them the truth, which is: it depends on how long and how willing. They have hope and they have terror. Both are more useful than ignorance.", AshenColor);
+                            break;
+                        case "b":
+                            if (mage)
+                            {
+                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                Msg("You put your hand on the stone floor of the cottage and let the fire look back in time, briefly, the way it can when something significant happened in a space. An Ashen lord — one you know by reputation, one who operates quietly — was here three weeks ago. The child was brought to them, not taken. That changes the shape of this considerably.", AshenColor);
+                            }
+                            else
+                            {
+                                ChangeRenown(5f);
+                                Msg("Your men search the surrounding area. A trail leads north for two miles before losing itself in rocky ground. Evidence of a camp. Cold ash that was cold before it was ash — the Ashen kind. Whoever took the child has a three-day lead and knows how to move without being followed.", DimColor);
+                            }
+                            break;
+                        case "c":
+                            ChangeRelWithRandomLord(5);
+                            ChangeRenown(5f);
+                            Msg("The report goes out with a rider. What the lord does with it — whether they treat it as urgent or as administration — is not in your hands. You have given it to a system. Systems move slowly. The child has a two-day head start northward.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
