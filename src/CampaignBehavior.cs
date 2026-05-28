@@ -104,38 +104,25 @@ namespace AshAndEmber
         private void ShowLoreIntro()
         {
             const string loreText =
-                "Calradia remembers fire.\n\n" +
-                "The mages of the old world did not merely wield it — they were made of it, bone-deep and blood-warm. " +
-                "When the Empire stretched from coast to coast, there were those who could feel the life ebbing from the wounded, " +
-                "who spoke to failing crops and were heard. The Empire was built on this, and you can still see it " +
-                "in the old aqueducts, the long roads, the cities placed with knowing precision.\n\n" +
-                "The Empire is gone, in the way empires always go — slowly, then all at once. " +
-                "Three heirs, three courts, three armies that have forgotten what they are fighting over. " +
-                "Rhagaea calculates. Lucon prays. Derthert counts his horsemen. None of them look north.\n\n" +
-                "In the north, fire has been dying for a long time.\n\n" +
-                "It began at Tyal. Then Sibir. Then Baltakhand. The Sturgian outriders who rode to investigate did not return. " +
-                "Those who turned back before the treeline speak of lords who walked through arrows without slowing. " +
-                "Of soldiers whose eyes held no warmth. Of a cold that had nothing to do with the season.\n\n" +
-                "They call themselves the Ashen. They were mages once — men and women who faced the extinction of their gift " +
-                "and chose the cold instead. What burns in them now is the memory of warmth. It is hungry, and it is moving south.\n\n" +
-                "The clans are scattered. The Empire bleeds. No kingdom is ready.\n\n" +
-                "And you — whether the fire stirs in you or not — are about to enter a world that is ending.";
+                "Fire gives life. It gives warmth, magic, the will to endure.\n\n" +
+                "When it is extinguished, only ash remains.\n\n" +
+                "In the north, lords who refused to let their fire die chose the cold instead. " +
+                "They are called the Ashen. They do not age. They do not negotiate. They march.\n\n" +
+                "The Empire is fractured. Rhagaea, Lucon, and Derthert fight over its bones " +
+                "while the ash moves south. The clans of Calradia are scattered and conflicted. " +
+                "None of them are ready.\n\n" +
+                "Some mages, tempted by the promise of unliving, may yet answer the cold's call.\n\n" +
+                "The fire is asking you something. The ash is listening for your answer.";
 
-            // MultiSelectionInquiry has a proper scrollable text area and a confirm button
-            // at the bottom — InquiryData's small dialog can't handle long text reliably.
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+            InformationManager.ShowInquiry(new InquiryData(
                 "Embers and Ash",
                 loreText,
-                new List<InquiryElement>
-                {
-                    new InquiryElement("continue", "Enter the dark.", null, true, ""),
-                },
-                false, 1, 1,
-                "Continue",
+                true, false,
+                "Enter the dark.",
                 "",
-                _ => ShowGiftPrompt(),
-                _ => ShowGiftPrompt()
-            ), false, true);
+                ShowGiftPrompt,
+                ShowGiftPrompt
+            ), true, true);
         }
 
         private void ShowGiftPrompt()
