@@ -114,14 +114,16 @@ namespace AshAndEmber
                 "Some mages, tempted by the promise of unliving, may yet answer the cold's call.\n\n" +
                 "The fire is asking you something. The ash is listening for your answer.";
 
+            // Empty callbacks — button just closes the popup.
+            // The gift prompt is shown independently on the first daily tick.
             InformationManager.ShowInquiry(new InquiryData(
                 "Embers and Ash",
                 loreText,
                 true, false,
                 "Enter the dark.",
                 "",
-                ShowGiftPrompt,
-                ShowGiftPrompt
+                () => { },
+                () => { }
             ), true, true);
         }
 
@@ -181,8 +183,12 @@ namespace AshAndEmber
         {
             if (!_selectionDone)
             {
+                // Mark done first so a second tick can't re-show the prompt.
                 _selectionDone = true;
                 try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                try { AshenCitySystem.Initialize(); } catch { }
+                try { AshenCitySystem.DailyTick(); } catch { }
+                ShowGiftPrompt();
             }
             try { ColourLordRegistry.SeedInitialLords(); } catch { }
             try { AshenCitySystem.Initialize(); } catch { }
