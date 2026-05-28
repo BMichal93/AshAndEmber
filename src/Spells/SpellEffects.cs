@@ -468,7 +468,7 @@ namespace AshAndEmber
             }
         }
 
-        private static void ForceDismount(Agent a)
+        public static void ForceDismount(Agent a)
         {
             Agent mount = null;
             try { mount = a.MountAgent; } catch { }
