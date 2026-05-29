@@ -589,7 +589,7 @@ namespace AshAndEmber
         private static void E_MothersPlea(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Mother's Plea",
+                "★  A Mother's Plea",
                 "A woman in rough-spun wool steps into your path as you ride out. She carries a small child — by a single look you can see it is burning with fever. She has heard what you carry inside you. She cries and offers nothing but her prayers.",
                 new List<InquiryElement>
                 {
@@ -626,7 +626,7 @@ namespace AshAndEmber
         private static void E_WidowsPyre(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Widow's Pyre",
+                "✦  The Widow's Pyre",
                 "A grey-haired woman waits at the village edge beside a wrapped body on a bier. Her husband died this morning. The village priest is three days' ride away. She has heard that your fire is not like other fire — that it burns clean and true — and asks you to send him on.",
                 new List<InquiryElement>
                 {
@@ -664,7 +664,7 @@ namespace AshAndEmber
         private static void E_SignalFire(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Signal Fire",
+                "✦  Signal Fire",
                 "On the hill above the road, a fire burns where no fire should be — wrong colour, wrong rhythm. It could be a signal. It could be an Ashen working. It could be nothing. But you feel it before you see it, which means something.",
                 new List<InquiryElement>
                 {
@@ -706,7 +706,7 @@ namespace AshAndEmber
         private static void E_EldersSending(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Elder's Sending",
+                "⚜  The Elder's Sending",
                 "The village elder — older than anyone else here, hands like bark — stops you at the gate. She places both palms on your horse's neck and mutters something. Then she looks up. \"The fire knows its own,\" she says. \"Ride safely.\"",
                 new List<InquiryElement>
                 {
@@ -745,7 +745,7 @@ namespace AshAndEmber
         private static void E_BeggarCrossroads(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Beggar at the Crossroads",
+                "★  Beggar at the Crossroads",
                 "An old man sits at the junction where the roads fork, wrapped in a blanket despite the season. His bowl is empty. He does not beg loudly — he just holds the bowl out, watching you pass.",
                 new List<InquiryElement>
                 {
@@ -783,7 +783,7 @@ namespace AshAndEmber
         private static void E_LameHorse(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Lame Horse",
+                "★  The Lame Horse",
                 "A cart horse has collapsed in the middle of the road, blocking the way out of the village. The farmer is red-faced, shouting at the animal, and getting nowhere. A queue of carts is forming behind him.",
                 new List<InquiryElement>
                 {
@@ -819,7 +819,7 @@ namespace AshAndEmber
         private static void E_CoinGame(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Coin Game",
+                "⚖  The Coin Game",
                 "A village child runs after your horse, shouting that you dropped a coin. You didn't. The child holds up a bent copper piece with an expression of perfect innocence.",
                 new List<InquiryElement>
                 {
@@ -854,7 +854,7 @@ namespace AshAndEmber
         private static void E_TorchesAtDusk(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Torches at Dusk",
+                "✦  Torches at Dusk",
                 "A group of men carrying torches and farming tools is moving toward a family's home at the edge of the village. The mood is ugly. You don't know the cause, but you know how this ends.",
                 new List<InquiryElement>
                 {
@@ -891,7 +891,7 @@ namespace AshAndEmber
         private static void E_EagerRecruit(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Eager Recruit",
+                "⚔  The Eager Recruit",
                 "A young man — seventeen, perhaps eighteen — is trotting alongside your horse with a cloth bundle on his back. He says he is strong, quick, that he can ride, that he has no family to miss him. His boots are falling apart.",
                 new List<InquiryElement>
                 {
@@ -927,7 +927,7 @@ namespace AshAndEmber
         private static void E_FestivalFarewell(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Festival Farewell",
+                "✿  The Festival Farewell",
                 "The village has been celebrating a saint's day. As you ride out, a group of villagers press food and a small clay jug of cider on your party — festival excess, freely given. The headman raises his cup at you from a doorway.",
                 new List<InquiryElement>
                 {
@@ -969,7 +969,7 @@ namespace AshAndEmber
         private static void E_OldFlameSeer(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Old Flame-Seer",
+                "✦  The Old Flame-Seer",
                 "An old man sits outside the inn, eyes clouded white. He does not look at you. He faces toward you. \"I can smell the fire from here,\" he says. \"Not the campfire kind. The old kind.\" He taps the bench beside him.",
                 new List<InquiryElement>
                 {
@@ -1004,7 +1004,7 @@ namespace AshAndEmber
         private static void E_HealersTrade(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Healer's Trade",
+                "✚  The Healer's Trade",
                 "The village healer — a woman in her forties with ink-stained fingers — corners you near the well. She has been watching you since you rode in. \"You carry warmth that moves,\" she says quietly. \"I have been trying to understand that for thirty years.\"",
                 new List<InquiryElement>
                 {
@@ -1041,7 +1041,7 @@ namespace AshAndEmber
         private static void E_FireAndStraw(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Fire and Straw",
+                "✦  Fire and Straw",
                 "Two children are crouched behind the grain barn, feeding sparks from a stolen tinderbox into a pile of loose straw. The wind is wrong. The barn is dry.",
                 new List<InquiryElement>
                 {
@@ -1079,7 +1079,7 @@ namespace AshAndEmber
         private static void E_ShrineGoesOut(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Shrine Goes Out",
+                "✦  The Shrine Goes Out",
                 "The village's roadside shrine — an iron bowl on a post, supposed to burn day and night — has gone cold. The village elder sees this as an ill omen. Three people have already gathered around it, uncertain. They see you arrive.",
                 new List<InquiryElement>
                 {
@@ -1115,7 +1115,7 @@ namespace AshAndEmber
         private static void E_WarmthMerchant(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Warmth Merchant",
+                "⚖  The Warmth Merchant",
                 "A nervous merchant is selling small clay pendants, claiming they are \"fire-touched — blessed by a real mage, keeps fever away, keeps the cold off.\" The pendants are ordinary clay. He has sold six already.",
                 new List<InquiryElement>
                 {
@@ -1157,7 +1157,7 @@ namespace AshAndEmber
         private static void E_FamilyQuarrel(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Family's Quarrel",
+                "★  A Family's Quarrel",
                 "Two families are shouting at each other in the village square over a boundary stone that has apparently moved. Both claim the other moved it. The headman is not available. They see your party and go quiet, looking at you.",
                 new List<InquiryElement>
                 {
@@ -1193,7 +1193,7 @@ namespace AshAndEmber
         private static void E_HarvestFestival(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Harvest Festival",
+                "✿  The Harvest Festival",
                 "The village is in the middle of a harvest feast. Tables are set in the square, children are underfoot, someone is playing a three-string instrument badly. The headman sees you ride in and waves you toward a seat.",
                 new List<InquiryElement>
                 {
@@ -1231,7 +1231,7 @@ namespace AshAndEmber
         private static void E_AshenAftermath(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Ashen Aftermath",
+                "✦  Ashen Aftermath",
                 "The village has been raided within the last day — not by bandits. The ash-grey marks on charred wood, the particular way the animals have been left, the silence: these are Ashen Spawn signs. Some people are wounded. The headman is counting the dead.",
                 new List<InquiryElement>
                 {
@@ -1271,7 +1271,7 @@ namespace AshAndEmber
         private static void E_BanditWarning(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Warning",
+                "⚔  The Warning",
                 "An old woman stops you as you ride in. She tells you the north road past the village has bandits on it — saw them herself this morning, eight or nine, camped in the tree-line. She is not asking anything of you. She is just telling you.",
                 new List<InquiryElement>
                 {
@@ -1306,7 +1306,7 @@ namespace AshAndEmber
         private static void E_SpilledCart(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Spilled Cart",
+                "✿  The Spilled Cart",
                 "A merchant's cart has gone over on a muddy rut outside the village gate, scattering grain sacks across the road. The merchant is arguing with his driver. Neither of them is picking anything up.",
                 new List<InquiryElement>
                 {
@@ -1346,7 +1346,7 @@ namespace AshAndEmber
         private static void E_VeteransQuestion(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Veteran's Question",
+                "⚔  The Veteran's Question",
                 "A scarred veteran — missing two fingers, grey at the temples — falls in beside your horse at the city gate. He has been watching you for three days in the tavern. \"You don't age like other lords,\" he says. \"My commander wants to know how.\"",
                 new List<InquiryElement>
                 {
@@ -1383,7 +1383,7 @@ namespace AshAndEmber
         private static void E_TheCondemned(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Condemned",
+                "⚖  The Condemned",
                 "A group of prisoners is being marched to the city square for public execution. Among them, one face turns toward you. You recognize the marks — the faint smell of old smoke, the way the eyes track fire. A Fire Worshipper. They hold your gaze for a moment before looking away.",
                 new List<InquiryElement>
                 {
@@ -1421,7 +1421,7 @@ namespace AshAndEmber
         private static void E_PetitionersGate(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Petitioners' Gate",
+                "⚜  Petitioners' Gate",
                 "Your reputation precedes you. A queue of people — farmers, merchants, a woman with a written complaint, a man with a battered ledger — waits at the city gate, hoping to speak to you before you ride out.",
                 new List<InquiryElement>
                 {
@@ -1464,7 +1464,7 @@ namespace AshAndEmber
         private static void E_LightenedPurse(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Lightened Purse",
+                "◆  The Lightened Purse",
                 "A day after leaving the city, your treasurer informs you that a purse is lighter than it should be. A pickpocket — and a skilled one — worked the crowd near the gate.",
                 new List<InquiryElement>
                 {
@@ -1509,7 +1509,7 @@ namespace AshAndEmber
         private static void E_DisplacedNoble(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Displaced Noble",
+                "⚜  The Displaced Noble",
                 "A woman in tattered clothing that was once expensive waits near the city gate. She says she is a noblewoman from a clan displaced by the Ashen advance. Her name is one you have not heard. She asks for nothing directly — only looks at you.",
                 new List<InquiryElement>
                 {
@@ -1548,7 +1548,7 @@ namespace AshAndEmber
         private static void E_BardsRequest(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Bard's Request",
+                "★  The Bard's Request",
                 "A young bard with ink on his collar catches you at the city gate. He wants to write a song about you. He has heard enough already — the fire, the battles, the years. He only needs you to confirm the shape of it.",
                 new List<InquiryElement>
                 {
@@ -1586,7 +1586,7 @@ namespace AshAndEmber
         private static void E_DetainedSoldier(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Detained Soldier",
+                "⚔  A Detained Soldier",
                 "One of your men has been stopped at the gate by a city guard claiming an outstanding debt — a tavern bill from three years ago with a number that has somehow grown to 400 gold. Your man insists it was settled. The guard insists otherwise.",
                 new List<InquiryElement>
                 {
@@ -1630,7 +1630,7 @@ namespace AshAndEmber
         private static void E_GuildsOffer(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Guild's Offer",
+                "⚖  The Guild's Offer",
                 "A well-dressed guild representative has been waiting at the city gate since early morning. He represents a consortium of merchants who have been watching your campaigns. They will back you — significantly — in exchange for trade route protection through your territories.",
                 new List<InquiryElement>
                 {
@@ -1673,7 +1673,7 @@ namespace AshAndEmber
         private static void E_AshenInformant(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Ashen Informant",
+                "◆  The Ashen Informant",
                 "A beggar at the city gate catches your stirrup and speaks quietly. He claims to know where the Ashen Spawn were three days ago — specific roads, specific numbers. Either he saw it or he heard it. He wants 300 gold to keep talking.",
                 new List<InquiryElement>
                 {
@@ -1714,7 +1714,7 @@ namespace AshAndEmber
         private static void E_InsultAtGate(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "An Insult at the Gate",
+                "⚜  An Insult at the Gate",
                 "A minor lord — drunk, red-faced, standing with two companions who are pretending not to be embarrassed — makes a loud remark about your clan's origins in front of a small crowd. It is specific enough to be intentional.",
                 new List<InquiryElement>
                 {
@@ -1764,7 +1764,7 @@ namespace AshAndEmber
         private static void E_CuriousScholar(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Curious Scholar",
+                "★  The Curious Scholar",
                 "A university scholar — young, coat covered in chalk marks — has been watching the city gate for you specifically. He has a theory about the inner fire and wants to test it. He has three pages of notes already. He looks like he has not slept.",
                 new List<InquiryElement>
                 {
@@ -1801,7 +1801,7 @@ namespace AshAndEmber
         private static void E_AnotherFire(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Another Fire",
+                "✦  Another Fire",
                 "In the market crowd, for a moment, you feel it — the particular warmth that has nothing to do with weather. Someone here carries the gift, or something close to it. The feeling passes before you can locate the source.",
                 new List<InquiryElement>
                 {
@@ -1840,7 +1840,7 @@ namespace AshAndEmber
         private static void E_AshTouchedMarket(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Ash-Touched Market",
+                "✦  The Ash-Touched Market",
                 "A woman in the market is selling goods she calls \"ash-touched\" — blessed by the Ashen, supposed to ward off the Spawn. She has a small crowd around her. The goods are ordinary cloth. You know the Ashen bless nothing.",
                 new List<InquiryElement>
                 {
@@ -1881,7 +1881,7 @@ namespace AshAndEmber
         private static void E_GreyEyes(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Grey Eyes",
+                "✦  Grey Eyes",
                 "A child at the gate stares at your face with the unself-conscious directness of the very young. \"Your eyes are the wrong colour,\" she says. \"And your hair. Are you dead?\" Her mother is mortified.",
                 new List<InquiryElement>
                 {
@@ -1918,7 +1918,7 @@ namespace AshAndEmber
         private static void E_FellowCold(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Fellow Cold",
+                "✦  The Fellow Cold",
                 "Moving through the city crowd, you see the grey hair and pale eyes of an Ashen lord you recognize — not well, but enough. They see you. Neither of you moves. The crowd parts around both of you.",
                 new List<InquiryElement>
                 {
@@ -1961,7 +1961,7 @@ namespace AshAndEmber
         private static void E_CrowdWantsSign(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Crowd Wants a Sign",
+                "★  The Crowd Wants a Sign",
                 "Word spreads faster than you do. A crowd has formed at the city gate — not hostile, not petitioning. Watching. Someone shouts that you should show them the fire. Others take it up. Your reputation has preceded you to a degree that is either flattering or dangerous.",
                 new List<InquiryElement>
                 {
@@ -2005,7 +2005,7 @@ namespace AshAndEmber
         private static void E_SoldierDying(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Soldier Dying",
+                "☠  A Soldier Dying",
                 "A man in a city guard's colours is dragging himself toward the healers' quarter, one hand pressed to a wound in his side. He fell in the night watch, he says between his teeth. He is going in the wrong direction.",
                 new List<InquiryElement>
                 {
@@ -2042,7 +2042,7 @@ namespace AshAndEmber
         private static void E_ChildsBead(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Child's Bead",
+                "★  The Child's Bead",
                 "A small child stands at the city gate with a fistful of clay beads on hemp thread, selling them for a coin each. The beads are rough-made — probably the child's own work. They look up at you with absolute confidence.",
                 new List<InquiryElement>
                 {
@@ -2080,7 +2080,7 @@ namespace AshAndEmber
         private static void E_TradeCouncil(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Trade Council",
+                "⚖  The Trade Council",
                 "The city's merchant council sends a runner as you enter. They meet weekly to discuss trade and security, and your arrival — with your reputation — means they would like a word with you at the table. It is an invitation, not a summons.",
                 new List<InquiryElement>
                 {
@@ -2120,7 +2120,7 @@ namespace AshAndEmber
         private static void EB_DyingEnemy()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Dying Man",
+                "☠  The Dying Man",
                 "He is enemy colours, but the fight is over. He is propped against a wheel, holding his side, watching you walk past. He does not ask. He just watches.",
                 new List<InquiryElement>
                 {
@@ -2157,7 +2157,7 @@ namespace AshAndEmber
         private static void EB_ChildAmongDead()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Found Among the Dead",
+                "☠  Found Among the Dead",
                 "One of your men calls you over. Behind a farmstead caught in the crossfire, a child — eight, perhaps nine — is sitting very still among the dead. She is not wounded. She has been here since before the battle started.",
                 new List<InquiryElement>
                 {
@@ -2195,7 +2195,7 @@ namespace AshAndEmber
         private static void EB_LootedSoldier()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Picked-Over Dead",
+                "☠  The Picked-Over Dead",
                 "One of your men is caught with a silver ring that came from a dead enemy's finger. He does not try to hide it when you notice. He shrugs. \"He's not using it.\"",
                 new List<InquiryElement>
                 {
@@ -2231,7 +2231,7 @@ namespace AshAndEmber
         private static void EB_LoneSurrender()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "One Man Remaining",
+                "⚔  One Man Remaining",
                 "All his companions are dead or fled. He is the last of them, and he has driven his sword into the ground and dropped to one knee. He is looking at you.",
                 new List<InquiryElement>
                 {
@@ -2268,7 +2268,7 @@ namespace AshAndEmber
         private static void EB_BattlefieldPriest()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Field Priest",
+                "★  The Field Priest",
                 "A wandering priest — no faction's colors, just a grey robe and a lantern — has appeared at the edge of the battlefield and is asking permission to walk among the dead and speak words over both sides.",
                 new List<InquiryElement>
                 {
@@ -2305,7 +2305,7 @@ namespace AshAndEmber
         private static void EB_EnemyMageJournal()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Strange Heat",
+                "✦  A Strange Heat",
                 "Among the enemy dead, a satchel. You smell it from three feet away — old paper, scorched at the edges, and something underneath. Warmth. Not fire. The kind of warmth that knows things. A mage kept notes.",
                 new List<InquiryElement>
                 {
@@ -2340,7 +2340,7 @@ namespace AshAndEmber
         private static void EB_HeraldAfterVictory()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Herald's Visit",
+                "⚜  The Herald's Visit",
                 "A herald in the colours of a neighbouring lord has ridden to the field while the smoke still rises. He is here to witness for his master. He bows carefully and says that your victory has been noted.",
                 new List<InquiryElement>
                 {
@@ -2376,7 +2376,7 @@ namespace AshAndEmber
         private static void EB_OfficerDeal()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Officer's Bargain",
+                "⚔  The Officer's Bargain",
                 "A captured enemy officer has been separated from the others. He leans in close and speaks quietly: he will tell you everything he knows about his lord's plans in exchange for release. He is calm. He has clearly been thinking about this since he surrendered.",
                 new List<InquiryElement>
                 {
@@ -2424,7 +2424,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Camp at Dusk",
+                "★  The Camp at Dusk",
                 "The battle is done. The camp is quiet in the way camps go quiet when men have spent themselves entirely — not resting, not sleeping, just stopped. They are tending wounds and staring at fires.",
                 new List<InquiryElement>
                 {
@@ -2471,7 +2471,7 @@ namespace AshAndEmber
         private static void ES_FallenLordsFamily()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Fallen Lord's Household",
+                "⚜  The Fallen Lord's Household",
                 "The keep's inner gate opens, and a woman walks out with two children close behind her. She stands in the dust of the courtyard and looks at you. She does not plead. She is past pleading. She is waiting to know what you are.",
                 new List<InquiryElement>
                 {
@@ -2511,7 +2511,7 @@ namespace AshAndEmber
         private static void ES_MakeExample()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Question of the Gate Guard",
+                "⚒  The Question of the Gate Guard",
                 "Your senior commander comes to you with a suggestion. The captain of the gate — the man who held the door longest, who cost you the most time and men — is kneeling in the yard. The suggestion is that an example would be heard in the next city before you arrive.",
                 new List<InquiryElement>
                 {
@@ -2550,7 +2550,7 @@ namespace AshAndEmber
         private static void ES_SurroundingVillages()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Surrounding Villages",
+                "⚒  The Surrounding Villages",
                 "Three village elders have walked to the gate before the dust has settled. They are not there to celebrate or mourn. They want to know if the harvest will be left to them. They stand very still while they ask.",
                 new List<InquiryElement>
                 {
@@ -2589,7 +2589,7 @@ namespace AshAndEmber
         private static void ES_TreasuryFound()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Treasury",
+                "⚒  The Treasury",
                 "The keep's treasury was sealed before the fighting started and remained untouched in the chaos. Your men have found it. It is substantial. How it is handled will be remembered.",
                 new List<InquiryElement>
                 {
@@ -2628,7 +2628,7 @@ namespace AshAndEmber
         private static void ES_OldScorchmarks()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Old Marks",
+                "✦  Old Marks",
                 "In the lowest level of the keep, your torch finds scorched walls that predate this battle by years. The pattern is not the random damage of fire — it is deliberate, and it is old. Someone with the gift worked here, before you, and the working was not small.",
                 new List<InquiryElement>
                 {
@@ -2667,7 +2667,7 @@ namespace AshAndEmber
         private static void ES_ShrineKeeper()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Shrine Keeper",
+                "⚒  The Shrine Keeper",
                 "An old priest stands in front of the city's main shrine with his arms out. He is not armed. He is not going to move. He is simply standing there, making it structurally inconvenient to do anything without going through him first.",
                 new List<InquiryElement>
                 {
@@ -2708,7 +2708,7 @@ namespace AshAndEmber
         private static void ES_FirstNight()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The First Night",
+                "⚒  The First Night",
                 "Your men are in the streets of the fallen city. The day is over. The question of what the evening holds is still open. Your captains are looking at you — not asking directly, but looking.",
                 new List<InquiryElement>
                 {
@@ -2753,7 +2753,7 @@ namespace AshAndEmber
         private static void ER_HeadmanConfronts()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Man Who Stayed",
+                "⚔  The Man Who Stayed",
                 "He did not run. Most of them did. But the headman stood at the edge of the village and watched the whole thing, and now he is standing in the road as your party forms up to leave. He is not armed. He just looks at you.",
                 new List<InquiryElement>
                 {
@@ -2789,7 +2789,7 @@ namespace AshAndEmber
         private static void ER_ChildFollows()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Child on the Road",
+                "☠  The Child on the Road",
                 "Half a mile out, your rearguard reports a child following the column. She has been keeping pace since the village. She is not asking for anything — she is just following.",
                 new List<InquiryElement>
                 {
@@ -2827,7 +2827,7 @@ namespace AshAndEmber
         private static void ER_SpoilsDivision()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Question of Shares",
+                "⚔  A Question of Shares",
                 "Your men are arguing about the split of what was taken. It has gone from muttering to raised voices. Two groups have formed. Your sergeants are watching you.",
                 new List<InquiryElement>
                 {
@@ -2873,7 +2873,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Woman in the Doorway",
+                "☠  The Woman in the Doorway",
                 "In the last house at the edge of the village, an old woman stands in the doorway as you ride past. She says one word. You catch it — it's not a language you know. But the intonation is clear. It is not a blessing.",
                 new List<InquiryElement>
                 {
@@ -2916,7 +2916,7 @@ namespace AshAndEmber
         private static void ER_ShrineBurning()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Still Burning",
+                "✦  Still Burning",
                 "As your party forms up to leave, you notice the village shrine is lit. You didn't touch it. You are certain of that. But the flame is gold and still, not orange and moving — the way a fire looks when it has been touched by something other than wood and air.",
                 new List<InquiryElement>
                 {
@@ -2952,7 +2952,7 @@ namespace AshAndEmber
         private static void ER_VeteranQuestions()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Veteran Asks",
+                "⚔  A Veteran Asks",
                 "An older man in your party — years of service, no complaints, someone you trust — rides up alongside you on the road out. He doesn't look at you. He says, quietly: \"I've been thinking about what we're doing.\"",
                 new List<InquiryElement>
                 {
@@ -2992,7 +2992,7 @@ namespace AshAndEmber
         private static void EC2_NoblewomansInvitation(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Private Dinner",
+                "⚜  The Private Dinner",
                 "Before you have stabled your horse, an invitation arrives from a city noblewoman whose name appears in conversations without being attached to any specific action. She wants to dine privately. The formality of the invitation suggests this is not entirely social.",
                 new List<InquiryElement>
                 {
@@ -3029,7 +3029,7 @@ namespace AshAndEmber
         private static void EC2_StreetPreacher(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Man Against the Fire",
+                "✦  The Man Against the Fire",
                 "A street preacher has gathered a small crowd near the main gate. He is describing what mages do to good people in specific and lurid terms. Several of his claims are not entirely wrong. He has not seen you yet.",
                 new List<InquiryElement>
                 {
@@ -3066,7 +3066,7 @@ namespace AshAndEmber
         private static void EC2_CityQuarantine(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Quarantine Gates",
+                "✚  The Quarantine Gates",
                 "The city gates are barred except for one lane, and a city physician is turning people back. There is a fever moving through the eastern quarter. Entry is permitted for known lords, but the physician looks at your party with obvious calculations happening behind her eyes.",
                 new List<InquiryElement>
                 {
@@ -3102,7 +3102,7 @@ namespace AshAndEmber
         private static void EC2_SellswordChallenge(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Challenge",
+                "⚔  The Challenge",
                 "A famous sellsword captain — you know the name, most people in this part of Calradia do — is at the city inn and has sent a message to your party before you've finished stabling the horses. He wants a bout in the training yard. No weapons, no grudges, just to know.",
                 new List<InquiryElement>
                 {
@@ -3148,7 +3148,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Marks on the Wall",
+                "✦  Marks on the Wall",
                 "Ashen sigils have appeared overnight on a stretch of the city wall near the market gate. Not painted — scorched, from inside the stone. The city guard is looking at them with the expression of men who would like to pretend this is not what it is.",
                 new List<InquiryElement>
                 {
@@ -3192,7 +3192,7 @@ namespace AshAndEmber
         private static void LC2_ChildPickpocket(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Small Thief",
+                "◆  The Small Thief",
                 "Your sergeant has caught a child — twelve at most, feet bare, ribs visible through a thin shirt — with a hand in your saddlebag. He is holding the child by the collar and looking at you for instruction.",
                 new List<InquiryElement>
                 {
@@ -3229,7 +3229,7 @@ namespace AshAndEmber
         private static void LC2_MerchantAccusation(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "An Accusation",
+                "⚖  An Accusation",
                 "A merchant is blocking the gate exit, waving a ledger and claiming one of your men broke three jars of oil in his shop and paid for none of it. Your man says he was never in that shop. One of them is lying.",
                 new List<InquiryElement>
                 {
@@ -3278,7 +3278,7 @@ namespace AshAndEmber
         private static void LC2_SealedLetter(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Letter",
+                "◆  The Letter",
                 "A captain of the city guard catches your stirrup at the gate with a sealed letter and a straightforward request: carry it to a lord in the next city. He can't trust regular riders with it. He is trusting you because of who you are.",
                 new List<InquiryElement>
                 {
@@ -3317,7 +3317,7 @@ namespace AshAndEmber
         private static void LC2_PartingGift(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Parting Gift",
+                "★  A Parting Gift",
                 "As you reach the city gate, a servant catches up with your party carrying a wrapped gift from a lord you dined with. The gift is appropriate in value — not a bribe, not an insult. A gesture.",
                 new List<InquiryElement>
                 {
@@ -3354,7 +3354,7 @@ namespace AshAndEmber
         private static void LC2_WrongnessInAir(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Something Smothered",
+                "✦  Something Smothered",
                 "You feel it as your party reaches the gate — a wrongness, like a fire that has been deliberately put out in a small and specific place. Not a natural cold. Someone has been working at suppressing something inside this city, and the absence of it is loud to your fire.",
                 new List<InquiryElement>
                 {
@@ -3394,7 +3394,7 @@ namespace AshAndEmber
         private static void EV2_TravelingMonk(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Teaching Monk",
+                "★  The Teaching Monk",
                 "An itinerant monk has set up a makeshift school at the inn — six or seven children sitting on the floor, trying to read from a single copied page. He looks underfed and completely undeterred.",
                 new List<InquiryElement>
                 {
@@ -3433,7 +3433,7 @@ namespace AshAndEmber
         private static void EV2_DriedWell(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Dry Well",
+                "✿  The Dry Well",
                 "The village well has given out. A group of men is standing around the dry shaft with the particular stillness of people trying to understand a problem they cannot solve with what they have. Children are being sent to a stream a mile away.",
                 new List<InquiryElement>
                 {
@@ -3472,7 +3472,7 @@ namespace AshAndEmber
         private static void EV2_WiseWomanWarning(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Wise Woman",
+                "✦  The Wise Woman",
                 "An old woman the villagers step around carefully asks to speak with you. She has been watching the road from her window for three days, she says. She knows something about what is ahead — not from rumour. From other means.",
                 new List<InquiryElement>
                 {
@@ -3513,7 +3513,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Your Name",
+                "★  Your Name",
                 "The headman intercepts you at the village entrance with the expression of a man trying to decide if this is an honor or an imposition. A child born three weeks ago has been named after you. He wanted you to know.",
                 new List<InquiryElement>
                 {
@@ -3552,7 +3552,7 @@ namespace AshAndEmber
         private static void EV2_DogWontStop(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Dog",
+                "✿  The Dog",
                 "A farm dog has been barking at you since your party entered the village. Just at you. Not at your horse, not at your men. At you specifically, with the rigid-legged certainty of an animal that knows something is wrong.",
                 new List<InquiryElement>
                 {
@@ -3590,7 +3590,7 @@ namespace AshAndEmber
         private static void LV2_PilgrimsRequest(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Road Companions",
+                "★  The Road Companions",
                 "A group of eight pilgrims — mixed ages, walking — asks to travel with your column to the next town. The roads are dangerous and they know it. They are not asking for soldiers; they are asking to walk near soldiers.",
                 new List<InquiryElement>
                 {
@@ -3628,7 +3628,7 @@ namespace AshAndEmber
         private static void LV2_LameHorseYours(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Your Horse, Pulling Up",
+                "✿  Your Horse, Pulling Up",
                 "Half a mile from the village your horse begins favoring its left foreleg. Your groom examines it and shakes his head — stone bruise, probably from yesterday's road. Not serious, but not ignorable.",
                 new List<InquiryElement>
                 {
@@ -3664,7 +3664,7 @@ namespace AshAndEmber
         private static void LV2_VillageGirlNote(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Hidden Note",
+                "◆  The Hidden Note",
                 "As your party leaves, a girl — perhaps sixteen — slips a folded piece of cloth into your saddlebag when she hands your horse back its feed bucket. She does not look at you when she does it. When you open it, it is a careful description of a lord's behavior toward this village that ends with a name and a plea.",
                 new List<InquiryElement>
                 {
@@ -3706,7 +3706,7 @@ namespace AshAndEmber
         private static void EV3_OldKnight(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Knight Without a Lord",
+                "⚔  The Knight Without a Lord",
                 "A man in worn but impeccably maintained armor is splitting wood outside the inn — methodical, precise, the kind of labor that comes from training rather than habit. His sword hangs on a post nearby. He is not a farmhand.",
                 new List<InquiryElement>
                 {
@@ -3743,7 +3743,7 @@ namespace AshAndEmber
         private static void EV3_WeddingNews(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Wedding",
+                "✿  The Wedding",
                 "The village is mid-celebration — music, tables in the square, flower garlands. As you ride in, a rider from the east arrives ahead of you and whispers something to the headman. The headman looks at the bride. The music does not stop, but the bride's expression changes. You know the look. Bad news from the direction of the Ashen.",
                 new List<InquiryElement>
                 {
@@ -3782,7 +3782,7 @@ namespace AshAndEmber
         private static void EV3_VillageCoercion(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Collector",
+                "⚖  The Collector",
                 "A city tax collector stands in the village square with a ledger showing numbers that cannot be legal — three times the standard levy, with a line for a \"processing fee\" that does not exist in any law you know. The headman is signing it because he does not see another option. The collector hasn't noticed you arrive.",
                 new List<InquiryElement>
                 {
@@ -3826,7 +3826,7 @@ namespace AshAndEmber
         private static void LV3_TwoSons(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Two Sons",
+                "★  Two Sons",
                 "A farmer stands at the road's edge with two young men behind him. One wants to go with your party; the other says the village needs him for the harvest. Both are right. The farmer's hands are shaking. He has asked you to decide, because he cannot.",
                 new List<InquiryElement>
                 {
@@ -3863,7 +3863,7 @@ namespace AshAndEmber
         private static void LV3_HiddenCriminal(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Familiar Face",
+                "◆  The Familiar Face",
                 "You recognise him from a different angle three months ago — same scar above the left eye, same way of standing. He led the bandit group that hit your supply column. Killed one of your men. He is sitting behind a cobbler's bench, working quietly, and he has not recognised you yet.",
                 new List<InquiryElement>
                 {
@@ -3902,7 +3902,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Inn Fire",
+                "✦  The Inn Fire",
                 "As your party forms up to leave, a shout goes up from the inn — grease fire in the kitchen, and it is catching fast. The innkeeper is shouting. People are running. The thatch is dry.",
                 new List<InquiryElement>
                 {
@@ -3953,7 +3953,7 @@ namespace AshAndEmber
         private static void EC3_GuardsExtorting(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Toll",
+                "⚖  The Toll",
                 "Two city guards are blocking a young merchant's cart and demanding an \"inspection fee\" that appears nowhere in any tariff you know. She is paying because she doesn't see another way through. The guards haven't noticed your party yet.",
                 new List<InquiryElement>
                 {
@@ -3993,7 +3993,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Question",
+                "★  The Question",
                 "A man with ink-stained fingers and a year's worth of notes under his arm has been waiting specifically for you. He has one question about the Ashen — not academic. He has been thinking about this for years, and he is clearly afraid the answer will confirm what he suspects.",
                 new List<InquiryElement>
                 {
@@ -4036,7 +4036,7 @@ namespace AshAndEmber
         private static void EC3_SickNoble(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Wealthy Sick",
+                "✚  The Wealthy Sick",
                 "A merchant family — three generations of money, none of it useful right now — approaches before you have put your horse in the stall. Their patriarch is dying. They have heard what you can do. They are not begging; they are negotiating. The sum they name is significant. They are very scared.",
                 new List<InquiryElement>
                 {
@@ -4086,7 +4086,7 @@ namespace AshAndEmber
         private static void LC3_DishonoredSoldier(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Broken Colors",
+                "⚔  Broken Colors",
                 "Against the city wall, a man who was clearly a soldier — posture, hands, the particular stillness of someone trained to wait — is sleeping rough. The chevrons have been pulled from his jacket recently. He isn't asking for anything. He is simply there.",
                 new List<InquiryElement>
                 {
@@ -4124,7 +4124,7 @@ namespace AshAndEmber
         private static void LC3_SpyWarning(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Warning",
+                "◆  A Warning",
                 "Half a mile from the city, a stranger passes your column going the other direction and presses a folded note into your hand without slowing. You open it. A name — one of your own men — and four words in a careful hand: 'reporting your movements east.'",
                 new List<InquiryElement>
                 {
@@ -4166,7 +4166,7 @@ namespace AshAndEmber
         private static void LC3_MercenaryOffer(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Mercenary Captain",
+                "⚔  The Mercenary Captain",
                 "A mercenary captain is at the city gate as you leave with her company of thirty behind her — experienced, well-equipped, moving in the same direction you are. She offers to ride with you at half her normal rate. She gives no explanation for the discount.",
                 new List<InquiryElement>
                 {
@@ -4207,7 +4207,7 @@ namespace AshAndEmber
         private static void EB2_StandardBearer()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Banner Still Standing",
+                "⚔  The Banner Still Standing",
                 "Everyone else on this part of the field has fled or fallen. One man remains: the enemy standard bearer, the banner still upright, looking at you. He is not going to lower it. He is not going to run. He is going to stand there until something changes.",
                 new List<InquiryElement>
                 {
@@ -4243,7 +4243,7 @@ namespace AshAndEmber
         private static void EB2_EnemySupplies()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "What the Wagons Carried",
+                "⚔  What the Wagons Carried",
                 "The captured supply wagons contain things that don't belong to a military campaign: children's shoes, household tools, grain sacks stamped with village headmen's seals. Someone stripped villages to feed this army. The soldiers who drove these wagons are among your prisoners.",
                 new List<InquiryElement>
                 {
@@ -4282,7 +4282,7 @@ namespace AshAndEmber
         private static void EB2_HeroInParty()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "What He Did",
+                "⚔  What He Did",
                 "A soldier comes to you privately after the battle — not a troublemaker, someone you know and trust. He reports that during the fighting he killed a man who had already surrendered. He is not minimising it. He came forward himself. He is waiting for your judgment.",
                 new List<InquiryElement>
                 {
@@ -4319,7 +4319,7 @@ namespace AshAndEmber
         private static void EB2_FireReveals()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "What the Fire Shows",
+                "✦  What the Fire Shows",
                 "Standing on the battlefield after dark, your fire does something it rarely does. Not a vision — a sensation: layered echoes of the last moments of the men who died here, pressed against your awareness like heat through a wall. It did not ask permission.",
                 new List<InquiryElement>
                 {
@@ -4360,7 +4360,7 @@ namespace AshAndEmber
         private static void ES2_HospitalWard()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Healers",
+                "✚  The Healers",
                 "In the lowest level of the keep, behind a door your men nearly missed, a hospital ward — families of garrison soldiers, a few merchants, an old woman who simply never left. Two exhausted physicians are still working, and they do not stop when your men enter.",
                 new List<InquiryElement>
                 {
@@ -4399,7 +4399,7 @@ namespace AshAndEmber
         private static void ES2_SpyInCamp()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Informant",
+                "◆  The Informant",
                 "After the siege, your intelligence man presents you with a name and evidence: someone inside your camp was passing information to the defenders throughout. He has been with you for four months. The evidence is solid. He is standing outside your tent right now, not knowing why he was summoned.",
                 new List<InquiryElement>
                 {
@@ -4443,7 +4443,7 @@ namespace AshAndEmber
         private static void ER2_ElderNegotiates()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Negotiation",
+                "⚔  The Negotiation",
                 "As your men form up at the raid's conclusion, the village elder appears from a doorway with a locked box. He names a sum — everything the village has saved — and asks simply if it is enough. He is not afraid. He is experienced. He has done this before.",
                 new List<InquiryElement>
                 {
@@ -4484,7 +4484,7 @@ namespace AshAndEmber
         private static void ER2_AshenEvidence()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "What They Left",
+                "✦  What They Left",
                 "In the village, your men find it: grain stored in marked sacks with Ashen sigils, a hidden correspondence in a dialect that is not quite any language, a room that has been cold for the wrong reasons. Whether this village was collaborating willingly or supplying the Ashen under compulsion, you cannot tell from what you have found.",
                 new List<InquiryElement>
                 {
@@ -4526,7 +4526,7 @@ namespace AshAndEmber
         private static void EV4_EmptyVillage(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Empty Houses",
+                "★  The Empty Houses",
                 "A third of the village is dark. Not abandoned by choice — hearth-fires still warm, meals half-eaten, tools left where they fell. Whatever made people leave, they left fast and they left last night. The remaining villagers are watching you from behind shutters.",
                 new List<InquiryElement>
                 {
@@ -4566,7 +4566,7 @@ namespace AshAndEmber
         private static void EV4_VillageTrial(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Trial",
+                "⚖  The Trial",
                 "A ring of villagers, a kneeling man, and a headman with a written list of grievances. Petty theft — three sacks of grain, taken in winter when he had none. The sentence being settled on is exile. His wife and two children are standing at the edge of the ring.",
                 new List<InquiryElement>
                 {
@@ -4604,7 +4604,7 @@ namespace AshAndEmber
         private static void EV4_GiftedChild(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "What She Sees",
+                "✦  What She Sees",
                 "A girl of perhaps six stops playing and stares at you. Not at your horse, not at your armor — at you. She reaches toward something she cannot name, cannot see, but clearly senses. Her mother pulls her back. The girl's eyes do not leave yours.",
                 new List<InquiryElement>
                 {
@@ -4638,7 +4638,7 @@ namespace AshAndEmber
         private static void EV4_FleeingFamily(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Road South",
+                "★  The Road South",
                 "A family with everything they own on one cart is moving south. Fast, for a loaded cart. Their village is three days north. They will not say what they saw. They don't need to — the direction alone carries the answer, and the children are not asking where they are going.",
                 new List<InquiryElement>
                 {
@@ -4679,7 +4679,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Storyteller",
+                "★  The Storyteller",
                 "An old woman has been at the inn for three days, trading stories for meals and a corner to sleep in. The innkeeper says she knows things about the first Ashen wars that aren't in any written record — she heard them from someone who heard them from someone who was there. She sees you saddling your horse and raises an eyebrow.",
                 new List<InquiryElement>
                 {
@@ -4721,7 +4721,7 @@ namespace AshAndEmber
         private static void LV4_DyingTraveler(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Last Request",
+                "☠  The Last Request",
                 "A man by the road has been robbed and wounded — not by battle. He is not going to reach the next village. He presses something into your hand — a sealed letter, a ring, a name — and asks one thing: make sure it reaches them. He is not panicking. He is very focused.",
                 new List<InquiryElement>
                 {
@@ -4759,7 +4759,7 @@ namespace AshAndEmber
         private static void LV4_EscapedPrisoner(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Escaped Man",
+                "◆  The Escaped Man",
                 "A man with raw wrists where manacles have recently been removed crouches in the shadow of your horse and asks very quietly that you not acknowledge him to the guard that just passed. He says he was held for a debt, not a crime. He might be telling the truth.",
                 new List<InquiryElement>
                 {
@@ -4805,7 +4805,7 @@ namespace AshAndEmber
         private static void LV4_DeserterSoldier(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Deserter",
+                "⚔  The Deserter",
                 "You recognise the posture before you recognise the face — a former enemy soldier, living as a village craftsman. He was at the battle of the eastern crossing; you remember his unit's colors. He has seen you see him. He has gone very still over his work, and he is waiting.",
                 new List<InquiryElement>
                 {
@@ -4846,7 +4846,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Block",
+                "⚖  The Block",
                 "A group of prisoners is being auctioned in the city square into indentured service — several years' labour for debts that may or may not be documented. Most of them are wrong for criminals: clothing, bearing. One of them has fire-worker's calluses and is tracking everything with the particular attention of someone who knows what is happening to them.",
                 new List<InquiryElement>
                 {
@@ -4887,7 +4887,7 @@ namespace AshAndEmber
         private static void EC4_FakeMage(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Impostor",
+                "✦  The Impostor",
                 "In the market, a man in conspicuously dramatic clothing is performing 'fire blessings' for coin — tricks with hidden flint and powder, practiced patter, a crowd that wants to believe. He is good at his pitch. He has not seen you arrive. Your fire identifies what his is immediately: nothing.",
                 new List<InquiryElement>
                 {
@@ -4924,7 +4924,7 @@ namespace AshAndEmber
         private static void EC4_WantedPoster(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Your Name on a Wall",
+                "◆  Your Name on a Wall",
                 "Near the market gate, a notice has been posted with a description of a 'fire-cursed lord causing disruption across the eastern roads' and a bounty attached. The description is vague but unmistakably you. The city guard has been walking past it all morning without looking twice.",
                 new List<InquiryElement>
                 {
@@ -4963,7 +4963,7 @@ namespace AshAndEmber
         private static void LC4_RunawayServant(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Running Girl",
+                "◆  The Running Girl",
                 "A young woman falls in beside your horse as you leave, keeping your party between herself and the gate. She is walking at exactly the pace required to not seem to be running. She says she is not a runaway. The bruising on her wrists suggests someone else has been making that determination for her.",
                 new List<InquiryElement>
                 {
@@ -5010,7 +5010,7 @@ namespace AshAndEmber
         private static void LC4_OldDebt(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Old Debt",
+                "⚖  The Old Debt",
                 "A man catches your horse at the gate and names a sum and a situation from three years ago — a deal gone sideways, a loan with no written record, your name attached. The sum is not ruinous. His expression is careful in the way of someone who has rehearsed this.",
                 new List<InquiryElement>
                 {
@@ -5054,7 +5054,7 @@ namespace AshAndEmber
         private static void LC4_RecognizedByAshen(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Watching Figure",
+                "✦  The Watching Figure",
                 "Leaving the city, you become aware — not by sight but by the particular absence of warmth — of someone in a building's shadow cataloguing your party. Grey cloak, pale still face, the patient posture of something that is not in a hurry because it has learned not to be. An Ashen agent is noting your movements.",
                 new List<InquiryElement>
                 {
@@ -5097,7 +5097,7 @@ namespace AshAndEmber
         private static void EB3_TriageDecision()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Not Enough",
+                "✚  Not Enough",
                 "Your surgeon comes to you with the numbers: the serious wounded outnumber the supplies available for serious care by more than the margin can absorb. By the time more supplies arrive, some of these men will not benefit from them. He is asking for guidance on how to allocate what is here.",
                 new List<InquiryElement>
                 {
@@ -5136,7 +5136,7 @@ namespace AshAndEmber
         private static void EB3_PrisonerNobleClaim()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "A Name Worth Something",
+                "⚜  A Name Worth Something",
                 "Listing the prisoners with your sergeant, a man near the end of the line gives his name quietly. It is a minor noble family — not great, but real. He is watching your face to see if you place it. He has clearly done this before and is evaluating whether you are the sort of person who recognises names.",
                 new List<InquiryElement>
                 {
@@ -5174,7 +5174,7 @@ namespace AshAndEmber
         private static void EB3_TheyCarriedHim()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Two Miles",
+                "⚔  Two Miles",
                 "Your sergeant reports something nobody mentioned during the battle: two of your soldiers carried a third — gut-wound, unable to walk — for two miles during a contested retreat, taking turns, under fire. Nobody ordered it. The man lived. The two of them are at camp eating as if nothing happened.",
                 new List<InquiryElement>
                 {
@@ -5219,7 +5219,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Water",
+                "☠  The Water",
                 "Your surgeon reports it an hour after the city falls: the main well was poisoned by the defenders before they surrendered. Something grey and chemical, not lethal in small amounts, but the families who drew water this morning are already showing symptoms. Your purification supplies will not cover the scale of it.",
                 new List<InquiryElement>
                 {
@@ -5265,7 +5265,7 @@ namespace AshAndEmber
         private static void ES3_LongPrisoner()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Kept One",
+                "⚒  The Kept One",
                 "In the deepest part of the dungeon, behind a door sealed separately from the others, a man who was there before you besieged the place. Two years, he says, when he can speak. He knows why he was kept rather than killed — he knows something the previous lord did not want spoken. He is offering it to you.",
                 new List<InquiryElement>
                 {
@@ -5310,7 +5310,7 @@ namespace AshAndEmber
         private static void ER3_CellarSurvivors()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Under the Floor",
+                "☠  Under the Floor",
                 "As your party prepares to leave, one of your men kicks through a root cellar door in a burned cottage. A family is in the dark below — grandparents, two young children — who have been in there since the raid began. They emerge slowly, covered in dust, squinting at the light. They do not speak. They are waiting to see what you do next.",
                 new List<InquiryElement>
                 {
@@ -5351,7 +5351,7 @@ namespace AshAndEmber
         private static void EV5_WolvesCircling(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Wolves",
+                "✿  The Wolves",
                 "A pack has been circling the village since last night — driven south by the cold or by something further north that displaced them. One child went to the stream at dawn and hasn't returned. The men have formed a search party, but they're going into the treeline against something faster than they are.",
                 new List<InquiryElement>
                 {
@@ -5391,7 +5391,7 @@ namespace AshAndEmber
         private static void EV5_FrozenFord(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Ford",
+                "✿  The Ford",
                 "The river ford near the village has frozen solid. The wrong season for it, the wrong temperature by ten degrees. The villagers are staring at it with an expression that sits between grateful and afraid. You know the exact moment it froze: last night, when you were cold and tired and thinking about the road ahead.",
                 new List<InquiryElement>
                 {
@@ -5426,7 +5426,7 @@ namespace AshAndEmber
         private static void LV5_TroopFever(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Fever",
+                "✚  The Fever",
                 "The column is ready to move when your sergeant pulls you aside: one of your men collapsed in the inn stable this morning. Not wounded. Fever. He is not contagious — the surgeon thinks — but he cannot sit a horse, and the way he looks at the ceiling suggests he is not going to be able to for several days.",
                 new List<InquiryElement>
                 {
@@ -5463,7 +5463,7 @@ namespace AshAndEmber
         private static void LV5_WrongSong(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Wrong Song",
+                "★  The Wrong Song",
                 "The village inn has a bard performing a ballad about you. It has your name, your approximate description, and three specific incidents that are entirely wrong — in one you slew a dragon, in another you appeared at a battle you were not at, and in the third you apparently said something wise that you have no memory of saying. He is mid-verse when he sees you standing in the doorway.",
                 new List<InquiryElement>
                 {
@@ -5500,7 +5500,7 @@ namespace AshAndEmber
         private static void EC5_PortraitPainter(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Likeness",
+                "◆  The Likeness",
                 "A painter in the city market is selling small portrait copies of you — worked from a verbal description, apparently, but unnervingly accurate in the eyes and the set of the jaw. He has sold six. He bows elaborately when you appear, which draws a crowd.",
                 new List<InquiryElement>
                 {
@@ -5537,7 +5537,7 @@ namespace AshAndEmber
         private static void EC5_PhysiciansEye(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Physician's Question",
+                "✚  The Physician's Question",
                 "A city physician stops you at the gate — not for medical reasons, she says, but because she has been studying aging for twenty years and your face has done something irreparable to her professional certainty. She says it carefully: \"You look forty and you look eighty. At the same time. I have been trying to understand that since you entered the gate.\"",
                 new List<InquiryElement>
                 {
@@ -5573,7 +5573,7 @@ namespace AshAndEmber
         private static void LC5_OldAlly(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "An Old Face",
+                "★  An Old Face",
                 "Someone calls your name from near the gate. It takes a moment — you knew him as a capable captain, sharp, well-regarded in his clan. He is less than that now. The uniform is gone, the bearing mostly. He is not quite begging. He is finding reasons to stand near you.",
                 new List<InquiryElement>
                 {
@@ -5612,7 +5612,7 @@ namespace AshAndEmber
         private static void EB4_WarHorse()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Horse That Stayed",
+                "⚔  The Horse That Stayed",
                 "One horse on the field is not yours. All the others have bolted or been taken. This one is standing beside its dead rider, still saddled, and will not move for anyone in your party — not from fear, not from stubbornness. It simply has not been given permission to go.",
                 new List<InquiryElement>
                 {
@@ -5653,7 +5653,7 @@ namespace AshAndEmber
         private static void ES4_AshenCrystal()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Left Behind",
+                "✦  Left Behind",
                 "In a room off the keep's great hall, placed on a shelf between two books as if it belonged there: a small object of grey stone that is cold in a way that has nothing to do with temperature. The Ashen put this here before the siege began — possibly years before. It is a marker. It means: we were here. We will return for it.",
                 new List<InquiryElement>
                 {
@@ -5689,7 +5689,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Marked Child",
+                "✦  The Marked Child",
                 "In the aftermath, one of your men finds a hidden cache in a burned cottage — cold tools, a correspondence in the Ashen dialect, and what looks like the beginning of marks on a child's clothes left behind. The family says their son has not been seen for two days. The marks are not birthmarks. They are made.",
                 new List<InquiryElement>
                 {
@@ -5738,7 +5738,7 @@ namespace AshAndEmber
         private static void EV6_MillDispute(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Mill Dispute",
+                "⚖  The Mill Dispute",
                 "Two families are on the verge of violence at the village mill. The issue is water rights: the upstream family diverted the millstream last autumn and the downstream family's mill has been running dry since. Both families have children watching from a distance. The headman has been trying to mediate for three months and has nothing left. He looks at you with the expression of a man who has run out of tools.",
                 new List<InquiryElement>
                 {
@@ -5782,7 +5782,7 @@ namespace AshAndEmber
         private static void EV6_DebtCollector(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Debt Collector",
+                "⚖  The Debt Collector",
                 "A city official with two armed escorts is working through the village, seizing goods against unpaid grain levies. The amounts seem correct on paper. The method is not — he has taken a widow's seed stock, which means she has nothing to plant in spring. She is standing in her doorway watching her future be loaded onto a cart.",
                 new List<InquiryElement>
                 {
@@ -5827,7 +5827,7 @@ namespace AshAndEmber
         private static void EV6_StrangersHorse(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Stranger's Horse",
+                "✿  The Stranger's Horse",
                 "An expensive horse — a lord's horse, by its tack — is tied outside an abandoned house on the edge of the village. It has been there since yesterday morning. Nobody claims to know whose it is. The house has been empty for two years. Nobody is willing to approach it. The horse watches everything with a steadiness that has nothing to do with waiting.",
                 new List<InquiryElement>
                 {
@@ -5876,7 +5876,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Sick Healer",
+                "✚  The Sick Healer",
                 "The village healer — the person this village relies on for fever, birth, broken bones, and every other thing that can go wrong with a body — is sick. Not gravely, but genuinely incapacitated. The village is managing, but managing is not the same as fine. Two families have members who need real attention. The healer apologises for the inconvenience with the specific exhaustion of someone who has never been allowed to be sick before.",
                 new List<InquiryElement>
                 {
@@ -5928,7 +5928,7 @@ namespace AshAndEmber
         private static void EV6_ChildsMap(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Child's Map",
+                "★  The Child's Map",
                 "A boy of perhaps ten runs alongside your horse and holds up a piece of bark with markings scratched into it. He says: \"I drew where the cold men camp. Nobody will look at it.\" The markings are crude but specific — a stream bend, a hill shape, distances approximated by how long he walked. He went there alone to draw it. He is proud of himself in the way of someone who has been ignored.",
                 new List<InquiryElement>
                 {
@@ -5970,7 +5970,7 @@ namespace AshAndEmber
         private static void EV6_BurnedShrine(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Burned Shrine",
+                "✦  The Burned Shrine",
                 "A roadside shrine at the village edge was burned recently — the ash is still warm. It was a fire-shrine, the old kind, the kind that predates the current priesthood by several hundred years. The villagers say it burned itself in the night. You know what burned it: something cold passing close, extinguishing by proximity rather than intent. The Ashen do not always mean to kill fire. Sometimes they simply cannot help it.",
                 new List<InquiryElement>
                 {
@@ -6012,7 +6012,7 @@ namespace AshAndEmber
         private static void LV6_OathOnRoad(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Oath on the Road",
+                "⚜  The Oath on the Road",
                 "A man in his thirties steps onto the road in front of your column and kneels. He says he has been waiting three days. He offers you his sword — an ordinary one, well-kept — and his oath of service. He has a reason, which he will tell you if you ask: a lord in the east took his family's land and he has no legal recourse and no army. He is not desperate. He is decided.",
                 new List<InquiryElement>
                 {
@@ -6054,7 +6054,7 @@ namespace AshAndEmber
         private static void LV6_FireTender(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Fire Tender",
+                "✦  The Fire Tender",
                 "An old woman at the village's edge has kept a small fire burning continuously for thirty-one years. She says her grandmother told her someone would come who would know what it was for. She says this plainly, without drama, the way people say things they have said to themselves so many times the words have worn smooth. She looks at you and whatever she sees satisfies something.",
                 new List<InquiryElement>
                 {
@@ -6096,7 +6096,7 @@ namespace AshAndEmber
         private static void LV6_HiddenGrave(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Hidden Grave",
+                "☠  The Hidden Grave",
                 "A fresh grave just outside the village boundary — no marker, turned earth still dark. Someone was buried in the last two days and buried quietly, outside the common ground, which means either shame or secrecy. The village knows it is there. Nobody mentions it. Two people looked away as you passed the spot.",
                 new List<InquiryElement>
                 {
@@ -6145,7 +6145,7 @@ namespace AshAndEmber
         private static void LV6_BlindSoldier(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Blind Soldier",
+                "⚔  The Blind Soldier",
                 "A man working a cobbler's stall near the road is blind — cloth bound over both eyes, the permanent kind. He turns toward your horse's sound with a specificity that means he has been expecting you, or someone like you. He asks, very carefully, if you are the lord who ordered the charge at the river crossing four years ago. He was a soldier there. He lost his eyes in the river. He says he is not asking for anything. He says this in a way that contains several possible meanings.",
                 new List<InquiryElement>
                 {
@@ -6188,7 +6188,7 @@ namespace AshAndEmber
         private static void EC6_Tribunal(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Tribunal",
+                "⚖  The Tribunal",
                 "A public sentencing is underway in the square: a woman accused of theft — three bolts of cloth. The evidence is thin. The sentence proposed is the removal of a hand. The merchant pressing charges has a lord's cousin on his ledger as a debtor, which may explain why the presiding magistrate is not looking at the crowd. The woman has three children standing at the square's edge watching.",
                 new List<InquiryElement>
                 {
@@ -6233,7 +6233,7 @@ namespace AshAndEmber
         private static void EC6_AlchemistFire(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Alchemist's Fire",
+                "✦  The Alchemist's Fire",
                 "A shop two streets from the gate is burning. The city watch is present but keeping their distance — the smoke is wrong colours, which means the contents are volatile and the watch knows it. The owner is inside. He is alive: you can hear him, and so can the fire you carry, which is currently extremely interested in what he has in that building. He is not trying to escape. He is trying to save something.",
                 new List<InquiryElement>
                 {
@@ -6287,7 +6287,7 @@ namespace AshAndEmber
         private static void EC6_Petition(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Petition",
+                "⚜  The Petition",
                 "A queue of citizens outside the lord's hall, waiting to file grievances. Most of them are here with complaints that the hall will classify as administrative and return unread. One of them is not: a farmer third from the back with a folded document who keeps looking toward the gate as if expecting someone to stop him from filing it. He has found something. What he has found is real enough that someone would prefer he not file it.",
                 new List<InquiryElement>
                 {
@@ -6330,7 +6330,7 @@ namespace AshAndEmber
         private static void EC6_Gladiator(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Gladiator",
+                "⚔  The Gladiator",
                 "A pit fighter in the city's arena district recognises you — not from your reputation, from your face. He was a man-at-arms in your third campaign, left after a wound that ended his military usefulness, and found his way here. He is not bitter about it. He looks like someone who has organised a life around what remained after the thing he was good at was taken from him. He asks if you have a moment.",
                 new List<InquiryElement>
                 {
@@ -6374,7 +6374,7 @@ namespace AshAndEmber
         private static void EC6_SmuggledLetters(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Smuggled Letters",
+                "◆  The Smuggled Letters",
                 "A courier is arrested at the city gate directly in front of your party — city guard, efficient, clearly expected. The courier has a satchel that the guard is not yet examining. Before he is taken he meets your eyes and his gaze goes to his horse's saddlebag, very briefly, very specifically. Then he looks away. The guard has not noticed. Whatever is in that saddlebag was intended for someone. It may now be intended for you.",
                 new List<InquiryElement>
                 {
@@ -6417,7 +6417,7 @@ namespace AshAndEmber
         private static void LC6_InformantsNote(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Informant's Note",
+                "◆  The Informant's Note",
                 "As you pass through the gate a folded note is pressed into your hand by someone who does not stop walking. It reads: 'I know who burned the eastern way-station and why. Second bridge at dusk. Come alone or don't come.' The way-station fire killed three of your men six months ago and was recorded as an accident. It was not an accident. You suspected this. Now someone else knows that you know.",
                 new List<InquiryElement>
                 {
@@ -6479,7 +6479,7 @@ namespace AshAndEmber
         private static void LC6_NobleHostage(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Noble Hostage",
+                "⚜  The Noble Hostage",
                 "A noble family is being escorted through the gate by eight armed men — not a guard of honour, an escort. The family's bearing says they know the difference. The youngest daughter, perhaps fourteen, makes direct eye contact with you as the group passes. Her gaze goes from your face to the armed men and back, very specifically, in the way of someone who has been waiting for someone with rank to walk past.",
                 new List<InquiryElement>
                 {
@@ -6521,7 +6521,7 @@ namespace AshAndEmber
         private static void LC6_EmptyWagon(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Empty Wagon",
+                "◆  The Empty Wagon",
                 "A merchant's wagon is stopped at the side of the road outside the gate. Fully loaded, canvas intact, horse still harnessed and calm. The driver is dead at the reins — recently, within the hour. No mark of violence visible at distance. No one else is near it. The wagon has a trade guild seal. Whatever killed the driver was fast and quiet and apparently uninterested in the cargo.",
                 new List<InquiryElement>
                 {
@@ -6563,7 +6563,7 @@ namespace AshAndEmber
         private static void LC6_Confiscation(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Confiscation",
+                "⚖  The Confiscation",
                 "City guards are stripping a foreign merchant's cart at the gate — spices, tools, quality cloth. The merchant is arguing in accented but correct legal language: his papers are in order, he has paid the city's gate toll, and the specific goods being confiscated are not on the restricted list. He is right. The guards know he is right. They are continuing anyway, which means they have orders from someone with enough rank that being right doesn't help.",
                 new List<InquiryElement>
                 {
@@ -6606,7 +6606,7 @@ namespace AshAndEmber
         private static void LC6_TheKneel(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Kneel",
+                "⚜  The Kneel",
                 "A man prostrates himself in the street as your party passes — full prostration, forehead to the cobbles, arms forward. This is not feudal formality. This is something older and more specific. Two people nearby step back. The man is shaking, slightly, with an emotion that is not fear. A woman beside him — his wife, probably — is watching you with the expression of someone who has been trying to talk him out of this for some time.",
                 new List<InquiryElement>
                 {
@@ -6651,7 +6651,7 @@ namespace AshAndEmber
         private static void EB5_MercenaryTerms()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Mercenary Terms",
+                "⚔  The Mercenary Terms",
                 "A surviving mercenary captain — his company is broken, he has perhaps thirty men left standing — approaches your lines under a white cloth. He offers surrender and immediate service. He says this without hesitation or performance: his contract ended when the army he was fighting for broke, and he is a professional. He wants to know your terms before his men decide for themselves. He has thirty minutes before they stop listening to him.",
                 new List<InquiryElement>
                 {
@@ -6696,7 +6696,7 @@ namespace AshAndEmber
         private static void EB5_OwnStandard()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Your Standard in Enemy Hands",
+                "⚔  Your Standard in Enemy Hands",
                 "Among the captured enemy effects: your own banner, folded in a wax-sealed case. Not a copy. The actual standard, with the specific repairs from two campaigns ago. Someone in your party gave it to the enemy, or sold it, or it was taken in circumstances nobody reported. Your sergeant is standing very still when he shows it to you. He has already started a list.",
                 new List<InquiryElement>
                 {
@@ -6747,7 +6747,7 @@ namespace AshAndEmber
         private static void EB5_EnemySurgeon()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Enemy Surgeon",
+                "✚  The Enemy Surgeon",
                 "Your surgeon comes to you with a specific request: the enemy field surgeon, taken prisoner, has been working on your wounded alongside him for the last three hours and is better than competent — he has saved two men your own surgeon was not certain about. He wants to keep him working. He is technically a prisoner. His continued presence requires your explicit permission and carries legal complications if this goes poorly.",
                 new List<InquiryElement>
                 {
@@ -6791,7 +6791,7 @@ namespace AshAndEmber
         private static void EB5_YoungOfficer()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Young Officer",
+                "⚔  The Young Officer",
                 "An enemy officer — seventeen, perhaps — is sitting at the field's edge with a broken arm set crudely and a look on his face that is not quite shock and not quite composure. He has a lieutenant's mark. He was in his first command. He is deciding whether to ask something or say nothing, and he has been deciding this since your patrol found him. He has no weapon.",
                 new List<InquiryElement>
                 {
@@ -6834,7 +6834,7 @@ namespace AshAndEmber
         private static void ES5_Archives()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Archives",
+                "⚒  The Archives",
                 "In the keep's lower level: a room of records, ledgers, correspondence — years of it. Someone is already burning them. Not a soldier, a clerk: methodical, moving through the shelves in order, using a small lamp. He has been at this since before your men entered the building. He looks up when you enter and does not run. He is doing his job.",
                 new List<InquiryElement>
                 {
@@ -6883,7 +6883,7 @@ namespace AshAndEmber
         private static void ES5_Collaborator()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Collaborator",
+                "◆  The Collaborator",
                 "A city administrator — tax assessor, title of record — who served the previous lord is present in the hall when you enter the keep. He has already prepared a summary of accounts and is offering his services. Three village headmen are also present, having come in with your soldiers. One of them recognises the administrator and says, in a flat voice, his name, and what he did: he organised the levy suppression that starved four villages two winters ago. The administrator does not deny it. He says he had orders.",
                 new List<InquiryElement>
                 {
@@ -6928,7 +6928,7 @@ namespace AshAndEmber
         private static void ES5_HiddenGold()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Hidden Gold",
+                "⚒  The Hidden Gold",
                 "Your men found a secondary cache beneath the keep's stables — significantly larger than the treasury your quartermaster recorded. A floor panel, recently replaced. The gold is real and unregistered. Your sergeant reports it to you privately, which means he has not reported it generally, which means he is waiting to understand what you intend before deciding what he knows. Six of your veterans know it exists. None of them have said anything yet.",
                 new List<InquiryElement>
                 {
@@ -6973,7 +6973,7 @@ namespace AshAndEmber
         private static void ES5_Torturer()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Torturer",
+                "⚒  The Torturer",
                 "In the garrison, waiting with the other soldiers to be processed: a man your sergeant identifies quietly by reputation, not by rank. The previous lord's dedicated interrogator. Not a soldier — a specialist, titled, salaried. There are people in the city who remember his face and his work. He is standing in line with everyone else, waiting. He has not tried to flee or to hide, which is either professional confidence or the specific resignation of a man who has been expecting this day.",
                 new List<InquiryElement>
                 {
@@ -7017,7 +7017,7 @@ namespace AshAndEmber
         private static void ER5_Apiary()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Apiary",
+                "✿  The Apiary",
                 "At the village's edge: a beekeeper, perhaps sixty, standing in the ash of what were twelve hives. He is counting what is left — one hive, cracked but intact, the bees confused but alive. He does not look up when you approach. He is doing arithmetic about years: how long it took to build, how many years he has left, whether the numbers allow what the numbers would need to allow. You can see the calculation in his face.",
                 new List<InquiryElement>
                 {
@@ -7064,7 +7064,7 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Name List",
+                "◆  The Name List",
                 "Among the burned papers, your sergeant finds a fragment that survived: a list of names in the Ashen script, partially legible, with a second column of annotations. Three of the names can be matched to villagers here — alive, present, currently watching your men clear the site. The annotations suggest observation records, not recruitment. These people were being watched. They do not know this. The question is whether to tell them, and whether that changes their safety or reduces it.",
                 new List<InquiryElement>
                 {
@@ -7127,7 +7127,7 @@ namespace AshAndEmber
         private static void EV7_WatchedVillage(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Watched Village",
+                "✦  The Watched Village",
                 "You feel it before you see it: three sets of eyes from the treeline that are too still to be villagers. Ashen scouts, posted here — which means someone sent them, and someone knows you were coming. The village is unaware. The scouts have not moved yet.",
                 new List<InquiryElement>
                 {
@@ -7175,7 +7175,7 @@ namespace AshAndEmber
         private static void EV7_SelfTaughtMage(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Self-Taught",
+                "✦  The Self-Taught",
                 "A mage at the village inn — self-trained, clearly capable, and entirely certain that the gift he found alone is the real version and what you carry is a lesser, inherited thing. He says this to your face without hostility, the way people state facts. He has been working with fire for eight years. He is wrong about the comparison. He is not wrong about his eight years.",
                 new List<InquiryElement>
                 {
@@ -7217,7 +7217,7 @@ namespace AshAndEmber
         private static void EV7_OldMastersStudent(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Old Master's Student",
+                "✦  The Old Master's Student",
                 "A young woman — perhaps twenty — has been waiting at the village for three days, asking every traveler if they match her description. She studied under a mage you have heard of: dead now, one of the old ones who knew more than they ever wrote down. She has a question only someone at your level can answer, and she has been carrying it for two years.",
                 new List<InquiryElement>
                 {
@@ -7259,7 +7259,7 @@ namespace AshAndEmber
         private static void EC7_GreyCloaks(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Grey Cloaks",
+                "✦  The Grey Cloaks",
                 "City watch reports that grey-cloaked figures have been moving through the market since this morning, asking specifically about you — your column's size, your route north, who rides at your left. Not merchants. Not scouts in any natural sense. They move like people who have been patient for a long time and are now less patient.",
                 new List<InquiryElement>
                 {
@@ -7301,7 +7301,7 @@ namespace AshAndEmber
         private static void EC7_TheDuelist(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Challenge",
+                "⚔  The Challenge",
                 "A mage in the city square calls your name loudly enough for the crowd to hear. He is theatrical about it — cloak, posture, timing. He challenges you to demonstrate your gift against his, publicly, in the market. He has an audience that is now watching you for your reaction. He may be good. He may be performing. He is definitely committed.",
                 new List<InquiryElement>
                 {
@@ -7347,7 +7347,7 @@ namespace AshAndEmber
         private static void EC7_AshenSurveillance(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Recognised",
+                "✦  Recognised",
                 "A figure in grey pauses at the sight of you entering the gate — not fear, recognition. Ashen, clearly. And they know what you are. They look at you the way Ashen look at something that is not quite what they expected to find in a human body. They do not move. They are deciding whether you are a complication or an opportunity.",
                 new List<InquiryElement>
                 {
@@ -7401,7 +7401,7 @@ namespace AshAndEmber
         private static void LV7_RoadWatchesBack(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Road Watches Back",
+                "✦  The Road Watches Back",
                 "Your outriders report movement in the treeline — three positions, coordinated, moving with your column's speed without getting closer. Not wildlife. Not bandits: bandits would have committed or retreated by now. They are pacing you, which means they are waiting for something. The gate is twenty yards behind you. The treeline continues for two miles ahead.",
                 new List<InquiryElement>
                 {
@@ -7447,7 +7447,7 @@ namespace AshAndEmber
         private static void LC7_DeadGuard(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Dead Guard",
+                "☠  The Dead Guard",
                 "The guard at the inner gate is dead. He has been propped up to look like he is standing at his post — someone needed this gate unwatched for a specific window of time. The window is now. Three grey-cloaked figures are moving through the gate passage with purposeful efficiency. They see you. You see them. There are thirty yards between you and the outcome is not yet fixed.",
                 new List<InquiryElement>
                 {
@@ -7490,7 +7490,7 @@ namespace AshAndEmber
         private static void LC7_AshenChallenge(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Cold Gauntlet",
+                "✦  The Cold Gauntlet",
                 "At the outer gate, an Ashen mage intercepts you alone — no escort, no weapons drawn. They state what they want clearly: a cold duel. Not a fight. A test of endurance: your warmth against their cold, in contact, until one yields. They say this the way one professional addresses another. They have done this before. They are not asking to harm you. They are asking to measure you.",
                 new List<InquiryElement>
                 {
@@ -7538,7 +7538,7 @@ namespace AshAndEmber
         private static void EB6_SurvivorMageDuel()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Survivor's Right",
+                "✦  The Survivor's Right",
                 "A mage on the losing side — badly wounded, one arm unusable — calls to you across the field before your men can reach him. He invokes a formal right from the old codes: a duel between fire-carriers for the right to a clean ending. Not a fight for his life — he knows that argument is over. A duel for the manner of it. He is asking you to take it seriously.",
                 new List<InquiryElement>
                 {
@@ -7585,7 +7585,7 @@ namespace AshAndEmber
         private static void ES6_KeepMage()
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "What the Keep Powered",
+                "✦  What the Keep Powered",
                 "In the lowest room of the conquered keep, chained to a working frame: a mage. Alive, clearly, and aware. They have been here long enough that the chains are worn where they've tested them. The previous lord used their gift to power something in the keep's walls — the cold storage that kept the garrison fed through three winters, apparently. They look at you and wait to find out which kind of lord you are.",
                 new List<InquiryElement>
                 {
@@ -7640,7 +7640,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
             string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Diagnose correctly");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Wrong Wound",
+                "✚  The Wrong Wound",
                 "A farmer is being treated at the inn — the village herb-woman has cleaned and bound a wound in his side. She is confident. She is wrong: the binding has sealed in something, and the smell is the smell of a wound going the wrong way. He is not complaining yet. He will be, badly, by morning.",
                 new List<InquiryElement>
                 {
@@ -7692,7 +7692,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Scouting, 0.25f);
             string hint  = SkillHint(DefaultSkills.Scouting, 0.25f, "Read the signs accurately");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Cold Trail",
+                "◆  The Cold Trail",
                 "Something passed through this village recently — the signs are subtle and scattered: ash on a doorstep where no fire was lit, a handprint on a well-cover in grey dust, a dog that stopped barking three nights ago and has not started again. The villagers have not connected these things. You have.",
                 new List<InquiryElement>
                 {
@@ -7739,7 +7739,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Roguery, 0.25f);
             string hint  = SkillHint(DefaultSkills.Roguery, 0.25f, "Read the deception precisely");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Lie",
+                "◆  The Lie",
                 "An old man at the inn table tells you there have been no grey-cloaked visitors in a week. He says this with full eye contact and complete stillness and the specific absence of the small corrections honest people make when they're trying to be accurate. He is lying. Whatever he saw, he was told to say he hadn't. The fire in you feels the cold in the room that isn't the weather.",
                 new List<InquiryElement>
                 {
@@ -7790,7 +7790,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Charm, 0.25f);
             string hint  = SkillHint(DefaultSkills.Charm, 0.25f, "Persuade him to speak");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Reluctant Official",
+                "⚜  The Reluctant Official",
                 "A city records clerk has information you need — movement orders for a specific gate, filed three weeks ago. He is technically required to provide access to lords on request. He is also clearly frightened of whoever filed those orders, and is performing bureaucratic friction with the specific expertise of a man who has been doing it for years. He is not going to say no. He is going to take a very long time to say yes.",
                 new List<InquiryElement>
                 {
@@ -7838,7 +7838,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Steward, 0.25f);
             string hint  = SkillHint(DefaultSkills.Steward, 0.25f, "Identify the specific irregularity");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Numbers",
+                "⚖  The Numbers",
                 "A merchant at the city guild hall is arguing with an auditor about a discrepancy in his import ledger. He says it's a clerical error. The auditor says it's systematic. They both appeal to you — you are a lord, apparently this grants you opinions about accounting. The ledger is on the table. One of them is right.",
                 new List<InquiryElement>
                 {
@@ -7887,7 +7887,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Scouting, 0.28f);
             string hint  = SkillHint(DefaultSkills.Scouting, 0.28f, "Confirm and identify them");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Shadow",
+                "◆  The Shadow",
                 "You are being followed. Not by amateurs — whoever this is matches your pace correctly, uses the crowd well, and has been doing it since the eastern gate. You noticed because you were looking. Most people would not have noticed. The question is what to do with the knowledge before they realise you have it.",
                 new List<InquiryElement>
                 {
@@ -7938,7 +7938,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
             string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Diagnose and treat correctly");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Well",
+                "✚  The Well",
                 "As you prepare to leave, three children are brought to the inn in quick succession — all from the same family, all with the same symptoms: pale, cramping, confused. The parents are terrified and the herb-woman is overwhelmed. All three drank from the eastern well this morning. The well is still being used. The village does not yet understand what is happening.",
                 new List<InquiryElement>
                 {
@@ -7991,7 +7991,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Tactics, 0.28f);
             string hint  = SkillHint(DefaultSkills.Tactics, 0.28f, "Read the setup before it springs");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Setup",
+                "⚔  The Setup",
                 "A rider catches you at the edge of the village with urgent news: a lord two valleys over needs your help — ambushed, pinned, requesting your column immediately. The message is correctly sealed and the rider is convincing. Something in the framing is wrong — the route he names, the timing, the too-specific detail about troop count. You have seen setups. This has the shape of a setup.",
                 new List<InquiryElement>
                 {
@@ -8047,7 +8047,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Charm, 0.25f);
             string hint  = SkillHint(DefaultSkills.Charm, 0.25f, "Talk him down without violence");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Standoff",
+                "⚜  The Standoff",
                 "A man is holding a merchant at knifepoint at the city gate. Not a robbery: his daughter was taken by the merchant in lieu of a debt, the law permits it, and he has apparently run out of other options. The gate guard is twenty feet away deciding whether to intervene. The merchant is frightened. The father is not — he is decided. Neither of them is going to improve the situation alone.",
                 new List<InquiryElement>
                 {
@@ -8100,7 +8100,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Roguery, 0.28f);
             string hint  = SkillHint(DefaultSkills.Roguery, 0.28f, "Identify the forgery and who wrote it");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Forgery",
+                "◆  The Forgery",
                 "The gate guard stops a merchant wagon and shows you a travel permit he is suspicious about — it's for three wagons and the seal looks right but he cannot explain why it bothers him. He is asking you because you are a lord and lords apparently know about seals. The merchant is watching this from twenty feet away with the composed expression of someone who knows exactly what is happening.",
                 new List<InquiryElement>
                 {
@@ -8152,7 +8152,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
             string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Apply your own knowledge alongside the surgeon");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Surgeon's Question",
+                "✚  The Surgeon's Question",
                 "Your surgeon has done what he can with what he has. He comes to you with a specific problem: two men with abdominal wounds, one set of gut-surgery supplies, and a clinical decision he says is above his certainty. He is asking you — not because he thinks you're a surgeon, but because he has seen enough of you to know whether you are the kind of person who has relevant information and the honesty to say when you don't.",
                 new List<InquiryElement>
                 {
@@ -8209,7 +8209,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Tactics, 0.28f);
             string hint  = SkillHint(DefaultSkills.Tactics, 0.28f, "Identify and correct the misread");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Debrief",
+                "⚔  The Debrief",
                 "Your sergeant is debriefing the battle with your officers and his read of what happened at the centre is subtly but importantly wrong — he believes the enemy centre held because of superior numbers, but you saw something else from your position. If his interpretation enters your officers' working model of how battles develop, it will inform a decision the wrong way at a moment that matters.",
                 new List<InquiryElement>
                 {
@@ -8259,7 +8259,7 @@ namespace AshAndEmber
             float chance = SkillChance(DefaultSkills.Steward, 0.25f);
             string hint  = SkillHint(DefaultSkills.Steward, 0.25f, "Divide the stores correctly and equitably");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "The Division",
+                "⚒  The Division",
                 "The keep's stores are more than expected — the previous lord was preparing for a long siege. Your quartermaster can manage the military share straightforwardly, but the civilian question is harder: the city's merchants and the keep's garrison staff both have claims under different precedents, and the amounts are large enough that the wrong division will cause problems before the week is out.",
                 new List<InquiryElement>
                 {
@@ -8318,7 +8318,7 @@ namespace AshAndEmber
         private static void E_OldEnemy(Settlement s)
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "An Old Enemy",
+                "⚔  An Old Enemy",
                 "A weathered veteran in the city square catches your eye and holds it. He was on the other side of a battle three years ago — you remember his face from across a line of shields. He remembers yours. He raises his cup toward you.",
                 new List<InquiryElement>
                 {
