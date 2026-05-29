@@ -399,6 +399,12 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Public spawn entry point ──────────────────────────────────────────
+        // Allows SettlementEncounters to spawn a gate-ambush Ashen party near a
+        // settlement without duplicating the spawn logic.
+        public static void SpawnAshenAmbushNear(Vec2 pos, int troops, float minStrength)
+            => SpawnAshenSpawnParty(pos, troops, minStrength);
+
         // ── Party spawning helper ─────────────────────────────────────────────
         // Creates a single Ashen Spawn bandit party near anchorPos, registers
         // it with FireWorshippersSystem, and returns it (or null on failure).

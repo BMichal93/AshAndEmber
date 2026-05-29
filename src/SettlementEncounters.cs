@@ -208,6 +208,7 @@ namespace AshAndEmber
                 pool.Add(EV6_StrangersHorse);
                 pool.Add(EV6_SickHealer);
                 pool.Add(EV6_MillDispute);
+                pool.Add(EV7_WatchedVillage);
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
@@ -219,6 +220,8 @@ namespace AshAndEmber
                     pool.Add(EV5_FrozenFord);
                     pool.Add(EV6_BurnedShrine);
                     pool.Add(EV6_ChildsMap);
+                    pool.Add(EV7_SelfTaughtMage);
+                    if (ren >= 600f) pool.Add(EV7_OldMastersStudent);
                 }
                 if (ashen) pool.Add(EV2_DogWontStop);
             }
@@ -241,6 +244,7 @@ namespace AshAndEmber
                 pool.Add(EC6_Petition);
                 pool.Add(EC6_Gladiator);
                 pool.Add(EC6_SmuggledLetters);
+                pool.Add(EC7_GreyCloaks);
                 if (mage)
                 {
                     pool.Add(E_CuriousScholar);
@@ -251,8 +255,10 @@ namespace AshAndEmber
                     pool.Add(EC4_FakeMage);
                     pool.Add(EC5_PhysiciansEye);
                     pool.Add(EC6_AlchemistFire);
+                    if (ren >= 400f) pool.Add(EC7_TheDuelist);
                     if (ren >= 1000f) pool.Add(E_CrowdWantsSign);
                 }
+                if (ashen) pool.Add(EC7_AshenSurveillance);
                 if (ashen)
                 {
                     pool.Add(E_GreyEyes);
@@ -296,6 +302,7 @@ namespace AshAndEmber
                 pool.Add(LV6_OathOnRoad);
                 pool.Add(LV6_HiddenGrave);
                 pool.Add(LV6_BlindSoldier);
+                pool.Add(LV7_RoadWatchesBack);
                 if (mage)
                 {
                     pool.Add(E_MothersPlea);
@@ -329,6 +336,7 @@ namespace AshAndEmber
                 pool.Add(LC6_TheKneel);
                 if (ren >= 400f) pool.Add(LC6_NobleHostage);
                 if (ren >= 300f) pool.Add(LC6_InformantsNote);
+                pool.Add(LC7_DeadGuard);
                 if (mage)
                 {
                     pool.Add(E_VeteransQuestion);
@@ -337,6 +345,7 @@ namespace AshAndEmber
                     if (ren >= 500f) pool.Add(E_PetitionersGate);
                 }
                 if (ashen) pool.Add(LC4_RecognizedByAshen);
+                if (ashen && mage) pool.Add(LC7_AshenChallenge);
             }
 
             Fire(pool, s);
@@ -383,6 +392,7 @@ namespace AshAndEmber
             pool.Add(EB5_EnemySurgeon);
             pool.Add(EB5_YoungOfficer);
             if (_lastBattleWon) pool.Add(EB5_OwnStandard);
+            if (mage && _lastBattleWon) pool.Add(EB6_SurvivorMageDuel);
             if (mage) pool.Add(EB_EnemyMageJournal);
             if (mage) pool.Add(EB2_FireReveals);
 
@@ -413,6 +423,7 @@ namespace AshAndEmber
                 pool.Add(ES5_Torturer);
                 if (mage) pool.Add(ES_OldScorchmarks);
                 if (mage) pool.Add(ES4_AshenCrystal);
+                if (mage) pool.Add(ES6_KeepMage);
             }
             else
             {
@@ -7040,6 +7051,526 @@ namespace AshAndEmber
                             break;
                         case "d":
                             Msg("You burn what remains. The three villagers continue their lives watched by something that no longer has a record here but still has an interest. Whether the interest expires with the observation or persists without the record is a question that will answer itself in its own time and probably not yours.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // GATE-AMBUSH & MAGE-DUEL EVENTS
+        // ═══════════════════════════════════════════════════════════════════
+
+        // ── Gate-ambush helper ─────────────────────────────────────────────
+        private static readonly Color WarnColor = new Color(0.80f, 0.30f, 0.15f);
+
+        private static void SpawnAshenAtGate(Settlement s, int troops, float minStrength)
+        {
+            try { CampaignMapEvents.SpawnAshenAmbushNear(s.GetPosition2D, troops, minStrength); }
+            catch { }
+        }
+
+        // ── ENTER VILLAGE: The Watched Village ─────────────────────────────
+        private static void EV7_WatchedVillage(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Watched Village",
+                "You feel it before you see it: three sets of eyes from the treeline that are too still to be villagers. Ashen scouts, posted here — which means someone sent them, and someone knows you were coming. The village is unaware. The scouts have not moved yet.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Ride straight at them. End this before it becomes something.", null, true,
+                        "Ashen party spawns at gate. You choose the ground."),
+                    new InquiryElement("b", "Warn the village headman and set a watch — catch them if they move.", null, true,
+                        "Ashen party spawns at gate, weakened — they lost the advantage. Relation +5."),
+                    new InquiryElement("c", "Slip into the village without alerting them. Let them think you didn't notice.", null, true,
+                        "Gain Calculating. They remain. You know they're there. They don't know you know."),
+                    new InquiryElement("d", "Ride in openly and loudly. Let them see your column's full size.", null, true,
+                        "50/50: they retreat or decide size doesn't matter to them."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            SpawnAshenAtGate(s, 10, 50f);
+                            Msg("You wheel your horse toward the treeline and your column follows. They don't run — Ashen scouts rarely do. They step out of the trees with the patience of something that has been cold long enough to stop hurrying. They are waiting at the gate.", WarnColor);
+                            break;
+                        case "b":
+                            ChangeRelWithOwner(s, 5);
+                            SpawnAshenAtGate(s, 6, 25f);
+                            Msg("The headman alerts his people quietly. The scouts shift when they realise they have been seen. They lose the tree cover and commit early. Smaller than you expected — the advantage of surprise was most of their plan. They are at the gate with less than they intended to bring.", WarnColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You enter normally, eyes forward, giving them nothing. They watch. You watch them watching. The village receives you without knowing what is in the treeline. You ride out later knowing exactly where you are not safe — which is a different kind of safety.", DimColor);
+                            break;
+                        case "d":
+                            if (_rng.Next(2) == 0)
+                                Msg("The column's size reads correctly. The scouts withdraw north in the specific unhurried way of a thing that was not afraid — it simply calculated and left. They will report your position and your number. That information is now travelling.", DimColor);
+                            else
+                            {
+                                SpawnAshenAtGate(s, 10, 50f);
+                                Msg("They don't retreat. Size, apparently, was not the relevant variable. They emerge from the trees and move toward the gate with the patience of something that has decided. They are there when you leave.", WarnColor);
+                            }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER VILLAGE: The Self-Taught Mage (mage-gated) ───────────────
+        private static void EV7_SelfTaughtMage(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Self-Taught",
+                "A mage at the village inn — self-trained, clearly capable, and entirely certain that the gift he found alone is the real version and what you carry is a lesser, inherited thing. He says this to your face without hostility, the way people state facts. He has been working with fire for eight years. He is wrong about the comparison. He is not wrong about his eight years.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Show him what the fire actually is — no argument, just the thing itself.", null, true,
+                        "Costs 1 day. He understands something he cannot un-understand. Deep lore exchange."),
+                    new InquiryElement("b", "Challenge him formally — demonstrate the difference by working the same problem.", null, true,
+                        "Gain Calculating. You both learn something. His gift is real and different."),
+                    new InquiryElement("c", "Let him demonstrate first. Eight years of self-teaching is worth hearing.", null, true,
+                        "Flavor. He shows you something you genuinely didn't know. Morale +3."),
+                    new InquiryElement("d", "Agree with him — the gift finds what it finds. He's not wrong about that.", null, true,
+                        "Gain Honor. He is surprised. You leave him with something to reconsider."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            Msg("You set something on the table between you — not a trick, not a demonstration, just the fire being what it is without the performance layer. He watches it for a long time. His own fire responds to it in a way that surprises him. He doesn't revise his opinion out loud. He revises it where opinions actually live. You ride out with a day of your life spent on a genuine exchange.", FireColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You give him a problem: heat a specific point without warming what surrounds it. He solves it differently than you would — more slowly, with more control over the margins. You solve it faster and with less precision. You both sit with this for a moment. He is not lesser. He is different. The difference matters in specific contexts. Neither of you had clearly understood that before.", FireColor);
+                            break;
+                        case "c":
+                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            Msg("He shows you a technique for sustaining a working with a fraction of the attention cost — he found it by accident in the third year and refined it over the following five. You have never seen it. It works. It solves a problem you didn't know you had. He looks at your face when you recognise its value and his certainty quietly reorganises itself around this new data point.", FireColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You agree with him — the fire is the fire, wherever it lands. He expected a contest. Your agreement disarms the whole conversation. He sits with it for a moment and then buys you a drink, which is the self-taught mage's version of a concession. You ride out with nothing changed and one person in the world who will speak well of you, specifically, for the rest of his life.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER VILLAGE: The Old Master's Student (mage, renown ≥ 600) ───
+        private static void EV7_OldMastersStudent(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Old Master's Student",
+                "A young woman — perhaps twenty — has been waiting at the village for three days, asking every traveler if they match her description. She studied under a mage you have heard of: dead now, one of the old ones who knew more than they ever wrote down. She has a question only someone at your level can answer, and she has been carrying it for two years.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Sit with her. Give her the honest answer.", null, true,
+                        "Costs 1 day. She receives it. The knowledge travels forward."),
+                    new InquiryElement("b", "Answer but challenge her framing — the question has a better version.", null, true,
+                        "Gain Calculating. She returns with a better question. Rare lore exchange."),
+                    new InquiryElement("c", "Test her first — see what she actually carries before deciding what she can receive.", null, true,
+                        "Costs 1 day. Her gift is real and specific. Your test reveals something unexpected."),
+                    new InquiryElement("d", "Tell her she needs to find the answer herself — it won't mean anything received.", null, true,
+                        "Gain Honor. She is frustrated. She is also right to be frustrated. Both things are true."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            Msg("The question was: can the fire grieve. You answer it honestly, which costs more than you expected, because the honest answer requires showing her the specific moment yours did. She receives it with the attention of someone who has been carrying a wrong assumption for years and can now correct it. She thanks you simply. She will teach what you gave her. It will carry your name, eventually, in the way that knowledge carries names: silently and without permission.", FireColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You tell her the question she asked is a narrower version of a better question. She sits with this and produces the better question in about four minutes, which tells you everything about the quality of her training. The better question neither of you can answer fully. You spend an hour working at its edges. The master taught her well. What she does next with it will be hers.", FireColor);
+                            break;
+                        case "c":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            Msg("You give her a working to complete — not a display, a test of understanding. She completes it three-quarters correctly and then does something you didn't expect: corrects herself mid-working without stopping, which is harder than getting it right the first time and significantly rarer. Her gift is real and her control is better than yours was at her age. The answer you give her afterward is the best version you have. She is ready for it.", FireColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You tell her to find it herself. She is frustrated in the specific way of someone who has been told a truth they did not want. She asks why. You tell her: because the answer you find is yours; the answer I give you is mine, and mine won't fit where yours needs to go. She sits with this and does not thank you. She will find the answer. When she does, it will be shaped correctly. You will not be there to see it.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER CITY: The Grey Cloaks ────────────────────────────────────
+        private static void EC7_GreyCloaks(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Grey Cloaks",
+                "City watch reports that grey-cloaked figures have been moving through the market since this morning, asking specifically about you — your column's size, your route north, who rides at your left. Not merchants. Not scouts in any natural sense. They move like people who have been patient for a long time and are now less patient.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Find them now and end this before it ends somewhere of their choosing.", null, true,
+                        "Ashen party spawns at gate. You're ready. They're not."),
+                    new InquiryElement("b", "Alert the city guard — if they're asking about a lord, the lord's guard should know.", null, true,
+                        "Relation +5. They scatter. You lose the confrontation but gain the city's cooperation."),
+                    new InquiryElement("c", "Have your people track them while you conduct your business normally.", null, true,
+                        "Gain Calculating. Your people follow them to a location. You learn something about their network."),
+                    new InquiryElement("d", "Do your business and leave faster than expected.", null, true,
+                        "They adjust. Ashen party spawns at gate — smaller, less prepared, but still there."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            SpawnAshenAtGate(s, 10, 55f);
+                            Msg("You locate them in the market district — five, moving with the collective focus of a coordinated group — and your column changes direction toward them visibly. They see. They assess. They move toward the gate rather than away from it, because Ashen agents do not break toward safety on instinct; they break toward their objective. They will be at the gate.", WarnColor);
+                            break;
+                        case "b":
+                            ChangeRelWithOwner(s, 5);
+                            Msg("The watch captain receives your report and sends eight men. The grey cloaks dissolve into the market crowd with the practiced invisibility of people who have done this before. They are gone before the watch reaches the market. The watch finds nothing. The city is notified. The agents are elsewhere. The information about your route is already with whoever sent them.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("Your people tail them to a warehouse in the tanner's district that is nominally owned by a cloth merchant. The name on the lease is a front. The merchant's name connects to a trading house with Ashen-adjacent clients in three other cities. Your people pull back before they are spotted. You have an address, a name, and a network structure. The grey cloaks leave the city before evening without incident.", AshenColor);
+                            break;
+                        case "d":
+                            SpawnAshenAtGate(s, 7, 30f);
+                            Msg("You finish your business in half the time and move for the gate. They anticipated the early departure — not perfectly, but enough. Fewer than their original plan. Less coordinated. Still there.", WarnColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER CITY: The Duelist (mage, renown ≥ 400) ──────────────────
+        private static void EC7_TheDuelist(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Challenge",
+                "A mage in the city square calls your name loudly enough for the crowd to hear. He is theatrical about it — cloak, posture, timing. He challenges you to demonstrate your gift against his, publicly, in the market. He has an audience that is now watching you for your reaction. He may be good. He may be performing. He is definitely committed.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Accept. Meet him in the square on your own terms.", null, true,
+                        "Costs 1 day. Renown +15. The crowd witnesses something real."),
+                    new InquiryElement("b", "Accept but set the terms yourself — something that tests control, not spectacle.", null, true,
+                        "Costs 1 day. Renown +10. Honor +1. He performs less well in control tests."),
+                    new InquiryElement("c", "Decline formally and publicly — not every challenge deserves the ground it's offered on.", null, true,
+                        "Renown +5. Honor +1. The crowd reads this correctly. He does not."),
+                    new InquiryElement("d", "Ask him, in front of the crowd, what he actually wants.", null, true,
+                        "Gain Calculating. His answer is more honest than the challenge was. Something changes."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            ChangeRenown(15f);
+                            Msg("He is good — better than the theatrics suggested. The crowd watches the square generate more heat than it has in years. He ends the contest first, which is his version of honour: yield before it becomes defeat. The crowd has seen something. They will describe it inaccurately for years. You will be larger in each telling.", FireColor);
+                            break;
+                        case "b":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            ChangeRenown(10f);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You name the test: sustain a working at precise temperature for sixty counted seconds, nothing added, nothing removed. He agrees. He lasts forty. You last seventy-two. Control is not what he trained for — he trained for display. The crowd is less entertained and more impressed. He takes the result with better grace than you expected.", GoodColor);
+                            break;
+                        case "c":
+                            ChangeRenown(5f);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You tell him and the crowd that the square is not the right ground for what he's describing, and that a challenge offered for an audience's benefit rather than an honest purpose is something different than a duel. The crowd receives this. He argues with it briefly, then quiets. He wanted your attention. He has it, briefly, and it is not what he planned.", GoodColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("The crowd goes quiet because the question was not what anyone expected. He hesitates, then answers honestly: he has a technique he cannot finish alone and needs someone at your level to complete it with him. The challenge was the only approach he thought you would respond to. He is not wrong about that. You spend an afternoon on the technique instead. The crowd disperses disappointed. The working is completed.", FireColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER CITY: Ashen Surveillance (ashen-gated) ───────────────────
+        private static void EC7_AshenSurveillance(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "Recognised",
+                "A figure in grey pauses at the sight of you entering the gate — not fear, recognition. Ashen, clearly. And they know what you are. They look at you the way Ashen look at something that is not quite what they expected to find in a human body. They do not move. They are deciding whether you are a complication or an opportunity.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Meet their eyes and hold them until they make a choice.", null, true,
+                        "They approach. A cold exchange follows. Intel or threat — you'll find out."),
+                    new InquiryElement("b", "Move through the gate without acknowledgement — you have seen each other, nothing more.", null, true,
+                        "Gain Calculating. Mutual awareness, no confrontation. They track your movements."),
+                    new InquiryElement("c", "Signal hostility. You do not want them tracking your column.", null, true,
+                        "Ashen party spawns at gate. You chose the fight. So did they."),
+                    new InquiryElement("d", "Send someone to them with a single question: why are you here?", null, true,
+                        "50/50: they answer, or your messenger returns alone and the gate suddenly has fewer grey cloaks."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (_rng.Next(2) == 0)
+                            {
+                                ChangeRenown(5f);
+                                Msg("They approach. They tell you — briefly, in the flat factual tone of an Ashen report — that there is a cold-marker in this city that was not placed by their side, and they want to know if you placed it. You didn't. They believe you. They tell you what it means if a third party is placing Ashen markers in human settlements. You ride away with that information.", AshenColor);
+                            }
+                            else
+                            {
+                                SpawnAshenAtGate(s, 8, 40f);
+                                Msg("They hold your eyes and reach a conclusion. They turn and walk toward the gate. Not away — toward. They are going to be there when you leave, having assessed that a confrontation outside is preferable to whatever you might arrange inside. They will be at the gate.", WarnColor);
+                            }
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You walk past. They watch you go with the patience of something that has time. Your column tracks their position as it passes. They stay visible long enough to confirm they are not hiding — they want you to know they are watching. You do your business in the city with the specific focus of a person who is also being filed away in someone else's record.", AshenColor);
+                            break;
+                        case "c":
+                            SpawnAshenAtGate(s, 12, 60f);
+                            Msg("They read your signal without confusion and begin moving with the unhurried efficiency of something that was prepared for this contingency. They have reinforcements — they were not alone in the city. More grey shapes detach from doorways and walls. They will be at the gate with numbers. You have chosen the ground, which was the right move. The numbers are less comfortable.", WarnColor);
+                            break;
+                        case "d":
+                            if (_rng.Next(2) == 0)
+                                Msg("They answer through your messenger: they are cataloguing the fire-carrier's movements as standard Ashen intelligence. They mean this as a neutral statement of fact. It is, in a way, reassuring — you are important enough to catalogue and not important enough to act on. For now. The messenger returns shaken by the quality of the stillness in them.", AshenColor);
+                            else
+                            {
+                                Msg("Your messenger returns alone. The grey figure is gone. Three positions that appeared to be occupied are now empty. Whatever they were doing in this city, your inquiry ended it. They are not at the gate when you leave. They are somewhere else. This is not a comfort.", DimColor);
+                            }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LEAVE VILLAGE: The Road Watches Back ───────────────────────────
+        private static void LV7_RoadWatchesBack(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Road Watches Back",
+                "Your outriders report movement in the treeline — three positions, coordinated, moving with your column's speed without getting closer. Not wildlife. Not bandits: bandits would have committed or retreated by now. They are pacing you, which means they are waiting for something. The gate is twenty yards behind you. The treeline continues for two miles ahead.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Turn and engage on your own terms while you still have the settlement behind you.", null, true,
+                        "Ashen party spawns at gate. You chose the ground. Better than theirs."),
+                    new InquiryElement("b", "Accelerate through the ambush corridor — make their timing wrong.", null, true,
+                        "50/50: you clear the corridor or they commit early and intercept."),
+                    new InquiryElement("c", "Send flankers into the treeline — remove the threat before it matures.", null, true,
+                        "Smaller Ashen spawn. Your flankers found some of them first."),
+                    new InquiryElement("d", "Return to the settlement and leave by a different route at a different hour.", null, true,
+                        "Safe. Costs half a day. The watchers are gone when you leave at dusk."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            SpawnAshenAtGate(s, 12, 55f);
+                            Msg("You halt the column and wheel back toward the settlement, forcing the watchers to commit before they are ready. They come out of the trees with the unhurried aggression of something that adjusted its plan in half a second. They are at the gate with full numbers and less positioning than they wanted. You chose better ground. You will need it.", WarnColor);
+                            break;
+                        case "b":
+                            if (_rng.Next(2) == 0)
+                                Msg("The acceleration disrupts their timing. They commit early, from two positions instead of three, and your column's speed means the intercept is partial. You clear the corridor with two of your people wounded and one of theirs left behind. The one they left behind is dead. The other two positions dissolved north. You are through.", GoodColor);
+                            else
+                            {
+                                SpawnAshenAtGate(s, 10, 50f);
+                                Msg("They adjusted faster than expected. The third position moved to close the exit ahead of you. You are back at the gate, formation intact, on worse terms than when you started. They are patient. They have been patient before.", WarnColor);
+                            }
+                            break;
+                        case "c":
+                            SpawnAshenAtGate(s, 6, 30f);
+                            Msg("Your flankers reach the treeline and find two positions. The third was further back than expected and sees the flankers moving. The two found positions break toward the road — toward you, not away. Your flankers engage their rear. The survivors reach the gate. Smaller than the original group. Still requiring an answer.", WarnColor);
+                            break;
+                        case "d":
+                            Msg("You return to the village and explain the delay to the headman without detail. You leave by the mill road at dusk in a column of three, the rest following at intervals. The treeline is empty when you check it from the road. The watchers had a specific window and you did not fill it. They will report your route change. You are ahead of the report by half a day.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LEAVE CITY: The Dead Guard ─────────────────────────────────────
+        private static void LC7_DeadGuard(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Dead Guard",
+                "The guard at the inner gate is dead. He has been propped up to look like he is standing at his post — someone needed this gate unwatched for a specific window of time. The window is now. Three grey-cloaked figures are moving through the gate passage with purposeful efficiency. They see you. You see them. There are thirty yards between you and the outcome is not yet fixed.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Pursue immediately — they used this gate for a reason and you need to know what.", null, true,
+                        "Ashen party spawns at outer gate. You catch them before they disperse."),
+                    new InquiryElement("b", "Raise the alarm first, then pursue — the city guard needs to know a gate guard is dead.", null, true,
+                        "Relation +5 with city lord. Ashen party spawns at gate, weaker — guard joins the fight."),
+                    new InquiryElement("c", "Follow one of them without engaging — find out where they go.", null, true,
+                        "Gain Calculating. You tail the slowest one. The location they reach is more informative than the fight."),
+                    new InquiryElement("d", "Seal the gate and hold position — let them come to you on your ground.", null, true,
+                        "Ashen party spawns at gate. You hold the chokepoint. The numbers favor you here."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            SpawnAshenAtGate(s, 10, 50f);
+                            Msg("You pursue immediately through the passage and out the outer gate. They have split — two are running north, one has stopped and turned. The one who turned is the answer to why they chose this gate specifically. They were ready for pursuit. The two running are the distraction. They are at the outer gate.", WarnColor);
+                            break;
+                        case "b":
+                            ChangeRelWithOwner(s, 5);
+                            SpawnAshenAtGate(s, 7, 30f);
+                            Msg("You pull the gate bell before you move. The guard response takes ninety seconds — long enough for two of them to clear the outer gate. The third waited too long, or was assigned to wait. The city guard arrives and takes the perimeter. You have three against one, with the city guard's weight behind you. The gate fight is short. The other two are already in the city by a different route.", WarnColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You follow the rearmost one through the outer gate at distance. They move east, then north, then into the tannery district and through a back door of a warehouse that should be empty at this hour. It is not empty. You note the address, the approach route, and the specific knock pattern. You do not enter. You ride away with more than a fight would have given you.", AshenColor);
+                            break;
+                        case "d":
+                            SpawnAshenAtGate(s, 10, 50f);
+                            Msg("You wedge the inner gate open and take position in the passage. The chokepoint is yours — nothing comes through without coming through you. Two of them decide not to. The third does, because the third is covering the other two's exit. The fight is in a narrow space with stone walls and you chose it. Your party handles it as it should be handled.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LEAVE CITY: The Ashen Challenge (ashen + mage gated) ───────────
+        private static void LC7_AshenChallenge(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Cold Gauntlet",
+                "At the outer gate, an Ashen mage intercepts you alone — no escort, no weapons drawn. They state what they want clearly: a cold duel. Not a fight. A test of endurance: your warmth against their cold, in contact, until one yields. They say this the way one professional addresses another. They have done this before. They are not asking to harm you. They are asking to measure you.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Accept. You want to know what they are as much as they want to know what you are.", null, true,
+                        "Costs 1 day. Renown +20. Ashen intel. Honor +1. The measurement goes both ways."),
+                    new InquiryElement("b", "Accept but set conditions — a formal witness, a time limit, both sides bound by the result.", null, true,
+                        "Costs 1 day. Renown +15. Honor +1. The Ashen mage respects the terms."),
+                    new InquiryElement("c", "Counter-challenge: your test, not theirs. Demonstrate warmth, not endurance.", null, true,
+                        "Costs 1 day. Morale +5. Renown +10. They accept the counter. The results are unexpected."),
+                    new InquiryElement("d", "Decline. You do not owe the Ashen a measurement.", null, true,
+                        "Lose Honor. They accept the refusal without argument. They already have data from the refusal."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            ChangeRenown(20f);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You make contact. The cold is a presence — not temperature, something older, the specific absence that the Ashen carry where warmth should be. You hold against it. They hold against yours. For ninety seconds neither of you moves. Then they release, slowly, and step back. They say one thing: 'Longer than the last one.' They leave south. You have a day less in your life and a measure of what you are against, which is worth it.", AshenColor);
+                            break;
+                        case "b":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            ChangeRenown(15f);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("They accept your conditions without hesitation — they were expecting conditions and prepared for them. You call a witness from your party. The time limit is sixty seconds. You both know going in that sixty seconds against this kind of cold is not easy. You hold for fifty-eight. They hold for all sixty on their side. The result is a draw by your terms. By what you both learned, it is something else. They leave. Your witness says nothing for an hour.", AshenColor);
+                            break;
+                        case "c":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            ChangeRenown(10f);
+                            Msg("You counter with warmth at contact — not aggression, just the fire being itself, sustained and present. They accept and make contact. The cold and the warm meet in whatever space exists between two carriers. What happens is not what either of you planned: they hold longer than expected, and so do you, and at the end there is something in their expression that is not the Ashen absence. They leave without speaking. Your column watched the whole thing and will not forget it.", FireColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            Msg("You decline. They receive the refusal with the patience of something that has been refused before. They step aside. As you ride past they say, very quietly, the duration they estimated from observation alone. They are three seconds off the real number. They leave. They had what they came for before you opened your mouth, and you gave them the rest when you closed it.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── POST-BATTLE: The Survivor Mage Duel (mage, battle won) ─────────
+        private static void EB6_SurvivorMageDuel()
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Survivor's Right",
+                "A mage on the losing side — badly wounded, one arm unusable — calls to you across the field before your men can reach him. He invokes a formal right from the old codes: a duel between fire-carriers for the right to a clean ending. Not a fight for his life — he knows that argument is over. A duel for the manner of it. He is asking you to take it seriously.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Accept the formal duel. The codes that govern fire-carriers still mean something.", null, true,
+                        "Costs 1 day. Gain Honor. Renown +10. The exchange before the end carries lore."),
+                    new InquiryElement("b", "Accept, but offer him a choice at the end — yield and receive a clean parole.", null, true,
+                        "Costs 1 day. Gain Merciful. Honor +1. He takes the parole. Something changes in him."),
+                    new InquiryElement("c", "Decline the duel but treat his wounds and release him.", null, true,
+                        "Gain Merciful. Honor +1. He receives this with more complexity than you expected."),
+                    new InquiryElement("d", "Ask what he wants to say before the duel — he invoked the right but he has something to tell you.", null, true,
+                        "Gain Calculating. Lore exchange. He gives you something and then accepts whatever comes."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            ChangeRenown(10f);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("The duel is formal and brief. He can barely stand but his working is precise — the body failing, the gift still itself. You end it cleanly. Before it ends he tells you the name of his teacher. You know the name. The lineage it implies is older than you expected him to carry. You will think about that name for a long time. Your men watched without speaking, which is how soldiers watch something that is larger than the battle it followed.", FireColor);
+                            break;
+                        case "b":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("At the end of the formal exchange — him down to one working, you still upright — you offer the parole. He considers it for ten seconds. He takes it. He sets down what he was holding and looks at his hands and then at you, and something in the Ashen training he carried releases. He will recover. Where he goes after this is his choice, which is different from what he expected to have today.", GoodColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You decline the duel and call your surgeon. He does not speak while being treated. When the wounds are dressed and he is given water he says: he invoked the right because he thought you would refuse, and refusal would have told him something. Acceptance would have told him something else. Treatment without the duel told him a third thing he was not expecting. He does not say what the third thing is. He is released at dusk.", GoodColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("He has been watching the Ashen's movement pattern for six months and disagrees with it. He is a mage on the wrong side of something that started as politics and metastasized. He gives you the pattern — in detail, specifically — and then accepts the duel. He fights correctly. The exchange is brief and formal and at the end of it you are carrying intelligence about Ashen strategy that he chose to give rather than let go with him. This was the whole point.", AshenColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── POST-SIEGE: The Keep's Mage (mage-gated) ───────────────────────
+        private static void ES6_KeepMage()
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "What the Keep Powered",
+                "In the lowest room of the conquered keep, chained to a working frame: a mage. Alive, clearly, and aware. They have been here long enough that the chains are worn where they've tested them. The previous lord used their gift to power something in the keep's walls — the cold storage that kept the garrison fed through three winters, apparently. They look at you and wait to find out which kind of lord you are.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Release them unconditionally. What was done here is done — they owe nothing forward.", null, true,
+                        "Gain Merciful. Honor +1. They leave. What they do after is theirs."),
+                    new InquiryElement("b", "Release them and offer a fair exchange — work freely chosen, compensation real.", null, true,
+                        "Gain Calculating. They consider it. 50/50: they accept or they need to leave first."),
+                    new InquiryElement("c", "Challenge them to prove themselves worth trusting before release.", null, true,
+                        "Costs 1 day. Deep lore exchange. Their gift is unusual. You both learn something."),
+                    new InquiryElement("d", "Ask what the keep actually ran on their gift before releasing them.", null, true,
+                        "Gain Calculating. The answer is more complex than cold storage. Release follows the answer."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You remove the chains personally. They stand carefully, testing their own weight. They say thank you with the specific brevity of someone who has been saving the word for when it was actually true. They take nothing from the room. They leave through the east door. You see them once more, three days later, on the road to a city you were not heading toward. They are moving faster than they should be able to. Something resolved in them.", GoodColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            if (_rng.Next(2) == 0)
+                            {
+                                ChangeRenown(8f);
+                                Msg("You lay out the terms: voluntary, compensated, ending with a clear date. They listen with the full attention of someone evaluating whether this is real. They conclude it is and accept. They work for you for six weeks before the agreed date and leave with what they earned and the specific look of someone who has revised their expectations of lords upward by one significant data point.", GoodColor);
+                            }
+                            else
+                                Msg("They receive the offer and ask for one thing: a week alone to decide. You grant it. At the end of the week they are gone. They left a note that says the offer was fair and they needed something else first. You will hear their name again in about two years, in a context that will make the note make sense.", DimColor);
+                            break;
+                        case "c":
+                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            Msg("You give them a working to attempt, chained as they are. They complete it. Then they give you a counter-test, unprompted, that you cannot complete with the same elegance. The gift they carry is cold-adjacent without being Ashen — something older, something that was apparently possible before the split between fire and cold produced what it produced. You release them having learned the shape of a third thing. They leave knowing you recognised it.", FireColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("Cold storage was the cover. What the keep actually ran was a working that kept the previous lord's health stable — a slow continuous gift that maintained his body at some equilibrium while he aged slower than he should have. Three years they powered this. The lord is dead now and they are standing here and neither of them got what they should have from the arrangement. You release them with that knowledge. They walk out without looking back.", AshenColor);
                             break;
                     }
                 }, null, "", false), false, true);
