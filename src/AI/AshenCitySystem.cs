@@ -53,10 +53,12 @@ namespace AshAndEmber
         private static readonly HashSet<string>           _ashenClanIds     = new HashSet<string>();
         private static readonly Dictionary<string,string> _settlementClanMap = new Dictionary<string,string>();
         private static readonly Dictionary<string,int>    _conqueredDays    = new Dictionary<string,int>();
+        // Heroes whose Ashen appearance has already been written — skipped on future scans.
+        private static readonly HashSet<string>           _ashenLookedIds   = new HashSet<string>();
         private static Kingdom  _ashenKingdom = null;
         private static bool     _initialized  = false;
         private static int      _appearanceDayCounter = 0;
-        private const  int      AppearanceTickInterval = 7; // re-scan appearance once per week
+        private const  int      AppearanceTickInterval = 30; // re-scan appearance once per month
 
         private const int    MinGarrisonCity   = 500;
         private const int    MinGarrisonCastle = 350;
@@ -83,6 +85,7 @@ namespace AshAndEmber
             _ashenClanIds.Clear();
             _settlementClanMap.Clear();
             _conqueredDays.Clear();
+            _ashenLookedIds.Clear();
             _appearanceDayCounter = 0;
         }
 
@@ -460,6 +463,7 @@ namespace AshAndEmber
                 {
                     if (h == Hero.MainHero) continue;
                     if (!h.IsLord && !h.IsWanderer) continue;
+                    if (_ashenLookedIds.Contains(h.StringId)) continue; // already processed
 
                     bool qualifies =
                         ColourLordRegistry.IsAshenLord(h) ||
@@ -467,8 +471,9 @@ namespace AshAndEmber
                         h.MapFaction?.StringId == AshenKingdomId ||
                         (h.PartyBelongedTo != null && FireWorshippersSystem.IsAshenSpawn(h.PartyBelongedTo));
 
-                    if (qualifies)
-                        try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
+                    if (!qualifies) continue;
+                    _ashenLookedIds.Add(h.StringId);
+                    try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
                 }
             }
             catch { }
