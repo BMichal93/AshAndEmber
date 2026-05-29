@@ -77,8 +77,6 @@ namespace AshAndEmber
                 parts.Add(Reversed
                     ? $"+{DamageCount * 25} kindled (Reversed Flame)"
                     : $"{DamageCount * 25} flame (Flame)");
-                    ? $"+{DamageCount * 25} kindled (Reversed Flame)"
-                    : $"{DamageCount * 25} flame (Flame)");
             if (PushCount > 0)
                 parts.Add(Reversed
                     ? $"{PushCount * 6}m draw (Reversed Surge)"
