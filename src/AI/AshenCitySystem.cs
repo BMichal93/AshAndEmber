@@ -53,8 +53,6 @@ namespace AshAndEmber
         private static readonly HashSet<string>           _ashenClanIds     = new HashSet<string>();
         private static readonly Dictionary<string,string> _settlementClanMap = new Dictionary<string,string>();
         private static readonly Dictionary<string,int>    _conqueredDays    = new Dictionary<string,int>();
-        // Heroes whose Ashen appearance has already been written — skipped on future scans.
-        private static readonly HashSet<string>           _ashenLookedIds   = new HashSet<string>();
         private static Kingdom  _ashenKingdom = null;
         private static bool     _initialized  = false;
         private static int      _appearanceDayCounter = 0;
@@ -85,7 +83,6 @@ namespace AshAndEmber
             _ashenClanIds.Clear();
             _settlementClanMap.Clear();
             _conqueredDays.Clear();
-            _ashenLookedIds.Clear();
             _appearanceDayCounter = 0;
         }
 
@@ -164,6 +161,7 @@ namespace AshAndEmber
             if (foundAny || _ashenKingdom != null)
             {
                 try { DeclareWarWithAllKingdoms(); } catch { }
+                ApplyAshenLookToSettlementHeroes();
                 _initialized = true;
             }
         }
@@ -454,13 +452,36 @@ namespace AshAndEmber
             catch { }
         }
 
-        // Apply Ashen appearance (grey skin, hair, eyes) to any hero (lord/wanderer)
+        // Called from CampaignBehavior when the player enters a settlement —
+        // applies Ashen appearance to any qualifying hero currently present there
+        // so portraits look correct before the player opens a conversation.
+        public static void ApplyAshenAppearanceToSettlement(Settlement settlement)
+        {
+            if (settlement == null) return;
+            try
+            {
+                bool isAshenSettlement = _settlementClanMap.ContainsKey(settlement.StringId);
+                foreach (Hero h in Hero.AllAliveHeroes.ToList())
+                {
+                    if (h == Hero.MainHero) continue;
+                    if (h.CurrentSettlement != settlement) continue;
+                    bool qualifies =
+                        ColourLordRegistry.IsAshenLord(h) ||
+                        isAshenSettlement ||
+                        h.MapFaction?.StringId == AshenKingdomId;
+                    if (!qualifies) continue;
+                    try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
+                }
+            }
+            catch { }
+        }
+
+        // Apply Ashen appearance (grey skin, hair, eyes) to any hero (lord/wanderer/notable)
         // that meets at least one of the following conditions:
         //   1. Is registered as an Ashen lord (ColourLordRegistry.IsAshenLord)
         //   2. Currently resides in an Ashen settlement
         //   3. Belongs to the Ashen faction/kingdom
         //   4. Belongs to an Ashen Spawn party
-        // Common citizens (non-hero NPCs) require Harmony patching — not done here.
         private static void ApplyAshenLookToSettlementHeroes()
         {
             try
@@ -468,8 +489,7 @@ namespace AshAndEmber
                 foreach (Hero h in Hero.AllAliveHeroes.ToList())
                 {
                     if (h == Hero.MainHero) continue;
-                    if (!h.IsLord && !h.IsWanderer) continue;
-                    if (_ashenLookedIds.Contains(h.StringId)) continue; // already processed
+                    if (!h.IsLord && !h.IsWanderer && !h.IsNotable) continue;
 
                     bool qualifies =
                         ColourLordRegistry.IsAshenLord(h) ||
@@ -478,7 +498,6 @@ namespace AshAndEmber
                         (h.PartyBelongedTo != null && FireWorshippersSystem.IsAshenSpawn(h.PartyBelongedTo));
 
                     if (!qualifies) continue;
-                    _ashenLookedIds.Add(h.StringId);
                     try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
                 }
             }

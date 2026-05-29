@@ -99,6 +99,8 @@ namespace AshAndEmber
         private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
         {
             try { SettlementEncounters.OnPartyEnteredSettlement(party, settlement); } catch { }
+            if (party == MobileParty.MainParty)
+                try { AshenCitySystem.ApplyAshenAppearanceToSettlement(settlement); } catch { }
         }
 
         private void OnSettlementLeft(MobileParty party, Settlement settlement)
