@@ -64,7 +64,7 @@ namespace AshAndEmber
             {
                 Id = TalentId.BattleMage, IsSpell = false, Name = "Tempered",
                 Lore = "The forge teaches patience. A slow hand draws more from less; a careful reach into the fire takes without burning.",
-                MechanicDesc = "Passive. The burning threshold rises from 4 inputs to 5."
+                MechanicDesc = "Passive. Each battle cast costs 1 fewer day (minimum 0)."
             },
             new TalentDef
             {
@@ -288,7 +288,7 @@ namespace AshAndEmber
                 {
                     if (Hero.MainHero?.MapFaction is Kingdom ashenK)
                     {
-                        ChangeCrimeRatingAction.Apply(ashenK, 5f, false);
+                        ChangeCrimeRatingAction.Apply(ashenK, GetBlightCrimeCost(id), false);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The ash spreads.",
                             new Color(0.3f, 0.35f, 0.7f)));

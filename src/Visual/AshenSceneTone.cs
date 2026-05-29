@@ -18,7 +18,6 @@ namespace AshAndEmber
     public static class AshenSceneTone
     {
         private static bool  _checked     = false;
-        private static bool  _toneApplied = false;
         private static float _warmupTimer = 0f;
         private const  float WarmupDuration = 3f;
 
@@ -50,7 +49,6 @@ namespace AshAndEmber
             if (!playerAshen && !ashenEnemies) return;
 
             ApplyColdFog();
-            _toneApplied = true;
 
             InformationManager.DisplayMessage(new InformationMessage(
                 "The cold fire spreads. The air carries ash.",
@@ -83,7 +81,6 @@ namespace AshAndEmber
         public static void Reset()
         {
             _checked     = false;
-            _toneApplied = false;
             _warmupTimer = 0f;
         }
     }

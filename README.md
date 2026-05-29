@@ -251,7 +251,7 @@ Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is 
 | Talent | Effect |
 |--------|--------|
 | **Gift** | You carry the fire. Battle casting enabled. |
-| **Tempered** | Free casting threshold raised from 4 inputs to 5. |
+| **Tempered** | Each battle cast costs 1 fewer day (minimum 0). |
 | **Resonance** | 1-in-4 campaign map casts cost no days. |
 | **Ember** | 5% chance per battle kill to restore 1 day of youth. |
 | **Harvest** | Executing a captured lord restores 100 days of youth. |
@@ -264,14 +264,14 @@ These are cast from the grimoire on the campaign map. Each costs 1 day (or crimi
 
 | Talent/Spell | Effect |
 |--------------|--------|
-| **Subjugate** | One prisoner yields and joins your roster. |
-| **Rejuvenate** | Several wounded soldiers recover. |
-| **Kindle** | Party morale +20. |
-| **Quicken** | 20 grain grows. |
-| **Unsettle** | Nearest enemy party loses 20 morale. |
-| **Wither** | An enemy village loses 20% of its hearth. |
-| **Clairvoyance** | +20 influence (requires kingdom membership). |
-| **Curse** | 2–4 soldiers in the nearest enemy party are wounded or killed. |
+| **Subjugate** | Your largest prisoner group yields and joins your ranks. |
+| **Rejuvenate** | Up to 8 wounded soldiers per type across your roster recover. |
+| **Kindle** | Party morale +40 and up to 5 wounded soldiers are roused. |
+| **Quicken** | Grain grows proportional to party size (50–200 measures). |
+| **Unsettle** | Nearest enemy party within 100 units loses 35 morale. |
+| **Wither** | Nearest enemy village loses 20% of its hearth. |
+| **Clairvoyance** | +40 influence, or +1000 gold if not in a kingdom. |
+| **Curse** | 5–12 soldiers in the nearest enemy party are wounded or killed, and their morale breaks. |
 
 ---
 
