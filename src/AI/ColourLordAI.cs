@@ -73,6 +73,23 @@ namespace AshAndEmber
                 _warmupTimer += TickInterval;
                 if (_warmupTimer < WarmupDuration) return;
                 _warmupDone = true;
+
+                // Stagger first casts: assign each eligible lord a random initial cooldown
+                // (0–half of their usual cooldown) so they don't all fire simultaneously.
+                try
+                {
+                    foreach (Agent a in Mission.Current.Agents.ToList())
+                    {
+                        if (!a.IsActive() || a.IsMount || !a.IsHero || a == Agent.Main) continue;
+                        Hero h = (a.Character as CharacterObject)?.HeroObject;
+                        if (h == null || !ColourLordRegistry.IsColourLord(h)) continue;
+                        bool ashen = ColourLordRegistry.IsAshenLord(h);
+                        float maxJitter = ashen ? AshenCooldown * 2f : DefaultCooldown * 0.6f;
+                        float jitter = (float)_rng.NextDouble() * maxJitter;
+                        if (jitter > 0f) _cooldowns[h.StringId] = jitter;
+                    }
+                }
+                catch { }
             }
 
             List<Agent> agents;

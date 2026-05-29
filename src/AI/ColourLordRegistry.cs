@@ -216,10 +216,15 @@ namespace AshAndEmber
                     Hero hero = Hero.AllAliveHeroes.FirstOrDefault(h => h.StringId == id);
                     if (hero == null || !hero.IsAlive || hero.IsPrisoner) continue;
 
+                    bool isBlight = IsAshenLord(hero);
+
+                    // First encounter: seed a random initial offset so lords don't all
+                    // cast on the same day after seeding or loading a save.
+                    if (!_campaignCooldowns.ContainsKey(id))
+                        _campaignCooldowns[id] = isBlight ? _rng.Next(3) : _rng.Next(8);
+
                     if (_campaignCooldowns.TryGetValue(id, out int cd) && cd > 0)
                     { _campaignCooldowns[id] = cd - 1; continue; }
-
-                    bool isBlight = IsAshenLord(hero);
 
                     // Blight lords cast hungrily — cold fire demands expression and costs them nothing
                     // Normal lords slow down as age accumulates

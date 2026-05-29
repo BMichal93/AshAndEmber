@@ -111,10 +111,14 @@ namespace AshAndEmber
         // ── New game prompt ───────────────────────────────────────────────────
         private void OnNewGameCreated()
         {
-            MageKnowledge.ResetForNewGame();
-            CampaignMapEvents.ResetForNewGame();
-            SettlementEncounters.ResetForNewGame();
-            ShowLoreIntro();
+            try
+            {
+                MageKnowledge.ResetForNewGame();
+                CampaignMapEvents.ResetForNewGame();
+                SettlementEncounters.ResetForNewGame();
+                ShowLoreIntro();
+            }
+            catch { }
         }
 
         private void ShowLoreIntro()
@@ -195,30 +199,38 @@ namespace AshAndEmber
         // ── Daily tick ────────────────────────────────────────────────────────
         private void OnDailyTick()
         {
-            if (!_selectionDone)
+            try
             {
-                _selectionDone = true;
-                try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                if (!_selectionDone)
+                {
+                    _selectionDone = true;
+                    try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                }
+                try { AshenCitySystem.Initialize(); } catch { }
+                try { AshenCitySystem.DailyTick(); } catch { }
+                try { ColourLordRegistry.DailyMapCast(); } catch { }
+                try { AgingSystem.DailyAgeCheck(); } catch { }
+                try { CampaignMapEvents.DailyTick(); } catch { }
+                try { SettlementEncounters.DailyTick(); } catch { }
+                try { CheckReapPrisonerYield(); } catch { }
+                if (_reapRaidCooldown > 0) _reapRaidCooldown--;
+                try { TickLordAnnouncement(); } catch { }
+                _dayCounter++;
+                if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
             }
-            try { AshenCitySystem.Initialize(); } catch { }
-            try { AshenCitySystem.DailyTick(); } catch { }
-            try { ColourLordRegistry.DailyMapCast(); } catch { }
-            try { AgingSystem.DailyAgeCheck(); } catch { }
-            try { CampaignMapEvents.DailyTick(); } catch { }
-            try { SettlementEncounters.DailyTick(); } catch { }
-            try { CheckReapPrisonerYield(); } catch { }
-            if (_reapRaidCooldown > 0) _reapRaidCooldown--;
-            try { TickLordAnnouncement(); } catch { }
-            _dayCounter++;
-            if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
+            catch { }
         }
 
         // ── Weekly tick ───────────────────────────────────────────────────────
         private void OnWeeklyTick()
         {
-            try { ColourLordRegistry.CheckPopulationBounds(); } catch { }
-            try { ColourLordRegistry.CheckAgeLimit(); } catch { }
-            try { CampaignMapEvents.WeeklyTick(); } catch { }
+            try
+            {
+                try { ColourLordRegistry.CheckPopulationBounds(); } catch { }
+                try { ColourLordRegistry.CheckAgeLimit(); } catch { }
+                try { CampaignMapEvents.WeeklyTick(); } catch { }
+            }
+            catch { }
         }
 
         // ── Mission ended ─────────────────────────────────────────────────────
@@ -477,34 +489,41 @@ namespace AshAndEmber
         private void OnHeroKilled(Hero victim, Hero killer,
             KillCharacterAction.KillCharacterActionDetail detail, bool showNotification)
         {
-            if (ColourLordRegistry.IsColourLord(victim))
-                try { ColourLordRegistry.OnLordDied(victim); } catch { }
-
-            if (detail != KillCharacterAction.KillCharacterActionDetail.Executed) return;
-            if (killer == null || !victim.IsLord) return;
-
-            // Player DevourLife: executing a captured lord draws back 100 days
-            if (killer == Hero.MainHero
-                && MageKnowledge.IsMage
-                && TalentSystem.Has(TalentId.DevourLife))
+            try
             {
-                try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
-            }
+                if (ColourLordRegistry.IsColourLord(victim))
+                    try { ColourLordRegistry.OnLordDied(victim); } catch { }
 
-            // NPC DevourLife: merciless/devious mage lord executioner absorbs 1 day
-            if (killer != Hero.MainHero
-                && ColourLordRegistry.IsColourLord(killer)
-                && ColourLordRegistry.HasTalent(killer, TalentId.DevourLife))
-            {
-                try
+                if (detail != KillCharacterAction.KillCharacterActionDetail.Executed) return;
+                if (killer == null) return;
+                bool victimIsLord = false;
+                try { victimIsLord = victim.IsLord; } catch { }
+                if (!victimIsLord) return;
+
+                // Player DevourLife: executing a captured lord draws back 100 days
+                if (killer == Hero.MainHero
+                    && MageKnowledge.IsMage
+                    && TalentSystem.Has(TalentId.DevourLife))
                 {
-                    int merciless = killer.GetTraitLevel(DefaultTraits.Mercy);
-                    int devious   = killer.GetTraitLevel(DefaultTraits.Honor);
-                    if (merciless < 0 || devious < 0)
-                        killer.SetBirthDay(killer.BirthDay + CampaignTime.Days(1));
+                    try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
                 }
-                catch { }
+
+                // NPC DevourLife: merciless/devious mage lord executioner absorbs 1 day
+                if (killer != Hero.MainHero
+                    && ColourLordRegistry.IsColourLord(killer)
+                    && ColourLordRegistry.HasTalent(killer, TalentId.DevourLife))
+                {
+                    try
+                    {
+                        int merciless = killer.GetTraitLevel(DefaultTraits.Mercy);
+                        int devious   = killer.GetTraitLevel(DefaultTraits.Honor);
+                        if (merciless < 0 || devious < 0)
+                            killer.SetBirthDay(killer.BirthDay + CampaignTime.Days(1));
+                    }
+                    catch { }
+                }
             }
+            catch { }
         }
 
         // ── Child inheritance ─────────────────────────────────────────────────
