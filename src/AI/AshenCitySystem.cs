@@ -55,6 +55,8 @@ namespace AshAndEmber
         private static readonly Dictionary<string,int>    _conqueredDays    = new Dictionary<string,int>();
         private static Kingdom  _ashenKingdom = null;
         private static bool     _initialized  = false;
+        private static int      _appearanceDayCounter = 0;
+        private const  int      AppearanceTickInterval = 7; // re-scan appearance once per week
 
         private const int    MinGarrisonCity   = 500;
         private const int    MinGarrisonCastle = 350;
@@ -81,6 +83,7 @@ namespace AshAndEmber
             _ashenClanIds.Clear();
             _settlementClanMap.Clear();
             _conqueredDays.Clear();
+            _appearanceDayCounter = 0;
         }
 
         // ── Initialization ────────────────────────────────────────────────────
@@ -521,7 +524,11 @@ namespace AshAndEmber
             RefillHeroGold();
             TickSettlementRecovery();
             MaintainCriminalStatus();
-            ApplyAshenLookToSettlementHeroes();
+            if (++_appearanceDayCounter >= AppearanceTickInterval)
+            {
+                _appearanceDayCounter = 0;
+                ApplyAshenLookToSettlementHeroes();
+            }
 
             bool playerIsAshen = MageKnowledge.IsAshen;
             try
