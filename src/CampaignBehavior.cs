@@ -571,18 +571,18 @@ namespace AshAndEmber
         // ── Save / Load ───────────────────────────────────────────────────────
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("LDM_SelectionDone",        ref _selectionDone);
-            dataStore.SyncData("LDM_PrisonerSnapshot",     ref _prisonerCountSnapshot);
-            dataStore.SyncData("LDM_DayCounter",           ref _dayCounter);
-            dataStore.SyncData("LDM_ReapRaidCooldown",     ref _reapRaidCooldown);
-            dataStore.SyncData("LDM_LordAnnounceCD",       ref _lordAnnounceCountdown);
-            dataStore.SyncData("LDM_LordAnnounceDone",     ref _lordAnnouncementDone);
-            MageKnowledge.Save(dataStore);      // also saves TalentSystem internally
-            ColourLordRegistry.Save(dataStore);
-            AshenCitySystem.Save(dataStore);
-            FireWorshippersSystem.Save(dataStore);
-            CampaignMapEvents.Save(dataStore);
-            SettlementEncounters.Save(dataStore);
+            try { dataStore.SyncData("LDM_SelectionDone",    ref _selectionDone); } catch { }
+            try { dataStore.SyncData("LDM_PrisonerSnapshot", ref _prisonerCountSnapshot); } catch { }
+            try { dataStore.SyncData("LDM_DayCounter",       ref _dayCounter); } catch { }
+            try { dataStore.SyncData("LDM_ReapRaidCooldown", ref _reapRaidCooldown); } catch { }
+            try { dataStore.SyncData("LDM_LordAnnounceCD",   ref _lordAnnounceCountdown); } catch { }
+            try { dataStore.SyncData("LDM_LordAnnounceDone", ref _lordAnnouncementDone); } catch { }
+            try { MageKnowledge.Save(dataStore); } catch { }
+            try { ColourLordRegistry.Save(dataStore); } catch { }
+            try { AshenCitySystem.Save(dataStore); } catch { }
+            try { FireWorshippersSystem.Save(dataStore); } catch { }
+            try { CampaignMapEvents.Save(dataStore); } catch { }
+            try { SettlementEncounters.Save(dataStore); } catch { }
         }
     }
 }
