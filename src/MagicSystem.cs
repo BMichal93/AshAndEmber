@@ -66,6 +66,7 @@ namespace AshAndEmber
             SpellEffects.FlushPendingDeaths();
             BanditMageAI.MissionTick(dt);
             BattleEvents.MissionTick(dt);
+            AshenSceneTone.MissionTick(dt);
         }
 
         protected override void OnEndMission()
@@ -85,6 +86,7 @@ namespace AshAndEmber
             try { ActiveEffectManager.ClearMissionEffects(); } catch { }
             try { MagicInputHandler.ResetInputState();       } catch { }
             try { BattleEvents.OnMissionEnd();               } catch { }
+            try { AshenSceneTone.Reset();                    } catch { }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
