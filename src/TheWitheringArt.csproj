@@ -105,6 +105,7 @@
     <Compile Include="Visual\GlowSystem.cs"/>
     <Compile Include="Visual\MoveSystem.cs"/>
     <Compile Include="Visual\NamePrefixes.cs"/>
+    <Compile Include="Visual\AshenSceneTone.cs"/>
   </ItemGroup>
 
   <!-- Auto-copy DLL into the game's Modules folder after every successful build. -->
