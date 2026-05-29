@@ -46,18 +46,15 @@ namespace AshAndEmber
         public static void ClearKnockdowns() { }
 
         /// <summary>
-        /// Battle spell aging cost formula:
-        ///   totalInputs &lt; 4  → 0 days
-        ///   4–5             → 1 day
-        ///   6–7             → 2 days
-        ///   8–9             → 3 days  (each +2 inputs adds 1 day)
-        /// With BattleMage talent the threshold shifts from 4 to 5.
+        /// Battle spell aging cost: 1 day per input press (form + effect combined).
+        /// BattleMage talent subtracts 1 from the total cost (minimum 0).
+        /// Examples: 1 input = 1 day | 4 inputs = 4 days | 6 inputs = 6 days
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
-            int threshold = hasBattleMageTalent ? 5 : 4;
-            if (totalInputs < threshold) return 0;
-            return (totalInputs - threshold) / 2 + 1;
+            int cost = totalInputs;
+            if (hasBattleMageTalent) cost = Math.Max(0, cost - 1);
+            return cost;
         }
 
         /// <summary>

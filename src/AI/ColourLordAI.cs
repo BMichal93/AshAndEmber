@@ -135,47 +135,49 @@ namespace AshAndEmber
 
             if (nearEnemies == 0 && !isAshen) return;
 
-            // 3. Choose attack recipe — Ashen lords use wider dice (more aggressive combos)
+            // 3. Choose attack recipe.
+            // Spell parameters: (formCount, dmg, push, morale) — every press costs 1 day.
+            // Ashen lords use a wider die (d6) and cast more aggressively.
+            // NPC post-battle aging = accumulated inputs / 3 (averaged across casts).
             int roll = isAshen ? _rng.Next(6) : _rng.Next(4);
             if (closeEnemies >= 3)
             {
-                // Surrounded — use Burst to push or damage
+                // Surrounded — use Burst to clear space
                 if (roll < 2)
-                    CastBurst(agent, hero, 3, 0, 2, 0, false); // Burst+Push (stronger)
+                    CastBurst(agent, hero, 2, 0, 2, 0, false);  // 4 inputs: push-burst
                 else if (roll < 4)
-                    CastBurst(agent, hero, 3, 3, 0, 0, false); // Burst+Damage (stronger)
+                    CastBurst(agent, hero, 2, 2, 0, 0, false);  // 4 inputs: damage-burst
                 else if (isAshen)
-                    CastBurst(agent, hero, 4, 3, 1, 0, false); // Ashen: heavy Burst+Dmg+Push
+                    CastBurst(agent, hero, 3, 2, 1, 0, false);  // 6 inputs: Ashen heavy burst
                 else
-                    CastBurst(agent, hero, 3, 3, 0, 0, false);
+                    CastBurst(agent, hero, 2, 2, 0, 0, false);  // 4 inputs: damage-burst
             }
             else
             {
-                // Cone enemies — use Blast
+                // Cone or open field
                 int coneCount = SpellEffects.CountEnemiesInCone(agent, 10f, 0.80f);
                 if (coneCount >= 1)
                 {
                     if (roll == 0)
-                        CastBlast(agent, hero, 3, 3, 0, 0, false); // Blast+Damage
+                        CastBlast(agent, hero, 2, 2, 0, 0, false); // 4 inputs: flame blast
                     else if (roll == 1)
-                        CastBlast(agent, hero, 3, 0, 0, 3, false); // Blast+Morale
+                        CastBlast(agent, hero, 2, 0, 0, 2, false); // 4 inputs: morale blast
                     else if (roll == 2)
-                        CastBlast(agent, hero, 3, 0, 2, 0, false); // Blast+Push
+                        CastBlast(agent, hero, 2, 0, 1, 0, false); // 3 inputs: push blast
                     else if (roll == 3)
-                        CastBurst(agent, hero, 3, 2, 0, 2, false); // Burst+Dmg+Morale
+                        CastBurst(agent, hero, 2, 1, 0, 1, false); // 4 inputs: flame+morale burst
                     else if (roll == 4 && isAshen)
-                        CastBlast(agent, hero, 4, 4, 0, 0, false); // Ashen: devastating Blast
+                        CastBlast(agent, hero, 3, 3, 0, 0, false); // 6 inputs: Ashen devastate
                     else
-                        CastBlast(agent, hero, 4, 0, 0, 4, false); // Ashen: mass fear blast
+                        CastBlast(agent, hero, 3, 0, 0, 3, false); // 6 inputs: Ashen mass fear
                 }
                 else if (isAshen)
                 {
-                    // Blight lords launch morale blasts even without cone alignment
-                    CastBurst(agent, hero, 3, 0, 0, 4, false);
+                    CastBurst(agent, hero, 2, 0, 0, 3, false);     // 5 inputs: morale drain
                 }
                 else
                 {
-                    CastBurst(agent, hero, 3, 0, 0, 2, false);
+                    CastBurst(agent, hero, 2, 0, 0, 1, false);     // 3 inputs: light morale burst
                 }
             }
         }
@@ -188,7 +190,7 @@ namespace AshAndEmber
                 SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, push, morale, reversed, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero, formCount);
+                RecordCast(hero, formCount + dmg + push + morale + (reversed ? 1 : 0));
 
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
@@ -207,7 +209,7 @@ namespace AshAndEmber
                 SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, push, morale, reversed, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero, formCount);
+                RecordCast(hero, formCount + dmg + push + morale + (reversed ? 1 : 0));
 
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4

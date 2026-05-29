@@ -178,9 +178,9 @@ namespace AshAndEmber
                 "  →  Barrier — wall of nodes, 1 per →; cast again to release\n" +
                 "  ↓  Burst   — circle around self, 2.5m radius per ↓\n\n" +
                 "Effects  (after Break)\n" +
-                "  ↑  Flame     — 12 damage per ↑  (+surge side: ×3, +smoulder side: ×4)\n" +
-                "  ←  Surge     — 4m push per ←  (+3 side damage per ←)\n" +
-                "  →  Smoulder  — 7 morale lost per →  (+4 side damage per →)\n" +
+                "  ↑  Flame     — 25 damage per ↑\n" +
+                "  ←  Surge     — 6m push per ←  (+5 kinetic damage per ←)\n" +
+                "  →  Smoulder  — 15 morale lost per →  (+8 side damage per →)\n" +
                 "  ↓  Reverse   — flips all effects (heal / pull / morale boost)\n\n" +
                 "Combined fires\n" +
                 "  Flame+Smoulder = Scorch  |  Surge+Flame = Cinder  |  Smoulder+Surge = Ember Surge\n\n" +
@@ -188,13 +188,14 @@ namespace AshAndEmber
                 "  ↓↓         Ward — self only,        1 day\n" +
                 "  ↓↓↓        Ward — 2m radius,        2 days\n" +
                 "  ↓↓↓↓       Ward — 4m radius,        3 days\n\n" +
-                "Burning cost  (form inputs + effect inputs combined)\n" +
-                "  Below 4 — free  |  4–5 = 1 day  |  6–7 = 2 days  |  8–9 = 3 days  |  10–11 = 4 days  |  …\n" +
-                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Threshold raised to 5.\n" : "") +
+                "Burning cost  (every input costs 1 day)\n" +
+                "  1 input = 1 day  |  3 inputs = 3 days  |  6 inputs = 6 days  |  …\n" +
+                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost − 1 day (minimum 0).\n" : "") +
                 ashenNote +
                 "\nExample\n" +
-                "  ↑↑↑  X  ↑↑↑↑↑  =  Blast (7.5m), 60 flame, 3 days  (8 inputs).\n" +
-                "  ↑↑  ↓↓  X  ↑↑  =  Blast (5m) + Burst (5m) + 24 flame, 3 days  (6 inputs).";
+                "  ↑  X  ↑  =  Blast (2.5m), 12 flame, 2 days  (2 inputs).\n" +
+                "  ↑↑↑  X  ↑↑↑  =  Blast (7.5m), 36 flame, 6 days  (6 inputs).\n" +
+                "  ↑↑  ↓↓  X  ↑↑  =  Blast (5m) + Burst (5m) + 24 flame, 6 days  (6 inputs).";
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
 

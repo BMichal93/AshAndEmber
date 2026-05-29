@@ -391,9 +391,9 @@ namespace AshAndEmber
                             int weight = ColourLordAI.ConsumeBattleCasts(leader);
                             if (weight <= 0) continue;
 
-                            // Aging scales with total formCount weight: 1 day per 3 weight.
-                            // A single formCount=3 cast = 1 day; two formCount=4 casts = 2 days.
-                            int agingDays = Math.Max(1, weight / 3);
+                            // Aging: weight = sum of totalInputs across all spells cast this battle.
+                            // Divide by 4 so an NPC casting 2-3 spells ages ~2-4 days per battle.
+                            int agingDays = Math.Max(1, weight / 4);
                             if (agingDays <= 0) continue;
 
                             if (!ColourLordRegistry.IsAshenLord(leader))
