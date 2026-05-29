@@ -196,8 +196,8 @@ namespace AshAndEmber
                 "  ↓↓         Ward — self only,        1 day\n" +
                 "  ↓↓↓        Ward — 2m radius,        2 days\n" +
                 "  ↓↓↓↓       Ward — 4m radius,        3 days\n\n" +
-                "Burning cost  (every input costs 1 day)\n" +
-                "  1 input = 1 day  |  3 inputs = 3 days  |  6 inputs = 6 days  |  …\n" +
+                "Burning cost  (every 2 inputs cost 1 day, rounded up)\n" +
+                "  2 inputs = 1 day  |  4 inputs = 2 days  |  6 inputs = 3 days  |  …\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost − 1 day (minimum 0).\n" : "") +
                 ashenNote +
                 "\nExample\n" +

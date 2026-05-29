@@ -52,7 +52,9 @@ namespace AshAndEmber
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
-            int cost = totalInputs;
+            // Divide by 2 (round up, min 1) so the player ages at roughly twice the NPC rate
+            // rather than 4× — 4 inputs = 2 days, 6 inputs = 3 days, etc.
+            int cost = Math.Max(1, (totalInputs + 1) / 2);
             if (hasBattleMageTalent) cost = Math.Max(0, cost - 1);
             return cost;
         }

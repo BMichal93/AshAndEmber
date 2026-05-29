@@ -376,6 +376,7 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Age all party leaders who cast spells during this battle.
             foreach (MapEventSide side in new[] { mapEvent.AttackerSide, mapEvent.DefenderSide })
             {
                 if (side == null) continue;
@@ -392,11 +393,9 @@ namespace AshAndEmber
                             int weight = ColourLordAI.ConsumeBattleCasts(leader);
                             if (weight <= 0) continue;
 
-                            // Aging: weight = sum of totalInputs across all spells cast this battle.
+                            // weight = sum of totalInputs across all spells cast this battle.
                             // Divide by 4 so an NPC casting 2-3 spells ages ~2-4 days per battle.
                             int agingDays = Math.Max(1, weight / 4);
-                            if (agingDays <= 0) continue;
-
                             if (!ColourLordRegistry.IsAshenLord(leader))
                                 AgingSystem.AgeHero(leader, agingDays);
                             if (playerInvolved)
@@ -409,6 +408,33 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+
+            // Also age companion mages travelling in the player's party.
+            // ApplyNpcBattleAging only reaches party leaders above; companions are non-leaders
+            // and would never be aged otherwise even though ColourLordAI tracks their casts.
+            if (!playerInvolved) return;
+            try
+            {
+                var roster = MobileParty.MainParty?.MemberRoster;
+                if (roster == null) return;
+                foreach (var entry in roster.GetTroopRoster().ToList())
+                {
+                    Hero companion = entry.Character?.HeroObject;
+                    if (companion == null || companion == Hero.MainHero) continue;
+                    if (!ColourLordRegistry.IsColourLord(companion)) continue;
+
+                    int weight = ColourLordAI.ConsumeBattleCasts(companion);
+                    if (weight <= 0) continue;
+
+                    int agingDays = Math.Max(1, weight / 4);
+                    if (!ColourLordRegistry.IsAshenLord(companion))
+                        AgingSystem.AgeHero(companion, agingDays);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{companion.Name} is spent by the working — {agingDays} day{(agingDays > 1 ? "s" : "")} older.",
+                        new Color(0.5f, 0.4f, 0.7f)));
+                }
+            }
+            catch { }
         }
 
         private void ApplyNpcBattleMoraleBonus(MapEvent mapEvent)

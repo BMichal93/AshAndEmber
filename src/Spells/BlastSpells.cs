@@ -36,14 +36,17 @@ namespace AshAndEmber
             Vec3  fwdH  = new Vec3(fwd.x, fwd.y, 0f);
             if (fwdH.Length > 0.01f) fwdH = fwdH.NormalizedCopy();
 
-            // Gather targets — enemies of the caster
+            // Gather targets — enemies normally; allies when Reversed (heals/pulls/boosts)
             var targets = new List<Agent>();
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
-                    if (casterTeam != null && a.Team == casterTeam) continue; // skip allies
+                    if (cast.Reversed)
+                        { if (casterTeam != null && a.Team != casterTeam) continue; } // reversed: allies only
+                    else
+                        { if (casterTeam != null && a.Team == casterTeam) continue; } // normal: enemies only
                     // Horizontal range check so mounted riders at elevation are not missed.
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > range) continue;

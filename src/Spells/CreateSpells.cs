@@ -119,6 +119,21 @@ namespace AshAndEmber
                 float dist = toH.Length;
 
                 bool isAlly = e.CasterTeam != null && a.Team == e.CasterTeam;
+
+                // Warning zone: push enemies (or allies for reversed) away from the barrier wall.
+                // Applies to mounted riders too — push distance scaled up so they can't charge through.
+                bool inWarningZone = dist > e.Radius && dist < e.Radius + 3.5f;
+                bool shouldPushBack = rev ? isAlly : !isAlly;
+                if (inWarningZone && shouldPushBack && !a.IsHero)
+                {
+                    Vec3 outDir = toH.Length < 0.01f ? new Vec3(1f, 0f, 0f) : toH.NormalizedCopy();
+                    bool mounted = false; try { mounted = a.MountAgent != null; } catch { }
+                    float pushDist = mounted ? 4f : 2.5f;
+                    Vec3 dest = a.Position + outDir * pushDist;
+                    dest.z = a.Position.z;
+                    try { QueueMove(a, dest, 0.3f); } catch { }
+                }
+
                 // Normal barrier: damage enemies only.
                 // Reversed barrier: heal/buff allies only (player included).
                 if (rev ? !isAlly : isAlly) continue;
@@ -196,7 +211,10 @@ namespace AshAndEmber
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
-                    if (casterTeam != null && a.Team == casterTeam) continue; // skip allies
+                    if (cast.Reversed)
+                        { if (casterTeam != null && a.Team != casterTeam) continue; } // reversed: allies only
+                    else
+                        { if (casterTeam != null && a.Team == casterTeam) continue; } // normal: enemies only
                     // Horizontal distance so mounted riders at elevation are hit correctly
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > radius) continue;

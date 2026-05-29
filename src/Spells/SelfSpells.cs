@@ -199,12 +199,17 @@ namespace AshAndEmber
                     // Horizontal distance so mounted riders at elevation are hit correctly
                     float dist = new Vec3(a.Position.x - nodePos.x, a.Position.y - nodePos.y, 0f).Length;
 
-                    // Avoidance: non-hero agents in warning zone sidestep the wave
-                    if (!a.IsHero && dist > WaveState.HitRadius && dist < WaveState.HitRadius + 3f)
+                    // Avoidance: non-hero enemies sidestep the incoming wave.
+                    // Skip for Reversed waves — allies should stay in place to receive heals.
+                    if (!w.Cast.Reversed && !a.IsHero &&
+                        dist > WaveState.HitRadius && dist < WaveState.HitRadius + 3f)
                         try { NudgeWaveSideStep(w, a); } catch { }
 
-                    // Hit only enemies not yet struck this tick
-                    if (w.CasterTeam != null && a.Team == w.CasterTeam) continue;
+                    // Normal: hit enemies. Reversed: hit allies (heal/pull/boost).
+                    if (w.Cast.Reversed)
+                        { if (w.CasterTeam != null && a.Team != w.CasterTeam) continue; }
+                    else
+                        { if (w.CasterTeam != null && a.Team == w.CasterTeam) continue; }
                     if (dist > WaveState.HitRadius) continue;
                     if (hit.Contains(a)) continue;
 

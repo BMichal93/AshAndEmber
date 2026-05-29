@@ -482,13 +482,21 @@ namespace AshAndEmber
                 if (h == null) return;
                 int v = h.GetTraitLevel(trait);
                 h.SetTraitLevel(trait, Math.Min(2, Math.Max(-2, v + delta)));
+                string sign = delta >= 0 ? "+" : "";
+                Msg($"({trait.Name} {sign}{delta})", delta >= 0 ? GoodColor : DimColor);
             }
             catch { }
         }
 
-        private static void ChangeGold(int amount)
+        private static bool ChangeGold(int amount)
         {
+            if (amount < 0 && (Hero.MainHero?.Gold ?? 0) < -amount)
+            {
+                Msg($"Not enough gold. (Need {-amount}, have {Hero.MainHero?.Gold ?? 0})", BadColor);
+                return false;
+            }
             try { Hero.MainHero?.ChangeHeroGold(amount); } catch { }
+            return true;
         }
 
         private static void ChangeRenown(float amount)
@@ -496,7 +504,11 @@ namespace AshAndEmber
             try
             {
                 if (Hero.MainHero?.Clan != null)
+                {
                     Hero.MainHero.Clan.Renown = Math.Max(0f, Hero.MainHero.Clan.Renown + amount);
+                    string sign = amount >= 0 ? "+" : "";
+                    Msg($"({sign}{amount:F0} renown)", GoodColor);
+                }
             }
             catch { }
         }
@@ -518,7 +530,11 @@ namespace AshAndEmber
             {
                 Hero owner = s.OwnerClan?.Leader;
                 if (owner != null && owner != Hero.MainHero)
+                {
                     ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, owner, delta, false);
+                    string sign = delta >= 0 ? "+" : "";
+                    Msg($"(Relation with {owner.Name}: {sign}{delta})", delta >= 0 ? GoodColor : BadColor);
+                }
             }
             catch { }
         }
@@ -533,7 +549,8 @@ namespace AshAndEmber
                 if (lords.Count == 0) return;
                 var lord = lords[_rng.Next(lords.Count)];
                 ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, delta, false);
-                Msg($"{lord.Name} hears of it.", DimColor);
+                string sign = delta >= 0 ? "+" : "";
+                Msg($"(Relation with {lord.Name}: {sign}{delta})", delta >= 0 ? GoodColor : BadColor);
             }
             catch { }
         }
@@ -5074,7 +5091,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Confront them directly.", null, true,
-                        "Gain Valor. They disappear before you reach them. But they know you saw."),
+                        "Gain Honor. They disappear before you reach them. But they know you saw."),
                     new InquiryElement("b", "Pretend not to notice and ride on.", null, true,
                         "They follow for a mile, then stop. The documentation continues elsewhere."),
                     new InquiryElement("c", "Have a message passed: you are not their enemy.", null, true,
@@ -5086,7 +5103,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            ShiftTrait(DefaultTraits.Calculating, -1);
+                            ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You turn your horse and ride toward the shadow. They are gone before you reach the doorway — not fled, simply gone, the way the Ashen go when they choose not to be found. The shadow is cold in a way that has nothing to do with the hour. They know you saw them. That may be enough.", AshenColor);
                             break;
                         case "b":
@@ -6073,6 +6090,7 @@ namespace AshAndEmber
                             if (t_lv6b != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_lv6b, 1); } catch { }
                             Msg("He tells you about the eastern lord's land seizure — specific, documented in his head if not on paper, the kind of grievance that tends to be accurate because it has been rehearsed for a long time. You accept his oath. The information travels with him.", DimColor);
                             break;
+                        }
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You explain it plainly: his service would be real but his problem would remain. He considers this for a moment, then nods. He picks up his sword and walks back off the road. He is not crushed. He is recalculating. Some men need only to be taken seriously to find their own way.", GoodColor);
@@ -6734,6 +6752,7 @@ namespace AshAndEmber
                             if (t_eb5b != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_eb5b, 30); } catch { }
                             Msg("He answers without hesitation: contracted to a lord two kingdoms over, passed through three intermediaries, the final payment never arrived. He tells you the lord's name and the reason the contract was placed. The information explains something about a troop movement you heard about last month. You take his men. The intelligence is worth as much as they are.", DimColor);
                             break;
+                        }
                         case "c":
                             ChangeGold(-500);
                             ShiftTrait(DefaultTraits.Honor, 1);

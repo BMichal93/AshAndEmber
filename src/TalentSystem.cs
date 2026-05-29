@@ -534,19 +534,46 @@ namespace AshAndEmber
         public static void ExecuteNpcMapSpell(Hero caster, TalentId id)
         {
             if (caster == null) return;
+            string blurb = null;
             try
             {
                 switch (id)
                 {
-                    case TalentId.BreakWills: NpcBreakWills(caster); break;
-                    case TalentId.Inspire:    NpcInspire(caster);    break;
-                    case TalentId.Plague:     NpcPlague(caster);     break;
-                    case TalentId.Curse:      NpcCurse(caster);      break;
-                    case TalentId.Rejuvenate: NpcRejuvenate(caster); break;
+                    case TalentId.BreakWills:
+                        NpcBreakWills(caster);
+                        blurb = "casts Unsettle — dread spreads through an enemy party.";
+                        break;
+                    case TalentId.Inspire:
+                        NpcInspire(caster);
+                        blurb = "kindles their warband — morale rises.";
+                        break;
+                    case TalentId.Plague:
+                        NpcPlague(caster);
+                        blurb = "works a Wither — a village's hearth fades.";
+                        break;
+                    case TalentId.Curse:
+                        NpcCurse(caster);
+                        blurb = "casts Curse — soldiers fall in a distant party.";
+                        break;
+                    case TalentId.Rejuvenate:
+                        NpcRejuvenate(caster);
+                        blurb = "draws on Rejuvenate — their wounded recover.";
+                        break;
                     default: break;
                 }
             }
             catch { }
+
+            if (blurb != null)
+            {
+                bool isAshen = ColourLordRegistry.IsAshenLord(caster);
+                Color c = isAshen
+                    ? new Color(0.35f, 0.4f, 0.65f)
+                    : new Color(0.65f, 0.45f, 0.8f);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{caster.Name} — {blurb}", c));
+            }
+
             if (ColourLordRegistry.IsAshenLord(caster))
                 ApplyBlightDrain(caster);
             else
