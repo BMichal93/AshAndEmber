@@ -118,19 +118,6 @@ namespace AshAndEmber
                 Vec3 toH = new Vec3(a.Position.x - e.Position.x, a.Position.y - e.Position.y, 0f);
                 float dist = toH.Length;
 
-                if (!a.IsHero && dist > e.Radius && dist < e.Radius + 3f)
-                {
-                    bool isMounted = false;
-                    try { isMounted = a.MountAgent != null; } catch { }
-                    if (!isMounted)
-                    {
-                        Vec3 nudge = toH.Length < 0.01f ? new Vec3(1f, 0f, 0f) : toH.NormalizedCopy();
-                        Vec3 dest = a.Position + nudge * 1.5f;
-                        dest.z = a.Position.z;
-                        try { QueueMove(a, dest, 0.35f); } catch { }
-                    }
-                }
-
                 bool isAlly = e.CasterTeam != null && a.Team == e.CasterTeam;
                 // Normal barrier: damage enemies only.
                 // Reversed barrier: heal/buff allies only (player included).
@@ -175,6 +162,14 @@ namespace AshAndEmber
                     {
                         // Smoulder side damage per tick (1.25f/tick per morale count)
                         DamageAgent(a, cast.MoraleCount * 1.25f);
+                    }
+                    // Teleport enemies back out so they cannot simply walk through the barrier
+                    if (!rev)
+                    {
+                        Vec3 outDir = toH.Length < 0.01f ? new Vec3(1f, 0f, 0f) : toH.NormalizedCopy();
+                        Vec3 outPos = e.Position + outDir * (e.Radius + 1.5f);
+                        outPos.z = a.Position.z;
+                        try { a.TeleportToPosition(outPos); } catch { }
                     }
                 }
                 catch { }

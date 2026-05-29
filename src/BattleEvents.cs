@@ -216,11 +216,21 @@ namespace AshAndEmber
         private static void FireCinderRain()
         {
             if (Mission.Current == null) return;
+            var victims = new List<Agent>();
             foreach (var agent in Mission.Current.Agents.ToList())
             {
                 if (!agent.IsActive() || agent.IsMount) continue;
                 if (IsAshenAgent(agent)) continue;
                 SpellEffects.DamageAgent(agent, PeriodicDamage);
+                victims.Add(agent);
+            }
+            // Scatter fire particles at a few victim positions
+            for (int i = 0; i < Math.Min(5, victims.Count); i++)
+            {
+                var a = victims[_rng.Next(victims.Count)];
+                Vec3 pos = a.Position + new Vec3((float)(_rng.NextDouble() - 0.5) * 2f,
+                                                 (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
+                try { SpellEffects.SpawnTempFireParticle(pos, CinderRainInterval * 0.8f); } catch { }
             }
         }
 
@@ -229,11 +239,20 @@ namespace AshAndEmber
         private static void FireEmberTithe()
         {
             if (Mission.Current == null) return;
+            var victims = new List<Agent>();
             foreach (var agent in Mission.Current.Agents.ToList())
             {
                 if (!agent.IsActive() || agent.IsMount) continue;
                 if (!IsAshenAgent(agent)) continue;
                 SpellEffects.DamageAgent(agent, PeriodicDamage);
+                victims.Add(agent);
+            }
+            for (int i = 0; i < Math.Min(3, victims.Count); i++)
+            {
+                var a = victims[_rng.Next(victims.Count)];
+                Vec3 pos = a.Position + new Vec3((float)(_rng.NextDouble() - 0.5) * 2f,
+                                                 (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
+                try { SpellEffects.SpawnTempFireParticle(pos, EmberTitheInterval * 0.8f); } catch { }
             }
         }
 
@@ -242,7 +261,16 @@ namespace AshAndEmber
         private static void FireTheRising()
         {
             if (Mission.Current == null || _ashenTeam == null) return;
+            Vec3 anchor = GetTeamCentroid(_ashenTeam);
             SpawnRisingUnits(RisingSpawnCount);
+            // Fire ring at the spawn point
+            for (int i = 0; i < 4; i++)
+            {
+                double angle = Math.PI * 2.0 / 4 * i;
+                Vec3 pos = anchor + new Vec3((float)Math.Cos(angle) * 3f,
+                                             (float)Math.Sin(angle) * 3f, 0f);
+                try { SpellEffects.SpawnTempFireParticle(pos, TheRisingInterval * 0.7f); } catch { }
+            }
             InformationManager.DisplayMessage(new InformationMessage(
                 $"The Rising — {RisingSpawnCount} more pour from the grey.",
                 new Color(0.5f, 0.3f, 0.5f)));
@@ -262,6 +290,14 @@ namespace AshAndEmber
                 catch { }
                 count++;
             }
+            // Three ominous fires spread across the field centre
+            Vec3 centre = GetFieldCentre();
+            for (int i = 0; i < 3; i++)
+            {
+                Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 20f,
+                                             (float)(_rng.NextDouble() - 0.5) * 20f, 0f);
+                try { SpellEffects.SpawnTempFireParticle(pos, 30f); } catch { }
+            }
             if (count > 0)
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"Dread — something cold passes through {count} fighters. Courage breaks.",
@@ -275,6 +311,14 @@ namespace AshAndEmber
         private static void FireLastLight()
         {
             try { Mission.Current.Scene.TimeOfDay = 23f; } catch { }
+            // A cluster of fires lights up the sudden darkness
+            Vec3 centre = GetFieldCentre();
+            for (int i = 0; i < 6; i++)
+            {
+                Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 30f,
+                                             (float)(_rng.NextDouble() - 0.5) * 30f, 0f);
+                try { SpellEffects.SpawnTempFireParticle(pos, 60f); } catch { }
+            }
             InformationManager.DisplayMessage(new InformationMessage(
                 "Last Light — the sun dies. Darkness falls over the field.",
                 new Color(0.2f, 0.2f, 0.45f)));
@@ -286,12 +330,17 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
             int count = 0;
+            var dismounted = new List<Vec3>();
             foreach (var agent in Mission.Current.Agents.ToList())
             {
                 if (!agent.IsActive() || !agent.HasMount) continue;
+                dismounted.Add(agent.Position);
                 SpellEffects.ForceDismount(agent);
                 count++;
             }
+            // Fire at the positions where mounts fell
+            foreach (var pos in dismounted.Take(4))
+                try { SpellEffects.SpawnTempFireParticle(pos, AshenGroundInterval * 0.9f); } catch { }
             if (count > 0)
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"Ashen Ground — {count} mount{(count != 1 ? "s" : "")} fall. No one rides today.",
@@ -316,6 +365,14 @@ namespace AshAndEmber
                     }
                 }
                 catch { }
+            }
+            // Scattered fires mark the lines breaking into chaos
+            Vec3 centre = GetFieldCentre();
+            for (int i = 0; i < 5; i++)
+            {
+                Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 25f,
+                                             (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
+                try { SpellEffects.SpawnTempFireParticle(pos, FrenzyInterval * 0.9f); } catch { }
             }
             InformationManager.DisplayMessage(new InformationMessage(
                 "Frenzy — no one can hold the line. All charge.",
@@ -393,6 +450,25 @@ namespace AshAndEmber
         }
 
         private static bool Roll(float chance) => _rng.NextDouble() < chance;
+
+        // Average position of all active non-mount agents across the whole field.
+        private static Vec3 GetFieldCentre()
+        {
+            if (Mission.Current == null) return Vec3.Zero;
+            float x = 0f, y = 0f, z = 0f;
+            int   n = 0;
+            try
+            {
+                foreach (var a in Mission.Current.Agents)
+                {
+                    if (!a.IsActive() || a.IsMount) continue;
+                    x += a.Position.x; y += a.Position.y; z += a.Position.z;
+                    n++;
+                }
+            }
+            catch { }
+            return n == 0 ? Vec3.Zero : new Vec3(x / n, y / n, z / n);
+        }
 
         // Average position of all active non-mount agents on a team.
         private static Vec3 GetTeamCentroid(Team team)
