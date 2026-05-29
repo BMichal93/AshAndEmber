@@ -299,7 +299,13 @@ namespace AshAndEmber
         // ── War maintenance ───────────────────────────────────────────────────
         public static void DeclareWarWithAllKingdoms()
         {
+            if (_ashenKingdom == null)
+                _ashenKingdom = Kingdom.All.FirstOrDefault(k => k.StringId == AshenKingdomId);
             if (_ashenKingdom == null) return;
+            // Revive first — the kingdom may have just been eliminated by Bannerlord's
+            // own peace-on-elimination logic, which is what triggered this call.
+            if (_ashenKingdom.IsEliminated)
+                try { _ashenKingdom.ReactivateKingdom(); } catch { }
             foreach (Kingdom k in Kingdom.All.ToList())
             {
                 if (k == _ashenKingdom || k.IsEliminated) continue;

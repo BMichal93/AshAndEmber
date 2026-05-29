@@ -713,7 +713,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Accept her blessing with grace.", null, true,
                         "Morale boost. Honor +1."),
                     new InquiryElement("b", "Ask what she means — how does she know?", null, true,
-                        "Gain flavor insight. Nothing mechanical."),
+                        "Gain Calculating. Old memory of what your kind once was."),
                     new InquiryElement("c", "Nod and ride. Old women and old words.", null, true,
                         "Nothing happens."),
                 },
@@ -728,6 +728,7 @@ namespace AshAndEmber
                             Msg("Your party rides out with a lightness that has no single cause. The elder watches from the gate until the road bends.", GoodColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("\"My grandmother's grandmother remembered a man with the same hands as yours,\" she says. \"Warm in winter. He was not cruel.\" She says nothing more.", FireColor);
                             break;
                         case "c":
@@ -828,7 +829,7 @@ namespace AshAndEmber
                     new InquiryElement("b", "Tell them quietly that you know the game, and move on.", null, true,
                         "Nothing happens."),
                     new InquiryElement("c", "Call their parents about it.", null, true,
-                        "Small scene. Nothing mechanical."),
+                        "Gain Honor. Small civic scene."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -844,6 +845,7 @@ namespace AshAndEmber
                             Msg("\"That is not mine,\" you say, \"and you know it.\" The child considers this, then vanishes into a doorway.", DimColor);
                             break;
                         case "c":
+                            ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("A mother appears from nowhere, takes the child by the ear, and disappears again. The copper coin remains in the road.", DimColor);
                             break;
                     }
@@ -976,7 +978,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Sit with him. You have questions too.", null, true,
                         "Costs 1 day. Renown +10 as the village sees you honour him."),
                     new InquiryElement("b", "Ask what he sees in you.", null, true,
-                        "Flavor insight only. Nothing mechanical."),
+                        "Gain Calculating. Lore insight from an old seer."),
                     new InquiryElement("c", "Keep walking. Old men with milky eyes say many things.", null, true,
                         "Nothing happens."),
                 },
@@ -991,6 +993,7 @@ namespace AshAndEmber
                             Msg("You sit with him for an hour. He tells you things about fire that you already knew but could not have named. The village watches from doorways. By evening they speak of you differently.", FireColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("\"A fire that eats its own wood,\" he says. \"Burning slow. Burning long.\" He does not explain further.", FireColor);
                             break;
                         case "c":
@@ -1086,7 +1089,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Relight it. You can do this without effort.", null, true,
                         "Costs 1 day. Renown +5. Gain Merciful."),
                     new InquiryElement("b", "Tell them the omen means nothing and suggest a flint and tinder.", null, true,
-                        "Nothing mechanical."),
+                        "Gain Calculating. The elder looks unconvinced."),
                     new InquiryElement("c", "Keep walking. Shrines are not your business.", null, true,
                         "Nothing happens."),
                 },
@@ -1102,6 +1105,7 @@ namespace AshAndEmber
                             Msg("The bowl catches on your breath. The flame is gold, not orange. The elder makes a sound you have not heard before. The villagers will talk about this for years.", FireColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("The elder does not look comforted by logic. But one of the young men goes looking for a flint.", DimColor);
                             break;
                         case "c":
@@ -1278,7 +1282,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Thank her and leave a coin for her trouble.", null, true,
                         "Lose 100 gold. Gain Merciful."),
                     new InquiryElement("b", "Ask for more details — position, numbers, armed?", null, true,
-                        "Gain tactical flavor message."),
+                        "Gain Calculating. Useful tactical detail gathered."),
                     new InquiryElement("c", "Nod and ride past.", null, true,
                         "Nothing happens."),
                 },
@@ -1293,6 +1297,7 @@ namespace AshAndEmber
                             Msg("She pockets the coin without looking at it. \"The Ashen have made everyone dangerous,\" she says. You believe her.", GoodColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("\"Eight, maybe ten. Short bows. A wagon they haven't moved in two days.\" She has been watching longer than this morning.", DimColor);
                             break;
                         case "c":
@@ -1810,7 +1815,7 @@ namespace AshAndEmber
                     new InquiryElement("b", "Let it pass. The fire finds its own.", null, true,
                         "Nothing happens."),
                     new InquiryElement("c", "Ask your men if anyone saw anything unusual.", null, true,
-                        "Flavor message only."),
+                        "Gain Calculating. Your men saw nothing useful, but you were looking."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1830,6 +1835,7 @@ namespace AshAndEmber
                             Msg("The fire does not give you everything you reach for. You have learned to accept this.", DimColor);
                             break;
                         case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("\"Nothing unusual,\" your sergeant says. \"Unless you count the man selling three different kinds of prayer-charm from one table.\" That is not it.", DimColor);
                             break;
                     }
@@ -2312,7 +2318,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Spend the night reading it properly.", null, true,
                         "Costs 1 day. Renown +10."),
                     new InquiryElement("b", "Take what seems useful and keep moving.", null, true,
-                        "Flavor message only."),
+                        "Gain Calculating. Some pages kept for later."),
                     new InquiryElement("c", "Leave it. Other fires are other fires.", null, true,
                         "Nothing happens."),
                 },
@@ -2327,6 +2333,7 @@ namespace AshAndEmber
                             Msg("They were further along one path than you expected. Their fire ran hot and fast and it killed them for it. The notes stop mid-sentence. You read the last entry three times.", FireColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("Some formulations you recognise, some you don't. You fold the pages carefully. Understanding them will take longer than tonight.", FireColor);
                             break;
                         case "c":
@@ -2635,7 +2642,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Study them carefully. These are a record.", null, true,
                         "Costs 1 day. Gain Ashen intel."),
                     new InquiryElement("b", "Note the pattern and move on.", null, true,
-                        "Flavor message only."),
+                        "Gain Calculating. Pattern noted, filed away."),
                     new InquiryElement("c", "Have them scrubbed out. Your men don't need to ask questions.", null, true,
                         "Nothing happens."),
                 },
@@ -2654,6 +2661,7 @@ namespace AshAndEmber
                             Msg(siegeIntel[_rng.Next(siegeIntel.Length)], AshenColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("The marks are Ashen-adjacent — old, deliberate, something happened here. You cannot tell what without more time. You file it away.", FireColor);
                             break;
                         case "c":
@@ -2878,7 +2886,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Ask what she said.", null, true,
-                        "Flavor only."),
+                        "Gain Calculating. What the word means stays with you."),
                     new InquiryElement("b", "Ride on.", null, true,
                         "Nothing happens."),
                     new InquiryElement("c", mage ? "Feel the word land. Your fire flinches." : "Give her a coin and ride on.", null, true,
@@ -2890,6 +2898,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("She says it again when asked, and then a third time slowly. Your interpreter shakes his head. \"Old northern dialect,\" he says. \"Means something like... 'come back as ash.'\"", DarkColor);
                             break;
                         case "b":
@@ -3557,7 +3566,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Try to approach and calm it.", null, true,
-                        "It keeps barking. Flavor only."),
+                        "Gain Merciful. It keeps barking, but you tried."),
                     new InquiryElement("b", "Ignore it.", null, true,
                         "Nothing happens. It doesn't stop."),
                     new InquiryElement("c", "Offer it meat from your pack.", null, true,
@@ -3569,6 +3578,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You approach slowly. It backs up, still barking, stays beyond your reach. It is not afraid — it simply does not want to be near what you have become. Animals remember things that people learn to ignore.", AshenColor);
                             break;
                         case "b":
@@ -4131,7 +4141,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Investigate immediately and quietly.", null, true,
                         "50/50: confirmed and discharged, or clean and you owe an apology."),
                     new InquiryElement("b", "Watch him without acting. Let him reveal himself.", null, true,
-                        "Nothing mechanical — the watching begins."),
+                        "Gain Calculating. The watching begins."),
                     new InquiryElement("c", "Anonymous notes are a weapon too. Discard it.", null, true,
                         "Nothing happens."),
                 },
@@ -4153,6 +4163,7 @@ namespace AshAndEmber
                             }
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("You fold the note and pocket it. You begin to watch in the way you have learned to watch — without looking like watching. The road ahead is a different shape now.", DimColor);
                             break;
                         case "c":
@@ -4214,7 +4225,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Honour it. He can keep the banner and go home.", null, true,
                         "Gain Honor and Merciful. Renown +10."),
                     new InquiryElement("b", "Demand he surrender the standard.", null, true,
-                        "Standard captured. Nothing else."),
+                        "Standard captured. Gain Calculating."),
                     new InquiryElement("c", "Ride past. Let your men decide.", null, true,
                         "Nothing — but your men will decide."),
                 },
@@ -4230,6 +4241,7 @@ namespace AshAndEmber
                             Msg("\"Keep it,\" you say. \"Go home.\" He looks at you for a long moment. Then he lowers the banner — not in surrender, just to carry it easier — and walks east. Your men watch him go in silence.", GoodColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("He gives it up. He makes the decision cleanly, without a last stand. He may be smarter than you gave him credit for.", DimColor);
                             break;
                         case "c":
@@ -4611,7 +4623,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Crouch down and say a quiet word to her.", null, true,
                         "Gain Merciful. The fire recognises her. She will remember this."),
                     new InquiryElement("b", "Meet the mother's eyes and give a small nod.", null, true,
-                        "The mother will watch for it now. She may not know what she's watching for."),
+                        "Gain Calculating. The mother will watch for it now."),
                     new InquiryElement("c", "Ride on. This is not yours to name.", null, true,
                         "Nothing happens. But the fire knows."),
                 },
@@ -4625,6 +4637,7 @@ namespace AshAndEmber
                             Msg("You crouch down. She does not flinch. You say nothing useful — there are no words yet that would help her — but you let a thread of warmth pass between you, very small, so she knows what it is she is feeling. She smiles. The mother stands frozen. You ride on.", FireColor);
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("The mother sees you see it. You nod once. She does not know what the nod means, but she will think about it later, and later still, and eventually she will start watching her daughter's hands near candles.", FireColor);
                             break;
                         case "c":
@@ -4929,7 +4942,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Tear it down quietly and ride on.", null, true,
-                        "Nothing. Done."),
+                        "Gain Calculating. Done quietly, evidence kept."),
                     new InquiryElement("b", "Report it to the city lord — someone posted this.", null, true,
                         "Renown +5. Relation +5. The lord is alarmed on your behalf."),
                     new InquiryElement("c", "Leave it. A bounty posted by men who can't catch you.", null, true,
@@ -4941,6 +4954,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("You take it down cleanly. Nobody sees. You fold it and keep it — if the author is identified later, this is evidence. The wall is blank. The guard walks past.", DimColor);
                             break;
                         case "b":
@@ -5059,7 +5073,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Confront them directly.", null, true,
-                        "They disappear before you reach them. But they know you saw."),
+                        "Gain Valor. They disappear before you reach them. But they know you saw."),
                     new InquiryElement("b", "Pretend not to notice and ride on.", null, true,
                         "They follow for a mile, then stop. The documentation continues elsewhere."),
                     new InquiryElement("c", "Have a message passed: you are not their enemy.", null, true,
@@ -5071,6 +5085,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                            ShiftTrait(DefaultTraits.Calculating, -1);
                             Msg("You turn your horse and ride toward the shadow. They are gone before you reach the doorway — not fled, simply gone, the way the Ashen go when they choose not to be found. The shadow is cold in a way that has nothing to do with the hour. They know you saw them. That may be enough.", AshenColor);
                             break;
                         case "b":
@@ -5834,7 +5849,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Enter the house and see what's inside.", null, true,
                         "50/50: valuable intelligence or a trap."),
                     new InquiryElement("b", "Have someone watch the horse and wait.", null, true,
-                        "Costs half a day. The owner will return."),
+                        "Gain Calculating. The owner returns. You have seen his face."),
                     new InquiryElement("c", "Ask the headman plainly — someone knows something.", null, true,
                         "Flavor. The headman knows something small."),
                     new InquiryElement("d", "Leave it alone and tell the headman to report anything to the nearest garrison.", null, true,
@@ -5858,6 +5873,7 @@ namespace AshAndEmber
                             }
                             break;
                         case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("Three hours later: a rider in plain clothing, moving quickly, stops at the horse and discovers the watcher. He makes a decision in less than a second and rides north at a pace that contains the answer to every question. The horse goes with him. You have seen his face.", DimColor);
                             break;
                         case "c":
@@ -6063,7 +6079,7 @@ namespace AshAndEmber
                     new InquiryElement("b", "Accept her recognition and give her something in return.", null, true,
                         "Lose 200 gold. Gain Honor. Morale +5. She has been waiting a long time."),
                     new InquiryElement("c", "Ask who taught her grandmother and why.", null, true,
-                        "Deep lore flavor. No mechanical cost."),
+                        "Gain Calculating. Rare lineage lore."),
                     new InquiryElement("d", "Tell her kindly that she has the wrong person.", null, true,
                         "She shakes her head once. She does not believe you. You almost believe her."),
                 },
@@ -6083,6 +6099,7 @@ namespace AshAndEmber
                             Msg("You give her enough coin to outlast the fire and tell her she did not wait for nothing. She receives this with the stillness of someone who has been very still for thirty-one years and is now very quietly not still. Your men, watching from the road, do not speak until you are well past the village.", GoodColor);
                             break;
                         case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("Her grandmother was taught by a woman who passed through in a winter so cold the wells froze solid, which was wrong for the season. The woman had warm hands and left quickly. She gave three instructions: tend the fire, tell no one official, wait. The waiting was the hardest part. It was also, apparently, the point.", FireColor);
                             break;
                         case "d":
@@ -6101,7 +6118,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Ask the headman directly who is buried there.", null, true,
-                        "He will tell you what he is allowed to tell you. Read between it."),
+                        "Gain Calculating. He tells you what he is allowed to tell you."),
                     new InquiryElement("b", "Investigate quietly yourself.", null, true,
                         "50/50: confirms a crime or reveals a tragedy."),
                     new InquiryElement("c", "Leave a marker — whoever it is deserves that much.", null, true,
@@ -6115,6 +6132,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("The headman says it was a traveler who died of cold. He says this to your left shoulder rather than your face, and he says 'traveler' the way people say a word they've agreed on. The traveler had no name he knew. The burial was done quickly for health reasons. Every sentence is technically true. None of them are entirely honest.", DimColor);
                             break;
                         case "b":
