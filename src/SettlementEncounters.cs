@@ -209,6 +209,8 @@ namespace AshAndEmber
                 pool.Add(EV6_SickHealer);
                 pool.Add(EV6_MillDispute);
                 pool.Add(EV7_WatchedVillage);
+                pool.Add(EV8_WrongWound);
+                pool.Add(EV8_ColdTrail);
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
@@ -221,6 +223,7 @@ namespace AshAndEmber
                     pool.Add(EV6_BurnedShrine);
                     pool.Add(EV6_ChildsMap);
                     pool.Add(EV7_SelfTaughtMage);
+                    pool.Add(EV8_TheLie);
                     if (ren >= 600f) pool.Add(EV7_OldMastersStudent);
                 }
                 if (ashen) pool.Add(EV2_DogWontStop);
@@ -245,6 +248,9 @@ namespace AshAndEmber
                 pool.Add(EC6_Gladiator);
                 pool.Add(EC6_SmuggledLetters);
                 pool.Add(EC7_GreyCloaks);
+                pool.Add(EC8_ReluctantOfficial);
+                pool.Add(EC8_MerchantLedger);
+                pool.Add(EC8_Followed);
                 if (mage)
                 {
                     pool.Add(E_CuriousScholar);
@@ -303,6 +309,8 @@ namespace AshAndEmber
                 pool.Add(LV6_HiddenGrave);
                 pool.Add(LV6_BlindSoldier);
                 pool.Add(LV7_RoadWatchesBack);
+                pool.Add(LV8_PoisonedWell);
+                pool.Add(LV8_BattleSetup);
                 if (mage)
                 {
                     pool.Add(E_MothersPlea);
@@ -337,6 +345,8 @@ namespace AshAndEmber
                 if (ren >= 400f) pool.Add(LC6_NobleHostage);
                 if (ren >= 300f) pool.Add(LC6_InformantsNote);
                 pool.Add(LC7_DeadGuard);
+                pool.Add(LC8_GateStandoff);
+                pool.Add(LC8_ForgeryAtGate);
                 if (mage)
                 {
                     pool.Add(E_VeteransQuestion);
@@ -393,6 +403,8 @@ namespace AshAndEmber
             pool.Add(EB5_YoungOfficer);
             if (_lastBattleWon) pool.Add(EB5_OwnStandard);
             if (mage && _lastBattleWon) pool.Add(EB6_SurvivorMageDuel);
+            pool.Add(EB8_FieldTriage);
+            pool.Add(EB8_BattleDebrief);
             if (mage) pool.Add(EB_EnemyMageJournal);
             if (mage) pool.Add(EB2_FireReveals);
 
@@ -421,6 +433,7 @@ namespace AshAndEmber
                 pool.Add(ES5_Collaborator);
                 pool.Add(ES5_HiddenGold);
                 pool.Add(ES5_Torturer);
+                pool.Add(ES8_SiegeStores);
                 if (mage) pool.Add(ES_OldScorchmarks);
                 if (mage) pool.Add(ES4_AshenCrystal);
                 if (mage) pool.Add(ES6_KeepMage);
@@ -526,6 +539,47 @@ namespace AshAndEmber
 
         private static string GoldStr(int amount)
             => amount >= 0 ? $"+{amount} gold" : $"{amount} gold";
+
+        // ── Skill-check helpers ───────────────────────────────────────────────
+        // Soft roll: base success chance + (skillLevel × perPoint), capped.
+        // baseChance 0.25 + perPoint 0.003 means:
+        //   skill  50 → 40 %    skill 100 → 55 %
+        //   skill 150 → 70 %    skill 200 → 85 %   skill 250+ → 90 % cap
+        private static int GetSkill(SkillObject skill)
+        {
+            try { return Hero.MainHero?.GetSkillValue(skill) ?? 0; }
+            catch { return 0; }
+        }
+
+        private static float SkillChance(SkillObject skill, float baseChance,
+                                          float perPoint = 0.003f, float cap = 0.90f)
+        {
+            int level = GetSkill(skill);
+            return Math.Min(cap, baseChance + level * perPoint);
+        }
+
+        private static bool SkillRoll(SkillObject skill, float baseChance,
+                                       float perPoint = 0.003f, float cap = 0.90f)
+            => _rng.NextDouble() < SkillChance(skill, baseChance, perPoint, cap);
+
+        // Returns a one-word likelihood label used in hint text.
+        private static string OddsLabel(float chance)
+        {
+            if (chance >= 0.85f) return "very likely";
+            if (chance >= 0.68f) return "likely";
+            if (chance >= 0.48f) return "even odds";
+            if (chance >= 0.32f) return "unlikely";
+            return "a long shot";
+        }
+
+        // Builds a hint string for a skill-check choice, shown as a tooltip.
+        // e.g. "[Charm 84] Persuasion attempt — likely (59%)."
+        private static string SkillHint(SkillObject skill, float baseChance, string outcomeLabel)
+        {
+            int level  = GetSkill(skill);
+            float pct  = SkillChance(skill, baseChance) * 100f;
+            return $"[{skill.Name} {level}] {outcomeLabel} — {OddsLabel(SkillChance(skill, baseChance))} ({(int)pct}%).";
+        }
 
         // ═════════════════════════════════════════════════════════════════════
         // LEAVE VILLAGE — MAGE
@@ -7571,6 +7625,686 @@ namespace AshAndEmber
                         case "d":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("Cold storage was the cover. What the keep actually ran was a working that kept the previous lord's health stable — a slow continuous gift that maintained his body at some equilibrium while he aged slower than he should have. Three years they powered this. The lord is dead now and they are standing here and neither of them got what they should have from the arrangement. You release them with that knowledge. They walk out without looking back.", AshenColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SKILL-CHECK EVENTS — SOFT ROLL (probability scales with skill level)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // ── ENTER VILLAGE: The Wrong Wound [Medicine] ───────────────────────
+        private static void EV8_WrongWound(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Diagnose correctly");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Wrong Wound",
+                "A farmer is being treated at the inn — the village herb-woman has cleaned and bound a wound in his side. She is confident. She is wrong: the binding has sealed in something, and the smell is the smell of a wound going the wrong way. He is not complaining yet. He will be, badly, by morning.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Intervene — reopen and treat it properly.", null, true, hint),
+                    new InquiryElement("b", "Tell the herb-woman what you see and let her decide.", null, true,
+                        "Gain Honor. She may or may not be able to correct it."),
+                    new InquiryElement("c", "Give the family coin to fetch a real surgeon from the next town.", null, true,
+                        "Lose 300 gold. Gain Merciful. He waits. That costs time he may not have."),
+                    new InquiryElement("d", "Say nothing. You could be wrong.", null, true,
+                        "Nothing. You might be wrong. You are not wrong."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Medicine, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                ChangeRenown(5f);
+                                Msg("You reopen the wound correctly, clean it properly, and pack it with what you have. The herb-woman watches with the particular attention of someone updating a technique in real time. He has a week of fever ahead of him and then a slow recovery. He was going to have a much shorter future. Your hands knew what they were doing.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                Msg("You intervene with confidence and correct intention but the wound is deeper than it looked and your treatment, while better than what was there, is not quite right either. He is no worse than he would have been by morning. He is better than he would have been by the following morning. The herb-woman completes the work after you leave. Between the two of you, he lives.", DimColor);
+                            }
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You tell her what you see. She listens with visible difficulty — this is her territory and her diagnosis. She looks again at the wound for a long moment, then starts unwrapping. She does not thank you. She does not need to. The farmer is better for the conversation. So is she, eventually.", GoodColor);
+                            break;
+                        case "c":
+                            ChangeGold(-300);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("A rider goes for the surgeon. He arrives by the following morning. The wound has started going wrong by then but not irreversibly. The surgeon works for two hours and the farmer survives. He will carry a scar and a story about the lord who paid without being asked. The surgeon will carry the memory of almost-too-late.", DimColor);
+                            break;
+                        case "d":
+                            Msg("You say nothing and ride on. In the morning you know, with the specific certainty of something you could have changed, that you were right. You carry this for the rest of the day. You do not know what he carries.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER VILLAGE: The Cold Trail [Scouting] ───────────────────────
+        private static void EV8_ColdTrail(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Scouting, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Scouting, 0.25f, "Read the signs accurately");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Cold Trail",
+                "Something passed through this village recently — the signs are subtle and scattered: ash on a doorstep where no fire was lit, a handprint on a well-cover in grey dust, a dog that stopped barking three nights ago and has not started again. The villagers have not connected these things. You have.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Read the full trail — age, numbers, direction, intent.", null, true, hint),
+                    new InquiryElement("b", "Warn the village and ask them to watch for more signs.", null, true,
+                        "Relation +5. They are alerted. They won't know what to look for."),
+                    new InquiryElement("c", "Mark the location and send the coordinates to the nearest garrison.", null, true,
+                        "Relation +3. Correct process. Slow response time."),
+                    new InquiryElement("d", "Note it and keep moving — you have seen this pattern before.", null, true,
+                        "Nothing. The pattern continues without a report."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Scouting, 0.25f))
+                            {
+                                ChangeRenown(8f);
+                                Msg("Three individuals, two nights ago, moving northwest — they stopped at specific houses in a specific order, which means they had a list. They were not foraging or scouting randomly. They were checking names. Whether the names are observation targets or something worse is a question the pattern cannot answer, but the direction and the timing and the specificity all point somewhere that needs to be known. You know it now.", AshenColor);
+                            }
+                            else
+                                Msg("You read what you can. The signs are two nights old — possibly three — and the movement pattern is unclear: you can see that something passed through but the direction fractures into two possibilities and the number could be two or five. What you know is incomplete. You can report what you have, which is better than nothing, which is what the village has.", DimColor);
+                            break;
+                        case "b":
+                            ChangeRelWithOwner(s, 5);
+                            Msg("You tell the headman what you saw without explaining what it means. He is the kind of man who will watch for more signs but will not know how to read them. He posts someone near the well at night. It is the wrong choice but it is a choice, and it is his, and he is doing it. You ride on with the mild dissatisfaction of having delegated a task to someone without the tools for it.", DimColor);
+                            break;
+                        case "c":
+                            ChangeRelWithRandomLord(3);
+                            Msg("The garrison receives the coordinates and notes them in the patrol log. Whether a patrol reaches the area before the trail is days colder is a scheduling question. You have created a record that exists. That is something.", DimColor);
+                            break;
+                        case "d":
+                            Msg("You note it and ride. The pattern is familiar: preliminary observation, cataloguing. Not action yet. The gap between catalogue and action is the part nobody ever knows in advance. You know the pattern. You did not tell anyone else. That is a small and specific weight.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER VILLAGE [mage]: The Lie [Roguery] ────────────────────────
+        private static void EV8_TheLie(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Roguery, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Roguery, 0.25f, "Read the deception precisely");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Lie",
+                "An old man at the inn table tells you there have been no grey-cloaked visitors in a week. He says this with full eye contact and complete stillness and the specific absence of the small corrections honest people make when they're trying to be accurate. He is lying. Whatever he saw, he was told to say he hadn't. The fire in you feels the cold in the room that isn't the weather.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Read the lie precisely — what is he hiding and who asked him to.", null, true, hint),
+                    new InquiryElement("b", "Tell him you know he's lying and give him a chance to correct it.", null, true,
+                        "Gain Calculating. He may talk. He may not. He will definitely know you can read him."),
+                    new InquiryElement("c", "Accept the lie and ask everyone else in the inn separately.", null, true,
+                        "Gain Calculating. Someone else was not instructed. 50/50."),
+                    new InquiryElement("d", "Leave him to his loyalty. People protect what they have to protect.", null, true,
+                        "Gain Honor. The information stays with him. You respect the choice."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Roguery, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                Msg("His hands moved once — toward his left pocket when you said 'visitors', then caught themselves. He was given something to keep and told to say nothing. You do not confront him. You wait until he uses the privy and check the pocket: a folded note with an Ashen symbol and a date three days from now. He was given a message to hold, not just a cover story. The date is a meeting.", AshenColor);
+                            }
+                            else
+                                Msg("You read the performance but not the content behind it — you can see the lie clearly but not what it contains. He was told something and told to deny it. What specifically, you cannot extract from his manner alone. You know the shape of the secret without its substance. That is useful, imprecisely.", DimColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You tell him plainly that you know. He goes very still, then says: \"They told me my family would be checked on.\" He says nothing more. He does not know what they look like without their cloaks, where they came from, or when they are coming back. He knows they were here, they had a specific interest in the mill road north, and they scared him well enough to hold for three days. You have the road. That is something.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            if (_rng.Next(2) == 0)
+                                Msg("The innkeeper's wife was not in the room when he was instructed. She tells you freely — three cloaks, two nights ago, asked about the mill road and a specific building at the north end. She describes the building. You know the building. It is a granary that doubles as a way-station on a particular trade route. The pieces connect.", AshenColor);
+                            else
+                                Msg("Everyone in the room received the same instruction or the same fear. You get polite misdirection from four people in four different registers. They are all protecting the same thing from different angles. The shape of the protection tells you it was recent and specific. You cannot get past the shape.", DimColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You let him keep it. He is protecting something with the only tools available to him. You ride on with the specific quiet of a choice that cost you information and cost him nothing, which is not the usual direction for that trade. He watches you leave with an expression he will carry for longer than you carry this road.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER CITY: The Reluctant Official [Charm] ─────────────────────
+        private static void EC8_ReluctantOfficial(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Charm, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Charm, 0.25f, "Persuade him to speak");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Reluctant Official",
+                "A city records clerk has information you need — movement orders for a specific gate, filed three weeks ago. He is technically required to provide access to lords on request. He is also clearly frightened of whoever filed those orders, and is performing bureaucratic friction with the specific expertise of a man who has been doing it for years. He is not going to say no. He is going to take a very long time to say yes.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Ease his fear rather than press his duty.", null, true, hint),
+                    new InquiryElement("b", "Invoke your authority formally — demand the record as a matter of right.", null, true,
+                        "Relation -3 with city lord. You get the record. He files a complaint."),
+                    new InquiryElement("c", "Offer him something in return — not a bribe, a guarantee.", null, true,
+                        "Gain Calculating. A specific guarantee costs you nothing but your word. He takes it."),
+                    new InquiryElement("d", "Leave it. Frightened clerks produce bad records under pressure anyway.", null, true,
+                        "Nothing. The information stays filed."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Charm, 0.25f))
+                            {
+                                ChangeRenown(5f);
+                                Msg("You spend ten minutes doing something that is not persuasion exactly — you make him understand that you already know what frightened him and that your interest is not in making his position worse. He relaxes by degrees. By the end he pulls the record himself and explains what it means without being asked. He does this because someone treating him as a person rather than an obstacle is rare enough to be worth responding to honestly.", GoodColor);
+                            }
+                            else
+                                Msg("You try the right approach but the fear in him is too deep and too recent to ease in a single conversation. He appreciates the tone and gives you the record's existence but not its content, which is technically compliance. He is sorry about this in the specific way of someone who would like to do more but cannot yet. You have the reference number. That opens other doors.", DimColor);
+                            break;
+                        case "b":
+                            ChangeRelWithOwner(s, -3);
+                            ChangeRenown(3f);
+                            Msg("You invoke the right and he produces the record — correctly, promptly, with the precise reluctance of a man who knows how to comply without cooperating. The record is there. What it contains is useful. He files a note about the interaction before you are out of the building. Someone will read that note. You have what you came for and a flag on your name in this city's records.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You tell him that if producing this record causes him any administrative difficulty, you will personally document that the request came under lord's authority and that he complied correctly. He looks at you for a long moment, understanding that this is the one thing he actually needed and nobody has ever thought to offer it. He pulls the record and gives it to you with his name on it. Brave, given what he was afraid of.", GoodColor);
+                            break;
+                        case "d":
+                            Msg("You leave him to his friction and his fear. The record stays filed. Whatever it contained will surface another way, eventually, which is a comfort and not a solution.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER CITY: The Merchant's Ledger [Steward] ────────────────────
+        private static void EC8_MerchantLedger(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Steward, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Steward, 0.25f, "Identify the specific irregularity");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Numbers",
+                "A merchant at the city guild hall is arguing with an auditor about a discrepancy in his import ledger. He says it's a clerical error. The auditor says it's systematic. They both appeal to you — you are a lord, apparently this grants you opinions about accounting. The ledger is on the table. One of them is right.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Read the ledger and find the specific problem.", null, true, hint),
+                    new InquiryElement("b", "Side with the auditor — systematic discrepancies are not clerical errors.", null, true,
+                        "Relation -5 with merchant guild. The auditor is grateful. The truth is still unknown."),
+                    new InquiryElement("c", "Side with the merchant — a single anomaly could be clerical.", null, true,
+                        "Relation +5 with merchant guild. He may owe you. He may be guilty."),
+                    new InquiryElement("d", "Decline to arbitrate — this is not your ledger or your fight.", null, true,
+                        "Nothing. They continue without you."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Steward, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                ChangeRenown(5f);
+                                Msg("The irregularity is on page seven: an import weight listed in two different units across two entries — a conversion that only works if the second shipment was a third smaller than recorded. Someone is skimming the margin between what arrives and what is declared, using the unit difference as cover. It has been done the same way four times. The merchant goes pale. The auditor takes notes. You hand the ledger back and leave both of them to what follows.", GoodColor);
+                            }
+                            else
+                                Msg("You work through it. The numbers are internally consistent in most places, which is actually the harder pattern to read — someone who knows accounting well enough to hide something in the averaging rather than a single line. You identify three possible locations for the irregularity but cannot determine which is the source. You tell them both this. The auditor takes it as confirmation. The merchant takes it as uncertainty. Both of them are right.", DimColor);
+                            break;
+                        case "b":
+                            ChangeRelWithOwner(s, -3);
+                            ChangeRelWithRandomLord(5);
+                            Msg("You support the auditor. The merchant guild will remember this in the specific way that guilds remember things: collectively, without urgency, and at a moment of their choosing. The auditor thanks you and continues the review. The truth of the ledger remains open, but the process continues now without obstruction. That is what auditors are for.", DimColor);
+                            break;
+                        case "c":
+                            ChangeRelWithOwner(s, 5);
+                            Msg("You support the merchant. He thanks you with the warmth of someone to whom this favour will translate into cooperation later. Whether he is guilty is a question you have declined to answer. The auditor closes his notes with the particular expression of a man who has been overruled before and knows exactly what it means for his profession. The ledger goes unresolved.", DimColor);
+                            break;
+                        case "d":
+                            Msg("You decline. They argue for another forty minutes and reach no conclusion. The merchant eventually agrees to a third-party review that will take six weeks. The auditor leaves unsatisfied. The ledger goes back into the hall. The truth is still in it.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ENTER CITY: The Shadow [Scouting] ──────────────────────────────
+        private static void EC8_Followed(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Scouting, 0.28f);
+            string hint  = SkillHint(DefaultSkills.Scouting, 0.28f, "Confirm and identify them");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Shadow",
+                "You are being followed. Not by amateurs — whoever this is matches your pace correctly, uses the crowd well, and has been doing it since the eastern gate. You noticed because you were looking. Most people would not have noticed. The question is what to do with the knowledge before they realise you have it.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Confirm identity before acting — read who they are without alerting them.", null, true, hint),
+                    new InquiryElement("b", "Reverse the tail — follow your follower.", null, true,
+                        "Gain Calculating. 50/50: you get ahead of them or they catch your move."),
+                    new InquiryElement("c", "Lead them somewhere useful and confront them on your terms.", null, true,
+                        "Renown +5. You pick the ground. The confrontation is controlled."),
+                    new InquiryElement("d", "Change your route and lose them — you have no time for this today.", null, true,
+                        "Safe. They lose you. You learn nothing about who sent them."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Scouting, 0.28f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                ChangeRenown(5f);
+                                Msg("You use a shop window and a narrow passage to get a clear look without stopping. City watch — not uniformed, working plainclothes. This is a sanctioned surveillance, not a freelance tail. Someone in city administration has an official interest in your movements. That is a different kind of problem than an Ashen watcher. You continue your route as if unaware and note everything they observe.", DimColor);
+                            }
+                            else
+                                Msg("You try to get a look but they are better than you expected and shift position exactly when you commit to the read. You confirm they are professional and confirm they are still there. That is all you get. You cannot tell employer, motive, or number — there may be more than one. You continue with incomplete information, which is the standard condition.", DimColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            if (_rng.Next(2) == 0)
+                                Msg("You take a corner fast and double back through the market, reading the crowd backward. You find the position they occupied two minutes ago and the position they are moving to. From behind, you follow them to a building two streets from the lord's hall — private, no guild mark, curtains drawn at midday. Someone is using that building for something that isn't commerce. You have an address.", DimColor);
+                            else
+                                Msg("They catch your move — probably they were watching for it. By the time you complete the reverse they are gone, and there is a different presence behind you: not following, just present. You have announced that you know. Whatever they were doing becomes more careful. The tail continues with better tradecraft.", BadColor);
+                            break;
+                        case "c":
+                            ChangeRenown(5f);
+                            Msg("You lead them to a courtyard with one entrance and position your party at it before stopping. When they arrive they find you waiting. The professional response is to acknowledge it: one of them steps forward and explains they are city watch, tracking the movements of 'persons of interest' per the lord's standing order. You are apparently a person of interest. They file their report. You have their faces, their methods, and the confirmation that the order comes from the lord directly.", GoodColor);
+                            break;
+                        case "d":
+                            Msg("Three corners and a market crossing and you are clean. They are good but you know this city's geometry better from yesterday's approach. You complete your business without a tail. They know you noticed. They file that you were 'surveillance-aware', which is its own kind of flag, but one without immediate consequences. You are ahead by one day.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LEAVE VILLAGE: The Poisoned Well [Medicine] ────────────────────
+        private static void LV8_PoisonedWell(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Diagnose and treat correctly");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Well",
+                "As you prepare to leave, three children are brought to the inn in quick succession — all from the same family, all with the same symptoms: pale, cramping, confused. The parents are terrified and the herb-woman is overwhelmed. All three drank from the eastern well this morning. The well is still being used. The village does not yet understand what is happening.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Diagnose and treat — identify the cause and act on it.", null, true, hint),
+                    new InquiryElement("b", "Seal the well immediately and send for the nearest physician.", null, true,
+                        "Gain Merciful. The well is sealed. The children wait for help that is two days away."),
+                    new InquiryElement("c", "Leave medicine from your supplies and your best guess at the cause.", null, true,
+                        "Lose 200 gold. Gain Merciful. Your guess may be right. The herb-woman will work from it."),
+                    new InquiryElement("d", "Delay your departure until you know they are stable.", null, true,
+                        "Morale -3. Costs half a day. They will be stable or they will not — you stay either way."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Medicine, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                ChangeRenown(8f);
+                                Msg("Mineral — cold ash contamination from something upstream, not poison in the active sense but wrong chemistry in quantity. You know the treatment: controlled fluid replacement, specific herbs, no dairy, rest. You walk through the well and seal it correctly, identifying the exact upstream source from the residue pattern. By evening the children are worse before they are better. By morning two of them are asking for food. The third takes another day. All three live. You ride out with one day less and one thing done correctly.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                Msg("You identify it as contamination and seal the well, which is correct and saves further damage. The specific cause and treatment, you're less certain about — your best guidance helps somewhat and the herb-woman corrects the gaps with her own knowledge. It becomes a collaboration and it is not elegant but the children survive. Two of them recover fully. One will have a difficult month ahead. All three live, which was the real question.", DimColor);
+                            }
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You seal the well yourself and dispatch a rider. The physician arrives two days later. By then one of the children has stabilised on the herb-woman's efforts and two are worse. The physician works through the night. All three survive but the delay cost something. The well was sealed in time to save the rest of the village. The river question was contained. This was the right choice given what you knew. It was not the best possible outcome.", DimColor);
+                            break;
+                        case "c":
+                            ChangeGold(-200);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You leave what you have and your best reading of the symptoms. The herb-woman takes your supplies and your guess with the concentrated focus of someone filtering useful signal from educated approximation. She is better with the approximate information than with nothing. Two children stabilise by evening. The third is harder. She sits with the third child through the night. In the morning you will not know how it ended. You hope your guess was close enough.", DimColor);
+                            break;
+                        case "d":
+                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            Msg("You delay. Your men understand this with the quiet acceptance of soldiers who have ridden for lords who would not have stopped. By dusk two of the children are clearly improving and one is not. You stay through the night. At dawn, the third child's fever breaks. You ride out three hours late and your men ride without complaint for twelve miles before anyone says anything. Then someone near the back laughs at something and the column relaxes.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LEAVE VILLAGE: The Setup [Tactics] ─────────────────────────────
+        private static void LV8_BattleSetup(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Tactics, 0.28f);
+            string hint  = SkillHint(DefaultSkills.Tactics, 0.28f, "Read the setup before it springs");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Setup",
+                "A rider catches you at the edge of the village with urgent news: a lord two valleys over needs your help — ambushed, pinned, requesting your column immediately. The message is correctly sealed and the rider is convincing. Something in the framing is wrong — the route he names, the timing, the too-specific detail about troop count. You have seen setups. This has the shape of a setup.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Read the tactical picture — confirm this is a trap and identify its structure.", null, true, hint),
+                    new InquiryElement("b", "Send a fast scout ahead before committing the column.", null, true,
+                        "Costs half a day. The scout confirms the truth of it, whatever it is."),
+                    new InquiryElement("c", "Respond as if it's real but at half-speed with flankers out.", null, true,
+                        "If trap: you spring it on your terms. If real: you arrive cautiously. No bad outcome."),
+                    new InquiryElement("d", "Dismiss the rider and send word to the lord mentioned to verify.", null, true,
+                        "Lose Honor if it's real. Gain Calculating if it's not. The truth takes half a day."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Tactics, 0.28f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                ChangeRenown(8f);
+                                Msg("The troop count detail is too specific — no messenger in a real ambush counts enemy troops that precisely, they estimate. The route named adds ninety minutes for no terrain reason. The seal is correct but the phrasing of the request contains an error that someone who had actually served with that lord would not have made. This is a kill box. You turn your column, take the southern road, and send a rider to the actual lord, who reports he is in his hall and has not been ambushed. Somebody wanted your column on a specific road at a specific time. They are waiting.", GoodColor);
+                            }
+                            else
+                                Msg("Something is wrong but you cannot isolate it cleanly enough to be certain. The seal is right. The rider is convincing. The route bothers you for a reason you cannot fully articulate. You decide to proceed cautiously rather than dismiss it, which is neither fully correct nor fully wrong. You learn the truth two miles down the road, with flankers out, which was the right preparation.", DimColor);
+                            break;
+                        case "b":
+                            Msg("Your scout rides ahead and returns in forty minutes: empty road for two miles, then sign of a prepared position — cut branches covering a ditch, horses tied off the road. It is a trap and they are already committed to it. You have thirty minutes before they adjust. Your column has the information and the initiative.", GoodColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You advance with flankers extended and pace halved. If it is real, your caution costs thirty minutes. If it is not, your flankers reach the ambush position first. They do. Three men in the ditch with the particular expression of ambushers who have been found before they were ready. They surrender before the column arrives. The plan required your column moving at normal speed. You denied them that.", GoodColor);
+                            break;
+                        case "d":
+                            if (_rng.Next(2) == 0)
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                Msg("The verification rider returns: the lord has not sent any message and is not in distress. He is now, however, aware that someone is impersonating his seal and setting traps under his name. He thanks you with the warmth of someone who just avoided an incident they didn't know was coming. You avoided the trap. He deals with the seal forgery. Both of you gained something.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Honor, -1);
+                                Msg("The lord's reply: he was ambushed, he did send the message, the rider is real, and your delay cost him two men who could have been extracted by a column that arrived on time. He is alive. His gratitude is not the warm kind. You chose caution when speed was required. The information that led to that choice was correct in shape but wrong in content.", BadColor);
+                            }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LEAVE CITY: The Gate Standoff [Charm] ──────────────────────────
+        private static void LC8_GateStandoff(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Charm, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Charm, 0.25f, "Talk him down without violence");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Standoff",
+                "A man is holding a merchant at knifepoint at the city gate. Not a robbery: his daughter was taken by the merchant in lieu of a debt, the law permits it, and he has apparently run out of other options. The gate guard is twenty feet away deciding whether to intervene. The merchant is frightened. The father is not — he is decided. Neither of them is going to improve the situation alone.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Talk the father down without threats.", null, true, hint),
+                    new InquiryElement("b", "Buy the daughter's debt yourself — end the material cause.", null, true,
+                        "Lose 400 gold. Gain Merciful. The debt is ended. The law is satisfied. He releases the knife."),
+                    new InquiryElement("c", "Invoke your authority — demand both parties stand down immediately.", null, true,
+                        "Gain Honor. The father complies. He goes to jail anyway. The daughter's situation is unchanged."),
+                    new InquiryElement("d", "Tell the merchant, publicly, that his behaviour is noted and documented.", null, true,
+                        "Gain Calculating. The merchant's position becomes uncomfortable. The father has a witness now."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Charm, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                ChangeRenown(5f);
+                                Msg("You speak to him — not about the knife, about the daughter. You ask her name. He tells you. You ask what he was going to do after. He does not have an answer, which is the opening. A man who has run out of options will take a new one if it is real. You tell him you will hear his case formally, today, and that the merchant will be required to present the debt documentation. The knife goes down. The guard, watching, does not intervene. The merchant understands something about the day has changed.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                Msg("You speak to him and he listens but the words that would reach him are words you do not quite find. He is beyond the range of reassurance — he needs a specific thing, not comfort. He puts the knife down eventually but not because of what you said. He puts it down because the guard is closer now and he has calculated correctly that this ends badly for him regardless. He goes with the guard. The daughter's situation is unchanged.", DimColor);
+                            }
+                            break;
+                        case "b":
+                            ChangeGold(-400);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You step between them and pay the debt to the merchant directly, in coin, in front of the gate guard. The material cause disappears. The father watches the coin change hands with the expression of a man watching the thing he was willing to die for become solvable. He releases the knife. He does not thank you — the words he had ready were not for this outcome. The daughter is released that afternoon.", GoodColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You order both parties to stand down with the full weight of your rank. The father complies because a lord's direct order is not the same as a gate guard's. He is taken by the guard and held. The standoff is over. The daughter's debt remains in force. The merchant walks away quickly. The father's compliance was real and cost him everything he had left. You invoke authority correctly and it resolves the wrong problem.", DimColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You name the merchant's action and the debt mechanism loudly enough for the twenty people at the gate to hear every detail. The merchant's face changes. The gate guard, who has a family of his own, starts paying closer attention. The father watches the audience form and understands that he now has witnesses and a lord on record. He lowers the knife himself. The merchant leaves quickly. The father's case is not resolved, but it has a shape and a record now that it did not have two minutes ago.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LEAVE CITY: The Forgery at the Gate [Roguery] ──────────────────
+        private static void LC8_ForgeryAtGate(Settlement s)
+        {
+            float chance = SkillChance(DefaultSkills.Roguery, 0.28f);
+            string hint  = SkillHint(DefaultSkills.Roguery, 0.28f, "Identify the forgery and who wrote it");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Forgery",
+                "The gate guard stops a merchant wagon and shows you a travel permit he is suspicious about — it's for three wagons and the seal looks right but he cannot explain why it bothers him. He is asking you because you are a lord and lords apparently know about seals. The merchant is watching this from twenty feet away with the composed expression of someone who knows exactly what is happening.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Read the forgery — identify what's wrong and who produced it.", null, true, hint),
+                    new InquiryElement("b", "Back the guard's instinct — detain the merchant pending verification.", null, true,
+                        "Relation +5. Correct process. 50/50 if the document was actually real."),
+                    new InquiryElement("c", "Wave it through — the seal looks right and you have somewhere to be.", null, true,
+                        "Nothing. It was forged. The merchant clears the gate with contraband."),
+                    new InquiryElement("d", "Ask the merchant directly where the permit was issued.", null, true,
+                        "Gain Calculating. His answer will tell you whether he knows it's forged or is carrying it in good faith."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Roguery, 0.28f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                ChangeRelWithOwner(s, 5);
+                                ChangeRenown(5f);
+                                Msg("The ink on the seal impression is the wrong shade for the permit office's wax — they changed their wax supplier eight months ago and the forger used old stock. The letter spacing on the issuing authority's title is also wrong: a period after 'Lord' that the real office stopped using two years back. This document was made by someone with access to old examples but not current practice. You show the guard both markers. The merchant's composure breaks precisely at the second marker, which is where he knew the risk was. He is detained.", GoodColor);
+                            }
+                            else
+                                Msg("Something is wrong but you cannot isolate it to a specific marker. The seal is good enough to pass most inspections and your reading of the text formatting finds one possible issue that could also be a variant on legitimate practice. You tell the guard it may be forged but that you cannot confirm it. He detains the merchant for verification based on your maybe. The merchant is furious. Whether the document was forged will be determined by the permit office in three days.", DimColor);
+                            break;
+                        case "b":
+                            ChangeRelWithOwner(s, 5);
+                            if (_rng.Next(2) == 0)
+                                Msg("The guard detains the merchant. The permit office's response comes in two days: forged. The merchant had contraband in the second wagon. The guard's instinct was correct. Your backing gave him the authority to act on it. He will remember that a lord trusted his read. That is the kind of thing that makes gate guards better at their jobs.", GoodColor);
+                            else
+                                Msg("The permit office's response comes in two days: legitimate. The merchant had a real permit and a delayed shipment and is furious about the detention at a level that may become a formal complaint. The guard's instinct was wrong. Your backing made it stick. He is embarrassed. You have a complaint pending. The seal was genuine.", BadColor);
+                            break;
+                        case "c":
+                            Msg("The permit was forged. The wagon contained grey-dyed cloth that matches Ashen courier colours exactly — not contraband in any legal sense, but material with a specific use. It cleared your gate. The merchant was gone before the guard's follow-up instinct completed. You made a small decision at a gate and someone's supply run went through. Whether that matters depends on what the cloth is for.", BadColor);
+                            break;
+                        case "d":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("He names the issuing office correctly but the date is yesterday, which is too fast for the permit office's actual processing time — they take three days minimum. He knows the date is wrong, which means he knows what he is carrying and where it came from. He does not flinch when you point this out. He is a professional. You have him detained not for the document but for his knowledge of the document's real origin. That is a better charge.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── AFTER BATTLE: Field Triage [Medicine] ──────────────────────────
+        private static void EB8_FieldTriage()
+        {
+            float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Apply your own knowledge alongside the surgeon");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Surgeon's Question",
+                "Your surgeon has done what he can with what he has. He comes to you with a specific problem: two men with abdominal wounds, one set of gut-surgery supplies, and a clinical decision he says is above his certainty. He is asking you — not because he thinks you're a surgeon, but because he has seen enough of you to know whether you are the kind of person who has relevant information and the honesty to say when you don't.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Work alongside him — apply whatever you know.", null, true, hint),
+                    new InquiryElement("b", "Give him the decision completely — this is his skill, not yours.", null, true,
+                        "Gain Honor. He makes the best call he can. Your men see you trust him completely."),
+                    new InquiryElement("c", "Ask him to explain the clinical picture fully before you say anything.", null, true,
+                        "Gain Calculating. Your question reshapes his thinking. He reaches a better decision."),
+                    new InquiryElement("d", "Spend gold on an urgent courier for a specialist while the surgeon holds the situation.", null, true,
+                        "Lose 500 gold. Gain Merciful. The specialist arrives in time for one of the two."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Medicine, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                MobileParty.MainParty.RecentEventsMorale += 6f;
+                                Msg("You have seen enough battlefield surgery to know the specific indicator he is weighing — the depth and quality of the wound site is different between the two in a way that changes the priority. You tell him what you see. He checks it against his own read and adjusts. Both men receive treatment in the right order with the right technique. Both survive. Your surgeon looks at you differently afterward — not with deference, with the specific respect of a professional whose assessment was confirmed.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                MobileParty.MainParty.RecentEventsMorale += 2f;
+                                Msg("You share what you know. Some of it is useful and he incorporates it. Some of it is below his knowledge level and he sets it aside without comment. The combined knowledge is better than his alone. One man survives who might not have. The other was beyond the combined knowledge of both of you. Your surgeon closes that file with the quiet efficiency of someone who has written those reports before and will write them again.", DimColor);
+                            }
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            MobileParty.MainParty.RecentEventsMorale += 4f;
+                            Msg("You give him the decision entirely and tell him so directly. He makes it cleanly, without the hesitation of someone who is second-guessing a superior's preferences. One man survives. The other does not — this was the likely outcome either way, and the surgeon's choice was correct given what was knowable. Your men watch you trust your own people completely. That travels through a column faster than orders.", GoodColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            MobileParty.MainParty.RecentEventsMorale += 4f;
+                            Msg("You ask him to describe the clinical picture fully before you say anything. In describing it, he hears something in the structure of his own account that he had not heard while thinking it. He stops and redirects. The question you asked changed nothing about the facts and everything about the framing. Both men receive treatment. Both survive. He thanks you for the question specifically, which is how surgeons acknowledge a useful non-intervention.", GoodColor);
+                            break;
+                        case "d":
+                            ChangeGold(-500);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            Msg("The courier rides hard. The specialist arrives six hours later with better supplies and a different technique. He saves one of the two men with confidence and works on the second for three hours before confirming what your surgeon already knew. One man lives who would not have. The 500 coin bought a life and a specific hour's professional certainty. Your surgeon watches the specialist work with the full attention of a man taking notes.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── AFTER BATTLE: The Debrief [Tactics] ────────────────────────────
+        private static void EB8_BattleDebrief()
+        {
+            float chance = SkillChance(DefaultSkills.Tactics, 0.28f);
+            string hint  = SkillHint(DefaultSkills.Tactics, 0.28f, "Identify and correct the misread");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Debrief",
+                "Your sergeant is debriefing the battle with your officers and his read of what happened at the centre is subtly but importantly wrong — he believes the enemy centre held because of superior numbers, but you saw something else from your position. If his interpretation enters your officers' working model of how battles develop, it will inform a decision the wrong way at a moment that matters.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Correct the read precisely — explain what actually held the centre.", null, true, hint),
+                    new InquiryElement("b", "Ask him what he saw from his position before offering a counter-reading.", null, true,
+                        "Gain Calculating. Honor +1. The combined account is better than either alone."),
+                    new InquiryElement("c", "Let it stand for now — his read is close enough for the lesson they need today.", null, true,
+                        "Nothing. The wrong model travels forward. It may matter."),
+                    new InquiryElement("d", "Bring in a second officer whose position gave them a clear view of the centre.", null, true,
+                        "Morale +3. The third account resolves the question. Both readings are partially correct."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Tactics, 0.28f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                MobileParty.MainParty.RecentEventsMorale += 5f;
+                                Msg("The centre held because of a deliberate false retreat on their right — it drew your left flank's attention and compressed the centre's pressure by a third. The numbers were coincidence. Your sergeant listens with the specific attention of someone updating a model. He asks two clarifying questions and then restates the corrected read back to the officers. They leave the debrief with the right lesson. This is what debriefs are for and it requires someone who was watching the whole field. You were.", GoodColor);
+                            }
+                            else
+                                Msg("You offer your counter-read but cannot articulate the mechanism clearly enough — you saw something but translating what you saw into the language of formation tactics is harder than seeing it was. Your sergeant acknowledges your disagreement and hedges his read without fully revising it. The debrief ends with ambiguity rather than a clean correction. Better than the wrong certainty. Not as good as the right certainty.", DimColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            MobileParty.MainParty.RecentEventsMorale += 4f;
+                            Msg("You ask what he saw. His account of the centre from his position is actually accurate from where he stood — he simply could not see the false retreat from the left flank, which was behind his line of sight. When you add your account to his the combined picture is clearer than either alone. He revises his conclusion correctly and credits the two-position reading. The officers leave with a better model and a method for building one.", GoodColor);
+                            break;
+                        case "c":
+                            Msg("You let it stand. His read is close enough that the lesson — hold the centre, watch for flanking pressure — is defensible. The mechanism is wrong. This will matter exactly once, at a moment that will not announce itself in advance. You have chosen convenience and it may cost nothing. You do not know yet.", DimColor);
+                            break;
+                        case "d":
+                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            Msg("You bring in the officer who held the right flank and had the clearest view of the centre from the side. His account adds the false retreat that your sergeant missed. With all three readings on the table the correct picture emerges naturally — no one person's reading was wrong, it was incomplete. The debrief ends with a model that was earned rather than imposed. Your men respect the process. So does your sergeant.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── AFTER SIEGE: The Siege Stores [Steward] ────────────────────────
+        private static void ES8_SiegeStores()
+        {
+            float chance = SkillChance(DefaultSkills.Steward, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Steward, 0.25f, "Divide the stores correctly and equitably");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Division",
+                "The keep's stores are more than expected — the previous lord was preparing for a long siege. Your quartermaster can manage the military share straightforwardly, but the civilian question is harder: the city's merchants and the keep's garrison staff both have claims under different precedents, and the amounts are large enough that the wrong division will cause problems before the week is out.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Work through the division properly — apply the correct precedents.", null, true, hint),
+                    new InquiryElement("b", "Give your quartermaster full authority — this is his domain.", null, true,
+                        "Gain Honor. He handles it correctly and resents no implication he couldn't."),
+                    new InquiryElement("c", "Take the military share, return the city merchants' claims, and call the garrison staff claims void.", null, true,
+                        "Gain Calculating. Fast. The garrison staff will be bitter. The merchants will be satisfied."),
+                    new InquiryElement("d", "Hire a city administrator to manage the civilian claims under your oversight.", null, true,
+                        "Lose 300 gold. The distribution is clean. The city trusts the outcome more."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Steward, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                ChangeRenown(8f);
+                                MobileParty.MainParty.RecentEventsMorale += 4f;
+                                Msg("The correct precedent is siege capture law modified by the city charter's civilian commerce protections — the merchants' pre-siege inventory claims are valid up to the point of city closure, garrison staff claims are pro-rated by months served, and the military share is calculated after both civilian claims are satisfied. You work through it in two hours. Nobody gets everything. Nobody has a legitimate grievance. Your quartermaster is taking notes. This is what governing is.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                MobileParty.MainParty.RecentEventsMorale += 2f;
+                                Msg("You apply the precedents as best you can, but the intersection of siege law and city charter has a gap that your reading doesn't resolve cleanly. You make a defensible decision rather than a correct one. The merchants accept it. The garrison staff accept it with the specific acceptance of people who will raise the gap in a formal petition in six months. You have managed the problem rather than solved it. For now, that is enough.", DimColor);
+                            }
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            Msg("You give him the full authority directly and say so in front of the claimants. He takes it and works through it correctly — he has done this before, or something close enough that the differences don't matter. The distribution takes three hours and satisfies both groups adequately. He reports back to you with the numbers and a note that says he would have arrived at the same conclusions with or without the authority. That is the point.", GoodColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            ChangeRelWithRandomLord(-5);
+                            Msg("Fast, clear, defensible on the merchant side. The garrison staff, who served through a siege under a lord who is now your prisoner, receive nothing for that service. Some of them are veterans. Some of them protected this city from your assault for months. The bitterness is specific and immediate. The merchants are satisfied and will say so. The garrison staff are not and will also say so. The city's opinion of you is divided along exactly those lines.", DimColor);
+                            break;
+                        case "d":
+                            ChangeGold(-300);
+                            ChangeRenown(5f);
+                            Msg("You hire the city's former exchequer — not the previous lord's man, an independent one who worked for the trade council. He manages the civilian claims under your sign-off, which means the distribution carries official weight but the process has local credibility. It costs three hundred coin and two days. The result is accepted without significant objection by anyone, which in post-siege administration is close to a miracle.", GoodColor);
                             break;
                     }
                 }, null, "", false), false, true);
