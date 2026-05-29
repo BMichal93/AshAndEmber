@@ -67,6 +67,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.ObjectSystem;
 
 namespace AshAndEmber
 {
@@ -5605,11 +5606,17 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                        {
                             ChangeGold(-400);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             MobileParty.MainParty.RecentEventsMorale += 3f;
+                            var t_lc5 = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
+                                     ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                                     ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
+                            if (t_lc5 != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_lc5, 1); } catch { }
                             Msg("You press the coin on him first, then name the offer. He straightens up slightly — not all the way, but enough. He falls in at the column's rear. Your veterans give him space without being instructed to. He knows what that means.", GoodColor);
                             break;
+                        }
                         case "b":
                             ChangeGold(-200);
                             ShiftTrait(DefaultTraits.Mercy, 1);
@@ -6047,12 +6054,23 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                        {
                             MobileParty.MainParty.RecentEventsMorale += 3f;
+                            var t_lv6a = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
+                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
+                            if (t_lv6a != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_lv6a, 1); } catch { }
                             Msg("You accept. He stands and sheathes his sword with the particular economy of a man who has been practising this moment in his head. Your veterans make room for him without being asked. He will be useful because he has already decided to be.", GoodColor);
                             break;
+                        }
                         case "b":
+                        {
                             MobileParty.MainParty.RecentEventsMorale += 3f;
                             ChangeRelWithRandomLord(-3);
+                            var t_lv6b = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
+                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
+                            if (t_lv6b != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_lv6b, 1); } catch { }
                             Msg("He tells you about the eastern lord's land seizure — specific, documented in his head if not on paper, the kind of grievance that tends to be accurate because it has been rehearsed for a long time. You accept his oath. The information travels with him.", DimColor);
                             break;
                         case "c":
@@ -6371,10 +6389,16 @@ namespace AshAndEmber
                             Msg("The arena's owner is a merchant who fronts legitimate trade but uses the pit's income to finance something he does not name to anyone. Your former man-at-arms has heard conversations through thin walls that he has been waiting to give to someone with rank. You are the first officer he has seen in three years. He gives them to you. They are useful and specific.", DimColor);
                             break;
                         case "b":
+                        {
                             ChangeGold(-200);
                             MobileParty.MainParty.RecentEventsMorale += 3f;
+                            var t_ec6 = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
+                                     ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                                     ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
+                            if (t_ec6 != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_ec6, 1); } catch { }
                             Msg("He accepts the offer without performing surprise — he was hoping for it. He falls back in at the column with a familiarity that belongs to someone returning to something rather than entering it. Your veterans who remember him confirm his placement without ceremony. He is good at this. He was always good at this.", GoodColor);
                             break;
+                        }
                         case "c":
                             ChangeGold(-100);
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -6688,13 +6712,26 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
+                        {
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 5f;
+                            var t_eb5 = MBObjectManager.Instance.GetObject<CharacterObject>("imperial_infantry")
+                                     ?? MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
+                                     ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                                     ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
+                            if (t_eb5 != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_eb5, 30); } catch { }
                             Msg("He gives the terms to his men. Three walk away. The rest accept. They fold into your column with the quiet efficiency of people who know how to be useful in an army. Your veterans test them in the first hour — small things, competence checks — and file their reports informally. The verdict is: solid. The captain takes his place in the order of march without being told where it is. He already knows.", GoodColor);
                             break;
+                        }
                         case "b":
+                        {
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             MobileParty.MainParty.RecentEventsMorale += 3f;
+                            var t_eb5b = MBObjectManager.Instance.GetObject<CharacterObject>("imperial_infantry")
+                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
+                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
+                            if (t_eb5b != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_eb5b, 30); } catch { }
                             Msg("He answers without hesitation: contracted to a lord two kingdoms over, passed through three intermediaries, the final payment never arrived. He tells you the lord's name and the reason the contract was placed. The information explains something about a troop movement you heard about last month. You take his men. The intelligence is worth as much as they are.", DimColor);
                             break;
                         case "c":

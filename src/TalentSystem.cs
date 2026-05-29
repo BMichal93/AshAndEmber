@@ -347,26 +347,29 @@ namespace AshAndEmber
 
         private static void CastRejuvenate()
         {
-            try
-            {
-                var roster = MobileParty.MainParty?.MemberRoster;
-                if (roster == null) return;
-                var wounded = roster.GetTroopRoster()
-                    .Where(e => !e.Character.IsHero && e.WoundedNumber > 0)
-                    .ToList();
-                if (wounded.Count == 0) { Msg("Rejuvenate — no wounded soldiers in your ranks."); return; }
+            var roster = MobileParty.MainParty?.MemberRoster;
+            if (roster == null) { Msg("Rejuvenate — no party found."); return; }
 
-                int totalHealed = 0;
-                // Heal up to 8 per wounded unit type across all types (no cap on types)
-                foreach (var entry in wounded)
+            var wounded = roster.GetTroopRoster()
+                .Where(e => !e.Character.IsHero && e.WoundedNumber > 0)
+                .ToList();
+            if (wounded.Count == 0) { Msg("Rejuvenate — no wounded soldiers in your ranks."); return; }
+
+            int totalHealed = 0;
+            foreach (var entry in wounded)
+            {
+                try
                 {
-                    int healed = Math.Max(1, Math.Min(entry.WoundedNumber, 8));
+                    int healed = Math.Min(entry.WoundedNumber, 8);
                     roster.AddToCounts(entry.Character, 0, false, -healed);
                     totalHealed += healed;
                 }
-                Msg($"Rejuvenate — {totalHealed} soldier{(totalHealed != 1 ? "s" : "")} rise from their wounds.");
+                catch { }
             }
-            catch { }
+            if (totalHealed > 0)
+                Msg($"Rejuvenate — {totalHealed} soldier{(totalHealed != 1 ? "s" : "")} rise from their wounds.");
+            else
+                Msg("Rejuvenate — the wounds hold.");
         }
 
         private static void CastPlantGrowth()
@@ -592,11 +595,19 @@ namespace AshAndEmber
                 .FirstOrDefault();
             if (target == null) return;
             target.RecentEventsMorale -= 20f;
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{caster.Name} casts Unsettle — dread grips {target.Name}.",
+                new Color(0.5f, 0.3f, 0.7f)));
         }
 
         private static void NpcInspire(Hero caster)
         {
-            caster.PartyBelongedTo?.Let(p => p.RecentEventsMorale += 20f);
+            var party = caster.PartyBelongedTo;
+            if (party == null) return;
+            party.RecentEventsMorale += 20f;
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{caster.Name} casts Kindle — {party.Name} surges with new purpose.",
+                new Color(0.9f, 0.6f, 0.2f)));
         }
 
         private static void NpcPlague(Hero caster)
@@ -608,6 +619,9 @@ namespace AshAndEmber
             if (villages.Count == 0) return;
             var v = villages[_rng.Next(villages.Count)];
             v.Village.Hearth = Math.Max(10f, v.Village.Hearth * 0.80f);
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{caster.Name} casts Wither — blight spreads through {v.Name}.",
+                new Color(0.4f, 0.6f, 0.3f)));
         }
 
         private static void NpcCurse(Hero caster)
@@ -624,6 +638,9 @@ namespace AshAndEmber
                 .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
             if (troops.Count == 0) return;
             try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch { }
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{caster.Name} casts Curse — a soldier in {target.Name} falls.",
+                new Color(0.7f, 0.2f, 0.2f)));
         }
 
         private static void NpcRejuvenate(Hero caster)
@@ -635,6 +652,9 @@ namespace AshAndEmber
             if (wounded.Count == 0) return;
             var entry = wounded[_rng.Next(wounded.Count)];
             try { roster.AddToCounts(entry.Character, 0, false, -Math.Min(entry.WoundedNumber, 2)); } catch { }
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{caster.Name} casts Rejuvenate — wounded soldiers stir in {caster.PartyBelongedTo?.Name}.",
+                new Color(0.3f, 0.7f, 0.5f)));
         }
 
         private static void Msg(string text) =>
