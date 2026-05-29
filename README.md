@@ -16,7 +16,7 @@ AshAndEmber/
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
 │   ├── SpellBuilder.cs              two-phase input parser → SpellCast
-│   ├── TalentSystem.cs              15 talents, learning logic, map spells
+│   ├── TalentSystem.cs              21 talents (7 passive, 6 enchantment, 8 spell), learning logic
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
 │   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks
@@ -167,32 +167,24 @@ Each key press adds one count. More counts = stronger or larger effect. Mix form
 
 ### Multi-form example
 
-`WW SS X UUU` — Blast (5 m) + Burst (5 m), simultaneously, 75 flame damage. 7 inputs = 7 days cost.
+`WW SS X UUU` — Blast (5 m) + Burst (5 m) simultaneously, 75 fire damage to enemies. 7 inputs = 2 days cost.
 
 ---
 
 ## Effects (after Break)
 
-Multiple effect types may be combined freely. Each key press adds one count.
+Two effect types. Each key press adds one count. Damage and Restore may be combined.
 
-| Key | Arrow | Effect | Per count |
-|-----|-------|--------|-----------|
-| W | ↑ | **Flame** | 25 damage |
-| A | ← | **Surge** | 6 m push (away from caster) + 5 kinetic damage |
-| D | → | **Smoulder** | 15 morale drained + 8 side damage |
-| S | ↓ | **Reverse** | Flips all effects (damage → heal, push → pull, morale drain → boost) |
+| Key | Arrow | Effect | Per count | Targets |
+|-----|-------|--------|-----------|---------|
+| W | ↑ | **Damage** | 25 fire damage | Enemies |
+| S | ↓ | **Restore** | 15 healing | Allies (Burst also heals caster) |
 
-### Combined fires
+A and D (← →) do nothing in the effect phase — they are form-only keys.
 
-When you use two effect types together their interaction changes what you see in the log:
+### Mixed effect
 
-| Combination | Name |
-|-------------|------|
-| Flame + Smoulder | **Scorch** |
-| Surge + Flame | **Cinder** |
-| Smoulder + Surge | **Ember Surge** |
-
-Combined effects still apply both individual results — the names are cosmetic.
+You can use both Damage and Restore in the same cast. Each form fires its effect against the appropriate team: enemies take damage, allies receive healing.
 
 ---
 
@@ -214,14 +206,12 @@ NPC lords cast wards reactively when their HP drops below 40% or when they detec
 
 ## Aging Cost
 
-Every spell draws on your lifespan. The cost is **1 day per input press** (form presses + effect presses combined):
+Every spell draws on your lifespan. The cost scales with total inputs (form + effect presses combined), capped at 2 days:
 
 | Total inputs | Cost |
 |--------------|------|
-| 1 | 1 day |
-| 2 | 2 days |
-| 3 | 3 days |
-| N | N days |
+| 1–3 | 1 day |
+| 4+ | 2 days |
 
 The **Tempered** talent reduces the cost by 1 day (minimum 0). The **Resonance** talent gives a 1-in-4 chance that any cast costs nothing.
 
@@ -244,9 +234,11 @@ Casting **any** spell during a tournament **kills and disqualifies you instantly
 
 ## Talents
 
-Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. Each subsequent talent costs **focus points**, capped at 3 per talent (Gift = 0, 2nd talent = 1 point, 3rd = 2 points, 4th onward = 3 points).
+Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. Each subsequent talent costs **focus points**: the first 3 purchased cost 1 point each; 4th onward costs 2 points. Maximum cost per talent is 2.
 
-### Passive talents
+The talent menu groups talents into three categories: **Passive**, **Enchantment**, and **Spell**.
+
+### Passive
 
 | Talent | Effect |
 |--------|--------|
@@ -255,10 +247,30 @@ Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is 
 | **Resonance** | 1-in-4 campaign map casts cost no days. |
 | **Ember** | 5% chance per battle kill to restore 1 day of youth. |
 | **Harvest** | Executing a captured lord restores 100 days of youth. |
-| **Reap** | Raiding a village restores 5 days (7-day cooldown between raids). Each discarded prisoner has a 5% chance to restore 1 day. Marks you (−1 Mercy, −1 Honor, +30 criminal rating). |
+| **Reap** | Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner has a 5% chance to restore 1 day. Marks you. |
 | **Kinship** | +10 relations with other mages; relation cannot fall below −10 with them. |
 
-### Campaign map spells
+### Enchantment
+
+Enchantments add automatic side effects to Damage or Restore casts. They fire every time the trigger effect is used in battle.
+
+**Damage enchantments** (trigger: Damage effect on enemies):
+
+| Talent | Effect |
+|--------|--------|
+| **Scatter** | Blasts enemies backward. Push distance = 4 m per Damage input. |
+| **Smoulder** | Scorches enemy morale. Morale loss = 12 per Damage input. |
+| **Bewilder** | Issues a random command to non-hero enemies — halt, charge, dismount, or go into melee. |
+
+**Restore enchantments** (trigger: Restore effect on allies):
+
+| Talent | Effect |
+|--------|--------|
+| **Ashveil** | Grants allies brief magic immunity. Duration = 2 s per Restore input. |
+| **Cinder Shell** | Hardens allies, reducing incoming damage for 8 s. Protection = 5% per Restore input, max 50%. |
+| **Hearthlight** | Lifts allied morale. Morale boost = 12 per Restore input. |
+
+### Spell (campaign map)
 
 These are cast from the grimoire on the campaign map. Each costs 1 day (or criminal rating if Ashen). Resonance applies.
 
@@ -300,16 +312,18 @@ Lords die of old age when they reach 100. Their deaths are announced in the camp
 NPC lords follow a priority order each tick:
 
 1. **Ward** themselves if HP < 40% or a magic cast was detected within 20 m recently.
-2. **Heal** (spawn a healing zone) if HP < 30%.
-3. **Heal zone** for allies who are below 50% HP within 15 m.
-4. **Attack** — Burst (when surrounded by 3+ enemies) or Blast (when enemies are in the forward cone). Ashen lords use heavier recipes and roll from a wider attack set.
+2. **Heal burst** if HP < 30% (Restore burst centred on self; also heals caster).
+3. **Heal burst** for allies below 50% HP within 15 m.
+4. **Attack** — Burst (when surrounded by 3+ enemies) or Blast (enemies in forward cone). Ashen lords use heavier recipes and roll from a wider attack set.
+
+Lords who have been assigned enchantment talents apply them automatically — a lord with Scatter will fling enemies backward on every damage hit; one with Hearthlight boosts allied morale on every heal.
 
 Spell power by lord type:
 
 | Lord type | Typical formCount | Notes |
 |-----------|-------------------|-------|
-| Regular mage lord | 2 | Blast or Burst with 1–2 damage/morale/push counts |
-| Ashen lord | 2–3 | Heavier combos; morale-first; rolls from a wider attack set |
+| Regular mage lord | 2 | Blast or Burst, 1–2 damage counts |
+| Ashen lord | 2–3 | Heavier combos; wider attack set; always has Scatter |
 
 Cooldowns by personality:
 
@@ -392,7 +406,8 @@ Every hero in an Ashen clan:
 - Bears the title **Ashen Lord** or **Ashen Lady**.
 - Does not age — birth day is reset daily to keep them near age 35.
 - Casts spells with no aging cost and on a short 6-second cooldown.
-- Uses darker, morale-focused spell recipes in battle.
+- Uses heavier, damage-focused spell recipes in battle.
+- Always carries the **Scatter** enchantment (cold fire flings enemies backward); 50% chance of **Smoulder** as well.
 - Carries **Curse**, **Break Wills**, and **Plague** as map-cast talents.
 
 ### Criminal status

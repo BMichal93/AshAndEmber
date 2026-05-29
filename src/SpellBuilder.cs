@@ -14,10 +14,8 @@
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
 // EFFECTS (effect buffer, stackable)
-//   U = Flame     — 25 dmg per U (Red visual)
-//   L = Surge     — 6m push per L (Blue visual)
-//   R = Smoulder  — 12 morale per R (Yellow visual)
-//   D = Reverse   — flips all effects (White/pastel visual)
+//   U = Damage  — 25 fire dmg per U (Red visual), hits enemies
+//   D = Restore — 15 heal per D (White visual), heals allies; Burst also heals caster
 // =============================================================================
 
 using System;
@@ -53,38 +51,34 @@ namespace AshAndEmber
 
         public bool IsFumble;
 
-        public int  DamageCount;   // U effects
-        public int  PushCount;     // L effects
-        public int  MoraleCount;   // R effects
-        public bool Reversed;      // D effect present
+        public int DamageCount;    // U effects — fire damage to enemies
+        public int RestoreCount;   // D effects — healing to allies (and caster on Burst)
 
-        public bool HasAnyEffect => DamageCount > 0 || PushCount > 0 || MoraleCount > 0 || Reversed;
-        public int  TotalInputs  => FormCount + DamageCount + PushCount + MoraleCount + (Reversed ? 1 : 0);
+        public bool HasAnyEffect => DamageCount > 0 || RestoreCount > 0;
+        public int  TotalInputs  => FormCount + DamageCount + RestoreCount;
 
-        public ColorSchool VisualColor =>
-            ColorSchoolData.ComputeEffectColor(DamageCount, PushCount, MoraleCount, Reversed);
+        public ColorSchool VisualColor
+        {
+            get
+            {
+                if (DamageCount > 0 && RestoreCount > 0) return ColorSchool.Orange;
+                if (DamageCount > 0)  return ColorSchool.Red;
+                if (RestoreCount > 0) return ColorSchool.White;
+                return ColorSchool.Red;
+            }
+        }
 
         public int AgingDays(bool hasBattleMageTalent) =>
             AgingSystem.ComputeBattleAgingCost(TotalInputs, hasBattleMageTalent);
 
         public string EffectSummary()
         {
-            if (IsFumble)  return "Fumble — input error.";
-            if (!HasAnyEffect) return "No effects specified.";
+            if (IsFumble)       return "Fumble — input error.";
+            if (!HasAnyEffect)  return "No effects specified.";
 
             var parts = new List<string>();
-            if (DamageCount > 0)
-                parts.Add(Reversed
-                    ? $"+{DamageCount * 25} kindled (Reversed Flame)"
-                    : $"{DamageCount * 25} flame (Flame)");
-            if (PushCount > 0)
-                parts.Add(Reversed
-                    ? $"{PushCount * 6}m draw (Reversed Surge)"
-                    : $"{PushCount * 6}m surge (+{PushCount * 5} kinetic)");
-            if (MoraleCount > 0)
-                parts.Add(Reversed
-                    ? $"+{MoraleCount * 15} kindled morale (Reversed Smoulder)"
-                    : $"-{MoraleCount * 15} smoulder (+{MoraleCount * 8} dmg)");
+            if (DamageCount  > 0) parts.Add($"{DamageCount * 25} damage");
+            if (RestoreCount > 0) parts.Add($"+{RestoreCount * 15} restore");
             return string.Join(", ", parts);
         }
 
@@ -93,14 +87,13 @@ namespace AshAndEmber
             int multi = BlastCount + WaveCount + BarrierCount + BurstCount;
             if (multi == 0)
             {
-                // Legacy single-form path (NPC casts)
                 switch (Form)
                 {
-                    case SpellForm.Blast:   return $"Blast ({_formCountOverride * 2.5f:F0}m range cone, 37°)";
+                    case SpellForm.Blast:   return $"Blast ({_formCountOverride * 2.5f:F0}m cone)";
                     case SpellForm.Aura:
                         int wGs = 3 + Math.Max(0, (_formCountOverride - 5) / 5);
                         float wR = Math.Max(3f, _formCountOverride * 2f - 1f);
-                        return $"Wave ({wGs}×{wGs} grid, {wR:F0}m)";
+                        return $"Wave ({wGs}×{wGs}, {wR:F0}m)";
                     case SpellForm.Barrier: return $"Barrier ({_formCountOverride} node{(_formCountOverride > 1 ? "s" : "")})";
                     case SpellForm.Burst:   return $"Burst ({_formCountOverride * 2.5f:F0}m radius)";
                     default:                return "Unknown form";
@@ -127,7 +120,6 @@ namespace AshAndEmber
         /// Parse the two raw buffers into a SpellCast.
         /// formBuffer  — keys pressed before Break.
         /// effectBuffer — keys pressed after Break.
-        /// Mixed form types are allowed; all fire simultaneously.
         /// </summary>
         public static SpellCast Parse(string formBuffer, string effectBuffer)
         {
@@ -139,7 +131,6 @@ namespace AshAndEmber
                 return cast;
             }
 
-            // Count each form direction independently — mixed forms all fire
             foreach (char c in formBuffer)
             {
                 switch (c)
@@ -157,13 +148,13 @@ namespace AshAndEmber
                             + (cast.BarrierCount > 0 ? 1 : 0) + (cast.BurstCount > 0 ? 1 : 0);
             if (activeForms == 1)
             {
-                if (cast.BlastCount > 0)   cast.Form = SpellForm.Blast;
+                if      (cast.BlastCount > 0)   cast.Form = SpellForm.Blast;
                 else if (cast.WaveCount > 0)    cast.Form = SpellForm.Aura;
                 else if (cast.BarrierCount > 0) cast.Form = SpellForm.Barrier;
                 else if (cast.BurstCount > 0)   cast.Form = SpellForm.Burst;
             }
 
-            // Parse effects
+            // Effects: U = Damage, D = Restore. L and R are silently ignored.
             if (!string.IsNullOrEmpty(effectBuffer))
             {
                 foreach (char c in effectBuffer)
@@ -171,9 +162,8 @@ namespace AshAndEmber
                     switch (c)
                     {
                         case 'U': cast.DamageCount++;  break;
-                        case 'L': cast.PushCount++;    break;
-                        case 'R': cast.MoraleCount++;  break;
-                        case 'D': cast.Reversed = true; break;
+                        case 'D': cast.RestoreCount++; break;
+                        // L (push) and R (morale) removed — silently skipped
                     }
                 }
             }
@@ -183,7 +173,6 @@ namespace AshAndEmber
 
         /// <summary>
         /// Execute a parsed SpellCast. Returns false if nothing happened (no aging cost).
-        /// For a barrier-only cast that toggles off, returns false (dispel = no aging).
         /// </summary>
         public static bool Execute(SpellCast cast, bool inMission)
         {
@@ -196,7 +185,6 @@ namespace AshAndEmber
 
                 if (multi == 0)
                 {
-                    // Legacy single-form path (NPC-constructed SpellCasts with Form set)
                     switch (cast.Form)
                     {
                         case SpellForm.Blast:   SpellEffects.ExecuteBlast(cast);   break;
@@ -208,8 +196,7 @@ namespace AshAndEmber
                     return true;
                 }
 
-                // Multi-form: fire all active forms
-                bool anyFired = false;
+                bool anyFired     = false;
                 bool barrierResult = true;
 
                 if (cast.BlastCount > 0)
@@ -225,7 +212,6 @@ namespace AshAndEmber
                 if (cast.BarrierCount > 0)
                 {
                     barrierResult = SpellEffects.ExecuteBarrier(cast);
-                    // Barrier-only dispel returns false (no aging), but if other forms also fired, charge normally
                     if (anyFired || cast.BurstCount > 0) barrierResult = true;
                     anyFired = true;
                 }
@@ -235,13 +221,11 @@ namespace AshAndEmber
                     anyFired = true;
                 }
 
-                // If barrier was the only form and it dispelled, return false
                 if (cast.BarrierCount > 0 && cast.BlastCount == 0 && cast.WaveCount == 0 && cast.BurstCount == 0)
                     return barrierResult;
 
                 return anyFired;
             }
-            // Campaign map spells are handled by TalentSystem, not SpellBuilder
             return false;
         }
     }
