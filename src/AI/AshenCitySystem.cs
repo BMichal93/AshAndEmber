@@ -442,23 +442,30 @@ namespace AshAndEmber
             catch { }
         }
 
-        // Apply Ashen appearance to any hero (lord/wanderer) currently residing
-        // inside an Ashen settlement. This affects their BodyProperties so the
-        // look is active the next time a scene with them loads. Common citizens
-        // (non-hero NPCs) require Harmony patching to modify — not done here.
+        // Apply Ashen appearance (grey skin, hair, eyes) to any hero (lord/wanderer)
+        // that meets at least one of the following conditions:
+        //   1. Is registered as an Ashen lord (ColourLordRegistry.IsAshenLord)
+        //   2. Currently resides in an Ashen settlement
+        //   3. Belongs to the Ashen faction/kingdom
+        //   4. Belongs to an Ashen Spawn party
+        // Common citizens (non-hero NPCs) require Harmony patching — not done here.
         private static void ApplyAshenLookToSettlementHeroes()
         {
-            if (_settlementClanMap.Count == 0) return;
             try
             {
                 foreach (Hero h in Hero.AllAliveHeroes.ToList())
                 {
                     if (h == Hero.MainHero) continue;
                     if (!h.IsLord && !h.IsWanderer) continue;
-                    if (h.CurrentSettlement == null) continue;
-                    if (!_settlementClanMap.ContainsKey(h.CurrentSettlement.StringId)) continue;
-                    if (ColourLordRegistry.IsAshenLord(h)) continue; // already handled by SetAshen
-                    try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
+
+                    bool qualifies =
+                        ColourLordRegistry.IsAshenLord(h) ||
+                        (h.CurrentSettlement != null && _settlementClanMap.ContainsKey(h.CurrentSettlement.StringId)) ||
+                        h.MapFaction?.StringId == AshenKingdomId ||
+                        (h.PartyBelongedTo != null && FireWorshippersSystem.IsAshenSpawn(h.PartyBelongedTo));
+
+                    if (qualifies)
+                        try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
                 }
             }
             catch { }
