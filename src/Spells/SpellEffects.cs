@@ -399,7 +399,7 @@ namespace AshAndEmber
             // Damage or Heal
             if (cast.DamageCount > 0)
             {
-                float amount = cast.DamageCount * 12f;
+                float amount = cast.DamageCount * 25f;
                 if (cast.Reversed)
                     HealAgent(target, amount);
                 else
@@ -421,7 +421,7 @@ namespace AshAndEmber
 
                 if (!isMounted)
                 {
-                    float dist = cast.PushCount * 4f;
+                    float dist = cast.PushCount * 5f;
                     try
                     {
                         Vec3 dir;
@@ -439,13 +439,13 @@ namespace AshAndEmber
 
                 // Kinetic side damage — surge force bruises on impact (not on pull)
                 if (!cast.Reversed)
-                    DamageAgent(target, cast.PushCount * 3f);
+                    DamageAgent(target, cast.PushCount * 4f);
             }
 
             // Morale drain or boost
             if (cast.MoraleCount > 0)
             {
-                float delta = cast.MoraleCount * 7f;
+                float delta = cast.MoraleCount * 12f;
                 try
                 {
                     float cur = target.GetMorale();
@@ -464,7 +464,7 @@ namespace AshAndEmber
 
                 // Smoulder side damage — the will-breaking fire scorches as it breaks spirit (not on boost)
                 if (!cast.Reversed)
-                    DamageAgent(target, cast.MoraleCount * 4f);
+                    DamageAgent(target, cast.MoraleCount * 5f);
             }
         }
 

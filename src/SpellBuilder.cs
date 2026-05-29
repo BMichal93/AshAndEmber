@@ -14,9 +14,9 @@
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
 // EFFECTS (effect buffer, stackable)
-//   U = Flame     — 12 dmg per U (Red visual)
-//   L = Surge     — 4m push per L (Blue visual)
-//   R = Smoulder  — 7 morale per R (Yellow visual)
+//   U = Flame     — 25 dmg per U (Red visual)
+//   L = Surge     — 5m push per L (Blue visual)
+//   R = Smoulder  — 12 morale per R (Yellow visual)
 //   D = Reverse   — flips all effects (White/pastel visual)
 // =============================================================================
 
@@ -75,16 +75,16 @@ namespace AshAndEmber
             var parts = new List<string>();
             if (DamageCount > 0)
                 parts.Add(Reversed
-                    ? $"+{DamageCount * 12} kindled (Reversed Flame)"
-                    : $"{DamageCount * 12} flame (Flame)");
+                    ? $"+{DamageCount * 25} kindled (Reversed Flame)"
+                    : $"{DamageCount * 25} flame (Flame)");
             if (PushCount > 0)
                 parts.Add(Reversed
-                    ? $"{PushCount * 4}m draw (Reversed Surge)"
-                    : $"{PushCount * 4}m surge (Surge)");
+                    ? $"{PushCount * 5}m draw (Reversed Surge)"
+                    : $"{PushCount * 5}m surge (Surge)");
             if (MoraleCount > 0)
                 parts.Add(Reversed
-                    ? $"+{MoraleCount * 7} kindled morale (Reversed Smoulder)"
-                    : $"-{MoraleCount * 7} smoulder (Smoulder)");
+                    ? $"+{MoraleCount * 12} kindled morale (Reversed Smoulder)"
+                    : $"-{MoraleCount * 12} smoulder (Smoulder)");
             return string.Join(", ", parts);
         }
 
