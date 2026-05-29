@@ -82,8 +82,12 @@ namespace AshAndEmber
                 Team pt = Mission.Current.PlayerTeam;
                 foreach (Agent a in Mission.Current.Agents)
                 {
-                    if (!a.IsActive() || a.IsMount || a.Team == null) continue;
-                    if (a.Team != pt && pt.IsEnemyOf(a.Team)) return true;
+                    if (!a.IsActive() || a.IsMount || a.Team == null || a.Team == pt) continue;
+                    // IsEnemyOf can throw "other_team_index_invalid" when an agent's team
+                    // has been released mid-battle — catch per-agent so the loop continues.
+                    bool isEnemy = false;
+                    try { isEnemy = pt.IsEnemyOf(a.Team); } catch { continue; }
+                    if (isEnemy) return true;
                 }
             }
             catch { }
@@ -224,14 +228,21 @@ namespace AshAndEmber
         internal static List<Agent> EnemiesOf(Agent source)
         {
             if (Mission.Current == null || source?.Team == null) return new List<Agent>();
+            var result = new List<Agent>();
             try
             {
-                return Mission.Current.Agents
-                    .Where(a => a != source && !a.IsMount && a.IsActive() &&
-                                a.Team != null && source.Team.IsEnemyOf(a.Team))
-                    .ToList();
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == source || a.IsMount || !a.IsActive() || a.Team == null) continue;
+                    // IsEnemyOf can throw "other_team_index_invalid" for released teams —
+                    // skip the individual agent rather than aborting the entire list.
+                    bool isEnemy = false;
+                    try { isEnemy = source.Team.IsEnemyOf(a.Team); } catch { continue; }
+                    if (isEnemy) result.Add(a);
+                }
             }
-            catch { return new List<Agent>(); }
+            catch { }
+            return result;
         }
 
         internal static List<Agent> AlliesOf(Agent source)

@@ -46,9 +46,9 @@ namespace AshAndEmber
         public static void ClearKnockdowns() { }
 
         /// <summary>
-        /// Battle spell aging cost: 1 day per input press (form + effect combined).
+        /// Battle spell aging cost: 1 day per 2 inputs (round up, min 1).
         /// BattleMage talent subtracts 1 from the total cost (minimum 0).
-        /// Examples: 1 input = 1 day | 4 inputs = 4 days | 6 inputs = 6 days
+        /// Examples: 2 inputs = 1 day | 4 inputs = 2 days | 6 inputs = 3 days
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {

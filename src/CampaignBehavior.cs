@@ -246,13 +246,20 @@ namespace AshAndEmber
         // ── Map event ended (battle result) ───────────────────────────────────
         private void OnMapEventEnded(MapEvent mapEvent)
         {
-            if (mapEvent == null) return;
-            try { ApplyNpcBattleAging(mapEvent); } catch { }
-            try { ApplyNpcBattleMoraleBonus(mapEvent); } catch { }
-            try { CheckReapRaidYield(mapEvent); } catch { }
-            try { SettlementEncounters.OnMapEventEnded(mapEvent); } catch { }
-            // Refresh snapshot so battle-captured prisoners don't count as discards
-            try { _prisonerCountSnapshot = MobileParty.MainParty?.PrisonRoster?.TotalManCount ?? _prisonerCountSnapshot; } catch { }
+            try
+            {
+                if (mapEvent == null) return;
+                try { ApplyNpcBattleAging(mapEvent); } catch { }
+                // Flush any battle casts not consumed above (NPCs absent from this event).
+                // Must run after aging so _battleCasts still holds data during ApplyNpcBattleAging.
+                try { ColourLordAI.FlushBattleCasts(); } catch { }
+                try { ApplyNpcBattleMoraleBonus(mapEvent); } catch { }
+                try { CheckReapRaidYield(mapEvent); } catch { }
+                try { SettlementEncounters.OnMapEventEnded(mapEvent); } catch { }
+                // Refresh snapshot so battle-captured prisoners don't count as discards
+                try { _prisonerCountSnapshot = MobileParty.MainParty?.PrisonRoster?.TotalManCount ?? _prisonerCountSnapshot; } catch { }
+            }
+            catch { }
         }
 
         // ── Monthly atmospheric events ────────────────────────────────────────
@@ -409,7 +416,7 @@ namespace AshAndEmber
                             // Divide by 4 so an NPC casting 2-3 spells ages ~2-4 days per battle.
                             int agingDays = Math.Max(1, weight / 4);
                             if (!ColourLordRegistry.IsAshenLord(leader))
-                                AgingSystem.AgeHero(leader, agingDays);
+                                AgeHeroDeferred(leader, agingDays);
                             if (playerInvolved)
                                 InformationManager.DisplayMessage(new InformationMessage(
                                     $"{leader.Name} is spent by the working — {agingDays} day{(agingDays > 1 ? "s" : "")} older.",
@@ -440,13 +447,23 @@ namespace AshAndEmber
 
                     int agingDays = Math.Max(1, weight / 4);
                     if (!ColourLordRegistry.IsAshenLord(companion))
-                        AgingSystem.AgeHero(companion, agingDays);
+                        AgeHeroDeferred(companion, agingDays);
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{companion.Name} is spent by the working — {agingDays} day{(agingDays > 1 ? "s" : "")} older.",
                         new Color(0.5f, 0.4f, 0.7f)));
                 }
             }
             catch { }
+        }
+
+        // Shifts a hero's birth day without triggering CheckAgeLimit immediately.
+        // Safe to call during OnMapEventEnded (post-battle transition) because
+        // KillCharacterAction during that window causes cascading handler crashes.
+        // DailyAgeCheck runs on the next tick and handles any over-100 cases cleanly.
+        private static void AgeHeroDeferred(Hero hero, int days)
+        {
+            if (hero == null || days <= 0) return;
+            try { hero.SetBirthDay(hero.BirthDay - CampaignTime.Days(days)); } catch { }
         }
 
         private void ApplyNpcBattleMoraleBonus(MapEvent mapEvent)

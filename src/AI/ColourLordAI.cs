@@ -36,11 +36,17 @@ namespace AshAndEmber
         public static void ClearCooldowns()
         {
             _cooldowns.Clear();
-            _battleCasts.Clear();
+            // _battleCasts is NOT cleared here — OnMapEventEnded consumes it after
+            // the battle via ApplyNpcBattleAging, which fires after OnMissionEnded.
+            // Call FlushBattleCasts() after aging is processed.
             _tickAccum   = 0f;
             _warmupDone  = false;
             _warmupTimer = 0f;
         }
+
+        /// Called from CampaignBehavior.OnMapEventEnded after aging is applied,
+        /// to discard any casts that weren't consumed (e.g. NPC not in this event).
+        public static void FlushBattleCasts() => _battleCasts.Clear();
 
         // Returns how many spells this hero cast in the last battle, then resets the counter.
         public static int ConsumeBattleCasts(Hero hero)
