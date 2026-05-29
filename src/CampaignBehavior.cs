@@ -198,7 +198,6 @@ namespace AshAndEmber
                 _selectionDone = true;
                 try { ColourLordRegistry.SeedInitialLords(); } catch { }
             }
-            try { ColourLordRegistry.SeedInitialLords(); } catch { }
             try { AshenCitySystem.Initialize(); } catch { }
             try { AshenCitySystem.DailyTick(); } catch { }
             try { ColourLordRegistry.DailyMapCast(); } catch { }

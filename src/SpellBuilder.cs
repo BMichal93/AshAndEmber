@@ -15,7 +15,7 @@
 //
 // EFFECTS (effect buffer, stackable)
 //   U = Flame     — 25 dmg per U (Red visual)
-//   L = Surge     — 5m push per L (Blue visual)
+//   L = Surge     — 6m push per L (Blue visual)
 //   R = Smoulder  — 12 morale per R (Yellow visual)
 //   D = Reverse   — flips all effects (White/pastel visual)
 // =============================================================================

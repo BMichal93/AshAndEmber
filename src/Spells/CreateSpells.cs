@@ -198,7 +198,7 @@ namespace AshAndEmber
             var targets  = new List<Agent>();
             try
             {
-                foreach (Agent a in Mission.Current.Agents)
+                foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     if (casterTeam != null && a.Team == casterTeam) continue; // skip allies

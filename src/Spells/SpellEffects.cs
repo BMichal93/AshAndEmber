@@ -343,7 +343,7 @@ namespace AshAndEmber
             var result = new List<Agent>();
             try
             {
-                foreach (Agent a in Mission.Current.Agents)
+                foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount || a == Player) continue;
                     Vec3 to = a.Position - origin;
@@ -364,7 +364,7 @@ namespace AshAndEmber
             var result = new List<Agent>();
             try
             {
-                foreach (Agent a in Mission.Current.Agents)
+                foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount || a == source) continue;
                     if (source.Team != null && a.Team == source.Team) continue;

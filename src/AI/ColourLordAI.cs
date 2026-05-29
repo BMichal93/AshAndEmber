@@ -154,8 +154,10 @@ namespace AshAndEmber
             }
             else
             {
-                // Cone or open field
-                int coneCount = SpellEffects.CountEnemiesInCone(agent, 10f, 0.80f);
+                // Cone or open field — use dot 0.65 to match actual blast geometry;
+                // range matches max blast distance for each tier (formCount*2.5f + buffer)
+                float blastDetectRange = isAshen ? 8f : 6f;
+                int coneCount = SpellEffects.CountEnemiesInCone(agent, blastDetectRange, 0.65f);
                 if (coneCount >= 1)
                 {
                     if (roll == 0)

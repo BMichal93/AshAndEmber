@@ -1,6 +1,6 @@
 ﻿// =============================================================================
 // LIFE & DEATH MAGIC — BlastSpells.cs
-// BLAST FORM: forward cone, 2m range per U input, 37° half-angle (dot 0.80).
+// BLAST FORM: forward cone, 2.5m range per U input, ~49° half-angle (dot 0.65).
 // Effects are applied to all agents in the cone regardless of team.
 // Player: enemies only; NPC version accepts a casterTeam parameter.
 // =============================================================================

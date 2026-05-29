@@ -167,7 +167,7 @@ Each key press adds one count. More counts = stronger or larger effect. Mix form
 
 ### Multi-form example
 
-`WW SS X UUU` — Blast (5 m) + Burst (5 m), simultaneously, 36 flame damage. 6 inputs = 2 days cost.
+`WW SS X UUU` — Blast (5 m) + Burst (5 m), simultaneously, 75 flame damage. 7 inputs = 7 days cost.
 
 ---
 
@@ -177,9 +177,9 @@ Multiple effect types may be combined freely. Each key press adds one count.
 
 | Key | Arrow | Effect | Per count |
 |-----|-------|--------|-----------|
-| W | ↑ | **Flame** | 12 damage (+3 per Surge count, +4 per Smoulder count as side damage) |
-| A | ← | **Surge** | 4 m push (away from caster) + 3 side damage per count |
-| D | → | **Smoulder** | 7 morale drained + 4 side damage per count |
+| W | ↑ | **Flame** | 25 damage |
+| A | ← | **Surge** | 6 m push (away from caster) + 5 kinetic damage |
+| D | → | **Smoulder** | 15 morale drained + 8 side damage |
 | S | ↓ | **Reverse** | Flips all effects (damage → heal, push → pull, morale drain → boost) |
 
 ### Combined fires
@@ -214,20 +214,16 @@ NPC lords cast wards reactively when their HP drops below 40% or when they detec
 
 ## Aging Cost
 
-Every spell draws on your lifespan. The cost is based on the **total input count** (form presses + effect presses):
+Every spell draws on your lifespan. The cost is **1 day per input press** (form presses + effect presses combined):
 
 | Total inputs | Cost |
 |--------------|------|
-| Below 4 | Free |
-| 4–5 | 1 day |
-| 6–7 | 2 days |
-| 8–9 | 3 days |
-| 10–11 | 4 days |
-| 12–13 | 5 days |
-| 14–15 | 6 days |
-| +2 inputs | +1 day |
+| 1 | 1 day |
+| 2 | 2 days |
+| 3 | 3 days |
+| N | N days |
 
-The **Tempered** talent raises the free threshold from 4 to 5. The **Resonance** talent gives a 1-in-4 chance that any cast costs nothing.
+The **Tempered** talent reduces the cost by 1 day (minimum 0). The **Resonance** talent gives a 1-in-4 chance that any cast costs nothing.
 
 Ward sigils cost `N − 1` days (↓↓ = 1 day, ↓↓↓ = 2 days, etc.).
 
@@ -292,10 +288,10 @@ When an enemy mage lord casts in battle, a message appears in the combat log des
 NPC lords age after every battle in which they cast. The cost scales with the power of spells used:
 
 ```
-aging days = max(1, total formCount / 3)
+aging days = max(1, total inputs / 4)
 ```
 
-A single moderate blast (formCount 3) costs 1 day. Two heavy Ashen blasts (formCount 4 each) cost 2–3 days. Ashen lords do not age regardless.
+`total inputs` is the sum of all form and effect presses across all spells cast in the battle. A single blast at formCount 2 + 2 damage effects (4 inputs) costs 1 day. Two heavy Ashen blasts (6 inputs each, 12 total) cost 3 days. Ashen lords do not age regardless.
 
 Lords die of old age when they reach 100. Their deaths are announced in the campaign log.
 
@@ -312,8 +308,8 @@ Spell power by lord type:
 
 | Lord type | Typical formCount | Notes |
 |-----------|-------------------|-------|
-| Regular mage lord | 3 | Blast or Burst with 3 damage/morale/push |
-| Ashen lord | 3–4 | Heavier combos; morale-first |
+| Regular mage lord | 2 | Blast or Burst with 1–2 damage/morale/push counts |
+| Ashen lord | 2–3 | Heavier combos; morale-first; rolls from a wider attack set |
 
 Cooldowns by personality:
 

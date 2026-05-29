@@ -139,7 +139,7 @@ namespace AshAndEmber
         }
 
         // Lights a cone shape with 7 temp lights.
-        // Matches blast-spell cone geometry: 9m range, ≈±37° half-angle (dot 0.80).
+        // Matches blast-spell cone geometry: up to 7.5m range, ≈±49° half-angle (dot 0.65).
         internal static void SpawnConeLights(Vec3 origin, Vec3 fwd, ColorSchool school, float duration)
         {
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);

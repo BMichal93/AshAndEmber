@@ -201,9 +201,9 @@ namespace AshAndEmber
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost − 1 day (minimum 0).\n" : "") +
                 ashenNote +
                 "\nExample\n" +
-                "  ↑  X  ↑  =  Blast (2.5m), 12 flame, 2 days  (2 inputs).\n" +
-                "  ↑↑↑  X  ↑↑↑  =  Blast (7.5m), 36 flame, 6 days  (6 inputs).\n" +
-                "  ↑↑  ↓↓  X  ↑↑  =  Blast (5m) + Burst (5m) + 24 flame, 6 days  (6 inputs).";
+                "  ↑  X  ↑  =  Blast (2.5m), 25 flame, 2 days  (2 inputs).\n" +
+                "  ↑↑↑  X  ↑↑↑  =  Blast (7.5m), 75 flame, 6 days  (6 inputs).\n" +
+                "  ↑↑  ↓↓  X  ↑↑  =  Blast (5m) + Burst (5m) + 50 flame, 6 days  (6 inputs).";
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
 
