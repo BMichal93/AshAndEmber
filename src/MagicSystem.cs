@@ -20,6 +20,23 @@ namespace AshAndEmber
     {
         protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
         {
+            // Reset all in-mission static state that may be stale from a previous
+            // game session running in the same process (save load without restart).
+            // ClearAreaEffects / ClearSelfEffects are internally try/catch'd.
+            try { SpellEffects.ClearAreaEffects();   } catch { }
+            try { SpellEffects.ClearSelfEffects();   } catch { }
+            try { SpellEffects.ClearGlows();         } catch { }
+            try { SpellEffects.ClearMoves();         } catch { }
+            try { SpellEffects.ClearPendingDeaths(); } catch { }
+            try { SpellEffects.ClearAnimTimers();    } catch { }
+            try { SpellEffects.ClearWard();          } catch { }
+            try { SpellEffects.ClearMagicMemory();   } catch { }
+            try { MagicInputHandler.ResetInputState();  } catch { }
+            try { ColourLordAI.ClearCooldowns();        } catch { }
+            try { ColourLordAI.FlushBattleCasts();      } catch { }
+            try { BanditMageAI.OnMissionEnd();           } catch { }
+            try { AshenSceneTone.Reset();                } catch { }
+
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
                 campaignStarter.AddBehavior(new MagicCampaignBehavior());
@@ -32,9 +49,13 @@ namespace AshAndEmber
 
         protected override void OnApplicationTick(float dt)
         {
-            if (Campaign.Current == null || Mission.Current != null) return;
-            try { MagicInputHandler.Tick(inMission: false); } catch { }
-            ActiveEffectManager.MapTick(dt);
+            try
+            {
+                if (Campaign.Current == null || Mission.Current != null) return;
+                try { MagicInputHandler.Tick(inMission: false); } catch { }
+                try { ActiveEffectManager.MapTick(dt); } catch { }
+            }
+            catch { }
         }
     }
 
