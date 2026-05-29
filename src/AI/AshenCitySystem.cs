@@ -161,7 +161,7 @@ namespace AshAndEmber
             if (foundAny || _ashenKingdom != null)
             {
                 try { DeclareWarWithAllKingdoms(); } catch { }
-                ApplyAshenLookToSettlementHeroes();
+                try { ApplyAshenLookToSettlementHeroes(); } catch { }
                 _initialized = true;
             }
         }

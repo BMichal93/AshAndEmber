@@ -83,12 +83,16 @@ namespace AshAndEmber
         private void OnMakePeace(IFaction faction1, IFaction faction2,
             MakePeaceAction.MakePeaceDetail detail)
         {
-            const string id = "ashen_kingdom";
-            bool ashenInvolved =
-                (faction1 is Kingdom k1 && k1.StringId == id) ||
-                (faction2 is Kingdom k2 && k2.StringId == id);
-            if (!ashenInvolved) return;
-            try { AshenCitySystem.DeclareWarWithAllKingdoms(); } catch { }
+            try
+            {
+                const string id = "ashen_kingdom";
+                bool ashenInvolved =
+                    (faction1 is Kingdom k1 && k1.StringId == id) ||
+                    (faction2 is Kingdom k2 && k2.StringId == id);
+                if (!ashenInvolved) return;
+                try { AshenCitySystem.DeclareWarWithAllKingdoms(); } catch { }
+            }
+            catch { }
         }
 
         private void OnMobilePartyCreated(MobileParty party)
@@ -236,11 +240,15 @@ namespace AshAndEmber
         // ── Mission ended ─────────────────────────────────────────────────────
         private void OnMissionEnded(IMission mission)
         {
-            try { ColourLordAI.ClearCooldowns(); } catch { }
-            try { SpellEffects.ClearAreaEffects(); } catch { }
-            try { SpellEffects.ClearSelfEffects(); } catch { }
-            try { SpellEffects.ClearGlows(); } catch { }
-            try { SpellEffects.ClearMoves(); } catch { }
+            try
+            {
+                try { ColourLordAI.ClearCooldowns(); } catch { }
+                try { SpellEffects.ClearAreaEffects(); } catch { }
+                try { SpellEffects.ClearSelfEffects(); } catch { }
+                try { SpellEffects.ClearGlows(); } catch { }
+                try { SpellEffects.ClearMoves(); } catch { }
+            }
+            catch { }
         }
 
         // ── Map event ended (battle result) ───────────────────────────────────
