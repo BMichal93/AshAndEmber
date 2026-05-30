@@ -111,6 +111,7 @@ namespace AshAndEmber
                 MageKnowledge.ResetForNewGame();
                 CampaignMapEvents.ResetForNewGame();
                 SettlementEncounters.ResetForNewGame();
+                DragonQuestSystem.ResetForNewGame();
                 ShowLoreIntro();
             }
             catch { }
@@ -249,6 +250,7 @@ namespace AshAndEmber
                 try { AgingSystem.DailyAgeCheck(); } catch { }
                 try { CampaignMapEvents.DailyTick(); } catch { }
                 try { SettlementEncounters.DailyTick(); } catch { }
+                try { DragonQuestSystem.DailyTick(); } catch { }
                 try { CheckReapPrisonerYield(); } catch { }
                 if (_reapRaidCooldown > 0) _reapRaidCooldown--;
                 try { TickLordAnnouncement(); } catch { }
@@ -297,6 +299,7 @@ namespace AshAndEmber
                 try { ApplyNpcBattleMoraleBonus(mapEvent); } catch { }
                 try { CheckReapRaidYield(mapEvent); } catch { }
                 try { SettlementEncounters.OnMapEventEnded(mapEvent); } catch { }
+                try { DragonQuestSystem.OnMapEventEnded(mapEvent); } catch { }
                 // Refresh snapshot so battle-captured prisoners don't count as discards
                 try { _prisonerCountSnapshot = MobileParty.MainParty?.PrisonRoster?.TotalManCount ?? _prisonerCountSnapshot; } catch { }
             }
@@ -641,6 +644,7 @@ namespace AshAndEmber
             try { FireWorshippersSystem.Save(dataStore); } catch { }
             try { CampaignMapEvents.Save(dataStore); } catch { }
             try { SettlementEncounters.Save(dataStore); } catch { }
+            try { DragonQuestSystem.Save(dataStore); } catch { }
         }
     }
 }

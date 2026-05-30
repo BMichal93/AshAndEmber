@@ -229,6 +229,7 @@ namespace AshAndEmber
         // ── Campaign map casting ───────────────────────────────────────────────
         public static void DailyMapCast()
         {
+            if (DragonQuestSystem.WorldRekindled) return;
             try
             {
                 // Build a single id→hero map so the inner loop is O(1) per lord

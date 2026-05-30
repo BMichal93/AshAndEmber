@@ -124,6 +124,9 @@ namespace AshAndEmber
         /// Each event rolls independently; multiple can fire the same week.
         public static void WeeklyTick()
         {
+            // World events are disabled once the world has been rekindled.
+            if (DragonQuestSystem.WorldRekindled) return;
+
             TryFireAshenPlague();
             TryFireGreatWithering();
             TryFireAshenMarch();

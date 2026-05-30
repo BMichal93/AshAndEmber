@@ -77,6 +77,7 @@
 
   <ItemGroup>
     <Compile Include="MagicSystem.cs"/>
+    <Compile Include="DragonQuestSystem.cs"/>
     <Compile Include="AgingSystem.cs"/>
     <Compile Include="SchoolData.cs"/>
     <Compile Include="SpellDatabase.cs"/>

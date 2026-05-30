@@ -200,7 +200,8 @@ namespace AshAndEmber
                 "  ←  X  ↑  =  Missile (8m range, 2m blast), 25 damage, 1 day  (2 inputs).\n" +
                 "  ←←←  X  ↑↑↑  =  Missile (9m range, 4m blast), 75 damage, 2 days  (6 inputs).\n" +
                 "  ↓  X  ↓↓  =  Burst (2.5m), +30 restore, 1 day  (3 inputs).  Caster also healed.\n" +
-                "  ↑↑  ↓↓  X  ↑  ↓  =  Blast + Burst, damage + restore, 2 days  (6 inputs).";
+                "  ↑↑  ↓↓  X  ↑  ↓  =  Blast + Burst, damage + restore, 2 days  (6 inputs)." +
+                DragonQuestSystem.GetGrimoireSummary();
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
 

@@ -766,6 +766,8 @@ namespace AshAndEmber
         public static void DailyTick()
         {
             if (_ashenClanIds.Count == 0) return;
+            // Once the world is rekindled, the Ashen cease to exist.
+            if (DragonQuestSystem.WorldRekindled) return;
 
             EnsureKingdomAlive();
 
