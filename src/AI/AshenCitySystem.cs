@@ -59,7 +59,22 @@ namespace AshAndEmber
         private static bool     _declaringWar        = false;
         private static bool     _ownershipInitDone   = false;
         private static readonly Random _rng  = new Random();
-        private const  int      AppearanceTickInterval = 30; // re-scan appearance once per month
+        private const  int      AppearanceTickInterval = 30;
+
+        // ── Throttle counters (not saved — reset in Save/Reset) ───────────────
+        // Each counter decrements daily; the operation fires when it reaches 0
+        // and is then reset to its interval. In Save() they are set to their
+        // grace values so heavy actions never run on the first ticks after load.
+        private static int _warThrottle      = 0;  // DeclareWar  — every 5 days
+        private static int _clanThrottle     = 0;  // ClanKingdom — every 3 days
+        private static int _villageThrottle  = 0;  // Villages    — every 7 days
+        private static int _recoveryThrottle = 0;  // Settlement  — every 3 days
+        private static int _prisonerThrottle = 0;  // Prisoners   — every 2 days
+        private const  int WarInterval      = 5;
+        private const  int ClanInterval     = 3;
+        private const  int VillageInterval  = 7;
+        private const  int RecoveryInterval = 3;
+        private const  int PrisonerInterval = 2;
 
         private const int    MinGarrisonCity   = 500;
         private const int    MinGarrisonCastle = 350;
@@ -81,14 +96,19 @@ namespace AshAndEmber
 
         public static void ResetForNewGame()
         {
-            _initialized      = false;
-            _ashenKingdom     = null;
+            _initialized       = false;
+            _ashenKingdom      = null;
             _ownershipInitDone = false;
-            _declaringWar     = false;
+            _declaringWar      = false;
             _ashenClanIds.Clear();
             _settlementClanMap.Clear();
             _conqueredDays.Clear();
             _appearanceDayCounter = 0;
+            _warThrottle      = 0;
+            _clanThrottle     = 0;
+            _villageThrottle  = 0;
+            _recoveryThrottle = 0;
+            _prisonerThrottle = 0;
         }
 
         // ── Initialization ────────────────────────────────────────────────────
@@ -410,6 +430,7 @@ namespace AshAndEmber
         // ownership is already correct, so daily overhead is minimal.
         private static void TickSettlementRecovery()
         {
+            // At most 1 ownership change per call to avoid cascading campaign events.
             foreach (var kvp in _settlementClanMap.ToList())
             {
                 try
@@ -425,7 +446,7 @@ namespace AshAndEmber
                              ?? clan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
                     if (lord == null) continue;
 
-                    ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement);
+                    try { ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement); } catch { }
 
                     // Eject from any foreign kingdom the restoration may have triggered
                     if (clan.Kingdom != null && clan.Kingdom.StringId != AshenKingdomId)
@@ -437,6 +458,8 @@ namespace AshAndEmber
                                 CampaignTime.Now + CampaignTime.Years(1000),
                                 false); }
                         catch { }
+
+                    return; // one recovery per tick — rest handled on subsequent days
                 }
                 catch { }
             }
@@ -526,8 +549,10 @@ namespace AshAndEmber
         private static void TickAshenClanKingdoms()
         {
             if (_ashenKingdom == null || _ashenKingdom.IsEliminated) return;
+            int adjustments = 0;
             foreach (string clanId in _ashenClanIds.ToList())
             {
+                if (adjustments >= 2) break; // at most 2 kingdom actions per tick
                 try
                 {
                     var clan = Clan.All.FirstOrDefault(c => c.StringId == clanId);
@@ -551,6 +576,7 @@ namespace AshAndEmber
                                     false); }
                             catch { }
                     }
+                    adjustments++;
                 }
                 catch { }
             }
@@ -625,6 +651,8 @@ namespace AshAndEmber
         public static void ExecuteAshenPrisoners()
         {
             if (_ashenClanIds.Count == 0) return;
+            // At most 1 heavy action (kill/release/convert) per call to avoid
+            // cascading KillCharacterAction calls on a single daily tick.
             try
             {
                 foreach (Hero hero in Hero.AllAliveHeroes.ToList())
@@ -644,7 +672,6 @@ namespace AshAndEmber
 
                         if (hero == Hero.MainHero)
                         {
-                            // Player captured — queue choice if nothing else is pending
                             if (MageKnowledge._deferredInquiry == null)
                             {
                                 Hero exec = captorParty.LeaderHero;
@@ -657,18 +684,15 @@ namespace AshAndEmber
                         double roll = _rng.NextDouble();
                         if (roll < 0.20)
                         {
-                            // 20% — turn Ashen, then release
                             try { ColourLordRegistry.SetAshen(hero, true); } catch { }
                             try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
                         }
                         else if (roll < 0.60)
                         {
-                            // 40% — flee (released, returns to original faction)
                             try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
                         }
                         else
                         {
-                            // 40% — executed
                             Hero executor = captorParty.LeaderHero
                                          ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
                                                 h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
@@ -676,6 +700,8 @@ namespace AshAndEmber
                             if (executor == null) continue;
                             try { KillCharacterAction.ApplyByExecution(hero, executor); } catch { }
                         }
+
+                        return; // one action per tick — process remaining on next call
                     }
                     catch { }
                 }
@@ -742,19 +768,61 @@ namespace AshAndEmber
             if (_ashenClanIds.Count == 0) return;
 
             EnsureKingdomAlive();
-            TickAshenClanKingdoms();
-            DeclareWarWithAllKingdoms();
+
+            // Decrement throttle counters (only when above zero)
+            if (_clanThrottle     > 0) _clanThrottle--;
+            if (_warThrottle      > 0) _warThrottle--;
+            if (_villageThrottle  > 0) _villageThrottle--;
+            if (_recoveryThrottle > 0) _recoveryThrottle--;
+            if (_prisonerThrottle > 0) _prisonerThrottle--;
+
+            // Clan kingdom enforcement — every ClanInterval days
+            if (_clanThrottle == 0)
+            {
+                TickAshenClanKingdoms();
+                _clanThrottle = ClanInterval;
+            }
+
+            // War declarations — every WarInterval days
+            if (_warThrottle == 0)
+            {
+                DeclareWarWithAllKingdoms();
+                _warThrottle = WarInterval;
+            }
+
+            // One-time ownership initialisation
             if (!_ownershipInitDone)
             {
                 try { InitialiseSettlementOwnership(); } catch { }
                 _ownershipInitDone = true;
             }
+
+            // Fast daily ops (idempotent, low cost)
             RefillGarrisons();
             RefillHeroGold();
-            TickSettlementRecovery();
             MaintainCriminalStatus();
-            TickAshenVillages();
-            ExecuteAshenPrisoners();
+
+            // Settlement recovery — every RecoveryInterval days, max 1 change per tick
+            if (_recoveryThrottle == 0)
+            {
+                TickSettlementRecovery();
+                _recoveryThrottle = RecoveryInterval;
+            }
+
+            // Village loot state — every VillageInterval days
+            if (_villageThrottle == 0)
+            {
+                TickAshenVillages();
+                _villageThrottle = VillageInterval;
+            }
+
+            // Prisoner fate — every PrisonerInterval days, max 1 action per tick
+            if (_prisonerThrottle == 0)
+            {
+                ExecuteAshenPrisoners();
+                _prisonerThrottle = PrisonerInterval;
+            }
+
             if (++_appearanceDayCounter >= AppearanceTickInterval)
             {
                 _appearanceDayCounter = 0;
@@ -849,12 +917,20 @@ namespace AshAndEmber
                 for (int i = 0; i < Math.Min(cKeys.Count, cVals.Count); i++)
                     _conqueredDays[cKeys[i]] = cVals[i];
 
-            // Always clear the Kingdom object reference after load so it is
-            // re-fetched from the live Kingdom.All on the next daily tick.
-            // Keeping a stale reference from a previous game session causes a
-            // native crash when accessing .IsEliminated on the dead object.
+            // Clear Kingdom reference so it is always re-fetched from live
+            // Kingdom.All — stale references from a previous session cause a
+            // native crash when accessing .IsEliminated on a dead object.
             _ashenKingdom  = null;
             _declaringWar  = false;
+
+            // Set grace periods so heavy campaign actions never fire on the
+            // first daily ticks after loading (avoids stacking ChangeOwner /
+            // DeclareWar / KillCharacter calls during game initialization).
+            _warThrottle      = WarInterval      + 2; // first DeclareWar: day 7
+            _clanThrottle     = ClanInterval     + 1; // first ClanKingdom: day 4
+            _villageThrottle  = VillageInterval  + 0; // first Village:    day 7
+            _recoveryThrottle = RecoveryInterval + 1; // first Recovery:   day 4
+            _prisonerThrottle = PrisonerInterval + 5; // first Prisoners:  day 7
         }
     }
 }

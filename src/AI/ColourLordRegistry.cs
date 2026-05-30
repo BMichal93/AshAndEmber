@@ -231,9 +231,15 @@ namespace AshAndEmber
         {
             try
             {
+                // Build a single id→hero map so the inner loop is O(1) per lord
+                // instead of O(n) → avoids O(n²) behaviour with many mage lords.
+                Dictionary<string, Hero> heroById;
+                try { heroById = Hero.AllAliveHeroes.ToDictionary(h => h.StringId, h => h); }
+                catch { return; }
+
                 foreach (string id in _mageIds.ToList())
                 {
-                    Hero hero = Hero.AllAliveHeroes.FirstOrDefault(h => h.StringId == id);
+                    heroById.TryGetValue(id, out Hero hero);
                     if (hero == null || !hero.IsAlive || hero.IsPrisoner) continue;
 
                     bool isBlight = IsAshenLord(hero);

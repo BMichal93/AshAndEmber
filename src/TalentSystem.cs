@@ -674,9 +674,13 @@ namespace AshAndEmber
 
         private static void NpcSubjugate(Hero caster)
         {
-            Vec2 pos = caster.PartyBelongedTo?.GetPosition2D ?? Vec2.Zero;
+            var casterParty   = caster.PartyBelongedTo;
+            var casterFaction = casterParty?.MapFaction;
+            if (casterParty == null || casterFaction == null) return;
+            Vec2 pos = casterParty.GetPosition2D;
             var target = MobileParty.All
-                .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, caster.PartyBelongedTo?.MapFaction)
+                .Where(p => p.IsActive && p.MapFaction != null
+                         && FactionManager.IsAtWarAgainstFaction(p.MapFaction, casterFaction)
                          && p.MemberRoster.TotalRegulars > 3
                          && (p.GetPosition2D - pos).Length < 40f)
                 .OrderBy(p => (p.GetPosition2D - pos).Length).FirstOrDefault();

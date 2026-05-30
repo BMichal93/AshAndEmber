@@ -502,6 +502,21 @@ namespace AshAndEmber
                 var pt = banditClan.DefaultPartyTemplate;
                 if (pt == null) return null;
 
+                // Bannerlord's engine accesses HomeSettlement when the party is defeated
+                // (to scatter survivors back to the lair).  Passing null causes a native
+                // crash when the player clicks "Done" on the post-battle looting screen.
+                // Use the bandit clan's own Hideout component; fall back to the nearest
+                // hideout settlement in the world if the clan has none yet.
+                Hideout hideout = null;
+                try
+                {
+                    Settlement hs = banditClan.Settlements.FirstOrDefault(s => s?.Hideout != null)
+                                 ?? Settlement.All.OrderBy(s => (s.GetPosition2D - anchorPos).Length)
+                                                  .FirstOrDefault(s => s?.Hideout != null);
+                    hideout = hs?.Hideout;
+                }
+                catch { }
+
                 // Scatter spawn point around the anchor (radius ≈ 4 map units)
                 const float scatter = 4f;
                 Vec2 spawnPos = anchorPos + new Vec2(
@@ -511,7 +526,7 @@ namespace AshAndEmber
                 var spawnCVec = new CampaignVec2(spawnPos, true);
 
                 string partyId = "ashen_spawn_evt_" + _rng.Next(999999).ToString("D6");
-                MobileParty party = BanditPartyComponent.CreateBanditParty(partyId, banditClan, null, false, pt, spawnCVec);
+                MobileParty party = BanditPartyComponent.CreateBanditParty(partyId, banditClan, hideout, false, pt, spawnCVec);
                 if (party == null) return null;
 
                 // Prefer sea_raider (matches the Ashen Spawn troop-type check in

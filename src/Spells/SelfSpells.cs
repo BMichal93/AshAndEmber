@@ -108,21 +108,23 @@ namespace AshAndEmber
                     SpawnTempFireParticle(_missile.Position, 0.3f);
             }
 
-            // Hit-detect: explode on close contact with a valid target
+            // Hit-detect: explode on close contact with a valid target.
+            // Direct iteration (no .ToList()) avoids per-frame heap allocation.
             bool wantDmg  = _missile.Cast.DamageCount  > 0;
             bool wantHeal = _missile.Cast.RestoreCount > 0;
+            Vec3 mpos = _missile.Position;
             try
             {
-                foreach (Agent a in Mission.Current.Agents.ToList())
+                foreach (Agent a in Mission.Current.Agents)
                 {
                     if (!a.IsActive() || a.IsMount) continue;
                     bool isEnemy = _missile.CasterTeam != null && a.Team != _missile.CasterTeam;
                     bool isAlly  = _missile.CasterTeam != null && a.Team == _missile.CasterTeam;
                     if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
-                    float dist = new Vec3(a.Position.x - _missile.Position.x,
-                                         a.Position.y - _missile.Position.y, 0f).Length;
-                    if (dist > MissileState.DetectRadius) continue;
-                    ExplodeMissile(_missile.Position);
+                    float dx = a.Position.x - mpos.x;
+                    float dy = a.Position.y - mpos.y;
+                    if (dx * dx + dy * dy > MissileState.DetectRadius * MissileState.DetectRadius) continue;
+                    ExplodeMissile(mpos);
                     return;
                 }
             }
