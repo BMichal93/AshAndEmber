@@ -95,6 +95,7 @@
     <Compile Include="AI\BlightSystem.cs"/>
     <Compile Include="AI\ColourUnitRegistry.cs"/>
     <Compile Include="AI\AshenCitySystem.cs"/>
+    <Compile Include="AI\AshenDialogue.cs"/>
     <Compile Include="AI\FireWorshippersSystem.cs"/>
     <Compile Include="Spells\SpellEffects.cs"/>
     <Compile Include="Spells\BlastSpells.cs"/>

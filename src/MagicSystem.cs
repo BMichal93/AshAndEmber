@@ -40,7 +40,10 @@ namespace AshAndEmber
 
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
+            {
                 campaignStarter.AddBehavior(new MagicCampaignBehavior());
+                AshenDialogue.Register(campaignStarter);
+            }
         }
 
         public override void OnMissionBehaviorInitialize(Mission mission)
