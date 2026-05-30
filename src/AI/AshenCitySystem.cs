@@ -706,7 +706,8 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        if (!hero.IsPrisoner || !hero.IsLord || hero.IsChild) continue;
+                        if (!hero.IsPrisoner || hero.IsChild) continue;
+                        if (hero != Hero.MainHero && !hero.IsLord) continue;
 
                         var captorParty = hero.PartyBelongedToAsPrisoner;
                         if (captorParty == null) continue;
