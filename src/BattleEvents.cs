@@ -36,6 +36,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
+using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
 
 namespace AshAndEmber
@@ -206,9 +207,8 @@ namespace AshAndEmber
             }
 
             if (names.Count > 0)
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "The field is cursed — " + string.Join(", ", names) + ".",
-                    new Color(0.7f, 0.3f, 0.2f)));
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "The field is cursed — " + string.Join(", ", names) + "."));
         }
 
         // ── Event: Cinder Rain ────────────────────────────────────────────────
@@ -274,9 +274,8 @@ namespace AshAndEmber
                                              (float)Math.Sin(angle) * 3f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, TheRisingInterval * 0.7f); } catch { }
             }
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"The Rising — {RisingSpawnCount} more pour from the grey.",
-                new Color(0.5f, 0.3f, 0.5f)));
+            MBInformationManager.AddQuickInformation(new TextObject(
+                $"The Rising — {RisingSpawnCount} more pour from the grey."));
         }
 
         // ── Event: Dread ──────────────────────────────────────────────────────
@@ -302,9 +301,8 @@ namespace AshAndEmber
                 try { SpellEffects.SpawnTempFireParticle(pos, 30f); } catch { }
             }
             if (count > 0)
-                InformationManager.DisplayMessage(new InformationMessage(
-                    $"Dread — something cold passes through {count} fighters. Courage breaks.",
-                    new Color(0.4f, 0.3f, 0.6f)));
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Dread — something cold passes through {count} fighters. Courage breaks."));
         }
 
         // ── Event: Last Light ─────────────────────────────────────────────────
@@ -348,11 +346,10 @@ namespace AshAndEmber
                                              (float)(_rng.NextDouble() - 0.5) * 30f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, 60f); } catch { }
             }
-            InformationManager.DisplayMessage(new InformationMessage(
+            MBInformationManager.AddQuickInformation(new TextObject(
                 $"Last Light — the sun dies. Darkness swallows the field." +
                 (blinded > 0   ? $" {blinded} fighters lose their footing in the dark." : "") +
-                (empowered > 0 ? $" The Ashen rise." : ""),
-                new Color(0.2f, 0.2f, 0.45f)));
+                (empowered > 0 ? $" The Ashen rise." : "")));
         }
 
         // ── Event: Ashen Ground ───────────────────────────────────────────────
@@ -373,9 +370,8 @@ namespace AshAndEmber
             foreach (var pos in dismounted.Take(4))
                 try { SpellEffects.SpawnTempFireParticle(pos, AshenGroundInterval * 0.9f); } catch { }
             if (count > 0)
-                InformationManager.DisplayMessage(new InformationMessage(
-                    $"Ashen Ground — {count} mount{(count != 1 ? "s" : "")} fall. No one rides today.",
-                    new Color(0.55f, 0.4f, 0.2f)));
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Ashen Ground — {count} mount{(count != 1 ? "s" : "")} fall. No one rides today."));
         }
 
         // ── Event: Frenzy ─────────────────────────────────────────────────────
@@ -405,9 +401,8 @@ namespace AshAndEmber
                                              (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, FrenzyInterval * 0.9f); } catch { }
             }
-            InformationManager.DisplayMessage(new InformationMessage(
-                "Frenzy — no one can hold the line. All charge.",
-                new Color(0.8f, 0.3f, 0.1f)));
+            MBInformationManager.AddQuickInformation(new TextObject(
+                "Frenzy — no one can hold the line. All charge."));
         }
 
         // ── Spawn helper ──────────────────────────────────────────────────────

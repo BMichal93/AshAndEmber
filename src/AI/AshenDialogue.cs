@@ -15,22 +15,22 @@ namespace AshAndEmber
             const int P = 200; // higher than vanilla (100) so our lines fire first
 
             // ── Opening and any standard lord sub-state ─────────────────────────
-            starter.AddDialogLine("ashen_start",    "start",        "ashen_done", "...", IsAshenInterlocutor, null, P);
-            starter.AddDialogLine("ashen_pretalk",  "lord_pretalk", "ashen_done", "...", IsAshenInterlocutor, null, P);
+            try { starter.AddDialogLine("ashen_start",    "start",        "ashen_done", "...", IsAshenInterlocutor, null, P); } catch { }
+            try { starter.AddDialogLine("ashen_pretalk",  "lord_pretalk", "ashen_done", "...", IsAshenInterlocutor, null, P); } catch { }
 
             // Player's only available response — also "..."
-            starter.AddPlayerLine("ashen_close",    "ashen_done", "close_window", "...", null, null, P);
+            try { starter.AddPlayerLine("ashen_close",    "ashen_done", "close_window", "...", null, null, P); } catch { }
 
             // ── Barter / tribute / negotiation ─────────────────────────────────
-            starter.AddDialogLine("ashen_barter",   "lord_barter_question", "close_window", "...", IsAshenInterlocutor, null, P);
+            try { starter.AddDialogLine("ashen_barter",   "lord_barter_question", "close_window", "...", IsAshenInterlocutor, null, P); } catch { }
 
             // ── Defeat / surrender offers ───────────────────────────────────────
-            starter.AddDialogLine("ashen_defeat_1", "defeated_lord_start_1", "close_window", "...", IsAshenInterlocutor, null, P);
-            starter.AddDialogLine("ashen_defeat_2", "defeated_lord_start_2", "close_window", "...", IsAshenInterlocutor, null, P);
-            starter.AddDialogLine("ashen_special",  "lord_special_request",  "close_window", "...", IsAshenInterlocutor, null, P);
+            try { starter.AddDialogLine("ashen_defeat_1", "defeated_lord_start_1", "close_window", "...", IsAshenInterlocutor, null, P); } catch { }
+            try { starter.AddDialogLine("ashen_defeat_2", "defeated_lord_start_2", "close_window", "...", IsAshenInterlocutor, null, P); } catch { }
+            try { starter.AddDialogLine("ashen_special",  "lord_special_request",  "close_window", "...", IsAshenInterlocutor, null, P); } catch { }
 
             // ── Prisoner conversation ───────────────────────────────────────────
-            starter.AddDialogLine("ashen_prisoner", "prisoner_chat",         "close_window", "...", IsAshenInterlocutor, null, P);
+            try { starter.AddDialogLine("ashen_prisoner", "prisoner_chat",         "close_window", "...", IsAshenInterlocutor, null, P); } catch { }
         }
 
         private static bool IsAshenInterlocutor()

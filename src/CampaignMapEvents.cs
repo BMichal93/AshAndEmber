@@ -50,6 +50,7 @@ using TaleWorlds.CampaignSystem.Party.PartyComponents;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
 
 namespace AshAndEmber
@@ -114,9 +115,8 @@ namespace AshAndEmber
                 catch { }
 
                 if (_longNightDaysRemaining == 0)
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "Long Night — the sun rises again. The darkness retreats. But the damage lingers.",
-                        new Color(0.85f, 0.75f, 0.35f)));
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "Long Night — the sun rises again. The darkness retreats. But the damage lingers."));
             }
         }
 
@@ -181,11 +181,10 @@ namespace AshAndEmber
                     if (party != null) spawned++;
                 }
 
-                InformationManager.DisplayMessage(new InformationMessage(
+                MBInformationManager.AddQuickInformation(new TextObject(
                     $"Ashen Plague — a grey sickness takes the garrison of {target.Name}. " +
                     $"{totalWounded} soldier{(totalWounded != 1 ? "s" : "")} fall to their wounds." +
-                    (spawned > 0 ? $" {spawned} Ashen Spawn rise from the dying." : ""),
-                    new Color(0.55f, 0.45f, 0.65f)));
+                    (spawned > 0 ? $" {spawned} Ashen Spawn rise from the dying." : "")));
             }
             catch { }
         }
@@ -210,10 +209,9 @@ namespace AshAndEmber
                     float before = target.Village.Hearth;
                     target.Village.Hearth = Math.Max(10f, before * 0.20f);
 
-                    InformationManager.DisplayMessage(new InformationMessage(
+                    MBInformationManager.AddQuickInformation(new TextObject(
                         $"Great Withering — the hearth-fires of {target.Name} gutter and die. " +
-                        $"Hearth: {before:F0} → {target.Village.Hearth:F0}.",
-                        new Color(0.6f, 0.35f, 0.2f)));
+                        $"Hearth: {before:F0} → {target.Village.Hearth:F0}."));
                 }
                 else
                 {
@@ -227,10 +225,9 @@ namespace AshAndEmber
                     float before = target.Town.Prosperity;
                     target.Town.Prosperity = Math.Max(10f, before * 0.50f);
 
-                    InformationManager.DisplayMessage(new InformationMessage(
+                    MBInformationManager.AddQuickInformation(new TextObject(
                         $"Great Withering — something cold and old passes through {target.Name}. " +
-                        $"Prosperity: {before:F0} → {target.Town.Prosperity:F0}.",
-                        new Color(0.6f, 0.35f, 0.2f)));
+                        $"Prosperity: {before:F0} → {target.Town.Prosperity:F0}."));
                 }
             }
             catch { }
@@ -267,10 +264,9 @@ namespace AshAndEmber
                     if (party != null) spawned++;
                 }
 
-                InformationManager.DisplayMessage(new InformationMessage(
+                MBInformationManager.AddQuickInformation(new TextObject(
                     $"Ashen March — {spawned} Ashen Spawn descend upon {kingdom.Name}. " +
-                    "The grey tide does not rest.",
-                    new Color(0.7f, 0.3f, 0.2f)));
+                    "The grey tide does not rest."));
             }
             catch { }
         }
@@ -304,10 +300,9 @@ namespace AshAndEmber
             }
             catch { }
 
-            InformationManager.DisplayMessage(new InformationMessage(
+            MBInformationManager.AddQuickInformation(new TextObject(
                 $"Long Night — the sun does not rise. {LongNightDuration} days of unbroken darkness fall over Calradia. " +
-                (spawned > 0 ? $"Ashen shapes pour from the shadow. {spawned} warbands take the roads." : "Something stirs in the dark."),
-                new Color(0.2f, 0.2f, 0.45f)));
+                (spawned > 0 ? $"Ashen shapes pour from the shadow. {spawned} warbands take the roads." : "Something stirs in the dark.")));
         }
 
         // ── Event 5: Ashen Tide ───────────────────────────────────────────────
@@ -339,10 +334,9 @@ namespace AshAndEmber
 
                 ChangeOwnerOfSettlementAction.ApplyByDefault(lord, castle);
 
-                InformationManager.DisplayMessage(new InformationMessage(
+                MBInformationManager.AddQuickInformation(new TextObject(
                     $"Ashen Tide — {castle.Name} bends to the cold fire. " +
-                    $"{lord.Name} claims it without a blade drawn.",
-                    new Color(0.45f, 0.35f, 0.6f)));
+                    $"{lord.Name} claims it without a blade drawn."));
             }
             catch { }
         }
@@ -407,10 +401,9 @@ namespace AshAndEmber
                     string nameList = killed <= 3
                         ? string.Join(", ", names)
                         : $"{names[0]}, {names[1]}, and {killed - 2} others";
-                    InformationManager.DisplayMessage(new InformationMessage(
+                    MBInformationManager.AddQuickInformation(new TextObject(
                         $"Fire Fades — {nameList} did not wake this morning. " +
-                        "Something ancient and cold moved through the realm in the dark hours. Their hearths grow cold behind them.",
-                        new Color(0.4f, 0.3f, 0.5f)));
+                        "Something ancient and cold moved through the realm in the dark hours. Their hearths grow cold behind them."));
                 }
             }
             catch { }
@@ -472,11 +465,10 @@ namespace AshAndEmber
                     if (p != null) spawned++;
                 }
 
-                InformationManager.DisplayMessage(new InformationMessage(
+                MBInformationManager.AddQuickInformation(new TextObject(
                     $"Darkened Roads — {destroyed} caravan{(destroyed != 1 ? "s" : "")} vanish on the roads of {kingdom.Name}. " +
                     $"Trade dies. Prosperity crumbles. " +
-                    (spawned > 0 ? "Ashen shapes move where merchants once walked." : "The roads fall silent and cold."),
-                    new Color(0.5f, 0.35f, 0.2f)));
+                    (spawned > 0 ? "Ashen shapes move where merchants once walked." : "The roads fall silent and cold.")));
             }
             catch { }
         }

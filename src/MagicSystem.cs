@@ -42,7 +42,7 @@ namespace AshAndEmber
                 gameStarterObject is CampaignGameStarter campaignStarter)
             {
                 campaignStarter.AddBehavior(new MagicCampaignBehavior());
-                AshenDialogue.Register(campaignStarter);
+                try { AshenDialogue.Register(campaignStarter); } catch { }
             }
         }
 

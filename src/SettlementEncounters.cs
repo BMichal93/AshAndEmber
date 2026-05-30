@@ -67,6 +67,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
 
 namespace AshAndEmber
@@ -472,7 +473,7 @@ namespace AshAndEmber
 
         // ── Helpers ───────────────────────────────────────────────────────────
         private static void Msg(string text, Color c)
-            => InformationManager.DisplayMessage(new InformationMessage(text, c));
+            => MBInformationManager.AddQuickInformation(new TextObject(text));
 
         private static void ShiftTrait(TraitObject trait, int delta)
         {
