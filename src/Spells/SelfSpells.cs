@@ -185,6 +185,9 @@ namespace AshAndEmber
             List<Agent> all;
             try { all = Mission.Current.Agents.ToList(); } catch { return; }
 
+            bool wantDmg  = w.Cast.DamageCount  > 0;
+            bool wantHeal = w.Cast.RestoreCount > 0;
+
             var hit = new HashSet<Agent>();
 
             for (int row = 0; row < w.GridSize; row++)
@@ -199,17 +202,15 @@ namespace AshAndEmber
                     // Horizontal distance so mounted riders at elevation are hit correctly
                     float dist = new Vec3(a.Position.x - nodePos.x, a.Position.y - nodePos.y, 0f).Length;
 
-                    // Avoidance: non-hero enemies sidestep the incoming wave.
-                    // Skip for Reversed waves — allies should stay in place to receive heals.
-                    if (!w.Cast.Reversed && !a.IsHero &&
+                    bool isEnemy = w.CasterTeam != null && a.Team != w.CasterTeam;
+                    bool isAlly  = w.CasterTeam != null && a.Team == w.CasterTeam;
+
+                    // Avoidance: non-hero enemies sidestep the incoming wave
+                    if (isEnemy && !a.IsHero &&
                         dist > WaveState.HitRadius && dist < WaveState.HitRadius + 3f)
                         try { NudgeWaveSideStep(w, a); } catch { }
 
-                    // Normal: hit enemies. Reversed: hit allies (heal/pull/boost).
-                    if (w.Cast.Reversed)
-                        { if (w.CasterTeam != null && a.Team != w.CasterTeam) continue; }
-                    else
-                        { if (w.CasterTeam != null && a.Team == w.CasterTeam) continue; }
+                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
                     if (dist > WaveState.HitRadius) continue;
                     if (hit.Contains(a)) continue;
 
@@ -217,7 +218,7 @@ namespace AshAndEmber
                     {
                         if (!IsWarded(a))
                         {
-                            ApplyEffectsToAgent(a, w.Cast, Agent.Main, applyPush: true, applyPull: false);
+                            ApplyEffectsToAgent(a, w.Cast, Agent.Main);
                             SpawnImpactBurst(a.Position, w.Cast.VisualColor, 2.5f);
                         }
                         hit.Add(a);

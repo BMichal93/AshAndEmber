@@ -1,7 +1,5 @@
-﻿// =============================================================================
-// LIFE & DEATH MAGIC — MagicData.cs (SchoolData.cs)
-// Mount & Blade II: Bannerlord Mod  v2.0.0
-// Reflavoured: colour magic → life and death magic, manipulation of life energies.
+// =============================================================================
+// LIFE & DEATH MAGIC — SchoolData.cs
 // =============================================================================
 
 using System.Collections.Generic;
@@ -10,18 +8,18 @@ using TaleWorlds.Library;
 namespace AshAndEmber
 {
     // Visual colour identifiers used by glow / light systems.
-    // Warm, fiery palette: Red/Orange/Yellow/Amber/Ember/Crimson/White.
-    // Green, Blue, Purple are retained as enum values but render as warm colours.
-    // Ashen is an ash-cold variant used only by Ashen mages.
+    // Red = Damage, White = Restore, Orange = both.
+    // Ashen is the cold-fire variant used only by Ashen mages.
+    // Yellow/Blue/Green/Purple are used by NPC area effects.
     public enum ColorSchool
     {
-        Red    = 0,  // Flame  — damage
-        Orange = 1,  // Scorch — damage + morale
-        Yellow = 2,  // Smoulder — morale drain
-        Green  = 3,  // Amber  — morale + push combined
-        Blue   = 4,  // Ember  — push / surge
-        Purple = 5,  // Crimson — push + damage
-        White  = 6,  // Pale Flame — reversal / heal
+        Red    = 0,  // Damage
+        Orange = 1,  // Damage + Restore combined
+        Yellow = 2,  // NPC morale cloud
+        Green  = 3,  // NPC heal zone
+        Blue   = 4,  // NPC barrier
+        Purple = 5,  // Lord caster glow
+        White  = 6,  // Restore / Ward
         Ashen  = 7,  // Ash-cold — Ashen mages only
     }
 
@@ -44,20 +42,19 @@ namespace AshAndEmber
             }
         }
 
-        // Reversed-effect glow: softer, tending toward gold/cream (life returning)
-        // Blight reversed is darker ash
+        // Soft glow for restore/healing — warm cream tones
         public static uint GetReversedGlowColor(ColorSchool base_school)
         {
             switch (base_school)
             {
-                case ColorSchool.Red:    return 0xFFFFCCBBu; // warm cream (healing)
-                case ColorSchool.Orange: return 0xFFFFDDAAu; // pale gold
-                case ColorSchool.Yellow: return 0xFFFFEE99u; // bright warm yellow (kindle)
-                case ColorSchool.Green:  return 0xFFFFCCAAu; // pale amber
-                case ColorSchool.Blue:   return 0xFFFFDD88u; // gold-draw
-                case ColorSchool.Purple: return 0xFFCC8844u; // bronze
+                case ColorSchool.Red:    return 0xFFFFCCBBu;
+                case ColorSchool.Orange: return 0xFFFFDDAAu;
+                case ColorSchool.Yellow: return 0xFFFFEE99u;
+                case ColorSchool.Green:  return 0xFFFFCCAAu;
+                case ColorSchool.Blue:   return 0xFFFFDD88u;
+                case ColorSchool.Purple: return 0xFFCC8844u;
                 case ColorSchool.White:  return 0xFFFFFFEEu;
-                case ColorSchool.Ashen:  return 0xFF2A3340u; // deep cold ash
+                case ColorSchool.Ashen:  return 0xFF2A3340u;
                 default:                 return 0xFFFFEEDDu;
             }
         }
@@ -78,34 +75,26 @@ namespace AshAndEmber
             }
         }
 
-        // Compute display colour from effect mix
-        public static ColorSchool ComputeEffectColor(int damageCount, int pushCount, int moraleCount, bool reversed)
+        // Compute display colour from the two effect types
+        public static ColorSchool ComputeEffectColor(int damageCount, int restoreCount)
         {
-            bool hasDmg    = damageCount > 0;
-            bool hasPush   = pushCount   > 0;
-            bool hasMorale = moraleCount > 0;
-
-            if (hasDmg && hasMorale && !hasPush)       return ColorSchool.Orange;
-            if (hasPush && hasDmg   && !hasMorale)     return ColorSchool.Purple;
-            if (hasPush && hasMorale && !hasDmg)       return ColorSchool.Green;
-            if (hasDmg)                                return ColorSchool.Red;
-            if (hasPush)                               return ColorSchool.Blue;
-            if (hasMorale)                             return ColorSchool.Yellow;
-            return ColorSchool.White;
+            if (damageCount > 0 && restoreCount > 0) return ColorSchool.Orange;
+            if (damageCount > 0)  return ColorSchool.Red;
+            if (restoreCount > 0) return ColorSchool.White;
+            return ColorSchool.Red;
         }
 
-        // Flavour name used in display strings
         public static string GetEffectName(ColorSchool school)
         {
             switch (school)
             {
                 case ColorSchool.Red:    return "Flame";
-                case ColorSchool.Orange: return "Scorch";
+                case ColorSchool.Orange: return "Kindle";
                 case ColorSchool.Yellow: return "Smoulder";
-                case ColorSchool.Green:  return "Ember Surge";
+                case ColorSchool.Green:  return "Ember";
                 case ColorSchool.Blue:   return "Surge";
                 case ColorSchool.Purple: return "Cinder";
-                case ColorSchool.White:  return "Kindle";
+                case ColorSchool.White:  return "Restore";
                 case ColorSchool.Ashen:  return "Ash";
                 default:                 return "Fire";
             }

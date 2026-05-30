@@ -48,13 +48,11 @@ namespace AshAndEmber
         /// <summary>
         /// Battle spell aging cost: 1 day per 2 inputs (round up, min 1).
         /// BattleMage talent subtracts 1 from the total cost (minimum 0).
-        /// Examples: 2 inputs = 1 day | 4 inputs = 2 days | 6 inputs = 3 days
+        /// Examples: 1-3 inputs = 1 day | 4+ inputs = 2 days (max 2)
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
-            // Divide by 2 (round up, min 1) so the player ages at roughly twice the NPC rate
-            // rather than 4× — 4 inputs = 2 days, 6 inputs = 3 days, etc.
-            int cost = Math.Max(1, (totalInputs + 1) / 2);
+            int cost = totalInputs <= 3 ? 1 : 2;
             if (hasBattleMageTalent) cost = Math.Max(0, cost - 1);
             return cost;
         }

@@ -41,6 +41,12 @@ namespace AshAndEmber
             TalentId.Clairvoyance, TalentId.Curse,
         };
 
+        private static readonly TalentId[] DamageEnchantments =
+            { TalentId.Scatter, TalentId.Smoulder, TalentId.Bewilder };
+
+        private static readonly TalentId[] RestoreEnchantments =
+            { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight };
+
         // ── Public API ────────────────────────────────────────────────────────
         public static bool IsColourLord(Hero hero) =>
             hero != null && _mageIds.Contains(hero.StringId);
@@ -84,6 +90,12 @@ namespace AshAndEmber
                     if (!current.Contains((int)t))
                         current.Add((int)t);
                 }
+                // Ashen lords always have Scatter (cold fire flings enemies away)
+                if (!current.Contains((int)TalentId.Scatter))
+                    current.Add((int)TalentId.Scatter);
+                // 50% chance of also gaining Smoulder (terror-through-morale drain)
+                if (_rng.Next(2) == 0 && !current.Contains((int)TalentId.Smoulder))
+                    current.Add((int)TalentId.Smoulder);
             }
             else
             {
@@ -136,6 +148,14 @@ namespace AshAndEmber
 
             // 20% chance of DevourLife
             if (_rng.Next(100) < 20) assigned.Add((int)TalentId.DevourLife);
+
+            // 30% chance for a damage enchantment
+            if (_rng.Next(100) < 30)
+                assigned.Add((int)DamageEnchantments[_rng.Next(DamageEnchantments.Length)]);
+
+            // 30% chance for a restore enchantment
+            if (_rng.Next(100) < 30)
+                assigned.Add((int)RestoreEnchantments[_rng.Next(RestoreEnchantments.Length)]);
 
             _lordTalents[heroId] = assigned;
         }

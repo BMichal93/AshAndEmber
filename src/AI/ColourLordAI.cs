@@ -1,7 +1,8 @@
-﻿// =============================================================================
+// =============================================================================
 // LIFE & DEATH MAGIC — AI/ColourLordAI.cs
 // NPC mage battle AI. Uses SpellEffects.ExecuteNpcBlast/ExecuteNpcBurst with
 // pre-prepared SpellCast recipes. Impulsive lords cast more, Calculating less.
+// Enchantment talents are applied automatically by ApplyEffectsToAgent.
 // Tracks casts per battle for post-battle aging.
 // =============================================================================
 
@@ -143,7 +144,7 @@ namespace AshAndEmber
             // 1. Heal when badly hurt
             if (hpPct < 0.30f)
             {
-                CastHealZone(agent, hero);
+                CastHealBurst(agent, hero);
                 return;
             }
 
@@ -152,70 +153,61 @@ namespace AshAndEmber
                                          && a.Position.Distance(agent.Position) <= 15f);
             if (allyHurt)
             {
-                CastHealZone(agent, hero);
+                CastHealBurst(agent, hero);
                 return;
             }
 
             if (nearEnemies == 0 && !isAshen) return;
 
-            // 3. Choose attack recipe.
-            // Spell parameters: (formCount, dmg, push, morale) — every press costs 1 day.
+            // 3. Choose attack recipe
             // Ashen lords use a wider die (d6) and cast more aggressively.
-            // NPC post-battle aging = accumulated inputs / 3 (averaged across casts).
             int roll = isAshen ? _rng.Next(6) : _rng.Next(4);
             if (closeEnemies >= 3)
             {
                 // Surrounded — use Burst to clear space
-                if (roll < 2)
-                    CastBurst(agent, hero, 2, 0, 2, 0, false);  // 4 inputs: push-burst
-                else if (roll < 4)
-                    CastBurst(agent, hero, 2, 2, 0, 0, false);  // 4 inputs: damage-burst
-                else if (isAshen)
-                    CastBurst(agent, hero, 3, 2, 1, 0, false);  // 6 inputs: Ashen heavy burst
+                if (roll < 3 || !isAshen)
+                    CastBurst(agent, hero, 2, 2, 0);  // 4 inputs: damage burst
                 else
-                    CastBurst(agent, hero, 2, 2, 0, 0, false);  // 4 inputs: damage-burst
+                    CastBurst(agent, hero, 3, 3, 0);  // 6 inputs: Ashen heavy burst
             }
             else
             {
-                // Cone or open field — use dot 0.65 to match actual blast geometry;
-                // range matches max blast distance for each tier (formCount*2.5f + buffer)
                 float blastDetectRange = isAshen ? 8f : 6f;
                 int coneCount = SpellEffects.CountEnemiesInCone(agent, blastDetectRange, 0.65f);
                 if (coneCount >= 1)
                 {
                     if (roll == 0)
-                        CastBlast(agent, hero, 2, 2, 0, 0, false); // 4 inputs: flame blast
+                        CastBlast(agent, hero, 2, 2, 0); // 4 inputs: solid blast
                     else if (roll == 1)
-                        CastBlast(agent, hero, 2, 0, 0, 2, false); // 4 inputs: morale blast
+                        CastBlast(agent, hero, 2, 1, 0); // 3 inputs: light blast
                     else if (roll == 2)
-                        CastBlast(agent, hero, 2, 0, 1, 0, false); // 3 inputs: push blast
+                        CastBurst(agent, hero, 2, 2, 0); // 4 inputs: damage burst
                     else if (roll == 3)
-                        CastBurst(agent, hero, 2, 1, 0, 1, false); // 4 inputs: flame+morale burst
+                        CastBlast(agent, hero, 2, 2, 0); // 4 inputs: solid blast
                     else if (roll == 4 && isAshen)
-                        CastBlast(agent, hero, 3, 3, 0, 0, false); // 6 inputs: Ashen devastate
+                        CastBlast(agent, hero, 3, 3, 0); // 6 inputs: Ashen devastate
                     else
-                        CastBlast(agent, hero, 3, 0, 0, 3, false); // 6 inputs: Ashen mass fear
+                        CastBurst(agent, hero, 3, 3, 0); // 6 inputs: Ashen mass burst
                 }
                 else if (isAshen)
                 {
-                    CastBurst(agent, hero, 2, 0, 0, 3, false);     // 5 inputs: morale drain
+                    CastBurst(agent, hero, 2, 2, 0); // 4 inputs: area pressure
                 }
                 else
                 {
-                    CastBurst(agent, hero, 2, 0, 0, 1, false);     // 3 inputs: light morale burst
+                    CastBurst(agent, hero, 2, 1, 0); // 3 inputs: light burst
                 }
             }
         }
 
-        private static void CastBlast(Agent agent, Hero hero,
-            int formCount, int dmg, int push, int morale, bool reversed)
+        private static void CastBlast(Agent agent, Hero hero, int formCount, int dmg, int restore)
         {
             try
             {
-                SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, push, morale, reversed, agent.Team);
+                SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, restore, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero, formCount + dmg + push + morale + (reversed ? 1 : 0));
+                RecordCast(hero, formCount + dmg + restore);
 
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
@@ -226,15 +218,14 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void CastBurst(Agent agent, Hero hero,
-            int formCount, int dmg, int push, int morale, bool reversed)
+        private static void CastBurst(Agent agent, Hero hero, int formCount, int dmg, int restore)
         {
             try
             {
-                SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, push, morale, reversed, agent.Team);
+                SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, restore, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero, formCount + dmg + push + morale + (reversed ? 1 : 0));
+                RecordCast(hero, formCount + dmg + restore);
 
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
@@ -268,14 +259,15 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void CastHealZone(Agent agent, Hero hero)
+        private static void CastHealBurst(Agent agent, Hero hero)
         {
             try
             {
-                SpellEffects.SpawnNpcHealZone(agent.Position, ColorSchool.Green, 1f, agent.Team);
+                // Restore burst — heals caster and nearby allies; enchantments apply automatically
+                SpellEffects.ExecuteNpcBurst(agent, 2, 0, 2, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero, 2);
+                RecordCast(hero, 4);
                 AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
             }
             catch { }

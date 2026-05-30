@@ -1,8 +1,7 @@
-﻿// =============================================================================
+// =============================================================================
 // LIFE & DEATH MAGIC — BlastSpells.cs
 // BLAST FORM: forward cone, 2.5m range per U input, ~49° half-angle (dot 0.65).
-// Effects are applied to all agents in the cone regardless of team.
-// Player: enemies only; NPC version accepts a casterTeam parameter.
+// Hits enemies when DamageCount > 0, allies when RestoreCount > 0.
 // =============================================================================
 
 using System;
@@ -31,22 +30,23 @@ namespace AshAndEmber
             int blastCnt = cast.BlastCount > 0 ? cast.BlastCount : cast.FormCount;
             float range = Math.Max(4f, blastCnt * 2.5f);
             Vec3  fwd   = caster.LookDirection.NormalizedCopy();
-            // Project forward vector to horizontal for cone test — vertical pitch would otherwise
+            // Project forward vector to horizontal — vertical pitch would otherwise
             // shrink the apparent cone angle when looking slightly up or down.
             Vec3  fwdH  = new Vec3(fwd.x, fwd.y, 0f);
             if (fwdH.Length > 0.01f) fwdH = fwdH.NormalizedCopy();
 
-            // Gather targets — enemies normally; allies when Reversed (heals/pulls/boosts)
+            bool wantDmg  = cast.DamageCount  > 0;
+            bool wantHeal = cast.RestoreCount > 0;
+
             var targets = new List<Agent>();
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
-                    if (cast.Reversed)
-                        { if (casterTeam != null && a.Team != casterTeam) continue; } // reversed: allies only
-                    else
-                        { if (casterTeam != null && a.Team == casterTeam) continue; } // normal: enemies only
+                    bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
+                    bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
+                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
                     // Horizontal range check so mounted riders at elevation are not missed.
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > range) continue;
@@ -75,7 +75,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    ApplyEffectsToAgent(a, cast, caster, applyPush: true, applyPull: true);
+                    ApplyEffectsToAgent(a, cast, caster);
                     SpawnImpactBurst(a.Position, glowColor, 5f);
                     affected++;
                 }

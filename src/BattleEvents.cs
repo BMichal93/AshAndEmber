@@ -56,16 +56,16 @@ namespace AshAndEmber
 
         public const float CinderRainInterval  = 20f;   // seconds between damage ticks
         public const float EmberTitheInterval  = 20f;
-        public const float TheRisingInterval   = 30f;
+        public const float TheRisingInterval   = 20f;
         public const float AshenGroundInterval = 20f;
         public const float FrenzyInterval      = 20f;
 
         // One-shot events fire this many seconds after battle start
         public const float OneShotDelay        = 5f;
 
-        public const float PeriodicDamage      = 5f;    // HP per Cinder Rain / Ember Tithe tick
+        public const float PeriodicDamage      = 15f;   // HP per Cinder Rain / Ember Tithe tick
         public const float DreadMoralePenalty  = 30f;   // morale removed by Dread
-        public const int   RisingSpawnCount    = 4;     // units per Rising tick
+        public const int   RisingSpawnCount    = 6;     // units per Rising tick
 
         // ── Per-battle state ──────────────────────────────────────────────────
         private static bool                  _initialized = false;
@@ -235,7 +235,8 @@ namespace AshAndEmber
         }
 
         // ── Event: Ember Tithe ────────────────────────────────────────────────
-        // All Ashen agents take PeriodicDamage HP of damage.
+        // All Ashen agents take PeriodicDamage HP of damage but gain +10 morale
+        // (the ritual price they embrace fuels their resolve).
         private static void FireEmberTithe()
         {
             if (Mission.Current == null) return;
@@ -245,6 +246,8 @@ namespace AshAndEmber
                 if (!agent.IsActive() || agent.IsMount) continue;
                 if (!IsAshenAgent(agent)) continue;
                 SpellEffects.DamageAgent(agent, PeriodicDamage);
+                // The Ashen embrace the tithe — pain fuels their resolve
+                try { agent.SetMorale(Math.Min(100f, agent.GetMorale() + 10f)); } catch { }
                 victims.Add(agent);
             }
             for (int i = 0; i < Math.Min(3, victims.Count); i++)
@@ -305,12 +308,38 @@ namespace AshAndEmber
         }
 
         // ── Event: Last Light ─────────────────────────────────────────────────
-        // Sets scene time-of-day to midnight. Fires once.
+        // Sets scene time-of-day to midnight, drains morale from non-Ashen
+        // agents and boosts Ashen agents. Fires once.
         // NOTE: Scene.TimeOfDay setter API varies by Bannerlord version;
         //       wrapped in try/catch so a missing API fails silently.
         private static void FireLastLight()
         {
             try { Mission.Current.Scene.TimeOfDay = 23f; } catch { }
+
+            int blinded = 0;
+            int empowered = 0;
+            if (Mission.Current != null)
+            {
+                foreach (var agent in Mission.Current.Agents.ToList())
+                {
+                    if (!agent.IsActive() || agent.IsMount) continue;
+                    try
+                    {
+                        if (IsAshenAgent(agent))
+                        {
+                            agent.SetMorale(Math.Min(100f, agent.GetMorale() + 15f));
+                            empowered++;
+                        }
+                        else
+                        {
+                            agent.SetMorale(Math.Max(0f, agent.GetMorale() - 20f));
+                            blinded++;
+                        }
+                    }
+                    catch { }
+                }
+            }
+
             // A cluster of fires lights up the sudden darkness
             Vec3 centre = GetFieldCentre();
             for (int i = 0; i < 6; i++)
@@ -320,7 +349,9 @@ namespace AshAndEmber
                 try { SpellEffects.SpawnTempFireParticle(pos, 60f); } catch { }
             }
             InformationManager.DisplayMessage(new InformationMessage(
-                "Last Light — the sun dies. Darkness falls over the field.",
+                $"Last Light — the sun dies. Darkness swallows the field." +
+                (blinded > 0   ? $" {blinded} fighters lose their footing in the dark." : "") +
+                (empowered > 0 ? $" The Ashen rise." : ""),
                 new Color(0.2f, 0.2f, 0.45f)));
         }
 

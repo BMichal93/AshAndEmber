@@ -41,6 +41,7 @@
 // =============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
@@ -97,7 +98,26 @@ namespace AshAndEmber
         public static void DailyTick()
         {
             if (_longNightDaysRemaining > 0)
+            {
                 _longNightDaysRemaining--;
+
+                // Each day of Long Night bleeds prosperity from every town not under Ashen rule
+                try
+                {
+                    foreach (var s in Settlement.All)
+                    {
+                        if (!s.IsTown || s.Town == null) continue;
+                        if (s.MapFaction?.StringId == AshenKingdomId) continue;
+                        s.Town.Prosperity = Math.Max(10f, s.Town.Prosperity - 6f);
+                    }
+                }
+                catch { }
+
+                if (_longNightDaysRemaining == 0)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "Long Night — the sun rises again. The darkness retreats. But the damage lingers.",
+                        new Color(0.85f, 0.75f, 0.35f)));
+            }
         }
 
         /// Called from CampaignBehavior.OnWeeklyTick().
@@ -262,13 +282,31 @@ namespace AshAndEmber
         // Will not stack: skips if a Long Night is already in progress.
         private static void TryFireLongNight()
         {
-            if (_longNightDaysRemaining > 0) return; // already active — do not stack
+            if (_longNightDaysRemaining > 0) return;
             if (_rng.NextDouble() >= ChanceLongNight) return;
 
             _longNightDaysRemaining = LongNightDuration;
 
+            // Spawn Ashen parties that emerge from the darkness
+            int spawned = 0;
+            try
+            {
+                var anchors = Settlement.All
+                    .Where(s => s.IsTown && s.MapFaction?.StringId != AshenKingdomId)
+                    .Select(s => s.GetPosition2D)
+                    .ToList();
+                for (int i = 0; i < 3 && anchors.Count > 0; i++)
+                {
+                    var pos = anchors[_rng.Next(anchors.Count)];
+                    var party = SpawnAshenSpawnParty(pos, 14, 50f);
+                    if (party != null) spawned++;
+                }
+            }
+            catch { }
+
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Long Night — the sun does not rise. {LongNightDuration} days of unbroken darkness descend.",
+                $"Long Night — the sun does not rise. {LongNightDuration} days of unbroken darkness fall over Calradia. " +
+                (spawned > 0 ? $"Ashen shapes pour from the shadow. {spawned} warbands take the roads." : "Something stirs in the dark."),
                 new Color(0.2f, 0.2f, 0.45f)));
         }
 
@@ -310,8 +348,9 @@ namespace AshAndEmber
         }
 
         // ── Event 6: Fire Fades ───────────────────────────────────────────────
-        // Half of all non-Ashen lords under 18 who are NOT clan leaders are
-        // killed. Player hero is always spared.
+        // 2–4 non-Ashen lords aged 25–55 who are NOT clan leaders are killed.
+        // Player hero is always spared. Their home settlement also loses
+        // hearth/prosperity as their fire fades from that place too.
         //
         // Safety constraints:
         //   • !IsChild  — Bannerlord's ApplyByOldAge/succession code is not safe
@@ -327,40 +366,63 @@ namespace AshAndEmber
             {
                 var candidates = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive
-                             && !h.IsChild                          // skip engine-flagged children
-                             && h.Age < 18f
-                             && (h.Clan == null || h.Clan.Leader != h) // skip clan leaders
+                             && !h.IsChild
+                             && h.Age >= 25f && h.Age < 56f
+                             && (h.Clan == null || h.Clan.Leader != h)
                              && h != Hero.MainHero
                              && !ColourLordRegistry.IsAshenLord(h))
                     .ToList();
                 if (candidates.Count == 0) return;
 
+                // Choose 2–4 victims deliberately rather than random 50% of a small pool
+                int targetCount = Math.Min(candidates.Count, 2 + _rng.Next(3));
+                var chosen = candidates.OrderBy(_ => _rng.Next()).Take(targetCount).ToList();
+
+                var names = new List<string>();
                 int killed = 0;
-                foreach (var hero in candidates)
+                foreach (var hero in chosen)
                 {
-                    if (_rng.Next(2) == 0) continue; // 50% survive
                     try
                     {
+                        // The fire fades from their home too
+                        try
+                        {
+                            var home = hero.HomeSettlement ?? hero.Clan?.HomeSettlement;
+                            if (home?.Village != null)
+                                home.Village.Hearth = Math.Max(10f, home.Village.Hearth * 0.70f);
+                            else if (home?.IsTown == true && home.Town != null)
+                                home.Town.Prosperity = Math.Max(10f, home.Town.Prosperity * 0.85f);
+                        }
+                        catch { }
+
                         KillCharacterAction.ApplyByMurder(hero, null, false);
+                        names.Add(hero.Name.ToString());
                         killed++;
                     }
                     catch { }
                 }
 
                 if (killed > 0)
+                {
+                    string nameList = killed <= 3
+                        ? string.Join(", ", names)
+                        : $"{names[0]}, {names[1]}, and {killed - 2} others";
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"Fire Fades — {killed} young lord{(killed != 1 ? "s" : "")} did not wake this morning. " +
-                        "Something ancient has moved through the realm.",
+                        $"Fire Fades — {nameList} did not wake this morning. " +
+                        "Something ancient and cold moved through the realm in the dark hours. Their hearths grow cold behind them.",
                         new Color(0.4f, 0.3f, 0.5f)));
+                }
             }
             catch { }
         }
 
         // ── Event 7: Darkened Roads ───────────────────────────────────────────
         // All caravans operating in a random non-Ashen kingdom are destroyed.
-        // Uses DestroyPartyAction which is the
-        // clean campaign-system way to remove a mobile party; the owning merchant
-        // heroes survive and may rebuild their caravans later.
+        // Also drains 15% prosperity from every town in the kingdom and spawns
+        // 2 Ashen ambush parties to fill the vacuum. Skips if no caravans exist.
+        // Uses DestroyPartyAction which is the clean campaign-system way to
+        // remove a mobile party; the owning merchant heroes survive and may
+        // rebuild their caravans later.
         private static void TryFireDarkenedRoads()
         {
             if (_rng.NextDouble() >= ChanceDarkenedRoads) return;
@@ -373,28 +435,48 @@ namespace AshAndEmber
 
                 var kingdom = kingdoms[_rng.Next(kingdoms.Count)];
 
-                // Collect all active caravans whose faction is this kingdom
+                // Destroy all active caravans in the kingdom
                 var caravans = MobileParty.All
                     .Where(p => p.IsActive && p.IsCaravan && p.MapFaction == kingdom)
                     .ToList();
-                if (caravans.Count == 0) return;
+                if (caravans.Count == 0) return; // no caravans = nothing dramatic to destroy
 
                 int destroyed = 0;
                 foreach (var caravan in caravans)
                 {
-                    try
-                    {
-                        DestroyPartyAction.Apply(caravan.Party, null);
-                        destroyed++;
-                    }
+                    try { DestroyPartyAction.Apply(caravan.Party, null); destroyed++; }
                     catch { }
                 }
 
-                if (destroyed > 0)
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"Darkened Roads — {destroyed} caravan{(destroyed != 1 ? "s" : "")} " +
-                        $"vanish on the roads of {kingdom.Name}. Nothing is found of them.",
-                        new Color(0.5f, 0.35f, 0.2f)));
+                // Trade collapse — every town in the kingdom loses 15% prosperity
+                try
+                {
+                    foreach (var s in Settlement.All)
+                    {
+                        if (!s.IsTown || s.Town == null || s.MapFaction != kingdom) continue;
+                        s.Town.Prosperity = Math.Max(10f, s.Town.Prosperity * 0.85f);
+                    }
+                }
+                catch { }
+
+                // Ashen spawn move in to fill the vacuum
+                var anchors = Settlement.All
+                    .Where(s => (s.IsTown || s.IsCastle) && s.MapFaction == kingdom)
+                    .Select(s => s.GetPosition2D)
+                    .ToList();
+                int spawned = 0;
+                for (int i = 0; i < 2 && anchors.Count > 0; i++)
+                {
+                    var pos = anchors[_rng.Next(anchors.Count)];
+                    var p = SpawnAshenSpawnParty(pos, 14, 50f);
+                    if (p != null) spawned++;
+                }
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Darkened Roads — {destroyed} caravan{(destroyed != 1 ? "s" : "")} vanish on the roads of {kingdom.Name}. " +
+                    $"Trade dies. Prosperity crumbles. " +
+                    (spawned > 0 ? "Ashen shapes move where merchants once walked." : "The roads fall silent and cold."),
+                    new Color(0.5f, 0.35f, 0.2f)));
             }
             catch { }
         }

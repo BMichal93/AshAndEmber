@@ -184,26 +184,26 @@ namespace AshAndEmber
                 "  ↑  Blast   — forward cone, 2.5m per ↑\n" +
                 "  ←  Wave    — 3×3 fire grid, +2m per ←, +1 size per 5←\n" +
                 "  →  Barrier — wall of nodes, 1 per →; cast again to release\n" +
-                "  ↓  Burst   — circle around self, 2.5m radius per ↓\n\n" +
+                "  ↓  Burst   — circle around self, 2.5m radius per ↓; also heals caster\n\n" +
                 "Effects  (after Break)\n" +
-                "  ↑  Flame     — 25 damage per ↑\n" +
-                "  ←  Surge     — 6m push per ←  (+5 kinetic damage per ←)\n" +
-                "  →  Smoulder  — 15 morale lost per →  (+8 side damage per →)\n" +
-                "  ↓  Reverse   — flips all effects (heal / pull / morale boost)\n\n" +
-                "Combined fires\n" +
-                "  Flame+Smoulder = Scorch  |  Surge+Flame = Cinder  |  Smoulder+Surge = Ember Surge\n\n" +
+                "  ↑  Damage  — 25 fire damage per ↑, hits enemies\n" +
+                "  ↓  Restore — 15 healing per ↓, heals allies\n\n" +
+                "Enchantments  (talent side-effects added automatically to Damage or Restore)\n" +
+                "  Damage enchantments:   Scatter · Smoulder · Bewilder\n" +
+                "  Restore enchantments:  Ashveil · Cinder Shell · Hearthlight\n\n" +
                 "Sigil  (no Break needed, repeat to expand)\n" +
-                "  ↓↓         Ward — self only,        1 day\n" +
-                "  ↓↓↓        Ward — 2m radius,        2 days\n" +
-                "  ↓↓↓↓       Ward — 4m radius,        3 days\n\n" +
-                "Burning cost  (every 2 inputs cost 1 day, rounded up)\n" +
-                "  2 inputs = 1 day  |  4 inputs = 2 days  |  6 inputs = 3 days  |  …\n" +
+                "  ↓↓         Ward — self only,   1 day\n" +
+                "  ↓↓↓        Ward — 2m radius,   2 days\n" +
+                "  ↓↓↓↓       Ward — 4m radius,   3 days\n\n" +
+                "Burning cost  (every 2 inputs = 1 day, max 2 days)\n" +
+                "  1-3 inputs = 1 day  |  4+ inputs = 2 days\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost − 1 day (minimum 0).\n" : "") +
                 ashenNote +
                 "\nExample\n" +
-                "  ↑  X  ↑  =  Blast (2.5m), 25 flame, 2 days  (2 inputs).\n" +
-                "  ↑↑↑  X  ↑↑↑  =  Blast (7.5m), 75 flame, 6 days  (6 inputs).\n" +
-                "  ↑↑  ↓↓  X  ↑↑  =  Blast (5m) + Burst (5m) + 50 flame, 6 days  (6 inputs).";
+                "  ↑  X  ↑  =  Blast (2.5m), 25 damage, 1 day  (2 inputs).\n" +
+                "  ↑↑↑  X  ↑↑↑  =  Blast (7.5m), 75 damage, 2 days  (6 inputs).\n" +
+                "  ↓  X  ↓↓  =  Burst (2.5m), +30 restore, 1 day  (3 inputs).  Caster also healed.\n" +
+                "  ↑↑  ↓↓  X  ↑  ↓  =  Blast + Burst, damage + restore, 2 days  (6 inputs).";
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
 
@@ -288,23 +288,43 @@ namespace AshAndEmber
             int cost = TalentSystem.PurchaseCost();
             string costStr = $"{cost} focus point{(cost != 1 ? "s" : "")}";
 
-            var elements = all.Select(d =>
+            var elements = new List<InquiryElement>();
+
+            TalentCategory? lastCategory = null;
+            foreach (var d in all)
             {
+                // Insert a disabled separator when the category changes
+                if (d.Category != lastCategory)
+                {
+                    lastCategory = d.Category;
+                    string header = d.Category switch
+                    {
+                        TalentCategory.Passive     => "─── Passive ───",
+                        TalentCategory.Enchantment => "─── Enchantment ───",
+                        TalentCategory.Spell       => "─── Spell ───",
+                        _                          => "───────────",
+                    };
+                    // Negative identifier marks non-selectable separator rows
+                    elements.Add(new InquiryElement(-(int)d.Category - 1, header, null, false, ""));
+                }
+
                 bool   owned = TalentSystem.Has(d.Id);
-                string icon  = d.IsSpell ? "✦" : "◆";
-                string tag   = d.IsSpell ? "spell" : "passive";
+                string icon  = d.Category == TalentCategory.Spell       ? "✦"
+                             : d.Category == TalentCategory.Enchantment  ? "❋"
+                             :                                              "◆";
+                string tag   = d.Category.ToString().ToLowerInvariant();
                 string check = owned ? "✓ " : "   ";
                 string label = $"{check}{icon}  {d.Name}   [{tag}]";
                 string hint  = $"【 {d.Name} 】  {tag}\n\n" +
                                $"{d.MechanicDesc}\n\n" +
                                $"{d.Lore}\n\n" +
                                (owned ? "— Already known —" : $"Cost: {costStr}");
-                return new InquiryElement((int)d.Id, label, null, !owned, hint);
-            }).ToList();
+                elements.Add(new InquiryElement((int)d.Id, label, null, !owned, hint));
+            }
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "Talents  —  The Inner Fire",
-                $"✦ = spell   ◆ = passive   Cost: {costStr} each. Gift is free.",
+                $"✦ = spell   ❋ = enchantment   ◆ = passive   Cost: {costStr} each.",
                 elements,
                 true, 0, 1,
                 "Learn", "Close",
@@ -312,8 +332,9 @@ namespace AshAndEmber
                 {
                     if (chosen?.Count > 0)
                     {
-                        var id = (TalentId)(int)chosen[0].Identifier;
-                        _deferredInquiry = () => TalentSystem.TryPurchase(id, Hero.MainHero);
+                        int id = (int)chosen[0].Identifier;
+                        if (id < 0) return; // separator row — ignore
+                        _deferredInquiry = () => TalentSystem.TryPurchase((TalentId)id, Hero.MainHero);
                     }
                 },
                 null, "", false

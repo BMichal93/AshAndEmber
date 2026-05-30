@@ -3,10 +3,10 @@
 // Two-phase input: form keys before Break, effect keys after Break.
 //
 // KEYS (while holding Left Alt / LB):
-//   W = U (form: Blast / effect: Damage)
-//   A = L (form: Aura  / effect: Push)
-//   D = R (form: Barrier / effect: Morale)
-//   S = D (form: Burst / effect: Reverse)
+//   W = U (form: Blast  / effect: Damage)
+//   A = L (form: Wave   / effect: — ignored)
+//   D = R (form: Barrier / effect: — ignored)
+//   S = D (form: Burst  / effect: Restore)
 //   X = Break (keyboard, while form buffer has input)
 //   L3 click = Break (gamepad)
 //   X = Spellbook (keyboard, while form buffer is empty)
@@ -91,9 +91,8 @@ namespace AshAndEmber
                     else
                     {
                         if (Input.IsKeyPressed(InputKey.W)) AppendEffect("U");
-                        else if (Input.IsKeyPressed(InputKey.A)) AppendEffect("L");
-                        else if (Input.IsKeyPressed(InputKey.D)) AppendEffect("R");
                         else if (Input.IsKeyPressed(InputKey.S)) AppendEffect("D");
+                        // A and D do nothing in effect phase
                     }
                 }
 
@@ -118,10 +117,9 @@ namespace AshAndEmber
                     }
                     else
                     {
-                        if (lUp    && !_prevLUp)   AppendEffect("U");
-                        if (lDown  && !_prevLDown)  AppendEffect("D");
-                        if (lLeft  && !_prevLLeft)  AppendEffect("L");
-                        if (lRight && !_prevLRight) AppendEffect("R");
+                        if (lUp   && !_prevLUp)  AppendEffect("U");
+                        if (lDown && !_prevLDown) AppendEffect("D");
+                        // lLeft and lRight do nothing in effect phase
                     }
 
                     _prevLUp = lUp; _prevLDown = lDown; _prevLLeft = lLeft; _prevLRight = lRight;

@@ -1,7 +1,7 @@
-﻿// =============================================================================
+// =============================================================================
 // LIFE & DEATH MAGIC — SpellEffects.cs
 // Core partial class: helpers, per-form execution entry points,
-// visual utilities, and the engine-safe deferred-death queue.
+// enchantment application, stoneskin state, and deferred-death queue.
 // =============================================================================
 
 using System;
@@ -31,13 +31,12 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
 
-        // ── Light-level helpers (kept for legacy compatibility, no longer blocks casting) ──
+        // ── Light-level helpers (kept for legacy compatibility) ────────────────
         internal enum LightLevel { Bright, Dim, Dark }
 
         internal static LightLevel GetCampaignLightLevel()
         {
             if (Campaign.Current == null) return LightLevel.Bright;
-            // Long Night event forces perpetual darkness for its duration
             if (CampaignMapEvents.IsLongNight()) return LightLevel.Dark;
             try
             {
@@ -49,13 +48,13 @@ namespace AshAndEmber
             catch { return LightLevel.Bright; }
         }
 
-        internal static LightLevel GetLightLevel() => LightLevel.Bright; // No longer restricts
+        internal static LightLevel GetLightLevel() => LightLevel.Bright;
         internal static bool RollDimFizzle() => false;
         internal static bool HasDarkAffinity(ColorSchool s) => false;
         internal static LightLevel GetEffectiveLightLevel(ColorSchool s) => LightLevel.Bright;
         public static bool IsDaytime() => true;
 
-        // ── Spell power — flat 1.0 (attribute scaling removed) ────────────────
+        // ── Spell power — flat 1.0 ────────────────────────────────────────────
         internal static float SpellPower(ColorSchool school, Hero hero = null) => 1f;
 
         // ── Siege / battle checks ─────────────────────────────────────────────
@@ -83,8 +82,6 @@ namespace AshAndEmber
                 foreach (Agent a in Mission.Current.Agents)
                 {
                     if (!a.IsActive() || a.IsMount || a.Team == null || a.Team == pt) continue;
-                    // IsEnemyOf can throw "other_team_index_invalid" when an agent's team
-                    // has been released mid-battle — catch per-agent so the loop continues.
                     bool isEnemy = false;
                     try { isEnemy = pt.IsEnemyOf(a.Team); } catch { continue; }
                     if (isEnemy) return true;
@@ -96,46 +93,36 @@ namespace AshAndEmber
 
         public static bool ProtectedByMirror(Agent a) => false;
 
-        // ── Toggle-dismiss (legacy stubs) ──────────────────────────────────────
         private static readonly Dictionary<string, string> _toggleComboToId
             = new Dictionary<string, string>();
 
         public static bool IsToggleDismiss(string combo) =>
             _toggleComboToId.TryGetValue(combo ?? "", out string id) && HasAreaEffect(id);
 
-        // ── Colour switch cooldown (removed) ──────────────────────────────────
         public static void TickColourCooldown(float dt) { }
         public static void ClearColourCooldown() { }
 
-        // ── Dispatch from player input ─────────────────────────────────────────
-        // Called by MagicInputHandler after SpellBuilder.Parse
-        // Legacy Execute(combo) no longer used — kept for build compatibility
         public static bool Execute(string combo) => false;
-
-        // ── Per-form execution entry points ───────────────────────────────────
-        // Implemented in BlastSpells.cs / SelfSpells.cs / CreateSpells.cs
 
         // ── NPC spell execution ───────────────────────────────────────────────
         public static void ExecuteNpcBlast(Agent caster, int formCount,
-            int damageCount, int pushCount, int moraleCount, bool reversed, Team casterTeam)
+            int damageCount, int restoreCount, Team casterTeam)
         {
             var cast = new SpellCast
             {
                 Form = SpellForm.Blast, FormCount = formCount, BlastCount = formCount,
-                DamageCount = damageCount, PushCount = pushCount,
-                MoraleCount = moraleCount, Reversed = reversed
+                DamageCount = damageCount, RestoreCount = restoreCount
             };
             ExecuteBlastFromAgent(caster, cast, casterTeam);
         }
 
         public static void ExecuteNpcBurst(Agent caster, int formCount,
-            int damageCount, int pushCount, int moraleCount, bool reversed, Team casterTeam)
+            int damageCount, int restoreCount, Team casterTeam)
         {
             var cast = new SpellCast
             {
                 Form = SpellForm.Burst, FormCount = formCount, BurstCount = formCount,
-                DamageCount = damageCount, PushCount = pushCount,
-                MoraleCount = moraleCount, Reversed = reversed
+                DamageCount = damageCount, RestoreCount = restoreCount
             };
             ExecuteBurstFromAgent(caster, cast, casterTeam);
         }
@@ -149,7 +136,7 @@ namespace AshAndEmber
             ClearWave();
         }
 
-        // ── Halted-agent tick (Blue push freeze) ─────────────────────────────
+        // ── Halted-agent tick (legacy freeze mechanic, dict stays empty with new system) ─
         public static void TickHaltedAgents(float dt)
         {
             if (_haltedAgents.Count == 0 || Mission.Current == null) return;
@@ -192,7 +179,6 @@ namespace AshAndEmber
             foreach (int idx in _expiredHaltKeys) _haltedAgents.Remove(idx);
         }
 
-        // ── Random unit ambient magic (removed, stub kept) ────────────────────
         public static void TickRandomUnitMagic(float dt) { }
 
         // ── Agent helpers ──────────────────────────────────────────────────────
@@ -224,7 +210,6 @@ namespace AshAndEmber
             catch { return new List<Agent>(); }
         }
 
-        // Generic enemy/ally lists relative to any agent (for NPC AI)
         internal static List<Agent> EnemiesOf(Agent source)
         {
             if (Mission.Current == null || source?.Team == null) return new List<Agent>();
@@ -234,8 +219,6 @@ namespace AshAndEmber
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (a == source || a.IsMount || !a.IsActive() || a.Team == null) continue;
-                    // IsEnemyOf can throw "other_team_index_invalid" for released teams —
-                    // skip the individual agent rather than aborting the entire list.
                     bool isEnemy = false;
                     try { isEnemy = source.Team.IsEnemyOf(a.Team); } catch { continue; }
                     if (isEnemy) result.Add(a);
@@ -251,8 +234,7 @@ namespace AshAndEmber
             try
             {
                 return Mission.Current.Agents
-                    .Where(a => a != source && !a.IsMount && a.IsActive() &&
-                                a.Team == source.Team)
+                    .Where(a => a != source && !a.IsMount && a.IsActive() && a.Team == source.Team)
                     .ToList();
             }
             catch { return new List<Agent>(); }
@@ -313,6 +295,14 @@ namespace AshAndEmber
         public static void DamageAgent(Agent target, float damage, ColorSchool? school = null)
         {
             if (target == null || !target.IsActive()) return;
+
+            // Cinder Shell enchantment: reduce incoming damage
+            if (_stoneskinAgents.TryGetValue(target, out var skin) && skin.Remaining > 0f)
+            {
+                float reduction = Math.Min(0.5f, skin.BonusArmor / 200f);
+                damage *= (1f - reduction);
+            }
+
             float newHealth = target.Health - damage;
             if (newHealth <= 0f)
             {
@@ -331,23 +321,23 @@ namespace AshAndEmber
         private static Blow BuildBlow(Agent target, DamageTypes type, float magnitude)
         {
             Blow blow = new Blow();
-            blow.OwnerId         = Agent.Main?.Index ?? 0;
-            blow.DamageType      = type;
-            blow.BaseMagnitude   = magnitude;
-            blow.InflictedDamage = (int)magnitude;
-            blow.GlobalPosition  = target.Position;
-            blow.Direction       = new Vec3(0f, 0f, 1f);
-            blow.WeaponRecord    = new BlowWeaponRecord();
-            blow.DamageCalculated= true;
-            blow.NoIgnore        = true;
-            blow.StrikeType      = StrikeType.Invalid;
-            blow.VictimBodyPart  = BoneBodyPartType.Chest;
-            blow.AttackType      = AgentAttackType.Standard;
-            blow.BlowFlag        = BlowFlags.NoSound;
+            blow.OwnerId          = Agent.Main?.Index ?? 0;
+            blow.DamageType       = type;
+            blow.BaseMagnitude    = magnitude;
+            blow.InflictedDamage  = (int)magnitude;
+            blow.GlobalPosition   = target.Position;
+            blow.Direction        = new Vec3(0f, 0f, 1f);
+            blow.WeaponRecord     = new BlowWeaponRecord();
+            blow.DamageCalculated = true;
+            blow.NoIgnore         = true;
+            blow.StrikeType       = StrikeType.Invalid;
+            blow.VictimBodyPart   = BoneBodyPartType.Chest;
+            blow.AttackType       = AgentAttackType.Standard;
+            blow.BlowFlag         = BlowFlags.NoSound;
             return blow;
         }
 
-        // ── Cone geometry (reused by Blast form and NPC AI) ───────────────────
+        // ── Cone geometry ─────────────────────────────────────────────────────
         internal static List<Agent> ConeAgents(Vec3 origin, Vec3 fwd, float range, float dot)
         {
             if (Mission.Current == null) return new List<Agent>();
@@ -367,7 +357,6 @@ namespace AshAndEmber
             return result;
         }
 
-        // Cone agents relative to any source agent (for NPC)
         internal static List<Agent> ConeAgentsFrom(Agent source, float range, float dot)
         {
             if (Mission.Current == null || source == null) return new List<Agent>();
@@ -389,96 +378,174 @@ namespace AshAndEmber
             return result;
         }
 
-        // Count enemies in cone from source
         internal static int CountEnemiesInCone(Agent source, float range, float dot)
             => ConeAgentsFrom(source, range, dot).Count;
 
         // ── Apply effect to one agent ─────────────────────────────────────────
-        // Used by all forms (Blast, Aura, Barrier, Burst)
-        internal static void ApplyEffectsToAgent(Agent target, SpellCast cast,
-            Agent caster, bool applyPush, bool applyPull)
+        internal static void ApplyEffectsToAgent(Agent target, SpellCast cast, Agent caster)
         {
             if (target == null || !target.IsActive()) return;
             if (IsWarded(target)) return;
 
+            bool isEnemy = caster?.Team != null && target.Team != null && caster.Team != target.Team;
+            bool isAlly  = caster?.Team != null && target.Team != null && caster.Team == target.Team;
+
             ColorSchool glowColor = cast.VisualColor;
-            uint raw = cast.Reversed
-                ? ColorSchoolData.GetReversedGlowColor(glowColor)
-                : ColorSchoolData.GetGlowColor(glowColor);
-            BeginAgentGlowRaw(target, raw, 2f);
+            BeginAgentGlowRaw(target, ColorSchoolData.GetGlowColor(glowColor), 2f);
 
-            // Damage or Heal
-            if (cast.DamageCount > 0)
+            // Damage — fire hits enemies
+            if (cast.DamageCount > 0 && isEnemy)
             {
-                float amount = cast.DamageCount * 25f;
-                if (cast.Reversed)
-                    HealAgent(target, amount);
-                else
-                    DamageAgent(target, amount);
+                DamageAgent(target, cast.DamageCount * 25f);
+                ApplyDamageEnchantments(target, cast, caster);
             }
 
-            // Push or Pull
-            if (cast.PushCount > 0)
+            // Restore — fire heals allies
+            if (cast.RestoreCount > 0 && isAlly)
             {
-                bool isMounted = false;
-                try { isMounted = target.MountAgent != null; } catch { }
-
-                // Overwhelming push (≥10) dismounts the rider before pushing
-                if (cast.PushCount >= 10 && isMounted)
-                {
-                    ForceDismount(target);
-                    isMounted = false;
-                }
-
-                if (!isMounted)
-                {
-                    float dist = cast.PushCount * 6f;
-                    try
-                    {
-                        Vec3 dir;
-                        if (cast.Reversed)
-                            dir = (caster != null ? caster.Position - target.Position : Vec3.Zero).NormalizedCopy();
-                        else
-                            dir = (caster != null ? target.Position - caster.Position : Vec3.Zero).NormalizedCopy();
-
-                        Vec3 dest = target.Position + dir * dist;
-                        dest.z = target.Position.z;
-                        QueueMove(target, dest, 0.4f);
-                    }
-                    catch { }
-                }
-
-                // Kinetic side damage — surge force bruises on impact (not on pull)
-                if (!cast.Reversed)
-                    DamageAgent(target, cast.PushCount * 5f);
-            }
-
-            // Morale drain or boost
-            if (cast.MoraleCount > 0)
-            {
-                float delta = cast.MoraleCount * 15f;
-                try
-                {
-                    float cur = target.GetMorale();
-                    float next = cast.Reversed
-                        ? Math.Min(cur + delta, 100f)
-                        : Math.Max(cur - delta, 0f);
-                    target.SetMorale(next);
-                }
-                catch { }
-
-                // Overwhelming morale bane (≥10) panics affected unit into charging headlong
-                if (cast.MoraleCount >= 10 && !cast.Reversed && !target.IsHero)
-                {
-                    try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
-                }
-
-                // Smoulder side damage — the will-breaking fire scorches as it breaks spirit (not on boost)
-                if (!cast.Reversed)
-                    DamageAgent(target, cast.MoraleCount * 8f);
+                HealAgent(target, cast.RestoreCount * 15f);
+                ApplyRestoreEnchantments(target, cast, caster);
             }
         }
 
+        // ── Enchantment application ────────────────────────────────────────────
+
+        private static void ApplyDamageEnchantments(Agent target, SpellCast cast, Agent caster)
+        {
+            // Scatter: push enemies back
+            if (CasterHasEnchantment(caster, TalentId.Scatter))
+            {
+                bool isMounted = false;
+                try { isMounted = target.MountAgent != null; } catch { }
+                if (!isMounted)
+                {
+                    float dist = cast.DamageCount * 4f;
+                    Vec3 origin = caster?.Position ?? target.Position;
+                    Vec3 dir = (target.Position - origin);
+                    if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
+                    dir = new Vec3(dir.x, dir.y, 0f).NormalizedCopy();
+                    Vec3 dest = target.Position + dir * dist;
+                    dest.z = target.Position.z;
+                    try { QueueMove(target, dest, 0.4f); } catch { }
+                }
+            }
+
+            // Smoulder: morale penalty
+            if (CasterHasEnchantment(caster, TalentId.Smoulder))
+            {
+                try
+                {
+                    float delta = cast.DamageCount * 12f;
+                    float cur   = target.GetMorale();
+                    target.SetMorale(Math.Max(cur - delta, 0f));
+                }
+                catch { }
+            }
+
+            // Bewilder: random command (not on heroes)
+            if (CasterHasEnchantment(caster, TalentId.Bewilder) && !target.IsHero)
+            {
+                try
+                {
+                    switch (_rng.Next(4))
+                    {
+                        case 0: // Panic — route
+                            try { target.SetMorale(0f); } catch { }
+                            break;
+                        case 1: // Charge — force into melee
+                            try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+                            break;
+                        case 2: // Dismount
+                            bool mounted = false;
+                            try { mounted = target.MountAgent != null; } catch { }
+                            if (mounted) ForceDismount(target);
+                            else try { target.SetMorale(0f); } catch { }
+                            break;
+                        case 3: // Shatter nerve — morale fractured to a quarter
+                            try { target.SetMorale(target.GetMorale() * 0.25f); } catch { }
+                            break;
+                    }
+                }
+                catch { }
+            }
+        }
+
+        private static void ApplyRestoreEnchantments(Agent target, SpellCast cast, Agent caster)
+        {
+            // Ashveil: brief magic immunity
+            if (CasterHasEnchantment(caster, TalentId.Ashveil))
+            {
+                float duration = cast.RestoreCount * 3f;
+                float current  = _wardedAgents.TryGetValue(target, out float t) ? t : 0f;
+                _wardedAgents[target] = Math.Max(current, duration);
+                BeginAgentGlow(target, ColorSchool.White, duration);
+            }
+
+            // Cinder Shell: armour boost (damage reduction)
+            if (CasterHasEnchantment(caster, TalentId.CinderShell))
+            {
+                float bonus = cast.RestoreCount * 10f;
+                AddStoneskin(target, bonus, 8f);
+                BeginAgentGlow(target, ColorSchool.Orange, 2f);
+            }
+
+            // Hearthlight: morale boost
+            if (CasterHasEnchantment(caster, TalentId.Hearthlight))
+            {
+                try
+                {
+                    float delta = cast.RestoreCount * 12f;
+                    float cur   = target.GetMorale();
+                    target.SetMorale(Math.Min(cur + delta, 100f));
+                }
+                catch { }
+            }
+        }
+
+        // Checks whether a caster (player or NPC lord) has a given enchantment talent.
+        private static bool CasterHasEnchantment(Agent caster, TalentId enchantment)
+        {
+            if (caster == null) return false;
+            if (caster == Agent.Main) return TalentSystem.Has(enchantment);
+            try
+            {
+                Hero hero = (caster.Character as TaleWorlds.CampaignSystem.CharacterObject)?.HeroObject;
+                if (hero != null && ColourLordRegistry.IsColourLord(hero))
+                    return ColourLordRegistry.HasTalent(hero, enchantment);
+            }
+            catch { }
+            return false;
+        }
+
+        // ── Stoneskin (Cinder Shell enchantment state) ─────────────────────────
+        private static readonly Dictionary<Agent, (float BonusArmor, float Remaining)>
+            _stoneskinAgents = new Dictionary<Agent, (float, float)>();
+
+        private static void AddStoneskin(Agent agent, float bonus, float duration)
+        {
+            if (agent == null) return;
+            if (!_stoneskinAgents.TryGetValue(agent, out var cur))
+                _stoneskinAgents[agent] = (bonus, duration);
+            else
+                _stoneskinAgents[agent] = (Math.Max(cur.BonusArmor, bonus), Math.Max(cur.Remaining, duration));
+        }
+
+        public static void TickStoneskin(float dt)
+        {
+            foreach (Agent key in _stoneskinAgents.Keys.ToList())
+            {
+                var (bonus, remaining) = _stoneskinAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive())
+                    _stoneskinAgents.Remove(key);
+                else
+                    _stoneskinAgents[key] = (bonus, remaining);
+            }
+        }
+
+        public static void ClearStoneskin() => _stoneskinAgents.Clear();
+
+        // ── Dismount helper ────────────────────────────────────────────────────
         public static void ForceDismount(Agent a)
         {
             Agent mount = null;
@@ -493,16 +560,12 @@ namespace AshAndEmber
         }
 
         // ── Magic-event memory ─────────────────────────────────────────────────
-        // Records positions of recent non-ward spell casts so NPC lords can
-        // react defensively.  Entries expire after 8 seconds.
         private static readonly List<(Vec3 Pos, float Left)> _recentMagicEvents
             = new List<(Vec3, float)>();
         private const float MagicMemoryDuration = 8f;
 
         public static void RecordMagicCast(Vec3 position)
-        {
-            _recentMagicEvents.Add((position, MagicMemoryDuration));
-        }
+            => _recentMagicEvents.Add((position, MagicMemoryDuration));
 
         public static bool HasRecentMagicNearby(Vec3 position, float radius)
         {
@@ -524,9 +587,9 @@ namespace AshAndEmber
         public static void ClearMagicMemory() => _recentMagicEvents.Clear();
 
         // ── Siege check ────────────────────────────────────────────────────────
-        public static void IssueChargeToOwnFormations(Agent caster) { } // removed mechanic
+        public static void IssueChargeToOwnFormations(Agent caster) { }
 
-        // ── Battle command (kept for NPC AI compatibility) ─────────────────────
+        // ── Battle command ─────────────────────────────────────────────────────
         public enum BattleCommandKind { Halt, Enrage, Dismount, StopArrows }
 
         public static void IssueBattleCommand(Agent source, BattleCommandKind kind,
@@ -612,8 +675,8 @@ namespace AshAndEmber
         }
 
         // ── Cast animation ──────────────────────────────────────────────────────
-        private static readonly ActionIndexCache _castAnimCache     = ActionIndexCache.Create("act_cheer_1");
-        private static readonly ActionIndexCache _castAnimClearCache= ActionIndexCache.Create("act_none");
+        private static readonly ActionIndexCache _castAnimCache      = ActionIndexCache.Create("act_cheer_1");
+        private static readonly ActionIndexCache _castAnimClearCache = ActionIndexCache.Create("act_none");
         private static readonly List<(Agent agent, float remaining)> _animClearTimers
             = new List<(Agent, float)>();
 
@@ -627,8 +690,8 @@ namespace AshAndEmber
                     var a = _animClearTimers[i].agent;
                     if (a != null && a.IsActive() && a.Health > 0f)
                     {
-                        bool mounted = false; try { mounted = a.MountAgent != null; } catch { }
-                        bool usingEquip = false; try { usingEquip = a.IsUsingGameObject; } catch { }
+                        bool mounted    = false; try { mounted    = a.MountAgent != null;   } catch { }
+                        bool usingEquip = false; try { usingEquip = a.IsUsingGameObject;    } catch { }
                         if (!mounted && !usingEquip)
                             try { a.SetActionChannel(0, _castAnimClearCache, true, 0UL); } catch { }
                     }
@@ -661,7 +724,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Militia helper (unchanged) ─────────────────────────────────────────
+        // ── Militia helper ─────────────────────────────────────────────────────
         private static MethodInfo _setMilitiaSetter;
         private static bool _setMilitiaResolved;
 
@@ -682,10 +745,9 @@ namespace AshAndEmber
             InformationManager.DisplayMessage(new InformationMessage(
                 text, ColorSchoolData.GetMessageColor(school)));
 
-        // ── NPC-specific visual helpers reused from old AI ────────────────────
+        // ── NPC-specific area-effect spawners ─────────────────────────────────
         public static void SpawnNpcBlueWall(Vec3 position, Vec3 fwd, Team casterTeam)
         {
-            // Create a 3-node blue barrier for NPC (using existing Barrier node area effect)
             for (int i = 0; i < 3; i++)
             {
                 Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();

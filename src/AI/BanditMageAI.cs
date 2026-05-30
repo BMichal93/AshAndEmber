@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // LIFE & DEATH MAGIC — AI/BanditMageAI.cs
 // Gives 12% of eligible bandit units minor spellcasting ability.
 // Casters are seeded once per mission at warmup and tracked by Agent reference.
@@ -183,9 +183,9 @@ namespace AshAndEmber
             bool useBurst = closeEnemies >= 2 || _rng.Next(2) == 0;
 
             // Spell power tiers:
-            //   Looter (untrained):       formCount=1, minimal effect — fire barely obeys them
-            //   Regular bandit casters:   formCount=2, modest damage or morale
-            //   Fire Worshippers / Ashen: formCount=3, real damage + secondary effect
+            //   Looter (untrained):       formCount=1, minimal damage
+            //   Regular bandit casters:   formCount=2, modest damage
+            //   Fire Worshippers / Ashen: formCount=3, heavy damage
             string troopId = (mage.Character as TaleWorlds.CampaignSystem.CharacterObject)?.StringId ?? "";
             bool isLooter  = troopId == "looter";
 
@@ -194,23 +194,23 @@ namespace AshAndEmber
                 if (_isSpecialBattle)
                 {
                     if (useBurst)
-                        SpellEffects.ExecuteNpcBurst(mage, 3, 2, 1, 0, false, mage.Team);
+                        SpellEffects.ExecuteNpcBurst(mage, 3, 2, 0, mage.Team);
                     else
-                        SpellEffects.ExecuteNpcBlast(mage, 3, 2, 0, 1, false, mage.Team);
+                        SpellEffects.ExecuteNpcBlast(mage, 3, 2, 0, mage.Team);
                 }
                 else if (isLooter)
                 {
                     if (useBurst)
-                        SpellEffects.ExecuteNpcBurst(mage, 1, 1, 0, 0, false, mage.Team);
+                        SpellEffects.ExecuteNpcBurst(mage, 1, 1, 0, mage.Team);
                     else
-                        SpellEffects.ExecuteNpcBlast(mage, 1, 0, 0, 1, false, mage.Team);
+                        SpellEffects.ExecuteNpcBlast(mage, 1, 1, 0, mage.Team);
                 }
                 else
                 {
                     if (useBurst)
-                        SpellEffects.ExecuteNpcBurst(mage, 2, 1, 0, 1, false, mage.Team);
+                        SpellEffects.ExecuteNpcBurst(mage, 2, 1, 0, mage.Team);
                     else
-                        SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, 0, false, mage.Team);
+                        SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, mage.Team);
                 }
 
                 SpellEffects.BeginAgentGlow(mage, ColorSchool.Red, 2f);

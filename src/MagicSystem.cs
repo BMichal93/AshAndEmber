@@ -30,6 +30,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearPendingDeaths(); } catch { }
             try { SpellEffects.ClearAnimTimers();    } catch { }
             try { SpellEffects.ClearWard();          } catch { }
+            try { SpellEffects.ClearStoneskin();     } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { MagicInputHandler.ResetInputState();  } catch { }
             try { ColourLordAI.ClearCooldowns();        } catch { }
@@ -82,6 +83,7 @@ namespace AshAndEmber
             SpellEffects.TickAreaEffects(dt);
             SpellEffects.TickWave(dt);
             SpellEffects.TickWard(dt);
+            SpellEffects.TickStoneskin(dt);
             SpellEffects.TickMagicMemory(dt);
             SpellEffects.TickHaltedAgents(dt);
             SpellEffects.FlushPendingDeaths();
@@ -97,6 +99,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearAreaEffects();   } catch { }
             try { SpellEffects.ClearWave();          } catch { }
             try { SpellEffects.ClearWard();          } catch { }
+            try { SpellEffects.ClearStoneskin();     } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { SpellEffects.ClearGlows();         } catch { }
             try { SpellEffects.ClearColourCooldown();} catch { }

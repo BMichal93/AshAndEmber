@@ -1,7 +1,8 @@
-﻿// =============================================================================
+// =============================================================================
 // LIFE & DEATH MAGIC — CreateSpells.cs
 // BARRIER FORM: wall of nodes in front of caster, 1 node per R input.
-// BURST FORM   : instant circle around caster, 2m radius per D input.
+// BURST FORM   : instant circle around caster, 2.5m radius per D input.
+//   Burst heals the caster when RestoreCount > 0.
 // =============================================================================
 
 using System;
@@ -57,8 +58,8 @@ namespace AshAndEmber
 
         private static void AddBarrierNode(Vec3 pos, SpellCast cast, Team casterTeam)
         {
-            float token = cast.DamageCount * 1000f + cast.PushCount * 100f
-                        + cast.MoraleCount * 10f   + (cast.Reversed ? 1f : 0f);
+            // Encode effects: high bits = damage, low bits = restore
+            float token = cast.DamageCount * 1000f + cast.RestoreCount;
             var node = new AreaEffect
             {
                 Id           = BarrierId,
@@ -85,13 +86,13 @@ namespace AshAndEmber
             _areaEffects.Add(node);
         }
 
-        // Called from AreaEffects.cs tick (every 2 s per node)
+        // Called from AreaEffects.cs tick (every 0.5 s per node)
         // Barrier lives indefinitely (Remaining = -1) until cast again.
         internal static void TickBarrierNode(AreaEffect e)
         {
             if (Mission.Current == null) return;
 
-            // Column of fire at three heights every tick; 3.5 s duration gives solid overlap beyond the 2 s tick.
+            // Column of fire at three heights every tick; 3.5 s duration gives solid overlap beyond the 0.5 s tick.
             SpawnTempLight(e.Position,                          e.School, 10f, 3.5f);
             SpawnTempLight(e.Position + new Vec3(0f, 0f, 1f),  e.School, 10f, 3.5f);
             SpawnTempLight(e.Position + new Vec3(0f, 0f, 2f),  e.School, 10f, 3.5f);
@@ -101,14 +102,10 @@ namespace AshAndEmber
                 SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 1f),  3f);
                 SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 2f),  3f);
             }
+
             int token   = (int)e.Power;
             int dmg     = token / 1000;
-            int push    = (token % 1000) / 100;
-            int morale  = (token % 100) / 10;
-            bool rev    = (token % 10) == 1;
-
-            var cast = new SpellCast { DamageCount = dmg, PushCount = push, MoraleCount = morale, Reversed = rev };
-            Agent src = Agent.Main;
+            int restore = token % 1000;
 
             foreach (Agent a in Mission.Current.Agents.ToList())
             {
@@ -118,13 +115,12 @@ namespace AshAndEmber
                 Vec3 toH = new Vec3(a.Position.x - e.Position.x, a.Position.y - e.Position.y, 0f);
                 float dist = toH.Length;
 
-                bool isAlly = e.CasterTeam != null && a.Team == e.CasterTeam;
+                bool isAlly  = e.CasterTeam != null && a.Team == e.CasterTeam;
+                bool isEnemy = e.CasterTeam != null && a.Team != e.CasterTeam;
 
-                // Warning zone: push enemies (or allies for reversed) away from the barrier wall.
-                // Applies to mounted riders too — push distance scaled up so they can't charge through.
+                // Warning zone: push enemies away from the barrier wall.
                 bool inWarningZone = dist > e.Radius && dist < e.Radius + 3.5f;
-                bool shouldPushBack = rev ? isAlly : !isAlly;
-                if (inWarningZone && shouldPushBack && !a.IsHero)
+                if (inWarningZone && isEnemy && !a.IsHero)
                 {
                     Vec3 outDir = toH.Length < 0.01f ? new Vec3(1f, 0f, 0f) : toH.NormalizedCopy();
                     bool mounted = false; try { mounted = a.MountAgent != null; } catch { }
@@ -134,57 +130,29 @@ namespace AshAndEmber
                     try { QueueMove(a, dest, 0.3f); } catch { }
                 }
 
-                // Normal barrier: damage enemies only.
-                // Reversed barrier: heal/buff allies only (player included).
-                if (rev ? !isAlly : isAlly) continue;
                 if (dist > e.Radius) continue;
+                if (IsWarded(a)) continue;
+
                 try
                 {
-                    uint raw = rev
-                        ? ColorSchoolData.GetReversedGlowColor(e.School)
-                        : ColorSchoolData.GetGlowColor(e.School);
-                    BeginAgentGlowRaw(a, raw, 1.5f);
-                    if (cast.DamageCount > 0)
+                    if (dmg > 0 && isEnemy)
                     {
-                        // 2.5f per 0.5s tick = 5 DPS per damage count (scales with new 25/hit values)
-                        float amt = cast.DamageCount * 2.5f;
-                        if (rev) HealAgent(a, amt); else DamageAgent(a, amt);
-                    }
-                    if (cast.MoraleCount > 0)
-                    {
-                        // 3f per 0.5s tick (6 morale/s per count, matches new 12-per-hit rate)
-                        float delta = cast.MoraleCount * 3f;
-                        float cur   = a.GetMorale();
-                        a.SetMorale(rev ? Math.Min(cur + delta, 100f) : Math.Max(cur - delta, 0f));
-                    }
-                    if (cast.PushCount > 0 && src != null)
-                    {
-                        bool isMounted = false;
-                        try { isMounted = a.MountAgent != null; } catch { }
-                        if (!isMounted)
-                        {
-                            float pushDist = cast.PushCount * 2.5f;
-                            Vec3 dir = rev
-                                ? (src.Position - a.Position).NormalizedCopy()
-                                : (a.Position - e.Position).NormalizedCopy();
-                            Vec3 dest = a.Position + dir * pushDist; dest.z = a.Position.z;
-                            QueueMove(a, dest, 0.3f);
-                        }
-                        // Kinetic side damage per tick (1f/tick per push count)
-                        if (!rev) DamageAgent(a, cast.PushCount * 1f);
-                    }
-                    if (cast.MoraleCount > 0 && !rev)
-                    {
-                        // Smoulder side damage per tick (1.25f/tick per morale count)
-                        DamageAgent(a, cast.MoraleCount * 1.25f);
-                    }
-                    // Teleport enemies back out so they cannot simply walk through the barrier
-                    if (!rev)
-                    {
+                        BeginAgentGlowRaw(a, ColorSchoolData.GetGlowColor(e.School), 1.5f);
+                        // 2.5f per 0.5s tick = 5 DPS per damage count
+                        DamageAgent(a, dmg * 2.5f);
+                        SpawnImpactBurst(a.Position, e.School, 3f);
+                        // Teleport enemies back so they cannot simply walk through the barrier
                         Vec3 outDir = toH.Length < 0.01f ? new Vec3(1f, 0f, 0f) : toH.NormalizedCopy();
                         Vec3 outPos = e.Position + outDir * (e.Radius + 1.5f);
                         outPos.z = a.Position.z;
                         try { a.TeleportToPosition(outPos); } catch { }
+                    }
+                    if (restore > 0 && isAlly)
+                    {
+                        BeginAgentGlowRaw(a, ColorSchoolData.GetReversedGlowColor(e.School), 1.5f);
+                        // 2.5f per 0.5s tick = 5 HPS per restore count
+                        HealAgent(a, restore * 2.5f);
+                        SpawnImpactBurst(a.Position, e.School, 3f);
                     }
                 }
                 catch { }
@@ -205,16 +173,19 @@ namespace AshAndEmber
 
             int burstCnt = cast.BurstCount > 0 ? cast.BurstCount : cast.FormCount;
             float radius = Math.Max(2f, burstCnt * 2.5f);
-            var targets  = new List<Agent>();
+
+            bool wantDmg  = cast.DamageCount  > 0;
+            bool wantHeal = cast.RestoreCount > 0;
+
+            var targets = new List<Agent>();
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
-                    if (cast.Reversed)
-                        { if (casterTeam != null && a.Team != casterTeam) continue; } // reversed: allies only
-                    else
-                        { if (casterTeam != null && a.Team == casterTeam) continue; } // normal: enemies only
+                    bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
+                    bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
+                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
                     // Horizontal distance so mounted riders at elevation are hit correctly
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > radius) continue;
@@ -233,8 +204,21 @@ namespace AshAndEmber
             {
                 try
                 {
-                    ApplyEffectsToAgent(a, cast, caster, applyPush: true, applyPull: true);
+                    ApplyEffectsToAgent(a, cast, caster);
                     SpawnImpactBurst(a.Position, col, 4f);
+                    affected++;
+                }
+                catch { }
+            }
+
+            // Burst also heals the caster when Restore is active
+            if (wantHeal && caster.IsActive())
+            {
+                try
+                {
+                    HealAgent(caster, cast.RestoreCount * 15f);
+                    ApplyRestoreEnchantments(caster, cast, caster);
+                    SpawnImpactBurst(caster.Position, col, 4f);
                     affected++;
                 }
                 catch { }
