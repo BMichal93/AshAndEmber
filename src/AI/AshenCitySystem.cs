@@ -320,6 +320,16 @@ namespace AshAndEmber
         }
 
         // ── War maintenance ───────────────────────────────────────────────────
+        // Called from the MakePeace campaign event. Resets the war throttle to 0
+        // so the next daily tick immediately re-declares war — no DeclareWarAction
+        // call here because that crashes during save loading.
+        public static void OnPeaceMade(IFaction faction1, IFaction faction2)
+        {
+            if (_ashenKingdom == null) return;
+            if (faction1 == _ashenKingdom || faction2 == _ashenKingdom)
+                _warThrottle = 0;
+        }
+
         // Re-entrancy guard prevents a rapid peace→war→peace loop: if Bannerlord's
         // diplomacy AI fires MakePeace while we are already inside DeclareWar, we
         // skip the nested call rather than cascading into a CPU spike.
@@ -966,7 +976,7 @@ namespace AshAndEmber
             // Set grace periods so heavy campaign actions never fire on the
             // first daily ticks after loading (avoids stacking ChangeOwner /
             // DeclareWar / KillCharacter calls during game initialization).
-            _warThrottle      = WarInterval      + 2; // first DeclareWar: day 7
+            _warThrottle      = 2;                    // first DeclareWar: day 2
             _clanThrottle     = ClanInterval     + 1; // first ClanKingdom: day 4
             _villageThrottle  = VillageInterval  + 0; // first Village:    day 7
             _recoveryThrottle = RecoveryInterval + 1; // first Recovery:   day 4
