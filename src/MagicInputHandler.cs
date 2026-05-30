@@ -3,10 +3,10 @@
 // Two-phase input: form keys before Break, effect keys after Break.
 //
 // KEYS (while holding Left Alt / LB):
-//   W = U (form: Blast  / effect: Damage)
-//   A = L (form: Wave   / effect: — ignored)
-//   D = R (form: Barrier / effect: — ignored)
-//   S = D (form: Burst  / effect: Restore)
+//   W = U (form: Blast   / effect: Damage)
+//   A = L (form: Wave    / effect: Damage)
+//   D = R (form: Barrier / effect: Damage)
+//   S = D (form: Burst   / effect: Restore)
 //   X = Break (keyboard, while form buffer has input)
 //   L3 click = Break (gamepad)
 //   X = Spellbook (keyboard, while form buffer is empty)
@@ -90,9 +90,10 @@ namespace AshAndEmber
                     }
                     else
                     {
-                        if (Input.IsKeyPressed(InputKey.W)) AppendEffect("U");
+                        if      (Input.IsKeyPressed(InputKey.W)) AppendEffect("U");
+                        else if (Input.IsKeyPressed(InputKey.A)) AppendEffect("L");
+                        else if (Input.IsKeyPressed(InputKey.D)) AppendEffect("R");
                         else if (Input.IsKeyPressed(InputKey.S)) AppendEffect("D");
-                        // A and D do nothing in effect phase
                     }
                 }
 
@@ -117,9 +118,10 @@ namespace AshAndEmber
                     }
                     else
                     {
-                        if (lUp   && !_prevLUp)  AppendEffect("U");
-                        if (lDown && !_prevLDown) AppendEffect("D");
-                        // lLeft and lRight do nothing in effect phase
+                        if (lUp    && !_prevLUp)   AppendEffect("U");
+                        if (lDown  && !_prevLDown)  AppendEffect("D");
+                        if (lLeft  && !_prevLLeft)  AppendEffect("L");
+                        if (lRight && !_prevLRight) AppendEffect("R");
                     }
 
                     _prevLUp = lUp; _prevLDown = lDown; _prevLLeft = lLeft; _prevLRight = lRight;
@@ -185,25 +187,6 @@ namespace AshAndEmber
             if (!_inEffectPhase && _formBuffer == "UUDDLLRRULDR")
             {
                 TalentSystem.UnlockAll();
-                return;
-            }
-
-            // Sigil: DD×N → Ward (no Break required, must not have entered effect phase)
-            //   DD   = self only,  0m radius;  cost 1 day
-            //   DDD  = 2m radius;  cost 2 days
-            //   DDDD = 4m radius;  cost 3 days  (dCount-1 days, radius = (dCount-1)×2m)
-            int dCount = _formBuffer.Length;
-            if (!_inEffectPhase && dCount >= 2 && IsAllD(_formBuffer))
-            {
-                if (!inMission) { Fizzle("The ward only holds in battle."); return; }
-                try { if (Hero.MainHero?.IsPrisoner == true) { Fizzle("You are bound. The fire cannot kindle."); return; } } catch { }
-                SpellEffects.ExecuteWard(dCount);
-                int cost = dCount - 1; // DD=1day, DDD=2days, DDDD=3days
-                if (cost > 0)
-                {
-                    if (MageKnowledge.IsAshen) ApplyBlightCastCost(cost);
-                    else AgingSystem.AgeHero(Hero.MainHero, cost);
-                }
                 return;
             }
 
@@ -303,13 +286,6 @@ namespace AshAndEmber
                 }
             }
             catch { }
-        }
-
-        private static bool IsAllD(string buf)
-        {
-            for (int i = 0; i < buf.Length; i++)
-                if (buf[i] != 'D') return false;
-            return true;
         }
 
         private static void Fizzle(string msg) =>
