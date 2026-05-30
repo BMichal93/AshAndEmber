@@ -78,13 +78,24 @@ namespace AshAndEmber
             try { AshenCitySystem.OnClanChangedKingdom(clan, oldKingdom, newKingdom, detail, showNotification); } catch { }
         }
 
-        // War maintenance is handled exclusively by AshenCitySystem.DailyTick.
-        // Responding to OnMakePeace synchronously caused a rapid peace→war loop
-        // when Bannerlord's diplomacy AI processed many negotiations at once
-        // (e.g. after the player joined a kingdom), spiking CPU until crash.
-        // The daily tick redeclares war within one game day — acceptable.
+        // Immediately undo any peace forced on the Ashen kingdom.
+        // DeclareWarWithAllKingdoms now has a re-entrancy guard so cascading
+        // peace→war→peace loops are impossible even if Bannerlord's diplomacy
+        // AI fires multiple MakePeace events in quick succession.
         private void OnMakePeace(IFaction faction1, IFaction faction2,
-            MakePeaceAction.MakePeaceDetail detail) { }
+            MakePeaceAction.MakePeaceDetail detail)
+        {
+            try
+            {
+                const string id = "ashen_kingdom";
+                bool ashenInvolved =
+                    (faction1 is Kingdom k1 && k1.StringId == id) ||
+                    (faction2 is Kingdom k2 && k2.StringId == id);
+                if (!ashenInvolved) return;
+                try { AshenCitySystem.DeclareWarWithAllKingdoms(); } catch { }
+            }
+            catch { }
+        }
 
         private void OnMobilePartyCreated(MobileParty party)
         {

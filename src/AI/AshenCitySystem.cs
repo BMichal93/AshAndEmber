@@ -56,6 +56,7 @@ namespace AshAndEmber
         private static Kingdom  _ashenKingdom = null;
         private static bool     _initialized  = false;
         private static int      _appearanceDayCounter = 0;
+        private static bool     _declaringWar = false;
         private const  int      AppearanceTickInterval = 30; // re-scan appearance once per month
 
         private const int    MinGarrisonCity   = 500;
@@ -162,6 +163,7 @@ namespace AshAndEmber
             {
                 try { DeclareWarWithAllKingdoms(); } catch { }
                 try { ApplyAshenLookToSettlementHeroes(); } catch { }
+                try { InitialiseSettlementOwnership(); } catch { }
                 _initialized = true;
             }
         }
@@ -295,21 +297,29 @@ namespace AshAndEmber
         }
 
         // ── War maintenance ───────────────────────────────────────────────────
+        // Re-entrancy guard prevents a rapid peace→war→peace loop: if Bannerlord's
+        // diplomacy AI fires MakePeace while we are already inside DeclareWar, we
+        // skip the nested call rather than cascading into a CPU spike.
         public static void DeclareWarWithAllKingdoms()
         {
+            if (_declaringWar) return;
             if (_ashenKingdom == null)
                 _ashenKingdom = Kingdom.All.FirstOrDefault(k => k.StringId == AshenKingdomId);
             if (_ashenKingdom == null) return;
-            // Revive first — the kingdom may have just been eliminated by Bannerlord's
-            // own peace-on-elimination logic, which is what triggered this call.
             if (_ashenKingdom.IsEliminated)
                 try { _ashenKingdom.ReactivateKingdom(); } catch { }
-            foreach (Kingdom k in Kingdom.All.ToList())
+            _declaringWar = true;
+            try
             {
-                if (k == _ashenKingdom || k.IsEliminated) continue;
-                if (!_ashenKingdom.IsAtWarWith(k))
-                    try { DeclareWarAction.ApplyByDefault(_ashenKingdom, k); } catch { }
+                foreach (Kingdom k in Kingdom.All.ToList())
+                {
+                    if (k == _ashenKingdom || k.IsEliminated) continue;
+                    if (!_ashenKingdom.IsAtWarWith(k))
+                        try { DeclareWarAction.ApplyByDefault(_ashenKingdom, k); } catch { }
+                }
             }
+            catch { }
+            finally { _declaringWar = false; }
         }
 
         // ── Garrison maintenance ──────────────────────────────────────────────
@@ -543,6 +553,103 @@ namespace AshAndEmber
             }
         }
 
+        // ── One-time settlement re-ownership ─────────────────────────────────
+        // Called once from Initialize(). Transfers specific contested cities to
+        // their intended Empire factions so the political map starts correctly.
+        private static void InitialiseSettlementOwnership()
+        {
+            var assignments = new[]
+            {
+                ("Husn Fulq", "empire_s"),
+                ("Charas",    "empire_w"),
+                ("Sargot",    "empire_w"),
+                ("Seonon",    "empire_n"),
+            };
+            foreach (var (name, kingdomId) in assignments)
+            {
+                try
+                {
+                    var settlement = Settlement.All.FirstOrDefault(s =>
+                        s.Name.ToString().IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+                    if (settlement == null || settlement.IsUnderSiege) continue;
+
+                    var kingdom = Kingdom.All.FirstOrDefault(k => k.StringId == kingdomId);
+                    if (kingdom == null || kingdom.IsEliminated) continue;
+
+                    Hero leader = kingdom.Leader ?? kingdom.RulingClan?.Leader;
+                    if (leader == null) continue;
+                    if (settlement.OwnerClan == leader.Clan) continue;
+
+                    try { ChangeOwnerOfSettlementAction.ApplyByDefault(leader, settlement); } catch { }
+                }
+                catch { }
+            }
+        }
+
+        // ── Permanent village raid state ──────────────────────────────────────
+        // Keeps every village bound to an Ashen-owned settlement permanently in
+        // the Looted state with minimal hearth so they never recover.
+        private static void TickAshenVillages()
+        {
+            try
+            {
+                foreach (Settlement s in Settlement.All)
+                {
+                    try
+                    {
+                        if (!s.IsVillage || s.Village == null) continue;
+                        var bound = s.Village.Bound;
+                        if (bound == null || !_settlementClanMap.ContainsKey(bound.StringId)) continue;
+                        if (bound.OwnerClan?.StringId != _settlementClanMap[bound.StringId]) continue;
+
+                        if (s.Village.VillageState == Village.VillageStates.Normal)
+                            try { s.Village.VillageState = Village.VillageStates.Looted; } catch { }
+                        if (s.Village.Hearth > 10f)
+                            try { s.Village.Hearth = 10f; } catch { }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        // ── Prisoner execution ────────────────────────────────────────────────
+        // Ashen lords execute any lord they hold captive — they take no prisoners.
+        public static void ExecuteAshenPrisoners()
+        {
+            if (_ashenClanIds.Count == 0) return;
+            try
+            {
+                foreach (Hero hero in Hero.AllAliveHeroes.ToList())
+                {
+                    try
+                    {
+                        if (!hero.IsPrisoner || !hero.IsLord) continue;
+                        if (hero.IsChild || hero == Hero.MainHero) continue;
+
+                        var captorParty = hero.PartyBelongedToAsPrisoner;
+                        if (captorParty == null) continue;
+
+                        bool captorIsAshen =
+                            (captorParty.LeaderHero != null &&
+                             ColourLordRegistry.IsAshenLord(captorParty.LeaderHero)) ||
+                            captorParty.MapFaction?.StringId == AshenKingdomId;
+                        if (!captorIsAshen) continue;
+
+                        Hero executor = captorParty.LeaderHero
+                                     ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
+                                            h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
+                                            _ashenClanIds.Contains(h.Clan?.StringId));
+                        if (executor == null) continue;
+
+                        try { KillCharacterAction.ApplyByExecution(hero, executor); } catch { }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
         // ── Daily tick ────────────────────────────────────────────────────────
         public static void DailyTick()
         {
@@ -555,6 +662,8 @@ namespace AshAndEmber
             RefillHeroGold();
             TickSettlementRecovery();
             MaintainCriminalStatus();
+            TickAshenVillages();
+            ExecuteAshenPrisoners();
             if (++_appearanceDayCounter >= AppearanceTickInterval)
             {
                 _appearanceDayCounter = 0;
