@@ -4098,6 +4098,7 @@ namespace AshAndEmber
                             }
                             else
                             {
+                                ChangeGold(-1000);
                                 Msg("The fire reaches and finds nothing to hold. Whatever process is ending in him, it is further along than it looks. You return the coin. They try not to accept it back. You insist. You ride out lighter than you arrived.", DimColor);
                             }
                             break;
