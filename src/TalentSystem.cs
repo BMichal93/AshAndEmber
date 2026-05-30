@@ -111,7 +111,7 @@ namespace AshAndEmber
                 Id = TalentId.Camaraderie, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Kinship",
                 Lore = "Those who carry the fire recognise each other from across a room. There is something almost like trust in that. Almost.",
-                MechanicDesc = "Passive. +10 relations with those who carry the fire. Never falls below −10."
+                MechanicDesc = "Passive. +10 relations with those who carry the fire. Never falls below 0 with them."
             },
             // ── Enchantments (Damage) ─────────────────────────────────────────
             new TalentDef
@@ -133,7 +133,7 @@ namespace AshAndEmber
                 Id = TalentId.Bewilder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Bewilder",
                 Lore = "The fire is not just heat — it is signal. When you push it through a mind unprepared, the signals cross. Halt, charge, flee, stand. They will not know which they were told.",
-                MechanicDesc = "Enchantment. Damage bewilders enemies with a random command — halt, charge, dismount, or go into melee."
+                MechanicDesc = "Enchantment. Damage bewilders enemies with a random effect — instant rout, force charge, dismount (mounted only), or morale fractured to 25%."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -141,7 +141,7 @@ namespace AshAndEmber
                 Id = TalentId.Ashveil, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Ashveil",
                 Lore = "Ash does not burn twice. Coat something in it, and the fire cannot find purchase. For a few seconds, what you kindle becomes untouchable.",
-                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 2s per Restore input."
+                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 3s per Restore input."
             },
             new TalentDef
             {
@@ -315,7 +315,22 @@ namespace AshAndEmber
             try
             {
                 int rel = CharacterRelationManager.GetHeroRelation(player, mage);
-                if (rel < -10) CharacterRelationManager.SetHeroRelation(player, mage, -10);
+                if (rel < 0) CharacterRelationManager.SetHeroRelation(player, mage, 0);
+            }
+            catch { }
+        }
+
+        // Enforce Kinship floor for all living mage lords — call from daily tick.
+        public static void EnforceKinship()
+        {
+            if (!Has(TalentId.Camaraderie) || Hero.MainHero == null) return;
+            try
+            {
+                foreach (Hero h in Hero.AllAliveHeroes)
+                {
+                    if (h == Hero.MainHero || !h.IsAlive || !ColourLordRegistry.IsColourLord(h)) continue;
+                    EnforceCaramaraderieLimits(Hero.MainHero, h);
+                }
             }
             catch { }
         }

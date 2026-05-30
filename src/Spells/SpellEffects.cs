@@ -461,8 +461,8 @@ namespace AshAndEmber
                             if (mounted) ForceDismount(target);
                             else try { target.SetMorale(0f); } catch { }
                             break;
-                        case 3: // Stop arrows — push into melee
-                            try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+                        case 3: // Shatter nerve — morale fractured to a quarter
+                            try { target.SetMorale(target.GetMorale() * 0.25f); } catch { }
                             break;
                     }
                 }
@@ -475,7 +475,7 @@ namespace AshAndEmber
             // Ashveil: brief magic immunity
             if (CasterHasEnchantment(caster, TalentId.Ashveil))
             {
-                float duration = cast.RestoreCount * 2f;
+                float duration = cast.RestoreCount * 3f;
                 float current  = _wardedAgents.TryGetValue(target, out float t) ? t : 0f;
                 _wardedAgents[target] = Math.Max(current, duration);
                 BeginAgentGlow(target, ColorSchool.White, duration);

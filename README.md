@@ -248,7 +248,7 @@ The talent menu groups talents into three categories: **Passive**, **Enchantment
 | **Ember** | 5% chance per battle kill to restore 1 day of youth. |
 | **Harvest** | Executing a captured lord restores 100 days of youth. |
 | **Reap** | Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner has a 5% chance to restore 1 day. Marks you. |
-| **Kinship** | +10 relations with other mages; relation cannot fall below −10 with them. |
+| **Kinship** | +10 relations with other mages; relation cannot fall below 0 (neutral) with them. |
 
 ### Enchantment
 
@@ -260,13 +260,13 @@ Enchantments add automatic side effects to Damage or Restore casts. They fire ev
 |--------|--------|
 | **Scatter** | Blasts enemies backward. Push distance = 4 m per Damage input. |
 | **Smoulder** | Scorches enemy morale. Morale loss = 12 per Damage input. |
-| **Bewilder** | Issues a random command to non-hero enemies — halt, charge, dismount, or go into melee. |
+| **Bewilder** | Random effect on non-hero enemies — instant rout, force charge, dismount (cavalry only), or morale fractured to 25%. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
 | Talent | Effect |
 |--------|--------|
-| **Ashveil** | Grants allies brief magic immunity. Duration = 2 s per Restore input. |
+| **Ashveil** | Grants allies brief magic immunity. Duration = 3 s per Restore input. |
 | **Cinder Shell** | Hardens allies, reducing incoming damage for 8 s. Protection = 5% per Restore input, max 50%. |
 | **Hearthlight** | Lifts allied morale. Morale boost = 12 per Restore input. |
 
