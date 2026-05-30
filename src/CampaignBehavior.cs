@@ -78,13 +78,15 @@ namespace AshAndEmber
             try { AshenCitySystem.OnClanChangedKingdom(clan, oldKingdom, newKingdom, detail, showNotification); } catch { }
         }
 
-        // OnMakePeace is intentionally a no-op.
-        // Calling DeclareWarAction from this event fires during save loading while
-        // the campaign is only partially initialised, causing a native crash.
-        // The daily tick's DeclareWarWithAllKingdoms() re-establishes war within
-        // one in-game day, which is sufficient.
+        // OnMakePeace resets the war throttle to 0 so the next daily tick
+        // immediately re-declares war (within one in-game day).
+        // DeclareWarAction is NOT called here — doing so during save loading
+        // crashes the campaign while it is only partially initialised.
         private void OnMakePeace(IFaction faction1, IFaction faction2,
-            MakePeaceAction.MakePeaceDetail detail) { }
+            MakePeaceAction.MakePeaceDetail detail)
+        {
+            try { AshenCitySystem.OnPeaceMade(faction1, faction2); } catch { }
+        }
 
         private void OnMobilePartyCreated(MobileParty party)
         {
