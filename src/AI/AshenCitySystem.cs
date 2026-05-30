@@ -57,6 +57,7 @@ namespace AshAndEmber
         private static bool     _initialized  = false;
         private static int      _appearanceDayCounter = 0;
         private static bool     _declaringWar = false;
+        private static readonly Random _rng  = new Random();
         private const  int      AppearanceTickInterval = 30; // re-scan appearance once per month
 
         private const int    MinGarrisonCity   = 500;
@@ -656,12 +657,12 @@ namespace AshAndEmber
                         {
                             // 20% — turn Ashen, then release
                             try { ColourLordRegistry.SetAshen(hero, true); } catch { }
-                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero, captorParty); } catch { }
+                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
                         }
                         else if (roll < 0.60)
                         {
                             // 40% — flee (released, returns to original faction)
-                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero, captorParty); } catch { }
+                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
                         }
                         else
                         {
@@ -708,7 +709,7 @@ namespace AshAndEmber
                         MageKnowledge.SetAshen(true);
                         try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch { }
                         try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
-                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(Hero.MainHero, null); } catch { }
+                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(Hero.MainHero); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Something ancient settles in you. The warmth you have always carried shifts — " +
                             "not gone, but changed. Cold fire. Grey flame. You are still here. " +
