@@ -182,7 +182,7 @@ namespace AshAndEmber
                 "  Mixed forms all fire simultaneously. Effects stack.\n\n" +
                 "Forms  (before Break, mix freely)\n" +
                 "  ↑  Blast   — forward cone, 2.5m per ↑\n" +
-                "  ←  Wave    — 3×3 fire grid, +2m per ←, +1 size per 5←\n" +
+                "  ←  Missile — projectile bolt, +3m range per ←, explodes (+1m blast per ←)\n" +
                 "  →  Barrier — wall of nodes, 1 per →; cast again to release\n" +
                 "  ↓  Burst   — circle around self, 2.5m radius per ↓; also heals caster\n\n" +
                 "Effects  (after Break)\n" +
@@ -197,7 +197,8 @@ namespace AshAndEmber
                 ashenNote +
                 "\nExample\n" +
                 "  ↑  X  ↑  =  Blast (2.5m), 25 damage, 1 day  (2 inputs).\n" +
-                "  ↑↑↑  X  ↑↑↑  =  Blast (7.5m), 75 damage, 2 days  (6 inputs).\n" +
+                "  ←  X  ↑  =  Missile (8m range, 2m blast), 25 damage, 1 day  (2 inputs).\n" +
+                "  ←←←  X  ↑↑↑  =  Missile (9m range, 4m blast), 75 damage, 2 days  (6 inputs).\n" +
                 "  ↓  X  ↓↓  =  Burst (2.5m), +30 restore, 1 day  (3 inputs).  Caster also healed.\n" +
                 "  ↑↑  ↓↓  X  ↑  ↓  =  Blast + Burst, damage + restore, 2 days  (6 inputs).";
 

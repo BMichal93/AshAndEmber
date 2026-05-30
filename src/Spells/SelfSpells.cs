@@ -1,10 +1,9 @@
 ﻿// =============================================================================
 // LIFE & DEATH MAGIC — SelfSpells.cs
-// WAVE FORM (L keys): a gridSize×gridSize block of fire that advances forward.
-//   gridSize  = 3 + max(0, (formCount - 5) / 5)  — grows +1 per 5 inputs above 5
-//   range     = max(3, formCount * 2 - 1) metres  — total travel distance
-//   Speed 4 m/s;  tick every 0.5 s;  node spacing 2 m;  hit radius 1.5 m.
-//   Non-hero agents in warning zone (hit + 3 m) are nudged sideways.
+// MISSILE FORM (L keys): a fast projectile that travels forward and explodes.
+//   range          = max(8, missileCount × 3) metres  — travel distance
+//   explosion radius = 1 + missileCount metres         — blast on impact/end
+//   Speed 28 m/s; trail every 0.05 s; hit-detect radius 1.5 m.
 // =============================================================================
 
 using System;
@@ -19,246 +18,177 @@ namespace AshAndEmber
 {
     public static partial class SpellEffects
     {
-        // ── Wave state ────────────────────────────────────────────────────────
-        private class WaveState
+        // ── Missile state ─────────────────────────────────────────────────────
+        private class MissileState
         {
-            public Vec3   Position;           // front-centre of the grid
-            public Vec3   Forward;
-            public Vec3   Right;
-            public int    GridSize;
-            public const float NodeSpacing    = 2f;
-            public const float Speed          = 4f;
-            public const float HitRadius      = 1.5f;
-            public const float TickInterval   = 0.5f;
-            public const float VisualInterval = 0.12f;
-            public float  TravelLeft;
-            public SpellCast Cast;
-            public Team   CasterTeam;
-            public float  TickTimer   = 0f;
-            public float  VisualTimer = 0f;
-            public readonly List<GameEntity> Lights = new List<GameEntity>();
+            public Vec3        Position;
+            public Vec3        Forward;
+            public float       TravelLeft;
+            public float       ExplosionRadius;
+            public SpellCast   Cast;
+            public Team        CasterTeam;
+            public GameEntity  Light;
+            public float       TrailTimer = 0f;
+            public const float Speed         = 28f;
+            public const float TrailInterval = 0.05f;
+            public const float DetectRadius  = 1.5f;
         }
 
-        private static WaveState _wave = null;
+        private static MissileState _missile = null;
 
         // ── Execute ───────────────────────────────────────────────────────────
-        public static void ExecuteWave(SpellCast cast)
+        public static void ExecuteMissile(SpellCast cast)
         {
             Agent caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return;
 
-            if (_wave != null)
+            if (_missile != null)
             {
-                ClearWave();
+                ClearMissile();
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "Wave dissolved.", new Color(0.7f, 0.7f, 0.7f)));
+                    "Missile dispersed.", new Color(0.7f, 0.7f, 0.7f)));
                 return;
             }
 
-            Vec3 fwd   = caster.LookDirection.NormalizedCopy();
-            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
-            right = right.Length < 0.01f ? new Vec3(1f, 0f, 0f) : right.NormalizedCopy();
+            int   missileCnt   = cast.MissileCount > 0 ? cast.MissileCount : cast.FormCount;
+            float range        = Math.Max(8f, missileCnt * 3f);
+            float explRadius   = 1f + missileCnt;
 
-            int waveCnt    = cast.WaveCount > 0 ? cast.WaveCount : cast.FormCount;
-            int   gridSize = 3 + Math.Max(0, (waveCnt - 5) / 5);
-            float range    = Math.Max(3f, waveCnt * 2f - 1f);
+            Vec3 fwd      = caster.LookDirection.NormalizedCopy();
+            Vec3 startPos = caster.Position + fwd * 1.5f + new Vec3(0f, 0f, 1.2f);
 
-            // Place wave front so that back row clears the caster
-            float halfDepth = (gridSize - 1) * WaveState.NodeSpacing * 0.5f;
-            Vec3  startPos  = caster.Position + fwd * (halfDepth + 2.5f);
-
-            _wave = new WaveState
+            _missile = new MissileState
             {
-                Position   = startPos,
-                Forward    = fwd,
-                Right      = right,
-                GridSize   = gridSize,
-                TravelLeft = range,
-                Cast       = cast,
-                CasterTeam = caster.Team,
+                Position        = startPos,
+                Forward         = fwd,
+                TravelLeft      = range,
+                ExplosionRadius = explRadius,
+                Cast            = cast,
+                CasterTeam      = caster.Team,
             };
 
             ColorSchool col = cast.VisualColor;
+            _missile.Light = SpawnAreaLight(startPos, col, 5f);
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
-            BeginAgentGlow(caster, col, 1.5f);
-            SpawnWaveLights(_wave);
+            BeginAgentGlow(caster, col, 1f);
 
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Wave ({gridSize}×{gridSize}, {range:F0}m) — {cast.EffectSummary()}.",
+                $"Missile ({range:F0}m, {explRadius:F0}m blast) — {cast.EffectSummary()}.",
                 ColorSchoolData.GetMessageColor(col)));
         }
 
-        private static void SpawnWaveLights(WaveState w)
+        // ── Tick (called from MagicSystem every mission frame) ─────────────────
+        public static void TickMissile(float dt)
         {
-            for (int row = 0; row < w.GridSize; row++)
-            for (int col = 0; col < w.GridSize; col++)
+            if (_missile == null || Mission.Current == null) return;
+
+            float moved        = MissileState.Speed * dt;
+            _missile.Position  += _missile.Forward * moved;
+            _missile.TravelLeft -= moved;
+
+            // Move head light with missile
+            if (_missile.Light != null)
             {
-                Vec3 pos = WaveNodePos(w, row, col);
-                w.Lights.Add(SpawnAreaLight(pos, w.Cast.VisualColor, 7f));
-            }
-        }
-
-        // row 0 = front edge of wave; col 0 = leftmost column (from caster PoV)
-        private static Vec3 WaveNodePos(WaveState w, int row, int col)
-        {
-            float half = (w.GridSize - 1) * 0.5f;
-            return w.Position
-                 + w.Right   * ((col - half) * WaveState.NodeSpacing)
-                 - w.Forward * (row           * WaveState.NodeSpacing);
-        }
-
-        // ── Tick (called from MagicSystem every mission frame) ────────────────
-        public static void TickWave(float dt)
-        {
-            if (_wave == null || Mission.Current == null) return;
-
-            float moved      = WaveState.Speed * dt;
-            _wave.Position  += _wave.Forward * moved;
-            _wave.TravelLeft -= moved;
-
-            if (_wave.TravelLeft <= 0f) { ClearWave(); return; }
-
-            // Reposition persistent lights to follow the advancing wave every frame
-            for (int row = 0; row < _wave.GridSize; row++)
-            for (int col = 0; col < _wave.GridSize; col++)
-            {
-                int idx = row * _wave.GridSize + col;
-                if (idx >= _wave.Lights.Count) break;
-                GameEntity light = _wave.Lights[idx];
-                if (light == null) continue;
                 try
                 {
-                    Vec3 pos = WaveNodePos(_wave, row, col);
-                    var lf = new MatrixFrame(Mat3.Identity, pos + new Vec3(0f, 0f, 0.5f));
-                    light.SetGlobalFrame(in lf, true);
+                    var lf = new MatrixFrame(Mat3.Identity, _missile.Position);
+                    _missile.Light.SetGlobalFrame(in lf, true);
                 }
                 catch { }
             }
 
-            // Spawn short-lived fire particles at the current grid positions
-            _wave.VisualTimer -= dt;
-            if (_wave.VisualTimer <= 0f)
+            // Particle trail — short-lived lights left behind every TrailInterval
+            _missile.TrailTimer -= dt;
+            if (_missile.TrailTimer <= 0f)
             {
-                _wave.VisualTimer = WaveState.VisualInterval;
-                SpawnWaveFireVisuals(_wave);
+                _missile.TrailTimer = MissileState.TrailInterval;
+                SpawnTempLight(_missile.Position, _missile.Cast.VisualColor, 3f, 0.4f);
+                if (_missile.Cast.VisualColor != ColorSchool.Ashen)
+                    SpawnTempFireParticle(_missile.Position, 0.3f);
             }
 
-            _wave.TickTimer -= dt;
-            if (_wave.TickTimer > 0f) return;
-            _wave.TickTimer = WaveState.TickInterval;
-
-            TickWaveEffects(_wave);
-        }
-
-        // One short-lived fire particle per grid node — called every VisualInterval.
-        // Particles can't be repositioned, so we respawn them frequently (every 0.12s)
-        // with a lifetime of 2.5× the interval so consecutive spawns overlap smoothly.
-        private static void SpawnWaveFireVisuals(WaveState w)
-        {
-            if (w.Cast.VisualColor == ColorSchool.Ashen) return;
-            for (int row = 0; row < w.GridSize; row++)
-            for (int col = 0; col < w.GridSize; col++)
+            // Hit-detect: explode on close contact with a valid target
+            bool wantDmg  = _missile.Cast.DamageCount  > 0;
+            bool wantHeal = _missile.Cast.RestoreCount > 0;
+            try
             {
-                Vec3 nodePos = WaveNodePos(w, row, col);
-                foreach (string name in _fireParticleNames)
-                {
-                    GameEntity entity = SpawnParticleEntity(nodePos, name);
-                    if (entity == null) continue;
-                    float dur = WaveState.VisualInterval * 2.5f;
-                    _areaEffects.Add(new AreaEffect
-                    {
-                        Id = "temp_particle", Position = nodePos, School = w.Cast.VisualColor,
-                        TickInterval = dur, TickTimer = dur, Remaining = dur,
-                        LightEntity  = entity,
-                    });
-                    break;
-                }
-            }
-        }
-
-        // Wave lifetime: range / 4 m/s  (e.g. 3 L-keys = 5 m → 1.25 s, 10 L-keys = 19 m → 4.75 s)
-        private static void TickWaveEffects(WaveState w)
-        {
-            if (Mission.Current == null) return;
-
-            List<Agent> all;
-            try { all = Mission.Current.Agents.ToList(); } catch { return; }
-
-            bool wantDmg  = w.Cast.DamageCount  > 0;
-            bool wantHeal = w.Cast.RestoreCount > 0;
-
-            var hit = new HashSet<Agent>();
-
-            for (int row = 0; row < w.GridSize; row++)
-            for (int col = 0; col < w.GridSize; col++)
-            {
-                Vec3 nodePos = WaveNodePos(w, row, col);
-
-                foreach (Agent a in all)
+                foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (!a.IsActive() || a.IsMount) continue;
-
-                    // Horizontal distance so mounted riders at elevation are hit correctly
-                    float dist = new Vec3(a.Position.x - nodePos.x, a.Position.y - nodePos.y, 0f).Length;
-
-                    bool isEnemy = w.CasterTeam != null && a.Team != w.CasterTeam;
-                    bool isAlly  = w.CasterTeam != null && a.Team == w.CasterTeam;
-
-                    // Avoidance: non-hero enemies sidestep the incoming wave
-                    if (isEnemy && !a.IsHero &&
-                        dist > WaveState.HitRadius && dist < WaveState.HitRadius + 3f)
-                        try { NudgeWaveSideStep(w, a); } catch { }
-
+                    bool isEnemy = _missile.CasterTeam != null && a.Team != _missile.CasterTeam;
+                    bool isAlly  = _missile.CasterTeam != null && a.Team == _missile.CasterTeam;
                     if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
-                    if (dist > WaveState.HitRadius) continue;
-                    if (hit.Contains(a)) continue;
+                    float dist = new Vec3(a.Position.x - _missile.Position.x,
+                                         a.Position.y - _missile.Position.y, 0f).Length;
+                    if (dist > MissileState.DetectRadius) continue;
+                    ExplodeMissile(_missile.Position);
+                    return;
+                }
+            }
+            catch { }
 
+            if (_missile.TravelLeft <= 0f)
+                ExplodeMissile(_missile.Position);
+        }
+
+        // ── Explosion ─────────────────────────────────────────────────────────
+        private static void ExplodeMissile(Vec3 pos)
+        {
+            if (_missile == null) return;
+            MissileState m = _missile;
+            ClearMissile();
+
+            if (Mission.Current == null) return;
+
+            float       radius = m.ExplosionRadius;
+            ColorSchool col    = m.Cast.VisualColor;
+
+            SpawnCircleLights(pos, col, radius, 5f);
+            SpawnImpactBurst(pos, col, 8f);
+            TryCastSound(pos, col);
+            RecordMagicCast(pos);
+
+            int affected = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount) continue;
+                    float dist = new Vec3(a.Position.x - pos.x,
+                                         a.Position.y - pos.y, 0f).Length;
+                    if (dist > radius) continue;
+                    bool isEnemy = m.CasterTeam != null && a.Team != m.CasterTeam;
+                    bool isAlly  = m.CasterTeam != null && a.Team == m.CasterTeam;
+                    bool wantDmg  = m.Cast.DamageCount  > 0;
+                    bool wantHeal = m.Cast.RestoreCount > 0;
+                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
+                    if (IsWarded(a)) continue;
                     try
                     {
-                        if (!IsWarded(a))
-                        {
-                            ApplyEffectsToAgent(a, w.Cast, Agent.Main);
-                            SpawnImpactBurst(a.Position, w.Cast.VisualColor, 2.5f);
-                        }
-                        hit.Add(a);
+                        ApplyEffectsToAgent(a, m.Cast, Agent.Main);
+                        SpawnImpactBurst(a.Position, col, 4f);
+                        affected++;
                     }
                     catch { }
                 }
             }
+            catch { }
 
-            if (hit.Count > 0)
-                RecordMagicCast(w.Position);
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Missile detonates — {m.Cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
+                ColorSchoolData.GetMessageColor(col)));
         }
 
-        // Nudge agent toward whichever lateral side of the wave is closer to them
-        private static void NudgeWaveSideStep(WaveState w, Agent a)
+        public static void ClearMissile()
         {
-            bool isMounted = false;
-            try { isMounted = a.MountAgent != null; } catch { }
-            if (isMounted) return;
-            if (IsWarded(a)) return;
-
-            Vec3  toAgent  = a.Position - w.Position;
-            float rDot     = Vec3.DotProduct(toAgent, w.Right);
-            Vec3  sideDir  = rDot >= 0f ? w.Right : new Vec3(-w.Right.x, -w.Right.y, 0f);
-            Vec3  dest     = a.Position + sideDir * 2.5f;
-            dest.z = a.Position.z;
-            QueueMove(a, dest, 0.35f);
+            if (_missile == null) return;
+            try { _missile.Light?.Remove(0); } catch { }
+            _missile = null;
         }
 
-        public static void ClearWave()
-        {
-            if (_wave == null) return;
-            foreach (GameEntity e in _wave.Lights)
-                try { e?.Remove(0); } catch { }
-            _wave = null;
-        }
-
-        // ── Legacy aura stub ──────────────────────────────────────────────────
-        // Forwards to Wave so any residual call-sites compile.
-        private const string AuraId = "spell_aura";
-        public static void ExecuteAura(SpellCast cast) => ExecuteWave(cast);
+        // ── Legacy stub ───────────────────────────────────────────────────────
+        public static void ExecuteAura(SpellCast cast) => ExecuteMissile(cast);
         internal static void TickAuraNode(AreaEffect e) { }
 
         // ── Ward state ────────────────────────────────────────────────────────

@@ -436,7 +436,7 @@ namespace AshAndEmber
             _areaEffects.Clear();
             _haltedAgents.Clear();
             _haltTeleportTimer = 0f;
-            ClearWave();
+            ClearMissile();
         }
     }
 }

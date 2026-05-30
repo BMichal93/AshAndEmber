@@ -84,7 +84,7 @@ namespace AshAndEmber
             SpellEffects.TickAnimClears(dt);
             SpellEffects.TickMoves(dt);
             SpellEffects.TickAreaEffects(dt);
-            SpellEffects.TickWave(dt);
+            SpellEffects.TickMissile(dt);
             SpellEffects.TickWard(dt);
             SpellEffects.TickStoneskin(dt);
             SpellEffects.TickMagicMemory(dt);
@@ -100,7 +100,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearAnimTimers();    } catch { }
             try { SpellEffects.ClearPendingDeaths(); } catch { }
             try { SpellEffects.ClearAreaEffects();   } catch { }
-            try { SpellEffects.ClearWave();          } catch { }
+            try { SpellEffects.ClearMissile();       } catch { }
             try { SpellEffects.ClearWard();          } catch { }
             try { SpellEffects.ClearStoneskin();     } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }

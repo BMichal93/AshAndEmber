@@ -165,7 +165,7 @@ namespace AshAndEmber
                             "The fire stirs. Hold Alt, type form keys (WASD), press X to Break, type effect keys, release Alt to cast.",
                             new Color(0.7f, 0.5f, 1.0f)));
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "Forms: W=Blast  A=Wave  D=Barrier  S=Burst  |  Effects: W=Damage  A=Push  D=Morale  S=Reverse  |  Alt+X = Grimoire",
+                            "Forms: W=Blast  A=Missile  D=Barrier  S=Burst  |  Effects: W=Damage  A=Push  D=Morale  S=Reverse  |  Alt+X = Grimoire",
                             new Color(0.6f, 0.6f, 0.8f)));
                     }
                     else

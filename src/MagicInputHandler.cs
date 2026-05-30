@@ -4,7 +4,7 @@
 //
 // KEYS (while holding Left Alt / LB):
 //   W = U (form: Blast   / effect: Damage)
-//   A = L (form: Wave    / effect: Damage)
+//   A = L (form: Missile / effect: Damage)
 //   D = R (form: Barrier / effect: Damage)
 //   S = D (form: Burst   / effect: Restore)
 //   X = Break (keyboard, while form buffer has input)

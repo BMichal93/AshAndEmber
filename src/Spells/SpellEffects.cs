@@ -130,10 +130,9 @@ namespace AshAndEmber
         // ── Self-effects clear ─────────────────────────────────────────────────
         public static void ClearSelfEffects()
         {
-            RemoveAreaEffect("spell_aura");
             RemoveAreaEffect("spell_barrier");
             _haltedAgents.Clear();
-            ClearWave();
+            ClearMissile();
         }
 
         // ── Halted-agent tick (legacy freeze mechanic, dict stays empty with new system) ─

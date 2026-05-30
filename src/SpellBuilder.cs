@@ -9,7 +9,7 @@
 //
 // FORMS (form buffer — mix freely, all fire simultaneously)
 //   U = Blast   (cone, 2.5m per U)
-//   L = Wave    (advancing fire grid, +2m per L)
+//   L = Missile (projectile, 3m range per L, explodes: 1+L m radius)
 //   R = Barrier (wall, 1 node per R)
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
@@ -24,13 +24,13 @@ using System.Linq;
 
 namespace AshAndEmber
 {
-    public enum SpellForm { None, Blast, Aura, Barrier, Burst }
+    public enum SpellForm { None, Blast, Missile, Barrier, Burst }
 
     public class SpellCast
     {
         // ── Multi-form counts (set by Parse for player casts) ─────────────────
         public int BlastCount;
-        public int WaveCount;
+        public int MissileCount;
         public int BarrierCount;
         public int BurstCount;
 
@@ -43,7 +43,7 @@ namespace AshAndEmber
         {
             get
             {
-                int multi = BlastCount + WaveCount + BarrierCount + BurstCount;
+                int multi = BlastCount + MissileCount + BarrierCount + BurstCount;
                 return multi > 0 ? multi : _formCountOverride;
             }
             set { _formCountOverride = value; }
@@ -84,16 +84,16 @@ namespace AshAndEmber
 
         public string FormSummary()
         {
-            int multi = BlastCount + WaveCount + BarrierCount + BurstCount;
+            int multi = BlastCount + MissileCount + BarrierCount + BurstCount;
             if (multi == 0)
             {
                 switch (Form)
                 {
                     case SpellForm.Blast:   return $"Blast ({_formCountOverride * 2.5f:F0}m cone)";
-                    case SpellForm.Aura:
-                        int wGs = 3 + Math.Max(0, (_formCountOverride - 5) / 5);
-                        float wR = Math.Max(3f, _formCountOverride * 2f - 1f);
-                        return $"Wave ({wGs}×{wGs}, {wR:F0}m)";
+                    case SpellForm.Missile:
+                        float mR  = Math.Max(8f, _formCountOverride * 3f);
+                        float mBR = 1f + _formCountOverride;
+                        return $"Missile ({mR:F0}m, {mBR:F0}m blast)";
                     case SpellForm.Barrier: return $"Barrier ({_formCountOverride} node{(_formCountOverride > 1 ? "s" : "")})";
                     case SpellForm.Burst:   return $"Burst ({_formCountOverride * 2.5f:F0}m radius)";
                     default:                return "Unknown form";
@@ -101,15 +101,15 @@ namespace AshAndEmber
             }
 
             var parts = new List<string>();
-            if (BlastCount > 0)   parts.Add($"Blast ({BlastCount * 2.5f:F0}m cone)");
-            if (WaveCount > 0)
+            if (BlastCount > 0)    parts.Add($"Blast ({BlastCount * 2.5f:F0}m cone)");
+            if (MissileCount > 0)
             {
-                int gs = 3 + Math.Max(0, (WaveCount - 5) / 5);
-                float r = Math.Max(3f, WaveCount * 2f - 1f);
-                parts.Add($"Wave ({gs}×{gs}, {r:F0}m)");
+                float r  = Math.Max(8f, MissileCount * 3f);
+                float br = 1f + MissileCount;
+                parts.Add($"Missile ({r:F0}m, {br:F0}m blast)");
             }
-            if (BarrierCount > 0) parts.Add($"Barrier ({BarrierCount} node{(BarrierCount > 1 ? "s" : "")})");
-            if (BurstCount > 0)   parts.Add($"Burst ({BurstCount * 2.5f:F0}m radius)");
+            if (BarrierCount > 0)  parts.Add($"Barrier ({BarrierCount} node{(BarrierCount > 1 ? "s" : "")})");
+            if (BurstCount > 0)    parts.Add($"Burst ({BurstCount * 2.5f:F0}m radius)");
             return string.Join(" + ", parts);
         }
     }
@@ -136,7 +136,7 @@ namespace AshAndEmber
                 switch (c)
                 {
                     case 'U': cast.BlastCount++;   break;
-                    case 'L': cast.WaveCount++;    break;
+                    case 'L': cast.MissileCount++; break;
                     case 'R': cast.BarrierCount++; break;
                     case 'D': cast.BurstCount++;   break;
                     default:  cast.IsFumble = true; return cast;
@@ -144,14 +144,14 @@ namespace AshAndEmber
             }
 
             // Set legacy Form field for single-form casts (backward compat)
-            int activeForms = (cast.BlastCount > 0 ? 1 : 0) + (cast.WaveCount > 0 ? 1 : 0)
+            int activeForms = (cast.BlastCount > 0 ? 1 : 0) + (cast.MissileCount > 0 ? 1 : 0)
                             + (cast.BarrierCount > 0 ? 1 : 0) + (cast.BurstCount > 0 ? 1 : 0);
             if (activeForms == 1)
             {
-                if      (cast.BlastCount > 0)   cast.Form = SpellForm.Blast;
-                else if (cast.WaveCount > 0)    cast.Form = SpellForm.Aura;
+                if      (cast.BlastCount   > 0) cast.Form = SpellForm.Blast;
+                else if (cast.MissileCount > 0) cast.Form = SpellForm.Missile;
                 else if (cast.BarrierCount > 0) cast.Form = SpellForm.Barrier;
-                else if (cast.BurstCount > 0)   cast.Form = SpellForm.Burst;
+                else if (cast.BurstCount   > 0) cast.Form = SpellForm.Burst;
             }
 
             // Effects: U/L/R = Damage, D = Restore.
@@ -182,14 +182,14 @@ namespace AshAndEmber
 
             if (inMission)
             {
-                int multi = cast.BlastCount + cast.WaveCount + cast.BarrierCount + cast.BurstCount;
+                int multi = cast.BlastCount + cast.MissileCount + cast.BarrierCount + cast.BurstCount;
 
                 if (multi == 0)
                 {
                     switch (cast.Form)
                     {
                         case SpellForm.Blast:   SpellEffects.ExecuteBlast(cast);   break;
-                        case SpellForm.Aura:    SpellEffects.ExecuteWave(cast);    break;
+                        case SpellForm.Missile: SpellEffects.ExecuteMissile(cast); break;
                         case SpellForm.Barrier: return SpellEffects.ExecuteBarrier(cast);
                         case SpellForm.Burst:   SpellEffects.ExecuteBurst(cast);   break;
                         default: return false;
@@ -205,9 +205,9 @@ namespace AshAndEmber
                     SpellEffects.ExecuteBlast(cast);
                     anyFired = true;
                 }
-                if (cast.WaveCount > 0)
+                if (cast.MissileCount > 0)
                 {
-                    SpellEffects.ExecuteWave(cast);
+                    SpellEffects.ExecuteMissile(cast);
                     anyFired = true;
                 }
                 if (cast.BarrierCount > 0)
@@ -222,7 +222,7 @@ namespace AshAndEmber
                     anyFired = true;
                 }
 
-                if (cast.BarrierCount > 0 && cast.BlastCount == 0 && cast.WaveCount == 0 && cast.BurstCount == 0)
+                if (cast.BarrierCount > 0 && cast.BlastCount == 0 && cast.MissileCount == 0 && cast.BurstCount == 0)
                     return barrierResult;
 
                 return anyFired;
