@@ -186,15 +186,11 @@ namespace AshAndEmber
                 "  →  Barrier — wall of nodes, 1 per →; cast again to release\n" +
                 "  ↓  Burst   — circle around self, 2.5m radius per ↓; also heals caster\n\n" +
                 "Effects  (after Break)\n" +
-                "  ↑  Damage  — 25 fire damage per ↑, hits enemies\n" +
-                "  ↓  Restore — 15 healing per ↓, heals allies\n\n" +
+                "  ↑ ← →  Damage  — 25 fire damage each, hits enemies\n" +
+                "  ↓      Restore — 15 healing per ↓, heals allies\n\n" +
                 "Enchantments  (talent side-effects added automatically to Damage or Restore)\n" +
                 "  Damage enchantments:   Scatter · Smoulder · Bewilder\n" +
                 "  Restore enchantments:  Ashveil · Cinder Shell · Hearthlight\n\n" +
-                "Sigil  (no Break needed, repeat to expand)\n" +
-                "  ↓↓         Ward — self only,   1 day\n" +
-                "  ↓↓↓        Ward — 2m radius,   2 days\n" +
-                "  ↓↓↓↓       Ward — 4m radius,   3 days\n\n" +
                 "Burning cost  (every 2 inputs = 1 day, max 2 days)\n" +
                 "  1-3 inputs = 1 day  |  4+ inputs = 2 days\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost − 1 day (minimum 0).\n" : "") +

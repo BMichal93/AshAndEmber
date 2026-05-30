@@ -178,29 +178,13 @@ Two effect types. Each key press adds one count. Damage and Restore may be combi
 | Key | Arrow | Effect | Per count | Targets |
 |-----|-------|--------|-----------|---------|
 | W | ↑ | **Damage** | 25 fire damage | Enemies |
+| A | ← | **Damage** | 25 fire damage | Enemies |
+| D | → | **Damage** | 25 fire damage | Enemies |
 | S | ↓ | **Restore** | 15 healing | Allies (Burst also heals caster) |
-
-A and D (← →) do nothing in the effect phase — they are form-only keys.
 
 ### Mixed effect
 
 You can use both Damage and Restore in the same cast. Each form fires its effect against the appropriate team: enemies take damage, allies receive healing.
-
----
-
-## Ward Sigil (no Break required)
-
-Hold the focus key and press **S (↓) twice or more without pressing Break**. Release to cast the ward immediately.
-
-| Input | Effect | Cost |
-|-------|--------|------|
-| ↓↓ | Ward — self only | 1 day |
-| ↓↓↓ | Ward — 2 m radius (protects nearby allies) | 2 days |
-| ↓↓↓↓ | Ward — 4 m radius | 3 days |
-
-A ward makes the protected agent **immune to all magic effects for 10 seconds**. Warded agents cannot be hit by the player's spells, NPC lord spells, or wave/barrier node impacts.
-
-NPC lords cast wards reactively when their HP drops below 40% or when they detect a magic cast nearby. Honorable or merciful lords extend the ward to allies within 6 m; others protect only themselves.
 
 ---
 
@@ -214,8 +198,6 @@ Every spell draws on your lifespan. The cost scales with total inputs (form + ef
 | 4+ | 2 days |
 
 The **Tempered** talent reduces the cost by 1 day (minimum 0). The **Resonance** talent gives a 1-in-4 chance that any cast costs nothing.
-
-Ward sigils cost `N − 1` days (↓↓ = 1 day, ↓↓↓ = 2 days, etc.).
 
 ### Ashen
 
@@ -311,10 +293,9 @@ Lords die of old age when they reach 100. Their deaths are announced in the camp
 
 NPC lords follow a priority order each tick:
 
-1. **Ward** themselves if HP < 40% or a magic cast was detected within 20 m recently.
-2. **Heal burst** if HP < 30% (Restore burst centred on self; also heals caster).
-3. **Heal burst** for allies below 50% HP within 15 m.
-4. **Attack** — Burst (when surrounded by 3+ enemies) or Blast (enemies in forward cone). Ashen lords use heavier recipes and roll from a wider attack set.
+1. **Heal burst** if HP < 30% (Restore burst centred on self; also heals caster).
+2. **Heal burst** for allies below 50% HP within 15 m.
+3. **Attack** — Burst (when surrounded by 3+ enemies) or Blast (enemies in forward cone). Ashen lords use heavier recipes and roll from a wider attack set.
 
 Lords who have been assigned enchantment talents apply them automatically — a lord with Scatter will fling enemies backward on every damage hit; one with Hearthlight boosts allied morale on every heal.
 
