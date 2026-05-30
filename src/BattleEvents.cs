@@ -207,8 +207,8 @@ namespace AshAndEmber
             }
 
             if (names.Count > 0)
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    "The field is cursed — " + string.Join(", ", names) + "."));
+                try { MBInformationManager.AddQuickInformation(new TextObject(
+                    "The field is cursed — " + string.Join(", ", names) + ".")); } catch { }
         }
 
         // ── Event: Cinder Rain ────────────────────────────────────────────────

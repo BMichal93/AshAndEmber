@@ -473,7 +473,10 @@ namespace AshAndEmber
 
         // ── Helpers ───────────────────────────────────────────────────────────
         private static void Msg(string text, Color c)
-            => MBInformationManager.AddQuickInformation(new TextObject(text));
+        {
+            try { MBInformationManager.AddQuickInformation(new TextObject(text)); }
+            catch { try { InformationManager.DisplayMessage(new InformationMessage(text, c)); } catch { } }
+        }
 
         private static void ShiftTrait(TraitObject trait, int delta)
         {
