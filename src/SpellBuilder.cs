@@ -14,8 +14,8 @@
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
 // EFFECTS (effect buffer, stackable)
-//   U = Damage  — 25 fire dmg per U (Red visual), hits enemies
-//   D = Restore — 15 heal per D (White visual), heals allies; Burst also heals caster
+//   U/L/R = Damage  — 25 fire dmg each (Red visual), hits enemies
+//   D     = Restore — 15 heal per D (White visual), heals allies; Burst also heals caster
 // =============================================================================
 
 using System;
@@ -154,16 +154,17 @@ namespace AshAndEmber
                 else if (cast.BurstCount > 0)   cast.Form = SpellForm.Burst;
             }
 
-            // Effects: U = Damage, D = Restore. L and R are silently ignored.
+            // Effects: U/L/R = Damage, D = Restore.
             if (!string.IsNullOrEmpty(effectBuffer))
             {
                 foreach (char c in effectBuffer)
                 {
                     switch (c)
                     {
-                        case 'U': cast.DamageCount++;  break;
+                        case 'U':
+                        case 'L':
+                        case 'R': cast.DamageCount++;  break;
                         case 'D': cast.RestoreCount++; break;
-                        // L (push) and R (morale) removed — silently skipped
                     }
                 }
             }
