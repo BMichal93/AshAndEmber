@@ -701,12 +701,13 @@ namespace AshAndEmber
                         case "a":
                             if (_rng.Next(2) == 0)
                             {
-                                Msg("The fire was a crude beacon — old Ashen sigil scorched into the earth. Someone lit it recently. The Ashen are closer than the lords believe.", FireColor);
-                                ChangeRenown(5f);
+                                ChangeRenown(10f);
+                                Msg("The fire was a crude beacon — old Ashen sigil scorched into the earth, still warm. Someone lit it within the hour. The Ashen are not as far as the lords believe, and they are signalling someone.", FireColor);
                             }
                             else
                             {
-                                Msg("Shepherd children, burning rubbish. They scatter when they see you coming. You ride back having learned nothing useful.", DimColor);
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                Msg("The fire is cold by the time you reach it — but it was lit deliberately. The ash is shaped wrong, burned at an angle no shepherd would choose. Someone was here and left when they heard you coming. There is nothing useful left. Only the knowing that you were right to look.", DimColor);
                             }
                             break;
                         case "b":
@@ -792,7 +793,8 @@ namespace AshAndEmber
                             Msg("Enough silver to keep him fed for days. He stares at it for a long moment, then at you. \"God keep you,\" he says.", GoodColor);
                             break;
                         case "c":
-                            Msg("You ride past. He lowers the bowl.", DimColor);
+                            MobileParty.MainParty.RecentEventsMorale -= 2f;
+                            Msg("You ride past. He lowers the bowl. Your soldiers say nothing, but the road is quieter than it was.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -860,7 +862,8 @@ namespace AshAndEmber
                             Msg("You take the bent copper and hand back a real coin. The child runs off before you can change your mind.", GoodColor);
                             break;
                         case "b":
-                            Msg("\"That is not mine,\" you say, \"and you know it.\" The child considers this, then vanishes into a doorway.", DimColor);
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("\"That is not mine,\" you say, \"and you know it.\" The child freezes — not caught-out, but surprised. Most people just argue. They look at you very carefully for a moment, then vanish into a doorway. You notice they were watching for which direction the sergeants were looking. A careful child.", DimColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -929,15 +932,16 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
-                            Msg("He falls in at the back of the column, trying to look like he has done this before. He has not. Your veterans watch him with something between amusement and memory.", GoodColor);
+                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            Msg("He falls in at the back of the column, trying to look like he has done this before. He has not. Your veterans watch him with something between amusement and memory. By nightfall they are teaching him to oil a saddle. The party rides easier for having something young in it.", GoodColor);
                             break;
                         case "b":
-                            Msg("\"The roads kill boys like you,\" you tell him honestly. He stops running after you, but he does not go back into the village either.", DimColor);
+                            Msg("\"The roads kill boys like you,\" you tell him honestly. He stops running after you, but he does not go back into the village either. He stands there in the dust, watching your column until the road bends. You do not look back twice.", DimColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("He stops. He does not argue. That is worse, somehow.", BadColor);
+                            MobileParty.MainParty.RecentEventsMorale -= 2f;
+                            Msg("He stops. He does not argue. That is worse, somehow. Two of your soldiers trade a look behind you.", BadColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -975,7 +979,8 @@ namespace AshAndEmber
                             Msg("You leave a purse with the headman for the festival fund. Word of it spreads the way good news travels — slowly, but it travels.", GoldColor);
                             break;
                         case "c":
-                            Msg("The villagers pull back their gifts politely. The headman lowers his cup.", DimColor);
+                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            Msg("The villagers pull back their gifts politely. The headman lowers his cup. Your soldiers ride out in silence — they saw you turn down free bread and cider during a festival, and they are thinking about it.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -1829,7 +1834,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Go back and search the market.", null, true,
-                        "50/50: find them and gain good favor, or find nothing."),
+                        $"Charm check ({(int)(SkillChance(DefaultSkills.Charm, 0.35f) * 100)}%): find them and gain their favor, or lose them to the crowd."),
                     new InquiryElement("b", "Let it pass. The fire finds its own.", null, true,
                         "Nothing happens."),
                     new InquiryElement("c", "Ask your men if anyone saw anything unusual.", null, true,
@@ -1841,13 +1846,16 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            if (_rng.Next(2) == 0)
+                            if (SkillRoll(DefaultSkills.Charm, 0.35f))
                             {
                                 ChangeRelWithRandomLord(15);
                                 Msg("You find them — a young woman with a merchant's colors and careful eyes. She knows what you are before you speak. The conversation is the kind you cannot have with anyone else. She is not a mage yet. She will be.", FireColor);
                             }
                             else
-                                Msg("The feeling is gone. The market is ordinary. Whoever it was, they knew how to go quiet. You remember what that felt like, once.", DimColor);
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                Msg("Whoever it was, they knew how to go quiet — better than most. You find only the warm patch in a crowd of cold faces where they stood. Someone out there now knows a mage passed through. You are not sure how you feel about that.", DimColor);
+                            }
                             break;
                         case "b":
                             Msg("The fire does not give you everything you reach for. You have learned to accept this.", DimColor);
