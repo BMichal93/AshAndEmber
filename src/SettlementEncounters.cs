@@ -1434,7 +1434,7 @@ namespace AshAndEmber
                             Msg("The guards stop. You argue the case. The lord's man listens with the patient look of someone who has already decided. The execution is delayed, not stopped. But delayed is something.", GoodColor);
                             break;
                         case "b":
-                            Msg("You ride past. Their eyes follow you. You do not look back. This is the choice that asks nothing of you and costs the most.", DimColor);
+                            Msg("You ride past. Their eyes follow you. You do not look back.", DimColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -2564,7 +2564,7 @@ namespace AshAndEmber
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             MobileParty.MainParty.RecentEventsMorale -= 5f;
-                            Msg("\"Release him.\" The commander presses his lips together but obeys. The gate captain looks at you for a long moment, then walks away. He will carry this for the rest of his life. So will you.", GoodColor);
+                            Msg("\"Release him.\" The commander presses his lips together but obeys. The gate captain looks at you for a long moment, then walks away.", GoodColor);
                             break;
                         case "b":
                             Msg("You give no instruction. The commander interprets silence as permission. You do not ask what happened in the yard afterward.", DimColor);
@@ -2726,7 +2726,7 @@ namespace AshAndEmber
                         case "b":
                             ChangeGold(400);
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("The valuables are collected. The priest watches without speaking. You leave him standing in front of an emptied shrine, which is its own kind of statement.", BadColor);
+                            Msg("The valuables are collected. The priest watches without speaking. You leave him standing in front of an emptied shrine.", BadColor);
                             break;
                         case "c":
                             ChangeGold(500);
@@ -3005,7 +3005,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("He talks for a while. It is not what you expected — he is not questioning you, he is questioning the shape of the campaign. His conclusion is that you are better than this, which is its own kind of pressure.", GoodColor);
+                            Msg("He talks for a while. It is not what you expected — he is not questioning you, he is questioning the shape of the campaign. His conclusion is that you are better than this.", GoodColor);
                             break;
                         case "b":
                             Msg("He rides at your pace for another minute, then drops back. He will raise it again when the weight of it gets heavier.", DimColor);
@@ -3370,7 +3370,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ChangeRelWithOwner(s, 10);
-                            Msg("The servant carries your thanks back. The lord will hear it before evening. This is how things are maintained at this level — small, consistent acknowledgements.", DimColor);
+                            Msg("The servant carries your thanks back. The lord will hear it before evening.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -3469,7 +3469,7 @@ namespace AshAndEmber
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "✿  The Dry Well",
-                "The village well has given out. A group of men is standing around the dry shaft with the particular stillness of people trying to understand a problem they cannot solve with what they have. Children are being sent to a stream a mile away.",
+                "The village well has given out. A group of men is standing around the dry shaft trying to understand a problem they cannot solve with what they have. Children are being sent to a stream a mile away.",
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Fund a new well. Leave enough for the work to be done.", null, true,
@@ -3654,7 +3654,7 @@ namespace AshAndEmber
                         case "c":
                             ChangeGold(200);
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("They pay without argument — they were expecting to pay something. That is what makes it worse.", BadColor);
+                            Msg("They pay without argument. They were expecting to pay something.", BadColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -3798,7 +3798,7 @@ namespace AshAndEmber
                         case "a":
                             MobileParty.MainParty.RecentEventsMorale += 8f;
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You stay for the dancing. The music recovers before the faces do. By the time your party leaves, the celebration has decided to be real rather than pretend. That is what people do. That is what they have to do.", GoodColor);
+                            Msg("You stay for the dancing. The music recovers before the faces do. By the time your party leaves, the celebration has turned real.", GoodColor);
                             break;
                         case "b":
                             ChangeGold(-300);
@@ -4094,7 +4094,7 @@ namespace AshAndEmber
                             if (_rng.Next(2) == 0)
                             {
                                 ShiftTrait(DefaultTraits.Mercy, 1);
-                                Msg("The fire finds something to work with. His breathing steadies. You cannot say how long — days, weeks — but he is not dying this morning. The family's relief is very loud and very private. You leave feeling older than the arithmetic of it.", FireColor);
+                                Msg("The fire finds something to work with. His breathing steadies. You cannot say how long — days, weeks — but he is not dying this morning. The family's relief is loud and private at the same time. You leave feeling older.", FireColor);
                             }
                             else
                             {
@@ -4228,7 +4228,7 @@ namespace AshAndEmber
                         case "b":
                             ChangeGold(-900);
                             MobileParty.MainParty.RecentEventsMorale += 10f;
-                            Msg("Full rate, clean contract, no ambiguity. She looks slightly relieved when you name it. \"Good,\" she says. \"I prefer that.\" So do you.", GoodColor);
+                            Msg("Full rate, clean contract, no ambiguity. She looks slightly relieved when you name it. \"Good,\" she says. \"I prefer that.\"", GoodColor);
                             break;
                         case "c":
                             Msg("She nods as if she expected that answer and doesn't look offended. She turns back to her company and says something. They begin moving west instead.", DimColor);
@@ -4380,7 +4380,7 @@ namespace AshAndEmber
                             Msg("You let it happen. Dozens of final seconds, layered, none of them clean. Enemy and ally blurred together in the last moment into something undifferentiated. You stand there until it passes. The fire is quieter after. So are you.", FireColor);
                             break;
                         case "b":
-                            Msg("You close it down. The echoes compress and go dark. The battlefield is just a field with bodies on it again, which is what it was before. That is not nothing. Sometimes that is exactly right.", DimColor);
+                            Msg("You close it down. The echoes compress and go dark. The battlefield is just a field with bodies on it again.", DimColor);
                             break;
                         case "c":
                             AgingSystem.AgeHero(Hero.MainHero, 1);
@@ -4457,7 +4457,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 2f;
-                            Msg("The announcement is made. The punishment follows. Your men are quiet in the specific way of people who needed to see this happen and are not entirely comfortable that they did.", DimColor);
+                            Msg("The announcement is made. The punishment follows. Your men are quiet afterward.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -4507,7 +4507,7 @@ namespace AshAndEmber
                         case "b":
                             ChangeGold(700);
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("You take the box. He steps back. He was prepared for this. That is the worst part of it — that he was prepared.", BadColor);
+                            Msg("You take the box. He steps back. He was prepared for this.", BadColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -4834,7 +4834,7 @@ namespace AshAndEmber
                             {
                                 // Crime — hand him back
                                 ShiftTrait(DefaultTraits.Honor, 1);
-                                Msg("Assault on a merchant's guard, the guard says. Three witnesses. You step aside. He runs and is caught. He looks at you as they retake him. You look back. This is what the answer to that question costs.", DimColor);
+                                Msg("Assault on a merchant's guard, the guard says. Three witnesses. You step aside. He runs and is caught. He looks at you as they retake him. You look back.", DimColor);
                             }
                             break;
                     }
@@ -4887,7 +4887,7 @@ namespace AshAndEmber
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "⚖  The Block",
-                "A group of prisoners is being auctioned in the city square into indentured service — several years' labour for debts that may or may not be documented. Most of them are wrong for criminals: clothing, bearing. One of them has fire-worker's calluses and is tracking everything with the particular attention of someone who knows what is happening to them.",
+                "A group of prisoners is being auctioned in the city square into indentured service — several years' labour for debts that may or may not be documented. Most of them are wrong for criminals: clothing, bearing. One of them has fire-worker's calluses and is watching everything carefully — someone who knows exactly what is happening to them.",
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Buy their freedom. All of them.", null, true,
@@ -5371,7 +5371,7 @@ namespace AshAndEmber
                         case "a":
                             ChangeGold(-300);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You have food and water left at the cellar entrance, coin pressed into the grandfather's hands. He holds it and looks at you. You rode in this morning and took what was here. You rode out this afternoon and left what was needed. Both of those things are true at once. He knows it. So do you.", DimColor);
+                            Msg("You have food and water left at the cellar entrance, coin pressed into the grandfather's hands. He holds it and looks at you. You rode in this morning and took what was here. You rode out this afternoon and left what was needed.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, 1);
@@ -5415,11 +5415,11 @@ namespace AshAndEmber
                             if (_rng.Next(2) == 0)
                                 Msg("The child is found in a hollow oak, frightened but whole. The wolves retreated before the party reached them — something about your column's size and noise was enough. The village will tell this story for years. You will be taller in each telling.", GoodColor);
                             else
-                                Msg("The child is found, but not unharmed. The wolves had time. Your party drives them north and the child lives. What that means for the family is longer than this road. You ride on carrying the specific weight of almost-enough.", DimColor);
+                                Msg("The child is found, but not unharmed. The wolves had time. Your party drives them north and the child lives. You ride on.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("Your men go in efficiently. The wolves break off when they meet something that knows how to move in a treeline. The child is found cold but breathing. Your men come back tasting the particular satisfaction of a thing done for no reward but the doing.", GoodColor);
+                            Msg("Your men go in efficiently. The wolves break off when they meet something that knows how to move in a treeline. The child is found cold but breathing. Your men come back in good spirits.", GoodColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, -1);
@@ -5487,7 +5487,7 @@ namespace AshAndEmber
                         case "a":
                             ChangeGold(-200);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("Coin left with the innkeeper, instructions given. He watches you ride out from the stable door with the expression of a man memorising the moment he was not left. He will catch up in a week. Your men file past him without comment, which is its own form of respect.", GoodColor);
+                            Msg("Coin left with the innkeeper, instructions given. He watches you ride out from the stable door. He will catch up in a week. Your men file past him without comment.", GoodColor);
                             break;
                         case "b":
                             MobileParty.MainParty.RecentEventsMorale += 3f;
@@ -5524,7 +5524,7 @@ namespace AshAndEmber
                         case "a":
                             MobileParty.MainParty.RecentEventsMorale += 5f;
                             ChangeRenown(3f);
-                            Msg("He finishes. The crowd applauds. He catches your eye across the room and his expression moves through three stages: recognition, panic, and then — when you don't stop him — relief. He takes his coin. The song will continue to be wrong in all the same ways. That is how legend works.", DimColor);
+                            Msg("He finishes. The crowd applauds. He catches your eye across the room and his expression moves through three stages: recognition, panic, and then — when you don't stop him — relief. He takes his coin. The song will continue to be wrong in all the same ways.", DimColor);
                             break;
                         case "b":
                             ChangeGold(-100);
@@ -5601,7 +5601,7 @@ namespace AshAndEmber
                             Msg("You tell her what it costs and what it gives. She listens with the complete attention of someone updating a life's framework in real time. She asks three questions that are so specific you have to think before answering. When you leave, she is already writing. Something in you is satisfied by being understood precisely.", FireColor);
                             break;
                         case "b":
-                            Msg("\"It is an unusual condition,\" you say. She nods with the expression of someone who has been told a polite version of something real and is already translating it. She will write something true about you from the deflection alone. That is the hazard of doctors.", DimColor);
+                            Msg("\"It is an unusual condition,\" you say. She nods. She is already translating the polite version into whatever is actually true. She will write something accurate about you from the deflection alone.", DimColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, -1);
@@ -5807,7 +5807,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ChangeRelWithOwner(s, 5);
-                            Msg("You give a ruling: upstream family diverts only during the dry months, downstream family has priority when the stream is low. It is not what either wanted. It is workable. Both families stand with the specific expression of people who have received the most justice the situation allowed rather than the most justice they hoped for. The headman thanks you with genuine relief.", GoodColor);
+                            Msg("You give a ruling: upstream family diverts only during the dry months, downstream family has priority when the stream is low. It is not what either wanted. It is workable. Both families receive it without complaint. The headman thanks you with genuine relief.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
@@ -5817,7 +5817,7 @@ namespace AshAndEmber
                         case "c":
                             ChangeGold(-500);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You commission the work on the spot and leave coin with the headman sufficient to see it done. Both families watch this with the particular attention of people who have been fighting over a scarcity and are now watching the scarcity disappear. The upstream father and the downstream father look at each other for the first time without the argument between them. It is a beginning.", GoodColor);
+                            Msg("You commission the work on the spot and leave coin with the headman sufficient to see it done. Both families watch in silence as the scarcity they have been fighting over disappears. The upstream father and the downstream father look at each other for the first time without the argument between them.", GoodColor);
                             break;
                         case "d":
                             Msg("The headman receives this with the expression of a man who has been given a task that will end him before the magistrate arrives. He thanks you anyway. He will do what he can. The families separate for the evening. Whether they stay separated through the week is a question the headman will be answering alone.", DimColor);
@@ -5865,7 +5865,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("You ride past. The cart rolls. The widow's face does not change because it already knows the shape of this. Your men file past without meeting her eyes, which is its own answer.", BadColor);
+                            Msg("You ride past. The cart rolls. The widow watches. Your men file past without meeting her eyes.", BadColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -5926,7 +5926,7 @@ namespace AshAndEmber
             bool mage = MageKnowledge.IsMage;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "✚  The Sick Healer",
-                "The village healer — the person this village relies on for fever, birth, broken bones, and every other thing that can go wrong with a body — is sick. Not gravely, but genuinely incapacitated. The village is managing, but managing is not the same as fine. Two families have members who need real attention. The healer apologises for the inconvenience with the specific exhaustion of someone who has never been allowed to be sick before.",
+                "The village healer — the person this village relies on for fever, birth, broken bones, and every other thing that can go wrong with a body — is sick. Not gravely, but genuinely incapacitated. The village is managing. Two families have members who need real attention. The healer apologises for the inconvenience, clearly unused to being the one laid up.",
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", mage ? "Use the fire to speed the healer's recovery." : "Leave your party's surgeon with the village for two days.", null, true,
@@ -5954,7 +5954,7 @@ namespace AshAndEmber
                             {
                                 ShiftTrait(DefaultTraits.Mercy, 1);
                                 MobileParty.MainParty.RecentEventsMorale -= 2f;
-                                Msg("Your surgeon stays. He grumbles about it with the specific grumbling of a man who is entirely willing. You ride ahead and meet him two days later on the road. He reports both families stable and the healer standing. He is in a good mood. Some work agrees with a person.", GoodColor);
+                                Msg("Your surgeon stays. He grumbles about it but goes willingly. You ride ahead and meet him two days later on the road. He reports both families stable and the healer standing. He is in a good mood.", GoodColor);
                             }
                             break;
                         case "b":
@@ -5964,10 +5964,10 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            Msg("You spend two hours at their bedside with a writing board. They dictate remedies, dosages, and the specific knowledge of two dozen years of treating this particular valley's ailments. By the end they are flushed and talking faster. Being taken seriously appears to be medicinal. You leave with more than you arrived with.", DimColor);
+                            Msg("You spend two hours at their bedside with a writing board. They dictate remedies, dosages, and twenty years of knowledge about treating this valley's ailments. By the end they are flushed and talking faster. You leave with more than you arrived with.", DimColor);
                             break;
                         case "d":
-                            Msg("You ride on. The village manages, as villages do, in the particular way that means some things get slightly worse before anyone admits they should not have waited.", DimColor);
+                            Msg("You ride on. The village manages. Some things will get slightly worse before anyone admits they should not have waited.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6009,7 +6009,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You tell him the cold men are dangerous and that his map was brave but that brave is not always safe. He is disappointed in the specific way of a child who hoped to matter. He will think about this conversation for a long time. So will you.", DimColor);
+                            Msg("You tell him the cold men are dangerous and that his map was brave but that brave is not always safe. He is disappointed. He wanted to matter, and he did, and that is not enough. You ride on.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6051,7 +6051,7 @@ namespace AshAndEmber
                             Msg("You tell the headman what a cold-passing leaves behind and which direction they came from. He listens with the attention of someone who has been waiting for official confirmation of what he already suspected. He thanks you formally, then immediately sends the oldest children to relatives further south.", DimColor);
                             break;
                         case "d":
-                            Msg("You ride past. The ash is still warm. By next week someone will have swept it clean and put up a cross of straw instead, which is what happens when a tradition outlasts its understanding.", DimColor);
+                            Msg("You ride past. The ash is still warm. By next week someone will have swept it clean and put up a cross of straw instead.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6086,7 +6086,7 @@ namespace AshAndEmber
                                       ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
                                       ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
                             if (t_lv6a != null) try { MobileParty.MainParty.MemberRoster.AddToCounts(t_lv6a, 1); } catch { }
-                            Msg("You accept. He stands and sheathes his sword with the particular economy of a man who has been practising this moment in his head. Your veterans make room for him without being asked. He will be useful because he has already decided to be.", GoodColor);
+                            Msg("You accept. He stands and sheathes his sword cleanly. Your veterans make room for him without being asked. He falls into the column without ceremony.", GoodColor);
                             break;
                         }
                         case "b":
@@ -6105,7 +6105,7 @@ namespace AshAndEmber
                             Msg("You explain it plainly: his service would be real but his problem would remain. He considers this for a moment, then nods. He picks up his sword and walks back off the road. He is not crushed. He is recalculating. Some men need only to be taken seriously to find their own way.", GoodColor);
                             break;
                         case "d":
-                            Msg("\"I have petitioned twice,\" he says, without heat. \"The second time they returned my letter unopened.\" He holds the information out to you as evidence, not complaint. He waits. You have told him to try something he has already tried. He is deciding what this means about you.", DimColor);
+                            Msg("\"I have petitioned twice,\" he says, without heat. \"The second time they returned my letter unopened.\" He waits. You have told him to try something he has already tried.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6148,7 +6148,7 @@ namespace AshAndEmber
                             Msg("Her grandmother was taught by a woman who passed through in a winter so cold the wells froze solid, which was wrong for the season. The woman had warm hands and left quickly. She gave three instructions: tend the fire, tell no one official, wait. The waiting was the hardest part. It was also, apparently, the point.", FireColor);
                             break;
                         case "d":
-                            Msg("She looks at your hands while you speak. She says: \"I know what warm hands look like in winter.\" She does not argue. She does not need to. You ride away with the specific feeling of having made an error you cannot prove was an error.", DimColor);
+                            Msg("She looks at your hands while you speak. She says: \"I know what warm hands look like in winter.\" She does not argue. You ride away not knowing whether you made an error.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6228,7 +6228,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("You tell him the order, the reason, and the cost as you knew it at the time. He listens without moving. When you finish he is quiet for a long time. Then he says: 'That's what I thought it would be.' Not forgiveness. Not accusation. Recognition. He picks up his work and resumes it. You ride away with the specific weight of having been accurate.", GoodColor);
+                            Msg("You tell him the order, the reason, and the cost as you knew it at the time. He listens without moving. When you finish he is quiet for a long time. Then he says: 'That's what I thought it would be.' He picks up his work and resumes it.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
@@ -6286,7 +6286,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("You watch. The sentence is confirmed. The woman does not cry, which is the worst part — she has already understood that crying will not help. Her children watch from the edge of the square. You ride on with the specific heaviness of a thing you chose not to do.", BadColor);
+                            Msg("You watch. The sentence is confirmed. The woman does not cry. Her children watch from the edge of the square. You ride on.", BadColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6318,7 +6318,7 @@ namespace AshAndEmber
                             AgingSystem.AgeHero(Hero.MainHero, 1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ChangeRenown(10f);
-                            Msg("You walk through the burning door. The fire parts around you with the specific recognition of something meeting itself. The alchemist is on his knees trying to seal a set of ceramic jars. You pick him up under one arm, take the jars under the other on instinct, and walk back out. The watch stares. The building comes down twenty seconds later. He is alive. The jars are intact. He says they contain something he has been twenty years developing and says nothing else for a long time.", FireColor);
+                            Msg("You walk through the burning door. The fire gives way around you. The alchemist is on his knees trying to seal a set of ceramic jars. You pick him up under one arm, take the jars under the other, and walk back out. The watch stares. The building comes down twenty seconds later. He is alive. The jars are intact. He says they contain something he has been twenty years developing and says nothing else for a long time.", FireColor);
                             break;
                         case "b":
                             if (_rng.Next(2) == 0)
@@ -6430,10 +6430,10 @@ namespace AshAndEmber
                             ChangeGold(-100);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 5f;
-                            Msg("You sit with him for an hour in a tavern that smells like sawdust and old fights. He tells you about the last three years in a way that is not a complaint. Your men learn about this afterward and do not say anything about it to you, which is how your men express approval. It was an hour well spent and everyone present seems to know it.", GoodColor);
+                            Msg("You sit with him for an hour in a tavern that smells like sawdust and old fights. He tells you about the last three years in a way that is not a complaint. Your men hear about it afterward and say nothing to you about it.", GoodColor);
                             break;
                         case "d":
-                            Msg("He nods when you acknowledge him. He expected approximately this. He goes back to his preparations with the particular stillness of a man who has been not-expected-much-of for long enough that he has built a life that does not require it.", DimColor);
+                            Msg("He nods when you acknowledge him. He goes back to his preparations without looking up.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6662,10 +6662,10 @@ namespace AshAndEmber
                         case "c":
                             ChangeGold(-300);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You pay the value of what's taken and give him the name of the appeal clerk who handles trade disputes with actual authority. He writes both down in a small leather-covered book. He thanks you with the specific efficiency of a merchant: thoroughly, briefly, and while already calculating his next move. He has done this before. He will recover.", GoodColor);
+                            Msg("You pay the value of what's taken and give him the name of the appeal clerk who handles trade disputes with actual authority. He writes both down in a small leather-covered book. He thanks you quickly and is already thinking about his next stop. He will recover.", GoodColor);
                             break;
                         case "d":
-                            Msg("You ride past. The guards continue. The merchant's arguments become less legal and more human as you go. By the time you are out of sight they are finished. His cart is lighter. He will spend three months in appeal and receive a partial settlement. This is the city working as designed.", DimColor);
+                            Msg("You ride past. The guards continue. The merchant's arguments become less legal and more human as you go. By the time you are out of sight they are finished. His cart is lighter. He will spend three months in appeal and receive a partial settlement.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -6780,7 +6780,7 @@ namespace AshAndEmber
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "⚔  Your Standard in Enemy Hands",
-                "Among the captured enemy effects: your own banner, folded in a wax-sealed case. Not a copy. The actual standard, with the specific repairs from two campaigns ago. Someone in your party gave it to the enemy, or sold it, or it was taken in circumstances nobody reported. Your sergeant is standing very still when he shows it to you. He has already started a list.",
+                "Among the captured enemy effects: your own banner, folded in a wax-sealed case. Not a copy. The actual standard — you recognise the patches from two campaigns ago. Someone in your party gave it to the enemy, or sold it, or it was taken in circumstances nobody reported. Your sergeant is standing very still when he shows it to you. He has already started a list.",
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Let your sergeant run the inquiry — he will be thorough and correct.", null, true,
@@ -6852,12 +6852,12 @@ namespace AshAndEmber
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 5f;
-                            Msg("He works through the night. In the morning three men who were dying are stable. Your surgeon reports this to you with the specificity of a man who has been counting. The enemy surgeon asks to speak to you before leaving — he wants to say that in twenty years he has not worked alongside another surgeon who made his decisions the way your man does. That is the only thing he says. He is released at noon.", GoodColor);
+                            Msg("He works through the night. In the morning three men who were dying are stable. Your surgeon reports this to you with the care of a man who has been counting. The enemy surgeon asks to speak to you before leaving — he wants to say that in twenty years he has not worked alongside another surgeon who made decisions the way your man does. He is released at noon.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 3f;
-                            Msg("He accepts the terms and returns to work immediately. When the last serious case is stable he comes to you directly, states that his obligation is fulfilled, and thanks you for the terms. He means it. He walks out of your camp with his equipment and his parole and the particular dignity of a man whose professional self has been treated as real. Your surgeon watches him go and says nothing, which is how your surgeon expresses approval.", GoodColor);
+                            Msg("He accepts the terms and returns to work immediately. When the last serious case is stable he comes to you directly, states that his obligation is fulfilled, and thanks you for the terms. He means it. He walks out of your camp with his equipment and his parole. Your surgeon watches him go without a word.", GoodColor);
                             break;
                         case "c":
                             Msg("Your surgeon receives the decision and returns to work. He will do what he can. Two men he was uncertain about do not make it through the night. Whether the enemy surgeon would have changed that outcome is not a question with a clean answer, but it is a question that will be in your surgeon's face for the next few days.", DimColor);
@@ -6896,11 +6896,11 @@ namespace AshAndEmber
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 3f;
-                            Msg("Your surgeon resets the arm properly. You give him water and point him north. He asks why. You tell him because the war ends eventually and people remember how they were treated when it was over. He thinks about this for a moment with the particular seriousness of someone very young encountering an idea that will reorganise several years of thought. He thanks you and walks north, holding his arm.", GoodColor);
+                            Msg("Your surgeon resets the arm properly. You give him water and point him north. He asks why. You tell him because the war ends eventually and people remember how they were treated when it was over. He thinks about this. He thanks you and walks north, holding his arm.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            Msg("He answers your questions with the specific honesty of someone in mild shock. He tells you about his commander's planned second position, the reserve force's size and location, and the reason the centre held longer than it should have. He does not realise he is giving you operational intelligence — he thinks he is explaining the battle. Both things are true. You release him afterward with his arm set. He was never going to withhold anything.", DimColor);
+                            Msg("He answers your questions with the openness of someone in mild shock. He tells you about his commander's planned second position, the reserve force's size and location, and the reason the centre held longer than it should have. He is explaining the battle. He does not realise how much that tells you. You release him afterward with his arm set.", DimColor);
                             break;
                         case "c":
                             ChangeGold(200);
@@ -6987,7 +6987,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            Msg("You name a date and a judge and have him held. The headmen's faces change — not to happiness but to something more durable than happiness. They have been given the form of justice rather than its result, which is how justice usually works and is usually better than the alternative. The administrator sits in his cell with the accounts he prepared, which will be used against him. This is appropriate.", GoodColor);
+                            Msg("You name a date and a judge and have him held. The headmen's faces settle into something that is not happiness but is more durable than happiness. The administrator sits in his cell with the accounts he prepared, which will be used against him.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, 1);
@@ -6997,7 +6997,7 @@ namespace AshAndEmber
                         case "c":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("You tell him his services are retained. The headmen leave the hall without looking at you. The administrator begins briefing you on the accounts with the specific efficiency of a man who has survived transitions before and knows the value of making himself immediately useful. He is, in fact, very useful. That is the entire problem.", BadColor);
+                            Msg("You tell him his services are retained. The headmen leave the hall without looking at you. The administrator begins briefing you on the accounts before you have settled in. He is competent, and he is going to be hard to replace.", BadColor);
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -7032,12 +7032,12 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 3f;
-                            Msg("You declare the full amount. Your sergeant writes it down with the specific expression of a man whose guess about you has been confirmed. The six veterans hear about it by evening. None of them comment on it directly. The morale effect of a correct expectation is different from a surprise and more lasting. They knew you would do this. They are glad they were right.", GoodColor);
+                            Msg("You declare the full amount. Your sergeant writes it down. The six veterans hear about it by evening. None of them comment on it directly. They knew you would do this. They are glad they were right.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, -1);
                             MobileParty.MainParty.RecentEventsMorale += 8f;
-                            Msg("You declare most of it, give the remainder to the six as a finder's share — significant, enough to matter — and watch what happens to their faces. The irregularity is small enough that your quartermaster will not press it. The loyalty from those six is specific and durable. Your sergeant thanks you without performing gratitude. He means it in the particular way of someone who asked for less than this and received more.", GoodColor);
+                            Msg("You declare most of it, give the remainder to the six as a finder's share — significant, enough to matter — and watch what happens to their faces. The irregularity is small enough that your quartermaster will not press it. Your sergeant thanks you. He means it.", GoodColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, -2);
@@ -7057,7 +7057,7 @@ namespace AshAndEmber
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "⚒  The Torturer",
-                "In the garrison, waiting with the other soldiers to be processed: a man your sergeant identifies quietly by reputation, not by rank. The previous lord's dedicated interrogator. Not a soldier — a specialist, titled, salaried. There are people in the city who remember his face and his work. He is standing in line with everyone else, waiting. He has not tried to flee or to hide, which is either professional confidence or the specific resignation of a man who has been expecting this day.",
+                "In the garrison, waiting with the other soldiers to be processed: a man your sergeant identifies quietly by reputation, not by rank. The previous lord's dedicated interrogator. Not a soldier — a specialist, titled, salaried. There are people in the city who remember his face and his work. He is standing in line with everyone else, waiting. He has not tried to flee or to hide.",
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Separate him from the others and hold him for a formal accounting.", null, true,
@@ -7077,7 +7077,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ChangeRelWithRandomLord(5);
-                            Msg("You pull him out of line personally and have him held separately. The other soldiers watch this with the specific attention of people determining what kind of administration is beginning. By evening, three city residents have come to the gate to ask about the process. They have names of people who were taken to the lower rooms. You have started something that will require a judge and several months. You have started it correctly.", GoodColor);
+                            Msg("You pull him out of line personally and have him held separately. The other soldiers watch. By evening, three city residents have come to the gate to ask about the process. They have names of people who were taken to the lower rooms. You have started something that will require a judge and several months. You have started it correctly.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
@@ -7243,7 +7243,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             if (_rng.Next(2) == 0)
-                                Msg("The column's size reads correctly. The scouts withdraw north in the specific unhurried way of a thing that was not afraid — it simply calculated and left. They will report your position and your number. That information is now travelling.", DimColor);
+                                Msg("The column's size reads correctly. The scouts withdraw north without hurrying — not afraid, just done. They will report your position and your number.", DimColor);
                             else
                             {
                                 SpawnAshenAtGate(s, 10, 50f);
@@ -7311,7 +7311,7 @@ namespace AshAndEmber
                     new InquiryElement("c", "Test her first — see what she actually carries before deciding what she can receive.", null, true,
                         "Costs 1 day. Her gift is real and specific. Your test reveals something unexpected."),
                     new InquiryElement("d", "Tell her she needs to find the answer herself — it won't mean anything received.", null, true,
-                        "Gain Honor. She is frustrated. She is also right to be frustrated. Both things are true."),
+                        "Gain Honor. She is frustrated, and she has reason to be."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -7320,7 +7320,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             AgingSystem.AgeHero(Hero.MainHero, 1);
-                            Msg("The question was: can the fire grieve. You answer it honestly, which costs more than you expected, because the honest answer requires showing her the specific moment yours did. She receives it with the attention of someone who has been carrying a wrong assumption for years and can now correct it. She thanks you simply. She will teach what you gave her. It will carry your name, eventually, in the way that knowledge carries names: silently and without permission.", FireColor);
+                            Msg("The question was: can the fire grieve. You answer it honestly, which costs more than you expected — the honest answer requires showing her the moment yours did. She takes it in quietly. She thanks you simply. She will teach what you gave her. It will carry your name, eventually, without anyone meaning it to.", FireColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
@@ -7332,7 +7332,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("You tell her to find it herself. She is frustrated in the specific way of someone who has been told a truth they did not want. She asks why. You tell her: because the answer you find is yours; the answer I give you is mine, and mine won't fit where yours needs to go. She sits with this and does not thank you. She will find the answer. When she does, it will be shaped correctly. You will not be there to see it.", GoodColor);
+                            Msg("You tell her to find it herself. She is frustrated. She asks why. You tell her: because the answer you find is yours; the answer I give you is mine, and mine won't fit where yours needs to go. She does not thank you. She will find the answer.", GoodColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -7462,7 +7462,7 @@ namespace AshAndEmber
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            Msg("You walk past. They watch you go with the patience of something that has time. Your column tracks their position as it passes. They stay visible long enough to confirm they are not hiding — they want you to know they are watching. You do your business in the city with the specific focus of a person who is also being filed away in someone else's record.", AshenColor);
+                            Msg("You walk past. They watch you go without moving. Your column tracks their position as it passes. They stay visible long enough to make sure you noticed — they want you to know they are watching. You do your business in the city aware that you are being catalogued.", AshenColor);
                             break;
                         case "c":
                             SpawnAshenAtGate(s, 12, 60f);
@@ -7595,7 +7595,7 @@ namespace AshAndEmber
                             AgingSystem.AgeHero(Hero.MainHero, 1);
                             ChangeRenown(20f);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("You make contact. The cold is a presence — not temperature, something older, the specific absence that the Ashen carry where warmth should be. You hold against it. They hold against yours. For ninety seconds neither of you moves. Then they release, slowly, and step back. They say one thing: 'Longer than the last one.' They leave south. You have a day less in your life and a measure of what you are against, which is worth it.", AshenColor);
+                            Msg("You make contact. The cold is a presence — not temperature, something older, the absence the Ashen carry where warmth should be. You hold against it. They hold against yours. For ninety seconds neither of you moves. Then they release, slowly, and step back. They say one thing: 'Longer than the last one.' They leave south. You have a day less in your life and a better measure of what you are against.", AshenColor);
                             break;
                         case "b":
                             AgingSystem.AgeHero(Hero.MainHero, 1);
@@ -7643,7 +7643,7 @@ namespace AshAndEmber
                             AgingSystem.AgeHero(Hero.MainHero, 1);
                             ChangeRenown(10f);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("The duel is formal and brief. He can barely stand but his working is precise — the body failing, the gift still itself. You end it cleanly. Before it ends he tells you the name of his teacher. You know the name. The lineage it implies is older than you expected him to carry. You will think about that name for a long time. Your men watched without speaking, which is how soldiers watch something that is larger than the battle it followed.", FireColor);
+                            Msg("The duel is formal and brief. He can barely stand but his working is precise — the body failing, the gift still itself. You end it cleanly. Before it ends he tells you the name of his teacher. You know the name. The lineage it implies is older than you expected him to carry. Your men watched in silence.", FireColor);
                             break;
                         case "b":
                             AgingSystem.AgeHero(Hero.MainHero, 1);
@@ -7689,14 +7689,14 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("You remove the chains personally. They stand carefully, testing their own weight. They say thank you with the specific brevity of someone who has been saving the word for when it was actually true. They take nothing from the room. They leave through the east door. You see them once more, three days later, on the road to a city you were not heading toward. They are moving faster than they should be able to. Something resolved in them.", GoodColor);
+                            Msg("You remove the chains personally. They stand carefully, testing their own weight. They say thank you — one word, plainly. They take nothing from the room. They leave through the east door. You see them once more, three days later, on the road to a city you were not heading toward. They are moving faster than they should be able to.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             if (_rng.Next(2) == 0)
                             {
                                 ChangeRenown(8f);
-                                Msg("You lay out the terms: voluntary, compensated, ending with a clear date. They listen with the full attention of someone evaluating whether this is real. They conclude it is and accept. They work for you for six weeks before the agreed date and leave with what they earned and the specific look of someone who has revised their expectations of lords upward by one significant data point.", GoodColor);
+                                Msg("You lay out the terms: voluntary, compensated, ending with a clear date. They listen carefully. They accept. They work for you for six weeks before the agreed date and leave with what they earned.", GoodColor);
                             }
                             else
                                 Msg("They receive the offer and ask for one thing: a week alone to decide. You grant it. At the end of the week they are gone. They left a note that says the offer was fair and they needed something else first. You will hear their name again in about two years, in a context that will make the note make sense.", DimColor);
@@ -7745,7 +7745,7 @@ namespace AshAndEmber
                             {
                                 ShiftTrait(DefaultTraits.Mercy, 1);
                                 ChangeRenown(5f);
-                                Msg("You reopen the wound correctly, clean it properly, and pack it with what you have. The herb-woman watches with the particular attention of someone updating a technique in real time. He has a week of fever ahead of him and then a slow recovery. He was going to have a much shorter future. Your hands knew what they were doing.", GoodColor);
+                                Msg("You reopen the wound correctly, clean it properly, and pack it with what you have. The herb-woman watches closely. He has a week of fever ahead of him and then a slow recovery. He was going to have a much shorter future.", GoodColor);
                             }
                             else
                             {
@@ -7763,7 +7763,7 @@ namespace AshAndEmber
                             Msg("A rider goes for the surgeon. He arrives by the following morning. The wound has started going wrong by then but not irreversibly. The surgeon works for two hours and the farmer survives. He will carry a scar and a story about the lord who paid without being asked. The surgeon will carry the memory of almost-too-late.", DimColor);
                             break;
                         case "d":
-                            Msg("You say nothing and ride on. In the morning you know, with the specific certainty of something you could have changed, that you were right. You carry this for the rest of the day. You do not know what he carries.", BadColor);
+                            Msg("You say nothing and ride on. In the morning you know you were right. You ride on.", BadColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -7861,7 +7861,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("You let him keep it. He is protecting something with the only tools available to him. You ride on with the specific quiet of a choice that cost you information and cost him nothing, which is not the usual direction for that trade. He watches you leave with an expression he will carry for longer than you carry this road.", GoodColor);
+                            Msg("You let him keep it. He is protecting something with the only tools available to him. You ride on. He watches you leave.", GoodColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -7874,7 +7874,7 @@ namespace AshAndEmber
             string hint  = SkillHint(DefaultSkills.Charm, 0.25f, "Persuade him to speak");
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "⚜  The Reluctant Official",
-                "A city records clerk has information you need — movement orders for a specific gate, filed three weeks ago. He is technically required to provide access to lords on request. He is also clearly frightened of whoever filed those orders, and is performing bureaucratic friction with the specific expertise of a man who has been doing it for years. He is not going to say no. He is going to take a very long time to say yes.",
+                "A city records clerk has information you need — movement orders for a specific gate, filed three weeks ago. He is technically required to provide access to lords on request. He is also clearly frightened of whoever filed those orders, and is deploying bureaucratic friction with the practiced ease of a man who has done it for years. He is not going to say no. He is going to take a very long time to say yes.",
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Ease his fear rather than press his duty.", null, true, hint),
@@ -7897,7 +7897,7 @@ namespace AshAndEmber
                                 Msg("You spend ten minutes doing something that is not persuasion exactly — you make him understand that you already know what frightened him and that your interest is not in making his position worse. He relaxes by degrees. By the end he pulls the record himself and explains what it means without being asked. He does this because someone treating him as a person rather than an obstacle is rare enough to be worth responding to honestly.", GoodColor);
                             }
                             else
-                                Msg("You try the right approach but the fear in him is too deep and too recent to ease in a single conversation. He appreciates the tone and gives you the record's existence but not its content, which is technically compliance. He is sorry about this in the specific way of someone who would like to do more but cannot yet. You have the reference number. That opens other doors.", DimColor);
+                                Msg("You try the right approach but the fear in him is too deep and too recent to ease in a single conversation. He appreciates the tone and gives you the record's existence but not its content — technically compliance. He cannot go further than this and he knows it. You have the reference number. That opens other doors.", DimColor);
                             break;
                         case "b":
                             ChangeRelWithOwner(s, -3);
@@ -7951,11 +7951,11 @@ namespace AshAndEmber
                         case "b":
                             ChangeRelWithOwner(s, -3);
                             ChangeRelWithRandomLord(5);
-                            Msg("You support the auditor. The merchant guild will remember this in the specific way that guilds remember things: collectively, without urgency, and at a moment of their choosing. The auditor thanks you and continues the review. The truth of the ledger remains open, but the process continues now without obstruction. That is what auditors are for.", DimColor);
+                            Msg("You support the auditor. The merchant guild will remember this. The auditor thanks you and continues the review. The truth of the ledger remains open, but the process continues without obstruction.", DimColor);
                             break;
                         case "c":
                             ChangeRelWithOwner(s, 5);
-                            Msg("You support the merchant. He thanks you with the warmth of someone to whom this favour will translate into cooperation later. Whether he is guilty is a question you have declined to answer. The auditor closes his notes with the particular expression of a man who has been overruled before and knows exactly what it means for his profession. The ledger goes unresolved.", DimColor);
+                            Msg("You support the merchant. He thanks you warmly. Whether he is guilty is a question you have declined to answer. The auditor closes his notes without a word and leaves. The ledger goes unresolved.", DimColor);
                             break;
                         case "d":
                             Msg("You decline. They argue for another forty minutes and reach no conclusion. The merchant eventually agrees to a third-party review that will take six weeks. The auditor leaves unsatisfied. The ledger goes back into the hall. The truth is still in it.", DimColor);
@@ -8009,7 +8009,7 @@ namespace AshAndEmber
                             Msg("You lead them to a courtyard with one entrance and position your party at it before stopping. When they arrive they find you waiting. The professional response is to acknowledge it: one of them steps forward and explains they are city watch, tracking the movements of 'persons of interest' per the lord's standing order. You are apparently a person of interest. They file their report. You have their faces, their methods, and the confirmation that the order comes from the lord directly.", GoodColor);
                             break;
                         case "d":
-                            Msg("Three corners and a market crossing and you are clean. They are good but you know this city's geometry better from yesterday's approach. You complete your business without a tail. They know you noticed. They file that you were 'surveillance-aware', which is its own kind of flag, but one without immediate consequences. You are ahead by one day.", DimColor);
+                            Msg("Three corners and a market crossing and you are clean. They are good but you know this city's geometry better from yesterday's approach. You complete your business without a tail. They know you noticed. You are ahead by one day.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -8106,7 +8106,7 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            Msg("You advance with flankers extended and pace halved. If it is real, your caution costs thirty minutes. If it is not, your flankers reach the ambush position first. They do. Three men in the ditch with the particular expression of ambushers who have been found before they were ready. They surrender before the column arrives. The plan required your column moving at normal speed. You denied them that.", GoodColor);
+                            Msg("You advance with flankers extended and pace halved. If it is real, your caution costs thirty minutes. If it is not, your flankers reach the ambush position first. They do. Three men in the ditch, caught too early. They surrender before the column arrives. The plan required your column moving at normal speed.", GoodColor);
                             break;
                         case "d":
                             if (_rng.Next(2) == 0)
@@ -8214,7 +8214,7 @@ namespace AshAndEmber
                         case "b":
                             ChangeRelWithOwner(s, 5);
                             if (_rng.Next(2) == 0)
-                                Msg("The guard detains the merchant. The permit office's response comes in two days: forged. The merchant had contraband in the second wagon. The guard's instinct was correct. Your backing gave him the authority to act on it. He will remember that a lord trusted his read. That is the kind of thing that makes gate guards better at their jobs.", GoodColor);
+                                Msg("The guard detains the merchant. The permit office's response comes in two days: forged. The merchant had contraband in the second wagon. The guard's instinct was correct. Your backing gave him the authority to act on it. He will remember that a lord trusted his read.", GoodColor);
                             else
                                 Msg("The permit office's response comes in two days: legitimate. The merchant had a real permit and a delayed shipment and is furious about the detention at a level that may become a formal complaint. The guard's instinct was wrong. Your backing made it stick. He is embarrassed. You have a complaint pending. The seal was genuine.", BadColor);
                             break;
@@ -8257,7 +8257,7 @@ namespace AshAndEmber
                             {
                                 ShiftTrait(DefaultTraits.Mercy, 1);
                                 MobileParty.MainParty.RecentEventsMorale += 6f;
-                                Msg("You have seen enough battlefield surgery to know the specific indicator he is weighing — the depth and quality of the wound site is different between the two in a way that changes the priority. You tell him what you see. He checks it against his own read and adjusts. Both men receive treatment in the right order with the right technique. Both survive. Your surgeon looks at you differently afterward — not with deference, with the specific respect of a professional whose assessment was confirmed.", GoodColor);
+                                Msg("You have seen enough battlefield surgery to recognise what he is weighing — the wound sites are different in a way that changes the priority. You tell him what you see. He checks it against his own read and adjusts. Both men receive treatment in the right order. Both survive. Your surgeon looks at you differently afterward — not with deference, just professional respect.", GoodColor);
                             }
                             else
                             {
@@ -8274,7 +8274,7 @@ namespace AshAndEmber
                         case "c":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             MobileParty.MainParty.RecentEventsMorale += 4f;
-                            Msg("You ask him to describe the clinical picture fully before you say anything. In describing it, he hears something in the structure of his own account that he had not heard while thinking it. He stops and redirects. The question you asked changed nothing about the facts and everything about the framing. Both men receive treatment. Both survive. He thanks you for the question specifically, which is how surgeons acknowledge a useful non-intervention.", GoodColor);
+                            Msg("You ask him to describe the clinical picture fully before you say anything. In describing it, he hears something he had not heard while thinking it. He stops and redirects. Both men receive treatment. Both survive. He thanks you for the question.", GoodColor);
                             break;
                         case "d":
                             ChangeGold(-500);
@@ -8314,7 +8314,7 @@ namespace AshAndEmber
                             {
                                 ShiftTrait(DefaultTraits.Calculating, 1);
                                 MobileParty.MainParty.RecentEventsMorale += 5f;
-                                Msg("The centre held because of a deliberate false retreat on their right — it drew your left flank's attention and compressed the centre's pressure by a third. The numbers were coincidence. Your sergeant listens with the specific attention of someone updating a model. He asks two clarifying questions and then restates the corrected read back to the officers. They leave the debrief with the right lesson. This is what debriefs are for and it requires someone who was watching the whole field. You were.", GoodColor);
+                                Msg("The centre held because of a deliberate false retreat on their right — it drew your left flank's attention and compressed the centre's pressure by a third. The numbers were coincidence. Your sergeant listens, asks two clarifying questions, and restates the corrected read back to the officers. They leave the debrief with the right lesson.", GoodColor);
                             }
                             else
                                 Msg("You offer your counter-read but cannot articulate the mechanism clearly enough — you saw something but translating what you saw into the language of formation tactics is harder than seeing it was. Your sergeant acknowledges your disagreement and hedges his read without fully revising it. The debrief ends with ambiguity rather than a clean correction. Better than the wrong certainty. Not as good as the right certainty.", DimColor);
@@ -8365,19 +8365,19 @@ namespace AshAndEmber
                                 ShiftTrait(DefaultTraits.Calculating, 1);
                                 ChangeRenown(8f);
                                 MobileParty.MainParty.RecentEventsMorale += 4f;
-                                Msg("The correct precedent is siege capture law modified by the city charter's civilian commerce protections — the merchants' pre-siege inventory claims are valid up to the point of city closure, garrison staff claims are pro-rated by months served, and the military share is calculated after both civilian claims are satisfied. You work through it in two hours. Nobody gets everything. Nobody has a legitimate grievance. Your quartermaster is taking notes. This is what governing is.", GoodColor);
+                                Msg("The correct precedent is siege capture law modified by the city charter's civilian commerce protections — the merchants' pre-siege inventory claims are valid up to the point of city closure, garrison staff claims are pro-rated by months served, and the military share is calculated after both civilian claims are satisfied. You work through it in two hours. Nobody gets everything. Nobody has a legitimate grievance. Your quartermaster is taking notes.", GoodColor);
                             }
                             else
                             {
                                 ShiftTrait(DefaultTraits.Calculating, 1);
                                 MobileParty.MainParty.RecentEventsMorale += 2f;
-                                Msg("You apply the precedents as best you can, but the intersection of siege law and city charter has a gap that your reading doesn't resolve cleanly. You make a defensible decision rather than a correct one. The merchants accept it. The garrison staff accept it with the specific acceptance of people who will raise the gap in a formal petition in six months. You have managed the problem rather than solved it. For now, that is enough.", DimColor);
+                                Msg("You apply the precedents as best you can, but the intersection of siege law and city charter has a gap that your reading doesn't resolve cleanly. You make a defensible decision rather than a correct one. The merchants accept it. The garrison staff accept it for now — but they will raise the gap in a formal petition in six months.", DimColor);
                             }
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             MobileParty.MainParty.RecentEventsMorale += 5f;
-                            Msg("You give him the full authority directly and say so in front of the claimants. He takes it and works through it correctly — he has done this before, or something close enough that the differences don't matter. The distribution takes three hours and satisfies both groups adequately. He reports back to you with the numbers and a note that says he would have arrived at the same conclusions with or without the authority. That is the point.", GoodColor);
+                            Msg("You give him the full authority directly and say so in front of the claimants. He takes it and works through it correctly — he has done this before, or something close enough that the differences don't matter. The distribution takes three hours and satisfies both groups adequately. He reports back to you with the numbers.", GoodColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Calculating, 1);
