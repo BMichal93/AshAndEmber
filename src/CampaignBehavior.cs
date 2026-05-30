@@ -78,22 +78,13 @@ namespace AshAndEmber
             try { AshenCitySystem.OnClanChangedKingdom(clan, oldKingdom, newKingdom, detail, showNotification); } catch { }
         }
 
-        // The Ashen make no peace. If the engine forces a peace involving the Ashen
-        // kingdom, immediately redeclare war.
+        // War maintenance is handled exclusively by AshenCitySystem.DailyTick.
+        // Responding to OnMakePeace synchronously caused a rapid peace→war loop
+        // when Bannerlord's diplomacy AI processed many negotiations at once
+        // (e.g. after the player joined a kingdom), spiking CPU until crash.
+        // The daily tick redeclares war within one game day — acceptable.
         private void OnMakePeace(IFaction faction1, IFaction faction2,
-            MakePeaceAction.MakePeaceDetail detail)
-        {
-            try
-            {
-                const string id = "ashen_kingdom";
-                bool ashenInvolved =
-                    (faction1 is Kingdom k1 && k1.StringId == id) ||
-                    (faction2 is Kingdom k2 && k2.StringId == id);
-                if (!ashenInvolved) return;
-                try { AshenCitySystem.DeclareWarWithAllKingdoms(); } catch { }
-            }
-            catch { }
-        }
+            MakePeaceAction.MakePeaceDetail detail) { }
 
         private void OnMobilePartyCreated(MobileParty party)
         {

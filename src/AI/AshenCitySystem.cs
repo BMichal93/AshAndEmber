@@ -404,6 +404,7 @@ namespace AshAndEmber
                     var settlement = Settlement.All.FirstOrDefault(s => s.StringId == kvp.Key);
                     if (settlement == null) continue;
                     if (settlement.OwnerClan?.StringId == kvp.Value) continue;
+                    if (settlement.IsUnderSiege) continue;
 
                     var clan = Clan.All.FirstOrDefault(c => c.StringId == kvp.Value);
                     if (clan == null || clan.IsEliminated) continue;
