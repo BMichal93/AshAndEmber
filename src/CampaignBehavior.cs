@@ -78,24 +78,13 @@ namespace AshAndEmber
             try { AshenCitySystem.OnClanChangedKingdom(clan, oldKingdom, newKingdom, detail, showNotification); } catch { }
         }
 
-        // Immediately undo any peace forced on the Ashen kingdom.
-        // DeclareWarWithAllKingdoms now has a re-entrancy guard so cascading
-        // peace→war→peace loops are impossible even if Bannerlord's diplomacy
-        // AI fires multiple MakePeace events in quick succession.
+        // OnMakePeace is intentionally a no-op.
+        // Calling DeclareWarAction from this event fires during save loading while
+        // the campaign is only partially initialised, causing a native crash.
+        // The daily tick's DeclareWarWithAllKingdoms() re-establishes war within
+        // one in-game day, which is sufficient.
         private void OnMakePeace(IFaction faction1, IFaction faction2,
-            MakePeaceAction.MakePeaceDetail detail)
-        {
-            try
-            {
-                const string id = "ashen_kingdom";
-                bool ashenInvolved =
-                    (faction1 is Kingdom k1 && k1.StringId == id) ||
-                    (faction2 is Kingdom k2 && k2.StringId == id);
-                if (!ashenInvolved) return;
-                try { AshenCitySystem.DeclareWarWithAllKingdoms(); } catch { }
-            }
-            catch { }
-        }
+            MakePeaceAction.MakePeaceDetail detail) { }
 
         private void OnMobilePartyCreated(MobileParty party)
         {

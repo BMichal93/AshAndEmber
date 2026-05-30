@@ -56,7 +56,8 @@ namespace AshAndEmber
         private static Kingdom  _ashenKingdom = null;
         private static bool     _initialized  = false;
         private static int      _appearanceDayCounter = 0;
-        private static bool     _declaringWar = false;
+        private static bool     _declaringWar        = false;
+        private static bool     _ownershipInitDone   = false;
         private static readonly Random _rng  = new Random();
         private const  int      AppearanceTickInterval = 30; // re-scan appearance once per month
 
@@ -164,7 +165,6 @@ namespace AshAndEmber
             {
                 try { DeclareWarWithAllKingdoms(); } catch { }
                 try { ApplyAshenLookToSettlementHeroes(); } catch { }
-                try { InitialiseSettlementOwnership(); } catch { }
                 _initialized = true;
             }
         }
@@ -742,6 +742,11 @@ namespace AshAndEmber
             EnsureKingdomAlive();
             TickAshenClanKingdoms();
             DeclareWarWithAllKingdoms();
+            if (!_ownershipInitDone)
+            {
+                try { InitialiseSettlementOwnership(); } catch { }
+                _ownershipInitDone = true;
+            }
             RefillGarrisons();
             RefillHeroGold();
             TickSettlementRecovery();
@@ -810,9 +815,11 @@ namespace AshAndEmber
         public static void Save(IDataStore store)
         {
             var ids   = _ashenClanIds.ToList();
-            bool init = _initialized;
-            store.SyncData("LDM_AshenClanIds",  ref ids);
-            store.SyncData("LDM_AshenCityInit", ref init);
+            bool init    = _initialized;
+            bool ownDone = _ownershipInitDone;
+            store.SyncData("LDM_AshenClanIds",      ref ids);
+            store.SyncData("LDM_AshenCityInit",     ref init);
+            store.SyncData("LDM_OwnershipInitDone", ref ownDone);
 
             var sKeys = _settlementClanMap.Keys.ToList();
             var sVals = _settlementClanMap.Values.ToList();
@@ -827,7 +834,8 @@ namespace AshAndEmber
             // Reconstruct in-memory state from the just-synced data
             _ashenClanIds.Clear();
             if (ids != null) foreach (var id in ids) _ashenClanIds.Add(id);
-            _initialized = init;
+            _initialized        = init;
+            _ownershipInitDone  = ownDone;
 
             _settlementClanMap.Clear();
             if (sKeys != null && sVals != null)
