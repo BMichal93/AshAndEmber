@@ -178,6 +178,7 @@ namespace AshAndEmber
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
                     try { AshenCitySystem.DailyTick(); } catch { }
+                    try { ReassignImperialSettlements(); } catch { }
                 },
                 _ =>
                 {
@@ -186,9 +187,48 @@ namespace AshAndEmber
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
                     try { AshenCitySystem.DailyTick(); } catch { }
+                    try { ReassignImperialSettlements(); } catch { }
                 },
                 "", false
             ), false, true);
+        }
+
+        private static void ReassignImperialSettlements()
+        {
+            // Marunath (town_B1) + nearest Battanian castles → Northern Empire leader
+            // Jaculan  (town_V6) + nearest Vlandian  castles → Western  Empire leader
+            // Castles chosen by map proximity: B5 (~25u), B2 (~43u) near Marunath;
+            //                                 V2 (~29u), V7 (~56u) near Jaculan.
+            Hero northLeader = null;
+            Hero westLeader  = null;
+            try
+            {
+                northLeader = Kingdom.All.FirstOrDefault(k => k.StringId == "empire")?.Leader;
+                westLeader  = Kingdom.All.FirstOrDefault(k => k.StringId == "empire_w")?.Leader;
+            }
+            catch { }
+
+            if (northLeader != null)
+            {
+                foreach (string id in new[] { "town_B1", "castle_B5", "castle_B2" })
+                    try
+                    {
+                        var s = Settlement.Find(id);
+                        if (s != null) ChangeOwnerOfSettlementAction.ApplyByDefault(northLeader, s);
+                    }
+                    catch { }
+            }
+
+            if (westLeader != null)
+            {
+                foreach (string id in new[] { "town_V6", "castle_V2", "castle_V7" })
+                    try
+                    {
+                        var s = Settlement.Find(id);
+                        if (s != null) ChangeOwnerOfSettlementAction.ApplyByDefault(westLeader, s);
+                    }
+                    catch { }
+            }
         }
 
         // ── Daily tick ────────────────────────────────────────────────────────
@@ -200,6 +240,7 @@ namespace AshAndEmber
                 {
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                    try { ReassignImperialSettlements(); } catch { }
                 }
                 try { AshenCitySystem.Initialize(); } catch { }
                 try { AshenCitySystem.DailyTick(); } catch { }
