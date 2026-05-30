@@ -587,8 +587,9 @@ namespace AshAndEmber
         }
 
         // ── Permanent village raid state ──────────────────────────────────────
-        // Keeps every village bound to an Ashen-owned settlement permanently in
-        // the Looted state with minimal hearth so they never recover.
+        // Iterates only village settlements; exits early on non-villages so
+        // performance cost is negligible (runs once per in-game day).
+        // VillageStates.Looted = burned/destroyed state with no interactions.
         private static void TickAshenVillages()
         {
             try
@@ -599,10 +600,12 @@ namespace AshAndEmber
                     {
                         if (!s.IsVillage || s.Village == null) continue;
                         var bound = s.Village.Bound;
-                        if (bound == null || !_settlementClanMap.ContainsKey(bound.StringId)) continue;
-                        if (bound.OwnerClan?.StringId != _settlementClanMap[bound.StringId]) continue;
-
-                        if (s.Village.VillageState == Village.VillageStates.Normal)
+                        if (bound == null) continue;
+                        if (!_settlementClanMap.TryGetValue(bound.StringId, out string clanId)) continue;
+                        if (bound.OwnerClan?.StringId != clanId) continue;
+                        // Leave alone while actively being raided
+                        if (s.Village.VillageState == Village.VillageStates.BeingRaided) continue;
+                        if (s.Village.VillageState != Village.VillageStates.Looted)
                             try { s.Village.VillageState = Village.VillageStates.Looted; } catch { }
                         if (s.Village.Hearth > 10f)
                             try { s.Village.Hearth = 10f; } catch { }
@@ -613,8 +616,9 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Prisoner execution ────────────────────────────────────────────────
-        // Ashen lords execute any lord they hold captive — they take no prisoners.
+        // ── Prisoner fate ─────────────────────────────────────────────────────
+        // For the player: queue a deferred choice (join Ashen vs die).
+        // For NPC lords: 20% become Ashen, 40% flee, 40% executed.
         public static void ExecuteAshenPrisoners()
         {
             if (_ashenClanIds.Count == 0) return;
@@ -624,8 +628,7 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        if (!hero.IsPrisoner || !hero.IsLord) continue;
-                        if (hero.IsChild || hero == Hero.MainHero) continue;
+                        if (!hero.IsPrisoner || !hero.IsLord || hero.IsChild) continue;
 
                         var captorParty = hero.PartyBelongedToAsPrisoner;
                         if (captorParty == null) continue;
@@ -636,18 +639,98 @@ namespace AshAndEmber
                             captorParty.MapFaction?.StringId == AshenKingdomId;
                         if (!captorIsAshen) continue;
 
-                        Hero executor = captorParty.LeaderHero
-                                     ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
-                                            h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
-                                            _ashenClanIds.Contains(h.Clan?.StringId));
-                        if (executor == null) continue;
+                        if (hero == Hero.MainHero)
+                        {
+                            // Player captured — queue choice if nothing else is pending
+                            if (MageKnowledge._deferredInquiry == null)
+                            {
+                                Hero exec = captorParty.LeaderHero;
+                                MageKnowledge._deferredInquiry = () => ShowAshenCapturePrompt(exec);
+                            }
+                            continue;
+                        }
 
-                        try { KillCharacterAction.ApplyByExecution(hero, executor); } catch { }
+                        // NPC lord: roll fate
+                        double roll = _rng.NextDouble();
+                        if (roll < 0.20)
+                        {
+                            // 20% — turn Ashen, then release
+                            try { ColourLordRegistry.SetAshen(hero, true); } catch { }
+                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero, captorParty); } catch { }
+                        }
+                        else if (roll < 0.60)
+                        {
+                            // 40% — flee (released, returns to original faction)
+                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero, captorParty); } catch { }
+                        }
+                        else
+                        {
+                            // 40% — executed
+                            Hero executor = captorParty.LeaderHero
+                                         ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
+                                                h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
+                                                _ashenClanIds.Contains(h.Clan?.StringId));
+                            if (executor == null) continue;
+                            try { KillCharacterAction.ApplyByExecution(hero, executor); } catch { }
+                        }
                     }
                     catch { }
                 }
             }
             catch { }
+        }
+
+        // ── Player capture prompt ─────────────────────────────────────────────
+        private static void ShowAshenCapturePrompt(Hero captor)
+        {
+            string captorName = captor?.Name.ToString() ?? "the Ashen lord";
+
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Grey Lords",
+
+                $"{captorName} crouches to your level. The battlefield has gone quiet — your men are dead or fled. " +
+                "They study you the way fire studies wood.\n\n" +
+                "When they speak, their voice carries the cold of something very old.\n\n" +
+                "\"You burned well,\" they say. \"That kind of fire does not simply go out. " +
+                "It changes. We have seen it many times.\"\n\n" +
+                "They extend a hand. The skin is grey-white, faintly luminous. Like ash that has forgotten it was ever warm.\n\n" +
+                "\"Take the cold. Or do not. Both are a kind of ending.\"",
+
+                true, true,
+                "Take the cold. Let it have me.",
+                "I have lived long enough.",
+
+                () =>
+                {
+                    // Join the Ashen
+                    try
+                    {
+                        MageKnowledge.SetAshen(true);
+                        try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch { }
+                        try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
+                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(Hero.MainHero, null); } catch { }
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Something ancient settles in you. The warmth you have always carried shifts — " +
+                            "not gone, but changed. Cold fire. Grey flame. You are still here. " +
+                            "But something that was purely yours is no longer.",
+                            new Color(0.35f, 0.35f, 0.75f)));
+                    }
+                    catch { }
+                },
+
+                () =>
+                {
+                    // Accept execution
+                    try
+                    {
+                        if (captor != null)
+                            try { KillCharacterAction.ApplyByExecution(Hero.MainHero, captor); } catch { }
+                        else
+                            try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, true); } catch { }
+                    }
+                    catch { }
+                }
+            ), true, true);
         }
 
         // ── Daily tick ────────────────────────────────────────────────────────

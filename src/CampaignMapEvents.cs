@@ -181,10 +181,11 @@ namespace AshAndEmber
                     if (party != null) spawned++;
                 }
 
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Ashen Plague — a grey sickness takes the garrison of {target.Name}. " +
-                    $"{totalWounded} soldier{(totalWounded != 1 ? "s" : "")} fall to their wounds." +
-                    (spawned > 0 ? $" {spawned} Ashen Spawn rise from the dying." : "")));
+                if (totalWounded > 0 || spawned > 0)
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Ashen Plague — a grey sickness takes the garrison of {target.Name}. " +
+                        $"{totalWounded} soldier{(totalWounded != 1 ? "s" : "")} fall to their wounds." +
+                        (spawned > 0 ? $" {spawned} Ashen Spawn rise from the dying." : "")));
             }
             catch { }
         }
@@ -264,9 +265,10 @@ namespace AshAndEmber
                     if (party != null) spawned++;
                 }
 
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Ashen March — {spawned} Ashen Spawn descend upon {kingdom.Name}. " +
-                    "The grey tide does not rest."));
+                if (spawned > 0)
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Ashen March — {spawned} Ashen Spawn descend upon {kingdom.Name}. " +
+                        "The grey tide does not rest."));
             }
             catch { }
         }
