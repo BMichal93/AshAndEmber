@@ -81,8 +81,10 @@ namespace AshAndEmber
 
         public static void ResetForNewGame()
         {
-            _initialized  = false;
-            _ashenKingdom = null;
+            _initialized      = false;
+            _ashenKingdom     = null;
+            _ownershipInitDone = false;
+            _declaringWar     = false;
             _ashenClanIds.Clear();
             _settlementClanMap.Clear();
             _conqueredDays.Clear();
@@ -846,6 +848,13 @@ namespace AshAndEmber
             if (cKeys != null && cVals != null)
                 for (int i = 0; i < Math.Min(cKeys.Count, cVals.Count); i++)
                     _conqueredDays[cKeys[i]] = cVals[i];
+
+            // Always clear the Kingdom object reference after load so it is
+            // re-fetched from the live Kingdom.All on the next daily tick.
+            // Keeping a stale reference from a previous game session causes a
+            // native crash when accessing .IsEliminated on the dead object.
+            _ashenKingdom  = null;
+            _declaringWar  = false;
         }
     }
 }
