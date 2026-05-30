@@ -241,14 +241,14 @@ namespace AshAndEmber
                     // First encounter: seed a random initial offset so lords don't all
                     // cast on the same day after seeding or loading a save.
                     if (!_campaignCooldowns.ContainsKey(id))
-                        _campaignCooldowns[id] = isBlight ? _rng.Next(3) : _rng.Next(8);
+                        _campaignCooldowns[id] = isBlight ? _rng.Next(7) : _rng.Next(8);
 
                     if (_campaignCooldowns.TryGetValue(id, out int cd) && cd > 0)
                     { _campaignCooldowns[id] = cd - 1; continue; }
 
                     // Blight lords cast hungrily — cold fire demands expression and costs them nothing
                     // Normal lords slow down as age accumulates
-                    int castChance = isBlight ? 35
+                    int castChance = isBlight ? 18
                                    : hero.Age < 50f ? 8
                                    : hero.Age < 70f ? 4
                                    : 2;
@@ -264,7 +264,7 @@ namespace AshAndEmber
                     {
                         TalentSystem.ExecuteNpcMapSpell(hero, chosen);
                         // Blight lords recover quickly; normal lords need several days
-                        _campaignCooldowns[id] = isBlight ? 1 + _rng.Next(3) : 5 + _rng.Next(5);
+                        _campaignCooldowns[id] = isBlight ? 3 + _rng.Next(4) : 5 + _rng.Next(5);
                         if (hero.Clan != null) hero.Clan.Renown += 3f;
                     }
                     catch { }

@@ -88,7 +88,7 @@ namespace AshAndEmber
             try
             {
                 agent.AgentVisuals?.GetEntity()
-                    ?.SetContourColor(0xFFFFFFFF, true);
+                    ?.SetContourColor(ColorSchoolData.GetGlowColor(ColorSchool.White), true);
                 int idx = _glowTimers.FindIndex(x => x.agent == agent);
                 if (idx >= 0) _glowTimers.RemoveAt(idx);
                 _glowTimers.Add((agent, duration));

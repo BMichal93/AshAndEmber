@@ -275,8 +275,11 @@ namespace AshAndEmber
 
         private static void ApplyCastVisuals(Agent agent)
         {
-            SpellEffects.BeginAgentGlow(agent, ColorSchool.Purple, 3f);
-            SpellEffects.TryCastSound(agent.Position, ColorSchool.Purple);
+            Hero hero = (agent.Character as CharacterObject)?.HeroObject;
+            bool isAshen = hero != null && ColourLordRegistry.IsAshenLord(hero);
+            ColorSchool school = isAshen ? ColorSchool.Ashen : ColorSchool.Purple;
+            SpellEffects.BeginAgentGlow(agent, school, 3f);
+            SpellEffects.TryCastSound(agent.Position, school);
             SpellEffects.TryCastAnimation(agent);
             SpellEffects.RecordMagicCast(agent.Position);
         }
@@ -317,7 +320,7 @@ namespace AshAndEmber
                 if (agent.Team == Agent.Main.Team) return;
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 Color c = isAshen
-                    ? new Color(0.45f, 0.45f, 0.65f)   // cold blue-grey for Blight
+                    ? new Color(0.38f, 0.50f, 0.75f)   // cold blue for Ashen
                     : new Color(0.65f, 0.45f, 0.75f);   // violet for colour lords
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{hero.Name} — {blurb}", c));

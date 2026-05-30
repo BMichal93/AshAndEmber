@@ -568,11 +568,14 @@ namespace AshAndEmber
             {
                 switch (id)
                 {
-                    case TalentId.BreakWills: NpcBreakWills(caster); blurb = "casts Unsettle — dread spreads through an enemy party."; break;
-                    case TalentId.Inspire:    NpcInspire(caster);    blurb = "kindles their warband — morale rises."; break;
-                    case TalentId.Plague:     NpcPlague(caster);     blurb = "works a Wither — a village's hearth fades."; break;
-                    case TalentId.Curse:      NpcCurse(caster);      blurb = "casts Curse — soldiers fall in a distant party."; break;
-                    case TalentId.Rejuvenate: NpcRejuvenate(caster); blurb = "draws on Rejuvenate — their wounded recover."; break;
+                    case TalentId.BreakWills:  NpcBreakWills(caster);  blurb = "casts Unsettle — dread spreads through an enemy party."; break;
+                    case TalentId.Inspire:     NpcInspire(caster);     blurb = "kindles their warband — morale rises."; break;
+                    case TalentId.Plague:      NpcPlague(caster);      blurb = "works a Wither — a village's hearth fades."; break;
+                    case TalentId.Curse:       NpcCurse(caster);       blurb = "casts Curse — soldiers fall in a distant party."; break;
+                    case TalentId.Rejuvenate:  NpcRejuvenate(caster);  blurb = "draws on Rejuvenate — their wounded recover."; break;
+                    case TalentId.Subjugate:   NpcSubjugate(caster);   blurb = "calls Subjugate — enemy troops break rank."; break;
+                    case TalentId.PlantGrowth: NpcPlantGrowth(caster); blurb = "works Quicken — their warband is sustained."; break;
+                    case TalentId.Clairvoyance:NpcClairvoyance(caster);blurb = "reads the threads — power flows to them."; break;
                     default: break;
                 }
             }
@@ -581,7 +584,7 @@ namespace AshAndEmber
             if (blurb != null)
             {
                 bool isAshen = ColourLordRegistry.IsAshenLord(caster);
-                Color c = isAshen ? new Color(0.35f, 0.4f, 0.65f) : new Color(0.65f, 0.45f, 0.8f);
+                Color c = isAshen ? new Color(0.38f, 0.50f, 0.75f) : new Color(0.65f, 0.45f, 0.8f);
                 InformationManager.DisplayMessage(new InformationMessage($"{caster.Name} — {blurb}", c));
             }
 
@@ -625,8 +628,6 @@ namespace AshAndEmber
                 .OrderBy(p => (p.GetPosition2D - pos).Length).FirstOrDefault();
             if (target == null) return;
             target.RecentEventsMorale -= 20f;
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"{caster.Name} casts Unsettle — dread grips {target.Name}.", new Color(0.5f, 0.3f, 0.7f)));
         }
 
         private static void NpcInspire(Hero caster)
@@ -634,8 +635,6 @@ namespace AshAndEmber
             var party = caster.PartyBelongedTo;
             if (party == null) return;
             party.RecentEventsMorale += 20f;
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"{caster.Name} casts Kindle — {party.Name} surges with new purpose.", new Color(0.9f, 0.6f, 0.2f)));
         }
 
         private static void NpcPlague(Hero caster)
@@ -645,8 +644,6 @@ namespace AshAndEmber
             if (villages.Count == 0) return;
             var v = villages[_rng.Next(villages.Count)];
             v.Village.Hearth = Math.Max(10f, v.Village.Hearth * 0.80f);
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"{caster.Name} casts Wither — blight spreads through {v.Name}.", new Color(0.4f, 0.6f, 0.3f)));
         }
 
         private static void NpcCurse(Hero caster)
@@ -662,8 +659,6 @@ namespace AshAndEmber
                 .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
             if (troops.Count == 0) return;
             try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch { }
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"{caster.Name} casts Curse — a soldier in {target.Name} falls.", new Color(0.7f, 0.2f, 0.2f)));
         }
 
         private static void NpcRejuvenate(Hero caster)
@@ -675,9 +670,59 @@ namespace AshAndEmber
             if (wounded.Count == 0) return;
             var entry = wounded[_rng.Next(wounded.Count)];
             try { roster.AddToCounts(entry.Character, 0, false, -Math.Min(entry.WoundedNumber, 2)); } catch { }
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"{caster.Name} casts Rejuvenate — wounded soldiers stir in {caster.PartyBelongedTo?.Name}.",
-                new Color(0.3f, 0.7f, 0.5f)));
+        }
+
+        private static void NpcSubjugate(Hero caster)
+        {
+            Vec2 pos = caster.PartyBelongedTo?.GetPosition2D ?? Vec2.Zero;
+            var target = MobileParty.All
+                .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, caster.PartyBelongedTo?.MapFaction)
+                         && p.MemberRoster.TotalRegulars > 3
+                         && (p.GetPosition2D - pos).Length < 40f)
+                .OrderBy(p => (p.GetPosition2D - pos).Length).FirstOrDefault();
+            if (target == null) return;
+            var troops = target.MemberRoster.GetTroopRoster()
+                .Where(e => !e.Character.IsHero && e.Number > 0).ToList();
+            if (troops.Count == 0) return;
+            int count = 2 + _rng.Next(3);
+            for (int i = 0; i < count; i++)
+            {
+                var troop = troops[_rng.Next(troops.Count)];
+                try { target.MemberRoster.AddToCounts(troop.Character, -1); } catch { }
+            }
+            target.RecentEventsMorale -= 15f;
+        }
+
+        private static void NpcPlantGrowth(Hero caster)
+        {
+            var party = caster.PartyBelongedTo;
+            if (party == null) return;
+            party.RecentEventsMorale += 15f;
+            var roster = party.MemberRoster;
+            var wounded = roster.GetTroopRoster()
+                .Where(e => !e.Character.IsHero && e.WoundedNumber > 0).ToList();
+            int healed = 0;
+            foreach (var entry in wounded)
+            {
+                if (healed >= 3) break;
+                int h = Math.Min(entry.WoundedNumber, 3 - healed);
+                try { roster.AddToCounts(entry.Character, 0, false, -h); healed += h; } catch { }
+            }
+        }
+
+        private static void NpcClairvoyance(Hero caster)
+        {
+            try
+            {
+                if (caster.Clan != null)
+                {
+                    caster.Clan.Renown    += 10f;
+                    caster.Clan.Influence += 15f;
+                }
+                if (caster.PartyBelongedTo != null)
+                    caster.PartyBelongedTo.RecentEventsMorale += 10f;
+            }
+            catch { }
         }
 
         private static void Msg(string text) =>

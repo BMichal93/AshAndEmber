@@ -36,8 +36,8 @@ namespace AshAndEmber
                 case ColorSchool.Green:  return 0xFFFF9900u; // warm amber
                 case ColorSchool.Blue:   return 0xFFFF6600u; // hot ember-orange
                 case ColorSchool.Purple: return 0xFFDD1100u; // deep crimson
-                case ColorSchool.White:  return 0xFFFFEECCu; // pale warm flame
-                case ColorSchool.Ashen:  return 0xFF4A5566u; // ash grey-blue
+                case ColorSchool.White:  return 0xFFFFDD44u; // golden-yellow restore
+                case ColorSchool.Ashen:  return 0xFF5588CCu; // cold blue
                 default:                 return 0xFFFFEECCu;
             }
         }
@@ -53,8 +53,8 @@ namespace AshAndEmber
                 case ColorSchool.Green:  return 0xFFFFCCAAu;
                 case ColorSchool.Blue:   return 0xFFFFDD88u;
                 case ColorSchool.Purple: return 0xFFCC8844u;
-                case ColorSchool.White:  return 0xFFFFFFEEu;
-                case ColorSchool.Ashen:  return 0xFF2A3340u;
+                case ColorSchool.White:  return 0xFFFFEE88u; // pale yellow
+                case ColorSchool.Ashen:  return 0xFF334466u;
                 default:                 return 0xFFFFEEDDu;
             }
         }
@@ -69,8 +69,8 @@ namespace AshAndEmber
                 case ColorSchool.Green:  return new Color(1.0f,  0.60f, 0.0f);
                 case ColorSchool.Blue:   return new Color(1.0f,  0.40f, 0.0f);
                 case ColorSchool.Purple: return new Color(0.87f, 0.07f, 0.0f);
-                case ColorSchool.White:  return new Color(1.0f,  0.93f, 0.8f);
-                case ColorSchool.Ashen:  return new Color(0.42f, 0.48f, 0.58f);
+                case ColorSchool.White:  return new Color(1.0f,  0.87f, 0.2f); // golden-yellow
+                case ColorSchool.Ashen:  return new Color(0.38f, 0.50f, 0.75f);
                 default:                 return Color.White;
             }
         }
