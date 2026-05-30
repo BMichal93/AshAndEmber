@@ -478,6 +478,16 @@ namespace AshAndEmber
             catch { try { InformationManager.DisplayMessage(new InformationMessage(text, c)); } catch { } }
         }
 
+        private static void AddMorale(float delta)
+        {
+            try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += delta; } catch { }
+        }
+
+        private static void AgePlayer(int days)
+        {
+            try { AgingSystem.AgeHero(Hero.MainHero, days); } catch { }
+        }
+
         private static void ShiftTrait(TraitObject trait, int delta)
         {
             try
@@ -628,7 +638,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You press your palm to the child's brow. The fever breaks. The mother cannot speak for weeping.", GoodColor);
                             break;
@@ -665,7 +675,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ChangeRenown(5f);
                             Msg("The pyre catches with a single breath. It burns gold and white, not orange. The woman watches until there is only ash. She does not weep — she looks satisfied.", FireColor);
@@ -746,7 +756,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("Your party rides out with a lightness that has no single cause. The elder watches from the gate until the road bends.", GoodColor);
                             break;
@@ -797,7 +807,7 @@ namespace AshAndEmber
                             Msg("Enough silver to keep him fed for days. He stares at it for a long moment, then at you. \"God keep you,\" he says.", GoodColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale -= 2f;
+                            AddMorale(-2f);
                             Msg("You ride past. He lowers the bowl. Your soldiers say nothing, but the road is quieter than it was.", DimColor);
                             break;
                     }
@@ -936,7 +946,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             Msg("He falls in at the back of the column, trying to look like he has done this before. He has not. Your veterans watch him with something between amusement and memory. By nightfall they are teaching him to oil a saddle. The party rides easier for having something young in it.", GoodColor);
                             break;
                         case "b":
@@ -944,7 +954,7 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            MobileParty.MainParty.RecentEventsMorale -= 2f;
+                            AddMorale(-2f);
                             Msg("He stops. He does not argue. That is worse, somehow. Two of your soldiers trade a look behind you.", BadColor);
                             break;
                     }
@@ -972,18 +982,18 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             ChangeRenown(3f);
                             Msg("The party eats well for the first hour on the road. Songs get sung. The cider is better than expected.", GoodColor);
                             break;
                         case "b":
                             ChangeGold(-200);
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             ChangeRenown(5f);
                             Msg("You leave a purse with the headman for the festival fund. Word of it spreads the way good news travels — slowly, but it travels.", GoldColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("The villagers pull back their gifts politely. The headman lowers his cup. Your soldiers ride out in silence — they saw you turn down free bread and cider during a festival, and they are thinking about it.", DimColor);
                             break;
                     }
@@ -1015,7 +1025,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(10f);
                             Msg("You sit with him for an hour. He tells you things about fire that you already knew but could not have named. The village watches from doorways. By evening they speak of you differently.", FireColor);
                             break;
@@ -1051,7 +1061,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 2);
+                            AgePlayer(2);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You spend the afternoon explaining what you have learned. She fills three pages of notes and asks questions you cannot answer. Something about that is satisfying.", FireColor);
@@ -1088,7 +1098,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ChangeRenown(5f);
                             Msg("The straw dies with a soft sound, smoke curling upward. The children stare at your hands. You put a finger to your lips. They run.", FireColor);
@@ -1126,7 +1136,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(5f);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("The bowl catches on your breath. The flame is gold, not orange. The elder makes a sound you have not heard before. The villagers will talk about this for years.", FireColor);
@@ -1169,7 +1179,7 @@ namespace AshAndEmber
                             break;
                         case "b":
                             ChangeGold(300);
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You spend a quiet hour doing something small and strange to a dozen clay pieces. They will hold warmth longer than they should. The merchant looks at them wide-eyed. The arrangement is profitable.", GoldColor);
                             break;
                         case "c":
@@ -1241,7 +1251,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             ChangeRenown(5f);
                             Msg("The party eats. Your men loosen up in a way that only happens when they feel safe. The music improves by the second cup.", GoodColor);
                             break;
@@ -1356,7 +1366,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("Your men stop arguing about the mud and start working. The merchant shuts up and helps. By the time the cart is righted, the argument is forgotten.", GoodColor);
                             break;
                         case "b":
@@ -1470,7 +1480,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(15f);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("The sun moves while you listen. Not all of it is solvable. Some of it is. You leave knowing more about what is wrong in this city than the lord who governs it.", GoodColor);
@@ -1813,7 +1823,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 2);
+                            AgePlayer(2);
                             ChangeRenown(20f);
                             Msg("You spend the afternoon showing him things that take a cost to show. He fills both sides of every page he has. \"The fire is not magic,\" he says finally. \"It is something older than magic.\" You think he might be right.", FireColor);
                             break;
@@ -1935,7 +1945,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("You kneel. \"I have been alive since before your grandmother's grandmother,\" you tell her. \"The colour goes after a while.\" She considers this with great seriousness. Her mother pulls her away, apologising. Your men are smiling.", GoodColor);
                             break;
                         case "b":
@@ -2014,9 +2024,9 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 2);
+                            AgePlayer(2);
                             ChangeRenown(30f);
-                            MobileParty.MainParty.RecentEventsMorale += 10f;
+                            AddMorale(10f);
                             Msg("You give them fire — not a trick, not a performance, but the real thing. The crowd goes quiet in the way people go quiet when they understand they are seeing something that will not come again. Your men ride in proud.", FireColor);
                             break;
                         case "b":
@@ -2102,7 +2112,7 @@ namespace AshAndEmber
                         case "b":
                             ChangeGold(-150);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("You drop three coins instead of one. The child's expression cracks into a grin before they can control it. Your men notice. It is a good way to enter a city.", GoodColor);
                             break;
                         case "c":
@@ -2174,7 +2184,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("You sit until the breathing stops. He never says anything. Neither do you. Your men, who are watching from the treeline, say nothing about it afterward.", GoodColor);
                             break;
                         case "b":
@@ -2211,7 +2221,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("She does not speak on the road. She does not cry either. You leave her with a headman's wife who takes one look and asks no questions. Your men are quiet when you ride back.", GoodColor);
                             break;
                         case "b":
@@ -2293,7 +2303,7 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("He considers the offer for a moment, then stands and pulls the sword back out of the ground. \"All right,\" he says. Your sergeant gives him a look. It is a good look.", GoodColor);
                             break;
                     }
@@ -2323,11 +2333,11 @@ namespace AshAndEmber
                         case "a":
                             ChangeGold(-100);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("He moves through the field until dark. Your men camp at a distance and watch the lantern. Nobody speaks much.", GoodColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("He goes among them without hurry. The battlefield goes quiet in a different way while he works.", DimColor);
                             break;
                         case "c":
@@ -2358,7 +2368,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(10f);
                             Msg("They were further along one path than you expected. Their fire ran hot and fast and it killed them for it. The notes stop mid-sentence. You read the last entry three times.", FireColor);
                             break;
@@ -2480,20 +2490,20 @@ namespace AshAndEmber
                         case "a":
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                AgePlayer(1);
                                 Msg("You move through the camp without speaking much. Where you pause by a fire, the warmth increases slightly. Nobody names it. They feel it anyway. By morning the camp has something it didn't have before.", FireColor);
                             }
                             else
                                 Msg("You walk among them, stopping here and there. You know their names. That matters more than you might think. The camp settles.", GoodColor);
                             ChangeRenown(5f);
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             break;
                         case "b":
                             Msg("You give them the evening. They use it. By morning they have pieced themselves back together in the way soldiers do — quietly and thoroughly.", DimColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("You stand over the surgeons until the last wound is dressed. Nobody dies tonight who didn't have to. The men notice this without acknowledging it.", GoodColor);
                             break;
                     }
@@ -2567,7 +2577,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("\"Release him.\" The commander presses his lips together but obeys. The gate captain looks at you for a long moment, then walks away.", GoodColor);
                             break;
                         case "b":
@@ -2576,7 +2586,7 @@ namespace AshAndEmber
                         case "c":
                             ChangeCrime(20f);
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("The next city opens its gates before your siege engines are assembled. The lesson was heard exactly as intended. You do not let yourself think about what that means about who you are.", BadColor);
                             break;
                     }
@@ -2648,7 +2658,7 @@ namespace AshAndEmber
                             break;
                         case "b":
                             ChangeGold(400);
-                            MobileParty.MainParty.RecentEventsMorale += 15f;
+                            AddMorale(15f);
                             ChangeRenown(10f);
                             Msg("The distribution takes an hour. By the time it is done, your men are laughing. You have not paid them to take this city — you have paid them to follow you to the next one.", GoodColor);
                             break;
@@ -2682,7 +2692,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             string[] siegeIntel = {
                                 "The marks are an Ashen working from at least twenty years ago. Someone in this lord's line made a bargain, or a mistake. Either way, the cold has been in this keep longer than anyone living here knew.",
                                 "The pattern is a ward — badly made, partially collapsed. Someone was trying to keep the Ashen out. They failed, and then whoever made the ward left, or was removed.",
@@ -2764,19 +2774,19 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 8f;
+                            AddMorale(-8f);
                             ChangeRenown(15f);
                             Msg("The order goes out. Some of your men are angry. The city folk open their shutters by midnight. By morning there are women putting bread on windowsills for your sentries. That is a different kind of victory.", GoodColor);
                             break;
                         case "b":
                             ChangeCrime(15f);
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            MobileParty.MainParty.RecentEventsMorale += 10f;
+                            AddMorale(10f);
                             Msg("One hour. The streets are loud and then quiet. Restoring order takes two hours, not one. You do not count what was taken. Some cities remember this for a generation.", BadColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("\"The work is done.\" The captains pass it along. The men take the words at face value — they are tired, and a clean victory is easier to carry home than the other kind.", GoodColor);
                             break;
                     }
@@ -2845,7 +2855,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("You ride back alone. She watches you come without expression. You take her back to the village and leave her with an old woman who opens the door without surprise. You do not speak on the ride back.", GoodColor);
                             break;
                         case "b":
@@ -2882,23 +2892,23 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 10f;
+                            AddMorale(10f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You make the call clearly and explain the reasoning. The arguing stops. The men respect the decision more than they would have respected equal shares — because they know you watched.", GoodColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("Equal shares, final answer. Some men are happy. Some are not. All of them stop arguing, which is the point.", DimColor);
                             break;
                         case "c":
                             if (_rng.Next(2) == 0)
                             {
-                                MobileParty.MainParty.RecentEventsMorale += 5f;
+                                AddMorale(5f);
                                 Msg("The sergeants sort it cleanly. You hear the voices settle. Sometimes trust is the right call.", DimColor);
                             }
                             else
                             {
-                                MobileParty.MainParty.RecentEventsMorale -= 5f;
+                                AddMorale(-5f);
                                 Msg("The sergeants cannot agree with each other. By the time it resolves, everyone has less than they started with and nobody is sure why.", BadColor);
                             }
                             break;
@@ -2937,7 +2947,7 @@ namespace AshAndEmber
                         case "c":
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                AgePlayer(1);
                                 Msg("The word is old. Old enough that your fire knows it before your mind does. There is a weight in it that travels with you for the rest of the day, like smoke that followed a wind home.", AshenColor);
                             }
                             else
@@ -2972,14 +2982,14 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You press your hand close. The flame does not react the way fire should. It knows you. That is the only word for it. It knows you, and it has been here longer than this village. You ride away with the feeling of something watching your back.", FireColor);
                             break;
                         case "b":
                             Msg("You ride out. You look back at the crossroads. The shrine is still lit. Whatever it is, it stays behind.", DimColor);
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You breathe it out. The flame obeys, goes dark. The bowl is just an iron bowl again. The village does not see this, but it will feel the difference when it wakes.", FireColor);
                             break;
@@ -3015,7 +3025,7 @@ namespace AshAndEmber
                             Msg("He rides at your pace for another minute, then drops back. He will raise it again when the weight of it gets heavier.", DimColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale -= 8f;
+                            AddMorale(-8f);
                             ShiftTrait(DefaultTraits.Honor, -1);
                             Msg("He drops back without argument. The men who heard it are quieter for the rest of the day. The question does not go away — you just made it invisible.", BadColor);
                             break;
@@ -3127,7 +3137,7 @@ namespace AshAndEmber
                             Msg("The physician's expression changes. She waves your party through and immediately turns to unpack what you left. Your men enter a quieter city than usual.", GoodColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("She waves you through without protest. Your men pass the sick quarter without looking at it directly. Everyone is thinking the same thing and nobody says it.", DimColor);
                             break;
                         case "c":
@@ -3161,13 +3171,13 @@ namespace AshAndEmber
                             if (_rng.Next(3) != 0)
                             {
                                 ChangeRenown(20f);
-                                MobileParty.MainParty.RecentEventsMorale += 8f;
+                                AddMorale(8f);
                                 Msg("He is better than most. You are better than him. The yard fills up by the second pass and is not quiet again until it is over. He shakes your hand without saying anything. That is respect.", GoodColor);
                             }
                             else
                             {
                                 ChangeRenown(-5f);
-                                MobileParty.MainParty.RecentEventsMorale -= 3f;
+                                AddMorale(-3f);
                                 Msg("He is fast and he knows it. The bout ends in his favour in a way that fills the yard with an uncomfortable quiet. You accept it cleanly, which helps. It does not help enough.", BadColor);
                             }
                             break;
@@ -3175,7 +3185,7 @@ namespace AshAndEmber
                             Msg("He takes the refusal in good humour. \"Another time,\" he says, and means it.", DimColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             Msg("No audience, no stakes. Just two people testing the limits of what they know. By the end you have both learned something. Your men eat breakfast in a good mood.", GoodColor);
                             break;
                     }
@@ -3216,7 +3226,7 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("It takes an hour and three men. By the time you are done, the wall is clean and a small crowd has formed to watch. Nobody cheers. They do look steadier.", GoodColor);
                             break;
                     }
@@ -3410,7 +3420,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(5f);
                             Msg("You find it in the merchant quarter: a room in a trading house whose walls have been subtly worked. Not by fire — by its absence. Someone has been conditioning this room for Ashen use. The merchant who rents it hasn't been seen in three days.", AshenColor);
                             break;
@@ -3497,7 +3507,7 @@ namespace AshAndEmber
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("Your men dig for three hours. They hit moisture at twenty feet. Not a full well, but enough for now. They come out muddy and satisfied in a way that has nothing to do with strategy.", GoodColor);
                             break;
                         case "c":
@@ -3569,7 +3579,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            if (mage) AgingSystem.AgeHero(Hero.MainHero, 1);
+                            if (mage) AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ChangeRenown(5f);
                             Msg("The child is brought out, asleep, unbothered by the weight of the name they were given. You say the words. The mother looks at you with an expression you will remember for a long time.", GoodColor);
@@ -3649,7 +3659,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("They walk at the rear of your column and do not cause trouble. By evening one of your younger soldiers is carrying an old man's pack. Nobody ordered it.", GoodColor);
                             break;
                         case "b":
@@ -3689,7 +3699,7 @@ namespace AshAndEmber
                             Msg("The village stable does adequate work. An hour and a half lost. The horse leaves sound. Your groom approves with the minimal expression of a man paid to disapprove of most things.", DimColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("You push on slowly. Your groom says nothing. Your men keep glancing back at the leg. Some things are noticed without being said.", BadColor);
                             break;
                         case "c":
@@ -3763,7 +3773,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("He sets the axe down, takes his sword from the post, and follows you without a word of ceremony. Your veterans make room without being asked.", GoodColor);
                             break;
@@ -3800,7 +3810,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You stay for the dancing. The music recovers before the faces do. By the time your party leaves, the celebration has turned real.", GoodColor);
                             break;
@@ -3810,7 +3820,7 @@ namespace AshAndEmber
                             Msg("The gift goes to the headman quietly. Nobody stops celebrating, and nobody believes the celebration anymore either. Sometimes that is all that can be offered.", DimColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("The groom looks at the bride. She nods once. He picks up his jacket from the chair and follows you without going back for anything else. Your men do not make jokes about it.", GoodColor);
                             break;
@@ -3884,7 +3894,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("The eager son takes two steps forward before the farmer can react. He joins the column with the grin of someone who spent the last year waiting to do exactly this.", GoodColor);
                             break;
                         case "b":
@@ -3962,19 +3972,19 @@ namespace AshAndEmber
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                AgePlayer(1);
                                 ChangeRenown(5f);
                                 Msg("You breathe the fire out of itself in one movement. It dies so completely that the smoke stops mid-column. The village stares. You tell them to check the kitchen floor for embers and ride on.", FireColor);
                             }
                             else
                             {
-                                MobileParty.MainParty.RecentEventsMorale += 5f;
+                                AddMorale(5f);
                                 Msg("Your men form a line in under a minute. The innkeeper finds the well. The fire loses before it can find the thatch. Your men are wet and satisfied and slightly competitive about who threw the most water.", GoodColor);
                             }
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("You clear the building first. The fire takes the kitchen and part of a storage room before it is stopped. Everyone who was inside is outside. The innkeeper will rebuild. Your men smell of smoke for two days.", GoodColor);
                             break;
                         case "c":
@@ -4059,7 +4069,7 @@ namespace AshAndEmber
                         case "c":
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                AgePlayer(1);
                                 Msg("You let a thread of fire move toward the part of yourself that remembers the Ashen you have known. He gasps. Not from the heat — from understanding something he has only described in words until now. He closes his notes. He will not write this part down.", FireColor);
                             }
                             else
@@ -4093,7 +4103,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 2);
+                            AgePlayer(2);
                             ChangeGold(1000);
                             if (_rng.Next(2) == 0)
                             {
@@ -4146,7 +4156,7 @@ namespace AshAndEmber
                         case "a":
                             ChangeGold(-200);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("He straightens up slowly and looks at you. \"What happened?\" you ask. \"Wrong captain at the wrong time,\" he says. He falls in at the rear of the column. Your sergeant gives him a look. It is a respectful one.", GoodColor);
                             break;
                         case "b":
@@ -4184,12 +4194,12 @@ namespace AshAndEmber
                         case "a":
                             if (_rng.Next(2) == 0)
                             {
-                                MobileParty.MainParty.RecentEventsMorale -= 5f;
+                                AddMorale(-5f);
                                 Msg("The evidence is there once you look for it. Inconsistencies in his timing, gaps in his account of certain evenings. He doesn't deny it when confronted. He is discharged. The column is quieter after.", BadColor);
                             }
                             else
                             {
-                                MobileParty.MainParty.RecentEventsMorale += 3f;
+                                AddMorale(3f);
                                 Msg("Nothing holds under examination. The man is clean. You tell him what was said and why you looked. He takes it with more grace than you deserve. Your men appreciate you telling him openly.", GoodColor);
                             }
                             break;
@@ -4226,12 +4236,12 @@ namespace AshAndEmber
                     {
                         case "a":
                             ChangeGold(-500);
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             Msg("They fall in. Competent, quiet, and visibly curious about what you are doing and why. The reason for the discount never becomes clear. That stays with you.", DimColor);
                             break;
                         case "b":
                             ChangeGold(-900);
-                            MobileParty.MainParty.RecentEventsMorale += 10f;
+                            AddMorale(10f);
                             Msg("Full rate, clean contract, no ambiguity. She looks slightly relieved when you name it. \"Good,\" she says. \"I prefer that.\"", GoodColor);
                             break;
                         case "c":
@@ -4305,16 +4315,16 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ChangeRenown(5f);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("The wagons are catalogued. Riders are sent with what can be identified. What cannot be traced is distributed to the nearest villages. Your men do this work without complaint, which surprises you until you realise it doesn't.", GoodColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale += 10f;
+                            AddMorale(10f);
                             Msg("The grain is divided, the tools shared out, the shoes kept by whoever fits them best. Your men eat well tonight. Somewhere, families do not.", DimColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("You put the torch to it yourself. Your men watch without speaking. They are hungry and they know why this is happening and they don't complain about it. That says something. You don't know exactly what.", GoodColor);
                             break;
                     }
@@ -4343,7 +4353,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("The punishment is announced. Some of your men are uncomfortable — he is popular. All of them understand why it is happening. Nobody argues with it. That is the best outcome you could have hoped for.", GoodColor);
                             break;
                         case "b":
@@ -4351,7 +4361,7 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("He is discharged. He goes quietly, which is the only thing left to his credit. Your men are subdued. They understand the rule now in a way that abstracts do not produce.", GoodColor);
                             break;
                     }
@@ -4379,7 +4389,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You let it happen. Dozens of final seconds, layered, none of them clean. Enemy and ally blurred together in the last moment into something undifferentiated. You stand there until it passes. The fire is quieter after. So are you.", FireColor);
                             break;
@@ -4387,7 +4397,7 @@ namespace AshAndEmber
                             Msg("You close it down. The echoes compress and go dark. The battlefield is just a field with bodies on it again.", DimColor);
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(5f);
                             Msg("You take what the fire is giving you and let it out through your hands into the wood you pile in the dark. The pyre lights gold. Your men come out of their tents without being called. Nobody speaks. Everyone stays until it burns down.", FireColor);
                             break;
@@ -4421,12 +4431,12 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("Guards posted, orders given. The physicians keep working without acknowledging the change. The old woman in the corner opens her eyes, looks at the guards, and closes them again with the expression of someone who has updated their estimate of you.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("Your surgeons go in. The two exhausted physicians step back and watch for exactly long enough to confirm your men know what they're doing. Then they sit down, back against the wall, and sleep where they are sitting.", GoodColor);
                             break;
                         case "c":
@@ -4460,7 +4470,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 2f;
+                            AddMorale(2f);
                             Msg("The announcement is made. The punishment follows. Your men are quiet afterward.", DimColor);
                             break;
                         case "b":
@@ -4516,7 +4526,7 @@ namespace AshAndEmber
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("\"Put it away,\" you say. You wave your men back. He closes the box slowly, not quite believing it. Your men are frustrated. You accept that. Some costs are worth having.", GoodColor);
                             break;
                     }
@@ -4740,7 +4750,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            if (mage) AgingSystem.AgeHero(Hero.MainHero, 1);
+                            if (mage) AgePlayer(1);
                             else ChangeGold(-200);
                             ChangeRenown(5f);
                             string[] stories = {
@@ -4957,7 +4967,7 @@ namespace AshAndEmber
                             Msg("You watch him work for a minute. He is genuinely talented at the craft of performance. The crowd gets something from it. You ride on, carrying the question of whether what they get is worth what they pay.", DimColor);
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("He sees your eyes and knows immediately. You find a quiet street. You show him one real thing — very small, not dangerous, but unmistakably true. He stares at his hands for a long time afterward. When he looks up his expression has changed entirely. He will not perform that act again. You don't know what he will do instead.", FireColor);
                             break;
                     }
@@ -5027,7 +5037,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("She walks with the party and says very little. One of your soldiers' wives has the look of someone who understands precisely what has happened and deals with it practically and without ceremony. By the next town, the girl has a different name and a different story. Your party moves on.", GoodColor);
                             break;
                         case "b":
@@ -5161,17 +5171,17 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("The surgeon works by likelihood. Some men watch others receive care that does not come to them. They understand the logic. Understanding the logic does not make it easier to lie on a stretcher in the dark and understand the logic.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("The veterans are treated first. The younger men see it and accept it — some with relief, some with the look of people calculating how long they need to survive in order to earn that precedence themselves.", GoodColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("The surgeon nods once — he already knew the right answer, he just needed someone with authority to say he could use it. He works through the night. In the morning he reports the number who survived. He does not list the names of those who did not.", GoodColor);
                             break;
                     }
@@ -5237,18 +5247,18 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 10f;
+                            AddMorale(10f);
                             ChangeRenown(5f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You call it out in front of everyone. The two men go red and eat their dinner faster. The rest of the camp is louder than it was. The man they carried looks at the fire for a long time without speaking.", GoodColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale += 6f;
+                            AddMorale(6f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You find them separately, tell them what you saw and what you think of it, and leave them to their meal. One of them nods. The other says \"he would have done it for us.\" That is the entire conversation.", GoodColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("Nothing is said. The camp feels the weight of what happened without it needing to be named. The two men eat. The man they carried passes them his bread ration. No explanation is given or requested.", GoodColor);
                             break;
@@ -5284,7 +5294,7 @@ namespace AshAndEmber
                         case "a":
                             ChangeGold(-500);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("Everything is committed. Your men give up their water rations without being asked — not all of them, but enough that the ones who don't quietly match the ones who do by the second hour. The city knows what your party did here. It will know for a long time.", GoodColor);
                             break;
                         case "b":
@@ -5293,7 +5303,7 @@ namespace AshAndEmber
                         case "c":
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 2);
+                                AgePlayer(2);
                                 ShiftTrait(DefaultTraits.Mercy, 1);
                                 Msg("You spend two days doing something very precise with the fire — not burning, but the opposite of burning, a working so controlled it is almost silence. By the end the water runs clear and the fire has aged you accordingly. The city's physician tests it three times before trusting it. Your men don't ask how you did it.", FireColor);
                             }
@@ -5461,7 +5471,7 @@ namespace AshAndEmber
                             Msg("You ride past the staring villagers and across the ford yourself, first, without comment. Your horse's hooves ring on the ice. The village watches. The fire doesn't explain itself and neither do you.", FireColor);
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("Before the village wakes fully, you unseal it. The ice cracks and thins and is gone by the time the first villager reaches the bank. They find running water and muddy tracks leading away. You are already on the road. They will talk about it as a dream.", FireColor);
                             break;
                     }
@@ -5494,11 +5504,11 @@ namespace AshAndEmber
                             Msg("Coin left with the innkeeper, instructions given. He watches you ride out from the stable door. He will catch up in a week. Your men file past him without comment.", GoodColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("You wait two days. The men use the time without complaint. On the third day he walks out under his own power, embarrassed and grateful in equal measure. The delay costs something. The decision costs nothing.", GoodColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("He is secured and he rides. He says nothing and neither does anyone else. Three men check on him every hour and file their reports to you without eye contact. He makes it to the next town. He is worse. That information travels through your camp faster than orders.", BadColor);
                             break;
                     }
@@ -5526,7 +5536,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             ChangeRenown(3f);
                             Msg("He finishes. The crowd applauds. He catches your eye across the room and his expression moves through three stages: recognition, panic, and then — when you don't stop him — relief. He takes his coin. The song will continue to be wrong in all the same ways.", DimColor);
                             break;
@@ -5600,7 +5610,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(5f);
                             Msg("You tell her what it costs and what it gives. She listens with the complete attention of someone updating a life's framework in real time. She asks three questions that are so specific you have to think before answering. When you leave, she is already writing. Something in you is satisfied by being understood precisely.", FireColor);
                             break;
@@ -5639,7 +5649,7 @@ namespace AshAndEmber
                         {
                             ChangeGold(-400);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             var t_lc5 = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
@@ -5681,13 +5691,13 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("It watches you come. When you take the reins it drops its head once — not in defeat, in acknowledgement. Your men give it a name before you have cleared the field. They will argue about the name for three days.", GoodColor);
                             break;
                         case "b":
                             if (_rng.Next(2) == 0)
                             {
-                                MobileParty.MainParty.RecentEventsMorale += 3f;
+                                AddMorale(3f);
                                 Msg("It accepts the gentle approach and the gentle hands. It comes. It is a very good horse. Your rider looks as if he has been given something he did not expect to deserve.", GoodColor);
                             }
                             else
@@ -5722,7 +5732,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You work at it for an hour. The fire does not like what it touches — there is a resistance that is not physical, the cold pushing back against the warmth. Eventually it yields. The stone cracks and the cold in it is gone. The room is just a room. The cost is in your hands and in your years.", FireColor);
                             break;
                         case "b":
@@ -5764,7 +5774,7 @@ namespace AshAndEmber
                         case "b":
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                AgePlayer(1);
                                 Msg("You put your hand on the stone floor of the cottage and let the fire look back in time, briefly, the way it can when something significant happened in a space. An Ashen lord — one you know by reputation, one who operates quietly — was here three weeks ago. The child was brought to them, not taken. That changes the shape of this considerably.", AshenColor);
                             }
                             else
@@ -5905,7 +5915,7 @@ namespace AshAndEmber
                             }
                             else
                             {
-                                MobileParty.MainParty.RecentEventsMorale -= 3f;
+                                AddMorale(-3f);
                                 Msg("The door opens on a man seated at the table, very still, with a crossbow resting on his knee and aimed at exactly where you walked in. He is a hired courier who was told to wait. He was told it by someone you would rather not have your location. He lets you leave. He stays.", BadColor);
                             }
                             break;
@@ -5950,14 +5960,14 @@ namespace AshAndEmber
                         case "a":
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                AgePlayer(1);
                                 ShiftTrait(DefaultTraits.Mercy, 1);
                                 Msg("You place your hands on theirs and let the fire work at something more subtle than heat — the particular warmth that allows a body to correct itself. By evening they are standing. They look at their own hands with the expression of someone who has been given something they cannot keep but will remember.", FireColor);
                             }
                             else
                             {
                                 ShiftTrait(DefaultTraits.Mercy, 1);
-                                MobileParty.MainParty.RecentEventsMorale -= 2f;
+                                AddMorale(-2f);
                                 Msg("Your surgeon stays. He grumbles about it but goes willingly. You ride ahead and meet him two days later on the road. He reports both families stable and the healer standing. He is in a good mood.", GoodColor);
                             }
                             break;
@@ -6042,12 +6052,12 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You rebuild the shrine's form from the ash and put the fire back into it — not decoratively, but properly, the way the old shrines held warmth: a working, a lasting, something that will not go out easily. The villagers gather without being summoned. A child touches the warm stone and pulls their hand back and then reaches again.", FireColor);
                             break;
                         case "b":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You press your palm to the ash and let the fire look backward at what extinguished it. A pale shape, moving fast, three of them, northwest to southeast — they were not scouting. They were running from something. That changes the intelligence considerably. Something in the north is making the Ashen move south in haste.", AshenColor);
                             break;
                         case "c":
@@ -6085,7 +6095,7 @@ namespace AshAndEmber
                     {
                         case "a":
                         {
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             var t_lv6a = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
                                       ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
                                       ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
@@ -6095,7 +6105,7 @@ namespace AshAndEmber
                         }
                         case "b":
                         {
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             ChangeRelWithRandomLord(-3);
                             var t_lv6b = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
                                       ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
@@ -6138,13 +6148,13 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You sit beside the fire for a full day. What it has been holding is not words — it is a shape, a memory of a working done here three generations ago by someone trying to leave a message for the next person who could receive it. You receive it. The working is a warning about the northern pass. It was placed here because the person who placed it did not expect to survive to deliver it in person. They were correct.", FireColor);
                             break;
                         case "b":
                             ChangeGold(-200);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("You give her enough coin to outlast the fire and tell her she did not wait for nothing. She receives this with the stillness of someone who has been very still for thirty-one years and is now very quietly not still. Your men, watching from the road, do not speak until you are well past the village.", GoodColor);
                             break;
                         case "c":
@@ -6319,7 +6329,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ChangeRenown(10f);
                             Msg("You walk through the burning door. The fire gives way around you. The alchemist is on his knees trying to seal a set of ceramic jars. You pick him up under one arm, take the jars under the other, and walk back out. The watch stares. The building comes down twenty seconds later. He is alive. The jars are intact. He says they contain something he has been twenty years developing and says nothing else for a long time.", FireColor);
@@ -6338,7 +6348,7 @@ namespace AshAndEmber
                             }
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(5f);
                             Msg("You keep the fire from the neighboring buildings with a working that costs a day's worth of years, and the watch gets him out. He is conscious and yelling about the jars. The building is ash. Half his work is ash. He is alive and furious, which is a better outcome than the alternative.", GoodColor);
                             break;
@@ -6422,7 +6432,7 @@ namespace AshAndEmber
                         case "b":
                         {
                             ChangeGold(-200);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             var t_ec6 = MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
@@ -6433,7 +6443,7 @@ namespace AshAndEmber
                         case "c":
                             ChangeGold(-100);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("You sit with him for an hour in a tavern that smells like sawdust and old fights. He tells you about the last three years in a way that is not a complaint. Your men hear about it afterward and say nothing to you about it.", GoodColor);
                             break;
                         case "d":
@@ -6516,7 +6526,7 @@ namespace AshAndEmber
                             }
                             else
                             {
-                                MobileParty.MainParty.RecentEventsMorale -= 5f;
+                                AddMorale(-5f);
                                 Msg("Four men. The note was sent by whoever burned the station, to confirm you hadn't stopped looking. You survive the bridge. Two of your party do not. The men who ambushed you were professionals and the information that the station fire was not an accident dies with them, because they didn't know it either — they were just hired to remove you.", BadColor);
                             }
                             break;
@@ -6699,11 +6709,11 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("You dismount and reach down and bring him to his feet with both hands. He cannot speak. His wife covers her mouth. Your men, who have been watching, are very quiet in the way of soldiers who have decided something about who they serve. You remount and ride on. By nightfall, three versions of this moment are circulating through the column. All of them are true.", GoodColor);
                             break;
                         case "b":
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             ChangeRenown(3f);
                             Msg("You raise your hand toward him in formal acknowledgement and say his gesture is received. He rises. He is satisfied. The wife relaxes. Your column passes. The man watches until you are out of sight. He went home and told the story correctly, which is the best thing a witness can do.", GoodColor);
                             break;
@@ -6713,7 +6723,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("You ride past. He rises slowly without help, watching your column go. Your men have been riding for two minutes before the silence in them develops a specific quality. Nobody says anything. Nobody needs to.", BadColor);
                             break;
                     }
@@ -6745,7 +6755,7 @@ namespace AshAndEmber
                         case "a":
                         {
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             var t_eb5 = MBObjectManager.Instance.GetObject<CharacterObject>("imperial_infantry")
                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
                                      ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
@@ -6757,7 +6767,7 @@ namespace AshAndEmber
                         case "b":
                         {
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             var t_eb5b = MBObjectManager.Instance.GetObject<CharacterObject>("imperial_infantry")
                                       ?? MBObjectManager.Instance.GetObject<CharacterObject>("watchman")
                                       ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
@@ -6803,13 +6813,13 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("Your sergeant works through the list in two days. It was a sutler — not a soldier, a camp follower, someone no one looked at. He had taken the standard from a storage chest during the confusion of the last march and sold it to an intermediary. He is gone; he ran when the inquiry started. Your sergeant gives you the name. The list of what he had access to is longer than the standard.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale -= 5f;
+                            AddMorale(-5f);
                             Msg("You conduct the interviews yourself. You find the answer on the second day: a veteran of eleven years, decorated twice, who sold it for a debt he could not pay by any other means. He does not deny it. He does not make excuses. He tells you the exact amount and the exact day. You have known this man for three campaigns. The inquiry ends with that conversation and does not get easier after it.", BadColor);
                             break;
                         case "c":
@@ -6855,12 +6865,12 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("He works through the night. In the morning three men who were dying are stable. Your surgeon reports this to you with the care of a man who has been counting. The enemy surgeon asks to speak to you before leaving — he wants to say that in twenty years he has not worked alongside another surgeon who made decisions the way your man does. He is released at noon.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("He accepts the terms and returns to work immediately. When the last serious case is stable he comes to you directly, states that his obligation is fulfilled, and thanks you for the terms. He means it. He walks out of your camp with his equipment and his parole. Your surgeon watches him go without a word.", GoodColor);
                             break;
                         case "c":
@@ -6899,7 +6909,7 @@ namespace AshAndEmber
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("Your surgeon resets the arm properly. You give him water and point him north. He asks why. You tell him because the war ends eventually and people remember how they were treated when it was over. He thinks about this. He thanks you and walks north, holding his arm.", GoodColor);
                             break;
                         case "b":
@@ -7035,12 +7045,12 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("You declare the full amount. Your sergeant writes it down. The six veterans hear about it by evening. None of them comment on it directly. They knew you would do this. They are glad they were right.", GoodColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, -1);
-                            MobileParty.MainParty.RecentEventsMorale += 8f;
+                            AddMorale(8f);
                             Msg("You declare most of it, give the remainder to the six as a finder's share — significant, enough to matter — and watch what happens to their faces. The irregularity is small enough that your quartermaster will not press it. Your sergeant thanks you. He means it.", GoodColor);
                             break;
                         case "c":
@@ -7129,7 +7139,7 @@ namespace AshAndEmber
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("You dismount and stand beside him in the ash for a few minutes without speaking. Your men watch from the road and do not hurry you. He does not thank you — there is nothing to thank. But he stops counting for a moment, which may be what sitting with someone in a loss actually accomplishes. You remount and rejoin your column. Something about the way your men fall back into march is different.", GoodColor);
                             break;
                         case "c":
@@ -7176,7 +7186,7 @@ namespace AshAndEmber
                         case "b":
                             if (mage)
                             {
-                                AgingSystem.AgeHero(Hero.MainHero, 1);
+                                AgePlayer(1);
                                 Msg("You put your hand on the fragment and let the fire look back along the cold trace of the writing. The agent who compiled this list was in this village eight days ago, cataloguing. The face you receive is specific: a woman, unremarkable, who trades in cloth and moves between villages on a regular circuit. You have her route and her face. She does not know you have either.", AshenColor);
                             }
                             else
@@ -7281,7 +7291,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You set something on the table between you — not a trick, not a demonstration, just the fire being what it is without the performance layer. He watches it for a long time. His own fire responds to it in a way that surprises him. He doesn't revise his opinion out loud. He revises it where opinions actually live. You ride out with a day of your life spent on a genuine exchange.", FireColor);
                             break;
                         case "b":
@@ -7289,7 +7299,7 @@ namespace AshAndEmber
                             Msg("You give him a problem: heat a specific point without warming what surrounds it. He solves it differently than you would — more slowly, with more control over the margins. You solve it faster and with less precision. You both sit with this for a moment. He is not lesser. He is different. The difference matters in specific contexts. Neither of you had clearly understood that before.", FireColor);
                             break;
                         case "c":
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("He shows you a technique for sustaining a working with a fraction of the attention cost — he found it by accident in the third year and refined it over the following five. You have never seen it. It works. It solves a problem you didn't know you had. He looks at your face when you recognise its value and his certainty quietly reorganises itself around this new data point.", FireColor);
                             break;
                         case "d":
@@ -7323,7 +7333,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("The question was: can the fire grieve. You answer it honestly, which costs more than you expected — the honest answer requires showing her the moment yours did. She takes it in quietly. She thanks you simply. She will teach what you gave her. It will carry your name, eventually, without anyone meaning it to.", FireColor);
                             break;
                         case "b":
@@ -7331,7 +7341,7 @@ namespace AshAndEmber
                             Msg("You tell her the question she asked is a narrower version of a better question. She sits with this and produces the better question in about four minutes, which tells you everything about the quality of her training. The better question neither of you can answer fully. You spend an hour working at its edges. The master taught her well. What she does next with it will be hers.", FireColor);
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You give her a working to complete — not a display, a test of understanding. She completes it three-quarters correctly and then does something you didn't expect: corrects herself mid-working without stopping, which is harder than getting it right the first time and significantly rarer. Her gift is real and her control is better than yours was at her age. The answer you give her afterward is the best version you have. She is ready for it.", FireColor);
                             break;
                         case "d":
@@ -7407,12 +7417,12 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(15f);
                             Msg("He is good — better than the theatrics suggested. The crowd watches the square generate more heat than it has in years. He ends the contest first, which is his version of honour: yield before it becomes defeat. The crowd has seen something. They will describe it inaccurately for years. You will be larger in each telling.", FireColor);
                             break;
                         case "b":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(10f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You name the test: sustain a working at precise temperature for sixty counted seconds, nothing added, nothing removed. He agrees. He lasts forty. You last seventy-two. Control is not what he trained for — he trained for display. The crowd is less entertained and more impressed. He takes the result with better grace than you expected.", GoodColor);
@@ -7596,20 +7606,20 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(20f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You make contact. The cold is a presence — not temperature, something older, the absence the Ashen carry where warmth should be. You hold against it. They hold against yours. For ninety seconds neither of you moves. Then they release, slowly, and step back. They say one thing: 'Longer than the last one.' They leave south. You have a day less in your life and a better measure of what you are against.", AshenColor);
                             break;
                         case "b":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(15f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("They accept your conditions without hesitation — they were expecting conditions and prepared for them. You call a witness from your party. The time limit is sixty seconds. You both know going in that sixty seconds against this kind of cold is not easy. You hold for fifty-eight. They hold for all sixty on their side. The result is a draw by your terms. By what you both learned, it is something else. They leave. Your witness says nothing for an hour.", AshenColor);
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AgePlayer(1);
+                            AddMorale(5f);
                             ChangeRenown(10f);
                             Msg("You counter with warmth at contact — not aggression, just the fire being itself, sustained and present. They accept and make contact. The cold and the warm meet in whatever space exists between two carriers. What happens is not what either of you planned: they hold longer than expected, and so do you, and at the end there is something in their expression that is not the Ashen absence. They leave without speaking. Your column watched the whole thing and will not forget it.", FireColor);
                             break;
@@ -7644,13 +7654,13 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ChangeRenown(10f);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("The duel is formal and brief. He can barely stand but his working is precise — the body failing, the gift still itself. You end it cleanly. Before it ends he tells you the name of his teacher. You know the name. The lineage it implies is older than you expected him to carry. Your men watched in silence.", FireColor);
                             break;
                         case "b":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("At the end of the formal exchange — him down to one working, you still upright — you offer the parole. He considers it for ten seconds. He takes it. He sets down what he was holding and looks at his hands and then at you, and something in the Ashen training he carried releases. He will recover. Where he goes after this is his choice, which is different from what he expected to have today.", GoodColor);
@@ -7706,7 +7716,7 @@ namespace AshAndEmber
                                 Msg("They receive the offer and ask for one thing: a week alone to decide. You grant it. At the end of the week they are gone. They left a note that says the offer was fair and they needed something else first. You will hear their name again in about two years, in a context that will make the note make sense.", DimColor);
                             break;
                         case "c":
-                            AgingSystem.AgeHero(Hero.MainHero, 1);
+                            AgePlayer(1);
                             Msg("You give them a working to attempt, chained as they are. They complete it. Then they give you a counter-test, unprompted, that you cannot complete with the same elegance. The gift they carry is cold-adjacent without being Ashen — something older, something that was apparently possible before the split between fire and cold produced what it produced. You release them having learned the shape of a third thing. They leave knowing you recognised it.", FireColor);
                             break;
                         case "d":
@@ -8065,7 +8075,7 @@ namespace AshAndEmber
                             Msg("You leave what you have and your best reading of the symptoms. The herb-woman takes your supplies and your guess with the concentrated focus of someone filtering useful signal from educated approximation. She is better with the approximate information than with nothing. Two children stabilise by evening. The third is harder. She sits with the third child through the night. In the morning you will not know how it ended. You hope your guess was close enough.", DimColor);
                             break;
                         case "d":
-                            MobileParty.MainParty.RecentEventsMorale -= 3f;
+                            AddMorale(-3f);
                             Msg("You delay. Your men understand this with the quiet acceptance of soldiers who have ridden for lords who would not have stopped. By dusk two of the children are clearly improving and one is not. You stay through the night. At dawn, the third child's fever breaks. You ride out three hours late and your men ride without complaint for twelve miles before anyone says anything. Then someone near the back laughs at something and the column relaxes.", GoodColor);
                             break;
                     }
@@ -8260,30 +8270,30 @@ namespace AshAndEmber
                             if (SkillRoll(DefaultSkills.Medicine, 0.25f))
                             {
                                 ShiftTrait(DefaultTraits.Mercy, 1);
-                                MobileParty.MainParty.RecentEventsMorale += 6f;
+                                AddMorale(6f);
                                 Msg("You have seen enough battlefield surgery to recognise what he is weighing — the wound sites are different in a way that changes the priority. You tell him what you see. He checks it against his own read and adjusts. Both men receive treatment in the right order. Both survive. Your surgeon looks at you differently afterward — not with deference, just professional respect.", GoodColor);
                             }
                             else
                             {
                                 ShiftTrait(DefaultTraits.Mercy, 1);
-                                MobileParty.MainParty.RecentEventsMorale += 2f;
+                                AddMorale(2f);
                                 Msg("You share what you know. Some of it is useful and he incorporates it. Some of it is below his knowledge level and he sets it aside without comment. The combined knowledge is better than his alone. One man survives who might not have. The other was beyond the combined knowledge of both of you. Your surgeon closes that file with the quiet efficiency of someone who has written those reports before and will write them again.", DimColor);
                             }
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 4f;
+                            AddMorale(4f);
                             Msg("You give him the decision entirely and tell him so directly. He makes it cleanly, without the hesitation of someone who is second-guessing a superior's preferences. One man survives. The other does not — this was the likely outcome either way, and the surgeon's choice was correct given what was knowable. Your men watch you trust your own people completely. That travels through a column faster than orders.", GoodColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 4f;
+                            AddMorale(4f);
                             Msg("You ask him to describe the clinical picture fully before you say anything. In describing it, he hears something he had not heard while thinking it. He stops and redirects. Both men receive treatment. Both survive. He thanks you for the question.", GoodColor);
                             break;
                         case "d":
                             ChangeGold(-500);
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("The courier rides hard. The specialist arrives six hours later with better supplies and a different technique. He saves one of the two men with confidence and works on the second for three hours before confirming what your surgeon already knew. One man lives who would not have. The 500 coin bought a life and a specific hour's professional certainty. Your surgeon watches the specialist work with the full attention of a man taking notes.", GoodColor);
                             break;
                     }
@@ -8317,7 +8327,7 @@ namespace AshAndEmber
                             if (SkillRoll(DefaultSkills.Tactics, 0.28f))
                             {
                                 ShiftTrait(DefaultTraits.Calculating, 1);
-                                MobileParty.MainParty.RecentEventsMorale += 5f;
+                                AddMorale(5f);
                                 Msg("The centre held because of a deliberate false retreat on their right — it drew your left flank's attention and compressed the centre's pressure by a third. The numbers were coincidence. Your sergeant listens, asks two clarifying questions, and restates the corrected read back to the officers. They leave the debrief with the right lesson.", GoodColor);
                             }
                             else
@@ -8326,14 +8336,14 @@ namespace AshAndEmber
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 4f;
+                            AddMorale(4f);
                             Msg("You ask what he saw. His account of the centre from his position is actually accurate from where he stood — he simply could not see the false retreat from the left flank, which was behind his line of sight. When you add your account to his the combined picture is clearer than either alone. He revises his conclusion correctly and credits the two-position reading. The officers leave with a better model and a method for building one.", GoodColor);
                             break;
                         case "c":
                             Msg("You let it stand. His read is close enough that the lesson — hold the centre, watch for flanking pressure — is defensible. The mechanism is wrong. This will matter exactly once, at a moment that will not announce itself in advance. You have chosen convenience and it may cost nothing. You do not know yet.", DimColor);
                             break;
                         case "d":
-                            MobileParty.MainParty.RecentEventsMorale += 3f;
+                            AddMorale(3f);
                             Msg("You bring in the officer who held the right flank and had the clearest view of the centre from the side. His account adds the false retreat that your sergeant missed. With all three readings on the table the correct picture emerges naturally — no one person's reading was wrong, it was incomplete. The debrief ends with a model that was earned rather than imposed. Your men respect the process. So does your sergeant.", GoodColor);
                             break;
                     }
@@ -8368,19 +8378,19 @@ namespace AshAndEmber
                             {
                                 ShiftTrait(DefaultTraits.Calculating, 1);
                                 ChangeRenown(8f);
-                                MobileParty.MainParty.RecentEventsMorale += 4f;
+                                AddMorale(4f);
                                 Msg("The correct precedent is siege capture law modified by the city charter's civilian commerce protections — the merchants' pre-siege inventory claims are valid up to the point of city closure, garrison staff claims are pro-rated by months served, and the military share is calculated after both civilian claims are satisfied. You work through it in two hours. Nobody gets everything. Nobody has a legitimate grievance. Your quartermaster is taking notes.", GoodColor);
                             }
                             else
                             {
                                 ShiftTrait(DefaultTraits.Calculating, 1);
-                                MobileParty.MainParty.RecentEventsMorale += 2f;
+                                AddMorale(2f);
                                 Msg("You apply the precedents as best you can, but the intersection of siege law and city charter has a gap that your reading doesn't resolve cleanly. You make a defensible decision rather than a correct one. The merchants accept it. The garrison staff accept it for now — but they will raise the gap in a formal petition in six months.", DimColor);
                             }
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            MobileParty.MainParty.RecentEventsMorale += 5f;
+                            AddMorale(5f);
                             Msg("You give him the full authority directly and say so in front of the claimants. He takes it and works through it correctly — he has done this before, or something close enough that the differences don't matter. The distribution takes three hours and satisfies both groups adequately. He reports back to you with the numbers.", GoodColor);
                             break;
                         case "c":
