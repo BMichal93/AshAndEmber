@@ -394,6 +394,43 @@ namespace AshAndEmber
             }
         }
 
+        // ── Town satisfaction / food maintenance ──────────────────────────────
+        // Ashen villages are permanently looted (no food production), so Ashen
+        // towns would otherwise starve, lose loyalty, and trigger rebellions.
+        // Cap food stocks at maximum and lock loyalty + security to 100 every
+        // day to prevent this.  Pure float assignments — no campaign events
+        // are fired, so this cannot crash or cause state corruption.
+        private static void MaintainAshenTownHealth()
+        {
+            foreach (var kvp in _settlementClanMap.ToList())
+            {
+                try
+                {
+                    var s = Settlement.All.FirstOrDefault(x => x.StringId == kvp.Key);
+                    if (s == null || s.Town == null) continue;
+                    if (!s.IsTown && !s.IsCastle) continue;
+
+                    Town t = s.Town;
+
+                    // Top up food so looted villages don't cause starvation
+                    try
+                    {
+                        float cap = t.FoodStocksUpperLimit();
+                        if (cap > 0f && t.FoodStocks < cap)
+                            t.FoodStocks = cap;
+                    }
+                    catch { }
+
+                    // Lock security to maximum (prevents loyalty decay from crime)
+                    try { if (t.Security < 100f) t.Security = 100f; } catch { }
+
+                    // Lock loyalty to maximum (directly prevents rebellion triggers)
+                    try { if (t.Loyalty < 100f) t.Loyalty = 100f; } catch { }
+                }
+                catch { }
+            }
+        }
+
         // ── Hero gold maintenance ─────────────────────────────────────────────
         private static void RefillHeroGold()
         {
@@ -802,6 +839,7 @@ namespace AshAndEmber
             // Fast daily ops (idempotent, low cost)
             RefillGarrisons();
             RefillHeroGold();
+            MaintainAshenTownHealth();
             MaintainCriminalStatus();
 
             // Settlement recovery — every RecoveryInterval days, max 1 change per tick
