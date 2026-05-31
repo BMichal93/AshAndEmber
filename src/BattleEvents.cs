@@ -46,15 +46,15 @@ namespace AshAndEmber
     {
         // ── Tuning constants ──────────────────────────────────────────────────
         // Per-battle activation probability for each event.
-        // Total expected events per battle: ~0.5 → most battles are clean,
-        // roughly 1-in-3 has one event, 1-in-20 has two.
-        public const float ChanceCinderRain    = 0.10f;
-        public const float ChanceEmberTithe    = 0.07f;
-        public const float ChanceTheRising     = 0.12f; // only if Ashen side present
-        public const float ChanceDread         = 0.08f;
-        public const float ChanceLastLight     = 0.05f;
-        public const float ChanceAshenGround   = 0.07f;
-        public const float ChanceFrenzy        = 0.07f;
+        // Total expected events per battle: ~0.25 → most battles are clean,
+        // roughly 1-in-4 has one event, 1-in-30 has two.
+        public const float ChanceCinderRain    = 0.05f;
+        public const float ChanceEmberTithe    = 0.04f;
+        public const float ChanceTheRising     = 0.06f; // only if Ashen side present
+        public const float ChanceDread         = 0.04f;
+        public const float ChanceLastLight     = 0.03f;
+        public const float ChanceAshenGround   = 0.04f;
+        public const float ChanceFrenzy        = 0.04f;
 
         public const float CinderRainInterval  = 20f;   // seconds between damage ticks
         public const float EmberTitheInterval  = 20f;
