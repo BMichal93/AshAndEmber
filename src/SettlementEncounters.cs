@@ -51,6 +51,9 @@
 // │ The Ember-Tithe             │ Enter village/city    │ Mage             │
 // │ What the Keep Concealed     │ Siege (won)           │ Mage             │
 // │ The Alchemist's Promise     │ Enter city/castle     │ General          │
+// │ The Ember Shard             │ Enter village/city    │ General, no trinket│
+// │ The Blind Eye               │ Enter village/city    │ General, no trinket│
+// │ The Pale Compass            │ Enter village/city    │ General, no trinket│
 // └─────────────────────────────┴───────────────────────┴──────────────────┘
 //
 // Wiring (CampaignBehavior.cs):
@@ -92,6 +95,9 @@ namespace AshAndEmber
         private static int    _childEventCooldown    = 0;   // long cooldown so child event fires rarely
         private static int    _bloodTitheCountdown   = 0;   // days until deferred blood-tithe consequence
         private static int    _babyEventCountdown    = 0;   // days until deferred illegitimate-child event
+        private static int    _trinketCountdown      = 0;   // days until next trinket-dream stage fires
+        private static int    _trinketPhase          = 0;   // 0=inactive, 1=first dream, 2=recurring dream
+        private static int    _trinketVariant        = 0;   // 1=ember shard, 2=blind eye, 3=pale compass
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -111,6 +117,9 @@ namespace AshAndEmber
             _childEventCooldown    = 0;
             _bloodTitheCountdown   = 0;
             _babyEventCountdown    = 0;
+            _trinketCountdown      = 0;
+            _trinketPhase          = 0;
+            _trinketVariant        = 0;
         }
 
         public static void Save(IDataStore store)
@@ -119,6 +128,9 @@ namespace AshAndEmber
             store.SyncData("SE_ChildEventCooldown", ref _childEventCooldown);
             store.SyncData("SE_BloodTithe",         ref _bloodTitheCountdown);
             store.SyncData("SE_BabyEvent",          ref _babyEventCountdown);
+            store.SyncData("SE_TrinketCountdown",   ref _trinketCountdown);
+            store.SyncData("SE_TrinketPhase",       ref _trinketPhase);
+            store.SyncData("SE_TrinketVariant",     ref _trinketVariant);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -169,6 +181,13 @@ namespace AshAndEmber
                 _babyEventCountdown--;
                 if (_babyEventCountdown == 0)
                     FireBabyConsequence();
+            }
+
+            if (_trinketCountdown > 0)
+            {
+                _trinketCountdown--;
+                if (_trinketCountdown == 0)
+                    FireTrinketStage();
             }
         }
 
@@ -228,6 +247,12 @@ namespace AshAndEmber
                 pool.Add(EV8_ColdTrail);
                 pool.Add(EV_DarknessSpreads);
                 pool.Add(EV_BurningWitch);
+                if (_trinketPhase == 0)
+                {
+                    pool.Add(EB_TrinketEmberShard);
+                    pool.Add(EB_TrinketBlindEye);
+                    pool.Add(EB_TrinketPaleCompass);
+                }
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
@@ -257,6 +282,12 @@ namespace AshAndEmber
                 pool.Add(EC8_Followed);
                 pool.Add(EC_LocalPriest);
                 pool.Add(EC_TavernStranger);
+                if (_trinketPhase == 0)
+                {
+                    pool.Add(EB_TrinketEmberShard);
+                    pool.Add(EB_TrinketBlindEye);
+                    pool.Add(EB_TrinketPaleCompass);
+                }
                 if (mage)
                 {
                     pool.Add(E_CuriousScholar);
@@ -4993,6 +5024,245 @@ namespace AshAndEmber
                 PenaliseSpouseForAdoption();
                 Msg("You arrange for the child to be brought into your household. They arrive. They are yours.", GoodColor);
             }
+        }
+
+        // ── EB_TrinketEmberShard — enter settlement, general, no active trinket ──
+        // A fragment of amber found on a corpse. Warm to the touch through a gauntlet.
+        private static void EB_TrinketEmberShard(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "◈  The Ember Shard",
+                "Among the enemy dead, you find him — the one who had no reason to carry what he carried. Inside his breastplate, tucked against the lining: a fragment of amber the size of a thumb. Something is suspended inside it, too small to name. What you notice first is not the shape but the warmth. From inside sealed armour, on a dead man, through your gauntlet: warmth that has no right to be there.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Take it.", null, true, ""),
+                    new InquiryElement("b", "Leave it.", null, true, ""),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            _trinketVariant   = 1;
+                            _trinketPhase     = 1;
+                            _trinketCountdown = 3;
+                            Msg("You close your gauntlet over it. The warmth doesn't fade when you ride on.", DarkColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You step back and keep walking. For a few strides the warmth seems to follow you. Then it does not.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── EB_TrinketBlindEye — enter settlement, general, no active trinket ────
+        // A small iron medallion with an eye etched on both sides. One closed, one open.
+        private static void EB_TrinketBlindEye(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "◈  The Blind Eye",
+                "A small iron medallion, caught in the buckle of a dead man's belt. Black with age. On one side: an eye, etched with a precision that belongs to a different tradition than anything else this man was carrying. The eye is closed. You turn it over. On the reverse, the same eye. Open.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Take it.", null, true, ""),
+                    new InquiryElement("b", "Leave it.", null, true, ""),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            _trinketVariant   = 2;
+                            _trinketPhase     = 1;
+                            _trinketCountdown = 3;
+                            Msg("You turn it over twice more. Closed. Open. You put it in your coat and ride on.", DarkColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You set it back against the buckle. You don't look back. The open side faces the sky.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── EB_TrinketPaleCompass — enter settlement, general, no active trinket ─
+        // A carved bone disc that settles on a fixed bearing regardless of how it is held.
+        private static void EB_TrinketPaleCompass(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "◈  The Pale Compass",
+                "Inside the lining of a dead man's coat, stitched there with deliberate care: a disc of carved bone, the size of a coin. The face is engraved with radial lines like a compass rose with no directions marked. You set it on your palm to examine it. It rotates. Slowly, precisely, it settles on a bearing. You turn your hand. It corrects. There is no magnet. There is no mechanism you can find.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Take it.", null, true, ""),
+                    new InquiryElement("b", "Leave it.", null, true, ""),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            _trinketVariant   = 3;
+                            _trinketPhase     = 1;
+                            _trinketCountdown = 3;
+                            Msg("The bone is warm when you close your fingers over it. The bearing holds.", DarkColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You tuck it back into the lining as you found it. The disc keeps its bearing all the way back to where the coat lies flat.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireTrinketStage — dispatches first dream or recurring dream ──
+        private static void FireTrinketStage()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _trinketCountdown = 1; return; }
+            if (_trinketPhase == 1)
+                MageKnowledge._deferredInquiry = FireTrinketFirstDream;
+            else if (_trinketPhase == 2)
+                MageKnowledge._deferredInquiry = FireTrinketRecurringDream;
+        }
+
+        // ── Deferred: FireTrinketFirstDream — 3 days after picking up a trinket ────
+        private static void FireTrinketFirstDream()
+        {
+            string title, desc;
+            switch (_trinketVariant)
+            {
+                case 2:
+                    title = "◈  The Eye Opens";
+                    desc  = "Both sides of the medallion have the same eye in the dream. Both are open. There is nothing behind them — not darkness exactly, but the specific quality of attention that has no object. It is watching you the way a locked door watches a room. You wake with the clear sense that something in your belongings is oriented toward you.";
+                    break;
+                case 3:
+                    title = "◈  A Direction";
+                    desc  = "You are in a dark place and the compass is in your hand. Every direction looks identical except one. The disc has settled on a bearing and what is in that direction is not light exactly, but what light might look like if it could form intentions. The pull is as large as you can imagine and no larger. You wake with your hand closed around nothing and the bearing still vivid in your mind.";
+                    break;
+                default:
+                    title = "◈  Something in the Amber";
+                    desc  = "You dream of flame suspended in resin — perfectly still, not consuming, not going out. In the dream, you reach toward it. It turns toward you. The warmth in that direction is very old. You wake with your hand extended and the smell of resin in your nose.";
+                    break;
+            }
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                title, desc,
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Reach toward it.", null, true, ""),
+                    new InquiryElement("b", "Hold still. Don't engage.", null, true, ""),
+                    new InquiryElement("c", "Get rid of it in the morning.", null, true, ""),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Calculating, -1);
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            ChangeRenown(10f);
+                            _trinketPhase     = 2;
+                            _trinketCountdown = 7;
+                            Msg("You reach. Something in the warmth extends toward you in return. You feel the contact as a jolt through the hand and through whatever the fire inside you is. When you wake, you are shaking, and there is one more thing you know how to do. You're not sure where the knowledge came from.", FireColor);
+                            break;
+                        case "b":
+                            _trinketPhase     = 2;
+                            _trinketCountdown = 7;
+                            Msg("You hold still in the dream until it passes. You wake ordinary and cold. The object is where you left it.", DimColor);
+                            break;
+                        case "c":
+                            _trinketPhase   = 0;
+                            _trinketVariant = 0;
+                            Msg("You throw it in the morning, as far and as deliberately as you can. You don't look for where it lands. You ride out lighter.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireTrinketRecurringDream — every 7 days while trinket is held ─
+        private static void FireTrinketRecurringDream()
+        {
+            string title, desc, successMsg, ageMsg, deathMsg;
+            switch (_trinketVariant)
+            {
+                case 2:
+                    title      = "◈  The Eye Again";
+                    desc       = "The dream returns. The iron eye is waiting. It is more open than before, if that has a meaning. The attention behind it has been watching you for seven days straight and has learned something from the observation. You have options now that you did not have at the start.";
+                    successMsg = "You meet the eye and don't look away. The attention intensifies until it is the only thing in the dream. Then it gives you something — a current of influence, recognition from quarters you did not cultivate, a weight of gold arriving by paths you didn't arrange. The eye closes. You wake with the feeling that you paid something you haven't noticed missing yet.";
+                    ageMsg     = "The eye opens all the way. The attention that has been watching you arrives all at once. The years go first — fifty of them, drawn out through you in a single second. You do not have time to regret the decision. You wake old in the way that is permanent, and the medallion in your pocket is cold iron now, nothing more.";
+                    deathMsg   = "The eye opens fully and you see what is behind it. You were not supposed to survive this. The attention was always this size. You had simply not understood how small you were standing in front of it.";
+                    break;
+                case 3:
+                    title      = "◈  The Bearing Again";
+                    desc       = "The dream returns. The compass is in your hand and the bearing is the same bearing it always is. What is in that direction has not moved. It has only become clearer that it is aware of you now — aware that you found it, aware that you have been carrying it. Seven days. You have options.";
+                    successMsg = "You follow the bearing. In the dream it takes you somewhere real enough that you remember it on waking — a room, a face, an exchange that settled three separate debts in your favour. The influence flows in from directions you didn't solicit. Gold arrives by paths you didn't arrange. The compass lies still in your pocket, facing its usual direction.";
+                    ageMsg     = "You reach the end of the bearing. What is there takes what it is owed. Fifty years, precise to the day. You feel each one of them leave. You wake in an older body, the compass still in your hand, the rose still pointing nowhere you can follow now. It is, in every sense, spent.";
+                    deathMsg   = "You arrive at the end of the bearing. What is there is not what you imagined. The compass was not guiding you. It was leading you.";
+                    break;
+                default:
+                    title      = "◈  The Amber Again";
+                    desc       = "The dream returns. The flame in the resin is brighter than before. It knows you now — or has learned to expect you. The warmth extends outward with more precision. You could let it in further. You could put the shard somewhere it would never be found. You have been carrying it for seven days and counting.";
+                    successMsg = "You open your hand in the dream and let the warmth come the rest of the way in. It passes through you like a tide: slow, total, indifferent to your comfort. When you wake, your purse is somehow heavier, three lords who have never spoken well of you have revised their estimate, and the fire you carry burns with a steadier quality. You don't know how to explain any of it. You don't try.";
+                    ageMsg     = "The warmth comes all the way in. You let it. For a moment you think it is good. Then the years begin to run. Fifty of them. Not taken — spent, which is different. You wake gasping, and the face looking back at you from still water is the face of someone who came to this late and paid for the privilege. The shard is cold. It won't warm again.";
+                    deathMsg   = "The warmth comes all the way in and keeps coming. You understand, in the last moment, that it was never warmth — it was appetite. The fire inside you feeds it until there is nothing left to feed with. You do not wake.";
+                    break;
+            }
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                title, desc,
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Throw it away. Enough.", null, true, ""),
+                    new InquiryElement("b", "Use it.", null, true, ""),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            _trinketPhase   = 0;
+                            _trinketVariant = 0;
+                            Msg("You find a river and throw it as far as the current will take it. You don't watch where it goes. You ride on without looking back. The dreams stop.", DimColor);
+                            break;
+                        case "b":
+                        {
+                            double roll = _rng.NextDouble();
+                            if (roll < 0.70)
+                            {
+                                // Success — significant gains, chain continues
+                                _trinketCountdown = 7;
+                                try { if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Influence += 60f; } catch { }
+                                ChangeRenown(50f);
+                                ChangeGold(2000);
+                                AddMorale(15f);
+                                Msg(successMsg, GoodColor);
+                            }
+                            else if (roll < 0.90)
+                            {
+                                // Age 50 years — ends chain
+                                _trinketPhase   = 0;
+                                _trinketVariant = 0;
+                                AgePlayer(50 * 365);
+                                Msg(ageMsg, BadColor);
+                            }
+                            else
+                            {
+                                // Instant death — ends chain
+                                _trinketPhase   = 0;
+                                _trinketVariant = 0;
+                                Msg(deathMsg, BadColor);
+                                try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
+                            }
+                            break;
+                        }
+                    }
+                }, null, "", false), false, true);
         }
 
         private static void PenaliseSpouseForAdoption()
