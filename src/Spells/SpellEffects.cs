@@ -467,6 +467,52 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+
+            // Waver: chance to convert a tier 1-2 non-hero, dismounted enemy to the caster's team.
+            // Mounted units are skipped — pulling a rider off mid-teleport is unsafe.
+            // Defaults tier to int.MaxValue on failure so unresolvable characters are never converted.
+            if (CasterHasEnchantment(caster, TalentId.Waver) && !target.IsHero
+                && caster?.Team != null && Mission.Current != null)
+            {
+                bool isMounted = false;
+                try { isMounted = target.MountAgent != null; } catch { }
+                int tier = int.MaxValue;
+                try { tier = (target.Character as TaleWorlds.CampaignSystem.CharacterObject)?.Tier ?? int.MaxValue; } catch { }
+                if (!isMounted && tier <= 2 && _rng.NextDouble() < 0.12)
+                {
+                    try
+                    {
+                        var character = target.Character;
+                        Vec3 spawnPos = target.Position;
+                        Team spawnTeam = caster.Team;
+
+                        // Snap to ground so the spawn doesn't float or sink
+                        try
+                        {
+                            float gz = spawnPos.z;
+                            Mission.Current.Scene.GetHeightAtPoint(
+                                spawnPos.AsVec2,
+                                BodyFlags.CommonCollisionExcludeFlagsForAgent,
+                                ref gz);
+                            spawnPos.z = gz;
+                        }
+                        catch { }
+
+                        // Remove the original; spawn a copy on the caster's side
+                        QueueKill(target);
+                        var origin = new BasicBattleAgentOrigin(character);
+                        Vec2 spawnDir = Vec2.Forward;
+                        var buildData = new AgentBuildData(origin)
+                            .Team(spawnTeam)
+                            .Controller(AgentControllerType.AI)
+                            .InitialPosition(in spawnPos)
+                            .InitialDirection(in spawnDir);
+                        Agent converted = Mission.Current.SpawnAgent(buildData, false);
+                        if (converted != null) BeginAgentGlowRaw(converted, new Color(1f, 0.45f, 0.1f), 3f);
+                    }
+                    catch { }
+                }
+            }
         }
 
         private static void ApplyRestoreEnchantments(Agent target, SpellCast cast, Agent caster)
@@ -496,6 +542,54 @@ namespace AshAndEmber
                     float delta = cast.RestoreCount * 12f;
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Min(cur + delta, 100f));
+                }
+                catch { }
+            }
+
+            // Rouse: chance to summon an allied soldier near the caster.
+            // Requires 3+ Restore inputs — weak heals do not carry enough fire to rouse anyone.
+            // Finds a living non-hero ally as the template so the spawned unit
+            // always matches the caster's faction — no hardcoded troop IDs needed.
+            if (CasterHasEnchantment(caster, TalentId.Rouse)
+                && cast.RestoreCount >= 3
+                && caster?.Team != null && Mission.Current != null
+                && _rng.NextDouble() < 0.15)
+            {
+                try
+                {
+                    Agent template = null;
+                    foreach (Agent a in Mission.Current.Agents.ToList())
+                    {
+                        if (a.IsActive() && !a.IsMount && !a.IsHero && a.Team == caster.Team)
+                        { template = a; break; }
+                    }
+                    if (template?.Character != null)
+                    {
+                        Vec3 spawnPos = caster.Position + new Vec3(
+                            (float)(_rng.NextDouble() - 0.5) * 3f,
+                            (float)(_rng.NextDouble() - 0.5) * 3f,
+                            0f);
+                        try
+                        {
+                            float gz = spawnPos.z;
+                            Mission.Current.Scene.GetHeightAtPoint(
+                                spawnPos.AsVec2,
+                                BodyFlags.CommonCollisionExcludeFlagsForAgent,
+                                ref gz);
+                            spawnPos.z = gz;
+                        }
+                        catch { }
+
+                        var origin = new BasicBattleAgentOrigin(template.Character);
+                        Vec2 spawnDir = Vec2.Forward;
+                        var buildData = new AgentBuildData(origin)
+                            .Team(caster.Team)
+                            .Controller(AgentControllerType.AI)
+                            .InitialPosition(in spawnPos)
+                            .InitialDirection(in spawnDir);
+                        Agent roused = Mission.Current.SpawnAgent(buildData, false);
+                        if (roused != null) BeginAgentGlowRaw(roused, new Color(0.9f, 0.7f, 0.3f), 3f);
+                    }
                 }
                 catch { }
             }

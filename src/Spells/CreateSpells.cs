@@ -230,6 +230,12 @@ namespace AshAndEmber
                     $"{cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
                     ColorSchoolData.GetMessageColor(col)));
             }
+            else
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{caster.Name} — burst strikes {affected} {(affected == 1 ? "target" : "targets")}.",
+                    new Color(0.6f, 0.6f, 0.6f)));
+            }
         }
     }
 }

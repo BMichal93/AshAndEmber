@@ -67,6 +67,9 @@ namespace AshAndEmber
                 if (caster == Agent.Main)
                     InformationManager.DisplayMessage(new InformationMessage(
                         "Nothing in range.", new Color(0.7f, 0.7f, 0.7f)));
+                else
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{caster.Name} — blast, no targets in range.", new Color(0.6f, 0.6f, 0.6f)));
                 return;
             }
 
@@ -87,6 +90,12 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
                     ColorSchoolData.GetMessageColor(glowColor)));
+            }
+            else
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{caster.Name} — blast strikes {affected} {(affected == 1 ? "target" : "targets")}.",
+                    new Color(0.6f, 0.6f, 0.6f)));
             }
         }
     }

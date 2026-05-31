@@ -189,8 +189,8 @@ namespace AshAndEmber
                 "  ↑ ← →  Damage  — 25 fire damage each, hits enemies\n" +
                 "  ↓      Restore — 15 healing per ↓, heals allies\n\n" +
                 "Enchantments  (talent side-effects added automatically to Damage or Restore)\n" +
-                "  Damage enchantments:   Scatter · Smoulder · Bewilder\n" +
-                "  Restore enchantments:  Ashveil · Cinder Shell · Hearthlight\n\n" +
+                "  Damage enchantments:   Scatter · Smoulder · Bewilder · Waver\n" +
+                "  Restore enchantments:  Ashveil · Cinder Shell · Hearthlight · Rouse\n\n" +
                 "Burning cost  (every 2 inputs = 1 day, max 2 days)\n" +
                 "  1-3 inputs = 1 day  |  4+ inputs = 2 days\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost − 1 day (minimum 0).\n" : "") +

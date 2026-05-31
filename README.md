@@ -216,7 +216,7 @@ Casting **any** spell during a tournament **kills and disqualifies you instantly
 
 ## Talents
 
-Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. Each subsequent talent costs **focus points**: the first 3 purchased cost 1 point each; 4th onward costs 2 points. Maximum cost per talent is 2.
+Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. Each subsequent talent costs **focus points**: the first 7 purchased cost 1 point each; 8th onward costs 2 points. Maximum cost per talent is 2.
 
 The talent menu groups talents into three categories: **Passive**, **Enchantment**, and **Spell**.
 
@@ -243,6 +243,7 @@ Enchantments add automatic side effects to Damage or Restore casts. They fire ev
 | **Scatter** | Blasts enemies backward. Push distance = 4 m per Damage input. |
 | **Smoulder** | Scorches enemy morale. Morale loss = 12 per Damage input. |
 | **Bewilder** | Random effect on non-hero enemies — instant rout, force charge, dismount (cavalry only), or morale fractured to 25%. |
+| **Waver** | 12% chance per hit to convert a struck enemy to your side. Only affects tier 1–2 units; cannot affect heroes, lords, or mounted units. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
@@ -251,6 +252,7 @@ Enchantments add automatic side effects to Damage or Restore casts. They fire ev
 | **Ashveil** | Grants allies brief magic immunity. Duration = 3 s per Restore input. |
 | **Cinder Shell** | Hardens allies, reducing incoming damage for 8 s. Protection = 5% per Restore input, max 50%. |
 | **Hearthlight** | Lifts allied morale. Morale boost = 12 per Restore input. |
+| **Rouse** | When casting with 3+ Restore inputs, each ally healed has a 15% chance to summon a new soldier near you. The unit's type matches your current roster. |
 
 ### Spell (campaign map)
 
