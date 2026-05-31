@@ -28,6 +28,9 @@ namespace AshAndEmber
         public static void AgeHero(Hero hero, int days)
         {
             if (hero == null || days <= 0) return;
+            // Ashen do not age — the cold preserves what remains
+            if (hero == Hero.MainHero && MageKnowledge.IsAshen) return;
+            if (hero != Hero.MainHero && ColourLordRegistry.IsAshenLord(hero)) return;
             try
             {
                 hero.SetBirthDay(hero.BirthDay - CampaignTime.Days(days));

@@ -58,7 +58,7 @@ namespace AshAndEmber
             catch { }
 
             ColorSchool glowColor = cast.VisualColor;
-            SpawnConeLights(caster.Position, fwd, glowColor, 3f);
+            SpawnConeLights(caster.Position, fwd, glowColor, 3f, range);
             TryCastSound(caster.Position, glowColor);
             TryCastAnimation(caster);
 

@@ -138,29 +138,30 @@ namespace AshAndEmber
                 SpawnTempFireParticle(origin, duration * 1.5f);
         }
 
-        // Lights a cone shape with 7 temp lights.
-        // Matches blast-spell cone geometry: up to 7.5m range, ≈±49° half-angle (dot 0.65).
-        internal static void SpawnConeLights(Vec3 origin, Vec3 fwd, ColorSchool school, float duration)
+        // Lights a cone shape with 7 temp lights scaled to the actual blast range.
+        // range matches the gameplay damage range so visuals never overreach.
+        internal static void SpawnConeLights(Vec3 origin, Vec3 fwd, ColorSchool school, float duration, float range = 7.5f)
         {
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
             right = right.Length < 0.01f ? new Vec3(1f, 0f, 0f) : right.NormalizedCopy();
+            float s = range / 7.5f; // scale factor so geometry tracks actual range
             Vec3[] pts = {
-                origin,                                      // caster origin
-                origin + fwd * 2.5f,                         // near centre
-                origin + fwd * 4.5f - right * 2.5f,          // mid left
-                origin + fwd * 4.5f + right * 2.5f,          // mid right
-                origin + fwd * 7.5f,                         // far centre
-                origin + fwd * 7.5f - right * 5f,            // far left edge
-                origin + fwd * 7.5f + right * 5f,            // far right edge
+                origin,                                             // caster origin
+                origin + fwd * 2.5f * s,                            // near centre
+                origin + fwd * 4.5f * s - right * 2.5f * s,        // mid left
+                origin + fwd * 4.5f * s + right * 2.5f * s,        // mid right
+                origin + fwd * range,                               // far centre
+                origin + fwd * range - right * 5f * s,              // far left edge
+                origin + fwd * range + right * 5f * s,              // far right edge
             };
             foreach (Vec3 pos in pts)
                 SpawnTempLight(pos, school, 8f, duration);
-            // Fire particles spread along the cone
+            // Fire particles spread along the cone up to the actual range
             if (school != ColorSchool.Ashen)
             {
-                SpawnTempFireParticle(origin,              duration * 2.5f);
-                SpawnTempFireParticle(origin + fwd * 4f,  duration * 2f);
-                SpawnTempFireParticle(origin + fwd * 7.5f, duration * 1.5f);
+                SpawnTempFireParticle(origin,               duration * 2.5f);
+                SpawnTempFireParticle(origin + fwd * range * 0.5f, duration * 2f);
+                SpawnTempFireParticle(origin + fwd * range,  duration * 1.5f);
             }
         }
 
