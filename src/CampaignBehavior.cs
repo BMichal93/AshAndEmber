@@ -513,8 +513,8 @@ namespace AshAndEmber
                             if (weight <= 0) continue;
 
                             // weight = sum of totalInputs across all spells cast this battle.
-                            // Divide by 4 so an NPC casting 2-3 spells ages ~2-4 days per battle.
-                            int agingDays = Math.Max(1, weight / 4);
+                            // Divide by 3 to match the steeper player scaling (ceil(n/2) per cast).
+                            int agingDays = Math.Max(1, weight / 3);
                             if (!ColourLordRegistry.IsAshenLord(leader))
                                 AgeHeroDeferred(leader, agingDays);
                             if (playerInvolved)

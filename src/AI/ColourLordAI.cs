@@ -125,77 +125,120 @@ namespace AshAndEmber
             var enemies = SpellEffects.EnemiesOf(agent);
             var allies  = SpellEffects.AlliesOf(agent);
 
-            // Blight lords cast proactively even if no one is obviously endangered
             if (!isAshen && enemies.Count == 0 && allies.All(a => a.Health >= a.HealthLimit * 0.9f)) return;
 
-            float hpPct = agent.Health / Math.Max(agent.HealthLimit, 1f);
+            float hpPct      = agent.Health / Math.Max(agent.HealthLimit, 1f);
             int closeEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < 8f);
             int nearEnemies  = enemies.Count(a => a.Position.Distance(agent.Position) < 20f);
 
-            // 0. Ward self when health is low OR magic was recently cast nearby
-            bool endangered = hpPct < 0.40f
-                           || SpellEffects.HasRecentMagicNearby(agent.Position, 20f);
-            if (endangered && !SpellEffects.IsWarded(agent))
+            bool isCalculating = false;
+            bool isImpulsive   = false;
+            try
             {
-                CastWard(agent, hero);
+                int calc = hero.GetTraitLevel(DefaultTraits.Calculating);
+                isCalculating = !isAshen && calc > 0;
+                isImpulsive   = !isAshen && calc < 0;
+            }
+            catch { }
+
+            // 0. Defensive burst when endangered — Ward is now a Restoration talent, not NPC-castable.
+            //    Ashen lords respond with overwhelming force; others with a space-clearing burst.
+            if (hpPct < 0.40f && closeEnemies >= 1)
+            {
+                if (isAshen)
+                    CastBurst(agent, hero, 3, 3, 0);
+                else
+                    CastBurst(agent, hero, 2, 2, 0);
                 return;
             }
 
-            // 1. Heal when badly hurt
+            // 1. Heal self when badly hurt
             if (hpPct < 0.30f)
             {
                 CastHealBurst(agent, hero);
                 return;
             }
 
-            // 2. Help hurt allies
-            bool allyHurt = allies.Any(a => a.Health < a.HealthLimit * 0.5f
-                                         && a.Position.Distance(agent.Position) <= 15f);
-            if (allyHurt)
+            // 2. Help hurt allies — Ashen don't bother, they only care about themselves
+            if (!isAshen)
             {
-                CastHealBurst(agent, hero);
-                return;
+                bool allyHurt = allies.Any(a => a.Health < a.HealthLimit * 0.5f
+                                             && a.Position.Distance(agent.Position) <= 15f);
+                if (allyHurt)
+                {
+                    CastHealBurst(agent, hero);
+                    return;
+                }
             }
 
             if (nearEnemies == 0 && !isAshen) return;
 
-            // 3. Choose attack recipe
-            // Ashen lords use a wider die (d6) and cast more aggressively.
+            // 3. Attack — differentiated by lord type
             int roll = isAshen ? _rng.Next(6) : _rng.Next(4);
+
             if (closeEnemies >= 3)
             {
-                // Surrounded — use Burst to clear space
-                if (roll < 3 || !isAshen)
-                    CastBurst(agent, hero, 2, 2, 0);  // 4 inputs: damage burst
+                // Surrounded — always burst to clear space
+                if (isAshen)
+                    CastBurst(agent, hero, roll < 3 ? 2 : 3, roll < 3 ? 2 : 3, 0);
                 else
-                    CastBurst(agent, hero, 3, 3, 0);  // 6 inputs: Ashen heavy burst
+                    CastBurst(agent, hero, 2, 2, 0);
             }
             else
             {
-                float blastDetectRange = isAshen ? 8f : 6f;
-                int coneCount = SpellEffects.CountEnemiesInCone(agent, blastDetectRange, 0.65f);
+                float detectRange = isAshen ? 8f : 6f;
+                int coneCount = SpellEffects.CountEnemiesInCone(agent, detectRange, 0.65f);
+
                 if (coneCount >= 1)
                 {
-                    if (roll == 0)
-                        CastBlast(agent, hero, 2, 2, 0); // 4 inputs: solid blast
-                    else if (roll == 1)
-                        CastBlast(agent, hero, 2, 1, 0); // 3 inputs: light blast
-                    else if (roll == 2)
-                        CastBurst(agent, hero, 2, 2, 0); // 4 inputs: damage burst
-                    else if (roll == 3)
-                        CastBlast(agent, hero, 2, 2, 0); // 4 inputs: solid blast
-                    else if (roll == 4 && isAshen)
-                        CastBlast(agent, hero, 3, 3, 0); // 6 inputs: Ashen devastate
+                    if (isAshen)
+                    {
+                        switch (roll)
+                        {
+                            case 0: CastBlast(agent, hero, 3, 3, 0); break; // devastating blast
+                            case 1: CastBurst(agent, hero, 3, 3, 0); break; // mass burst
+                            case 2: CastBlast(agent, hero, 2, 2, 0); break; // solid blast
+                            case 3: CastBurst(agent, hero, 2, 2, 0); break; // medium burst
+                            case 4: CastBlast(agent, hero, 3, 2, 0); break; // wide-range blast
+                            default: CastBurst(agent, hero, 2, 3, 0); break; // deep damage burst
+                        }
+                    }
+                    else if (isCalculating)
+                    {
+                        // Calculating: patient, prefers area burst when multiple enemies
+                        if (coneCount >= 2)
+                            CastBurst(agent, hero, 2, 2, 0);
+                        else if (roll <= 1)
+                            CastBlast(agent, hero, 2, 2, 0);
+                        else
+                            CastBurst(agent, hero, 2, 1, 0);
+                    }
+                    else if (isImpulsive)
+                    {
+                        // Impulsive: direct forward blasts, higher-tempo
+                        if (roll <= 2)
+                            CastBlast(agent, hero, 2, 2, 0);
+                        else
+                            CastBlast(agent, hero, 2, 1, 0);
+                    }
                     else
-                        CastBurst(agent, hero, 3, 3, 0); // 6 inputs: Ashen mass burst
+                    {
+                        // Default: balanced mix
+                        if (roll == 0)      CastBlast(agent, hero, 2, 2, 0);
+                        else if (roll == 1) CastBlast(agent, hero, 2, 1, 0);
+                        else if (roll == 2) CastBurst(agent, hero, 2, 2, 0);
+                        else                CastBlast(agent, hero, 2, 2, 0);
+                    }
                 }
                 else if (isAshen)
                 {
-                    CastBurst(agent, hero, 2, 2, 0); // 4 inputs: area pressure
+                    // Ashen never idle — harass at range even with no obvious cone target
+                    if (roll < 3) CastBurst(agent, hero, 2, 2, 0);
+                    else          CastBlast(agent, hero, 2, 2, 0);
                 }
-                else
+                else if (nearEnemies > 0)
                 {
-                    CastBurst(agent, hero, 2, 1, 0); // 3 inputs: light burst
+                    CastBurst(agent, hero, 2, 1, 0); // light pressure while repositioning
                 }
             }
         }
@@ -232,29 +275,6 @@ namespace AshAndEmber
                     ? (isAshen ? "tears the veil — cold fire erupts." : "channels a great eruption.")
                     : (isAshen ? "erupts with cold fire." : "fire bursts outward.");
                 AnnounceEnemyCast(agent, hero, blurb);
-            }
-            catch { }
-        }
-
-        private static void CastWard(Agent agent, Hero hero)
-        {
-            try
-            {
-                // Honorable or merciful lords extend the ward to nearby troops;
-                // merciless/dishonorable lords protect only themselves.
-                float allyRadius = 0f;
-                try
-                {
-                    bool noble = hero.GetTraitLevel(DefaultTraits.Honor) > 0
-                              || hero.GetTraitLevel(DefaultTraits.Mercy) > 0;
-                    if (noble) allyRadius = 6f;
-                }
-                catch { }
-
-                SpellEffects.ExecuteWardFromAgent(agent, allyRadius);
-                SetCooldown(hero);
-                RecordCast(hero, 2);
-                AnnounceEnemyCast(agent, hero, "wraps themselves in the working.");
             }
             catch { }
         }

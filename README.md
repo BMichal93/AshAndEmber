@@ -1,4 +1,4 @@
-# Ash and Ember — v0.9.1
+# Ash and Ember — v0.9.4
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -194,14 +194,16 @@ Damage and Restore may be combined in the same cast.
 
 ## Aging Cost
 
-Every spell draws on your lifespan. Cost scales with total inputs (form + effect combined), capped at 2 days:
+Every spell draws on your lifespan. Cost scales with total inputs (form + effect combined) — no hard cap:
 
-| Total inputs | Cost |
-|--------------|------|
-| 1–3 | 1 day |
-| 4+ | 2 days |
+| Total inputs | Cost | With BattleMage |
+|--------------|------|-----------------|
+| 1–2 | 1 day | 1 day |
+| 3–4 | 2 days | 1 day |
+| 5–6 | 3 days | 2 days |
+| 7–8 | 4 days | 3 days |
 
-**BattleMage** talent reduces the cost by 1 day (minimum 0). **Sorcerer** talent reduces it further.
+**BattleMage** talent reduces the cost by 1 day (minimum 1 — casts are never free). **Sorcerer** talent reduces it further.
 
 ### Becoming Ashen
 
@@ -283,12 +285,18 @@ NPC lords cast on the campaign map independently. Ashen lords cast approximately
 
 ### Battle AI priority
 
-1. **Ward self** if HP < 40% or magic was recently used nearby.
+1. **Defensive burst** if HP < 40% and enemies within 8 m — clears close threats instead of warding.
 2. **Heal burst** if HP < 30%.
-3. **Heal burst** for allies below 50% HP within 15 m.
-4. **Burst** (when 3+ enemies within 8 m) or **Blast** (enemies in forward cone).
+3. **Heal burst** for allies below 50% HP within 15 m (non-Ashen lords only — Ashen fight on regardless).
+4. **Attack** based on lord personality:
+   - *Ashen*: rotating heavy Blast/Burst recipes (up to 6 inputs), never idle.
+   - *Calculating*: prefers Burst when multiple enemies are in the area; precise Blast otherwise.
+   - *Impulsive*: forward Blast-heavy, high tempo.
+   - *Default*: balanced Blast/Burst mix.
 
-Ashen lords skip the no-enemies early exit and cast proactively at all times. First cast is delayed 12 seconds; subsequent casts use the lord's trait-modified cooldown.
+Ward is no longer castable by NPC lords — it is now a Restoration talent available only to the player.
+
+Ashen lords skip the no-enemies early exit and cast proactively at all times. First cast is delayed 12 seconds; subsequent casts use the lord's trait-modified cooldown. Ashen spells display cold-blue and grey visuals.
 
 ### Aging (NPC)
 
@@ -347,7 +355,7 @@ Expected events per battle: ~0.5. ~60% of battles are clean.
 
 When entering or leaving a settlement, or after a battle, the mod may trigger a short narrative encounter — a short piece of text with a choice that has a mechanical consequence (gold, relations, morale, troop changes). The encounter pool has over 40 unique events gated by mage status, Ashen status, renown, and settlement type.
 
-A cooldown of 3 days prevents back-to-back encounters. Encounter chance: 35% per settlement transition, 35–55% per battle type.
+A cooldown of 6 days prevents back-to-back encounters. Encounter chance: 10% per settlement transition; 14% per field battle; 22% per siege or raid.
 
 ---
 
@@ -413,8 +421,9 @@ At campaign start the following settlements are assigned to the Ashen Kingdom. T
 ### Ashen lords
 
 - Do not age (birth day reset daily to ~35).
-- Cast spells with no aging cost; 6-second cooldown.
+- Cast spells with no aging cost; 6-second cooldown. Spells display cold-blue and grey visuals.
 - Always carry Scatter + Curse + BreakWills + Plague. 50% chance of Smoulder.
+- Personality traits locked to Merciless, Closefisted, and Deceitful.
 - Captured Ashen lords and Ashen Spawn party leaders refuse all dialogue. Encounters with them end with silence.
 
 ### Criminal status
@@ -429,17 +438,25 @@ Peace with the Ashen is revoked within 1–2 days and war re-declared.
 
 ## Campaign World Events
 
-Seven rare events fire on the weekly tick. Multiple may fire the same week.
+Twelve rare events fire on the weekly tick. Multiple may fire the same week.
 
 | Event | Chance/week | Effect |
 |-------|-------------|--------|
-| **Ashen Plague** | 8% | Wounds entire garrison of a random city/castle. Spawns 3 Ashen Spawn hordes (120–140 troops each) nearby. |
+| **Ashen Plague** | 8% | Wounds entire garrison of a random city/castle. Spawns 3 Ashen Spawn hordes nearby. |
 | **Great Withering** | 10% | Destroys 80% of a village's hearth or halves a city's prosperity. |
-| **Ashen March** | 5% | Spawns 6 Ashen Spawn hordes (200 troops each, strength ≥ 70) across a random non-Ashen kingdom. |
+| **Ashen March** | 5% | Spawns 6 Ashen Spawn hordes across a random non-Ashen kingdom. |
 | **Long Night** | 3% | Forces mod light-level to Dark for 7 days. Each day drains prosperity from every non-Ashen town. |
 | **Ashen Tide** | 3% | A random non-Ashen castle is seized by an Ashen lord. Loyalty/security set to max immediately. |
 | **Fire Fades** | 1.5% | 2–4 non-Ashen lords aged 25–55 (not clan leaders) die. Their home settlement weakens. |
 | **Darkened Roads** | 6% | All caravans of a random kingdom vanish. Town prosperity drops 15%. 2 Ashen ambush parties arrive. |
+| **Seeds of Betrayal** | 1.3% | A faction leader is poisoned at their own feast. The clan behind it is expelled from the realm. |
+| **Broken Will** | 1% | Once or twice per campaign (after day 60): a faction is drawn into the cold and declares war on all others. |
+| **The Long March** | 4% | 4 massive Ashen warbands (100+ troops each) march into Vlandia, Aserai, Khuzait, or Sturgia. |
+| **Whispers from the Ash** | 1.5% | 1–3 mage lords abandon their factions and join the Ashen — gaining Ashen title, traits, and cold-fire magic. |
+| **Tyranny** | 2% | A faction leader executes all tier-5/6 clan heads. Ruling clan loses all influence. One clan defects. |
+| **Stolen Heirloom** | 2% | A rival clan seizes the faction seal overnight — a new ruling clan takes power without a blade drawn. |
+| **Iron Winter** | 4% (winter only) | All northern villages (Sturgia, Northern Empire) lose 50% hearth. All northern cities lose 50% prosperity and food. |
+| **Scorching Sun** | 4% (summer only) | All southern desert villages (Aserai, Southern Empire) lose 50% hearth. Cities lose 50% prosperity and food. |
 
 ---
 

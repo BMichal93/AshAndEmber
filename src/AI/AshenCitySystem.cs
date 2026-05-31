@@ -222,6 +222,17 @@ namespace AshAndEmber
             catch { _ashenKingdom = null; }
         }
 
+        // Sets the three personality traits that define every Ashen lord:
+        // Merciless (Mercy −2), Closefisted (Generosity −2), Deceitful (Honor −2).
+        // Called whenever any hero joins the Ashen — including via events.
+        public static void ApplyAshenPersonality(Hero hero)
+        {
+            if (hero == null) return;
+            try { hero.SetTraitLevel(DefaultTraits.Mercy,      -2); } catch { }
+            try { hero.SetTraitLevel(DefaultTraits.Generosity, -2); } catch { }
+            try { hero.SetTraitLevel(DefaultTraits.Honor,      -2); } catch { }
+        }
+
         // ── Called by ColourLordRegistry.SetAshen for every hero turned Ashen ──
         // Moves the hero's clan into the Ashen kingdom. Safe to call at any time:
         // if the kingdom isn't ready yet the clan is simply ejected (Initialize
@@ -230,6 +241,7 @@ namespace AshAndEmber
         {
             var clan = hero?.Clan;
             if (clan == null || hero == Hero.MainHero) return;
+            try { ApplyAshenPersonality(hero); } catch { }
             try
             {
                 if (_ashenKingdom == null)

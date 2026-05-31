@@ -57,10 +57,15 @@ namespace AshAndEmber
         public bool HasAnyEffect => DamageCount > 0 || RestoreCount > 0;
         public int  TotalInputs  => FormCount + DamageCount + RestoreCount;
 
+        // Set by NPC execution helpers to override the default school-from-effects logic
+        // (e.g. Ashen lords emit cold-blue visuals regardless of damage/restore mix).
+        public ColorSchool? OverrideVisualColor = null;
+
         public ColorSchool VisualColor
         {
             get
             {
+                if (OverrideVisualColor.HasValue) return OverrideVisualColor.Value;
                 if (DamageCount > 0 && RestoreCount > 0) return ColorSchool.Orange;
                 if (DamageCount > 0)  return ColorSchool.Red;
                 if (RestoreCount > 0) return ColorSchool.White;

@@ -29,12 +29,12 @@ namespace AshAndEmber
 
         private static readonly Dictionary<string, string> _titles = new Dictionary<string, string>
         {
-            { "looter",           "Fire Prophet"   },
+            { "looter",           "Fire Zealot"   },
             { "forest_bandit",    "Hedge Witch"    },
             { "sea_raider",       "Ashen Caller"   },
             { "mountain_bandit",  "Ash Shaman"     },
-            { "steppe_bandit",    "Wind Binder"    },
-            { "desert_bandit",    "Ember Prophet"  },
+            { "steppe_bandit",    "Wind Dancer"    },
+            { "desert_bandit",    "Ember Binder"  },
         };
 
         private const float CooldownDuration = 18f;
@@ -222,7 +222,7 @@ namespace AshAndEmber
 
                 string title = GetTitle(mage);
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"The {title} channels dark fire!",
+                    $"The {title} channels the fire!",
                     new Color(0.85f, 0.35f, 0.15f)));
 
                 // The fire burns those who borrow it without the gift.

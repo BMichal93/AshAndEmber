@@ -111,7 +111,8 @@ namespace AshAndEmber
             var cast = new SpellCast
             {
                 Form = SpellForm.Blast, FormCount = formCount, BlastCount = formCount,
-                DamageCount = damageCount, RestoreCount = restoreCount
+                DamageCount = damageCount, RestoreCount = restoreCount,
+                OverrideVisualColor = ResolveNpcSchool(caster)
             };
             ExecuteBlastFromAgent(caster, cast, casterTeam);
         }
@@ -122,9 +123,23 @@ namespace AshAndEmber
             var cast = new SpellCast
             {
                 Form = SpellForm.Burst, FormCount = formCount, BurstCount = formCount,
-                DamageCount = damageCount, RestoreCount = restoreCount
+                DamageCount = damageCount, RestoreCount = restoreCount,
+                OverrideVisualColor = ResolveNpcSchool(caster)
             };
             ExecuteBurstFromAgent(caster, cast, casterTeam);
+        }
+
+        // Returns ColorSchool.Ashen for Ashen lords so their spells show cold-blue
+        // visuals; null for everyone else so the default school logic applies.
+        private static ColorSchool? ResolveNpcSchool(Agent caster)
+        {
+            try
+            {
+                var h = (caster?.Character as TaleWorlds.CampaignSystem.CharacterObject)?.HeroObject;
+                if (h != null && ColourLordRegistry.IsAshenLord(h)) return ColorSchool.Ashen;
+            }
+            catch { }
+            return null;
         }
 
         // ── Self-effects clear ─────────────────────────────────────────────────
