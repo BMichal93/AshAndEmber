@@ -547,9 +547,11 @@ namespace AshAndEmber
             }
 
             // Rouse: chance to summon an allied soldier near the caster.
+            // Requires 3+ Restore inputs — weak heals do not carry enough fire to rouse anyone.
             // Finds a living non-hero ally as the template so the spawned unit
             // always matches the caster's faction — no hardcoded troop IDs needed.
             if (CasterHasEnchantment(caster, TalentId.Rouse)
+                && cast.RestoreCount >= 3
                 && caster?.Team != null && Mission.Current != null
                 && _rng.NextDouble() < 0.15)
             {

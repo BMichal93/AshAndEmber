@@ -171,7 +171,7 @@ namespace AshAndEmber
                 Id = TalentId.Rouse, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Rouse",
                 Lore = "The fire knows where to reach. When you pour it into a friend and there is enough left over, sometimes it finds its way to someone who was only waiting for a reason to come.",
-                MechanicDesc = "Enchantment. Each Restore application has a 15% chance to rouse a new allied soldier near you."
+                MechanicDesc = "Enchantment. When you use 3+ Restore inputs, each ally healed has a 15% chance to rouse a new soldier near you."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
