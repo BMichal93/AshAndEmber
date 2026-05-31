@@ -238,8 +238,8 @@ namespace AshAndEmber
                 new Color(1f, 0.8f, 0.2f)));
         }
 
-        // Cost curve: 1 pt for the first 5 talents after Gift, 2 pts after that. Max 2.
-        public static int PurchaseCost() => _purchased.Count <= 5 ? 1 : 2;
+        // Cost curve: 1 pt for the first 7 talents after Gift, 2 pts after that. Max 2.
+        public static int PurchaseCost() => _purchased.Count <= 7 ? 1 : 2;
 
         public static bool TryPurchase(TalentId id, Hero hero)
         {
