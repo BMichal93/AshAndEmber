@@ -91,6 +91,7 @@ namespace AshAndEmber
         private static bool   _lastBattleAsAttacker  = false;
         private static int    _childEventCooldown    = 0;   // long cooldown so child event fires rarely
         private static int    _bloodTitheCountdown   = 0;   // days until deferred blood-tithe consequence
+        private static int    _babyEventCountdown    = 0;   // days until deferred illegitimate-child event
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -109,6 +110,7 @@ namespace AshAndEmber
             _lastSettlementId      = null;
             _childEventCooldown    = 0;
             _bloodTitheCountdown   = 0;
+            _babyEventCountdown    = 0;
         }
 
         public static void Save(IDataStore store)
@@ -116,6 +118,7 @@ namespace AshAndEmber
             store.SyncData("SE_Cooldown",           ref _cooldown);
             store.SyncData("SE_ChildEventCooldown", ref _childEventCooldown);
             store.SyncData("SE_BloodTithe",         ref _bloodTitheCountdown);
+            store.SyncData("SE_BabyEvent",          ref _babyEventCountdown);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -159,6 +162,13 @@ namespace AshAndEmber
                 _bloodTitheCountdown--;
                 if (_bloodTitheCountdown == 0)
                     FireBloodTitheConsequence();
+            }
+
+            if (_babyEventCountdown > 0)
+            {
+                _babyEventCountdown--;
+                if (_babyEventCountdown == 0)
+                    FireBabyConsequence();
             }
         }
 
@@ -246,6 +256,7 @@ namespace AshAndEmber
                 pool.Add(EC7_GreyCloaks);
                 pool.Add(EC8_Followed);
                 pool.Add(EC_LocalPriest);
+                pool.Add(EC_TavernStranger);
                 if (mage)
                 {
                     pool.Add(E_CuriousScholar);
@@ -4795,6 +4806,7 @@ namespace AshAndEmber
         // ── Deferred: FireBloodTitheConsequence — 3 days after LC_BloodCollector C ──
         private static void FireBloodTitheConsequence()
         {
+            if (MageKnowledge._deferredInquiry != null) { _bloodTitheCountdown = 1; return; }
             if (_rng.NextDouble() < 0.5)
             {
                 MageKnowledge._deferredInquiry = () =>
@@ -4819,6 +4831,180 @@ namespace AshAndEmber
                 MageKnowledge._deferredInquiry = () =>
                     Msg("Three days since the alchemist took a drop of your blood. Whatever he intended, it has not arrived — or has not arrived yet, or was not intended for you. The fire you carry feels the same. You note it and ride on.", DimColor);
             }
+        }
+
+        // ── EC_TavernStranger — enter city, general ───────────────────────────
+        // An attractive stranger at the city tavern opens a conversation.
+        private static void EC_TavernStranger(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "♦  An Evening in the City",
+                "The tavern is busy enough that you have a corner to yourself, or nearly. A person across the room has been watching you since you sat down — attractive, unhurried, clearly aware that you have noticed them noticing you. They cross the room at the pace of someone who is confident in the outcome. They lean against the table and say something that could mean several things, depending on which answer you give.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Tell them to go away.", null, true,
+                        "Gain Calculating."),
+                    new InquiryElement("b", "Flirt back.", null, true,
+                        "See where it goes."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You give them the short version — not hostile, just clear. They read it correctly and withdraw with the grace of someone who does this regularly and does not take it personally. You finish your drink in peace.", DimColor);
+                            break;
+                        case "b":
+                        {
+                            ShiftTrait(DefaultTraits.Calculating, -1);
+                            bool isMale = !(Hero.MainHero?.IsFemale ?? false);
+                            int outcomeCount = isMale ? 4 : 3;
+                            int outcome = _rng.Next(outcomeCount) + 1;
+
+                            switch (outcome)
+                            {
+                                case 1:
+                                    // Spend the night — charm roll for morale
+                                    if (SkillRoll(DefaultSkills.Charm, 0.45f))
+                                    {
+                                        AddMorale(10f);
+                                        Msg("The evening goes well by any measure. The conversation outlasts the candles. The morning is ordinary and the better for it. Your mood is noticeably improved when you ride out.", GoodColor);
+                                    }
+                                    else
+                                        Msg("The evening is pleasant without being remarkable. Something in the timing was slightly off. You part amicably. Your men notice you are in an average mood, which is better than most mornings.", DimColor);
+                                    break;
+
+                                case 2:
+                                    // Robbed in the night
+                                    ChangeGold(-100);
+                                    Msg("You wake in the early morning to the sound of the door closing carefully. Your purse is 100 coins lighter. They were good at it — no mess, no drama, just a professional taking advantage of a distraction. You dress without hurrying and decide not to mention it.", BadColor);
+                                    break;
+
+                                case 3:
+                                    // Attempted murder in your sleep — athletics roll
+                                    if (SkillRoll(DefaultSkills.Athletics, 0.40f))
+                                    {
+                                        ChangeRenown(5f);
+                                        Msg("Something wakes you — a shift in weight, a sound wrong by half a second. You are moving before you are fully awake, which is the only reason you are still alive. The knife misses. What follows is brief and decisive. Word of the incident finds its way to certain circles before you have left the city.", GoodColor);
+                                    }
+                                    else
+                                    {
+                                        WoundPlayer();
+                                        Msg("You wake to pain, already bleeding. The knife did its work before your body registered what was happening. You live — they misjudged the angle — but it costs you. You are treated, bandaged, and ride out wounded, with a considerable revision of your judgment of people.", BadColor);
+                                    }
+                                    break;
+
+                                case 4:
+                                    // Spend the night (male only) — charm roll for morale + baby countdown
+                                    if (SkillRoll(DefaultSkills.Charm, 0.45f))
+                                    {
+                                        AddMorale(10f);
+                                        Msg("The evening is genuinely good — the kind you do not expect in a city tavern and will not easily explain to anyone who asks. The morning is easy. You ride out in a better mood than you have been in for some time. You do not think much about it. Not yet.", GoodColor);
+                                    }
+                                    else
+                                        Msg("The evening is warm enough. Not remarkable, but real. You part before dawn. It is the kind of night that does not leave a scar. You think about it briefly on the road and then stop thinking about it.", DimColor);
+                                    _babyEventCountdown = 365;
+                                    break;
+                            }
+                            break;
+                        }
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireBabyConsequence — 365 days after EC_TavernStranger outcome 4 ──
+        private static void FireBabyConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _babyEventCountdown = 1; return; }
+
+            MageKnowledge._deferredInquiry = () =>
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "♦  Word from the Road",
+                    "A letter finds you through three different couriers, each one more indirect than the last. The handwriting is careful but unpracticed. A woman you spent a night with nearly a year ago has had your child. She is not demanding anything specific. She is informing you of the situation in precise terms and waiting to see what you do with the information.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "Ignore it. You have no obligations here.", null, true,
+                            "Gain Cruel (lose Mercy)."),
+                        new InquiryElement("b", "Send money. That is all you can offer from here.", null, true,
+                            "Lose the greater of 500 gold or 5% of your current gold."),
+                        new InquiryElement("c", "Acknowledge the child. Bring them into your household.", null, true,
+                            "The child joins your clan."),
+                    },
+                    false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        switch (chosen?[0]?.Identifier as string)
+                        {
+                            case "a":
+                                ShiftTrait(DefaultTraits.Mercy, -1);
+                                Msg("You set the letter aside without reading the second half. Whatever she decides to do with that is hers. You ride on without writing back. The courier system that found you will not find you again on this — you made sure of it.", DimColor);
+                                break;
+                            case "b":
+                            {
+                                int gold = Hero.MainHero?.Gold ?? 0;
+                                int amount = Math.Max(500, (int)(gold * 0.05f));
+                                ChangeGold(-amount);
+                                Msg($"You send {amount} gold through the same chain of couriers in reverse. The letter you include is short. You do not know if it is adequate. You suspect it is not, but it is the form of adequate that you can manage from this distance.", GoldColor);
+                                break;
+                            }
+                            case "c":
+                                TryAdoptIllicitChild();
+                                break;
+                        }
+                    }, null, "", false), false, true);
+            };
+        }
+
+        // ── Helper: adopt illicit child into player clan ───────────────────────
+        private static void TryAdoptIllicitChild()
+        {
+            try
+            {
+                // Find a non-hero CharacterObject from the player's culture for the template
+                CharacterObject template = CharacterObject.All
+                    .FirstOrDefault(c => c != null && !c.IsHero
+                                     && c.Culture == Hero.MainHero.Culture);
+                if (template == null)
+                    template = CharacterObject.All.FirstOrDefault(c => c != null && !c.IsHero);
+
+                Settlement birthPlace = Hero.MainHero.HomeSettlement
+                    ?? Settlement.All.FirstOrDefault(se => se != null && se.IsTown);
+
+                if (template != null && birthPlace != null)
+                {
+                    Hero child = HeroCreator.CreateChild(template, birthPlace, Clan.PlayerClan, 1);
+                    if (child != null)
+                    {
+                        try { child.Father = Hero.MainHero; } catch { }
+                        PenaliseSpouseForAdoption();
+                        Msg($"{child.Name} arrives in your household — quiet, small, and entirely unaware of the circumstances. They are yours now, in whatever sense you decide that means.", GoodColor);
+                        return;
+                    }
+                }
+                // Fallback if hero creation fails
+                PenaliseSpouseForAdoption();
+                Msg("You arrange for the child to be brought to your household through a chain of trusted intermediaries. There is no formal record, but it is done. They are yours.", GoodColor);
+            }
+            catch
+            {
+                PenaliseSpouseForAdoption();
+                Msg("You arrange for the child to be brought into your household. They arrive. They are yours.", GoodColor);
+            }
+        }
+
+        private static void PenaliseSpouseForAdoption()
+        {
+            try
+            {
+                Hero spouse = Hero.MainHero.Spouse;
+                if (spouse == null || !spouse.IsAlive) return;
+                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -20, false);
+                Msg($"({spouse.Name} −20 relation)", BadColor);
+            }
+            catch { }
         }
     }
 }
