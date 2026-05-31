@@ -38,7 +38,7 @@ namespace AshAndEmber
         Scatter     = 15,  // Enchantment — Damage: push back
         Smoulder    = 16,  // Enchantment — Damage: morale penalty
         Bewilder    = 17,  // Enchantment — Damage: random command
-        Waver       = 21,  // Enchantment — Damage: 5% convert enemy to your team
+        Waver       = 21,  // Enchantment — Damage: 12% chance to convert tier 1-2 enemy to your team
         // ── Restore enchantments ─────────────────────────────────────────────
         Ashveil     = 18,  // Enchantment — Restore: magic immunity
         CinderShell = 19,  // Enchantment — Restore: armour boost
@@ -402,7 +402,7 @@ namespace AshAndEmber
             try
             {
                 var prisoners = MobileParty.MainParty?.PrisonRoster?.GetTroopRoster()
-                    .Where(e => !e.Character.IsHero && e.Number > 0).ToList();
+                    ?.Where(e => e.Character != null && !e.Character.IsHero && e.Number > 0).ToList();
                 if (prisoners == null || prisoners.Count == 0)
                 { Msg("Subjugate — no prisoners to subjugate."); return; }
                 var entry = prisoners.OrderByDescending(e => e.Number).First();

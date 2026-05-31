@@ -483,32 +483,35 @@ namespace AshAndEmber
                     try
                     {
                         var character = target.Character;
-                        Vec3 spawnPos = target.Position;
-                        Team spawnTeam = caster.Team;
-
-                        // Snap to ground so the spawn doesn't float or sink
-                        try
+                        if (character != null) // only kill the original when we can spawn a replacement
                         {
-                            float gz = spawnPos.z;
-                            Mission.Current.Scene.GetHeightAtPoint(
-                                spawnPos.AsVec2,
-                                BodyFlags.CommonCollisionExcludeFlagsForAgent,
-                                ref gz);
-                            spawnPos.z = gz;
-                        }
-                        catch { }
+                            Vec3 spawnPos = target.Position;
+                            Team spawnTeam = caster.Team;
 
-                        // Remove the original; spawn a copy on the caster's side
-                        QueueKill(target);
-                        var origin = new BasicBattleAgentOrigin(character);
-                        Vec2 spawnDir = Vec2.Forward;
-                        var buildData = new AgentBuildData(origin)
-                            .Team(spawnTeam)
-                            .Controller(AgentControllerType.AI)
-                            .InitialPosition(in spawnPos)
-                            .InitialDirection(in spawnDir);
-                        Agent converted = Mission.Current.SpawnAgent(buildData, false);
-                        if (converted != null) BeginAgentGlowRaw(converted, new Color(1f, 0.45f, 0.1f).ToUnsignedInteger(), 3f);
+                            // Snap to ground so the spawn doesn't float or sink
+                            try
+                            {
+                                float gz = spawnPos.z;
+                                Mission.Current.Scene.GetHeightAtPoint(
+                                    spawnPos.AsVec2,
+                                    BodyFlags.CommonCollisionExcludeFlagsForAgent,
+                                    ref gz);
+                                spawnPos.z = gz;
+                            }
+                            catch { }
+
+                            // Remove the original; spawn a copy on the caster's side
+                            QueueKill(target);
+                            var origin = new BasicBattleAgentOrigin(character);
+                            Vec2 spawnDir = Vec2.Forward;
+                            var buildData = new AgentBuildData(origin)
+                                .Team(spawnTeam)
+                                .Controller(AgentControllerType.AI)
+                                .InitialPosition(in spawnPos)
+                                .InitialDirection(in spawnDir);
+                            Agent converted = Mission.Current.SpawnAgent(buildData, false);
+                            if (converted != null) BeginAgentGlowRaw(converted, new Color(1f, 0.45f, 0.1f).ToUnsignedInteger(), 3f);
+                        }
                     }
                     catch { }
                 }

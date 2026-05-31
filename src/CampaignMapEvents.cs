@@ -23,8 +23,8 @@
 // │ Ashen Tide      │ A random non-Ashen castle is claimed by a random Ashen  │
 // │                 │ lord via ChangeOwnerOfSettlementAction.                  │
 // ├─────────────────┼──────────────────────────────────────────────────────────┤
-// │ Fire Fades      │ 50% of non-Ashen lords under age 18 die (old-age action │
-// │                 │ with notification suppressed; aggregate message shown).  │
+// │ Fire Fades      │ 2–4 non-Ashen lords aged 25–55 (non-clan-leaders) die.  │
+// │                 │ Kills via ApplyByMurder; their home settlement weakens. │
 // ├─────────────────┼──────────────────────────────────────────────────────────┤
 // │ Darkened Roads  │ All caravans in a random kingdom are destroyed via       │
 // │                 │ DestroyPartyAction. Ashen-kingdom caravans are immune.   │

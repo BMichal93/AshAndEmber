@@ -108,6 +108,14 @@ namespace AshAndEmber
         // ── Called from CampaignBehavior.OnDailyTick ─────────────────────────
         public static void DailyTick()
         {
+            // The ending sequence must complete even after _worldRekindled is set
+            // (phase 1 sets the flag; phases 2-4 must still run on subsequent days).
+            if (_endingPhase > 0)
+            {
+                if (_endingPhase < 5) TickEnding();
+                return;
+            }
+
             if (_worldRekindled) return;
 
             // Fire old man event (deferred so the UI is clean)
@@ -136,10 +144,6 @@ namespace AshAndEmber
                 // Re-show final prompt if somehow missed
                 MageKnowledge._deferredInquiry = ShowFinalPrompt;
             }
-
-            // Ending sequence
-            if (_endingPhase > 0)
-                TickEnding();
         }
 
         // ── Goal checks ───────────────────────────────────────────────────────
@@ -235,7 +239,8 @@ namespace AshAndEmber
                     },
                     () =>
                     {
-                        // Refuse — no quest
+                        // Refuse — quest permanently unavailable; lore: "died with him"
+                        _phase = PhaseFailed;
                         InformationManager.DisplayMessage(new InformationMessage(
                             "You walked away. Whatever he was offering died with him.",
                             new Color(0.5f, 0.5f, 0.5f)));
