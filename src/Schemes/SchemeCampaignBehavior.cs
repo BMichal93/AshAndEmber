@@ -110,7 +110,7 @@ namespace AshAndEmber
         }
 
         // ── UI: step 1 — choose scheme ────────────────────────────────────────
-        private static void OpenSchemeSelectionUI()
+        internal static void OpenSchemeSelectionUI()
         {
             try
             {

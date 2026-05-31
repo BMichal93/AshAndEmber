@@ -103,6 +103,7 @@
     <Compile Include="AI\FireWorshippersSystem.cs"/>
     <Compile Include="Schemes\SchemeSystem.cs"/>
     <Compile Include="Schemes\SchemeCampaignBehavior.cs"/>
+    <Compile Include="Sanctuary\SanctuaryCampaignBehavior.cs"/>
     <Compile Include="Spells\SpellEffects.cs"/>
     <Compile Include="Spells\BlastSpells.cs"/>
     <Compile Include="Spells\SelfSpells.cs"/>

@@ -201,6 +201,15 @@ namespace AshAndEmber
                         "Long Night — the sun rises again. The darkness retreats. But the damage lingers."));
             }
 
+            // Tick down protective rites
+            if (_protectedDaysRemaining > 0)
+            {
+                _protectedDaysRemaining--;
+                if (_protectedDaysRemaining == 0)
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "The protective rites have faded. The sanctuary's shield is spent."));
+            }
+
             // The Temple's war with the Ashen is permanent — re-declare if peace is made
             if (_templeFounded)
             {
@@ -246,9 +255,11 @@ namespace AshAndEmber
         /// Resets state for a fresh new game (called from OnNewGameCreated).
         public static void ResetForNewGame()
         {
-            _longNightDaysRemaining = 0;
-            _brokenWillFired        = 0;
-            _templeFounded          = false;
+            _longNightDaysRemaining  = 0;
+            _brokenWillFired         = 0;
+            _templeFounded           = false;
+            _debugForceNextTemple    = false;
+            _protectedDaysRemaining  = 0;
             _brokenKingdomIds.Clear();
             _gotKingdoms.Clear();
             _gotDays.Clear();
@@ -260,6 +271,12 @@ namespace AshAndEmber
         private static void TryFireAshenPlague()
         {
             if (_rng.NextDouble() >= ChanceAshenPlague) return;
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "Ashen Plague — the sanctuary's protective ward turns it aside. The grey sickness finds no purchase."));
+                return;
+            }
             try
             {
                 // Require a settlement with a living garrison
@@ -355,6 +372,12 @@ namespace AshAndEmber
         private static void TryFireAshenMarch()
         {
             if (_rng.NextDouble() >= ChanceAshenMarch) return;
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "Ashen March — the holy ward holds. The grey tide finds the roads blocked by something it cannot name."));
+                return;
+            }
             try
             {
                 var kingdoms = Kingdom.All
@@ -397,6 +420,12 @@ namespace AshAndEmber
         {
             if (_longNightDaysRemaining > 0) return;
             if (_rng.NextDouble() >= ChanceLongNight) return;
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "Long Night — the protective rites hold. The darkness stirs at the edge but cannot cross."));
+                return;
+            }
 
             _longNightDaysRemaining = LongNightDuration;
 
@@ -429,6 +458,12 @@ namespace AshAndEmber
         private static void TryFireAshenTide()
         {
             if (_rng.NextDouble() >= ChanceAshenTide) return;
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "Ashen Tide — the sanctuary's blessing turns the cold back. The castle holds."));
+                return;
+            }
             try
             {
                 // Target: a castle not already under Ashen control or active siege
@@ -732,14 +767,32 @@ namespace AshAndEmber
         //   • Skips the player's faction.
         //   • Skips already-broken kingdoms.
         //   • Checks !IsAtWarWith before declaring to avoid duplicate war actions.
-        private static bool _declaringBrokenWill = false;
-        private static bool _templeFounded       = false;
+        private static bool _declaringBrokenWill  = false;
+        private static bool _templeFounded        = false;
+        private static bool _debugForceNextTemple = false;
+        private static int  _protectedDaysRemaining = 0;
+
+        // ── Sanctuary / protective rites public API ───────────────────────────
+        internal static int  ProtectedDaysRemaining => _protectedDaysRemaining;
+        internal static bool IsProtectedFromAshen   => _protectedDaysRemaining > 0;
+        internal static void StartProtection(int days)
+            => _protectedDaysRemaining = Math.Max(_protectedDaysRemaining, days);
+        internal static void DebugForceTemple()
+        {
+            if (!_templeFounded) _debugForceNextTemple = true;
+        }
         private static void TryFireBrokenWill()
         {
             if (_brokenWillFired >= BrokenWillMaxFires) return;
             if (CampaignTime.Now.ToDays < BrokenWillEarliestDay) return;
             if (_rng.NextDouble() >= ChanceBrokenWill) return;
             if (_declaringBrokenWill) return;
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "Broken Will — the protective rites hold. The cold fire finds no crack in the ward to slip through."));
+                return;
+            }
 
             try
             {
@@ -747,7 +800,6 @@ namespace AshAndEmber
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
                              && !_brokenKingdomIds.Contains(k.StringId)
-                             && k != Hero.MainHero?.Clan?.Kingdom
                              && k.Leader != null
                              && k.Clans.Count(c => c != null && !c.IsEliminated) >= 2)
                     .ToList();
@@ -794,6 +846,12 @@ namespace AshAndEmber
         private static void TryFireTheLongMarch()
         {
             if (_rng.NextDouble() >= ChanceTheLongMarch) return;
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "The Long March — the protective rites form a wall the grey tide cannot cross. The columns turn back."));
+                return;
+            }
             try
             {
                 // Shuffle eligible target kingdoms so selection is not always Vlandia
@@ -845,6 +903,12 @@ namespace AshAndEmber
         private static void TryFireWhispersFromTheAsh()
         {
             if (_rng.NextDouble() >= ChanceWhispers) return;
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "Whispers from the Ash — the holy ward silences the call. The mages hear nothing but flame."));
+                return;
+            }
             try
             {
                 // Eligible: mage lords, clan leaders, 2+ alive members in clan, kingdom stays viable
@@ -1210,29 +1274,28 @@ namespace AshAndEmber
             if (_rng.NextDouble() >= ChanceIronWinter) return;
             try
             {
+                // Pick one random northern kingdom rather than devastating all of them at once
+                var northKingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated
+                             && System.Array.IndexOf(NorthernKingdoms, k.StringId) >= 0)
+                    .ToList();
+                if (northKingdoms.Count == 0) return;
+                var kingdom = northKingdoms[_rng.Next(northKingdoms.Count)];
+
                 int villages = 0, towns = 0;
                 foreach (var s in Settlement.All)
                 {
-                    if (s == null) continue;
-                    string factionId = s.MapFaction?.StringId ?? "";
-                    bool isNorth = System.Array.IndexOf(NorthernKingdoms, factionId) >= 0;
-                    if (!isNorth) continue;
-
+                    if (s == null || s.MapFaction != kingdom) continue;
                     if (s.IsVillage && s.Village != null)
                     {
-                        try
-                        {
-                            s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f);
-                            villages++;
-                        }
-                        catch { }
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
                     }
                     else if (s.IsTown && s.Town != null)
                     {
                         try
                         {
-                            s.Town.Prosperity  = Math.Max(10f, s.Town.Prosperity  * 0.5f);
-                            s.Town.FoodStocks  = Math.Max(10f, s.Town.FoodStocks  * 0.5f);
+                            s.Town.Prosperity = Math.Max(10f, s.Town.Prosperity * 0.5f);
+                            s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
                             towns++;
                         }
                         catch { }
@@ -1240,10 +1303,10 @@ namespace AshAndEmber
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Iron Winter — the cold came early and stayed. " +
-                    $"{villages} village{(villages != 1 ? "s" : "")} in the north cannot keep their fires lit. " +
+                    $"Iron Winter — the cold descended on {kingdom.Name} and refused to leave. " +
+                    $"{villages} village{(villages != 1 ? "s" : "")} cannot keep their fires lit. " +
                     $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} halved their stores. " +
-                    $"The roads north are quiet in the wrong way."));
+                    $"The roads are quiet in the wrong way."));
             }
             catch { }
         }
@@ -1261,29 +1324,28 @@ namespace AshAndEmber
             if (_rng.NextDouble() >= ChanceScorchingSun) return;
             try
             {
+                // Pick one random desert kingdom rather than scorching all of them at once
+                var desertKingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated
+                             && System.Array.IndexOf(DesertKingdoms, k.StringId) >= 0)
+                    .ToList();
+                if (desertKingdoms.Count == 0) return;
+                var kingdom = desertKingdoms[_rng.Next(desertKingdoms.Count)];
+
                 int villages = 0, towns = 0;
                 foreach (var s in Settlement.All)
                 {
-                    if (s == null) continue;
-                    string factionId = s.MapFaction?.StringId ?? "";
-                    bool isDesert = System.Array.IndexOf(DesertKingdoms, factionId) >= 0;
-                    if (!isDesert) continue;
-
+                    if (s == null || s.MapFaction != kingdom) continue;
                     if (s.IsVillage && s.Village != null)
                     {
-                        try
-                        {
-                            s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f);
-                            villages++;
-                        }
-                        catch { }
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
                     }
                     else if (s.IsTown && s.Town != null)
                     {
                         try
                         {
-                            s.Town.Prosperity  = Math.Max(10f, s.Town.Prosperity  * 0.5f);
-                            s.Town.FoodStocks  = Math.Max(10f, s.Town.FoodStocks  * 0.5f);
+                            s.Town.Prosperity = Math.Max(10f, s.Town.Prosperity * 0.5f);
+                            s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
                             towns++;
                         }
                         catch { }
@@ -1291,10 +1353,10 @@ namespace AshAndEmber
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Scorching Sun — the sky has been white with heat for three weeks. " +
-                    $"The wells in {villages} southern village{(villages != 1 ? "s" : "")} are low or dry. " +
-                    $"{towns} desert cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} rationed their stores. " +
-                    $"The caravans carry less. The people eat less. The land remembers."));
+                    $"Scorching Sun — the sky above {kingdom.Name} has been white with heat for three weeks. " +
+                    $"The wells in {villages} village{(villages != 1 ? "s" : "")} are low or dry. " +
+                    $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} rationed their stores. " +
+                    $"The land remembers."));
             }
             catch { }
         }
@@ -1315,7 +1377,6 @@ namespace AshAndEmber
         {
             if (kingdom == null || kingdom.IsEliminated) return;
             if (kingdom.StringId == AshenKingdomId) return;
-            if (kingdom == Hero.MainHero?.Clan?.Kingdom) return; // spare player's faction
 
             var ruling      = kingdom.RulingClan;
             var playerClan  = Hero.MainHero?.Clan;
@@ -1408,7 +1469,7 @@ namespace AshAndEmber
                 if (targets.Count == 0)
                 {
                     MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Mage Fatwa — fear of sorcery swept {kingdomName} like a fever. " +
+                        $"Mage Fatwa — fear of the fire and ash swept {kingdomName} like a fever. " +
                         $"Torches were lit. Doors were barred. The mages stayed hidden long enough for the mood to break."));
                     return;
                 }
@@ -1460,8 +1521,12 @@ namespace AshAndEmber
         private static void TryFireTheTemple()
         {
             if (_templeFounded) return;
-            if (CampaignTime.Now.ToDays < TempleEarliestDay) return;
-            if (_rng.NextDouble() >= ChanceTheTemple) return;
+            if (!_debugForceNextTemple)
+            {
+                if (CampaignTime.Now.ToDays < TempleEarliestDay) return;
+                if (_rng.NextDouble() >= ChanceTheTemple) return;
+            }
+            _debugForceNextTemple = false;
             try
             {
                 // ── Pick the founding city ─────────────────────────────────────
@@ -1513,38 +1578,33 @@ namespace AshAndEmber
                 string secondName = secondClan?.Name?.ToString();
 
                 // ── Create The Temple kingdom ──────────────────────────────────
-                // Modern API first; legacy MBObjectManager approach as fallback.
                 Kingdom temple = null;
                 try
                 {
-                    // Bannerlord 1.5+ static factory — handles clan placement internally
-                    temple = Kingdom.CreateKingdom(
-                        foundingClan.Leader,
+                    temple = MBObjectManager.Instance.CreateObject<Kingdom>("the_temple");
+                    if (temple == null) return;
+
+                    // InitializeKingdom(name, informalName, culture, banner,
+                    //   color1, color2, capitalSettlement,
+                    //   encyclopediaText, rulerTitle, rulerDescription)
+                    temple.InitializeKingdom(
                         new TextObject("The Temple"),
                         new TextObject("Temple"),
+                        foundingClan.Culture,
                         new Banner(foundingClan.Banner.Serialize()),
-                        "the_temple");
+                        foundingClan.Color,
+                        foundingClan.Color2,
+                        chosenCity,
+                        new TextObject("A militant order sworn to oppose the Ashen at any cost."),
+                        new TextObject("High Templar"),
+                        new TextObject("Led by those who answered the call when kingdoms would not."));
+
+                    // For a new empty kingdom, ApplyByCreateKingdom makes the clan its ruler.
+                    // Fall back to ApplyByJoinToKingdom if the former API isn't available.
+                    try   { ChangeKingdomAction.ApplyByCreateKingdom(foundingClan, temple, false); }
+                    catch { ChangeKingdomAction.ApplyByJoinToKingdom(foundingClan, temple); }
                 }
-                catch
-                {
-                    try
-                    {
-                        temple = MBObjectManager.Instance.CreateObject<Kingdom>("the_temple");
-                        if (temple == null) return;
-                        temple.InitializeKingdom(
-                            new TextObject("The Temple"),
-                            new TextObject("Temple"),
-                            foundingClan.Culture,
-                            new Banner(foundingClan.Banner.Serialize()),
-                            chosenCity.GetPosition2D,
-                            chosenCity.GetPosition2D,
-                            "the_temple");
-                        // Add founding clan; try ApplyByCreateKingdom first, JoinToKingdom as fallback
-                        try   { ChangeKingdomAction.ApplyByCreateKingdom(foundingClan, temple, false); }
-                        catch { ChangeKingdomAction.ApplyByJoinToKingdom(foundingClan, temple); }
-                    }
-                    catch { temple = null; }
-                }
+                catch { temple = null; }
 
                 if (temple == null || temple.IsEliminated) return;
                 _templeFounded = true;   // set only once kingdom is confirmed valid
@@ -1587,9 +1647,9 @@ namespace AshAndEmber
 
                 string body =
                     $"A preacher climbed the steps of the great hall in {cityName} and spoke of fire — " +
-                    $"not the warm fire of the hearth, but the cold that walks south on grey feet.\n\n" +
-                    $"He said the kingdoms argued policy while the Ashen counted their dead. " +
-                    $"He said someone had to answer the cold with something older and hotter.\n\n" +
+                    $"a flame that lives in us all and the cold that walks south to extinguish it.\n\n" +
+                    $"He said the kingdoms argued policy while the Ashen marches restlessly. " +
+                    $"He said that we must stand against them as one, or perish.\n\n" +
                     $"{clanName} listened. Then they left their old banners behind.{secondLine} " +
                     $"They have raised a new standard: The Temple. " +
                     $"Their only declared war is with the Ashen. " +
@@ -1786,7 +1846,8 @@ namespace AshAndEmber
             }
 
             int templeFounded = _templeFounded ? 1 : 0;
-            store.SyncData("LDM_TempleFounded", ref templeFounded);
+            store.SyncData("LDM_TempleFounded",    ref templeFounded);
+            store.SyncData("LDM_ProtectedDays",    ref _protectedDaysRemaining);
             _templeFounded = templeFounded != 0;
         }
     }

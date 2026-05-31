@@ -416,9 +416,13 @@ When a cooldown expires the player receives a notification: *"Contacts reset —
 | **Hire an Assassin (wound)** | Roguery | 1 200 | 20 | 30% | ~20% of target's party troops wounded. |
 | **False Accusations** | Charm | 600 | 15 | 45% | Target clan loses 5% of their renown (min 50). |
 
+### Arrange covert business (city menu)
+
+In any town, a direct **"Arrange some covert business"** option is available in the main town menu — no tavern dialogue required. Conditions and costs are identical to the tavern route.
+
 ### Debug mode
 
-Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. While active, all schemes cost nothing and always succeed. Toggle again to restore normal mode.
+Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. While active, all schemes cost nothing and always succeed. When toggled **on**, this also queues **The Temple** event to fire on the next weekly tick (if it hasn't fired yet). Toggle again to restore normal mode.
 
 ### Balance notes
 
@@ -530,11 +534,33 @@ Twelve rare events fire on the weekly tick. Multiple may fire the same week.
 | **Stolen Heirloom** | 2% | A rival clan seizes the faction seal overnight — a new ruling clan takes power without a blade drawn. |
 | **Mage Fatwa** | 2.5% | Religious fear sweeps a kingdom. 0–3 mage lords (non-Ashen) are hunted and killed by the mob. |
 | **The Temple Rises** | 4% (after day 100, once only) | Diathma, Makeb, or Omor breaks from its faction. The city's owner clan founds The Temple — a militant holy order sworn to fight the Ashen. One more clan joins automatically. Player may join. |
-| **Iron Winter** | 4% (winter only) | All northern villages (Sturgia, Northern Empire) lose 50% hearth. All northern cities lose 50% prosperity and food. |
-| **Scorching Sun** | 4% (summer only) | All southern desert villages (Aserai, Southern Empire) lose 50% hearth. Cities lose 50% prosperity and food. |
+| **Iron Winter** | 4% (winter only) | One random northern kingdom (Sturgia or Northern Empire) loses 50% hearth in villages and 50% prosperity/food in cities. |
+| **Scorching Sun** | 4% (summer only) | One random desert kingdom (Aserai or Southern Empire) loses 50% hearth in villages and 50% prosperity/food in cities. |
 | **Game of Thrones** | 5% on leader death | When a qualifying faction leader dies, the kingdom fractures: all non-ruling clans leave and become independent, keeping their fiefs. Requires 4+ clans; never fires for the Ashen. |
 
 The Ashen are exempt from all betrayal and political-fracture events — their will is cold, singular, and does not break or scheme against itself.
+
+### The Sanctuary
+
+Cities owned by **The Temple** and **two randomly chosen Empire towns** (selected at new-game start, saved with the campaign) have a **Sanctuary** accessible from the town menu.
+
+**Access requirement:** Honor ≥ 1 (Honourable) AND Mercy ≥ 1 (Merciful). Non-qualifying characters cannot use the Sanctuary.
+
+**Temple member discount:** Temple faction members pay 40% less gold and age 40% less for all rites.
+
+| Rite | Cost | Effect |
+|------|------|--------|
+| **Prayer of Strength** | 500g | Party morale +40 |
+| **Protective Rites** | 1 000g + 30 days older | Blocks all Ashen world events for 14 days |
+| **Turn the Ashen** | 1 500g + 45 days older | Wounds 12–20 soldiers in up to 3 Ashen parties within 200 map units; breaks their morale |
+| **Prayer of Healing** | 800g + 20 days older | Fully heals all wounded troops in the party |
+| **Prayer for a Blessing** | 5 000g | Rejuvenates the player by ~10 years (hard floor: age 20) |
+
+When Protective Rites are active, any Ashen world event that would fire instead shows a notification that the ward held. The counter ticks down daily and a notification fires when it expires.
+
+**NPC behavior:**
+- Honourable + Merciful lords currently in a sanctuary city: **0.3% chance per day** to receive a miracle (healing or morale). A notification appears: *"Miracle — [lord] prayed at the sanctuary in [city]."*
+- Temple faction lords: **3% chance per day** to partially heal their wounded; **2% chance** to wound troops in the nearest Ashen party within 100 map units.
 
 ### The Temple
 

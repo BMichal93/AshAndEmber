@@ -43,6 +43,7 @@ namespace AshAndEmber
             {
                 campaignStarter.AddBehavior(new MagicCampaignBehavior());
                 campaignStarter.AddBehavior(new SchemeCampaignBehavior());
+                campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter); } catch { }
                 try { SchemeSystem.Initialize(); } catch { }
             }
@@ -61,7 +62,7 @@ namespace AshAndEmber
                 try { MagicInputHandler.Tick(inMission: false); } catch { }
                 try { ActiveEffectManager.MapTick(dt); } catch { }
 
-                // Ctrl+Shift+F10 — toggle scheme debug mode (zero cost, 100% success)
+                // Ctrl+Shift+F10 — toggle scheme debug mode; also force-fires The Temple event
                 try
                 {
                     if (TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftControl)
@@ -69,10 +70,24 @@ namespace AshAndEmber
                      && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.F10))
                     {
                         SchemeSystem.DebugFree = !SchemeSystem.DebugFree;
+                        string schemeMsg = SchemeSystem.DebugFree
+                            ? "[DEBUG] Schemes: costs disabled, success forced."
+                            : "[DEBUG] Schemes: normal mode restored.";
+
+                        // Also queue The Temple event if it hasn't fired yet
+                        string templeMsg = "";
+                        try
+                        {
+                            if (SchemeSystem.DebugFree)
+                            {
+                                CampaignMapEvents.DebugForceTemple();
+                                templeMsg = " Temple event queued for next weekly tick.";
+                            }
+                        }
+                        catch { }
+
                         MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
-                            SchemeSystem.DebugFree
-                                ? "[DEBUG] Schemes: costs disabled, success forced."
-                                : "[DEBUG] Schemes: normal mode restored."));
+                            schemeMsg + templeMsg));
                     }
                 }
                 catch { }
