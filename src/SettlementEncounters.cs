@@ -213,6 +213,8 @@ namespace AshAndEmber
                 pool.Add(EV7_WatchedVillage);
                 pool.Add(EV8_WrongWound);
                 pool.Add(EV8_ColdTrail);
+                pool.Add(EV_DarknessSpreads);
+                pool.Add(EV_BurningWitch);
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
@@ -253,6 +255,7 @@ namespace AshAndEmber
                 pool.Add(EC6_SmuggledLetters);
                 pool.Add(EC7_GreyCloaks);
                 pool.Add(EC8_Followed);
+                pool.Add(EC_LocalPriest);
                 if (mage)
                 {
                     pool.Add(E_CuriousScholar);
@@ -313,6 +316,9 @@ namespace AshAndEmber
                 pool.Add(LV7_RoadWatchesBack);
                 pool.Add(LV8_PoisonedWell);
                 pool.Add(LV8_BattleSetup);
+                pool.Add(LV_ColdEmbrace);
+                pool.Add(LV_ColdDream);
+                pool.Add(LV_ThreeWitches);
                 if (mage)
                 {
                     pool.Add(E_MothersPlea);
@@ -8443,6 +8449,476 @@ namespace AshAndEmber
                             ShiftTrait(DefaultTraits.Honor, -1);
                             ChangeCrime(5f);
                             Msg("He is taken in for questioning and released inside the hour — there is no cause. He looks at you differently when he comes out. So do you, at yourself.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Helper: wound the player hero and a few party members ─────────────
+        private static void WoundPlayer()
+        {
+            try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.MaxHitPoints / 4); } catch { }
+            try
+            {
+                var roster = MobileParty.MainParty?.MemberRoster;
+                if (roster == null) return;
+                int toWound = 3 + _rng.Next(8), wounded = 0;
+                foreach (var e in roster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero) continue;
+                    int healthy = e.Number - e.WoundedNumber;
+                    int w = Math.Min(healthy, toWound - wounded);
+                    if (w <= 0) continue;
+                    roster.AddToCounts(e.Character, 0, false, w);
+                    wounded += w;
+                    if (wounded >= toWound) break;
+                }
+            }
+            catch { }
+        }
+
+        // ── Helper: wound a number of party troops (simulate Curse hit) ───────
+        private static void WoundPartyTroops(int count)
+        {
+            try
+            {
+                var roster = MobileParty.MainParty?.MemberRoster;
+                if (roster == null) return;
+                int wounded = 0;
+                foreach (var e in roster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero) continue;
+                    int healthy = e.Number - e.WoundedNumber;
+                    int w = Math.Min(healthy, count - wounded);
+                    if (w <= 0) continue;
+                    roster.AddToCounts(e.Character, 0, false, w);
+                    wounded += w;
+                    if (wounded >= count) break;
+                }
+            }
+            catch { }
+        }
+
+        // ── Helper: become Ashen (full conversion sequence) ───────────────────
+        private static void BecomeAshen()
+        {
+            try { ColourLordRegistry.SetAshen(Hero.MainHero, true); } catch { }
+            try { AshenCitySystem.ApplyAshenPersonality(Hero.MainHero); } catch { }
+            try { ColourLordRegistry.SetMage(Hero.MainHero, true); } catch { }
+            try { AshenCitySystem.OnHeroSetAshen(Hero.MainHero); } catch { }
+            try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch { }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // DARK / ASHEN SETTLEMENT EVENTS
+        // ════════════════════════════════════════════════════════════════════
+
+        // ── EV_DarknessSpreads — village enter ────────────────────────────────
+        // Your scouts report cold blue flames in the fields at night and livestock
+        // found bloodless at dawn. Ashen cultists may be hiding in the village.
+        private static void EV_DarknessSpreads(Settlement s)
+        {
+            string vName = s.Name?.ToString() ?? "the village";
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★ Darkness in the Roots",
+                $"Your scouts found livestock dead in the fields near {vName} — bloodless, cold, " +
+                $"facing the same direction. The villagers won't meet your eyes. " +
+                $"Someone lit fires in the northern field after midnight, " +
+                $"the wrong colour and shape for hearth or harvest. " +
+                $"You cannot prove it, but something Ashen has been here recently.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Burn the village. Cultists hide among the innocent here.", null, true,
+                        "Village razed. Crime +50. 50% chance −60 relations with settlement owner."),
+                    new InquiryElement("b", "Spare them. There is no solid proof.", null, true,
+                        "50% nothing happens. 50% Ashen Spawn descend on the village anyway."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            // Simulate a village raid
+                            try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.30f); } catch { }
+                            ChangeCrime(50f);
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                ChangeRelWithOwner(s, -60);
+                                Msg($"You gave the order. {vName} burned by morning. " +
+                                    $"Whether the cultists were inside, or fled, or were never truly there — " +
+                                    $"you will not know. The settlement's lord received word before the ash cooled.", BadColor);
+                            }
+                            else
+                            {
+                                Msg($"You gave the order. {vName} burned by morning. " +
+                                    $"The owner's people came to assess the damage and said nothing in your presence.", BadColor);
+                            }
+                            break;
+                        case "b":
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                Msg($"You passed through {vName} and rode on. " +
+                                    $"The cold feeling faded by nightfall. Perhaps you misread the signs. " +
+                                    $"Perhaps the cultists saw your mercy and scattered.", DimColor);
+                            }
+                            else
+                            {
+                                // Spawn 200 Ashen near the village
+                                try { CampaignMapEvents.SpawnAshenAmbushNear(s.GetPosition2D, 20, 180f); } catch { }
+                                Msg($"You showed mercy and rode on. That evening, {vName} caught fire from three sides at once. " +
+                                    $"Ashen Spawn poured from the shadows — the cultists had already called for them. " +
+                                    $"The village burned regardless of your choice.", BadColor);
+                            }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── EV_BurningWitch — village enter ───────────────────────────────────
+        // A young girl is stripped to a stake. The villagers intend to burn her.
+        private static void EV_BurningWitch(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★ The Pyre",
+                "In the village square, a young girl is bound to a stake. The crowd " +
+                "has built a pyre at her feet. \"A witch,\" they say. \"She brings the grey cold " +
+                "into our fields.\" Her eyes are dark and frightened — or very still, which is worse. " +
+                "The village elder watches you to see what you do.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Let them burn her. She may truly be a witch.", null, true,
+                        "She dies. Calculating +1."),
+                    new InquiryElement("b", "Watch. You've heard worse ways to spend an afternoon.", null, true,
+                        "She dies. Mercy −1."),
+                    new InquiryElement("c", "Stop them. There is no proof, only fear.", null, true,
+                        "Mercy +1. 50% chance she was Ashen and casts a curse before falling."),
+                    new InquiryElement("d", "Ride on. You don't have time for this.", null, true,
+                        "Nothing happens."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            Msg("You say nothing. The fire is lit. She does not scream — or she does, and you have already turned away. " +
+                                "The village elder nods at your back as you leave.", DimColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            Msg("You watch. The crowd watches you watching. " +
+                                "Something in you marks this moment and files it under things you have become.", BadColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                // She was Ashen — casts Curse before dying
+                                int w = 5 + _rng.Next(8);
+                                WoundPartyTroops(w);
+                                try { AgePlayer(3); } catch { }
+                                Msg($"You step forward. The crowd parts. The girl raises her head — " +
+                                    $"and her eyes are grey. Not frightened. Cold. She speaks one word " +
+                                    $"and your soldiers cry out. {w} of them are clutching wounds " +
+                                    $"that were not there a moment ago. She was what they said she was.", BadColor);
+                            }
+                            else
+                            {
+                                Msg("You step forward. The crowd parts. The girl raises her head — " +
+                                    "her eyes are human and wet and terrified. You cut her free. " +
+                                    "The elder says nothing. The villagers say nothing. " +
+                                    "You ride out with a girl who was not a witch, and the knowledge " +
+                                    "of what would have happened if you had kept riding.", GoodColor);
+                            }
+                            break;
+                        case "d":
+                            Msg("You ride on. Behind you, the fire takes hold. " +
+                                "There was nothing you could have done. You choose not to decide whether that is true.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── EC_LocalPriest — town enter ───────────────────────────────────────
+        // A city priest asks for funding to establish a sanctuary here.
+        private static void EC_LocalPriest(Settlement s)
+        {
+            string cName  = s.Name?.ToString() ?? "the city";
+            bool   exists = SanctuaryCampaignBehavior.HasSanctuary(s);
+            if (exists) return; // already has a sanctuary; skip
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★ The Priest at the Gate",
+                $"A worn priest intercepts you at the city gate of {cName}. " +
+                $"He speaks quickly — he has been turned away by two lords already. " +
+                $"He wants to build a sanctuary here: a place where the honourable can seek " +
+                $"blessing, healing, and protection against the Ashen. He needs coin. A great deal of it.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Donate 10,000 denars — build it properly.", null, true,
+                        "Sanctuary immediately added to this city's services."),
+                    new InquiryElement("b", "Give 5,000 denars — half now, half later.", null, true,
+                        "50% chance sanctuary is established."),
+                    new InquiryElement("c", "Spare 500 denars — something is better than nothing.", null, true,
+                        "5% chance sanctuary is established."),
+                    new InquiryElement("d", "Turn him away. You have nothing to give.", null, true,
+                        "Nothing happens."),
+                    new InquiryElement("e", "Have him beaten and driven off.", null, true,
+                        "Mercy −1."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (!ChangeGold(-10000)) break;
+                            SanctuaryCampaignBehavior.AddPermanentSanctuary(s.StringId);
+                            Msg($"You give him the coin without ceremony. He bows once and says nothing further. " +
+                                $"Within a week, the sanctuary of {cName} is open. " +
+                                $"The flame burns clean inside it.", GoodColor);
+                            break;
+                        case "b":
+                            if (!ChangeGold(-5000)) break;
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                SanctuaryCampaignBehavior.AddPermanentSanctuary(s.StringId);
+                                Msg($"Half the sum was enough to begin. The sanctuary of {cName} opens its doors. " +
+                                    $"The priest sent you a short note of thanks that says more than it appears to.", GoodColor);
+                            }
+                            else
+                            {
+                                Msg($"The coin was not enough to complete the work. The foundations are laid " +
+                                    $"but the doors have not opened. The priest writes that he will find the rest.", DimColor);
+                            }
+                            break;
+                        case "c":
+                            if (!ChangeGold(-500)) break;
+                            if (_rng.NextDouble() < 0.05)
+                            {
+                                SanctuaryCampaignBehavior.AddPermanentSanctuary(s.StringId);
+                                Msg($"You drop a handful of coin into his hands and ride on. A month later, " +
+                                    $"word reaches you: the sanctuary of {cName} is open. " +
+                                    $"Your small gift opened a door no one expected.", GoodColor);
+                            }
+                            else
+                            {
+                                Msg("You give what you can. He thanks you with a quiet dignity that makes the small sum feel smaller. " +
+                                    "It was not enough, but it was something.", DimColor);
+                            }
+                            break;
+                        case "d":
+                            Msg("You pass him without stopping. He watches you go, then turns back to the gate to wait for the next lord.", DimColor);
+                            break;
+                        case "e":
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            Msg("Your soldiers scatter him from the gate. He does not return. " +
+                                "The city remembers you were there.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LV_ColdEmbrace — village leave ────────────────────────────────────
+        // Resting in the afternoon, a ring of Ashen Spawn closes around you.
+        // They reach out the cold and wait.
+        private static void LV_ColdEmbrace(Settlement s)
+        {
+            int   oneH    = Hero.MainHero?.GetSkillValue(DefaultSkills.OneHanded) ?? 0;
+            int   twoH    = Hero.MainHero?.GetSkillValue(DefaultSkills.TwoHanded) ?? 0;
+            int   best    = Math.Max(oneH, twoH);
+            float athChance  = Math.Min(0.90f, 0.35f + (Hero.MainHero?.GetSkillValue(DefaultSkills.Athletics) ?? 0) * 0.003f);
+            float combChance = Math.Min(0.90f, 0.35f + best * 0.003f);
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★ The Circle Closes",
+                "You are resting in the afternoon shade outside the village when they arrive. " +
+                "A ring of Ashen Spawn — grey-cloaked, cold-eyed — has closed around you without a sound. " +
+                "They do not speak. They extend their hands toward you, and the air drops ten degrees. " +
+                "They are offering you something.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Embrace the cold. Accept what they offer.", null, true,
+                        "You become Ashen and join the Ashen faction."),
+                    new InquiryElement("b", $"Run. Get out of the ring. (Athletics {(int)(athChance*100)}%)", null, true,
+                        $"Success: escape cleanly. Failure: wounded."),
+                    new InquiryElement("c", $"Fight them off. ({(int)(combChance*100)}% with your best blade skill)", null, true,
+                        $"Success: drive them back. Failure: wounded."),
+                    new InquiryElement("d", "Burn them with magic. Age 3 days.", null, true,
+                        "The fire scatters them. Costs 3 days of your life."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            BecomeAshen();
+                            Msg("You reach back. The cold is not a sensation — it is a state. " +
+                                "The grey settles into your eyes before you are aware it has begun. " +
+                                "The Ashen Spawn lower their hands. You are one of them now.", BadColor);
+                            break;
+                        case "b":
+                            if (_rng.NextDouble() < athChance)
+                                Msg("You break from the ring at a dead run, low and fast. " +
+                                    "One of them reaches — you feel the cold graze your shoulder " +
+                                    "and then you are through and moving and they do not follow. " +
+                                    "You do not stop running until the village is behind you.", DimColor);
+                            else
+                            {
+                                WoundPlayer();
+                                Msg("You move — but not fast enough. The cold finds you before you clear the ring. " +
+                                    "You come through bleeding and slow, the grey chill deep in your shoulder. " +
+                                    "They let you go. You cannot decide if that makes it better or worse.", BadColor);
+                            }
+                            break;
+                        case "c":
+                            if (_rng.NextDouble() < combChance)
+                                Msg("You draw and move. They are not afraid of blades — " +
+                                    "but blades still cut. You take two down before the others scatter. " +
+                                    "Not elegantly, but you come out the other side standing.", GoodColor);
+                            else
+                            {
+                                WoundPlayer();
+                                Msg("You were outnumbered, and they moved without fear. " +
+                                    "You take wounds before you manage to break the ring. " +
+                                    "They let you go when you clear them. You are not sure why.", BadColor);
+                            }
+                            break;
+                        case "d":
+                            AgePlayer(3);
+                            Msg("The fire comes from somewhere older than your hands. " +
+                                "They scatter before it — cold things do not like what burns. " +
+                                "They are gone in seconds. You are three days older. " +
+                                "Some costs are paid faster than others.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LV_ColdDream — village leave ──────────────────────────────────────
+        // Sleeping at the village inn, the cold reaches into your dreams.
+        private static void LV_ColdDream(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★ Ash in the Dream",
+                "You slept at the village inn and woke before dawn, cold and certain. " +
+                "The dream was vivid: grey plains stretching without horizon, " +
+                "something vast and patient moving at the edge of it. " +
+                "It looked at you — not with eyes — and extended an invitation. " +
+                "You are awake now. The decision feels more real than waking usually does.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Accept the invitation. Join the cold.", null, true,
+                        "You become Ashen and join the Ashen faction."),
+                    new InquiryElement("b", "Refuse. It was only a dream.", null, true,
+                        "Nothing happens."),
+                    new InquiryElement("c", "Reach back — try to learn what it wants.", null, true,
+                        "30% wounded. 20% become Ashen. 50% gain 1 free focus point."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            BecomeAshen();
+                            Msg("You answer the invitation. By morning you are different in ways you cannot fully describe yet. " +
+                                "Your reflection in the horse trough shows grey at the edges of your eyes.", BadColor);
+                            break;
+                        case "b":
+                            Msg("You get up, drink cold water, and decide it was only a dream. " +
+                                "You are probably right. The world looks normal in daylight. " +
+                                "It usually does.", DimColor);
+                            break;
+                        case "c":
+                        {
+                            double roll = _rng.NextDouble();
+                            if (roll < 0.30)
+                            {
+                                WoundPlayer();
+                                Msg("You reach toward it and it reaches back — harder than you expected. " +
+                                    "You come awake on the floor, bleeding from nowhere you can explain. " +
+                                    "The dream is gone. The wounds are not.", BadColor);
+                            }
+                            else if (roll < 0.50)
+                            {
+                                BecomeAshen();
+                                Msg("You reach toward it and it takes you the rest of the way. " +
+                                    "You learn what it wants. It wants everything. " +
+                                    "By the time you understand that, the grey is already in your eyes.", BadColor);
+                            }
+                            else
+                            {
+                                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                                Msg("You reach toward it carefully, like touching something hot from the side. " +
+                                    "You pull back before it pulls you in — but you bring something with you: " +
+                                    "a clarity, a sense of how things connect. One focus point, " +
+                                    "paid for in proximity to something you do not fully understand.", GoodColor);
+                            }
+                            break;
+                        }
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LV_ThreeWitches — village leave ───────────────────────────────────
+        // Three figures dance around a fire in the dark at the crossroads.
+        private static void LV_ThreeWitches(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★ Three Figures at the Crossroads",
+                "Your party crests the hill above the crossroads and stops. " +
+                "Below, three women are dancing around a fire that burns colours that do not exist in wood. " +
+                "They see you. One raises a hand — an invitation, not a threat. " +
+                "The fire is warm from here. Your scouts are very still.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Join them at the fire.", null, true,
+                        "Lose ~2 years of age (min 20). Honor −2, Mercy −2."),
+                    new InquiryElement("b", "Ride past without stopping.", null, true,
+                        "Nothing happens."),
+                    new InquiryElement("c", "Intervene — scatter the rite.", null, true,
+                        "Gain 1 focus point. 50% chance they curse you as they flee: +1 year older."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            try { AgingSystem.RejuvenateHero(Hero.MainHero, 730); } catch { } // ~2 years
+                            ShiftTrait(DefaultTraits.Honor, -2);
+                            ShiftTrait(DefaultTraits.Mercy, -2);
+                            Msg("You ride down and dismount at the fire. They make space for you without speaking. " +
+                                "The dance is not something you will remember clearly in daylight. " +
+                                "You feel two years lighter when you leave. You feel heavier in other ways.", DimColor);
+                            break;
+                        case "b":
+                            Msg("You ride past without slowing. One of them watches you go, " +
+                                "fire still burning in the hollow of her hand. " +
+                                "The crossroads is quiet behind you.", DimColor);
+                            break;
+                        case "c":
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                AgePlayer(365); // 1 year
+                                Msg("You ride in fast and scatter them — they break and vanish into the dark, " +
+                                    "one of them turning as she runs. You feel something land on you, " +
+                                    "light and cold: a curse, spoken quickly, without ceremony. " +
+                                    "You are one year older. You stopped something, though. " +
+                                    "You take the focus point and the year and call it even.", DimColor);
+                            }
+                            else
+                            {
+                                Msg("You ride in and scatter them. They vanish without a word. " +
+                                    "The fire goes out as you cross it. " +
+                                    "Something remains where the fire was — a clarity, a residue of interrupted power. " +
+                                    "You take what you can carry. One focus point, ungiven but yours now.", GoodColor);
+                            }
                             break;
                     }
                 }, null, "", false), false, true);

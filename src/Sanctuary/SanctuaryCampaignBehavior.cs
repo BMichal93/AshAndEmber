@@ -115,6 +115,15 @@ namespace AshAndEmber
 
         // ── Helpers ───────────────────────────────────────────────────────────
 
+        // Called by EC_LocalPriest settlement event when a player funds a sanctuary.
+        internal static bool AddPermanentSanctuary(string settlementStringId)
+        {
+            if (string.IsNullOrEmpty(settlementStringId)) return false;
+            if (_permanentSanctuaryIds.Contains(settlementStringId)) return false;
+            _permanentSanctuaryIds.Add(settlementStringId);
+            return true;
+        }
+
         internal static bool HasSanctuary(Settlement s)
         {
             if (s == null || !s.IsTown) return false;

@@ -57,6 +57,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Party.PartyComponents;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -87,6 +88,8 @@ namespace AshAndEmber
         public const float ChanceWhispers        = 0.015f; // ~every 67 weeks  (very rare)
         public const float ChanceTyranny         = 0.02f;  // ~every 50 weeks  (very rare)
         public const float ChanceStolenHeirloom  = 0.02f;  // ~every 50 weeks  (very rare)
+        public const float ChancePeasantUnrest   = 0.06f;  // ~every 17 weeks  (medium — like Great Withering)
+        public const float ChanceWolfSheepCloth = 0.03f;  // ~every 33 weeks  (rare but not very)
         public const float ChanceMageFatwa      = 0.025f; // ~every 40 weeks  (rare)
         public const float ChanceTheTemple     = 0.04f;  // once per campaign after day 100 (~25 weeks to fire)
         public const int   TempleEarliestDay   = 100;
@@ -246,6 +249,8 @@ namespace AshAndEmber
             TryFireWhispersFromTheAsh();
             TryFireTyranny();
             TryFireStolenHeirloom();
+            TryFirePeasantUnrest();
+            TryFireWolfSheepClothing();
             TryFireMageFatwa();
             TryFireTheTemple();
             TryFireIronWinter();
@@ -1678,6 +1683,294 @@ namespace AshAndEmber
                 ), true);
             }
             catch { }
+        }
+
+        // ── Event 19: Peasant Unrest ─────────────────────────────────────────
+        // The people have had enough. Three bands of desperate peasants-turned-
+        // brigands take to the roads near a random lord's settlement.
+        //
+        // Safety: looter parties use the same hideout-safe pattern as Ashen Spawn.
+        private static void TryFirePeasantUnrest()
+        {
+            if (_rng.NextDouble() >= ChancePeasantUnrest) return;
+            try
+            {
+                var kingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated && k.StringId != AshenKingdomId)
+                    .ToList();
+                if (kingdoms.Count == 0) return;
+
+                var kingdom = kingdoms[_rng.Next(kingdoms.Count)];
+                var anchors = Settlement.All
+                    .Where(s => (s.IsTown || s.IsCastle) && s.MapFaction == kingdom)
+                    .ToList();
+                if (anchors.Count == 0) return;
+
+                var anchor = anchors[_rng.Next(anchors.Count)];
+
+                int spawned = 0;
+                for (int i = 0; i < 3; i++)
+                {
+                    if (SpawnLooterParty(anchor.GetPosition2D, 50) != null) spawned++;
+                }
+
+                if (spawned > 0)
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Peasant Unrest — The people of {kingdom.Name} have had enough. " +
+                        $"Three ragged bands broke from the fields near {anchor.Name} last night, " +
+                        $"carrying scythes and old iron. No lord called them — no lord can stop them easily."));
+            }
+            catch { }
+        }
+
+        // ── Event 20: A Wolf in Sheep's Clothing ─────────────────────────────
+        // A minor lord in a random kingdom is accused of serving the Ashen.
+        //
+        // Not in player's kingdom: silent execution, notification only.
+        // Player in kingdom, tier < 4: Charm-modified 33% chance player is accused
+        //   and expelled; otherwise a random minor lord is executed.
+        // Player in kingdom, tier ≥ 4: four-choice Inquiry (accuse, accuse other,
+        //   say nothing, suggest innocence — last has 33% traitor-twist).
+        private static void TryFireWolfSheepClothing()
+        {
+            if (_rng.NextDouble() >= ChanceWolfSheepCloth) return;
+            try
+            {
+                var kingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated
+                             && k.StringId != AshenKingdomId
+                             && k.Leader != null
+                             && k.Clans.Count(c => c != null && !c.IsEliminated) >= 3)
+                    .ToList();
+                if (kingdoms.Count == 0) return;
+
+                var kingdom     = kingdoms[_rng.Next(kingdoms.Count)];
+                var ruler       = kingdom.Leader;
+                string kingdomName = kingdom.Name?.ToString() ?? "the realm";
+                string rulerName   = ruler?.Name?.ToString() ?? "the ruler";
+
+                // Collect two candidate minor lords
+                var minorLords = kingdom.Clans
+                    .Where(c => c != null && !c.IsEliminated
+                             && c != kingdom.RulingClan
+                             && c.Leader != null && c.Leader.IsAlive
+                             && !c.Leader.IsChild
+                             && c.Leader != Hero.MainHero
+                             && c.Heroes.Count(h => h.IsAlive && !h.IsChild) >= 1)
+                    .OrderBy(_ => _rng.Next())
+                    .Take(2)
+                    .Select(c => c.Leader)
+                    .ToList();
+                if (minorLords.Count == 0) return;
+
+                var    lord1     = minorLords[0];
+                var    lord2     = minorLords.Count > 1 ? minorLords[1] : null;
+                string lord1Name = lord1.Name?.ToString() ?? "a lord";
+                string lord2Name = lord2?.Name?.ToString() ?? "";
+                bool   hasBoth   = lord2 != null && lord2.IsAlive;
+                bool   playerIn  = Hero.MainHero?.Clan?.Kingdom == kingdom;
+
+                if (!playerIn)
+                {
+                    var victim = minorLords[_rng.Next(minorLords.Count)];
+                    try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"A Wolf in Sheep's Clothing — {victim.Name} of {kingdomName} was accused " +
+                        $"of serving the Ashen. The verdict arrived before they could speak. " +
+                        $"Their family maintains innocence. The court did not ask."));
+                    return;
+                }
+
+                int playerTier = Hero.MainHero?.Clan?.Tier ?? 0;
+
+                if (playerTier < 4)
+                {
+                    int   charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
+                    float p     = Math.Max(0.05f, 0.33f - charm / 300f * 0.25f);
+                    if (_rng.NextDouble() < p)
+                    {
+                        string clName = Hero.MainHero?.Clan?.Name?.ToString() ?? "your clan";
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(Hero.MainHero.Clan, false); } catch { }
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            $"A Wolf in Sheep's Clothing — The whispers of {kingdomName} found {clName}. " +
+                            $"There was no real trial. {rulerName} signed the expulsion before midday. " +
+                            $"You are cast out. Your Charm softened the odds — this time it was not enough."));
+                    }
+                    else
+                    {
+                        var victim = minorLords[_rng.Next(minorLords.Count)];
+                        try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch { }
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            $"A Wolf in Sheep's Clothing — {kingdomName}'s court needed an answer. " +
+                            $"{victim.Name} gave them one by existing. Executed before sunset; " +
+                            $"guilt neither proven nor questioned."));
+                    }
+                    return;
+                }
+
+                // Tier ≥ 4: four choices
+                var elems = new List<InquiryElement>
+                {
+                    new InquiryElement("a", $"Accuse {lord1Name} — they are the traitor.", null, true,
+                        $"{lord1Name} is executed. +10 with {rulerName}."),
+                    new InquiryElement("b",
+                        hasBoth ? $"Accuse {lord2Name} — they are the traitor." : "Let the court choose.",
+                        null, true,
+                        hasBoth ? $"{lord2Name} is executed. +10 with {rulerName}."
+                                : "A random lord is chosen. No relation effects."),
+                    new InquiryElement("c", "Say nothing. Let the court decide.", null, true,
+                        "One is executed at random. No relation effects."),
+                    new InquiryElement("d", "Suggest both are innocent. The evidence doesn't hold.", null, true,
+                        $"+100 with the accused. 33% chance one was truly a traitor — if so, −10 with {rulerName}."),
+                };
+
+                string body =
+                    $"The court of {kingdomName} is alive with whispers. " +
+                    $"{lord1Name}" + (hasBoth ? $" and {lord2Name} are" : " is") +
+                    $" accused of serving the Ashen. The evidence is thin. The mood is not.\n\n" +
+                    $"{rulerName} turns to you. At your clan's standing, your voice carries weight.";
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "A Wolf in Sheep's Clothing",
+                    body, elems, false, 1, 1, "Speak", "",
+                    chosen =>
+                    {
+                        try
+                        {
+                            switch (chosen?[0]?.Identifier as string)
+                            {
+                                case "a":
+                                    try { KillCharacterAction.ApplyByMurder(lord1, null, false); } catch { }
+                                    if (ruler?.IsAlive == true && Hero.MainHero != null)
+                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
+                                            Hero.MainHero, ruler, +10, false); } catch { }
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"A Wolf in Sheep's Clothing — You named {lord1Name}. " +
+                                        $"The court accepted it. The execution was before dusk. " +
+                                        $"{rulerName} nodded in your direction."));
+                                    break;
+                                case "b":
+                                    if (hasBoth)
+                                    {
+                                        try { KillCharacterAction.ApplyByMurder(lord2, null, false); } catch { }
+                                        if (ruler?.IsAlive == true && Hero.MainHero != null)
+                                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
+                                                Hero.MainHero, ruler, +10, false); } catch { }
+                                        MBInformationManager.AddQuickInformation(new TextObject(
+                                            $"A Wolf in Sheep's Clothing — You named {lord2Name}. " +
+                                            $"The court accepted it without debate. " +
+                                            $"You bought goodwill, and you know exactly what that cost."));
+                                    }
+                                    else
+                                    {
+                                        var v = minorLords[_rng.Next(minorLords.Count)];
+                                        try { KillCharacterAction.ApplyByMurder(v, null, false); } catch { }
+                                        MBInformationManager.AddQuickInformation(new TextObject(
+                                            $"A Wolf in Sheep's Clothing — The court chose. " +
+                                            $"{v.Name} did not survive the night."));
+                                    }
+                                    break;
+                                case "c":
+                                {
+                                    var v = minorLords[_rng.Next(minorLords.Count)];
+                                    try { KillCharacterAction.ApplyByMurder(v, null, false); } catch { }
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"A Wolf in Sheep's Clothing — You said nothing. " +
+                                        $"The court chose its own answer. {v.Name} did not survive the night. " +
+                                        $"You kept your hands clean. Someone's blood was on them regardless."));
+                                    break;
+                                }
+                                case "d":
+                                {
+                                    if (lord1.IsAlive && Hero.MainHero != null)
+                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
+                                            Hero.MainHero, lord1, +100, false); } catch { }
+                                    if (hasBoth && lord2.IsAlive && Hero.MainHero != null)
+                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
+                                            Hero.MainHero, lord2, +100, false); } catch { }
+
+                                    if (_rng.NextDouble() < 0.33)
+                                    {
+                                        var traitor = minorLords[_rng.Next(minorLords.Count)];
+                                        try { ColourLordRegistry.SetAshen(traitor, true); } catch { }
+                                        try { AshenCitySystem.ApplyAshenPersonality(traitor); } catch { }
+                                        try { ColourLordRegistry.SetMage(traitor, true); } catch { }
+                                        try { AshenCitySystem.OnHeroSetAshen(traitor); } catch { }
+                                        try { MageKnowledge.ApplyAshenAppearance(traitor); } catch { }
+                                        if (ruler?.IsAlive == true && Hero.MainHero != null)
+                                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
+                                                Hero.MainHero, ruler, -10, false); } catch { }
+                                        MBInformationManager.AddQuickInformation(new TextObject(
+                                            $"A Wolf in Sheep's Clothing — You spoke for their innocence and were believed. " +
+                                            $"Three days later, {traitor.Name} vanished from their chambers, " +
+                                            $"found among the Ashen — grey-eyed and cold. The accusation was true. " +
+                                            $"{rulerName} did not forget that you vouched for them."));
+                                    }
+                                    else
+                                    {
+                                        MBInformationManager.AddQuickInformation(new TextObject(
+                                            $"A Wolf in Sheep's Clothing — You spoke for their innocence. " +
+                                            $"The court, grudgingly, accepted it. The accused remember. " +
+                                            $"Whether the accusation had merit, neither you nor anyone else " +
+                                            $"will ever be entirely certain."));
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        catch { }
+                    }, null, "", false), false);
+            }
+            catch { }
+        }
+
+        // Spawns a looter party of `troopCount` near `anchorPos` using the
+        // same hideout-safe pattern as SpawnAshenSpawnParty.
+        private static MobileParty SpawnLooterParty(Vec2 anchorPos, int troopCount)
+        {
+            try
+            {
+                Clan banditClan = Clan.BanditFactions.FirstOrDefault(c => c != null && !c.IsEliminated);
+                if (banditClan == null) return null;
+
+                var pt = banditClan.DefaultPartyTemplate;
+                if (pt == null) return null;
+
+                Hideout hideout = null;
+                try
+                {
+                    Settlement hs = banditClan.Settlements.FirstOrDefault(s => s?.Hideout != null);
+                    if (hs == null)
+                        hs = Settlement.All
+                            .Where(s => s?.Hideout != null)
+                            .OrderBy(s => (s.GetPosition2D.x - anchorPos.x) * (s.GetPosition2D.x - anchorPos.x)
+                                        + (s.GetPosition2D.y - anchorPos.y) * (s.GetPosition2D.y - anchorPos.y))
+                            .FirstOrDefault();
+                    if (hs == null) hs = Settlement.All.FirstOrDefault(s => s?.Hideout != null);
+                    hideout = hs?.Hideout;
+                }
+                catch { }
+                if (hideout == null) return null;
+
+                const float scatter = 5f;
+                Vec2 sp = anchorPos + new Vec2(
+                    (float)(_rng.NextDouble() - 0.5) * scatter * 2f,
+                    (float)(_rng.NextDouble() - 0.5) * scatter * 2f);
+                var cv = new CampaignVec2(sp, true);
+
+                string pid = "peasant_unrest_" + _rng.Next(999999).ToString("D6");
+                MobileParty party = BanditPartyComponent.CreateBanditParty(pid, banditClan, hideout, false, pt, cv);
+                if (party == null) return null;
+
+                CharacterObject troop =
+                    MBObjectManager.Instance.GetObject<CharacterObject>("looter")
+                 ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit");
+                if (troop == null) return null;
+
+                party.MemberRoster.AddToCounts(troop, troopCount);
+                return party;
+            }
+            catch { return null; }
         }
 
         // Returns true when a settlement is a safe candidate for The Temple's founding city.
