@@ -508,7 +508,7 @@ namespace AshAndEmber
                             .InitialPosition(in spawnPos)
                             .InitialDirection(in spawnDir);
                         Agent converted = Mission.Current.SpawnAgent(buildData, false);
-                        if (converted != null) BeginAgentGlowRaw(converted, new Color(1f, 0.45f, 0.1f), 3f);
+                        if (converted != null) BeginAgentGlowRaw(converted, new Color(1f, 0.45f, 0.1f).ToUnsignedInteger(), 3f);
                     }
                     catch { }
                 }
@@ -588,7 +588,7 @@ namespace AshAndEmber
                             .InitialPosition(in spawnPos)
                             .InitialDirection(in spawnDir);
                         Agent roused = Mission.Current.SpawnAgent(buildData, false);
-                        if (roused != null) BeginAgentGlowRaw(roused, new Color(0.9f, 0.7f, 0.3f), 3f);
+                        if (roused != null) BeginAgentGlowRaw(roused, new Color(0.9f, 0.7f, 0.3f).ToUnsignedInteger(), 3f);
                     }
                 }
                 catch { }
