@@ -95,6 +95,7 @@ namespace AshAndEmber
         private static int    _childEventCooldown    = 0;   // long cooldown so child event fires rarely
         private static int    _bloodTitheCountdown   = 0;   // days until deferred blood-tithe consequence
         private static int    _babyEventCountdown    = 0;   // days until deferred illegitimate-child event
+        private static int    _pregnancyCountdown    = 0;   // days until female-player pregnancy triggers
         private static int    _trinketCountdown      = 0;   // days until next trinket-dream stage fires
         private static int    _trinketPhase          = 0;   // 0=inactive, 1=first dream, 2=recurring dream
         private static int    _trinketVariant        = 0;   // 1=ember shard, 2=blind eye, 3=pale compass
@@ -117,6 +118,7 @@ namespace AshAndEmber
             _childEventCooldown    = 0;
             _bloodTitheCountdown   = 0;
             _babyEventCountdown    = 0;
+            _pregnancyCountdown    = 0;
             _trinketCountdown      = 0;
             _trinketPhase          = 0;
             _trinketVariant        = 0;
@@ -128,6 +130,7 @@ namespace AshAndEmber
             store.SyncData("SE_ChildEventCooldown", ref _childEventCooldown);
             store.SyncData("SE_BloodTithe",         ref _bloodTitheCountdown);
             store.SyncData("SE_BabyEvent",          ref _babyEventCountdown);
+            store.SyncData("SE_Pregnancy",          ref _pregnancyCountdown);
             store.SyncData("SE_TrinketCountdown",   ref _trinketCountdown);
             store.SyncData("SE_TrinketPhase",       ref _trinketPhase);
             store.SyncData("SE_TrinketVariant",     ref _trinketVariant);
@@ -181,6 +184,13 @@ namespace AshAndEmber
                 _babyEventCountdown--;
                 if (_babyEventCountdown == 0)
                     FireBabyConsequence();
+            }
+
+            if (_pregnancyCountdown > 0)
+            {
+                _pregnancyCountdown--;
+                if (_pregnancyCountdown == 0)
+                    FirePregnancyConsequence();
             }
 
             if (_trinketCountdown > 0)
@@ -4891,13 +4901,12 @@ namespace AshAndEmber
                         {
                             ShiftTrait(DefaultTraits.Calculating, -1);
                             bool isMale = !(Hero.MainHero?.IsFemale ?? false);
-                            int outcomeCount = isMale ? 4 : 3;
-                            int outcome = _rng.Next(outcomeCount) + 1;
+                            int outcome = _rng.Next(4) + 1; // 4 outcomes for both genders
 
                             switch (outcome)
                             {
                                 case 1:
-                                    // Spend the night — charm roll for morale
+                                    // Spend the night — charm roll for morale (all genders, no extra consequence)
                                     if (SkillRoll(DefaultSkills.Charm, 0.45f))
                                     {
                                         AddMorale(10f);
@@ -4928,7 +4937,7 @@ namespace AshAndEmber
                                     break;
 
                                 case 4:
-                                    // Spend the night (male only) — charm roll for morale + baby countdown
+                                    // Male: spend the night + baby in a year. Female: spend the night + pregnant in 30 days.
                                     if (SkillRoll(DefaultSkills.Charm, 0.45f))
                                     {
                                         AddMorale(10f);
@@ -4936,7 +4945,10 @@ namespace AshAndEmber
                                     }
                                     else
                                         Msg("The evening is warm enough. Not remarkable, but real. You part before dawn. It is the kind of night that does not leave a scar. You think about it briefly on the road and then stop thinking about it.", DimColor);
-                                    _babyEventCountdown = 365;
+                                    if (isMale)
+                                        _babyEventCountdown = 365;
+                                    else
+                                        _pregnancyCountdown = 30;
                                     break;
                             }
                             break;
@@ -5263,6 +5275,24 @@ namespace AshAndEmber
                         }
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FirePregnancyConsequence — 30 days after female-player outcome 1 ──
+        private static void FirePregnancyConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _pregnancyCountdown = 1; return; }
+            MageKnowledge._deferredInquiry = () =>
+            {
+                try { MakePregnantAction.Apply(Hero.MainHero); } catch { }
+                Hero husband = Hero.MainHero?.Spouse;
+                if (husband != null && husband.IsAlive)
+                {
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, husband, -50, false); } catch { }
+                    Msg($"You are with child — and {husband.Name} knows it is not his. ({husband.Name} −50 relation)", BadColor);
+                }
+                else
+                    Msg("You are with child. The road ahead looks different than it did a month ago.", DimColor);
+            };
         }
 
         private static void PenaliseSpouseForAdoption()
