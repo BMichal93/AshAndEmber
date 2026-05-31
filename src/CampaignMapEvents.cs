@@ -88,6 +88,8 @@ namespace AshAndEmber
         public const float ChanceTyranny         = 0.02f;  // ~every 50 weeks  (very rare)
         public const float ChanceStolenHeirloom  = 0.02f;  // ~every 50 weeks  (very rare)
         public const float ChanceMageFatwa      = 0.025f; // ~every 40 weeks  (rare)
+        public const float ChanceTheTemple     = 0.04f;  // once per campaign after day 100 (~25 weeks to fire)
+        public const int   TempleEarliestDay   = 100;
         public const float ChanceIronWinter      = 0.04f;  // ~every 25 weeks  (rare, winter only)
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
 
@@ -198,6 +200,21 @@ namespace AshAndEmber
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "Long Night — the sun rises again. The darkness retreats. But the damage lingers."));
             }
+
+            // The Temple's war with the Ashen is permanent — re-declare if peace is made
+            if (_templeFounded)
+            {
+                try
+                {
+                    var temple = Kingdom.All.FirstOrDefault(k =>
+                        k.StringId == "the_temple" && !k.IsEliminated);
+                    var ashen = Kingdom.All.FirstOrDefault(k =>
+                        k.StringId == AshenKingdomId && !k.IsEliminated);
+                    if (temple != null && ashen != null && !temple.IsAtWarWith(ashen))
+                        DeclareWarAction.ApplyByDefault(temple, ashen);
+                }
+                catch { }
+            }
         }
 
         /// Called from CampaignBehavior.OnWeeklyTick().
@@ -221,6 +238,7 @@ namespace AshAndEmber
             TryFireTyranny();
             TryFireStolenHeirloom();
             TryFireMageFatwa();
+            TryFireTheTemple();
             TryFireIronWinter();
             TryFireScorchingSun();
         }
@@ -230,6 +248,7 @@ namespace AshAndEmber
         {
             _longNightDaysRemaining = 0;
             _brokenWillFired        = 0;
+            _templeFounded          = false;
             _brokenKingdomIds.Clear();
             _gotKingdoms.Clear();
             _gotDays.Clear();
@@ -714,6 +733,7 @@ namespace AshAndEmber
         //   • Skips already-broken kingdoms.
         //   • Checks !IsAtWarWith before declaring to avoid duplicate war actions.
         private static bool _declaringBrokenWill = false;
+        private static bool _templeFounded       = false;
         private static void TryFireBrokenWill()
         {
             if (_brokenWillFired >= BrokenWillMaxFires) return;
@@ -1416,6 +1436,205 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Event 18: The Temple Rises ────────────────────────────────────────
+        // Once per campaign, after campaign day 100: one of the three canonical
+        // cities (Diathma/Makeb/Omor) — or any valid Empire/Khuzait/Sturgia town
+        // if none are eligible — breaks away. Its owner clan founds The Temple,
+        // a militant holy order sworn to end the Ashen. One second clan joins
+        // automatically. The player is offered the choice to join too.
+        //
+        // The Temple is always at war with the Ashen (re-declared daily).
+        // It never initiates war on other factions (the AI is too resource-starved
+        // with one city; any war it is drawn into is by other factions' choice).
+        //
+        // Safety constraints:
+        //   • Fires at most once (_templeFounded flag, saved/loaded).
+        //   • Not before TempleEarliestDay (100).
+        //   • Never takes a ruling clan (faction stays viable).
+        //   • Never targets a besieged city.
+        //   • Never targets a city whose owner clan is the player's.
+        //   • Settlement stabilised immediately: loyalty + security forced to 100.
+        //   • Kingdom creation uses modern API with legacy MBObjectManager fallback;
+        //     any failure at creation time aborts the whole event silently.
+        //   • _templeFounded is only set TRUE after the kingdom is confirmed valid.
+        private static void TryFireTheTemple()
+        {
+            if (_templeFounded) return;
+            if (CampaignTime.Now.ToDays < TempleEarliestDay) return;
+            if (_rng.NextDouble() >= ChanceTheTemple) return;
+            try
+            {
+                // ── Pick the founding city ─────────────────────────────────────
+                var preferredNames = new[] { "Diathma", "Makeb", "Omor" }
+                    .OrderBy(_ => _rng.Next()).ToArray();
+
+                Settlement chosenCity = null;
+                foreach (var pName in preferredNames)
+                {
+                    var s = Settlement.All.FirstOrDefault(x =>
+                        x.IsTown
+                        && string.Equals(x.Name?.ToString(), pName, StringComparison.OrdinalIgnoreCase)
+                        && IsValidTempleCity(x));
+                    if (s != null) { chosenCity = s; break; }
+                }
+
+                if (chosenCity == null)
+                {
+                    // Fallback: any qualifying Empire/Khuzait/Sturgia town
+                    var fallbackIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                        { "empire_w", "empire", "empire_s", "empire_n", "khuzait", "sturgia" };
+                    chosenCity = Settlement.All
+                        .Where(x => x.IsTown && IsValidTempleCity(x)
+                                 && x.OwnerClan?.Kingdom != null
+                                 && fallbackIds.Contains(x.OwnerClan.Kingdom.StringId))
+                        .OrderBy(_ => _rng.Next())
+                        .FirstOrDefault();
+                }
+
+                if (chosenCity == null) return;
+
+                Clan foundingClan   = chosenCity.OwnerClan;
+                Kingdom sourceKingdom = foundingClan.Kingdom;
+
+                // ── Find a second clan to join automatically ────────────────────
+                Clan secondClan = sourceKingdom?.Clans
+                    .Where(c => c != null && !c.IsEliminated
+                             && c != foundingClan
+                             && c != sourceKingdom.RulingClan
+                             && c.Leader != null && c.Leader.IsAlive
+                             && !c.Leader.IsChild
+                             && c.Leader != Hero.MainHero
+                             && c.Heroes.Count(h => h.IsAlive && !h.IsChild) >= 1)
+                    .OrderBy(_ => _rng.Next())
+                    .FirstOrDefault();
+
+                string cityName   = chosenCity.Name?.ToString()   ?? "a great city";
+                string clanName   = foundingClan.Name?.ToString() ?? "the founders";
+                string secondName = secondClan?.Name?.ToString();
+
+                // ── Create The Temple kingdom ──────────────────────────────────
+                // Modern API first; legacy MBObjectManager approach as fallback.
+                Kingdom temple = null;
+                try
+                {
+                    // Bannerlord 1.5+ static factory — handles clan placement internally
+                    temple = Kingdom.CreateKingdom(
+                        foundingClan.Leader,
+                        new TextObject("The Temple"),
+                        new TextObject("Temple"),
+                        new Banner(foundingClan.Banner.Serialize()),
+                        "the_temple");
+                }
+                catch
+                {
+                    try
+                    {
+                        temple = MBObjectManager.Instance.CreateObject<Kingdom>("the_temple");
+                        if (temple == null) return;
+                        temple.InitializeKingdom(
+                            new TextObject("The Temple"),
+                            new TextObject("Temple"),
+                            foundingClan.Culture,
+                            new Banner(foundingClan.Banner.Serialize()),
+                            chosenCity.GetPosition2D,
+                            chosenCity.GetPosition2D,
+                            "the_temple");
+                        // Add founding clan; try ApplyByCreateKingdom first, JoinToKingdom as fallback
+                        try   { ChangeKingdomAction.ApplyByCreateKingdom(foundingClan, temple, false); }
+                        catch { ChangeKingdomAction.ApplyByJoinToKingdom(foundingClan, temple); }
+                    }
+                    catch { temple = null; }
+                }
+
+                if (temple == null || temple.IsEliminated) return;
+                _templeFounded = true;   // set only once kingdom is confirmed valid
+
+                // ── Transfer and stabilise the founding city ───────────────────
+                try
+                {
+                    ChangeOwnerOfSettlementAction.ApplyByDefault(foundingClan.Leader, chosenCity);
+                    if (chosenCity.Town != null)
+                    {
+                        chosenCity.Town.Loyalty  = 100f;
+                        chosenCity.Town.Security = 100f;
+                    }
+                }
+                catch { }
+
+                // ── Second clan joins ──────────────────────────────────────────
+                if (secondClan != null)
+                    try { ChangeKingdomAction.ApplyByJoinToKingdom(secondClan, temple); } catch { }
+
+                // ── Declare permanent war on the Ashen ─────────────────────────
+                try
+                {
+                    var ashen = Kingdom.All.FirstOrDefault(k =>
+                        k.StringId == AshenKingdomId && !k.IsEliminated);
+                    if (ashen != null && !temple.IsAtWarWith(ashen))
+                        DeclareWarAction.ApplyByDefault(temple, ashen);
+                }
+                catch { }
+
+                // ── Player prompt ──────────────────────────────────────────────
+                string secondLine = secondName != null
+                    ? $" {secondName} answered the call before the sun rose."
+                    : "";
+                string warningLine =
+                    (Hero.MainHero?.Clan != null
+                  && Hero.MainHero.Clan == Hero.MainHero.Clan?.Kingdom?.RulingClan)
+                    ? "\n\n[Warning: you are your faction's ruling clan. Joining will leave your kingdom leaderless.]"
+                    : "";
+
+                string body =
+                    $"A preacher climbed the steps of the great hall in {cityName} and spoke of fire — " +
+                    $"not the warm fire of the hearth, but the cold that walks south on grey feet.\n\n" +
+                    $"He said the kingdoms argued policy while the Ashen counted their dead. " +
+                    $"He said someone had to answer the cold with something older and hotter.\n\n" +
+                    $"{clanName} listened. Then they left their old banners behind.{secondLine} " +
+                    $"They have raised a new standard: The Temple. " +
+                    $"Their only declared war is with the Ashen. " +
+                    $"It will not end until one side has run out of ground to stand on.{warningLine}";
+
+                InformationManager.ShowInquiry(new InquiryData(
+                    "The Temple Rises",
+                    body,
+                    true, true,
+                    "Join The Temple",
+                    "Watch from a distance",
+                    () =>
+                    {
+                        try
+                        {
+                            var templeK = Kingdom.All.FirstOrDefault(k =>
+                                k.StringId == "the_temple" && !k.IsEliminated);
+                            if (templeK == null || Hero.MainHero?.Clan == null) return;
+                            ChangeKingdomAction.ApplyByJoinToKingdom(Hero.MainHero.Clan, templeK);
+                            MBInformationManager.AddQuickInformation(new TextObject(
+                                "Your clan answers the call. The Temple's banner is yours now."));
+                        }
+                        catch { }
+                    },
+                    null
+                ), true);
+            }
+            catch { }
+        }
+
+        // Returns true when a settlement is a safe candidate for The Temple's founding city.
+        private static bool IsValidTempleCity(Settlement s)
+        {
+            if (s.OwnerClan == null || s.OwnerClan.IsEliminated) return false;
+            if (s.OwnerClan.Leader == null || !s.OwnerClan.Leader.IsAlive) return false;
+            if (s.OwnerClan.Leader.IsChild)   return false;
+            if (s.OwnerClan.Leader == Hero.MainHero) return false;   // player's clan must opt in, not be forced out
+            if (s.OwnerClan.Kingdom == null)  return false;
+            if (s.OwnerClan.Kingdom.StringId == AshenKingdomId) return false;
+            if (s.OwnerClan == s.OwnerClan.Kingdom.RulingClan) return false;  // don't behead the source faction
+            if (s.IsUnderSiege) return false;
+            if (s.OwnerClan.Heroes.Count(h => h.IsAlive && !h.IsChild) < 2) return false;
+            return true;
+        }
+
         // ── Player-event choice helpers ───────────────────────────────────────
 
         // Returns true when the player's clan is in the given kingdom at tier 4+.
@@ -1565,6 +1784,10 @@ namespace AshAndEmber
                 _gotKingdoms.Clear(); _gotDays.Clear();
                 for (int i = 0; i < gotK.Count; i++) { _gotKingdoms.Add(gotK[i]); _gotDays.Add(gotD[i]); }
             }
+
+            int templeFounded = _templeFounded ? 1 : 0;
+            store.SyncData("LDM_TempleFounded", ref templeFounded);
+            _templeFounded = templeFounded != 0;
         }
     }
 }
