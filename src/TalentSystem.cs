@@ -38,10 +38,12 @@ namespace AshAndEmber
         Scatter     = 15,  // Enchantment — Damage: push back
         Smoulder    = 16,  // Enchantment — Damage: morale penalty
         Bewilder    = 17,  // Enchantment — Damage: random command
+        Waver       = 21,  // Enchantment — Damage: 5% convert enemy to your team
         // ── Restore enchantments ─────────────────────────────────────────────
         Ashveil     = 18,  // Enchantment — Restore: magic immunity
         CinderShell = 19,  // Enchantment — Restore: armour boost
         Hearthlight = 20,  // Enchantment — Restore: morale boost
+        Rouse       = 22,  // Enchantment — Restore: 15% chance to summon an allied unit
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell }
@@ -135,6 +137,13 @@ namespace AshAndEmber
                 Lore = "The fire is not just heat — it is signal. When you push it through a mind unprepared, the signals cross. Halt, charge, flee, stand. They will not know which they were told.",
                 MechanicDesc = "Enchantment. Damage bewilders enemies with a random effect — instant rout, force charge, dismount (mounted only), or morale fractured to 25%."
             },
+            new TalentDef
+            {
+                Id = TalentId.Waver, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Waver",
+                Lore = "The fire does not only destroy what it finds — sometimes it changes it. A man who feels it pass through him and survive is no longer certain what side he stands on. The doubt is brief. It can be enough.",
+                MechanicDesc = "Enchantment. Damage has a 5% chance to convert a struck non-hero enemy to your side. Cannot affect mounted units or lords."
+            },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
             {
@@ -156,6 +165,13 @@ namespace AshAndEmber
                 Category = TalentCategory.Enchantment, Name = "Hearthlight",
                 Lore = "The fire in them has not gone out — it has only dimmed. You reach in and remind it what it is for. They remember, for a moment, that the fire is their friend.",
                 MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 12 per Restore input."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Rouse, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Rouse",
+                Lore = "The fire knows where to reach. When you pour it into a friend and there is enough left over, sometimes it finds its way to someone who was only waiting for a reason to come.",
+                MechanicDesc = "Enchantment. Each Restore application has a 15% chance to rouse a new allied soldier near you."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
