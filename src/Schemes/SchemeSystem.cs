@@ -106,8 +106,8 @@ namespace AshAndEmber
         {
             new SchemeDefinition(SchemeType.Assassinate,
                 "Assassinate a Lord",
-                "Hire a blade. On success the target dies quietly. On exposure: war may follow.",
-                2000, 30, 0.20f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false),
+                "Hire a blade. On success the target dies quietly. On exposure: war may follow. Hard 14-day retry block per target.",
+                2000, 30, 0.28f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false),
 
             new SchemeDefinition(SchemeType.SpreadTerror,
                 "Spread Terror",
@@ -127,7 +127,7 @@ namespace AshAndEmber
             new SchemeDefinition(SchemeType.SpreadRumors,
                 "Spread Rumors",
                 "Whisper campaigns corrode trust. Loyalty and prosperity fall.",
-                300,  5,  0.55f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true),
+                500,  5,  0.40f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true),
 
             new SchemeDefinition(SchemeType.BurnStorage,
                 "Burn a Storage",
@@ -156,8 +156,13 @@ namespace AshAndEmber
         };
 
         // ── State ─────────────────────────────────────────────────────────────
-        private static readonly List<PendingScheme>          _pending      = new List<PendingScheme>();
-        private static readonly Dictionary<string, int>      _npcCooldowns = new Dictionary<string, int>();
+        private static readonly List<PendingScheme>          _pending       = new List<PendingScheme>();
+        private static readonly Dictionary<string, int>      _npcCooldowns  = new Dictionary<string, int>();
+
+        // Per-target repeat-scheme cooldowns. Key = "{SchemeType}:{targetStringId}".
+        // Assassination: 14-day hard block. All others: 7-day 5× cost inflation.
+        private static readonly Dictionary<string, int>      _targetCooldowns = new Dictionary<string, int>();
+
         private static readonly Random _rng = new Random();
 
         // Debug: when true, player schemes cost nothing and always succeed.
@@ -169,11 +174,46 @@ namespace AshAndEmber
         {
             _pending.Clear();
             _npcCooldowns.Clear();
+            _targetCooldowns.Clear();
         }
 
         /// Returns true if the player already has a scheme pending execution.
         internal static bool PlayerHasPendingScheme()
             => _pending.Any(p => p.IsPlayer);
+
+        // Cooldown key for a given scheme+target combination.
+        private static string CooldownKey(SchemeType type, string targetId)
+            => $"{(int)type}:{targetId ?? ""}";
+
+        /// True when assassination is in the hard-block window for this lord.
+        internal static bool IsHardBlocked(SchemeType type, Hero targetHero, Settlement targetSett)
+        {
+            if (type != SchemeType.Assassinate) return false;
+            string id  = targetHero?.StringId ?? targetSett?.StringId ?? "";
+            string key = CooldownKey(type, id);
+            return _targetCooldowns.TryGetValue(key, out int cd) && cd > 0;
+        }
+
+        /// Returns true if a repeat-scheme cooldown is active for this target
+        /// (non-assassination schemes: cost will be inflated 5×).
+        internal static bool IsOnCooldown(SchemeType type, Hero targetHero, Settlement targetSett)
+        {
+            string id  = targetHero?.StringId ?? targetSett?.StringId ?? "";
+            string key = CooldownKey(type, id);
+            return _targetCooldowns.TryGetValue(key, out int cd) && cd > 0;
+        }
+
+        /// Effective gold cost, accounting for tier scaling and repeat-cooldown inflation.
+        internal static int ComputeGoldCost(SchemeDefinition def,
+            Hero targetHero, Settlement targetSett, bool ignoreCooldown = false)
+        {
+            int tier = targetHero?.Clan?.Tier ?? targetSett?.OwnerClan?.Tier ?? 0;
+            float tierMult = 1f + tier * 0.40f;                       // 1.0× – 3.4×
+            int cost = (int)(def.GoldCost * tierMult);
+            if (!ignoreCooldown && IsOnCooldown(def.Type, targetHero, targetSett))
+                cost *= 5;                                             // 5× penalty for repeat use
+            return cost;
+        }
 
         /// Queue a scheme. Gold and influence are deducted immediately.
         /// Returns false if the instigator cannot afford it, or if the player
@@ -187,11 +227,16 @@ namespace AshAndEmber
             // Player is limited to one pending scheme at a time for balance
             if (isPlayer && PlayerHasPendingScheme()) return false;
 
+            // Assassination: hard block while cooldown is active (no retrying same lord)
+            if (IsHardBlocked(type, targetHero, targetSettlement)) return false;
+
+            int effectiveGold = ComputeGoldCost(def, targetHero, targetSettlement);
+
             if (!isPlayer || !DebugFree)
             {
-                if (instigator.Gold < def.GoldCost) return false;
+                if (instigator.Gold < effectiveGold) return false;
                 if ((instigator.Clan?.Influence ?? 0) < def.InfluenceCost) return false;
-                try { instigator.Gold -= def.GoldCost; } catch { }
+                try { instigator.Gold -= effectiveGold; } catch { }
                 try { if (instigator.Clan != null) instigator.Clan.Influence -= def.InfluenceCost; } catch { }
             }
 
@@ -204,6 +249,12 @@ namespace AshAndEmber
                 DaysRemaining      = 1 + _rng.Next(3),
                 IsPlayer           = isPlayer
             });
+
+            // Set per-target cooldown: 14 days for assassination (hard block), 7 days for others (5× cost)
+            string targetId = targetHero?.StringId ?? targetSettlement?.StringId ?? "";
+            if (!string.IsNullOrEmpty(targetId))
+                _targetCooldowns[CooldownKey(type, targetId)] = type == SchemeType.Assassinate ? 14 : 7;
+
             return true;
         }
 
@@ -213,6 +264,12 @@ namespace AshAndEmber
             {
                 _npcCooldowns[key]--;
                 if (_npcCooldowns[key] <= 0) _npcCooldowns.Remove(key);
+            }
+
+            foreach (var key in _targetCooldowns.Keys.ToList())
+            {
+                _targetCooldowns[key]--;
+                if (_targetCooldowns[key] <= 0) _targetCooldowns.Remove(key);
             }
 
             for (int i = _pending.Count - 1; i >= 0; i--)
@@ -316,9 +373,9 @@ namespace AshAndEmber
             if (targetSettlement?.Town != null)
                 try { chance -= targetSettlement.Town.Security / 400f; } catch { }
 
-            // Clan-tier penalty
+            // Clan-tier penalty (lower than before so high-tier targets are hard but not impossible)
             if (targetHero?.Clan != null)
-                try { chance -= targetHero.Clan.Tier * 0.04f; } catch { }
+                try { chance -= targetHero.Clan.Tier * 0.025f; } catch { }
             else if (targetSettlement?.OwnerClan != null)
                 try { chance -= targetSettlement.OwnerClan.Tier * 0.02f; } catch { }
 
@@ -479,7 +536,7 @@ namespace AshAndEmber
                         string tForg = targetHero.Name?.ToString() ?? "the lord";
                         Hero factionLeader = targetHero.Clan?.Kingdom?.Leader;
                         if (factionLeader != null && factionLeader != targetHero)
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(targetHero, factionLeader, -30, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(targetHero, factionLeader, -55, false); } catch { }
                         Notify(s,
                             $"Forged letters reached {(factionLeader?.Name?.ToString() ?? "the faction leader")}'s hands " +
                             $"by three different routes. They looked genuine enough. " +
@@ -517,7 +574,8 @@ namespace AshAndEmber
                         if (targetHero == null || !targetHero.IsAlive || targetHero.Clan == null) break;
                         string tAcc  = targetHero.Name?.ToString() ?? "the lord";
                         string cAcc  = targetHero.Clan.Name?.ToString() ?? "their clan";
-                        float renown = 25f + _rng.Next(26); // 25–50
+                        // 5% flat renown loss, floor 50 — meaningful at any clan size
+                        float renown = Math.Max(50f, targetHero.Clan.Renown * 0.05f);
                         try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - renown); } catch { }
                         // Also damage relations between instigator and target (they'll suspect someone)
                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -20, false); } catch { }
@@ -684,6 +742,17 @@ namespace AshAndEmber
                 _npcCooldowns.Clear();
                 for (int i = 0; i < cdKeys.Count; i++)
                     _npcCooldowns[cdKeys[i]] = cdVals[i];
+            }
+
+            var tcdKeys = _targetCooldowns.Keys.ToList();
+            var tcdVals = _targetCooldowns.Values.ToList();
+            store.SyncData("SCH_TcdKeys", ref tcdKeys);
+            store.SyncData("SCH_TcdVals", ref tcdVals);
+            if (tcdKeys != null && tcdVals != null && tcdKeys.Count == tcdVals.Count)
+            {
+                _targetCooldowns.Clear();
+                for (int i = 0; i < tcdKeys.Count; i++)
+                    _targetCooldowns[tcdKeys[i]] = tcdVals[i];
             }
         }
     }

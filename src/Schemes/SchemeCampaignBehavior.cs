@@ -126,15 +126,21 @@ namespace AshAndEmber
                 var elements = new List<InquiryElement>();
                 foreach (var def in SchemeSystem.Definitions)
                 {
-                    float chance = SchemeSystem.ComputeSuccessChance(
-                        Hero.MainHero, def.Type, null, null);
+                    float chance   = SchemeSystem.ComputeSuccessChance(Hero.MainHero, def.Type, null, null);
+                    int   baseCost = SchemeSystem.ComputeGoldCost(def, null, null, ignoreCooldown: true);
+                    bool  hardBlock = SchemeSystem.IsHardBlocked(def.Type, null, null);
+                    string cooldownNote = hardBlock ? "  [BLOCKED — retry cooldown active]"
+                                       : "";
                     string hint = $"{def.Description}\n" +
-                                  $"Cost: {def.GoldCost}g / {def.InfluenceCost} influence  |  " +
-                                  $"Est. success: {(int)(chance * 100)}%  |  Delay: 1-3 days  |  " +
-                                  $"Failure: 70% silent, 30% exposed (crime + relations, possibly war).";
-                    bool canAfford = Hero.MainHero.Gold >= def.GoldCost
+                                  $"Base cost: from {baseCost}g (scales with target tier; 5× if repeated within 7 days){cooldownNote}\n" +
+                                  $"Influence: {def.InfluenceCost}  |  " +
+                                  $"Est. success (no target): {(int)(chance * 100)}%  |  Delay: 1-3 days\n" +
+                                  $"Failure: 70% silent / 30% exposed — crime rating, relations hit, possible war.";
+                    bool canAfford = !hardBlock
+                                  && Hero.MainHero.Gold >= baseCost
                                   && (Hero.MainHero.Clan?.Influence ?? 0) >= def.InfluenceCost;
-                    elements.Add(new InquiryElement(def.Type, def.Name + (canAfford ? "" : " (can't afford)"), null, canAfford, hint));
+                    string label = def.Name + (canAfford ? "" : hardBlock ? " [blocked]" : " (can't afford)");
+                    elements.Add(new InquiryElement(def.Type, label, null, canAfford, hint));
                 }
 
                 MBInformationManager.ShowMultiSelectionInquiry(
@@ -186,10 +192,15 @@ namespace AshAndEmber
 
                 var elements = lords.Select(h =>
                 {
-                    float ch = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, h, null);
-                    string label = $"{h.Name}  [{h.Clan?.Name} / {h.Clan?.Kingdom?.Name?.ToString() ?? "landless"}]";
-                    string hint  = $"Success chance: {(int)(ch * 100)}%  |  Clan tier: {h.Clan?.Tier ?? 0}";
-                    return new InquiryElement(h.StringId, label, null, true, hint);
+                    float ch   = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, h, null);
+                    int   cost = SchemeSystem.ComputeGoldCost(_selectedDef, h, null);
+                    bool  cd   = SchemeSystem.IsOnCooldown(_selectedDef.Type, h, null);
+                    bool  blk  = SchemeSystem.IsHardBlocked(_selectedDef.Type, h, null);
+                    string label = $"{h.Name}  [{h.Clan?.Name} / {h.Clan?.Kingdom?.Name?.ToString() ?? "landless"}]" +
+                                   (blk ? "  [BLOCKED]" : "");
+                    string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g  |  Tier: {h.Clan?.Tier ?? 0}" +
+                                   (cd ? "  [5× repeat penalty]" : "");
+                    return new InquiryElement(h.StringId, label, null, !blk, hint);
                 }).ToList();
 
                 MBInformationManager.ShowMultiSelectionInquiry(
@@ -238,10 +249,12 @@ namespace AshAndEmber
 
                 var elements = settlements.Select(s =>
                 {
-                    float ch = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, null, s);
+                    float ch   = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, null, s);
+                    int   cost = SchemeSystem.ComputeGoldCost(_selectedDef, null, s);
+                    bool  cd   = SchemeSystem.IsOnCooldown(_selectedDef.Type, null, s);
                     string label = $"{s.Name}  [{s.OwnerClan?.Name?.ToString() ?? "?"} / {s.OwnerClan?.Kingdom?.Name?.ToString() ?? "?"}]  " +
                                    $"Security: {(int)(s.Town?.Security ?? 0)}";
-                    string hint  = $"Success chance: {(int)(ch * 100)}%";
+                    string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g" + (cd ? "  [5× repeat penalty]" : "");
                     return new InquiryElement(s.StringId, label, null, true, hint);
                 }).ToList();
 
@@ -278,12 +291,15 @@ namespace AshAndEmber
             {
                 if (_selectedDef == null) return;
 
-                float chance  = SchemeSystem.ComputeSuccessChance(
+                float chance    = SchemeSystem.ComputeSuccessChance(
                     Hero.MainHero, _selectedDef.Type, targetHero, targetSett);
-                string tName  = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
+                int   goldCost  = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
+                bool  onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
+                string tName    = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
+                string cooldownNote = onCooldown ? "\n[!] Repeat-use penalty active — cost is 5× base." : "";
                 string body   = $"Scheme: {_selectedDef.Name}\n" +
                                 $"Target: {tName}\n" +
-                                $"Cost: {_selectedDef.GoldCost} gold  +  {_selectedDef.InfluenceCost} influence\n" +
+                                $"Cost: {goldCost} gold  +  {_selectedDef.InfluenceCost} influence{cooldownNote}\n" +
                                 $"Success chance: {(int)(chance * 100)}%\n" +
                                 $"Execution delay: 1–3 days\n\n" +
                                 $"On failure (35% chance of exposure): heavy relation penalty.";
@@ -318,7 +334,7 @@ namespace AshAndEmber
                 else
                 {
                     MBInformationManager.AddQuickInformation(
-                        new TextObject("You cannot afford this scheme."));
+                        new TextObject("You cannot arrange this scheme right now — blocked, in flight, or insufficient funds."));
                 }
 
                 _selectedDef = null;
