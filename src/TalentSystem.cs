@@ -142,7 +142,7 @@ namespace AshAndEmber
                 Id = TalentId.Waver, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Waver",
                 Lore = "The fire does not only destroy what it finds — sometimes it changes it. A man who feels it pass through him and survive is no longer certain what side he stands on. The doubt is brief. It can be enough.",
-                MechanicDesc = "Enchantment. Damage has a 5% chance to convert a struck non-hero enemy to your side. Cannot affect mounted units or lords."
+                MechanicDesc = "Enchantment. Damage has a 12% chance to convert a struck enemy to your side. Only affects tier 1–2 units. Cannot affect heroes, lords, or mounted units."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef

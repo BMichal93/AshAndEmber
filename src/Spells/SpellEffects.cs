@@ -468,14 +468,17 @@ namespace AshAndEmber
                 catch { }
             }
 
-            // Waver: tiny chance to convert a non-hero, dismounted enemy to the caster's team.
+            // Waver: chance to convert a tier 1-2 non-hero, dismounted enemy to the caster's team.
             // Mounted units are skipped — pulling a rider off mid-teleport is unsafe.
+            // Defaults tier to int.MaxValue on failure so unresolvable characters are never converted.
             if (CasterHasEnchantment(caster, TalentId.Waver) && !target.IsHero
                 && caster?.Team != null && Mission.Current != null)
             {
                 bool isMounted = false;
                 try { isMounted = target.MountAgent != null; } catch { }
-                if (!isMounted && _rng.NextDouble() < 0.05)
+                int tier = int.MaxValue;
+                try { tier = (target.Character as TaleWorlds.CampaignSystem.CharacterObject)?.Tier ?? int.MaxValue; } catch { }
+                if (!isMounted && tier <= 2 && _rng.NextDouble() < 0.12)
                 {
                     try
                     {
@@ -505,7 +508,7 @@ namespace AshAndEmber
                             .InitialPosition(in spawnPos)
                             .InitialDirection(in spawnDir);
                         Agent converted = Mission.Current.SpawnAgent(buildData, false);
-                        if (converted != null) BeginAgentGlowRaw(converted, new Color(0.5f, 0.9f, 0.5f), 3f);
+                        if (converted != null) BeginAgentGlowRaw(converted, new Color(1f, 0.45f, 0.1f), 3f);
                     }
                     catch { }
                 }
