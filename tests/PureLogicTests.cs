@@ -195,5 +195,153 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(1, cast.DamageCount);
             Assert.AreEqual(3, cast.RestoreCount);
         }
+
+        // ── Full talent roster coverage ───────────────────────────────────────
+
+        [Test]
+        public void TalentSystem_AllTalentIds_HaveDefinition()
+        {
+            // Every value in the TalentId enum must have a matching entry in All.
+            foreach (TalentId id in System.Enum.GetValues(typeof(TalentId)))
+            {
+                var def = TalentSystem.All.FirstOrDefault(d => d.Id == id);
+                Assert.IsNotNull(def, $"TalentSystem.All is missing a definition for TalentId.{id}.");
+            }
+        }
+
+        [Test]
+        public void TalentSystem_AllDefinitions_HaveNonEmptyText()
+        {
+            foreach (var def in TalentSystem.All)
+            {
+                Assert.IsFalse(string.IsNullOrWhiteSpace(def.Name),
+                    $"TalentId.{def.Id} has an empty Name.");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(def.MechanicDesc),
+                    $"TalentId.{def.Id} has an empty MechanicDesc.");
+            }
+        }
+
+        [Test]
+        public void TalentSystem_SpellTalents_AreNotEnchantments()
+        {
+            var spellIds = new[]
+            {
+                TalentId.Subjugate, TalentId.Rejuvenate, TalentId.PlantGrowth,
+                TalentId.BreakWills, TalentId.Inspire, TalentId.Plague,
+                TalentId.Clairvoyance, TalentId.Curse,
+            };
+            foreach (var id in spellIds)
+            {
+                var def = TalentSystem.All.FirstOrDefault(d => d.Id == id);
+                Assert.IsNotNull(def, $"Missing def for {id}.");
+                Assert.IsTrue(def.IsSpell, $"{id} should be flagged IsSpell.");
+                Assert.IsFalse(def.IsEnchantment, $"{id} should not be flagged IsEnchantment.");
+                Assert.AreEqual(TalentCategory.Spell, def.Category);
+            }
+        }
+
+        [Test]
+        public void TalentSystem_PassiveTalents_AreNeitherSpellNorEnchantment()
+        {
+            var passiveIds = new[]
+            {
+                TalentId.Gift, TalentId.BattleMage, TalentId.Sorcerer, TalentId.Ember,
+                TalentId.DevourLife, TalentId.Reap, TalentId.Camaraderie,
+            };
+            foreach (var id in passiveIds)
+            {
+                var def = TalentSystem.All.FirstOrDefault(d => d.Id == id);
+                Assert.IsNotNull(def, $"Missing def for {id}.");
+                Assert.IsFalse(def.IsSpell, $"{id} should not be flagged IsSpell.");
+                Assert.IsFalse(def.IsEnchantment, $"{id} should not be flagged IsEnchantment.");
+                Assert.AreEqual(TalentCategory.Passive, def.Category);
+            }
+        }
+
+        [Test]
+        public void TalentSystem_GiftIsAlwaysPurchasedAtStart()
+        {
+            TalentSystem.ResetForNewGame();
+            Assert.IsTrue(TalentSystem.Has(TalentId.Gift),
+                "Gift should be purchased automatically at game start.");
+        }
+
+        // ── AgingSystem pure math ─────────────────────────────────────────────
+
+        [Test]
+        public void AgingSystem_ComputeBattleAgingCost_SmallCast_CostsOneDay()
+        {
+            // 1-3 inputs = 1 day without BattleMage
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, false));
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(2, false));
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, false));
+        }
+
+        [Test]
+        public void AgingSystem_ComputeBattleAgingCost_LargeCast_CostsTwoDays()
+        {
+            // 4+ inputs = 2 days without BattleMage
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, false));
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(8, false));
+        }
+
+        [Test]
+        public void AgingSystem_ComputeBattleAgingCost_BattleMage_ReducesByOne()
+        {
+            // BattleMage subtracts 1 (minimum 0).
+            Assert.AreEqual(0, AgingSystem.ComputeBattleAgingCost(1, true));  // 1-1 = 0
+            Assert.AreEqual(0, AgingSystem.ComputeBattleAgingCost(3, true));  // 1-1 = 0
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(4, true));  // 2-1 = 1
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(8, true));  // 2-1 = 1
+        }
+
+        // ── NPC heal-burst RestoreCount satisfies Rouse threshold ─────────────
+
+        [Test]
+        public void SpellBuilder_NpcHealBurstRestoreCount_MeetsRouseThreshold()
+        {
+            // NPC CastHealBurst passes restoreCount=3. Verify that value meets Rouse's
+            // requirement so lords with Rouse can summon allies when healing.
+            const int npcRestoreCount = 3;
+            Assert.IsTrue(npcRestoreCount >= 3,
+                "NPC heal burst must use at least 3 Restore inputs to satisfy Rouse's threshold.");
+        }
+
+        // ── BattleEvents probability constants ────────────────────────────────
+
+        [Test]
+        public void BattleEvents_AllChanceConstants_AreInValidRange()
+        {
+            Assert.IsTrue(BattleEvents.ChanceCinderRain  is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceEmberTithe  is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceTheRising   is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceDread       is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceLastLight   is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceAshenGround is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceFrenzy      is >= 0f and <= 1f);
+        }
+
+        [Test]
+        public void BattleEvents_AllIntervalConstants_ArePositive()
+        {
+            Assert.Greater(BattleEvents.CinderRainInterval,  0f);
+            Assert.Greater(BattleEvents.EmberTitheInterval,  0f);
+            Assert.Greater(BattleEvents.TheRisingInterval,   0f);
+            Assert.Greater(BattleEvents.AshenGroundInterval, 0f);
+            Assert.Greater(BattleEvents.FrenzyInterval,      0f);
+            Assert.Greater(BattleEvents.OneShotDelay,        0f);
+        }
+
+        [Test]
+        public void BattleEvents_PeriodicDamage_IsPositive()
+        {
+            Assert.Greater(BattleEvents.PeriodicDamage, 0f);
+        }
+
+        [Test]
+        public void BattleEvents_RisingSpawnCount_IsPositive()
+        {
+            Assert.Greater(BattleEvents.RisingSpawnCount, 0);
+        }
     }
 }

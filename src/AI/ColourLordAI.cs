@@ -263,11 +263,12 @@ namespace AshAndEmber
         {
             try
             {
-                // Restore burst — heals caster and nearby allies; enchantments apply automatically
-                SpellEffects.ExecuteNpcBurst(agent, 2, 0, 2, agent.Team);
+                // 3 Restore inputs: meets the Rouse enchantment threshold (>= 3)
+                // so lords who own Rouse can summon allies when healing.
+                SpellEffects.ExecuteNpcBurst(agent, 2, 0, 3, agent.Team);
                 ApplyCastVisuals(agent);
                 SetCooldown(hero);
-                RecordCast(hero, 4);
+                RecordCast(hero, 5);
                 AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
             }
             catch { }
