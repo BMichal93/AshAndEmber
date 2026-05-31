@@ -31,6 +31,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
@@ -74,6 +75,12 @@ namespace AshAndEmber
         private static readonly List<RunningEvent> _active = new List<RunningEvent>();
         private static readonly Random       _rng         = new Random();
 
+        // ── Visual atmosphere state ────────────────────────────────────────────
+        // _skySet prevents periodic events from overriding a dramatic one-shot sky tint.
+        private static bool       _skySet      = false;
+        private static MethodInfo _setFogMethod = null;
+        private static bool       _fogResolved  = false;
+
         // Represents one active event running in a battle
         private class RunningEvent
         {
@@ -114,6 +121,7 @@ namespace AshAndEmber
             _active.Clear();
             _initialized = false;
             _ashenTeam   = null;
+            _skySet      = false;
         }
 
         // ── Initialization ────────────────────────────────────────────────────
@@ -224,7 +232,7 @@ namespace AshAndEmber
                 SpellEffects.DamageAgent(agent, PeriodicDamage);
                 victims.Add(agent);
             }
-            // Scatter fire particles at a few victim positions
+            // Scatter fire particles at victim positions
             for (int i = 0; i < Math.Min(5, victims.Count); i++)
             {
                 var a = victims[_rng.Next(victims.Count)];
@@ -232,6 +240,11 @@ namespace AshAndEmber
                                                  (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, CinderRainInterval * 0.8f); } catch { }
             }
+            // Atmospheric: burning-sky fog + wide ground fire field + aerial glow
+            ApplyFog(new Vec3(0.90f, 0.28f, 0.04f), 0.004f);
+            Vec3 centre = GetFieldCentre();
+            SpawnGroundFireField(centre, 35f, 6, ColorSchool.Red, CinderRainInterval * 0.80f);
+            SpawnAerialGlow(centre, 30f, 14f, 3, ColorSchool.Orange, CinderRainInterval * 0.80f);
         }
 
         // ── Event: Ember Tithe ────────────────────────────────────────────────
@@ -257,6 +270,13 @@ namespace AshAndEmber
                                                  (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, EmberTitheInterval * 0.8f); } catch { }
             }
+            // Atmospheric: amber pulse above the Ashen position — they burn and hold
+            if (_ashenTeam != null)
+            {
+                Vec3 ashenCentre = GetTeamCentroid(_ashenTeam);
+                SpawnAerialGlow(ashenCentre, 20f, 10f, 3, ColorSchool.Yellow, EmberTitheInterval * 0.80f);
+                SpawnGroundFireField(ashenCentre, 12f, 4, ColorSchool.Orange, EmberTitheInterval * 0.80f);
+            }
         }
 
         // ── Event: The Rising ─────────────────────────────────────────────────
@@ -274,6 +294,9 @@ namespace AshAndEmber
                                              (float)Math.Sin(angle) * 3f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, TheRisingInterval * 0.7f); } catch { }
             }
+            // Atmospheric: eruption burst at the spawn point + dim ghostly lights above
+            SpawnGroundFireField(anchor, 12f, 5, ColorSchool.Purple, TheRisingInterval * 0.75f);
+            SpawnAerialGlow(anchor, 16f, 10f, 3, ColorSchool.Ashen, TheRisingInterval * 0.75f);
             MBInformationManager.AddQuickInformation(new TextObject(
                 $"The Rising — {RisingSpawnCount} more pour from the grey."));
         }
@@ -300,6 +323,11 @@ namespace AshAndEmber
                                              (float)(_rng.NextDouble() - 0.5) * 20f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, 30f); } catch { }
             }
+            // Atmospheric: deep-dusk sky, cold dark fog, wide field of grey flames
+            TintSky(22f); // deep dusk / near-night
+            ApplyFog(new Vec3(0.18f, 0.18f, 0.26f), 0.006f); // cold dark fog
+            SpawnGroundFireField(centre, 40f, 10, ColorSchool.Ashen, 30f);
+            SpawnAerialGlow(centre, 35f, 16f, 5, ColorSchool.Ashen, 30f);
             if (count > 0)
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"Dread — something cold passes through {count} fighters. Courage breaks."));
@@ -312,7 +340,9 @@ namespace AshAndEmber
         //       wrapped in try/catch so a missing API fails silently.
         private static void FireLastLight()
         {
-            try { Mission.Current.Scene.TimeOfDay = 23f; } catch { }
+            // Last Light always overrides the sky — it's the defining one-shot event.
+            _skySet = true;
+            try { Mission.Current?.Scene.TimeOfDay = 23f; } catch { }
 
             int blinded = 0;
             int empowered = 0;
@@ -346,6 +376,10 @@ namespace AshAndEmber
                                              (float)(_rng.NextDouble() - 0.5) * 30f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, 60f); } catch { }
             }
+            // Atmospheric: fire-lit midnight fog, wide ground fire, burning-sky aerial glow
+            ApplyFog(new Vec3(0.80f, 0.22f, 0.05f), 0.005f); // fire-lit night
+            SpawnGroundFireField(centre, 40f, 10, ColorSchool.Orange, 60f);
+            SpawnAerialGlow(centre, 40f, 18f, 6, ColorSchool.Red, 60f);
             MBInformationManager.AddQuickInformation(new TextObject(
                 $"Last Light — the sun dies. Darkness swallows the field." +
                 (blinded > 0   ? $" {blinded} fighters lose their footing in the dark." : "") +
@@ -369,6 +403,10 @@ namespace AshAndEmber
             // Fire at the positions where mounts fell
             foreach (var pos in dismounted.Take(4))
                 try { SpellEffects.SpawnTempFireParticle(pos, AshenGroundInterval * 0.9f); } catch { }
+            // Atmospheric: ash fog + grey ground effect across the field
+            ApplyFog(new Vec3(0.48f, 0.47f, 0.50f), 0.005f); // grey ash fog
+            Vec3 centre = GetFieldCentre();
+            SpawnGroundFireField(centre, 30f, 5, ColorSchool.Ashen, AshenGroundInterval * 0.80f);
             if (count > 0)
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"Ashen Ground — {count} mount{(count != 1 ? "s" : "")} fall. No one rides today."));
@@ -401,6 +439,10 @@ namespace AshAndEmber
                                              (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, FrenzyInterval * 0.9f); } catch { }
             }
+            // Atmospheric: red chaos fog, wide ground fire, aerial crimson glow
+            ApplyFog(new Vec3(0.85f, 0.15f, 0.05f), 0.003f); // blood-red fog
+            SpawnGroundFireField(centre, 38f, 7, ColorSchool.Red, FrenzyInterval * 0.80f);
+            SpawnAerialGlow(centre, 32f, 12f, 4, ColorSchool.Orange, FrenzyInterval * 0.80f);
             MBInformationManager.AddQuickInformation(new TextObject(
                 "Frenzy — no one can hold the line. All charge."));
         }
@@ -513,6 +555,80 @@ namespace AshAndEmber
             }
             catch { }
             return n == 0 ? Vec3.Zero : new Vec3(x / n, y / n, z / n);
+        }
+
+        // ── Visual atmosphere helpers ─────────────────────────────────────────
+
+        // Sets scene time-of-day for a dramatic sky (only fires once per battle
+        // so periodic events can't fight over it with one-shot events).
+        private static void TintSky(float timeOfDay)
+        {
+            if (_skySet) return;
+            _skySet = true;
+            try { Mission.Current?.Scene.TimeOfDay = timeOfDay; } catch { }
+        }
+
+        // Applies scene fog via reflection (same pattern as AshenSceneTone).
+        // rgb = light colour in linear space; falloff = fog density coefficient.
+        private static void ApplyFog(Vec3 rgb, float falloff = 0.004f, float density = 1.0f)
+        {
+            try
+            {
+                var scene = Mission.Current?.Scene;
+                if (scene == null) return;
+                if (!_fogResolved)
+                {
+                    _fogResolved  = true;
+                    _setFogMethod = scene.GetType().GetMethod("SetFog",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+                if (_setFogMethod == null) return;
+                if (_setFogMethod.GetParameters().Length == 3)
+                    _setFogMethod.Invoke(scene, new object[] { falloff, rgb, density });
+            }
+            catch { }
+        }
+
+        // Scatters fire particles and coloured point lights across the field.
+        // Safe to call every event tick — particle/light duration < interval prevents stacking.
+        private static void SpawnGroundFireField(Vec3 centre, float radius, int count,
+            ColorSchool school, float duration)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                try
+                {
+                    double angle = _rng.NextDouble() * Math.PI * 2;
+                    float  dist  = (float)(_rng.NextDouble() * radius);
+                    Vec3   pos   = centre + new Vec3((float)Math.Cos(angle) * dist,
+                                                     (float)Math.Sin(angle) * dist, 0f);
+                    if (school != ColorSchool.Ashen)
+                        try { SpellEffects.SpawnTempFireParticle(pos, duration); } catch { }
+                    SpellEffects.SpawnTempLight(pos, school, 10f, duration * 0.7f);
+                }
+                catch { }
+            }
+        }
+
+        // Places large-radius glow lights high above the field to simulate a
+        // burning or darkened sky reflected onto the scene.
+        private static void SpawnAerialGlow(Vec3 centre, float spread, float height,
+            int count, ColorSchool school, float duration)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                try
+                {
+                    double angle = _rng.NextDouble() * Math.PI * 2;
+                    float  dist  = (float)(_rng.NextDouble() * spread);
+                    float  h     = height + (float)(_rng.NextDouble() * 10f);
+                    Vec3   pos   = new Vec3(centre.x + (float)Math.Cos(angle) * dist,
+                                            centre.y + (float)Math.Sin(angle) * dist,
+                                            centre.z + h);
+                    SpellEffects.SpawnTempLight(pos, school, 28f, duration);
+                }
+                catch { }
+            }
         }
 
         // ── Registration helpers ──────────────────────────────────────────────

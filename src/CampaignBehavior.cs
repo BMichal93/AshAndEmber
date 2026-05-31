@@ -198,16 +198,21 @@ namespace AshAndEmber
 
         private static void ReassignImperialSettlements()
         {
-            // Marunath (town_B1) + nearest Battanian castles → Northern Empire leader
-            // Jaculan  (town_V6) + nearest Vlandian  castles → Western  Empire leader
-            // Castles chosen by map proximity: B5 (~25u), B2 (~43u) near Marunath;
-            //                                 V2 (~29u), V7 (~56u) near Jaculan.
+            // Marunath (town_B1) + castles B5/B2      → Northern Empire
+            // Jaculan  (town_V6) + castles V2/V7      → Western  Empire
+            // Seonon   (by name) + nearby B castles   → Northern Empire
+            // Razih    (by name) + nearby A castles   → Southern Empire
+            // Ostican  + nearby V castles              → Ashen kingdom
             Hero northLeader = null;
             Hero westLeader  = null;
+            Hero southLeader = null;
+            Hero ashenLeader = null;
             try
             {
                 northLeader = Kingdom.All.FirstOrDefault(k => k.StringId == "empire")?.Leader;
                 westLeader  = Kingdom.All.FirstOrDefault(k => k.StringId == "empire_w")?.Leader;
+                southLeader = Kingdom.All.FirstOrDefault(k => k.StringId == "empire_s")?.Leader;
+                ashenLeader = Kingdom.All.FirstOrDefault(k => k.StringId == "ashen_kingdom")?.Leader;
             }
             catch { }
 
@@ -217,7 +222,7 @@ namespace AshAndEmber
                     try
                     {
                         var s = Settlement.Find(id);
-                        if (s != null) ChangeOwnerOfSettlementAction.ApplyByDefault(northLeader, s);
+                        if (s != null) { ChangeOwnerOfSettlementAction.ApplyByDefault(northLeader, s); StabiliseSettlement(s); }
                     }
                     catch { }
             }
@@ -228,10 +233,59 @@ namespace AshAndEmber
                     try
                     {
                         var s = Settlement.Find(id);
-                        if (s != null) ChangeOwnerOfSettlementAction.ApplyByDefault(westLeader, s);
+                        if (s != null) { ChangeOwnerOfSettlementAction.ApplyByDefault(westLeader, s); StabiliseSettlement(s); }
                     }
                     catch { }
             }
+
+            // Seonon (Battanian city near Northern Empire border) → Northern Empire
+            if (northLeader != null)
+                try { AssignSettlementAndNearby("Seonon", northLeader, 40f); } catch { }
+
+            // Razih (Aserai city near Southern Empire border) → Southern Empire
+            if (southLeader != null)
+                try { AssignSettlementAndNearby("Razih", southLeader, 40f); } catch { }
+
+            // Ostican (Vlandian settlement) → Ashen kingdom
+            if (ashenLeader != null)
+                try { AssignSettlementAndNearby("Ostican", ashenLeader, 40f); } catch { }
+        }
+
+        // Finds a settlement by exact display name, transfers it and all non-town
+        // settlements (castles/villages) within `radius` map-units to `newOwner`.
+        // Silently skips anything that can't be found or transferred.
+        private static void AssignSettlementAndNearby(string settlementName, Hero newOwner, float radius)
+        {
+            Settlement anchor = null;
+            try { anchor = Settlement.All.FirstOrDefault(s => s.Name?.ToString() == settlementName); }
+            catch { }
+            if (anchor == null) return;
+
+            // Transfer the anchor itself
+            try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, anchor); StabiliseSettlement(anchor); } catch { }
+
+            // Transfer nearby castles within radius (skip villages — they belong to their bound town)
+            try
+            {
+                Vec2 anchorPos = anchor.GetPosition2D;
+                foreach (Settlement nearby in Settlement.All
+                    .Where(s => s != anchor && s.IsCastle && !s.IsUnderSiege
+                             && (s.GetPosition2D - anchorPos).Length <= radius)
+                    .ToList())
+                {
+                    try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, nearby); StabiliseSettlement(nearby); } catch { }
+                }
+            }
+            catch { }
+        }
+
+        // Sets Town loyalty and security to maximum so code-driven captures don't
+        // trigger a rebellion on the very next game tick.
+        private static void StabiliseSettlement(Settlement s)
+        {
+            if (s?.Town == null) return;
+            try { s.Town.Loyalty  = 100f; } catch { }
+            try { s.Town.Security = 100f; } catch { }
         }
 
         // ── Daily tick ────────────────────────────────────────────────────────

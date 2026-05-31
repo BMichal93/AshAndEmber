@@ -76,8 +76,8 @@ namespace AshAndEmber
         private const  int RecoveryInterval = 3;
         private const  int PrisonerInterval = 2;
 
-        private const int    MinGarrisonCity   = 500;
-        private const int    MinGarrisonCastle = 350;
+        private const int    MinGarrisonCity   = 1500; // overwhelming standing army
+        private const int    MinGarrisonCastle = 800;  // heavy castle garrison
         private const int    MinHeroGold       = 150_000;
         private const string AshenKingdomId    = "ashen_kingdom";
 
@@ -92,6 +92,8 @@ namespace AshAndEmber
             "Varnovapol", "Tepes", "Epinosa", "Takor", "Khimli",
             // Castles near Amprela (Lochana ~27, Syratos ~44; Epinosa already above)
             "Lochana", "Syratos",
+            // Ostican (Vlandian) — assigned at game start; daily tick enforces retention
+            "Ostican",
         };
 
         public static void ResetForNewGame()
@@ -174,7 +176,10 @@ namespace AshAndEmber
 
                             _settlementClanMap[settlement.StringId] = ashenClan.StringId;
                             if (ashenLord != null)
+                            {
                                 try { ChangeOwnerOfSettlementAction.ApplyByDefault(ashenLord, settlement); } catch { }
+                                try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch { }
+                            }
                             try { EnsureGarrison(settlement); } catch { }
                             foundAny = true;
                         }
@@ -278,7 +283,10 @@ namespace AshAndEmber
                     Hero lord = clan.Leader
                              ?? clan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
                     if (lord != null)
+                    {
                         try { ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement); } catch { }
+                        try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch { }
+                    }
                 }
 
                 // Starting gold
@@ -398,7 +406,10 @@ namespace AshAndEmber
                 try
                 {
                     var s = Settlement.All.FirstOrDefault(x => x.StringId == kvp.Key);
-                    if (s != null) EnsureGarrison(s);
+                    if (s == null) continue;
+                    // Only refill while the settlement is still Ashen-owned
+                    if (!_ashenClanIds.Contains(s.OwnerClan?.StringId ?? "")) continue;
+                    EnsureGarrison(s);
                 }
                 catch { }
             }
@@ -407,9 +418,10 @@ namespace AshAndEmber
         // ── Town satisfaction / food maintenance ──────────────────────────────
         // Ashen villages are permanently looted (no food production), so Ashen
         // towns would otherwise starve, lose loyalty, and trigger rebellions.
-        // Cap food stocks at maximum and lock loyalty + security to 100 every
-        // day to prevent this.  Pure float assignments — no campaign events
-        // are fired, so this cannot crash or cause state corruption.
+        // Locks all vital settlement stats for Ashen-owned towns/castles daily.
+        // Pure float assignments — no campaign events are fired, crash-safe.
+        // Skips any settlement that has already changed hands so the system
+        // never touches a conquered city that is pending map-removal.
         private static void MaintainAshenTownHealth()
         {
             foreach (var kvp in _settlementClanMap.ToList())
@@ -419,23 +431,25 @@ namespace AshAndEmber
                     var s = Settlement.All.FirstOrDefault(x => x.StringId == kvp.Key);
                     if (s == null || s.Town == null) continue;
                     if (!s.IsTown && !s.IsCastle) continue;
+                    // Guard: only maintain while still Ashen-owned
+                    if (!_ashenClanIds.Contains(s.OwnerClan?.StringId ?? "")) continue;
 
                     Town t = s.Town;
 
-                    // Top up food so looted villages don't cause starvation
+                    // Food — prevent starvation from looted villages
                     try
                     {
                         float cap = t.FoodStocksUpperLimit();
-                        if (cap > 0f && t.FoodStocks < cap)
-                            t.FoodStocks = cap;
+                        if (cap > 0f && t.FoodStocks < cap) t.FoodStocks = cap;
                     }
                     catch { }
 
-                    // Lock security to maximum (prevents loyalty decay from crime)
+                    // Loyalty + security — never rebel
                     try { if (t.Security < 100f) t.Security = 100f; } catch { }
+                    try { if (t.Loyalty  < 100f) t.Loyalty  = 100f; } catch { }
 
-                    // Lock loyalty to maximum (directly prevents rebellion triggers)
-                    try { if (t.Loyalty < 100f) t.Loyalty = 100f; } catch { }
+                    // Prosperity — ensures full tax, recruitment, and militia growth
+                    try { if (t.Prosperity < 5000f) t.Prosperity = 5000f; } catch { }
                 }
                 catch { }
             }
@@ -471,45 +485,105 @@ namespace AshAndEmber
         }
 
         // ── Settlement ownership recovery ──────────────────────────────────────
-        // Runs every daily tick. If any mapped settlement is not owned by the expected
-        // Ashen clan (due to initial setup timing, AI redistribution, or conquest),
-        // force-reclaim it immediately. The OwnerClan check makes this a no-op when
-        // ownership is already correct, so daily overhead is minimal.
+        // Runs every RecoveryInterval days. Detects settlements that are no longer
+        // owned by an Ashen clan.
+        //
+        // KEY DESIGN: if another faction legitimately conquered the settlement
+        // (not under siege, owned by non-Ashen clan), we RELEASE it permanently —
+        // we do NOT reclaim it. The only exception is intra-Ashen redistribution
+        // (fief moved to a different Ashen clan), which we silently remap.
+        //
+        // After processing, CheckAshenExtinction fires to give the Ashen a new
+        // foothold if they have been completely dispossessed.
         private static void TickSettlementRecovery()
         {
-            // At most 1 ownership change per call to avoid cascading campaign events.
             foreach (var kvp in _settlementClanMap.ToList())
             {
                 try
                 {
                     var settlement = Settlement.All.FirstOrDefault(s => s.StringId == kvp.Key);
-                    if (settlement == null) continue;
-                    if (settlement.OwnerClan?.StringId == kvp.Value) continue;
-                    if (settlement.IsUnderSiege) continue;
+                    if (settlement == null) { _settlementClanMap.Remove(kvp.Key); continue; }
 
-                    var clan = Clan.All.FirstOrDefault(c => c.StringId == kvp.Value);
-                    if (clan == null || clan.IsEliminated) continue;
-                    Hero lord = clan.Leader
-                             ?? clan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
-                    if (lord == null) continue;
+                    string currentClanId = settlement.OwnerClan?.StringId ?? "";
+                    if (currentClanId == kvp.Value) continue; // still correct — no action
 
-                    try { ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement); } catch { }
+                    if (settlement.IsUnderSiege) continue; // battle in progress — wait
 
-                    // Eject from any foreign kingdom the restoration may have triggered
-                    if (clan.Kingdom != null && clan.Kingdom.StringId != AshenKingdomId)
-                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                    // Re-add to Ashen kingdom if lost
-                    if (clan.Kingdom?.StringId != AshenKingdomId && _ashenKingdom != null)
-                        try { ChangeKingdomAction.ApplyByJoinToKingdom(
-                                clan, _ashenKingdom,
-                                CampaignTime.Now + CampaignTime.Years(1000),
-                                false); }
-                        catch { }
+                    // Fief redistributed within Ashen kingdom (different Ashen clan) — remap
+                    if (_ashenClanIds.Contains(currentClanId))
+                    {
+                        _settlementClanMap[kvp.Key] = currentClanId;
+                        continue;
+                    }
 
-                    return; // one recovery per tick — rest handled on subsequent days
+                    // Legitimately conquered by an outside faction — release permanently
+                    _settlementClanMap.Remove(kvp.Key);
+                    try
+                    {
+                        // Stabilise so the new owner doesn't face an instant rebellion
+                        if (settlement.Town != null)
+                        {
+                            settlement.Town.Loyalty  = 100f;
+                            settlement.Town.Security = 100f;
+                        }
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            $"{settlement.Name} — wrested from the Ashen. The cold retreats there, for now."));
+                    }
+                    catch { }
+
+                    return; // one release per tick — remainder handled on subsequent days
                 }
                 catch { }
             }
+
+            CheckAshenExtinction();
+        }
+
+        // ── Ashen extinction guard ─────────────────────────────────────────────
+        // If the Ashen have been completely dispossessed, assign one random
+        // non-player town to them so they always maintain a foothold on the map.
+        private static void CheckAshenExtinction()
+        {
+            if (_settlementClanMap.Count > 0) return;
+            if (DragonQuestSystem.WorldRekindled) return;
+
+            // Need at least one living, free Ashen lord to claim the settlement
+            Hero ashenLord = null;
+            try
+            {
+                ashenLord = Hero.AllAliveHeroes.FirstOrDefault(h =>
+                    h.IsAlive && !h.IsDisabled && !h.IsPrisoner && IsAshenClanMember(h));
+            }
+            catch { }
+            if (ashenLord == null) return;
+
+            // Pick a random town not already controlled by the Ashen or the player
+            Settlement target = null;
+            try
+            {
+                var candidates = Settlement.All
+                    .Where(s => s.IsTown && !s.IsUnderSiege
+                             && s.MapFaction?.StringId != AshenKingdomId
+                             && s.OwnerClan?.Leader != Hero.MainHero
+                             && s.MapFaction != Hero.MainHero?.MapFaction)
+                    .ToList();
+                if (candidates.Count > 0)
+                    target = candidates[_rng.Next(candidates.Count)];
+            }
+            catch { }
+            if (target == null) return;
+
+            try
+            {
+                ChangeOwnerOfSettlementAction.ApplyByDefault(ashenLord, target);
+                try { if (target.Town != null) { target.Town.Loyalty = 100f; target.Town.Security = 100f; } } catch { }
+                _settlementClanMap[target.StringId] = ashenLord.Clan.StringId;
+                try { EnsureGarrison(target); } catch { }
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"The grey fire resurges — {target.Name} falls to the Ashen without warning. The cold claims new ground."));
+            }
+            catch { }
         }
 
         // ── Criminal status ───────────────────────────────────────────────────
@@ -657,6 +731,7 @@ namespace AshAndEmber
                     if (settlement.OwnerClan == leader.Clan) continue;
 
                     try { ChangeOwnerOfSettlementAction.ApplyByDefault(leader, settlement); } catch { }
+                    try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch { }
                 }
                 catch { }
             }

@@ -338,6 +338,7 @@ namespace AshAndEmber
                 var lord   = ashenLords[_rng.Next(ashenLords.Count)];
 
                 ChangeOwnerOfSettlementAction.ApplyByDefault(lord, castle);
+                StabiliseSettlement(castle);
 
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"Ashen Tide — {castle.Name} bends to the cold fire. " +
@@ -478,6 +479,15 @@ namespace AshAndEmber
             catch { }
         }
 
+        // Sets Town loyalty and security to max so code-driven captures don't
+        // immediately trigger a rebellion on the next game tick.
+        private static void StabiliseSettlement(Settlement s)
+        {
+            if (s?.Town == null) return;
+            try { s.Town.Loyalty  = 100f; } catch { }
+            try { s.Town.Security = 100f; } catch { }
+        }
+
         // ── Public spawn entry point ──────────────────────────────────────────
         // Allows SettlementEncounters to spawn a gate-ambush Ashen party near a
         // settlement without duplicating the spawn logic.
@@ -539,9 +549,9 @@ namespace AshAndEmber
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit");
                 if (troop == null) return null;
 
-                party.MemberRoster.AddToCounts(troop, baseTroops);
+                party.MemberRoster.AddToCounts(troop, baseTroops * 10);
 
-                // Top up to reach minimum strength requirement
+                // Top up to reach minimum strength requirement (rarely needed with 10× base)
                 if (minStrength > 0f)
                 {
                     int guard = 20; // safety cap — 20 × 5 = max 100 extra troops

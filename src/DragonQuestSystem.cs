@@ -468,6 +468,7 @@ namespace AshAndEmber
                     try
                     {
                         ChangeOwnerOfSettlementAction.ApplyByDefault(lord, s);
+                        try { if (s.Town != null) { s.Town.Loyalty = 100f; s.Town.Security = 100f; } } catch { }
                         moved++;
                     }
                     catch { }
