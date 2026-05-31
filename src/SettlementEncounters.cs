@@ -96,6 +96,7 @@ namespace AshAndEmber
         private static int    _bloodTitheCountdown   = 0;   // days until deferred blood-tithe consequence
         private static int    _babyEventCountdown    = 0;   // days until deferred illegitimate-child event
         private static int    _pregnancyCountdown    = 0;   // days until female-player pregnancy triggers
+        private static int    _familyFeverCooldown   = 0;   // long cooldown for the family-plague event
         private static int    _trinketCountdown      = 0;   // days until next trinket-dream stage fires
         private static int    _trinketPhase          = 0;   // 0=inactive, 1=first dream, 2=recurring dream
         private static int    _trinketVariant        = 0;   // 1=ember shard, 2=blind eye, 3=pale compass
@@ -119,6 +120,7 @@ namespace AshAndEmber
             _bloodTitheCountdown   = 0;
             _babyEventCountdown    = 0;
             _pregnancyCountdown    = 0;
+            _familyFeverCooldown   = 0;
             _trinketCountdown      = 0;
             _trinketPhase          = 0;
             _trinketVariant        = 0;
@@ -131,6 +133,7 @@ namespace AshAndEmber
             store.SyncData("SE_BloodTithe",         ref _bloodTitheCountdown);
             store.SyncData("SE_BabyEvent",          ref _babyEventCountdown);
             store.SyncData("SE_Pregnancy",          ref _pregnancyCountdown);
+            store.SyncData("SE_FamilyFever",        ref _familyFeverCooldown);
             store.SyncData("SE_TrinketCountdown",   ref _trinketCountdown);
             store.SyncData("SE_TrinketPhase",       ref _trinketPhase);
             store.SyncData("SE_TrinketVariant",     ref _trinketVariant);
@@ -171,6 +174,7 @@ namespace AshAndEmber
         {
             if (_cooldown > 0) _cooldown--;
             if (_childEventCooldown > 0) _childEventCooldown--;
+            if (_familyFeverCooldown > 0) _familyFeverCooldown--;
 
             if (_bloodTitheCountdown > 0)
             {
@@ -246,8 +250,8 @@ namespace AshAndEmber
 
             if (village)
             {
-                pool.Add(E_AshenAftermath);
                 pool.Add(E_BanditWarning);
+                if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
                 pool.Add(EV2_TravelingMonk);
                 pool.Add(EV2_WiseWomanWarning);
                 if (ren >= 600f) pool.Add(EV2_ChildNamedAfterYou);
@@ -266,7 +270,6 @@ namespace AshAndEmber
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
-                    pool.Add(E_HealersTrade);
                     pool.Add(E_WarmthMerchant);
                     pool.Add(EV4_GiftedChild);
                     pool.Add(EV7_SelfTaughtMage);
@@ -281,6 +284,7 @@ namespace AshAndEmber
             {
                 pool.Add(E_OldEnemy);
                 pool.Add(EC2_CityQuarantine);
+                if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
                 if (ren >= 150f) pool.Add(EC3_Philosopher);
                 if (ren >= 250f) pool.Add(EC8_MerchantLedger);
                 if (ren >= 300f) pool.Add(EC8_ReluctantOfficial);
@@ -313,11 +317,7 @@ namespace AshAndEmber
                 }
                 pool.Add(EC9_AshenElixir);
                 if (ashen) pool.Add(EC7_AshenSurveillance);
-                if (ashen)
-                {
-                    pool.Add(E_GreyEyes);
-                    pool.Add(E_FellowCold);
-                }
+                if (ashen) pool.Add(E_FellowCold);
             }
 
             Fire(pool, s);
@@ -335,9 +335,6 @@ namespace AshAndEmber
 
             if (village)
             {
-                pool.Add(E_TorchesAtDusk);
-                pool.Add(E_EagerRecruit);
-                pool.Add(E_FestivalFarewell);
                 pool.Add(LV7_RoadWatchesBack);
                 pool.Add(LV8_PoisonedWell);
                 pool.Add(LV8_BattleSetup);
@@ -348,7 +345,6 @@ namespace AshAndEmber
                 {
                     pool.Add(E_MothersPlea);
                     pool.Add(E_WidowsPyre);
-                    pool.Add(E_SignalFire);
                 }
             }
             if (town)
@@ -356,16 +352,13 @@ namespace AshAndEmber
                 pool.Add(E_LightenedPurse);
                 pool.Add(E_InsultAtGate);
                 pool.Add(LC2_ChildPickpocket);
-                if (ren >= 150f) pool.Add(E_DisplacedNoble);
                 if (ren >= 300f) pool.Add(E_BardsRequest);
                 if (ren >= 400f) pool.Add(LC2_PartingGift);
-                if (ren >= 500f) pool.Add(E_GuildsOffer);
                 pool.Add(LC7_DeadGuard);
                 pool.Add(LC8_GateStandoff);
                 pool.Add(LC8_ForgeryAtGate);
                 if (mage)
                 {
-                    pool.Add(E_TheCondemned);
                     pool.Add(LC2_WrongnessInAir);
                     pool.Add(LC_BloodCollector);
                 }
@@ -669,162 +662,6 @@ namespace AshAndEmber
                 }, null, "", false), false, true);
         }
 
-        // 3. Signal Fire
-        private static void E_SignalFire(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "✦  Signal Fire",
-                "On the hill above the road, a fire burns where no fire should be — wrong colour, wrong rhythm. It could be a signal. It could be an Ashen working. It could be nothing. But you feel it before you see it, which means something.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Ride toward it. Whatever it is, you should know.", null, true,
-                        "Possible Ashen intel or delay. 50/50."),
-                    new InquiryElement("b", "Note the position and send word to the nearest lord.", null, true,
-                        "Relation +5 with a lord."),
-                    new InquiryElement("c", "Ignore it. The fire speaks to you, but not always for a reason.", null, true,
-                        "Nothing happens."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            if (_rng.Next(2) == 0)
-                            {
-                                ChangeRenown(10f);
-                                Msg("The fire was a crude beacon — old Ashen sigil scorched into the earth, still warm. Someone lit it within the hour. The Ashen are not as far as the lords believe, and they are signalling someone.", FireColor);
-                            }
-                            else
-                            {
-                                ShiftTrait(DefaultTraits.Calculating, 1);
-                                Msg("The fire is cold by the time you reach it — but it was lit deliberately. The ash is shaped wrong, burned at an angle no shepherd would choose. Someone was here and left when they heard you coming. There is nothing useful left. Only the knowing that you were right to look.", DimColor);
-                            }
-                            break;
-                        case "b":
-                            ChangeRelWithRandomLord(5);
-                            Msg("A rider carries the report. Whether anyone acts on it is another matter.", DimColor);
-                            break;
-                        case "c":
-                            Msg("The fire gutters as you pass below it. Whatever it was, it burns itself out.", DimColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // 8. Torches at Dusk
-        private static void E_TorchesAtDusk(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "✦  Torches at Dusk",
-                "A group of men carrying torches and farming tools is moving toward a family's home at the edge of the village. The mood is ugly. You don't know the cause, but you know how this ends.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Ride in front of them. Your authority ends this now.", null, true,
-                        "Gain Merciful. Renown +5. Possible brief confrontation."),
-                    new InquiryElement("b", "Report the situation to the headman before riding on.", null, true,
-                        "Gain Merciful. Nothing immediate."),
-                    new InquiryElement("c", "This village is not your concern. Ride on.", null, true,
-                        "Lose Honor."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            ChangeRenown(5f);
-                            Msg("Your party fills the road. The men stop. Nobody in a mob wants to be the first to challenge a lord. They disperse slowly, torches still lit, going nowhere.", GoodColor);
-                            break;
-                        case "b":
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("The headman runs. Whether he reaches them in time is not your problem to witness.", DimColor);
-                            break;
-                        case "c":
-                            ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("Behind you, the torches keep moving. You do not look back.", BadColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // 9. The Eager Recruit
-        private static void E_EagerRecruit(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "⚔  The Eager Recruit",
-                "A young man — seventeen, perhaps eighteen — is trotting alongside your horse with a cloth bundle on his back. He says he is strong, quick, that he can ride, that he has no family to miss him. His boots are falling apart.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Take him on. The party could use the hands.", null, true,
-                        "Gain Merciful. Morale +3."),
-                    new InquiryElement("b", "Decline politely. The road is not what he imagines.", null, true,
-                        "Nothing happens."),
-                    new InquiryElement("c", "Tell him to go home and grow up.", null, true,
-                        "Lose Honor."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            AddMorale(8f);
-                            Msg("He falls in at the back of the column, trying to look like he has done this before. He has not. Your veterans watch him with something between amusement and memory. By nightfall they are teaching him to oil a saddle. The party rides easier for having something young in it.", GoodColor);
-                            break;
-                        case "b":
-                            Msg("\"The roads kill boys like you,\" you tell him honestly. He stops running after you, but he does not go back into the village either. He stands there in the dust, watching your column until the road bends. You do not look back twice.", DimColor);
-                            break;
-                        case "c":
-                            ShiftTrait(DefaultTraits.Honor, -1);
-                            AddMorale(-2f);
-                            Msg("He stops. He does not argue. That is worse, somehow. Two of your soldiers trade a look behind you.", BadColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // 10. The Festival Farewell
-        private static void E_FestivalFarewell(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "✿  The Festival Farewell",
-                "The village has been celebrating a saint's day. As you ride out, a group of villagers press food and a small clay jug of cider on your party — festival excess, freely given. The headman raises his cup at you from a doorway.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Accept with thanks and share it among the party.", null, true,
-                        "Morale +8. Small renown."),
-                    new InquiryElement("b", "Accept but donate a gift back in kind.", null, true,
-                        "Lose 200 gold. Morale +8. Renown +5."),
-                    new InquiryElement("c", "Decline. You prefer to travel light.", null, true,
-                        "Nothing happens."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            AddMorale(8f);
-                            ChangeRenown(3f);
-                            Msg("The party eats well for the first hour on the road. Songs get sung. The cider is better than expected.", GoodColor);
-                            break;
-                        case "b":
-                            ChangeGold(-200);
-                            AddMorale(8f);
-                            ChangeRenown(5f);
-                            Msg("You leave a purse with the headman for the festival fund. Word of it spreads the way good news travels — slowly, but it travels.", GoldColor);
-                            break;
-                        case "c":
-                            AddMorale(-3f);
-                            Msg("The villagers pull back their gifts politely. The headman lowers his cup. Your soldiers ride out in silence — they saw you turn down free bread and cider during a festival, and they are thinking about it.", DimColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
         // ═════════════════════════════════════════════════════════════════════
         // ENTER VILLAGE — MAGE
         // ═════════════════════════════════════════════════════════════════════
@@ -838,9 +675,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Sit with him. You have questions too.", null, true,
-                        "Costs 1 day. Renown +10 as the village sees you honour him."),
+                        TalentSystem.PurchasedCount < 6
+                            ? "Costs 1 day. Learn a random magical talent."
+                            : "Costs 1 day. Your gift is already deep — he gives you what he can."),
                     new InquiryElement("b", "Ask what he sees in you.", null, true,
-                        "Gain Calculating. Lore insight from an old seer."),
+                        "Gain Calculating."),
                     new InquiryElement("c", "Keep walking. Old men with milky eyes say many things.", null, true,
                         "Nothing happens."),
                 },
@@ -851,8 +690,27 @@ namespace AshAndEmber
                     {
                         case "a":
                             AgePlayer(1);
-                            ChangeRenown(10f);
-                            Msg("You sit with him for an hour. He tells you things about fire that you already knew but could not have named. The village watches from doorways. By evening they speak of you differently.", FireColor);
+                            if (TalentSystem.PurchasedCount < 6)
+                            {
+                                var available = TalentSystem.All
+                                    .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id))
+                                    .ToList();
+                                if (available.Count > 0)
+                                {
+                                    var pick = available[_rng.Next(available.Count)];
+                                    TalentSystem.GrantFree(pick.Id, Hero.MainHero);
+                                    Msg($"You sit with him for an hour. He speaks around the edges of things you were already reaching toward. By the time the village lanterns are lit, something has opened in you — the shape of {pick.Name}, given without ceremony.", FireColor);
+                                }
+                                else
+                                {
+                                    Msg("You sit with him for an hour. He tells you what he knows. It is less than you hoped and more than you can use right now.", FireColor);
+                                }
+                            }
+                            else
+                            {
+                                ChangeRenown(8f);
+                                Msg("You sit with him for an hour. He tells you things about fire that you already knew but had not named — the difference is smaller than it used to be. He senses it. Before you leave he says: 'You have gone further than I can follow.' He does not mean it as a compliment.", FireColor);
+                            }
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
@@ -860,43 +718,6 @@ namespace AshAndEmber
                             break;
                         case "c":
                             Msg("You walk past. He keeps facing the direction you were standing.", DimColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // 12. The Healer's Trade
-        private static void E_HealersTrade(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "✚  The Healer's Trade",
-                "The village healer — a woman in her forties with ink-stained fingers — corners you near the well. She has been watching you since you rode in. \"You carry warmth that moves,\" she says quietly. \"I have been trying to understand that for thirty years.\"",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Share what you know about the fire's nature.", null, true,
-                        "Costs 2 days. Gain Honor and Merciful."),
-                    new InquiryElement("b", "Let her demonstrate her herb-work while you watch.", null, true,
-                        "Lose 300 gold. Gain flavor knowledge."),
-                    new InquiryElement("c", "Smile and say you know nothing of what she means.", null, true,
-                        "Nothing happens."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            AgePlayer(2);
-                            ShiftTrait(DefaultTraits.Honor, 1);
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You spend the afternoon explaining what you have learned. She fills three pages of notes and asks questions you cannot answer. Something about that is satisfying.", FireColor);
-                            break;
-                        case "b":
-                            ChangeGold(-300);
-                            Msg("She teaches you how she coaxes heat from poultices and why fever-breaks work. There is a different kind of fire in what she does. You leave thinking about the difference.", DimColor);
-                            break;
-                        case "c":
-                            Msg("She watches you walk away. She knows you lied. You can tell by the way she doesn't follow.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -940,46 +761,6 @@ namespace AshAndEmber
                 }, null, "", false), false, true);
         }
 
-        // 18. Ashen Aftermath
-        private static void E_AshenAftermath(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "✦  Ashen Aftermath",
-                "The village has been raided within the last day — not by bandits. The ash-grey marks on charred wood, the particular way the animals have been left, the silence: these are Ashen Spawn signs. Some people are wounded. The headman is counting the dead.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Help with the wounded and leave supplies.", null, true,
-                        "Lose 300 gold. Gain Merciful. Renown +5."),
-                    new InquiryElement("b", "Send a rider to report to the nearest lord.", null, true,
-                        "Relation +5 with nearest lord."),
-                    new InquiryElement("c", "Look for anything salvageable in the confusion.", null, true,
-                        "Gain 200 gold. Lose Honor. Crime +5."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ChangeGold(-300);
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            ChangeRenown(5f);
-                            Msg("Your men set bones and distribute grain from the wagons. The headman grips your arm without speaking. The village will survive.", GoodColor);
-                            break;
-                        case "b":
-                            ChangeRelWithRandomLord(5);
-                            Msg("A rider leaves at speed. Whether the lord sends troops before the Spawn return is uncertain.", DimColor);
-                            break;
-                        case "c":
-                            ChangeGold(200);
-                            ShiftTrait(DefaultTraits.Honor, -1);
-                            ChangeCrime(5f);
-                            Msg("You pick through what the Spawn left behind. The headman watches you from across the square and says nothing. You do not meet his eyes.", BadColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
         // 19. The Warning
         private static void E_BanditWarning(Settlement s)
         {
@@ -1011,44 +792,6 @@ namespace AshAndEmber
                             break;
                         case "c":
                             Msg("You file the warning away. Bandits on the north road. Noted.", DimColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // 22. The Condemned
-        private static void E_TheCondemned(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "⚖  The Condemned",
-                "A group of prisoners is being marched to the city square for public execution. Among them, one face turns toward you. You recognize the marks — the faint smell of old smoke, the way the eyes track fire. A Fire Worshipper. They hold your gaze for a moment before looking away.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Speak to the guards in their defense.", null, true,
-                        "Gain Honor. Relation -10 with city lord. Crime +5."),
-                    new InquiryElement("b", "Look away and ride on.", null, true,
-                        "Nothing happens."),
-                    new InquiryElement("c", "Slip them a tool they might use.", null, true,
-                        "Gain Honor. Crime +20."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ShiftTrait(DefaultTraits.Honor, 1);
-                            ChangeRelWithOwner(s, -10);
-                            ChangeCrime(5f);
-                            Msg("The guards stop. You argue the case. The lord's man listens with the patient look of someone who has already decided. The execution is delayed, not stopped. But delayed is something.", GoodColor);
-                            break;
-                        case "b":
-                            Msg("You ride past. Their eyes follow you. You do not look back.", DimColor);
-                            break;
-                        case "c":
-                            ShiftTrait(DefaultTraits.Honor, 1);
-                            ChangeCrime(20f);
-                            Msg("A small knife pressed palm-to-palm in a crowd. Whether they get free or not, they have a chance they did not have this morning.", DarkColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -1103,45 +846,6 @@ namespace AshAndEmber
                 }, null, "", false), false, true);
         }
 
-        // 25. The Displaced Noble
-        private static void E_DisplacedNoble(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "⚜  The Displaced Noble",
-                "A woman in tattered clothing that was once expensive waits near the city gate. She says she is a noblewoman from a clan displaced by the Ashen advance. Her name is one you have not heard. She asks for nothing directly — only looks at you.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Give her enough to find her feet.", null, true,
-                        "Lose 500 gold. Gain Merciful. She may or may not be real."),
-                    new InquiryElement("b", "Offer her work in your party's household.", null, true,
-                        "Gain Merciful. Potential useful contact."),
-                    new InquiryElement("c", "Ride past.", null, true,
-                        "Nothing happens."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ChangeGold(-500);
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            if (_rng.Next(2) == 0)
-                                Msg("She receives the coins with practiced dignity. Real or not, there is something in her bearing that makes you think the story was true.", GoodColor);
-                            else
-                                Msg("She takes the coins and is gone before you have ridden half a street. You cannot know what she really was. You find you don't mind either way.", DimColor);
-                            break;
-                        case "b":
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("She accepts without hesitation. Whether her claim is true or not, she is useful and grateful — both worth more than a name.", GoodColor);
-                            break;
-                        case "c":
-                            Msg("She watches you pass. Her face does not change.", DimColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
         // 26. The Bard's Request
         private static void E_BardsRequest(Settlement s)
         {
@@ -1175,49 +879,6 @@ namespace AshAndEmber
                             ChangeRenown(20f);
                             ShiftTrait(DefaultTraits.Honor, -1);
                             Msg("You give him a story worth a song — most of it true, the rest better than true. He looks satisfied. So does the version of yourself you described.", GoldColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // 28. The Guild's Offer
-        private static void E_GuildsOffer(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "⚖  The Guild's Offer",
-                "A well-dressed guild representative has been waiting at the city gate since early morning. He represents a consortium of merchants who have been watching your campaigns. They will back you — significantly — in exchange for trade route protection through your territories.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Accept the arrangement.", null, true,
-                        "Gain 1000 gold. Minor Honor cost — you owe them something."),
-                    new InquiryElement("b", "Decline. You don't want to owe merchants.", null, true,
-                        "Nothing happens."),
-                    new InquiryElement("c", "Counter-demand — the terms are not good enough.", null, true,
-                        "50/50: Gain 1500 gold, or the deal falls through."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ChangeGold(1000);
-                            ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("Coin and obligation exchange hands. The guild gets a letter of protection. You get a campaign fund. Neither side is fully satisfied, which usually means a fair deal.", GoldColor);
-                            break;
-                        case "b":
-                            Msg("\"The offer stands,\" he says, folding the contract away. He says it as though he expected nothing else from someone in your position.", DimColor);
-                            break;
-                        case "c":
-                            if (_rng.Next(2) == 0)
-                            {
-                                ChangeGold(1500);
-                                Msg("He pauses, consults a second sheet, and doubles the figure. Apparently you were worth more to them than the first offer implied.", GoldColor);
-                            }
-                            else
-                            {
-                                Msg("He folds the contract and wishes you a pleasant road. The guild will find someone else.", DimColor);
-                            }
                             break;
                     }
                 }, null, "", false), false, true);
@@ -1305,47 +966,6 @@ namespace AshAndEmber
                             ChangeGold(200);
                             ShiftTrait(DefaultTraits.Honor, -1);
                             Msg("You tell him a plausible story with enough detail to feel real. He pays you and begins writing immediately. The theory he builds will be wrong in interesting ways.", BadColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // ═════════════════════════════════════════════════════════════════════
-        // ENTER CITY/CASTLE — ASHEN ONLY
-        // ═════════════════════════════════════════════════════════════════════
-
-        // 34. Grey Eyes
-        private static void E_GreyEyes(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "✦  Grey Eyes",
-                "A child at the gate stares at your face with the unself-conscious directness of the very young. \"Your eyes are the wrong colour,\" she says. \"And your hair. Are you dead?\" Her mother is mortified.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Kneel down and tell her you are just very, very old.", null, true,
-                        "Gain Merciful. Morale +5."),
-                    new InquiryElement("b", "Smile and ride past.", null, true,
-                        "Nothing happens."),
-                    new InquiryElement("c", "Say yes. And that you have come for children who misbehave.", null, true,
-                        "Lose Honor. City relation -5."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            AddMorale(5f);
-                            Msg("You kneel. \"I have been alive since before your grandmother's grandmother,\" you tell her. \"The colour goes after a while.\" She considers this with great seriousness. Her mother pulls her away, apologising. Your men are smiling.", GoodColor);
-                            break;
-                        case "b":
-                            Msg("You ride past. She keeps staring at the space where you were.", DimColor);
-                            break;
-                        case "c":
-                            ShiftTrait(DefaultTraits.Honor, -1);
-                            ChangeRelWithOwner(s, -5);
-                            Msg("She bursts into tears. Her mother shouts something at your back. Your men are quiet for an uncomfortable stretch of road.", BadColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -5305,6 +4925,147 @@ namespace AshAndEmber
                 Msg($"({spouse.Name} −20 relation)", BadColor);
             }
             catch { }
+        }
+
+        // ── Condition helpers ──────────────────────────────────────────────────
+        private static bool HasSpouseAndChild()
+        {
+            try
+            {
+                if (Hero.MainHero?.Spouse == null || !Hero.MainHero.Spouse.IsAlive) return false;
+                return Hero.AllAliveHeroes.Any(h =>
+                    h.IsAlive && !h.IsDisabled &&
+                    (h.Father == Hero.MainHero || h.Mother == Hero.MainHero));
+            }
+            catch { return false; }
+        }
+
+        // ── Helper: remove troops from garrison then party ─────────────────────
+        private static void SacrificeTroops(Settlement s, int count)
+        {
+            int remaining = count;
+            try
+            {
+                var garrison = s?.Town?.GarrisonParty?.MemberRoster;
+                if (garrison != null)
+                {
+                    foreach (var e in garrison.GetTroopRoster().ToList())
+                    {
+                        if (e.Character.IsHero) continue;
+                        int take = Math.Min(e.Number, remaining);
+                        if (take <= 0) continue;
+                        garrison.AddToCounts(e.Character, -take);
+                        remaining -= take;
+                        if (remaining <= 0) break;
+                    }
+                }
+            }
+            catch { }
+            if (remaining > 0)
+            {
+                try
+                {
+                    var roster = MobileParty.MainParty?.MemberRoster;
+                    if (roster != null)
+                    {
+                        foreach (var e in roster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero) continue;
+                            int take = Math.Min(e.Number, remaining);
+                            if (take <= 0) continue;
+                            roster.AddToCounts(e.Character, -take);
+                            remaining -= take;
+                            if (remaining <= 0) break;
+                        }
+                    }
+                }
+                catch { }
+            }
+            int sacrificed = count - remaining;
+            if (sacrificed > 0) Msg($"({sacrificed} troops consumed by the ritual)", BadColor);
+        }
+
+        // ── E_TheWasting — enter village/city, requires spouse + living child ──
+        // A strange wasting sickness takes hold of the player's family.
+        private static void E_TheWasting(Settlement s)
+        {
+            Hero spouse = Hero.MainHero?.Spouse;
+            Hero child  = Hero.AllAliveHeroes.FirstOrDefault(h =>
+                h.IsAlive && !h.IsDisabled &&
+                (h.Father == Hero.MainHero || h.Mother == Hero.MainHero));
+
+            if (spouse == null || child == null) return;
+            _familyFeverCooldown = 600;
+
+            bool mage          = MageKnowledge.IsMage;
+            bool hasDarkTalent = mage && (TalentSystem.Has(TalentId.Ember)
+                                       || TalentSystem.Has(TalentId.Reap)
+                                       || TalentSystem.Has(TalentId.DevourLife));
+
+            string spouseName = spouse.Name?.ToString() ?? "your spouse";
+            string childName  = child.Name?.ToString()  ?? "your child";
+
+            string cHint = mage
+                ? $"Age 10 years. Both {spouseName} and {childName} survive. Both +10 relation."
+                : "Requires mage ability.";
+            string dHint = hasDarkTalent
+                ? $"Sacrifice 100 troops. Lose Mercy and Honour. Both survive. −20 relation with each."
+                : "Requires Ember, Reap, or Devour Life talent.";
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★  The Wasting",
+                $"A rider catches you on the road with bad news: a strange wasting sickness has taken hold of both {spouseName} and {childName} at the same time. The healers have done what they can. They can sustain one of them — not both. By the time you arrive, the choice is already framed in the doorway. There is not much time.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", $"Save {spouseName}.", null, true,
+                        $"{childName} does not survive. −20 relation with {spouseName}."),
+                    new InquiryElement("b", $"Save {childName}.", null, true,
+                        $"{spouseName} does not survive."),
+                    new InquiryElement("c", "Channel the fire through both of them.", null, mage, cHint),
+                    new InquiryElement("d", "Perform a dark ritual to sustain them.", null, hasDarkTalent, dHint),
+                    new InquiryElement("e", "Make a pact with the cold. Pay whatever it asks.", null, true,
+                        $"Become Ashen. Both survive. −50 relation with {spouseName} and {childName}."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            try { KillCharacterAction.ApplyByMurder(child, null, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -20, false); } catch { }
+                            Msg($"You put everything into {spouseName}. The fever breaks. {childName} does not wake. {spouseName} knows what you chose, and what it cost, and does not yet know what to do with either of those things.", BadColor);
+                            break;
+                        case "b":
+                            try { KillCharacterAction.ApplyByMurder(spouse, null, false); } catch { }
+                            Msg($"You put everything into {childName}. The fever breaks. {spouseName} does not wake. {childName} will be older before they understand what happened in that room. You will have to decide what to tell them.", BadColor);
+                            break;
+                        case "c":
+                            AgePlayer(3650); // 10 years
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, 10, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  10, false); } catch { }
+                            Msg($"You put the fire through both of them at once — not a thing that is meant to be done like this, not a thing you will be able to explain. It costs ten years. They both wake. {spouseName} holds your face when you come back to yourself and does not ask what you gave. {childName} is already asking for food.", FireColor);
+                            break;
+                        case "d":
+                            try
+                            {
+                                Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2);
+                                ShiftTrait(DefaultTraits.Honor, -1);
+                                SacrificeTroops(s, 100);
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -20, false);
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -20, false);
+                            }
+                            catch { }
+                            Msg($"The ritual requires something living and it requires a lot of it. One hundred of your soldiers do not wake up. You do not watch. {spouseName} and {childName} survive, fever-broken, and when they look at you afterward there is something in it that was not there before. You do not explain what you did. They do not ask. Both of you prefer it this way.", DarkColor);
+                            break;
+                        case "e":
+                            BecomeAshen();
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -50, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -50, false); } catch { }
+                            Msg($"The cold accepts the offer immediately, as though it had been waiting. {spouseName} and {childName} wake — both of them, at the same moment, as if pulled back by the same thread. They look at you and something in both of their faces shifts before they can hide it. You are different now. The grey is already in your eyes. They are alive. They know what it cost.", AshenColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
         }
     }
 }

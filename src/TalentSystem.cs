@@ -257,6 +257,20 @@ namespace AshAndEmber
         // Cost curve: 1 pt for the first 7 talents after Gift, 2 pts after that. Max 2.
         public static int PurchaseCost() => _purchased.Count <= 7 ? 1 : 2;
 
+        // Grant a talent for free (no focus-point cost). Returns false if already owned.
+        public static bool GrantFree(TalentId id, Hero hero)
+        {
+            if (_purchased.Contains(id)) return false;
+            _purchased.Add(id);
+            if (id == TalentId.Camaraderie) ApplyCamaraderie(hero);
+            if (id == TalentId.Reap)        ApplyReapTraits(hero);
+            var def = GetDef(id);
+            if (def != null)
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Talent learned: {def.Name}.", new Color(0.90f, 0.60f, 0.20f)));
+            return true;
+        }
+
         public static bool TryPurchase(TalentId id, Hero hero)
         {
             if (_purchased.Contains(id)) return false;
