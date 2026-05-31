@@ -131,10 +131,14 @@ namespace AshAndEmber
                     bool  hardBlock = SchemeSystem.IsHardBlocked(def.Type, null, null);
                     string cooldownNote = hardBlock ? "  [BLOCKED — retry cooldown active]"
                                        : "";
+                    bool   isAss   = def.Type == SchemeType.Assassinate;
+                    string traits  = isAss ? "Honor −1 (Dishonorable), Calculating −1 (Devious), Mercy −1 (Merciless) — on commit"
+                                           : "Honor −1 (Dishonorable), Calculating −1 (Devious) — on commit";
                     string hint = $"{def.Description}\n" +
                                   $"Base cost: from {baseCost}g (scales with target tier; 5× if repeated within 7 days){cooldownNote}\n" +
                                   $"Influence: {def.InfluenceCost}  |  " +
                                   $"Est. success (no target): {(int)(chance * 100)}%  |  Delay: 1-3 days\n" +
+                                  $"Personality cost: {traits}\n" +
                                   $"Failure: 70% silent / 30% exposed — crime rating, relations hit, possible war.";
                     bool canAfford = !hardBlock
                                   && Hero.MainHero.Gold >= baseCost
@@ -297,12 +301,17 @@ namespace AshAndEmber
                 bool  onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
                 string tName    = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
                 string cooldownNote = onCooldown ? "\n[!] Repeat-use penalty active — cost is 5× base." : "";
+                bool   isAssassinate = _selectedDef.Type == SchemeType.Assassinate;
+                string traitNote = isAssassinate
+                    ? "\nPersonality: Honor −1 (Dishonorable)  +  Calculating −1 (Devious)  +  Mercy −1 (Merciless) — paid on commit."
+                    : "\nPersonality: Honor −1 (Dishonorable)  +  Calculating −1 (Devious) — paid on commit.";
                 string body   = $"Scheme: {_selectedDef.Name}\n" +
                                 $"Target: {tName}\n" +
                                 $"Cost: {goldCost} gold  +  {_selectedDef.InfluenceCost} influence{cooldownNote}\n" +
                                 $"Success chance: {(int)(chance * 100)}%\n" +
-                                $"Execution delay: 1–3 days\n\n" +
-                                $"On failure (35% chance of exposure): heavy relation penalty.";
+                                $"Execution delay: 1-3 days\n" +
+                                traitNote + "\n\n" +
+                                $"On failure (30% chance of exposure): crime rating, relations, possible war.";
 
                 InformationManager.ShowInquiry(
                     new InquiryData(
@@ -328,6 +337,13 @@ namespace AshAndEmber
 
                 if (ok)
                 {
+                    // Personality cost: scheming is inherently dishonorable and devious
+                    try { ShiftPlayerTrait(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Honor, -1); } catch { }
+                    try { ShiftPlayerTrait(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Calculating, -1); } catch { }
+                    // Assassination additionally marks the player as merciless
+                    if (_selectedDef.Type == SchemeType.Assassinate)
+                        try { ShiftPlayerTrait(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Mercy, -1); } catch { }
+
                     MBInformationManager.AddQuickInformation(
                         new TextObject("Scheme arranged. Results in 1-3 days."));
                 }
@@ -340,6 +356,16 @@ namespace AshAndEmber
                 _selectedDef = null;
             }
             catch { }
+        }
+
+        // Shifts the player's personality trait by delta, clamped to [-2, 2].
+        private static void ShiftPlayerTrait(
+            TaleWorlds.CampaignSystem.CharacterDevelopment.TraitObject trait, int delta)
+        {
+            var hero = Hero.MainHero;
+            if (hero == null) return;
+            int current = hero.GetTraitLevel(trait);
+            hero.SetTraitLevel(trait, Math.Min(2, Math.Max(-2, current + delta)));
         }
     }
 }

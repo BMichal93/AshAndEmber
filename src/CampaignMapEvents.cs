@@ -87,6 +87,7 @@ namespace AshAndEmber
         public const float ChanceWhispers        = 0.015f; // ~every 67 weeks  (very rare)
         public const float ChanceTyranny         = 0.02f;  // ~every 50 weeks  (very rare)
         public const float ChanceStolenHeirloom  = 0.02f;  // ~every 50 weeks  (very rare)
+        public const float ChanceMageFatwa      = 0.025f; // ~every 40 weeks  (rare)
         public const float ChanceIronWinter      = 0.04f;  // ~every 25 weeks  (rare, winter only)
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
 
@@ -219,6 +220,7 @@ namespace AshAndEmber
             TryFireWhispersFromTheAsh();
             TryFireTyranny();
             TryFireStolenHeirloom();
+            TryFireMageFatwa();
             TryFireIronWinter();
             TryFireScorchingSun();
         }
@@ -574,8 +576,13 @@ namespace AshAndEmber
         // A faction leader is murdered by their own court. The murderous clan is
         // expelled from the faction. Inspired by the Red Wedding.
         //
+        // If the player's clan is tier 4+ in the affected kingdom, a choice
+        // appears: back the conspirators or warn the court.
+        //   Back: +50 with schemer clan, −100 with ruling clan.
+        //   Warn: −100 with schemer clan, +20 with ruling clan, 33% plot stops.
+        //
         // Safety constraints:
-        //   • Excludes the player and the player's faction entirely.
+        //   • Excludes the player as faction leader (k.Leader != Hero.MainHero).
         //   • Requires the target faction to have ≥ 3 clans so one expulsion does
         //     not immediately collapse the realm.
         //   • Uses ApplyByMurder(leader, null, false) — neutral quiet death, engine
@@ -586,7 +593,6 @@ namespace AshAndEmber
             if (_rng.NextDouble() >= ChanceSeedsOfBetrayal) return;
             try
             {
-                // Find a faction leader who is not the player and whose kingdom has 3+ clans
                 var candidates = Kingdom.All
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
@@ -595,15 +601,14 @@ namespace AshAndEmber
                              && k.Leader.IsAlive
                              && !k.Leader.IsPrisoner
                              && !k.Leader.IsChild
-                             && k != Hero.MainHero?.Clan?.Kingdom  // spare player's faction
                              && k.Clans.Count(c => c != null && !c.IsEliminated) >= 3)
                     .ToList();
                 if (candidates.Count == 0) return;
 
-                var kingdom = candidates[_rng.Next(candidates.Count)];
-                var leader  = kingdom.Leader;
+                var  kingdom      = candidates[_rng.Next(candidates.Count)];
+                var  leader       = kingdom.Leader;
+                Clan oldRulingClan = kingdom.RulingClan;
 
-                // Pick a non-ruling, non-player clan to blame — the "conspirators"
                 var scapegoats = kingdom.Clans
                     .Where(c => c != null && !c.IsEliminated
                              && c != kingdom.RulingClan
@@ -613,22 +618,85 @@ namespace AshAndEmber
 
                 Clan expelled = scapegoats.Count > 0 ? scapegoats[_rng.Next(scapegoats.Count)] : null;
 
-                // The blood price — kill the leader quietly; engine handles succession
-                string leaderName   = leader.Name?.ToString() ?? "the lord";
-                string kingdomName  = kingdom.Name?.ToString() ?? "the realm";
-                string expelledName = expelled?.Name?.ToString() ?? "a noble house";
+                string leaderName   = leader.Name?.ToString()          ?? "the lord";
+                string kingdomName  = kingdom.Name?.ToString()         ?? "the realm";
+                string expelledName = expelled?.Name?.ToString()       ?? "a noble house";
+                string oldRulerName = oldRulingClan?.Name?.ToString()  ?? "the ruling clan";
 
-                try { KillCharacterAction.ApplyByMurder(leader, null, false); } catch { }
+                bool playerQualifies = PlayerIsQualifiedForEvent(kingdom)
+                                    && Hero.MainHero?.Clan != expelled;
 
-                // Expel the responsible clan
-                if (expelled != null && expelled.Kingdom == kingdom)
-                    try { ChangeKingdomAction.ApplyByLeaveKingdom(expelled, false); } catch { }
+                if (playerQualifies)
+                {
+                    string body =
+                        $"Word has reached you in the dark — {expelledName} is moving against {leaderName} of {kingdomName}. " +
+                        $"The wine is already prepared. They are asking if you stand with them.\n\n" +
+                        $"Back the conspirators: +50 relations with {expelledName}, −100 with {oldRulerName}.\n" +
+                        $"Warn the court: −100 with {expelledName}, +20 with {oldRulerName}, 33% chance the plot is stopped.";
 
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive the feast. " +
-                    $"The wine was poisoned. The doors were barred. {expelledName} fled before dawn, " +
-                    $"their banners cut from the hall. Someone will sit the seat they left empty. " +
-                    $"Someone always does."));
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Seeds of Betrayal",
+                        body,
+                        true, true,
+                        $"Back {expelledName}",
+                        $"Warn {leaderName}",
+                        () =>
+                        {
+                            try
+                            {
+                                try { KillCharacterAction.ApplyByMurder(leader, null, false); } catch { }
+                                if (expelled != null && expelled.Kingdom == kingdom)
+                                    try { ChangeKingdomAction.ApplyByLeaveKingdom(expelled, false); } catch { }
+                                PlayerRelationWithClan(expelled, +50);
+                                PlayerRelationWithClan(oldRulingClan, -100);
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive the feast. " +
+                                    $"You were part of it. {expelledName} fled before dawn — grateful, and gone. " +
+                                    $"What remains of {oldRulerName} knows a blade when they see the hand that held it."));
+                            }
+                            catch { }
+                        },
+                        () =>
+                        {
+                            try
+                            {
+                                PlayerRelationWithClan(expelled, -100);
+                                if (_rng.NextDouble() < 0.33)
+                                {
+                                    PlayerRelationWithClan(oldRulingClan, +20);
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"Seeds of Betrayal — your warning reached {leaderName} in time. " +
+                                        $"The feast was cancelled. {expelledName}'s plot collapsed in daylight. " +
+                                        $"{oldRulerName} owes you something, whether or not they say so. " +
+                                        $"{expelledName} will not forget your name."));
+                                }
+                                else
+                                {
+                                    try { KillCharacterAction.ApplyByMurder(leader, null, false); } catch { }
+                                    if (expelled != null && expelled.Kingdom == kingdom)
+                                        try { ChangeKingdomAction.ApplyByLeaveKingdom(expelled, false); } catch { }
+                                    PlayerRelationWithClan(oldRulingClan, +20);
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive despite your warning. " +
+                                        $"{expelledName} moved before the word could spread. " +
+                                        $"{oldRulerName} remembers who tried. {expelledName} remembers too."));
+                                }
+                            }
+                            catch { }
+                        }
+                    ), true);
+                }
+                else
+                {
+                    try { KillCharacterAction.ApplyByMurder(leader, null, false); } catch { }
+                    if (expelled != null && expelled.Kingdom == kingdom)
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(expelled, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive the feast. " +
+                        $"The wine was poisoned. The doors were barred. {expelledName} fled before dawn, " +
+                        $"their banners cut from the hall. Someone will sit the seat they left empty. " +
+                        $"Someone always does."));
+                }
             }
             catch { }
         }
@@ -812,10 +880,14 @@ namespace AshAndEmber
         // clan is bankrupted — influence drained to zero. One of the executed
         // clans defects before the blade falls.
         //
+        // If the player's clan is tier 4+ in the affected kingdom, a choice
+        // appears: support the tyrant or defy them.
+        //   Support: +100 with tyrant, −50 with all condemned clans.
+        //   Defy: 33% chance the player is also executed (game over path).
+        //
         // Safety constraints:
-        //   • Never targets the player or the player's faction.
-        //   • Only kills clan leaders whose clan has ≥ 2 living members (no
-        //     clan extinction mid-event).
+        //   • Never has the player as tyrant (k.Leader != Hero.MainHero).
+        //   • Only kills clan leaders whose clan has ≥ 2 living members.
         //   • Requires at least one tier-5/6 non-ruling clan to exist.
         //   • Defecting clan uses ApplyByLeaveKingdom (safe outside ClanChangedKingdom).
         //   • Ruling clan influence floor is 0f (never negative).
@@ -824,11 +896,9 @@ namespace AshAndEmber
             if (_rng.NextDouble() >= ChanceTyranny) return;
             try
             {
-                // Find a kingdom with tier-5/6 non-ruling clans and a leader who isn't the player
                 var kingdoms = Kingdom.All
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
-                             && k != Hero.MainHero?.Clan?.Kingdom
                              && k.Leader != null && k.Leader != Hero.MainHero
                              && k.RulingClan != null
                              && k.Clans.Any(c => c != null && !c.IsEliminated
@@ -844,7 +914,6 @@ namespace AshAndEmber
                 var tyrant   = kingdom.Leader;
                 var ruling   = kingdom.RulingClan;
 
-                // Collect the condemned clans
                 var condemned = kingdom.Clans
                     .Where(c => c != null && !c.IsEliminated
                              && c != ruling
@@ -856,39 +925,136 @@ namespace AshAndEmber
                     .ToList();
                 if (condemned.Count == 0) return;
 
-                // One clan defects before the execution — they escape; the rest do not
                 Clan defector = condemned[_rng.Next(condemned.Count)];
-                try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch { }
 
-                // Execute the rest's clan leaders
-                var executed = new List<string>();
-                foreach (var clan in condemned)
+                string tyrantName   = tyrant?.Name?.ToString()   ?? "the lord";
+                string kingdomName  = kingdom.Name?.ToString()   ?? "the realm";
+                string defectorName = defector?.Name?.ToString() ?? "one house";
+
+                bool playerQualifies = PlayerIsQualifiedForEvent(kingdom);
+
+                if (playerQualifies)
                 {
-                    if (clan == defector) continue;
-                    if (clan.Leader == null || !clan.Leader.IsAlive) continue;
-                    try
-                    {
-                        executed.Add(clan.Leader.Name?.ToString() ?? "a lord");
-                        KillCharacterAction.ApplyByMurder(clan.Leader, null, false);
-                    }
-                    catch { }
+                    var executedClans = condemned.Where(c => c != defector).ToList();
+                    string condemnedNames = executedClans.Count == 0 ? "the high lords"
+                        : executedClans.Count <= 2
+                            ? string.Join(" and ", executedClans.Select(c => c.Name?.ToString() ?? "a house"))
+                            : (executedClans[0].Name?.ToString() ?? "a house") + " and others";
+
+                    string body =
+                        $"{tyrantName} of {kingdomName} has called the high lords to feast — " +
+                        $"and means to keep them there permanently. " +
+                        $"{condemnedNames} are condemned. {defectorName} has already fled.\n\n" +
+                        $"Support the purge: +100 relations with {tyrantName}, −50 with all condemned clans.\n" +
+                        $"Defy the tyrant: 33% chance of being added to the execution list.";
+
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Tyranny",
+                        body,
+                        true, true,
+                        $"Support {tyrantName}",
+                        "Defy the tyrant",
+                        () =>
+                        {
+                            try
+                            {
+                                try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch { }
+                                var executed = new List<string>();
+                                foreach (var clan in condemned)
+                                {
+                                    if (clan == defector) continue;
+                                    if (clan.Leader == null || !clan.Leader.IsAlive) continue;
+                                    try
+                                    {
+                                        executed.Add(clan.Leader.Name?.ToString() ?? "a lord");
+                                        KillCharacterAction.ApplyByMurder(clan.Leader, null, false);
+                                    }
+                                    catch { }
+                                }
+                                try { ruling.Influence = 0f; } catch { }
+
+                                if (tyrant != null && tyrant.IsAlive)
+                                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
+                                        Hero.MainHero, tyrant, +100, false); } catch { }
+                                foreach (var clan in condemned)
+                                    PlayerRelationWithClan(clan, -50);
+
+                                string exList = executed.Count == 0 ? "none"
+                                    : executed.Count <= 3 ? string.Join(", ", executed)
+                                    : $"{executed[0]}, {executed[1]}, and {executed.Count - 2} others";
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    $"Tyranny — you stood with {tyrantName}. {exList} did not leave the feast. " +
+                                    $"{defectorName} read the invitation and chose the road. " +
+                                    $"The tyrant's gratitude is real. The hatred of the condemned will outlast them."));
+                            }
+                            catch { }
+                        },
+                        () =>
+                        {
+                            try
+                            {
+                                try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch { }
+                                var executed = new List<string>();
+                                foreach (var clan in condemned)
+                                {
+                                    if (clan == defector) continue;
+                                    if (clan.Leader == null || !clan.Leader.IsAlive) continue;
+                                    try
+                                    {
+                                        executed.Add(clan.Leader.Name?.ToString() ?? "a lord");
+                                        KillCharacterAction.ApplyByMurder(clan.Leader, null, false);
+                                    }
+                                    catch { }
+                                }
+                                try { ruling.Influence = 0f; } catch { }
+
+                                if (_rng.NextDouble() < 0.33)
+                                {
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"Tyranny — you defied {tyrantName}. They added your name to the list. " +
+                                        $"The blade found you before dawn."));
+                                    try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
+                                }
+                                else
+                                {
+                                    string exList = executed.Count == 0 ? "none"
+                                        : executed.Count <= 3 ? string.Join(", ", executed)
+                                        : $"{executed[0]}, {executed[1]}, and {executed.Count - 2} others";
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"Tyranny — you defied {tyrantName}. The purge happened anyway — {exList} before dawn. " +
+                                        $"Your defiance was noted. For now, the blade did not find you."));
+                                }
+                            }
+                            catch { }
+                        }
+                    ), true);
                 }
+                else
+                {
+                    try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch { }
+                    var executed = new List<string>();
+                    foreach (var clan in condemned)
+                    {
+                        if (clan == defector) continue;
+                        if (clan.Leader == null || !clan.Leader.IsAlive) continue;
+                        try
+                        {
+                            executed.Add(clan.Leader.Name?.ToString() ?? "a lord");
+                            KillCharacterAction.ApplyByMurder(clan.Leader, null, false);
+                        }
+                        catch { }
+                    }
+                    try { ruling.Influence = 0f; } catch { }
 
-                // Drain the ruling clan's influence to zero — the purge cost everything
-                try { ruling.Influence = 0f; } catch { }
-
-                string tyrantName   = tyrant?.Name?.ToString()    ?? "the lord";
-                string kingdomName  = kingdom.Name?.ToString()    ?? "the realm";
-                string defectorName = defector?.Name?.ToString()  ?? "one house";
-                string exList = executed.Count == 0 ? "none"
-                    : executed.Count <= 3 ? string.Join(", ", executed)
-                    : $"{executed[0]}, {executed[1]}, and {executed.Count - 2} others";
-
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Tyranny — {tyrantName} of {kingdomName} called their great lords to feast " +
-                    $"and did not let them leave. {exList} — dead before dawn. " +
-                    $"{defectorName} read the invitation and chose the road instead. " +
-                    $"The throne room is emptier now. So is the treasury of those who held it."));
+                    string exList2 = executed.Count == 0 ? "none"
+                        : executed.Count <= 3 ? string.Join(", ", executed)
+                        : $"{executed[0]}, {executed[1]}, and {executed.Count - 2} others";
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Tyranny — {tyrantName} of {kingdomName} called their great lords to feast " +
+                        $"and did not let them leave. {exList2} — dead before dawn. " +
+                        $"{defectorName} read the invitation and chose the road instead. " +
+                        $"The throne room is emptier now. So is the treasury of those who held it."));
+                }
             }
             catch { }
         }
@@ -897,11 +1063,17 @@ namespace AshAndEmber
         // A rival clan within a faction seizes power — the faction leader changes
         // to the head of a different clan inside the same kingdom.
         //
+        // If the player's clan is tier 4+ in the affected kingdom (and is neither
+        // the old ruler nor the usurper), a choice appears.
+        //   Back the usurper: +50 with usurper, −100 with old ruling clan.
+        //   Stand with old rulers: −100 with usurper, +20 with old ruling clan,
+        //     33% chance the coup fails.
+        //
         // Uses ChangeRulingClanAction.Apply(newClan) which is the engine's own
         // ruling-clan transition. Falls back to a no-op if the action throws.
         //
         // Safety constraints:
-        //   • Excludes the player's faction and the Ashen kingdom.
+        //   • Excludes the Ashen kingdom.
         //   • Requires ≥ 2 non-eliminated clans in the kingdom.
         //   • The new ruling clan must already be a member of the kingdom.
         //   • Wrapped entirely in try/catch; a failure is silent and harmless.
@@ -913,19 +1085,17 @@ namespace AshAndEmber
                 var kingdoms = Kingdom.All
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
-                             && k != Hero.MainHero?.Clan?.Kingdom
                              && k.RulingClan != null
                              && k.Clans.Count(c => c != null && !c.IsEliminated) >= 2)
                     .ToList();
                 if (kingdoms.Count == 0) return;
 
-                var kingdom = kingdoms[_rng.Next(kingdoms.Count)];
+                var  kingdom  = kingdoms[_rng.Next(kingdoms.Count)];
+                Clan oldRuler = kingdom.RulingClan;
 
-                // Candidate: any non-ruling, non-eliminated clan in the same kingdom
-                // whose leader is alive, adult, and not the player
                 var rivals = kingdom.Clans
                     .Where(c => c != null && !c.IsEliminated
-                             && c != kingdom.RulingClan
+                             && c != oldRuler
                              && c.Leader != null
                              && c.Leader.IsAlive
                              && !c.Leader.IsChild
@@ -933,17 +1103,75 @@ namespace AshAndEmber
                     .ToList();
                 if (rivals.Count == 0) return;
 
-                var usurper     = rivals[_rng.Next(rivals.Count)];
-                string oldName  = kingdom.RulingClan?.Name?.ToString() ?? "the old house";
-                string newName  = usurper.Name?.ToString()             ?? "a rival house";
-                string kingName = kingdom.Name?.ToString()             ?? "the realm";
+                var    usurper = rivals[_rng.Next(rivals.Count)];
+                string oldName  = oldRuler?.Name?.ToString() ?? "the old house";
+                string newName  = usurper.Name?.ToString()   ?? "a rival house";
+                string kingName = kingdom.Name?.ToString()   ?? "the realm";
 
-                try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
+                bool playerQualifies = PlayerIsQualifiedForEvent(kingdom)
+                                    && Hero.MainHero?.Clan != oldRuler
+                                    && Hero.MainHero?.Clan != usurper;
 
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Stolen Heirloom — the signet ring of {kingName} changed hands in the night. " +
-                    $"{newName} holds the seal now. {oldName} held it at sundown. " +
-                    $"No swords were drawn. That may be the most frightening part."));
+                if (playerQualifies)
+                {
+                    string body =
+                        $"{newName} is moving to seize the seal of {kingName} from {oldName}. " +
+                        $"Word has reached you — and they are waiting to see which way your clan stands.\n\n" +
+                        $"Back the seizure: +50 relations with {newName}, −100 with {oldName}.\n" +
+                        $"Stand with {oldName}: −100 with {newName}, +20 with {oldName}, 33% chance the coup fails.";
+
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Stolen Heirloom",
+                        body,
+                        true, true,
+                        $"Back {newName}",
+                        $"Stand with {oldName}",
+                        () =>
+                        {
+                            try
+                            {
+                                try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
+                                PlayerRelationWithClan(usurper,  +50);
+                                PlayerRelationWithClan(oldRuler, -100);
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    $"Stolen Heirloom — you backed {newName}'s move. The seal of {kingName} changed hands. " +
+                                    $"{oldName} knows exactly where you stood."));
+                            }
+                            catch { }
+                        },
+                        () =>
+                        {
+                            try
+                            {
+                                PlayerRelationWithClan(usurper,  -100);
+                                PlayerRelationWithClan(oldRuler, +20);
+                                if (_rng.NextDouble() < 0.33)
+                                {
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"Stolen Heirloom — your opposition was enough. {newName}'s move collapsed before it landed. " +
+                                        $"{kingName} stays in {oldName}'s hands. {newName} has not forgotten your part in it."));
+                                }
+                                else
+                                {
+                                    try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"Stolen Heirloom — despite your opposition, {newName} pressed ahead. " +
+                                        $"The seal of {kingName} is in their hands now. {oldName} is grateful, though powerless. " +
+                                        $"{newName} will not forget your name."));
+                                }
+                            }
+                            catch { }
+                        }
+                    ), true);
+                }
+                else
+                {
+                    try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Stolen Heirloom — the signet ring of {kingName} changed hands in the night. " +
+                        $"{newName} holds the seal now. {oldName} held it at sundown. " +
+                        $"No swords were drawn. That may be the most frightening part."));
+                }
             }
             catch { }
         }
@@ -1106,6 +1334,108 @@ namespace AshAndEmber
                 $"raised their own banners and walked out the gate with everything they owned. " +
                 $"{newLeader} inherits a throne — and a much smaller kingdom. " +
                 $"What was one realm is now many ambitions."));
+        }
+
+        // ── Event 17: Mage Fatwa ─────────────────────────────────────────────
+        // Religious terror sweeps a random non-Ashen kingdom. Fanatics hunt
+        // mage lords — 0–3 are killed by the mob before the violence is spent.
+        // Ashen lords are immune (the mob does not touch what it truly fears).
+        //
+        // Safety constraints:
+        //   • Never kills the player hero.
+        //   • Only targets mage lords who are not clan leaders (avoids instant
+        //     succession chaos mid-event) and whose clan has ≥ 2 living members.
+        //   • Skips kingdoms with no eligible mage lord targets (silent no-fire).
+        private static void TryFireMageFatwa()
+        {
+            if (_rng.NextDouble() >= ChanceMageFatwa) return;
+            try
+            {
+                var kingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated && k.StringId != AshenKingdomId)
+                    .ToList();
+                if (kingdoms.Count == 0) return;
+
+                // Weight kingdoms that actually have mage lords
+                var eligible = kingdoms
+                    .Where(k => Hero.AllAliveHeroes.Any(h =>
+                        h.IsLord && h.IsAlive && !h.IsChild && !h.IsPrisoner
+                        && h != Hero.MainHero
+                        && h.Clan?.Kingdom == k
+                        && ColourLordRegistry.IsColourLord(h)
+                        && !ColourLordRegistry.IsAshenLord(h)
+                        && h.Clan.Leader != h
+                        && h.Clan.Heroes.Count(x => x.IsAlive && !x.IsChild) >= 2))
+                    .ToList();
+                if (eligible.Count == 0) return;
+
+                var kingdom = eligible[_rng.Next(eligible.Count)];
+
+                var targets = Hero.AllAliveHeroes
+                    .Where(h => h.IsLord && h.IsAlive && !h.IsChild && !h.IsPrisoner
+                             && h != Hero.MainHero
+                             && h.Clan?.Kingdom == kingdom
+                             && ColourLordRegistry.IsColourLord(h)
+                             && !ColourLordRegistry.IsAshenLord(h)
+                             && h.Clan.Leader != h
+                             && h.Clan.Heroes.Count(x => x.IsAlive && !x.IsChild) >= 2)
+                    .OrderBy(_ => _rng.Next())
+                    .Take(_rng.Next(4))   // 0–3
+                    .ToList();
+
+                string kingdomName = kingdom.Name?.ToString() ?? "the realm";
+
+                if (targets.Count == 0)
+                {
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Mage Fatwa — fear of sorcery swept {kingdomName} like a fever. " +
+                        $"Torches were lit. Doors were barred. The mages stayed hidden long enough for the mood to break."));
+                    return;
+                }
+
+                var killed = new List<string>();
+                foreach (var h in targets)
+                {
+                    try
+                    {
+                        killed.Add(h.Name?.ToString() ?? "a mage");
+                        KillCharacterAction.ApplyByMurder(h, null, false);
+                    }
+                    catch { }
+                }
+
+                string nameList = killed.Count == 1 ? killed[0]
+                    : killed.Count == 2 ? $"{killed[0]} and {killed[1]}"
+                    : $"{killed[0]}, {killed[1]}, and {killed.Count - 2} others";
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Mage Fatwa — a preacher in {kingdomName} declared that the fire-touched were an abomination. " +
+                    $"The crowd agreed. {nameList} did not survive the week. " +
+                    $"The mob does not need to understand what it fears — only that it fears it."));
+            }
+            catch { }
+        }
+
+        // ── Player-event choice helpers ───────────────────────────────────────
+
+        // Returns true when the player's clan is in the given kingdom at tier 4+.
+        private static bool PlayerIsQualifiedForEvent(Kingdom kingdom)
+        {
+            var player = Hero.MainHero;
+            if (player?.Clan == null) return false;
+            return player.Clan.Kingdom == kingdom && player.Clan.Tier >= 4;
+        }
+
+        // Applies a relation delta between the player and all living adult members
+        // of a clan (used by Stolen Heirloom, Tyranny, and Seeds of Betrayal choices).
+        private static void PlayerRelationWithClan(Clan clan, int delta)
+        {
+            if (clan == null || Hero.MainHero == null) return;
+            foreach (var h in clan.Heroes)
+            {
+                if (h == null || !h.IsAlive || h.IsChild || h == Hero.MainHero) continue;
+                try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, h, delta, false); } catch { }
+            }
         }
 
         // ── Seasonal helpers ──────────────────────────────────────────────────

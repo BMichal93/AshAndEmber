@@ -161,7 +161,10 @@ namespace AshAndEmber
 
         // Per-target repeat-scheme cooldowns. Key = "{SchemeType}:{targetStringId}".
         // Assassination: 14-day hard block. All others: 7-day 5× cost inflation.
-        private static readonly Dictionary<string, int>      _targetCooldowns = new Dictionary<string, int>();
+        private static readonly Dictionary<string, int>      _targetCooldowns    = new Dictionary<string, int>();
+
+        // Keys in _targetCooldowns that were set by the player — notified when they expire.
+        private static readonly HashSet<string>               _playerCooldownKeys = new HashSet<string>();
 
         private static readonly Random _rng = new Random();
 
@@ -175,6 +178,7 @@ namespace AshAndEmber
             _pending.Clear();
             _npcCooldowns.Clear();
             _targetCooldowns.Clear();
+            _playerCooldownKeys.Clear();
         }
 
         /// Returns true if the player already has a scheme pending execution.
@@ -253,7 +257,11 @@ namespace AshAndEmber
             // Set per-target cooldown: 14 days for assassination (hard block), 7 days for others (5× cost)
             string targetId = targetHero?.StringId ?? targetSettlement?.StringId ?? "";
             if (!string.IsNullOrEmpty(targetId))
-                _targetCooldowns[CooldownKey(type, targetId)] = type == SchemeType.Assassinate ? 14 : 7;
+            {
+                string cdKey = CooldownKey(type, targetId);
+                _targetCooldowns[cdKey] = type == SchemeType.Assassinate ? 14 : 7;
+                if (isPlayer) _playerCooldownKeys.Add(cdKey);
+            }
 
             return true;
         }
@@ -269,7 +277,12 @@ namespace AshAndEmber
             foreach (var key in _targetCooldowns.Keys.ToList())
             {
                 _targetCooldowns[key]--;
-                if (_targetCooldowns[key] <= 0) _targetCooldowns.Remove(key);
+                if (_targetCooldowns[key] <= 0)
+                {
+                    _targetCooldowns.Remove(key);
+                    if (_playerCooldownKeys.Remove(key))
+                        try { NotifyCooldownExpired(key); } catch { }
+                }
             }
 
             for (int i = _pending.Count - 1; i >= 0; i--)
@@ -327,7 +340,8 @@ namespace AshAndEmber
                         .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
                                  && t != Hero.MainHero
                                  && t.Clan != null && t.Clan != lord.Clan
-                                 && lord.Clan.Kingdom != null && t.Clan.Kingdom != null
+                                 && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
+                                 && t.Clan.Kingdom != null && !t.Clan.Kingdom.IsEliminated
                                  && lord.Clan.Kingdom.IsAtWarWith(t.Clan.Kingdom))
                         .ToList();
                     if (enemies.Count == 0) return;
@@ -535,7 +549,7 @@ namespace AshAndEmber
                         if (targetHero == null || !targetHero.IsAlive) break;
                         string tForg = targetHero.Name?.ToString() ?? "the lord";
                         Hero factionLeader = targetHero.Clan?.Kingdom?.Leader;
-                        if (factionLeader != null && factionLeader != targetHero)
+                        if (factionLeader != null && factionLeader != targetHero && factionLeader.IsAlive)
                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(targetHero, factionLeader, -55, false); } catch { }
                         Notify(s,
                             $"Forged letters reached {(factionLeader?.Name?.ToString() ?? "the faction leader")}'s hands " +
@@ -623,7 +637,7 @@ namespace AshAndEmber
                 var targetKingdom = targetHero?.Clan?.Kingdom
                                  ?? targetSett?.OwnerClan?.Kingdom
                                  ?? (targetSett?.MapFaction as Kingdom);
-                if (targetKingdom != null && instigator.Clan != null)
+                if (targetKingdom != null && !targetKingdom.IsEliminated && instigator.Clan != null)
                 {
                     float crimeDelta = 30f + _rng.Next(31); // 30–60
                     try { ChangeCrimeRatingAction.Apply(targetKingdom, crimeDelta, false); } catch { }
@@ -647,6 +661,7 @@ namespace AshAndEmber
                     var instigKingdom = instigator.Clan?.Kingdom;
                     if (instigKingdom != null && targetKingdom != null
                         && instigKingdom != targetKingdom
+                        && !instigKingdom.IsEliminated && !targetKingdom.IsEliminated
                         && !instigKingdom.IsAtWarWith(targetKingdom))
                     {
                         try { DeclareWarAction.ApplyByDefault(instigKingdom, targetKingdom); } catch { }
@@ -669,6 +684,41 @@ namespace AshAndEmber
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────
+
+        // Fires when a player-set per-target cooldown expires.
+        // Key format: "{schemeTypeInt}:{targetStringId}"
+        private static void NotifyCooldownExpired(string key)
+        {
+            var parts = key.Split(new[] { ':' }, 2);
+            if (parts.Length < 2) return;
+            if (!int.TryParse(parts[0], out int typeInt)) return;
+            var  type       = (SchemeType)typeInt;
+            bool hardBlock  = type == SchemeType.Assassinate;
+            var  def        = GetDefinition(type);
+            string scheme   = def?.Name ?? "The scheme";
+
+            // Resolve target name
+            string targetId = parts[1];
+            string target   = "the target";
+            try
+            {
+                Hero h = FindHero(targetId);
+                if (h != null) target = h.Name?.ToString() ?? target;
+                else
+                {
+                    Settlement s = FindSettlement(targetId);
+                    if (s != null) target = s.Name?.ToString() ?? target;
+                }
+            }
+            catch { }
+
+            string msg = hardBlock
+                ? $"Contacts reset — the path to {target} is open again. Assassination may be attempted."
+                : $"Network cooled — {scheme} against {target} may be repeated at normal cost.";
+
+            MBInformationManager.AddQuickInformation(new TextObject(msg));
+        }
+
         internal static SchemeDefinition GetDefinition(SchemeType type)
             => Definitions.FirstOrDefault(d => d.Type == type);
 
@@ -753,6 +803,14 @@ namespace AshAndEmber
                 _targetCooldowns.Clear();
                 for (int i = 0; i < tcdKeys.Count; i++)
                     _targetCooldowns[tcdKeys[i]] = tcdVals[i];
+            }
+
+            var pckList = _playerCooldownKeys.ToList();
+            store.SyncData("SCH_PckList", ref pckList);
+            if (pckList != null)
+            {
+                _playerCooldownKeys.Clear();
+                foreach (var k in pckList) _playerCooldownKeys.Add(k);
             }
         }
     }

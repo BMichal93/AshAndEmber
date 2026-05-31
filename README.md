@@ -370,48 +370,65 @@ When visiting any city, talk to the **Tavern Keeper** and choose *"I have some s
 3. **Confirm** — pay gold and influence upfront. The scheme executes in **1–3 campaign days**.
 4. **Result** — success applies the effect; silent failure leaves no trace; exposed failure hits relations hard.
 
+### Personality cost
+
+Requesting **any** scheme costs **Honor −1 (Dishonorable)** and **Calculating −1 (Devious)** — paid immediately on confirm, before the scheme resolves. Ordering an **assassination** also costs **Mercy −1 (Merciless)**. All costs are shown on the confirmation screen before you commit.
+
 ### Failure outcomes
 
-- **70% of failures** — **Agent fled**: brief notification only. No trace, no consequences. The scheme dissolved.
+- **70% of failures** — **Agent fled**: brief notification only. No trace, no consequences.
 - **30% of failures** — **Agent caught**:
-  - Crime rating +30–60 in the target's kingdom.
-  - Relations −60 to −80 with the target or settlement owner.
-  - Assassination and Stage a Coup caught: **40% chance of war declaration** with the target's kingdom.
+  - Crime rating +30–60 in the target's kingdom (only if the kingdom is not eliminated).
+  - Relations −60 to −80 with the target or settlement owner (only if they are alive).
+  - Assassination and Stage a Coup caught: **40% chance of war declaration** (only if both kingdoms exist, are not eliminated, and are not already at war).
 
 ### Success formula
 
-`baseChance + (skill / 600 × 30%) − (security / 400) − (clanTier × 4%)` — capped at 5–85%.
+`baseChance + (skill / 600 × 30%) − (security / 400) − (clanTier × 2.5%)` — capped at 5–85%.
 
-**Ashen targets** resist mortal scheming: an additional **−30%** applies to any scheme against an Ashen lord or an Ashen settlement. Even a skilled Roguery lord has only a ~5% chance of successfully assassinating an Ashen lord.
+**Ashen targets**: additional −30%. Near-impossible without max Roguery/Charm.
+
+### Gold cost
+
+Base × `(1 + target clan tier × 0.4)` — tier 0 = 1×, tier 6 = 3.4×. Shown exactly in the target-selection UI before you commit.
+
+### Repeat-use penalty
+
+| Scheme | Cooldown after any attempt | Repeat within window |
+|--------|---------------------------|---------------------|
+| Assassinate a Lord | **14-day hard block** — cannot be queued at all | — |
+| All other schemes | **7 days** | **5× base cost** |
+
+When a cooldown expires the player receives a notification: *"Contacts reset — the path to [target] is open again"* or *"Network cooled — [scheme] may be repeated at normal cost."*
 
 ### Scheme list
 
-| Scheme | Skill | Gold | Influence | Base % | Effect on success |
-|--------|-------|------|-----------|--------|-------------------|
-| **Assassinate a Lord** | Roguery | 2 000 | 30 | 20% | Target lord dies. |
+| Scheme | Skill | Base gold | Influence | Base % | Effect on success |
+|--------|-------|-----------|-----------|--------|-------------------|
+| **Assassinate a Lord** | Roguery | 2 000 | 30 | 28% | Target lord dies. |
 | **Spread Terror** | Roguery | 500 | 10 | 45% | City security −25–45. |
 | **Poison a Well** | Roguery | 800 | 15 | 40% | 20–60 garrison militia killed. |
 | **Stage a Coup** | Charm | 1 500 | 40 | 20% | Loyalty −40, security −35. Rebellion likely. |
-| **Spread Rumors** | Charm | 300 | 5 | 55% | Loyalty −15, prosperity −8%. |
+| **Spread Rumors** | Charm | 500 | 5 | 40% | Loyalty −15, prosperity −8%. |
 | **Burn a Storage** | Roguery | 600 | 10 | 50% | Food −50%, prosperity −15%. |
 | **Bribe Soldiers** | Charm | 1 000 | 20 | 35% | 20–50 garrison troops desert. |
-| **Forge Documents** | Charm | 800 | 15 | 40% | Target lord −30 relations with their faction leader. |
+| **Forge Documents** | Charm | 800 | 15 | 40% | Target lord −55 relations with their faction leader (if alive). |
 | **Hire an Assassin (wound)** | Roguery | 1 200 | 20 | 30% | ~20% of target's party troops wounded. |
-| **False Accusations** | Charm | 600 | 15 | 45% | Target clan loses 25–50 renown. |
+| **False Accusations** | Charm | 600 | 15 | 45% | Target clan loses 5% of their renown (min 50). |
 
 ### Debug mode
 
-Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. While active, all schemes cost nothing (no gold or influence) and always succeed. A confirmation message appears in the campaign log. Toggle again to restore normal mode.
+Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. While active, all schemes cost nothing and always succeed. Toggle again to restore normal mode.
 
 ### Balance notes
 
-- The player may only have **one scheme in flight at a time**. This prevents resource abuse and keeps schemes as meaningful individual decisions rather than spam.
-- Schemes and campaign map spells draw on the same gold and influence reservoir — using one reduces what you have for the other. Plan accordingly.
-- Each scheme notification is written in the same atmospheric style as world events, appearing in the campaign message log.
+- One scheme in flight at a time. Schemes and campaign map spells share the same gold and influence pool — using one limits what you have for the other.
+- The UI shows exact tier-scaled cost and any active repeat penalties before committing.
+- Crash safety: eliminated kingdoms cannot receive crime rating or war declarations; dead heroes cannot receive relation changes. All checked before applying.
 
 ### NPC lords
 
-About once every **33 campaign days** globally, a random NPC lord initiates a scheme — paying the same costs, subject to the same success/failure rules. Each lord has a 20–35 day personal cooldown. NPCs only target enemies (factions they are at war with) and never target the player hero directly. High-profile NPC schemes (assassinations, coups, poisonings) appear in the campaign log with full flavor text.
+About once every **33 campaign days** globally, a random NPC lord initiates a scheme — paying the same tier-scaled costs, subject to the same rules. Each lord has a 20–35 day personal cooldown. NPCs only target enemies and never target the player. High-profile NPC schemes appear in the campaign log with full flavor text.
 
 ---
 
@@ -511,11 +528,24 @@ Twelve rare events fire on the weekly tick. Multiple may fire the same week.
 | **Whispers from the Ash** | 1.5% | 1–3 mage lords abandon their factions and join the Ashen — gaining Ashen title, traits, and cold-fire magic. |
 | **Tyranny** | 2% | A faction leader executes all tier-5/6 clan heads. Ruling clan loses all influence. One clan defects. |
 | **Stolen Heirloom** | 2% | A rival clan seizes the faction seal overnight — a new ruling clan takes power without a blade drawn. |
+| **Mage Fatwa** | 2.5% | Religious fear sweeps a kingdom. 0–3 mage lords (non-Ashen) are hunted and killed by the mob. |
 | **Iron Winter** | 4% (winter only) | All northern villages (Sturgia, Northern Empire) lose 50% hearth. All northern cities lose 50% prosperity and food. |
 | **Scorching Sun** | 4% (summer only) | All southern desert villages (Aserai, Southern Empire) lose 50% hearth. Cities lose 50% prosperity and food. |
 | **Game of Thrones** | 5% on leader death | When a qualifying faction leader dies, the kingdom fractures: all non-ruling clans leave and become independent, keeping their fiefs. Requires 4+ clans; never fires for the Ashen. |
 
 The Ashen are exempt from all betrayal and political-fracture events — their will is cold, singular, and does not break or scheme against itself.
+
+### Player-interactive world events
+
+Three events prompt the player for a choice if their clan is **tier 4 or higher** and **in the affected kingdom**. The dialog appears before effects are applied.
+
+| Event | Support the schemers | Oppose the schemers |
+|-------|---------------------|---------------------|
+| **Stolen Heirloom** | +50 relations with the usurper clan, −100 with the displaced ruling clan. | −100 with the usurper clan, +20 with the old ruling clan. **33% chance** the coup fails outright. |
+| **Seeds of Betrayal** | +50 with the conspiring clan, −100 with the old ruling clan. | −100 with the conspiring clan, +20 with the old ruling clan. **33% chance** the plot is stopped and the leader survives. |
+| **Tyranny** | +100 with the tyrant, −50 with every condemned clan. | **33% chance** the player is added to the execution list (game over). |
+
+If the player's clan is below tier 4, or is the direct party in the event (the ruling clan being displaced, etc.), the event fires silently as normal.
 
 ---
 
