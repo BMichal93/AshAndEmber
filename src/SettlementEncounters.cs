@@ -48,6 +48,9 @@
 // │ The Child's Bead            │ Enter city/castle     │ General          │
 // │ The Trade Council           │ Enter city/castle     │ General, Ren≥700 │
 // │ An Old Enemy                │ Enter city/castle     │ General          │
+// │ The Ember-Tithe             │ Enter village/city    │ Mage             │
+// │ What the Keep Concealed     │ Siege (won)           │ Mage             │
+// │ The Alchemist's Promise     │ Enter city/castle     │ General          │
 // └─────────────────────────────┴───────────────────────┴──────────────────┘
 //
 // Wiring (CampaignBehavior.cs):
@@ -229,6 +232,7 @@ namespace AshAndEmber
                     pool.Add(EV7_SelfTaughtMage);
                     pool.Add(EV8_TheLie);
                     if (ren >= 600f) pool.Add(EV7_OldMastersStudent);
+                    pool.Add(E_EmberTithe);
                 }
                 if (ashen) pool.Add(EV2_DogWontStop);
             }
@@ -268,7 +272,9 @@ namespace AshAndEmber
                     pool.Add(EC6_AlchemistFire);
                     if (ren >= 400f) pool.Add(EC7_TheDuelist);
                     if (ren >= 1000f) pool.Add(E_CrowdWantsSign);
+                    pool.Add(E_EmberTithe);
                 }
+                pool.Add(EC9_AshenElixir);
                 if (ashen) pool.Add(EC7_AshenSurveillance);
                 if (ashen)
                 {
@@ -445,6 +451,7 @@ namespace AshAndEmber
                 if (mage) pool.Add(ES_OldScorchmarks);
                 if (mage) pool.Add(ES4_AshenCrystal);
                 if (mage) pool.Add(ES6_KeepMage);
+                if (mage) pool.Add(ES7_FallenLaboratory);
             }
             else
             {
@@ -8918,6 +8925,201 @@ namespace AshAndEmber
                                     "The fire goes out as you cross it. " +
                                     "Something remains where the fire was — a clarity, a residue of interrupted power. " +
                                     "You take what you can carry. One focus point, ungiven but yours now.", GoodColor);
+                            }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── E_EmberTithe — enter village / enter city (mage) ──────────────────
+        // An old man asks to bask in your fire, offering knowledge in return.
+        private static void E_EmberTithe(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★  The Ember-Tithe",
+                "An old man separates from the edge of the road as your party slows — bent, weathered, dressed in something between a travelling coat and a burial shroud. He does not beg. He simply asks. He says he has spent forty years gathering knowledge of fire, of the kind that does not burn wood, and that he has perhaps a season left to him. He asks only to feel the warmth of what you carry, just once, before he faces the cold. In return, he offers what he knows.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Let him stand in it. You can spare the warmth.", null, true,
+                        "Gain 1 focus point. Age 30 days."),
+                    new InquiryElement("b", "Refuse. You owe him nothing.", null, true,
+                        "Nothing happens."),
+                    new InquiryElement("c", "Seize him. What he knows can be taken without the ceremony.", null, true,
+                        "+10 renown. +500 gold. 50% chance: wounded by his curse."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            AgePlayer(30);
+                            Msg("He stands in it for a long moment, eyes closed. Then he begins to speak — not quickly, not with ceremony, but as a man unburdening something he has carried for decades. He talks for two hours. When he leaves, you sit with the shape of what he gave you for a long time. One focus point, paid in warmth and thirty days. You call it even.", FireColor);
+                            break;
+                        case "b":
+                            Msg("He nods once when you refuse, as though he expected it. He folds his coat around himself and walks away from the road — not toward any village you can see, just away from the direction you are heading. You do not see where he goes.", DimColor);
+                            break;
+                        case "c":
+                            ChangeRenown(10f);
+                            ChangeGold(500);
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                WoundPlayer();
+                                Msg("You take him before he can speak. He does not struggle. He is still through all of it, and when you have what you need he says, clearly, one word — a name, not his, something older. The wound opens in you an hour later, from nowhere, deep and clean as a blade. He kept something back. He kept the part that costs.", BadColor);
+                            }
+                            else
+                            {
+                                Msg("You take what he knows, quickly and without ceremony. He gives it without resistance — more than he might have given freely. He is gone before the last of your men pass. What you learned is real. What you paid for it has not arrived yet.", DimColor);
+                            }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── ES7_FallenLaboratory — siege attacker won, mage ───────────────────
+        // A sealed chamber reveals a heretical mage's laboratory after capture.
+        private static void ES7_FallenLaboratory()
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "✦  What the Keep Concealed",
+                "Your sergeant reports a sealed chamber discovered behind the keep's lower kitchens — bricked up rather than locked, intended to disappear. Inside: organised notes, apparatus you recognise as capable of real work, and ingredients that would be illegal in three of the five regions you have ridden through. This belonged to the previous lord's personal scholar. The notes are meticulous. The work described in them is heretical by any measure. It is also genuinely interesting.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Study the notes. Knowledge does not become false for being forbidden.", null, true,
+                        "Lose Honour. 20% chance: gain 1 focus point."),
+                    new InquiryElement("b", "Leave it. It was sealed for reasons you have no need to unpack.", null, true,
+                        "Nothing happens. The chamber stays as it is."),
+                    new InquiryElement("c", "Burn it. Some work should not outlive the people who made it.", null, true,
+                        "Gain Honour."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            if (_rng.NextDouble() < 0.20)
+                            {
+                                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                                Msg("You read through most of the night. The scholar was working on the relationship between fire-carrying and certain physical states — not how to create it, but how to deepen it once present. The path they mapped is not one you would have found alone. By morning you understand something you did not understand before. One focus point, bought in hours and the specific unease of learning from someone you cannot question.", FireColor);
+                            }
+                            else
+                            {
+                                Msg("You read through most of the night. The scholar was careful, methodical, and working on something genuinely dangerous — not in the explosive sense but in the kind that changes what a person believes is possible. You come away unsettled. Not from the content but from how clearly it was reasoned. The work yields nothing tonight. It may yield something later.", DimColor);
+                            }
+                            break;
+                        case "b":
+                            Msg("You have the chamber re-sealed. Whatever was worked here will stay here, in the dark, until the keep is occupied by someone else who finds it and makes the same decision. You have enough decisions already.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You carry the first armful yourself. The notes burn with a faint smell that is not entirely paper, and the apparatus blackens in ways that suggest it already absorbed something it should not have. The chamber is ash by midday. You don't know what was lost. You know what wasn't found.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── EC9_AshenElixir — enter city, general ─────────────────────────────
+        // A street alchemist offers a secret of power — for a price.
+        private static void EC9_AshenElixir(Settlement s)
+        {
+            float charmChance = SkillChance(DefaultSkills.Charm, 0.30f);
+            string charmHint  = SkillHint(DefaultSkills.Charm, 0.30f, "Intimidate him into speaking");
+
+            void ShowElixirChoice()
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "⚗  The Vial",
+                    "He produces it from inside his coat: a small sealed vial, dark and faintly luminescent, the liquid inside not quite settling the way liquid should. He describes the contents — ash-blood drawn from a living Ashen donor, three additional reagents he declines to name, prepared over a fortnight at specific temperatures. He says it will unlock something in whoever drinks it. He says the process is irreversible. He says this as though it is a recommendation.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "Drink it.", null, true,
+                            "50% chance: gain 2 attribute points. 25% chance: become Ashen. 25% chance: die."),
+                        new InquiryElement("b", "Refuse. You've heard enough.", null, true,
+                            "Nothing happens."),
+                        new InquiryElement("c", "Report him to the city watch.", null, true,
+                            "+5 renown. He is arrested."),
+                        new InquiryElement("d", "Beat him and recover your money.", null, true,
+                            "Recover 1000 gold. Lose Mercy."),
+                    },
+                    false, 1, 1, "Decide", "",
+                    chosen2 =>
+                    {
+                        switch (chosen2?[0]?.Identifier as string)
+                        {
+                            case "a":
+                            {
+                                double roll = _rng.NextDouble();
+                                if (roll < 0.50)
+                                {
+                                    try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 2; } catch { }
+                                    Msg("The liquid is cold going down and then not cold at all. Your vision whites out briefly. When it returns you are sitting on the cobblestones and your hands are shaking — not from weakness, from something running faster than usual under the surface. You have two attribute points you did not have an hour ago. The alchemist has already left. So has any record of this.", GoodColor);
+                                }
+                                else if (roll < 0.75)
+                                {
+                                    BecomeAshen();
+                                    Msg("The liquid is cold going down and then colder still. The ash-blood recognises something in you it was looking for. Your reflection in the window across the street is already different — grey at the margins, the eyes beginning to change. The alchemist watches with professional satisfaction and then quietly disappears. You have become something you cannot unbecome.", BadColor);
+                                }
+                                else
+                                {
+                                    Msg("The liquid moves wrong in you from the moment it clears your throat. You have time to understand what is happening before you lose the ability to act on it. Your men find you on the street three minutes later, unmoving.", BadColor);
+                                    try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
+                                }
+                                break;
+                            }
+                            case "b":
+                                Msg("You set the vial on his table and leave. He calls after you — something about wasted potential, the usual — but does not follow. The street swallows his voice quickly.", DimColor);
+                                break;
+                            case "c":
+                                ChangeRenown(5f);
+                                Msg("You find the nearest city watch officer and describe what you witnessed. The watch takes it seriously — ash-blood preparation is illegal in this city, as in most. They collect him within the hour. His apparatus is confiscated. The vial goes with it. You receive a formal acknowledgement from the watch captain. It will be recorded under your name.", GoodColor);
+                                break;
+                            case "d":
+                                ShiftTrait(DefaultTraits.Mercy, -1);
+                                ChangeGold(1000);
+                                Msg("You make your position clear without extended negotiation. He returns the coins without being asked twice. He also offers two of the unnamed reagents as an apparent apology, which you did not request and are not certain you want. You leave him on the floor of his shop, breathing, with a considerably reduced opinion of street salesmanship.", DimColor);
+                                break;
+                        }
+                    }, null, "", false), false, true);
+            }
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "⚗  The Alchemist's Promise",
+                "A man separates from the crowd near the market gate — not blocking you, just placing himself where you will notice him. He is dressed expensively for someone selling things from a bag. He uses the word 'secret' twice in his opening sentence, which is a technique. He says he has something that will change what you are capable of. He says he can prove it. He says it will cost you one thousand gold to hear the proof.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Refuse. Every man with a secret wants money first.", null, true,
+                        "Nothing happens."),
+                    new InquiryElement("b", "Agree. Pay the thousand gold and hear him out.", null, true,
+                        "Lose 1000 gold. He shows you what he has."),
+                    new InquiryElement($"c", $"Threaten him into talking. ({(int)(charmChance * 100)}% Charm)", null, true,
+                        charmHint),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            Msg("You ride on. He watches you go with the expression of a man recalculating his approach for the next mark. He will try someone else. That is not your problem.", DimColor);
+                            break;
+                        case "b":
+                            if (!ChangeGold(-1000)) return;
+                            ShowElixirChoice();
+                            break;
+                        case "c":
+                            if (SkillRoll(DefaultSkills.Charm, 0.30f))
+                            {
+                                Msg("You do not raise your voice. You do not need to. He reads the situation correctly and decides that a free demonstration is preferable to the alternative. He is correct.", GoodColor);
+                                ShowElixirChoice();
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Honor, -1);
+                                ChangeCrime(10f);
+                                Msg("You push harder than the situation called for. He does not give you what you want — instead he shouts for the watch. You disengage before it escalates further, but not before witnesses have a good look at your face. The city watch receives a complaint. Your criminal rating rises. The alchemist keeps his secret.", BadColor);
                             }
                             break;
                     }
