@@ -238,12 +238,19 @@ namespace AshAndEmber
                 try { heroById = Hero.AllAliveHeroes.ToDictionary(h => h.StringId, h => h); }
                 catch { return; }
 
+                // At most one Ashen lord casts per campaign day to prevent notification floods.
+                int ashenCastsToday = 0;
+                const int MaxAshenCastsPerDay = 1;
+
                 foreach (string id in _mageIds.ToList())
                 {
                     heroById.TryGetValue(id, out Hero hero);
                     if (hero == null || !hero.IsAlive || hero.IsPrisoner) continue;
 
                     bool isBlight = IsAshenLord(hero);
+
+                    // Skip Ashen lords once the daily cap is reached
+                    if (isBlight && ashenCastsToday >= MaxAshenCastsPerDay) continue;
 
                     // First encounter: seed a random initial offset so lords don't all
                     // cast on the same day after seeding or loading a save.
@@ -273,6 +280,7 @@ namespace AshAndEmber
                         // Blight lords recover quickly; normal lords need several days
                         _campaignCooldowns[id] = isBlight ? 3 + _rng.Next(4) : 5 + _rng.Next(5);
                         if (hero.Clan != null) hero.Clan.Renown += 3f;
+                        if (isBlight) ashenCastsToday++;
                     }
                     catch { }
                 }

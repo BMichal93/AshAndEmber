@@ -334,8 +334,20 @@ namespace AshAndEmber
         public static void OnPeaceMade(IFaction faction1, IFaction faction2)
         {
             if (_ashenKingdom == null) return;
-            if (faction1 == _ashenKingdom || faction2 == _ashenKingdom)
-                _warThrottle = 0;
+            if (faction1 != _ashenKingdom && faction2 != _ashenKingdom) return;
+
+            // Refund the influence the non-Ashen side spent — peace with the Ashen
+            // can never stick, so the AI should not be permanently drained by it.
+            try
+            {
+                IFaction other = faction1 == _ashenKingdom ? faction2 : faction1;
+                var otherKingdom = other as Kingdom;
+                var rulingClan = otherKingdom?.RulingClan;
+                if (rulingClan != null) rulingClan.Influence += 100f;
+            }
+            catch { }
+
+            _warThrottle = 0;
         }
 
         // Re-entrancy guard prevents a rapid peace→war→peace loop: if Bannerlord's

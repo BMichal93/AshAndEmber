@@ -75,11 +75,11 @@ namespace AshAndEmber
     public static class SettlementEncounters
     {
         // ── Tuning ────────────────────────────────────────────────────────────
-        public const float EncounterChance       = 0.35f;  // per settlement transition
-        public const int   MinDaysBetween        = 3;      // shared cooldown between any encounter
-        public const float BattleEncounterChance = 0.35f;  // per field battle
-        public const float SiegeEncounterChance  = 0.50f;  // per siege
-        public const float RaidEncounterChance   = 0.55f;  // per raid
+        public const float EncounterChance       = 0.10f;  // per settlement transition (was 0.35)
+        public const int   MinDaysBetween        = 6;      // shared cooldown between any encounter (was 3)
+        public const float BattleEncounterChance = 0.14f;  // per field battle (was 0.35)
+        public const float SiegeEncounterChance  = 0.22f;  // per siege (was 0.50)
+        public const float RaidEncounterChance   = 0.22f;  // per raid (was 0.55)
 
         // ── State ─────────────────────────────────────────────────────────────
         private static int    _cooldown              = 0;
