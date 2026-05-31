@@ -42,10 +42,10 @@ namespace AshAndEmber
         };
 
         private static readonly TalentId[] DamageEnchantments =
-            { TalentId.Scatter, TalentId.Smoulder, TalentId.Bewilder };
+            { TalentId.Scatter, TalentId.Smoulder, TalentId.Bewilder, TalentId.Waver };
 
         private static readonly TalentId[] RestoreEnchantments =
-            { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight };
+            { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight, TalentId.Rouse };
 
         // ── Public API ────────────────────────────────────────────────────────
         public static bool IsColourLord(Hero hero) =>

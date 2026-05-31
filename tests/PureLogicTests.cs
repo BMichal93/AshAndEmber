@@ -122,5 +122,78 @@ namespace AshAndEmber.Tests
                     $"GetGlowColor returned 0 for {school}.");
             }
         }
+
+        // ── Waver / Rouse talent definition tests ─────────────────────────────
+
+        [Test]
+        public void TalentSystem_Waver_IsDefinedAsEnchantment()
+        {
+            var def = TalentSystem.All.FirstOrDefault(d => d.Id == TalentId.Waver);
+            Assert.IsNotNull(def, "Waver should be present in TalentSystem.All.");
+            Assert.IsTrue(def.IsEnchantment, "Waver should be flagged as an enchantment.");
+            Assert.IsFalse(def.IsSpell, "Waver should not be a campaign map spell.");
+            Assert.AreEqual(TalentCategory.Enchantment, def.Category);
+        }
+
+        [Test]
+        public void TalentSystem_Rouse_IsDefinedAsEnchantment()
+        {
+            var def = TalentSystem.All.FirstOrDefault(d => d.Id == TalentId.Rouse);
+            Assert.IsNotNull(def, "Rouse should be present in TalentSystem.All.");
+            Assert.IsTrue(def.IsEnchantment, "Rouse should be flagged as an enchantment.");
+            Assert.IsFalse(def.IsSpell, "Rouse should not be a campaign map spell.");
+            Assert.AreEqual(TalentCategory.Enchantment, def.Category);
+        }
+
+        [Test]
+        public void TalentSystem_WaverAndRouse_NotPurchasedAfterReset()
+        {
+            TalentSystem.ResetForNewGame();
+            Assert.IsFalse(TalentSystem.Has(TalentId.Waver),
+                "Waver should not be purchased at game start.");
+            Assert.IsFalse(TalentSystem.Has(TalentId.Rouse),
+                "Rouse should not be purchased at game start.");
+        }
+
+        // ── SpellBuilder parsing for Waver / Rouse thresholds ─────────────────
+
+        [Test]
+        public void SpellBuilder_OneDamageInput_WaverConditionMet()
+        {
+            // Any DamageCount > 0 lets Waver roll its 12% chance.
+            var cast = SpellBuilder.Parse("U", "U");
+            Assert.AreEqual(1, cast.DamageCount);
+            Assert.AreEqual(0, cast.RestoreCount);
+            Assert.IsFalse(cast.IsFumble);
+        }
+
+        [Test]
+        public void SpellBuilder_ThreeRestoreInputs_RouseThresholdMet()
+        {
+            // Rouse requires RestoreCount >= 3.
+            var cast = SpellBuilder.Parse("D", "DDD");
+            Assert.AreEqual(3, cast.RestoreCount);
+            Assert.AreEqual(0, cast.DamageCount);
+            Assert.IsTrue(cast.RestoreCount >= 3,
+                "3 Restore inputs should satisfy Rouse's minimum threshold.");
+        }
+
+        [Test]
+        public void SpellBuilder_TwoRestoreInputs_RouseThresholdNotMet()
+        {
+            var cast = SpellBuilder.Parse("D", "DD");
+            Assert.AreEqual(2, cast.RestoreCount);
+            Assert.IsFalse(cast.RestoreCount >= 3,
+                "2 Restore inputs should not satisfy Rouse's minimum threshold.");
+        }
+
+        [Test]
+        public void SpellBuilder_MixedEffects_CountsAreSeparate()
+        {
+            // 1 Damage + 3 Restore: Waver can trigger on enemies, Rouse on allies.
+            var cast = SpellBuilder.Parse("U", "UDDD");
+            Assert.AreEqual(1, cast.DamageCount);
+            Assert.AreEqual(3, cast.RestoreCount);
+        }
     }
 }
