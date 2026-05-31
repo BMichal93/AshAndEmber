@@ -1,4 +1,4 @@
-# Ash and Ember — v0.9.4
+# Ash and Ember — v0.10.0
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -356,6 +356,58 @@ Expected events per battle: ~0.5. ~60% of battles are clean.
 When entering or leaving a settlement, or after a battle, the mod may trigger a short narrative encounter — a short piece of text with a choice that has a mechanical consequence (gold, relations, morale, troop changes). The encounter pool has over 40 unique events gated by mage status, Ashen status, renown, and settlement type.
 
 A cooldown of 6 days prevents back-to-back encounters. Encounter chance: 10% per settlement transition; 14% per field battle; 22% per siege or raid.
+
+---
+
+## Schemes and Betrayals
+
+When visiting any city, talk to the **Tavern Keeper** and choose *"I have some shadier business that needs arranging."* A scheme menu opens letting you plan covert operations against lords or settlements.
+
+### How it works
+
+1. **Choose a scheme** — pick from the list, which shows your success chance and cost.
+2. **Choose a target** — lord (for lord-targeted schemes) or settlement (for city/castle schemes).
+3. **Confirm** — pay gold and influence upfront. The scheme executes in **1–3 campaign days**.
+4. **Result** — success applies the effect; silent failure leaves no trace; exposed failure hits relations hard.
+
+### Failure outcomes
+
+- **70% of failures** — **Agent fled**: brief notification only. No trace, no consequences. The scheme dissolved.
+- **30% of failures** — **Agent caught**:
+  - Crime rating +30–60 in the target's kingdom.
+  - Relations −60 to −80 with the target or settlement owner.
+  - Assassination and Stage a Coup caught: **40% chance of war declaration** with the target's kingdom.
+
+### Success formula
+
+`baseChance + (skill / 600 × 30%) − (security / 400) − (clanTier × 4%)` — capped at 5–85%.
+
+**Ashen targets** resist mortal scheming: an additional **−30%** applies to any scheme against an Ashen lord or an Ashen settlement. Even a skilled Roguery lord has only a ~5% chance of successfully assassinating an Ashen lord.
+
+### Scheme list
+
+| Scheme | Skill | Gold | Influence | Base % | Effect on success |
+|--------|-------|------|-----------|--------|-------------------|
+| **Assassinate a Lord** | Roguery | 2 000 | 30 | 20% | Target lord dies. |
+| **Spread Terror** | Roguery | 500 | 10 | 45% | City security −25–45. |
+| **Poison a Well** | Roguery | 800 | 15 | 40% | 20–60 garrison militia killed. |
+| **Stage a Coup** | Charm | 1 500 | 40 | 20% | Loyalty −40, security −35. Rebellion likely. |
+| **Spread Rumors** | Charm | 300 | 5 | 55% | Loyalty −15, prosperity −8%. |
+| **Burn a Storage** | Roguery | 600 | 10 | 50% | Food −50%, prosperity −15%. |
+| **Bribe Soldiers** | Charm | 1 000 | 20 | 35% | 20–50 garrison troops desert. |
+| **Forge Documents** | Charm | 800 | 15 | 40% | Target lord −30 relations with their faction leader. |
+| **Hire an Assassin (wound)** | Roguery | 1 200 | 20 | 30% | ~20% of target's party troops wounded. |
+| **False Accusations** | Charm | 600 | 15 | 45% | Target clan loses 25–50 renown. |
+
+### Balance notes
+
+- The player may only have **one scheme in flight at a time**. This prevents resource abuse and keeps schemes as meaningful individual decisions rather than spam.
+- Schemes and campaign map spells draw on the same gold and influence reservoir — using one reduces what you have for the other. Plan accordingly.
+- Each scheme notification is written in the same atmospheric style as world events, appearing in the campaign message log.
+
+### NPC lords
+
+About once every **33 campaign days** globally, a random NPC lord initiates a scheme — paying the same costs, subject to the same success/failure rules. Each lord has a 20–35 day personal cooldown. NPCs only target enemies (factions they are at war with) and never target the player hero directly. High-profile NPC schemes (assassinations, coups, poisonings) appear in the campaign log with full flavor text.
 
 ---
 
