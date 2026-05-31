@@ -108,6 +108,10 @@ namespace AshAndEmber
         public const int BrokenWillMaxFires = 2;
         public const int BrokenWillEarliestDay = 60;
 
+        // Game of Thrones: chance when a faction leader dies; requires 4+ clans in the faction
+        public const float ChanceGameOfThrones = 0.05f;
+        public const int   GoTMinClans         = 4;
+
         // The Long March: which kingdoms are eligible targets (vanilla Bannerlord string IDs)
         private static readonly string[] LongMarchTargets = { "vlandia", "aserai", "khuzait", "sturgia" };
 
@@ -121,6 +125,11 @@ namespace AshAndEmber
         private static int _longNightDaysRemaining = 0;
         private static int _brokenWillFired        = 0;
         private static readonly HashSet<string> _brokenKingdomIds = new HashSet<string>();
+
+        // Game of Thrones: kingdom IDs queued for delayed clan-ejection
+        private static readonly List<string> _gotKingdoms = new List<string>();
+        private static readonly List<int>    _gotDays     = new List<int>();
+
         private static readonly Random _rng = new Random();
 
         // ── Public API ────────────────────────────────────────────────────────
@@ -129,10 +138,45 @@ namespace AshAndEmber
         /// Called by SpellEffects.GetCampaignLightLevel() to force Dark.
         public static bool IsLongNight() => _longNightDaysRemaining > 0;
 
+        // ── Called from CampaignBehavior.OnHeroKilled ────────────────────────
+        // Triggered when a faction leader dies. Rolls 5% chance and queues a
+        // 2-day delayed Game of Thrones event for that kingdom.
+        // Ashen do not fracture — their will is cold and singular.
+        public static void OnFactionLeaderKilled(Kingdom kingdom)
+        {
+            if (kingdom == null || kingdom.IsEliminated) return;
+            if (kingdom.StringId == AshenKingdomId) return;         // Ashen never fracture
+            if (DragonQuestSystem.WorldRekindled) return;
+            if (kingdom.Clans.Count(c => c != null && !c.IsEliminated) < GoTMinClans) return;
+            if (_rng.NextDouble() >= ChanceGameOfThrones) return;
+
+            _gotKingdoms.Add(kingdom.StringId);
+            _gotDays.Add(2); // 2-day delay so succession settles first
+        }
+
         /// Called from CampaignBehavior.OnDailyTick().
         /// Decrements ongoing timed effects (Long Night).
         public static void DailyTick()
         {
+            // Tick down pending Game of Thrones events
+            for (int i = _gotDays.Count - 1; i >= 0; i--)
+            {
+                _gotDays[i]--;
+                if (_gotDays[i] <= 0)
+                {
+                    string kid = _gotKingdoms[i];
+                    _gotKingdoms.RemoveAt(i);
+                    _gotDays.RemoveAt(i);
+                    try
+                    {
+                        var k = Kingdom.All.FirstOrDefault(x => x.StringId == kid);
+                        if (k != null && !k.IsEliminated)
+                            FireGameOfThrones(k);
+                    }
+                    catch { }
+                }
+            }
+
             if (_longNightDaysRemaining > 0)
             {
                 _longNightDaysRemaining--;
@@ -185,6 +229,8 @@ namespace AshAndEmber
             _longNightDaysRemaining = 0;
             _brokenWillFired        = 0;
             _brokenKingdomIds.Clear();
+            _gotKingdoms.Clear();
+            _gotDays.Clear();
         }
 
         // ── Event 1: Ashen Plague ─────────────────────────────────────────────
@@ -1005,6 +1051,63 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Event 16: Game of Thrones ─────────────────────────────────────────
+        // Triggered 2 days after a faction leader dies (5% chance, 4+ clan kingdom).
+        // All non-ruling, non-player clans leave the kingdom and become independent.
+        // They keep their fiefs — the kingdom fractures.
+        //
+        // Safety constraints:
+        //   • Never fires for the Ashen (excluded at trigger).
+        //   • Never fires for the player's faction.
+        //   • Never ejects the current ruling clan or the player's clan.
+        //   • Each ejection in its own try/catch; a bad clan can't abort others.
+        //   • Requires kingdom still exists and is not eliminated by the time of firing.
+        //   • Uses ChangeKingdomAction.ApplyByLeaveKingdom — the only safe API path.
+        private static void FireGameOfThrones(Kingdom kingdom)
+        {
+            if (kingdom == null || kingdom.IsEliminated) return;
+            if (kingdom.StringId == AshenKingdomId) return;
+            if (kingdom == Hero.MainHero?.Clan?.Kingdom) return; // spare player's faction
+
+            var ruling      = kingdom.RulingClan;
+            var playerClan  = Hero.MainHero?.Clan;
+            string kingName = kingdom.Name?.ToString() ?? "the realm";
+            string newLeader= kingdom.Leader?.Name?.ToString() ?? "a new lord";
+
+            var toEject = kingdom.Clans
+                .Where(c => c != null && !c.IsEliminated
+                         && c != ruling
+                         && c != playerClan
+                         && c.Heroes.Any(h => h.IsAlive && !h.IsChild))
+                .ToList();
+
+            if (toEject.Count == 0) return;
+
+            var expelled = new List<string>();
+            foreach (var clan in toEject)
+            {
+                try
+                {
+                    expelled.Add(clan.Name?.ToString() ?? "a house");
+                    ChangeKingdomAction.ApplyByLeaveKingdom(clan, false);
+                }
+                catch { }
+            }
+
+            if (expelled.Count == 0) return;
+
+            string nameList = expelled.Count <= 3
+                ? string.Join(", ", expelled)
+                : $"{expelled[0]}, {expelled[1]}, and {expelled.Count - 2} others";
+
+            MBInformationManager.AddQuickInformation(new TextObject(
+                $"Game of Thrones — When {kingName}'s lord fell, the wolves came out from behind their smiles. " +
+                $"The court had been held together by one will. Without it, {nameList} " +
+                $"raised their own banners and walked out the gate with everything they owned. " +
+                $"{newLeader} inherits a throne — and a much smaller kingdom. " +
+                $"What was one realm is now many ambitions."));
+        }
+
         // ── Seasonal helpers ──────────────────────────────────────────────────
         // Bannerlord has 84 days per year, 4 seasons of 21 days each.
         // Season index: 0 = Spring, 1 = Summer, 2 = Autumn, 3 = Winter.
@@ -1121,6 +1224,16 @@ namespace AshAndEmber
             {
                 _brokenKingdomIds.Clear();
                 foreach (var id in brokenList) _brokenKingdomIds.Add(id);
+            }
+
+            var gotK = _gotKingdoms.ToList();
+            var gotD = _gotDays.ToList();
+            store.SyncData("LDM_GoTKingdoms", ref gotK);
+            store.SyncData("LDM_GoTDays",     ref gotD);
+            if (gotK != null && gotD != null && gotK.Count == gotD.Count)
+            {
+                _gotKingdoms.Clear(); _gotDays.Clear();
+                for (int i = 0; i < gotK.Count; i++) { _gotKingdoms.Add(gotK[i]); _gotDays.Add(gotD[i]); }
             }
         }
     }

@@ -60,6 +60,22 @@ namespace AshAndEmber
                 if (Campaign.Current == null || Mission.Current != null) return;
                 try { MagicInputHandler.Tick(inMission: false); } catch { }
                 try { ActiveEffectManager.MapTick(dt); } catch { }
+
+                // Ctrl+Shift+F10 — toggle scheme debug mode (zero cost, 100% success)
+                try
+                {
+                    if (TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftControl)
+                     && TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftShift)
+                     && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.F10))
+                    {
+                        SchemeSystem.DebugFree = !SchemeSystem.DebugFree;
+                        MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
+                            SchemeSystem.DebugFree
+                                ? "[DEBUG] Schemes: costs disabled, success forced."
+                                : "[DEBUG] Schemes: normal mode restored."));
+                    }
+                }
+                catch { }
             }
             catch { }
         }

@@ -608,6 +608,16 @@ namespace AshAndEmber
         {
             try
             {
+                // Game of Thrones: if this was a faction leader, the kingdom may fracture.
+                // Check before any other processing since succession may change Kingdom.Leader.
+                try
+                {
+                    var vClan = victim?.Clan;
+                    if (vClan?.Kingdom?.RulingClan == vClan && vClan?.Kingdom?.Leader == victim)
+                        CampaignMapEvents.OnFactionLeaderKilled(vClan.Kingdom);
+                }
+                catch { }
+
                 if (ColourLordRegistry.IsColourLord(victim))
                     try { ColourLordRegistry.OnLordDied(victim); } catch { }
 

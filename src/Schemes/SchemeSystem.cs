@@ -160,6 +160,10 @@ namespace AshAndEmber
         private static readonly Dictionary<string, int>      _npcCooldowns = new Dictionary<string, int>();
         private static readonly Random _rng = new Random();
 
+        // Debug: when true, player schemes cost nothing and always succeed.
+        // Toggled via Ctrl+Shift+F10 on the campaign map.
+        internal static bool DebugFree = false;
+
         // ── Public API ────────────────────────────────────────────────────────
         internal static void Initialize()
         {
@@ -183,11 +187,13 @@ namespace AshAndEmber
             // Player is limited to one pending scheme at a time for balance
             if (isPlayer && PlayerHasPendingScheme()) return false;
 
-            if (instigator.Gold < def.GoldCost) return false;
-            if ((instigator.Clan?.Influence ?? 0) < def.InfluenceCost) return false;
-
-            try { instigator.Gold -= def.GoldCost; } catch { }
-            try { if (instigator.Clan != null) instigator.Clan.Influence -= def.InfluenceCost; } catch { }
+            if (!isPlayer || !DebugFree)
+            {
+                if (instigator.Gold < def.GoldCost) return false;
+                if ((instigator.Clan?.Influence ?? 0) < def.InfluenceCost) return false;
+                try { instigator.Gold -= def.GoldCost; } catch { }
+                try { if (instigator.Clan != null) instigator.Clan.Influence -= def.InfluenceCost; } catch { }
+            }
 
             _pending.Add(new PendingScheme
             {
@@ -337,7 +343,8 @@ namespace AshAndEmber
             if (!string.IsNullOrEmpty(s.TargetHeroId)       && targetHero == null) return;
             if (!string.IsNullOrEmpty(s.TargetSettlementId) && targetSett == null) return;
 
-            float chance = ComputeSuccessChance(instigator, s.Type, targetHero, targetSett);
+            float chance = (s.IsPlayer && DebugFree) ? 1f
+                         : ComputeSuccessChance(instigator, s.Type, targetHero, targetSett);
             bool  ok     = _rng.NextDouble() < chance;
 
             if (ok) ApplySuccess(s, instigator, targetHero, targetSett);

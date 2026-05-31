@@ -399,6 +399,10 @@ When visiting any city, talk to the **Tavern Keeper** and choose *"I have some s
 | **Hire an Assassin (wound)** | Roguery | 1 200 | 20 | 30% | ~20% of target's party troops wounded. |
 | **False Accusations** | Charm | 600 | 15 | 45% | Target clan loses 25–50 renown. |
 
+### Debug mode
+
+Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. While active, all schemes cost nothing (no gold or influence) and always succeed. A confirmation message appears in the campaign log. Toggle again to restore normal mode.
+
 ### Balance notes
 
 - The player may only have **one scheme in flight at a time**. This prevents resource abuse and keeps schemes as meaningful individual decisions rather than spam.
@@ -509,6 +513,9 @@ Twelve rare events fire on the weekly tick. Multiple may fire the same week.
 | **Stolen Heirloom** | 2% | A rival clan seizes the faction seal overnight — a new ruling clan takes power without a blade drawn. |
 | **Iron Winter** | 4% (winter only) | All northern villages (Sturgia, Northern Empire) lose 50% hearth. All northern cities lose 50% prosperity and food. |
 | **Scorching Sun** | 4% (summer only) | All southern desert villages (Aserai, Southern Empire) lose 50% hearth. Cities lose 50% prosperity and food. |
+| **Game of Thrones** | 5% on leader death | When a qualifying faction leader dies, the kingdom fractures: all non-ruling clans leave and become independent, keeping their fiefs. Requires 4+ clans; never fires for the Ashen. |
+
+The Ashen are exempt from all betrayal and political-fracture events — their will is cold, singular, and does not break or scheme against itself.
 
 ---
 
