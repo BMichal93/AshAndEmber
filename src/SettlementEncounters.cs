@@ -98,6 +98,9 @@ namespace AshAndEmber
         private static int    _pregnancyCountdown    = 0;   // days until female-player pregnancy triggers
         private static int    _familyFeverCooldown   = 0;   // long cooldown for the family-plague event
         private static int    _ashenFrenzyCountdown  = 0;   // fires the day after player becomes Ashen
+        private static int    _hedgeWitchCooldown    = 0;   // cooldown for the hedge-witch event
+        private static int    _hedgeWitchCurse       = 0;   // days until witch-bargain sickness fires
+        private static int    _ancientBookFound      = 0;   // 1 after the grimoire event fires (one-time)
         private static int    _trinketCountdown      = 0;   // days until next trinket-dream stage fires
         private static int    _trinketPhase          = 0;   // 0=inactive, 1=first dream, 2=recurring dream
         private static int    _trinketVariant        = 0;   // 1=ember shard, 2=blind eye, 3=pale compass
@@ -123,6 +126,9 @@ namespace AshAndEmber
             _pregnancyCountdown    = 0;
             _familyFeverCooldown   = 0;
             _ashenFrenzyCountdown  = 0;
+            _hedgeWitchCooldown    = 0;
+            _hedgeWitchCurse       = 0;
+            _ancientBookFound      = 0;
             _trinketCountdown      = 0;
             _trinketPhase          = 0;
             _trinketVariant        = 0;
@@ -137,6 +143,9 @@ namespace AshAndEmber
             store.SyncData("SE_Pregnancy",          ref _pregnancyCountdown);
             store.SyncData("SE_FamilyFever",        ref _familyFeverCooldown);
             store.SyncData("SE_AshenFrenzy",        ref _ashenFrenzyCountdown);
+            store.SyncData("SE_HedgeWitchCD",       ref _hedgeWitchCooldown);
+            store.SyncData("SE_HedgeWitchCurse",    ref _hedgeWitchCurse);
+            store.SyncData("SE_AncientBook",        ref _ancientBookFound);
             store.SyncData("SE_TrinketCountdown",   ref _trinketCountdown);
             store.SyncData("SE_TrinketPhase",       ref _trinketPhase);
             store.SyncData("SE_TrinketVariant",     ref _trinketVariant);
@@ -178,6 +187,14 @@ namespace AshAndEmber
             if (_cooldown > 0) _cooldown--;
             if (_childEventCooldown > 0) _childEventCooldown--;
             if (_familyFeverCooldown > 0) _familyFeverCooldown--;
+            if (_hedgeWitchCooldown > 0) _hedgeWitchCooldown--;
+
+            if (_hedgeWitchCurse > 0)
+            {
+                _hedgeWitchCurse--;
+                if (_hedgeWitchCurse == 0)
+                    FireHedgeWitchCurse();
+            }
 
             if (_ashenFrenzyCountdown > 0)
             {
@@ -262,6 +279,7 @@ namespace AshAndEmber
             {
                 pool.Add(E_BanditWarning);
                 if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
+                if (_hedgeWitchCooldown == 0 && HasHedgeWitchCondition()) pool.Add(E_NightVisitor);
                 pool.Add(EV2_TravelingMonk);
                 pool.Add(EV2_WiseWomanWarning);
                 if (ren >= 600f) pool.Add(EV2_ChildNamedAfterYou);
@@ -295,6 +313,7 @@ namespace AshAndEmber
                 pool.Add(E_OldEnemy);
                 pool.Add(EC2_CityQuarantine);
                 if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
+                if (_hedgeWitchCooldown == 0 && HasHedgeWitchCondition()) pool.Add(E_NightVisitor);
                 if (ren >= 150f) pool.Add(EC3_Philosopher);
                 if (ren >= 250f) pool.Add(EC8_MerchantLedger);
                 if (ren >= 300f) pool.Add(EC8_ReluctantOfficial);
@@ -420,6 +439,7 @@ namespace AshAndEmber
                 pool.Add(ES8_SiegeStores);
                 if (mage) pool.Add(ES4_AshenCrystal);
                 if (mage) pool.Add(ES7_FallenLaboratory);
+                if (mage && _ancientBookFound == 0) pool.Add(ES_AncientGrimoire);
             }
             else
             {
@@ -4704,6 +4724,243 @@ namespace AshAndEmber
                                 break;
                         }
                     }, null, "", false), false, true);
+            };
+        }
+
+        // ── ES_AncientGrimoire — siege won, mage, one-time ────────────────────
+        // A strange book found in the conquered keep's sealed archive.
+        private static void ES_AncientGrimoire()
+        {
+            _ancientBookFound = 1;
+
+            void ShowRitePrompt()
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "★  What the Book Describes",
+                    "The rituals are specific and detailed — not the vague symbolism of cult texts but something written by someone who had done them and was writing down what worked. The central one describes a working to rekindle a depleted fire-gift at the cost of the lives surrounding it. Not metaphorically. The warmth of the living, taken in bulk, pressed back into a fire-carrier who has burned too low. The author's notes in the margin suggest it was tested. They suggest it worked.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "Discard it. You have read enough.", null, true,
+                            "Nothing happens."),
+                        new InquiryElement("b", "Perform the rite.", null, true,
+                            "Become Devious and Cruel. Gain Reap or Harvest (or attribute point if owned). 50% of your troops die."),
+                        new InquiryElement("c", "Report it to the nearest temple. This should not exist.", null, true,
+                            "+10 renown. Gain Honour. Spend 500 gold."),
+                    },
+                    false, 1, 1, "Decide", "",
+                    chosen2 =>
+                    {
+                        switch (chosen2?[0]?.Identifier as string)
+                        {
+                            case "a":
+                                Msg("You set the book face-down on the table and leave it there. Someone will find it when they clear the keep. That is their problem now. You are not certain you made the right decision, but you made a decision, and that is enough for tonight.", DimColor);
+                                break;
+                            case "b":
+                                try
+                                {
+                                    Hero.MainHero.SetTraitLevel(DefaultTraits.Honor, -2);
+                                    Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2);
+                                }
+                                catch { }
+                                // Grant Reap if not owned, then Harvest (DevourLife), else attribute point
+                                if (!TalentSystem.Has(TalentId.Reap))
+                                    TalentSystem.GrantFree(TalentId.Reap, Hero.MainHero);
+                                else if (!TalentSystem.Has(TalentId.DevourLife))
+                                    TalentSystem.GrantFree(TalentId.DevourLife, Hero.MainHero);
+                                else
+                                    try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 1; } catch { }
+                                KillHalfParty();
+                                Msg("The working is exactly what the book said it was — which is to say it is the worst thing you have done. Your soldiers fall between one breath and the next, not in pain, just gone. The fire in you surges in a way that makes the preceding days feel like ash. You are standing in a room full of people who trusted you, and half of them are not standing anymore. The book's author was correct. It works.", BadColor);
+                                break;
+                            case "c":
+                                if (!ChangeGold(-500)) return;
+                                ChangeRenown(10f);
+                                ShiftTrait(DefaultTraits.Honor, 1);
+                                Msg("You have the book wrapped and sealed for transport. The temple receives it with the grim recognition of people who have handled this category of thing before. The courier confirms delivery. You receive formal acknowledgement and a note of thanks that does not begin to cover what you have handed them. The renown is a side-effect — what you actually did was make sure no one else reads that margin note and decides to test the method.", GoodColor);
+                                break;
+                        }
+                    }, null, "", false), false, true);
+            }
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★  The Sealed Archive",
+                "Your men found it behind a false wall in the keep's lower study — a sealed room, clearly personal, clearly not meant to be entered by whoever came next. Inside: a single book, handwritten, with a lock that took three of your people an hour to open. The title page has no author and no date. The first ten pages are in a cipher. The next two hundred are not.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Burn it. Some things are better unread.", null, true,
+                        "Gain Honour."),
+                    new InquiryElement("b", "Read it.", null, true,
+                        "See what it contains."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You burn it in the keep's hearth without reading beyond the first page. The fire takes it quickly — more quickly than paper should. Whatever was in the cipher, it goes with the rest. The room feels different when you leave it. Not better. Just different.", GoodColor);
+                            break;
+                        case "b":
+                            ShowRitePrompt();
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Helper: kill 50% of non-hero party troops ──────────────────────────
+        private static void KillHalfParty()
+        {
+            try
+            {
+                var roster = MobileParty.MainParty?.MemberRoster;
+                if (roster == null) return;
+                int total = roster.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero && e.Number > 0)
+                    .Sum(e => e.Number);
+                int toKill = total / 2;
+                if (toKill <= 0) return;
+                int killed = 0;
+                foreach (var e in roster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero || e.Number <= 0) continue;
+                    int take = Math.Min(e.Number, toKill - killed);
+                    if (take <= 0) break;
+                    roster.AddToCounts(e.Character, -take);
+                    killed += take;
+                    if (killed >= toKill) break;
+                }
+                if (killed > 0) Msg($"({killed} troops consumed by the rite)", BadColor);
+            }
+            catch { }
+        }
+
+        // ── HasHedgeWitchCondition ─────────────────────────────────────────────
+        private static bool HasHedgeWitchCondition()
+        {
+            try
+            {
+                Hero h = Hero.MainHero;
+                Hero spouse = h?.Spouse;
+                if (spouse == null || !spouse.IsAlive) return false;
+                if (h.Age < 40f || spouse.Age < 40f) return false;
+                if (Hero.AllAliveHeroes.Any(c =>
+                        c.IsAlive && !c.IsDisabled &&
+                        (c.Father == h || c.Mother == h))) return false;
+                if (spouse.GetTraitLevel(DefaultTraits.Honor) >= 1) return false;
+                if (spouse.GetTraitLevel(DefaultTraits.Mercy)  >= 1) return false;
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // ── E_NightVisitor — enter village/city, conditional ──────────────────
+        // A servant reports a strange figure visiting the player's spouse at night.
+        private static void E_NightVisitor(Settlement s)
+        {
+            Hero spouse = Hero.MainHero?.Spouse;
+            if (spouse == null) return;
+            _hedgeWitchCooldown = 300;
+
+            string spouseName = spouse.Name?.ToString() ?? "your spouse";
+            float scoutChance = SkillChance(DefaultSkills.Scouting, 0.35f);
+            string scoutHint  = SkillHint(DefaultSkills.Scouting, 0.35f, "Follow the figure without being seen");
+
+            void ShowRevelation()
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "★  What Your Spouse Has Done",
+                    $"The figure is a hedge witch — old, deliberate, carrying things in a bag that clink wrong. This is not her first visit. {spouseName} receives her without surprise: they have spoken before, many times, in the hours before dawn when the house is asleep. You piece it together quickly. The herbs, the cost, the quiet desperation of someone who has watched time run and decided to reach for something the healers will not offer. She has been trying to give you children before the years close that door entirely.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "Say nothing. It is kind of them.", null, true,
+                            "Lose Honour. 20% chance of pregnancy. Sickness arrives in 7 days."),
+                        new InquiryElement("b", "Hang the witch.", null, true,
+                            "Gain Impulsive."),
+                        new InquiryElement("c", $"Kill them both — the witch and {spouseName} — in fury.", null, true,
+                            "Gain Impulsive and Cruel. Both die."),
+                        new InquiryElement("d", "Tell the witch to go and never come back.", null, true,
+                            "Nothing happens."),
+                    },
+                    false, 1, 1, "Decide", "",
+                    chosen2 =>
+                    {
+                        switch (chosen2?[0]?.Identifier as string)
+                        {
+                            case "a":
+                                ShiftTrait(DefaultTraits.Honor, -1);
+                                // 20% fertility boost: attempt pregnancy for the appropriate hero
+                                if (_rng.NextDouble() < 0.20)
+                                {
+                                    Hero target = (Hero.MainHero?.IsFemale == true)
+                                        ? Hero.MainHero : spouse;
+                                    try { MakePregnantAction.Apply(target); } catch { }
+                                }
+                                _hedgeWitchCurse = 7;
+                                Msg($"You say nothing and leave the way you came. {spouseName} never knows you were there. The witch departs before dawn. You carry the knowledge of it without speaking it. Whatever was agreed in that room begins to work. Seven days later, so does everything else.", DimColor);
+                                break;
+                            case "b":
+                                ShiftTrait(DefaultTraits.Calculating, -1);
+                                Msg("You have the witch taken before she leaves the grounds. She does not argue. She asks only that you know what you are stopping. You have her hanged before noon. {spouseName} does not speak for three days. Neither do you.", BadColor);
+                                break;
+                            case "c":
+                                ShiftTrait(DefaultTraits.Calculating, -1);
+                                try { Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2); } catch { }
+                                try { KillCharacterAction.ApplyByMurder(spouse, Hero.MainHero, false); } catch { }
+                                Msg($"The fury comes before the thought. The witch is first — she had time to understand what was happening. {spouseName} had less. You surface an hour later in a room that cannot be unchanged. What was done out of love and desperation is done. So is {spouseName}.", BadColor);
+                                break;
+                            case "d":
+                                Msg("You step into the room before {spouseName} can speak. You tell the witch to go — calmly, with enough in your voice that she understands this is the last visit. She leaves. {spouseName} watches you with something that is not quite relief and not quite anger. You do not discuss it. The door stays between you for a long time.", DimColor);
+                                break;
+                        }
+                    }, null, "", false), false, true);
+            }
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "♦  The Visitor at Night",
+                $"One of your servants finds you before you have finished your first cup of the morning. They are careful with their words — a strange figure, they say, has been seen entering the house in the hours before dawn. Not a burglar: too deliberate, too familiar with the layout, too expected by whoever let them in. They look at you and wait to see what you want to do with that.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Leave it be.", null, true,
+                        "Nothing happens."),
+                    new InquiryElement($"b", $"Investigate. ({(int)(scoutChance * 100)}% Scouting)", null, true,
+                        scoutHint),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            Msg("You tell the servant you heard them and will handle it. You do not handle it. Whatever is happening in your house at odd hours continues to happen without your interference. You are not certain if that is restraint or avoidance.", DimColor);
+                            break;
+                        case "b":
+                            if (SkillRoll(DefaultSkills.Scouting, 0.35f))
+                                ShowRevelation();
+                            else
+                                Msg("You watch the house for three mornings without finding anything out of the ordinary. Whatever the servant saw, the timing was either coincidence or whoever it was has learned to move more carefully. The question stays open.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireHedgeWitchCurse — 7 days after E_NightVisitor choice A ──
+        private static void FireHedgeWitchCurse()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _hedgeWitchCurse = 1; return; }
+            WoundPlayer();
+            MageKnowledge._deferredInquiry = () =>
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "♦  The Price of the Bargain",
+                    "Seven days after the witch's visit. It begins in the night — not a wound, not a fever in the ordinary sense. Something the witch's working cost that was not disclosed in the agreement, or was disclosed in terms that were easy to misread at the time. You come awake cold, unable to stand, your body doing things that the healers will describe later as 'an acute episode' in the careful way healers describe things they do not understand. It takes a week to pass. Some of it does not pass.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("ok", "Endure it.", null, true, "Wounded."),
+                    },
+                    false, 1, 1, "Endure", "",
+                    _ => Msg("You survive it. The healers say you will recover. They mean most of it. Whatever the witch's working extracted as its price, it took it without asking and gave back something approximate.", BadColor),
+                    null, "", false), false, true);
             };
         }
     }
