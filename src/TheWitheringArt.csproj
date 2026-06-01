@@ -101,7 +101,6 @@
     <Compile Include="AI\AshenCitySystem.cs"/>
     <Compile Include="AI\AshenDialogue.cs"/>
     <Compile Include="AI\FireWorshippersSystem.cs"/>
-    <Compile Include="LordEncounterEvents.cs"/>
     <Compile Include="Schemes\SchemeSystem.cs"/>
     <Compile Include="Schemes\SchemeCampaignBehavior.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.cs"/>

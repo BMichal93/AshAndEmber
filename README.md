@@ -24,7 +24,6 @@ AshAndEmber/
 │   ├── BattleEvents.cs              per-battle battlefield events with atmospheric visuals
 │   ├── DragonQuestSystem.cs         main quest — The Last Flight of the Dragons
 │   ├── SettlementEncounters.cs      40+ random events on settlement enter/leave/battle
-│   ├── LordEncounterEvents.cs       lord dialogue event — The Whispered Coin
 │   ├── SchoolData.cs                colour school definitions and visual data
 │   ├── SpellDatabase.cs             spell definition registry
 │   ├── ActiveEffects.cs             per-frame effect state tracking
@@ -366,31 +365,6 @@ A cooldown of 6 days prevents back-to-back encounters. Six new dark-themed event
 | **The Circle Closes** | Leave village | Ashen Spawn surround you. Embrace the cold (become Ashen), run (Athletics check), fight (best blade skill check), or burn them with magic (age 3 days). |
 | **Ash in the Dream** | Leave village | A dream reaches out to you. Accept (become Ashen), refuse, or inquire (30% wounded / 20% become Ashen / 50% free focus point). |
 | **Three Figures at the Crossroads** | Leave village | Three witches invite you. Join (−2 years, Honor/Mercy −2), ride past (nothing), or scatter them (free focus point; 50% cursed: +1 year). | Encounter chance: 10% per settlement transition; 14% per field battle; 22% per siege or raid.
-
----
-
-## Lord Encounter Events
-
-### The Whispered Coin
-
-A rare encounter triggered during lord dialogue. When the player's clan is **tier 1–3**, each unique lord conversation has an **8% chance** to cause a stranger to intercept you in the passageway on your way to the hall.
-
-**Variants (chosen at random):**
-- A hooded messenger presses a purse into your hand and names a price.
-- A young person with the lord's jaw and harder eyes asks you to end the family line here.
-- A scarred former soldier who carried the clan's banner for six years makes you an offer.
-
-**Choices:**
-
-| Choice | Requirements | Outcome |
-|--------|-------------|---------|
-| **Refuse** — let them go | None | Nothing happens. |
-| **Agree** — fight the lord now | None | Immediate battle with the lord's party. **On victory:** +50 relations with a random lord in that kingdom, 2 000–4 000 gold. |
-| **Turn them in** — seize the conspirator | OneHanded/Athletics check (base 30%, +0.4% per skill point, cap 85%) | **Success:** +10 relations with the lord, −10 with a random lord. **Failure:** nothing. |
-
-**Cooldown:** 14 days after any choice before a new offer can appear.
-
-**Gates:** player clan tier 1–3 only; Ashen lords are excluded; the target must have an active kingdom.
 
 ---
 
