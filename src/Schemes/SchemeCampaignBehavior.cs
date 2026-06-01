@@ -226,9 +226,20 @@ namespace AshAndEmber
         {
             try
             {
+                bool isVipers = _selectedDef.Type == SchemeType.VipersCounsel;
+                var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
+
+                if (isVipers && playerKingdom == null)
+                {
+                    MBInformationManager.AddQuickInformation(
+                        new TextObject("You must belong to a kingdom to use Viper's Counsel."));
+                    return;
+                }
+
                 var lords = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && !h.IsChild
-                             && h != Hero.MainHero)
+                             && h != Hero.MainHero
+                             && (!isVipers || (h.Clan?.Kingdom != null && h.Clan.Kingdom == playerKingdom)))
                     .OrderBy(h => h.Clan?.Kingdom?.Name?.ToString() ?? "")
                     .ThenBy(h => h.Name?.ToString() ?? "")
                     .Take(60)
@@ -236,7 +247,9 @@ namespace AshAndEmber
 
                 if (lords.Count == 0)
                 {
-                    MBInformationManager.AddQuickInformation(new TextObject("No valid lord targets found."));
+                    MBInformationManager.AddQuickInformation(new TextObject(isVipers
+                        ? "No rival lords found within your kingdom."
+                        : "No valid lord targets found."));
                     return;
                 }
 
@@ -254,10 +267,14 @@ namespace AshAndEmber
                     return new InquiryElement(h.StringId, label, null, !blk, hint);
                 }).ToList();
 
+                string selectMsg = isVipers
+                    ? "Select a lord from your kingdom to undermine in the king's eyes:"
+                    : "Select the lord to target:";
+
                 MBInformationManager.ShowMultiSelectionInquiry(
                     new MultiSelectionInquiryData(
                         $"Target — {_selectedDef.Name}",
-                        "Select the lord to target:",
+                        selectMsg,
                         elements, true, 1, 1,
                         "Confirm", "Back",
                         OnLordTargetChosen, null),

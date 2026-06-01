@@ -60,6 +60,7 @@ namespace AshAndEmber
         ForgeDocuments,     // Smear a lord             — Charm
         HireAssassin,       // Wound a lord's party     — Roguery
         FalseAccusations,   // Drain clan renown        — Charm
+        VipersCounsel,      // Undermine rival clan with king — Charm (same kingdom only)
     }
 
     internal sealed class SchemeDefinition
@@ -183,6 +184,12 @@ namespace AshAndEmber
                 "Spread Rumors",
                 "Whisper campaigns corrode trust. Loyalty and prosperity fall.",
                 1200, 20, 0.35f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 400),
+
+            // LORD SCHEME (same kingdom only) ──────────────────────────────────────
+            new SchemeDefinition(SchemeType.VipersCounsel,
+                "Viper's Counsel",
+                "Poison the king's ear against a rival clan. Your renown rises; theirs falls. Can only target lords within your own kingdom. On failure, lose standing with both the king and the target.",
+                1800, 60, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 600),
         };
 
         // ── State ─────────────────────────────────────────────────────────────
@@ -378,16 +385,31 @@ namespace AshAndEmber
 
                 if (scheme.NeedsLord)
                 {
-                    var enemies = Hero.AllAliveHeroes
-                        .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
-                                 && t != Hero.MainHero
-                                 && t.Clan != null && t.Clan != lord.Clan
-                                 && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
-                                 && t.Clan.Kingdom != null && !t.Clan.Kingdom.IsEliminated
-                                 && lord.Clan.Kingdom.IsAtWarWith(t.Clan.Kingdom))
-                        .ToList();
-                    if (enemies.Count == 0) return;
-                    targetHero = enemies[_rng.Next(enemies.Count)];
+                    List<Hero> lordTargets;
+                    if (scheme.Type == SchemeType.VipersCounsel)
+                    {
+                        // Same-kingdom court intrigue — target a rival clan within the same kingdom
+                        lordTargets = Hero.AllAliveHeroes
+                            .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
+                                     && t != lord && t != Hero.MainHero
+                                     && t.Clan != null && t.Clan != lord.Clan
+                                     && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
+                                     && t.Clan.Kingdom == lord.Clan.Kingdom)
+                            .ToList();
+                    }
+                    else
+                    {
+                        lordTargets = Hero.AllAliveHeroes
+                            .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
+                                     && t != Hero.MainHero
+                                     && t.Clan != null && t.Clan != lord.Clan
+                                     && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
+                                     && t.Clan.Kingdom != null && !t.Clan.Kingdom.IsEliminated
+                                     && lord.Clan.Kingdom.IsAtWarWith(t.Clan.Kingdom))
+                            .ToList();
+                    }
+                    if (lordTargets.Count == 0) return;
+                    targetHero = lordTargets[_rng.Next(lordTargets.Count)];
                 }
                 else
                 {
@@ -641,6 +663,24 @@ namespace AshAndEmber
                             $"{cAcc}'s reputation has taken a visible hit. {tAcc} cannot easily deny what they haven't heard yet.",
                             col);
                         break;
+
+                    // ── Viper's Counsel ───────────────────────────────────────
+                    case SchemeType.VipersCounsel:
+                        if (targetHero == null || !targetHero.IsAlive || targetHero.Clan == null) break;
+                        string tVipr  = targetHero.Name?.ToString() ?? "the lord";
+                        string cVipr  = targetHero.Clan.Name?.ToString() ?? "their clan";
+                        // Target loses 7% renown (floor 50) — more than FalseAccusations, justified by the king's direct involvement
+                        float viprLoss = Math.Max(50f, targetHero.Clan.Renown * 0.07f);
+                        try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - viprLoss); } catch { }
+                        // Instigator clan gains renown — the contrast is the point
+                        float viprGain = 30f + _rng.Next(21); // 30–50
+                        try { if (instigator.Clan != null) instigator.Clan.Renown += viprGain; } catch { }
+                        Notify(s,
+                            $"The king's ear is not easily poisoned — but patience placed the right words at the right moment. " +
+                            $"{cVipr}'s recent deeds were reframed, their loyalty questioned in a dozen small ways. " +
+                            $"Their standing at court has quietly eroded. {inst}'s name rises by comparison.",
+                            col);
+                        break;
                 }
             }
             catch { }
@@ -661,6 +701,31 @@ namespace AshAndEmber
         private static void ApplyFailure(PendingScheme s, Hero instigator,
             Hero targetHero, Settlement targetSett)
         {
+            // VipersCounsel always surfaces on failure — there is no silent slip when
+            // the king's court is involved. The target is always told and the king sours
+            // on the manipulator regardless of whether an agent was literally "caught".
+            if (s.Type == SchemeType.VipersCounsel)
+            {
+                string tVFail = targetHero?.Name?.ToString() ?? "the lord";
+                if (targetHero != null && targetHero.IsAlive && targetHero != instigator)
+                {
+                    int tDelta = -(50 + _rng.Next(21)); // −50 to −70
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, tDelta, false); } catch { }
+                }
+                Hero king = instigator.Clan?.Kingdom?.Leader;
+                if (king != null && king.IsAlive && king != instigator && king != targetHero)
+                {
+                    int kDelta = -(30 + _rng.Next(21)); // −30 to −50
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, king, kDelta, false); } catch { }
+                }
+                Notify(s,
+                    $"SCHEME EXPOSED — The words reached {tVFail} before the king believed them. " +
+                    $"The plot is known, and the king did not appreciate the attempt at manipulation within his own court. " +
+                    $"Relations with both have suffered deeply.",
+                    new Color(0.80f, 0.20f, 0.18f));
+                return;
+            }
+
             bool caught = _rng.NextDouble() < 0.30;
 
             string inst    = instigator.Name?.ToString() ?? "Someone";
