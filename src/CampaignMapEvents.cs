@@ -40,6 +40,12 @@
 // │ Tyranny              │ (Very rare) A faction leader executes their highest- │
 // │                      │ tier clan heads. Ruling clan loses all influence.   │
 // │                      │ One executed clan defects.                          │
+// ├──────────────────────┼─────────────────────────────────────────────────────┤
+// │ The Ashen Gambit     │ (Once per campaign, day 120+) Ashen assassins strike │
+// │                      │ every Imperial throne in a single night. Empire     │
+// │                      │ leaders die, lords suffer −30 morale, cities −30   │
+// │                      │ security. Ashen Spawn flood the heartlands and the  │
+// │                      │ cold armies march.                                  │
 // └──────────────────────┴─────────────────────────────────────────────────────┘
 //
 // DEBUGGING GUIDE:
@@ -95,6 +101,9 @@ namespace AshAndEmber
         public const int   TempleEarliestDay   = 100;
         public const float ChanceIronWinter      = 0.04f;  // ~every 25 weeks  (rare, winter only)
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
+        public const float ChanceAshenGambit     = 0.010f; // ~every 100 weeks, fires ONCE per campaign (day 120+)
+        public const int   AshenGambitEarliestDay = 120;
+        public const int   AshenGambitSpawnCount  = 8;     // Ashen Spawn warbands seeded across the Empire
 
         // Ashen Plague: parties spawned near the afflicted settlement
         public const int AshenPlagueSpawnCount  = 3;
@@ -126,6 +135,9 @@ namespace AshAndEmber
 
         // Scorching Sun: desert kingdoms — Aserai and the Southern Empire bake in the heat.
         private static readonly string[] DesertKingdoms = { "aserai", "empire_s" };
+
+        // The Ashen Gambit: all vanilla Empire splits plus base "empire" ID for safety.
+        private static readonly string[] EmpireKingdomIds = { "empire_w", "empire_s", "empire_n", "empire" };
 
         // ── Runtime state ─────────────────────────────────────────────────────
         private static int _longNightDaysRemaining = 0;
@@ -255,6 +267,7 @@ namespace AshAndEmber
             TryFireTheTemple();
             TryFireIronWinter();
             TryFireScorchingSun();
+            TryFireAshenGambit();
         }
 
         /// Resets state for a fresh new game (called from OnNewGameCreated).
@@ -265,6 +278,7 @@ namespace AshAndEmber
             _templeFounded           = false;
             _debugForceNextTemple    = false;
             _protectedDaysRemaining  = 0;
+            _ashenGambitFired        = false;
             _brokenKingdomIds.Clear();
             _gotKingdoms.Clear();
             _gotDays.Clear();
@@ -772,10 +786,11 @@ namespace AshAndEmber
         //   • Skips the player's faction.
         //   • Skips already-broken kingdoms.
         //   • Checks !IsAtWarWith before declaring to avoid duplicate war actions.
-        private static bool _declaringBrokenWill  = false;
-        private static bool _templeFounded        = false;
-        private static bool _debugForceNextTemple = false;
+        private static bool _declaringBrokenWill    = false;
+        private static bool _templeFounded          = false;
+        private static bool _debugForceNextTemple   = false;
         private static int  _protectedDaysRemaining = 0;
+        private static bool _ashenGambitFired       = false;
 
         // ── Sanctuary / protective rites public API ───────────────────────────
         internal static int  ProtectedDaysRemaining => _protectedDaysRemaining;
@@ -1924,6 +1939,184 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Event 21: The Ashen Gambit ────────────────────────────────────────
+        // Fires at most once per campaign, no earlier than AshenGambitEarliestDay.
+        // Ashen assassins — woven through every Imperial court like cold thread —
+        // coordinate their move in a single night of dark fire and silence:
+        //
+        //   Phase 1 — Kill all living Empire faction leaders (silent murder, no
+        //             attribution). Skipped leaders: player hero, child heroes,
+        //             any king whose kingdom has only 1 surviving clan (succession
+        //             must be possible).
+        //   Phase 2 — Apply −30 morale to every active Empire lord party.
+        //   Phase 3 — Apply −30 security to every Empire town (floor 0).
+        //   Phase 4 — Spawn AshenGambitSpawnCount Ashen Spawn warbands, each with
+        //             minStrength 80, distributed across Empire settlement anchors.
+        //             All spawns use the hideout-safe pattern to prevent crashes.
+        //   Phase 5 — Ensure the Ashen kingdom is at war with every Empire faction,
+        //             then surge Ashen lord party morale +50 to drive them onto the
+        //             offensive.
+        //
+        // Sanctuary protection blocks the event with a notification.
+        // Safety constraints:
+        //   • Never kills the player hero.
+        //   • Only kills leaders of kingdoms with ≥ 2 surviving clans.
+        //   • Each phase is individually try/caught; one failure cannot abort the rest.
+        private static void TryFireAshenGambit()
+        {
+            if (_ashenGambitFired) return;
+            if (CampaignTime.Now.ToDays < AshenGambitEarliestDay) return;
+            if (_rng.NextDouble() >= ChanceAshenGambit) return;
+
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "The Ashen Gambit — The sanctuary's ward blazes bright. The assassins feel it like a wall of fire " +
+                    "and pull back into the dark. Tonight, the Empire's lords sleep safely."));
+                return;
+            }
+
+            _ashenGambitFired = true;
+
+            // ── Phase 1: Kill all living Empire faction leaders ───────────────
+            var killedNames = new List<string>();
+            try
+            {
+                var empireKingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated
+                             && EmpireKingdomIds.Contains(k.StringId)
+                             && k.Leader != null
+                             && k.Leader.IsAlive
+                             && !k.Leader.IsChild
+                             && k.Leader != Hero.MainHero
+                             && k.Clans.Count(c => c != null && !c.IsEliminated) >= 2)
+                    .ToList();
+
+                foreach (var kingdom in empireKingdoms)
+                {
+                    try
+                    {
+                        killedNames.Add(kingdom.Leader.Name?.ToString() ?? "an emperor");
+                        KillCharacterAction.ApplyByMurder(kingdom.Leader, null, false);
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            // ── Phase 2: −30 morale to all active Empire lord parties ─────────
+            int moraleHit = 0;
+            try
+            {
+                foreach (var hero in Hero.AllAliveHeroes)
+                {
+                    if (!hero.IsLord || hero.IsChild || hero.PartyBelongedTo == null) continue;
+                    if (hero.Clan?.Kingdom == null) continue;
+                    if (!EmpireKingdomIds.Contains(hero.Clan.Kingdom.StringId)) continue;
+                    try
+                    {
+                        hero.PartyBelongedTo.RecentEventsMorale -= 30f;
+                        moraleHit++;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            // ── Phase 3: −30 security to every Empire town (floor 0) ─────────
+            int secHit = 0;
+            try
+            {
+                foreach (var settlement in Settlement.All)
+                {
+                    if (!settlement.IsTown || settlement.Town == null) continue;
+                    if (!EmpireKingdomIds.Contains(settlement.MapFaction?.StringId)) continue;
+                    try
+                    {
+                        settlement.Town.Security = Math.Max(0f, settlement.Town.Security - 30f);
+                        secHit++;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            // ── Phase 4: Spawn Ashen Spawn across Empire heartlands ───────────
+            int spawned = 0;
+            try
+            {
+                var empireAnchors = Settlement.All
+                    .Where(s => (s.IsTown || s.IsCastle)
+                             && EmpireKingdomIds.Contains(s.MapFaction?.StringId))
+                    .Select(s => s.GetPosition2D)
+                    .ToList();
+
+                if (empireAnchors.Count > 0)
+                {
+                    for (int i = 0; i < AshenGambitSpawnCount; i++)
+                    {
+                        var anchor = empireAnchors[i % empireAnchors.Count];
+                        var party  = SpawnAshenSpawnParty(anchor, baseTroops: 15, minStrength: 80f);
+                        if (party != null) spawned++;
+                    }
+                }
+            }
+            catch { }
+
+            // ── Phase 5: Ashen go on the offensive ───────────────────────────
+            try
+            {
+                var ashenKingdom = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == AshenKingdomId && !k.IsEliminated);
+
+                if (ashenKingdom != null)
+                {
+                    foreach (var empire in Kingdom.All
+                        .Where(k => !k.IsEliminated && EmpireKingdomIds.Contains(k.StringId)))
+                    {
+                        try
+                        {
+                            if (!ashenKingdom.IsAtWarWith(empire))
+                                DeclareWarAction.ApplyByDefault(ashenKingdom, empire);
+                        }
+                        catch { }
+                    }
+                }
+
+                // Surge Ashen lord party morale — push them into aggressive campaigning
+                foreach (var party in MobileParty.All)
+                {
+                    if (!party.IsActive) continue;
+                    var leader = party.LeaderHero;
+                    if (leader != null && ColourLordRegistry.IsAshenLord(leader))
+                    {
+                        try { party.RecentEventsMorale += 50f; } catch { }
+                    }
+                }
+            }
+            catch { }
+
+            // ── Notification ──────────────────────────────────────────────────
+            string leaderStr = killedNames.Count == 0
+                ? "the Imperial thrones stand empty by morning"
+                : killedNames.Count == 1
+                    ? $"{killedNames[0]} is dead"
+                    : killedNames.Count <= 3
+                        ? string.Join(", ", killedNames.Take(killedNames.Count - 1))
+                          + $" and {killedNames[killedNames.Count - 1]} are dead"
+                        : $"{killedNames[0]}, {killedNames[1]}, and {killedNames.Count - 2} other rulers are dead";
+
+            MBInformationManager.AddQuickInformation(new TextObject(
+                $"The Ashen Gambit — In a single night of cold fire and silence, every Imperial throne was struck at once. " +
+                $"{leaderStr}. Their courts woke to ash on the pillows and cooling blood on the floors. " +
+                (moraleHit > 0 ? $"Dread swept through {moraleHit} Imperial warbands. " : "") +
+                (secHit > 0 ? $"{secHit} Imperial cit{(secHit != 1 ? "ies" : "y")} erupted in panic and suspicion. " : "") +
+                (spawned > 0
+                    ? $"{spawned} Ashen Spawn rose from the shadows across the heartlands before dawn. "
+                    : "") +
+                "The cold armies do not wait. They march."));
+        }
+
         // Spawns a looter party of `troopCount` near `anchorPos` using the
         // same hideout-safe pattern as SpawnAshenSpawnParty.
         private static MobileParty SpawnLooterParty(Vec2 anchorPos, int troopCount)
@@ -2142,6 +2335,10 @@ namespace AshAndEmber
             store.SyncData("LDM_TempleFounded",    ref templeFounded);
             store.SyncData("LDM_ProtectedDays",    ref _protectedDaysRemaining);
             _templeFounded = templeFounded != 0;
+
+            int gambitFired = _ashenGambitFired ? 1 : 0;
+            store.SyncData("LDM_AshenGambitFired", ref gambitFired);
+            _ashenGambitFired = gambitFired != 0;
         }
     }
 }
