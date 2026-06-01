@@ -130,60 +130,71 @@ namespace AshAndEmber
             {
                 starter.AddGameMenu(
                     "ldm_scheme_menu",
-                    "{LDM_SCHEME_HEADER}",
+                    "{LDM_SCHEME_HDR}",
                     args =>
                     {
                         try
                         {
                             int gold = Hero.MainHero?.Gold ?? 0;
                             int inf  = (int)(Hero.MainHero?.Clan?.Influence ?? 0f);
-                            MBTextManager.SetTextVariable("LDM_SCHEME_HEADER",
-                                $"The tavernkeeper leans back. His fee was set before you sat down.\n" +
-                                $"Your resources: {gold} gold  |  {inf} influence");
+                            MBTextManager.SetTextVariable("LDM_SCHEME_HDR",
+                                $"The tavernkeeper leans forward. Name the work.\nYour resources: {gold}g  |  {inf} influence");
                         }
                         catch { }
                     });
             }
             catch { }
 
-            // ── One option per scheme type ─────────────────────────────────────
-            // Outer try/catch: prevents TypeInitializationException on SchemeSystem
-            // from escaping into Bannerlord's native dispatcher and crashing.
-            // Text-variable keys use only letters — digits are not safe in
-            // Bannerlord's text-variable parser (sanctuary uses ALLCAPS_LETTERS only).
+            // ── Debug probe: static text, no text variables, no SchemeSystem ref ─
+            // Shows even if SchemeSystem fails — confirms menu registration works.
+            try
+            {
+                starter.AddGameMenuOption(
+                    "ldm_scheme_menu", "ldm_scheme_debug",
+                    "[Debug] Check scheme system",
+                    args => { args.IsEnabled = true; return true; },
+                    args =>
+                    {
+                        int cnt = 0;
+                        try { cnt = SchemeSystem.Definitions.Length; } catch { }
+                        MBInformationManager.AddQuickInformation(
+                            new TextObject($"Scheme menu OK. Definitions loaded: {cnt}"));
+                    });
+            }
+            catch { }
+
+            // ── One option per scheme — option IDs use letters only (no digits) ─
+            // Pattern mirrors Sanctuary: always return true (show all), grey when
+            // player can't afford, guard consequence against disabled-but-clicked edge cases.
             try
             {
                 foreach (var def in SchemeSystem.Definitions)
                 {
                     SchemeDefinition captured = def;
-                    string textKey = "LDM_SC_" + captured.Type.ToString().ToUpperInvariant();
+                    // Option ID: letters + underscores only — digits in IDs fail in this BL version.
+                    string optionId = "ldm_sc_" + captured.Type.ToString().ToLowerInvariant();
+                    // Text-variable key: same restriction, all-caps + underscores.
+                    string textKey  = "LDM_SC_" + captured.Type.ToString().ToUpperInvariant();
                     try
                     {
                         starter.AddGameMenuOption(
                             "ldm_scheme_menu",
-                            "ldm_sc_" + captured.Type.ToString().ToLowerInvariant(),
+                            optionId,
                             "{" + textKey + "}",
                             args =>
                             {
                                 try
                                 {
-                                    int baseCost = 0;
-                                    try { baseCost = SchemeSystem.ComputeGoldCost(captured, null, null, ignoreCooldown: true); } catch { }
-                                    int playerGold = Hero.MainHero?.Gold ?? 0;
-                                    int playerInf  = (int)(Hero.MainHero?.Clan?.Influence ?? 0f);
-                                    bool canAfford = playerGold >= baseCost && playerInf >= captured.InfluenceCost;
-                                    bool hardBlock = false;
-                                    try { hardBlock = SchemeSystem.IsHardBlocked(captured.Type, null, null); } catch { }
-                                    string suffix = hardBlock
-                                        ? "  [BLOCKED — cooldown active]"
-                                        : canAfford
-                                            ? $"  —  {baseCost}g / {captured.InfluenceCost} inf"
-                                            : $"  —  {baseCost}g / {captured.InfluenceCost} inf  [can't afford]";
-                                    MBTextManager.SetTextVariable(textKey, captured.Name + suffix);
+                                    int  playerGold = Hero.MainHero?.Gold ?? 0;
+                                    int  playerInf  = (int)(Hero.MainHero?.Clan?.Influence ?? 0f);
+                                    bool canAfford  = playerGold >= captured.GoldCost
+                                                   && playerInf  >= captured.InfluenceCost;
+                                    string label = captured.Name
+                                        + $"  —  {captured.GoldCost}g / {captured.InfluenceCost} inf"
+                                        + (canAfford ? "" : "  [Insufficient funds]");
+                                    MBTextManager.SetTextVariable(textKey, label);
                                     try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                                    // Always enabled/visible — IsEnabled=false hides options in this BL version.
-                                    // Affordability is enforced in the consequence (QueueScheme returns false).
-                                    args.IsEnabled = !hardBlock;
+                                    args.IsEnabled = canAfford;
                                     try { args.Tooltip = new TextObject(captured.Description); } catch { }
                                 }
                                 catch { }
@@ -191,6 +202,7 @@ namespace AshAndEmber
                             },
                             args =>
                             {
+                                if ((Hero.MainHero?.Gold ?? 0) < captured.GoldCost) return;
                                 _selectedDef = captured;
                                 if (captured.NeedsLord) OpenLordTargetUI();
                                 else                    OpenSettlementTargetUI();
