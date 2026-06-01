@@ -18,6 +18,7 @@
 // │ Torches at Dusk             │ Leave village         │ General          │
 // │ The Eager Recruit           │ Leave village         │ General          │
 // │ The Festival Farewell       │ Leave village         │ General          │
+// │ The Hollow Hour             │ Leave village         │ General          │
 // │ The Old Flame-Seer          │ Enter village         │ Mage             │
 // │ The Healer's Trade          │ Enter village         │ Mage             │
 // │ Fire and Straw              │ Enter village         │ Mage             │
@@ -83,7 +84,7 @@ namespace AshAndEmber
     {
         // ── Tuning ────────────────────────────────────────────────────────────
         public const float EncounterChance       = 0.10f;  // per settlement transition (was 0.35)
-        public const int   MinDaysBetween        = 6;      // shared cooldown between any encounter (was 3)
+        public const int   MinDaysBetween        = 7;      // shared cooldown between any encounter (was 3, then 6)
         public const float BattleEncounterChance = 0.14f;  // per field battle (was 0.35)
         public const float SiegeEncounterChance  = 0.22f;  // per siege (was 0.50)
         public const float RaidEncounterChance   = 0.22f;  // per raid (was 0.55)
@@ -391,6 +392,7 @@ namespace AshAndEmber
                 pool.Add(LV_ColdEmbrace);
                 pool.Add(LV_ColdDream);
                 pool.Add(LV_ThreeWitches);
+                pool.Add(LV_HollowHour);
                 if (mage)
                 {
                     pool.Add(E_MothersPlea);
@@ -3265,6 +3267,28 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Helper: permanently remove N troops from the party ────────────────
+        private static void KillPartyTroops(int count)
+        {
+            try
+            {
+                var roster = MobileParty.MainParty?.MemberRoster;
+                if (roster == null) return;
+                int killed = 0;
+                foreach (var e in roster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero || e.Number <= 0) continue;
+                    int take = Math.Min(e.Number, count - killed);
+                    if (take <= 0) break;
+                    roster.AddToCounts(e.Character, -take);
+                    killed += take;
+                    if (killed >= count) break;
+                }
+                if (killed > 0) Msg($"({killed} soldier{(killed == 1 ? "" : "s")} found dead at dawn)", BadColor);
+            }
+            catch { }
+        }
+
         // ── Helper: become Ashen (full conversion sequence) ───────────────────
         private static void BecomeAshen()
         {
@@ -3688,6 +3712,130 @@ namespace AshAndEmber
                                     "Something remains where the fire was — a clarity, a residue of interrupted power. " +
                                     "You take what you can carry. One focus point, ungiven but yours now.", GoodColor);
                             }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── LV_HollowHour — village leave, general ────────────────────────────
+        // The darkest part of the night settles over camp — something unnatural
+        // rides in the fog. Three soldiers die if the player sleeps through it.
+        private static void LV_HollowHour(Settlement s)
+        {
+            Hero hero = Hero.MainHero;
+            bool mage = MageKnowledge.IsMage;
+
+            float leadChance = SkillChance(DefaultSkills.Leadership, 0.35f);
+            string leadHint  = SkillHint(DefaultSkills.Leadership, 0.35f, "Rally them — your voice cuts the fog");
+
+            float athChance  = SkillChance(DefaultSkills.Athletics, 0.35f);
+            string athHint   = SkillHint(DefaultSkills.Athletics, 0.35f, "Move fast enough to wake them physically");
+
+            bool prayGate = hero != null
+                         && hero.GetTraitLevel(DefaultTraits.Honor) >= 1
+                         && hero.GetTraitLevel(DefaultTraits.Mercy) >= 1
+                         && (MobileParty.MainParty?.Morale ?? 0f) >= 60f;
+            string prayHint = prayGate
+                ? "Your faith is unbroken and your men's hearts are high. The prayer holds."
+                : "Requires Honourable and Merciful traits and party morale of 60 or above.";
+
+            string mageHint = mage
+                ? "Push the fire outward — cold auras cannot hold against it. Costs a day."
+                : "Requires mage ability.";
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★ The Hollow Hour",
+                "You wake in the deep of night without knowing why. The camp is wrong — " +
+                "too quiet, the fires too low, the air thick with cold that has no wind behind it. " +
+                "A pale fog has rolled in from nowhere: close, slow, and patient. " +
+                "Your men sleep on, but their breathing is shallow and ragged. " +
+                "One of them whimpers. Another goes still. This is not weather. " +
+                "Something is feeding on the dark and your camp is in the middle of it.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", $"Shout your men awake. ({(int)(leadChance * 100)}% Leadership)", null, true,
+                        leadHint),
+                    new InquiryElement("b", "Go back to sleep. It is only fog.", null, true,
+                        "Fog. Just fog. That is what you tell yourself."),
+                    new InquiryElement("c", "Dispel the darkness with fire. (Mage — 1 day)", null, mage,
+                        mageHint),
+                    new InquiryElement("d", $"Move through camp and shake them awake. ({(int)(athChance * 100)}% Athletics)", null, true,
+                        athHint),
+                    new InquiryElement("e", "Kneel and pray until the darkness passes.", null, prayGate,
+                        prayHint),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Leadership, 0.35f))
+                            {
+                                AddMorale(5f);
+                                Msg("Your voice cuts through the fog before you have fully thought about it — " +
+                                    "command instinct, louder than the wrongness. Heads come up around the camp, " +
+                                    "eyes unfocused, hands reaching for weapons by habit. " +
+                                    "The aura breaks against the noise and the motion. " +
+                                    "By the time dawn comes your men are quieter than usual but alive and present. " +
+                                    "They don't ask what you drove off. They can tell something was there.", GoodColor);
+                            }
+                            else
+                            {
+                                KillPartyTroops(3);
+                                AddMorale(-10f);
+                                Msg("You shout — but the fog swallows your voice like cloth swallows water. " +
+                                    "The words don't land. The men who were already deep in it don't surface. " +
+                                    "By dawn three of them are cold. " +
+                                    "No wounds. No mark. Just gone quiet in the night while you stood there shouting into nothing.", BadColor);
+                            }
+                            break;
+                        case "b":
+                            KillPartyTroops(3);
+                            AddMorale(-10f);
+                            Msg("You pull your blanket up and close your eyes. " +
+                                "The nightmares come without warning — not vivid ones, just a pressure, " +
+                                "a slow sense of something settling over you, of breath becoming harder to draw. " +
+                                "You wake at dawn to find three men who did not. " +
+                                "No wounds. No marks. Just cold. " +
+                                "The fog is gone. The rest of your men look at you and say nothing.", BadColor);
+                            break;
+                        case "c":
+                            AgePlayer(1);
+                            AddMorale(5f);
+                            Msg("You push the fire outward — not a spell, exactly, more a refusal: " +
+                                "warmth moving against cold in the way warmth does when it remembers what it is. " +
+                                "The fog pulls back in sections, like cloth being peeled from something wet. " +
+                                "Gone before the sky lightens. Your men sleep through it entirely. " +
+                                "They wake rested, which is unusual on a cold march. " +
+                                "You are a day older. You count it worth the cost.", FireColor);
+                            break;
+                        case "d":
+                            if (SkillRoll(DefaultSkills.Athletics, 0.35f))
+                            {
+                                AddMorale(5f);
+                                Msg("You move fast — camp to camp, shoulder to shoulder, " +
+                                    "hands on men's arms and boots on their bedrolls. " +
+                                    "It is ungraceful and it works. The ones you reach in time surface confused but breathing. " +
+                                    "The aura needs stillness; you denied it stillness. " +
+                                    "By dawn the fog is thin and ordinary and your camp is intact.", GoodColor);
+                            }
+                            else
+                            {
+                                KillPartyTroops(3);
+                                AddMorale(-10f);
+                                Msg("You move — but the fog is thicker than it looked and the camp is larger than your legs. " +
+                                    "You reach most of them. Three you don't reach in time. " +
+                                    "They were already too deep in it when you got there. " +
+                                    "Cold in their blankets, faces slack, gone quietly in the part of the night that forgets them.", BadColor);
+                            }
+                            break;
+                        case "e":
+                            Msg("You kneel at the edge of the camp and pray — not quickly, not as habit, " +
+                                "but with the full weight of someone who believes the words mean something. " +
+                                "The fog thins. Not fast, but steadily, like something deciding not to stay. " +
+                                "Your men sleep on, undisturbed. By first light it is gone. " +
+                                "Nothing happened. In the hollow hour, that is the whole point.", GoodColor);
                             break;
                     }
                 }, null, "", false), false, true);
