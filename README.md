@@ -391,6 +391,8 @@ Requesting **any** scheme costs **Honor −1 (Dishonorable)** and **Calculating 
   - Relations −60 to −80 with the target or settlement owner (only if they are alive).
   - Assassination and Stage a Coup caught: **40% chance of war declaration** (only if both kingdoms exist, are not eliminated, and are not already at war).
 
+**Viper's Counsel always exposes on failure** — court intrigue has no silent slip. Relations −50 to −70 with the target lord and −30 to −50 with the king, regardless of whether an agent was literally caught.
+
 ### Success formula
 
 `baseChance + (skill / 600 × 30%) − (security / 400) − (clanTier × 2.5%)` — capped at 5–85%.
@@ -414,16 +416,20 @@ When a cooldown expires the player receives a notification: *"Contacts reset —
 
 | Scheme | Skill | Base gold | Influence | Base % | Effect on success |
 |--------|-------|-----------|-----------|--------|-------------------|
-| **Assassinate a Lord** | Roguery | 2 000 | 30 | 28% | Target lord dies. |
-| **Spread Terror** | Roguery | 500 | 10 | 45% | City security −25–45. |
-| **Poison a Well** | Roguery | 800 | 15 | 40% | 20–60 garrison militia killed. |
-| **Stage a Coup** | Charm | 1 500 | 40 | 20% | Loyalty −40, security −35. Rebellion likely. |
-| **Spread Rumors** | Charm | 500 | 5 | 40% | Loyalty −15, prosperity −8%. |
-| **Burn a Storage** | Roguery | 600 | 10 | 50% | Food −50%, prosperity −15%. |
-| **Bribe Soldiers** | Charm | 1 000 | 20 | 35% | 20–50 garrison troops desert. |
-| **Forge Documents** | Charm | 800 | 15 | 40% | Target lord −55 relations with their faction leader (if alive). |
-| **Hire an Assassin (wound)** | Roguery | 1 200 | 20 | 30% | ~20% of target's party troops wounded. |
-| **False Accusations** | Charm | 600 | 15 | 45% | Target clan loses 5% of their renown (min 50). |
+| **Assassinate a Lord** | Roguery | 6 000 | 120 | 25% | Target lord dies. |
+| **Hire an Assassin (wound)** | Roguery | 2 500 | 65 | 33% | ~20% of target's party troops wounded. |
+| **Forge Documents** | Charm | 2 000 | 55 | 40% | Target lord −55 relations with their faction leader (if alive). |
+| **False Accusations** | Charm | 1 500 | 40 | 45% | Target clan loses 5% renown (min 50). |
+| **Stage a Coup** | Charm | 4 500 | 100 | 20% | Loyalty −40, security −35. Rebellion likely. |
+| **Poison a Well** | Roguery | 2 200 | 60 | 38% | 20–60 garrison militia killed. |
+| **Bribe Soldiers** | Charm | 2 200 | 60 | 32% | 20–50 garrison troops desert. |
+| **Burn a Storage** | Roguery | 2 000 | 45 | 40% | Food −50%, prosperity −15%. |
+| **Spread Terror** | Roguery | 1 500 | 35 | 40% | City security −25–45. |
+| **Spread Rumors** | Charm | 1 200 | 20 | 35% | Loyalty −15, prosperity −8%. |
+| **Viper's Counsel** ★ | Charm | 1 800 | 60 | 40% | Target clan loses 7% renown (min 50). Your clan gains 30–50 renown. **Same-kingdom lords only.** Failure always exposes. |
+| **Scatter the Wolves** | Roguery | 2 500 | 50 | 35% | Spawns 5–8 bandit/deserter parties across the target lord's entire kingdom, each anchored to a hideout. |
+
+★ *Viper's Counsel can only target lords within your own kingdom.*
 
 ### Arrange covert business (city menu)
 
@@ -441,7 +447,11 @@ Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. Wh
 
 ### NPC lords
 
-About once every **33 campaign days** globally, a random NPC lord initiates a scheme — paying the same tier-scaled costs, subject to the same rules. Each lord has a 20–35 day personal cooldown. NPCs only target enemies and never target the player. High-profile NPC schemes appear in the campaign log with full flavor text.
+About once every **33 campaign days** globally, a random NPC lord initiates a scheme — paying the same tier-scaled costs, subject to the same rules. Each lord has a 20–35 day personal cooldown. NPCs never target the player directly. High-profile NPC schemes appear in the campaign log with full flavor text.
+
+- **Standard lord and settlement schemes** target enemy factions only.
+- **Viper's Counsel** (NPC) targets a rival clan within the same kingdom — court intrigue runs both ways.
+- **Scatter the Wolves** (NPC) targets a lord in an enemy kingdom, flooding that kingdom with bandits.
 
 ---
 

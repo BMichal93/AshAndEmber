@@ -37,6 +37,8 @@ using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Party.PartyComponents;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -61,6 +63,7 @@ namespace AshAndEmber
         HireAssassin,       // Wound a lord's party     — Roguery
         FalseAccusations,   // Drain clan renown        — Charm
         VipersCounsel,      // Undermine rival clan with king — Charm (same kingdom only)
+        ScatterWolves,      // Flood rival kingdom with bandits/deserters — Roguery
     }
 
     internal sealed class SchemeDefinition
@@ -190,6 +193,12 @@ namespace AshAndEmber
                 "Viper's Counsel",
                 "Poison the king's ear against a rival clan. Your renown rises; theirs falls. Can only target lords within your own kingdom. On failure, lose standing with both the king and the target.",
                 1800, 60, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 600),
+
+            // LORD SCHEME (targets enemy kingdom via lord) ─────────────────────────
+            new SchemeDefinition(SchemeType.ScatterWolves,
+                "Scatter the Wolves",
+                "Pay deserters and brigands to flood a rival kingdom's roads. Bandit parties surge across their lands, tying up lords and bleeding resources. Target a lord — their whole kingdom suffers.",
+                2500, 50, 0.35f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 800),
         };
 
         // ── State ─────────────────────────────────────────────────────────────
@@ -681,6 +690,21 @@ namespace AshAndEmber
                             $"Their standing at court has quietly eroded. {inst}'s name rises by comparison.",
                             col);
                         break;
+
+                    // ── Scatter the Wolves ────────────────────────────────────
+                    case SchemeType.ScatterWolves:
+                        if (targetHero?.Clan?.Kingdom == null) break;
+                        Kingdom scatterKingdom = targetHero.Clan.Kingdom;
+                        string scatterKingdomName = scatterKingdom.Name?.ToString() ?? "the kingdom";
+                        int partyCount = 5 + _rng.Next(4); // 5–8 parties
+                        int scatterSpawned = 0;
+                        try { scatterSpawned = SpawnBanditsInKingdom(scatterKingdom, partyCount); } catch { }
+                        Notify(s,
+                            $"Coin found the right hands in the right dark corners. Deserters and brigands filter " +
+                            $"into {scatterKingdomName} — {scatterSpawned} parties now roam its roads and passes. " +
+                            $"Lords will spend the coming weeks chasing shadows instead of campaigning.",
+                            col);
+                        break;
                 }
             }
             catch { }
@@ -867,6 +891,74 @@ namespace AshAndEmber
 
             if (s.IsPlayer || isHighProfile || targetIsPlayer)
                 MBInformationManager.AddQuickInformation(new TextObject(text));
+        }
+
+        // Spawns bandit parties throughout the target kingdom, each tied to the
+        // nearest hideout — critical to avoid the null-hideout crash. Mirrors the
+        // SpawnLooterParty pattern in CampaignMapEvents.cs exactly.
+        // Returns the number of parties actually created.
+        private static int SpawnBanditsInKingdom(Kingdom kingdom, int partyCount)
+        {
+            if (kingdom == null || kingdom.IsEliminated) return 0;
+
+            Clan banditClan = Clan.BanditFactions.FirstOrDefault(c => c != null && !c.IsEliminated);
+            if (banditClan == null) return 0;
+            var pt = banditClan.DefaultPartyTemplate;
+            if (pt == null) return 0;
+
+            CharacterObject troop =
+                MBObjectManager.Instance.GetObject<CharacterObject>("looter")
+             ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit");
+            if (troop == null) return 0;
+
+            // Gather settlement positions in the target kingdom as spawn anchors.
+            var anchors = Settlement.All
+                .Where(s => (s.IsTown || s.IsCastle) && s.OwnerClan?.Kingdom == kingdom)
+                .Select(s => s.GetPosition2D)
+                .ToList();
+            if (anchors.Count == 0) return 0;
+
+            int spawned = 0;
+            for (int i = 0; i < partyCount; i++)
+            {
+                try
+                {
+                    Vec2 anchor = anchors[_rng.Next(anchors.Count)];
+
+                    // 3-level hideout fallback — never pass null to CreateBanditParty.
+                    Hideout hideout = null;
+                    try
+                    {
+                        Settlement hs = banditClan.Settlements.FirstOrDefault(s => s?.Hideout != null);
+                        if (hs == null)
+                            hs = Settlement.All
+                                .Where(s => s?.Hideout != null)
+                                .OrderBy(s => (s.GetPosition2D.x - anchor.x) * (s.GetPosition2D.x - anchor.x)
+                                            + (s.GetPosition2D.y - anchor.y) * (s.GetPosition2D.y - anchor.y))
+                                .FirstOrDefault();
+                        if (hs == null) hs = Settlement.All.FirstOrDefault(s => s?.Hideout != null);
+                        hideout = hs?.Hideout;
+                    }
+                    catch { }
+                    if (hideout == null) continue;
+
+                    const float scatter = 5f;
+                    Vec2 sp = anchor + new Vec2(
+                        (float)(_rng.NextDouble() - 0.5) * scatter * 2f,
+                        (float)(_rng.NextDouble() - 0.5) * scatter * 2f);
+                    var cv = new CampaignVec2(sp, true);
+
+                    int troops = 20 + _rng.Next(16); // 20–35 per party
+                    string pid = "scatter_wolves_" + _rng.Next(999999).ToString("D6");
+
+                    MobileParty party = BanditPartyComponent.CreateBanditParty(pid, banditClan, hideout, false, pt, cv);
+                    if (party == null) continue;
+                    party.MemberRoster.AddToCounts(troop, troops);
+                    spawned++;
+                }
+                catch { }
+            }
+            return spawned;
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────
