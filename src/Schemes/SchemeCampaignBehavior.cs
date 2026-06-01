@@ -70,9 +70,11 @@ namespace AshAndEmber
                         {
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsTown) return false;
-                            if (Hero.MainHero?.Gold < 300) return false;
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            bool pending = SchemeSystem.PlayerHasPendingScheme();
+                            // Guard SchemeSystem access separately — a static-init failure there
+                            // must not prevent the option from appearing.
+                            bool pending = false;
+                            try { pending = SchemeSystem.PlayerHasPendingScheme(); } catch { }
                             args.IsEnabled = !pending;
                             if (pending)
                                 try { args.Tooltip = new TextObject("A scheme is already in motion."); } catch { }
@@ -107,8 +109,6 @@ namespace AshAndEmber
             }
             catch { }
 
-            // Keeper responds and closes the dialogue window; consequence defers UI to next tick
-            // so it opens after the dialogue window has fully closed.
             try
             {
                 starter.AddDialogLine(
@@ -117,17 +117,9 @@ namespace AshAndEmber
                     "close_window",
                     "Coin spent here buys silence. Name what you need done.",
                     null,
-                    DeferOpenSchemeSelectionUI,
+                    OpenSchemeSelectionUI,
                     P);
             }
-            catch { }
-        }
-
-        // Dialogue consequence: defer the scheme UI to the next application tick so it
-        // opens after the dialogue window has fully closed and the game state is clean.
-        private static void DeferOpenSchemeSelectionUI()
-        {
-            try { MageKnowledge._deferredInquiry = OpenSchemeSelectionUI; }
             catch { }
         }
 

@@ -379,8 +379,16 @@ namespace AshAndEmber
                 if (Hero.MainHero?.Gold < cost) return;
                 Hero.MainHero.Gold -= cost;
                 try { MobileParty.MainParty.RecentEventsMorale += MoralePrayerBoost; } catch { }
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Prayer of Strength — the flame holds. Party morale rises by {MoralePrayerBoost}."));
+                try
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Prayer of Strength",
+                        "The candles are the same ones that have burned here for decades — the wax is built up in long columns, the flames do not flicker. You speak no words aloud. The fire listens anyway.\n\n" +
+                        "When you rise, the weight is not gone, but it sits differently. Your men will feel it before they know why — a steadiness in the line, a fraction less give in the shoulders. " +
+                        "It is a small thing. It is also everything.",
+                        true, false, "So be it.", "", null, null));
+                }
+                catch { MBInformationManager.AddQuickInformation(new TextObject($"Prayer of Strength — the flame holds. Party morale rises by {MoralePrayerBoost}.")); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } }
@@ -396,9 +404,17 @@ namespace AshAndEmber
                 Hero.MainHero.Gold -= cost;
                 AgeHero(Hero.MainHero, aging);
                 CampaignMapEvents.StartProtection(ProtectiveDays);
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Protective Rites — the sanctuary's blessing holds for {ProtectiveDays} days. " +
-                    $"The Ashen cannot reach through it."));
+                try
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Protective Rites",
+                        "The priest draws symbols in ash across your palms and speaks words that are not quite in any language you recognise. The flame on the altar burns a shade hotter for a moment, then returns to itself.\n\n" +
+                        $"You will carry this for {ProtectiveDays} days. The grey things that hunt in the cold will find your scent harder to follow. " +
+                        "It does not make you invisible. It makes you less interesting to whatever thinks of you as prey.\n\n" +
+                        "The priest does not say farewell. He simply returns to his candles.",
+                        true, false, "I understand.", "", null, null));
+                }
+                catch { MBInformationManager.AddQuickInformation(new TextObject($"Protective Rites — the sanctuary's blessing holds for {ProtectiveDays} days.")); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } }
@@ -454,11 +470,23 @@ namespace AshAndEmber
                     catch { }
                 }
 
-                string msg = targets.Count == 0
-                    ? "Turn the Ashen — the prayer rings through cold air. No grey figures are close enough to feel it."
-                    : $"Turn the Ashen — {targets.Count} Ashen part{(targets.Count > 1 ? "ies" : "y")} recoil from the light. " +
-                      $"{totalWounded} soldiers driven to their knees.";
-                MBInformationManager.AddQuickInformation(new TextObject(msg));
+                string narrative = targets.Count == 0
+                    ? "The rite is spoken. The flame on the altar surges briefly and then settles. The priest says nothing — " +
+                      "the prayer was heard, but whatever grey things move in the cold are not close enough to feel it. " +
+                      "Sometimes that is the only answer the flame gives."
+                    : $"The priest does not stop speaking even as the light changes. Outside, something is happening — " +
+                      $"you can feel it through the stone floor, a vibration that is not quite sound. " +
+                      $"{targets.Count} Ashen part{(targets.Count > 1 ? "ies" : "y")} have recoiled from it. " +
+                      $"{totalWounded} cold soldiers are on their knees in the dark, wondering what struck them. " +
+                      "The flame on the altar returns to its ordinary size. The priest finishes his words.";
+                try
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Turn the Ashen", narrative, true, false, "The flame holds.", "", null, null));
+                }
+                catch { MBInformationManager.AddQuickInformation(new TextObject(targets.Count == 0
+                    ? "Turn the Ashen — no Ashen are close enough to feel it."
+                    : $"Turn the Ashen — {targets.Count} part{(targets.Count > 1 ? "ies" : "y")}, {totalWounded} wounded.")); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } }
@@ -487,10 +515,21 @@ namespace AshAndEmber
                 }
                 try { if (Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints) Hero.MainHero.HitPoints = Hero.MainHero.MaxHitPoints; } catch { }
 
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    healed > 0
-                        ? $"Prayer of Healing — {healed} soldier{(healed != 1 ? "s" : "")} rise from their wounds. The flame restores what the cold tried to take."
-                        : "Prayer of Healing — the blessing holds. No wounded remain to restore."));
+                string healNarrative = healed > 0
+                    ? $"The priest says a word you don't catch. Then another. By the third, the bandaged men in your camp are sitting up — " +
+                      $"not better, exactly, but less far from it. {healed} soldier{(healed != 1 ? "s" : "")} who should have needed another week are " +
+                      "folding their blankets and checking their equipment. They don't ask how. Some things don't improve from asking."
+                    : "The priest speaks the words regardless. The flame does its work through stone and distance. " +
+                      "When you return to your men you find none of them wounded — the blessing confirmed what was already true. " +
+                      "It is not the most dramatic outcome. It is still something.";
+                try
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Prayer of Healing", healNarrative, true, false, "It is enough.", "", null, null));
+                }
+                catch { MBInformationManager.AddQuickInformation(new TextObject(healed > 0
+                    ? $"Prayer of Healing — {healed} soldier{(healed != 1 ? "s" : "")} restored."
+                    : "Prayer of Healing — no wounded to restore.")); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } }
@@ -515,10 +554,22 @@ namespace AshAndEmber
                     try { AgingSystem.RejuvenateHero(hero, actualDays); } catch { }
 
                 int yearsGained = actualDays / 365;
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    yearsGained > 0
-                        ? $"Prayer for a Blessing — the flame takes {yearsGained} year{(yearsGained != 1 ? "s" : "")} away. Some debts are paid not in coin."
-                        : "Prayer for a Blessing — the flame holds. You are as young as the rites will allow."));
+                string blessNarrative = yearsGained > 0
+                    ? $"The priest does not explain what he is doing. He places both hands on the altar, speaks without pause for several minutes, " +
+                      "and when he finishes the candles are slightly shorter than they were. So are you, in a way that doesn't show in a mirror but " +
+                      $"shows in how your joints feel the next morning. {yearsGained} year{(yearsGained != 1 ? "s" : "")} paid back. " +
+                      "You don't ask where they went. Some debts are settled in kinds of coin you don't want to examine."
+                    : "The priest completes the rite. The flame does what it can. You are as young as the sanctuary will allow — " +
+                      "which is to say, the years behind you are already as few as this place can make them. " +
+                      "There is something clarifying about reaching a limit.";
+                try
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Prayer for a Blessing", blessNarrative, true, false, "Some debts are settled.", "", null, null));
+                }
+                catch { MBInformationManager.AddQuickInformation(new TextObject(yearsGained > 0
+                    ? $"Prayer for a Blessing — {yearsGained} year{(yearsGained != 1 ? "s" : "")} returned."
+                    : "Prayer for a Blessing — already as young as the rites allow.")); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } }
