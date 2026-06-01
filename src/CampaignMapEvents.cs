@@ -103,7 +103,8 @@ namespace AshAndEmber
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
         public const float ChanceAshenGambit     = 0.010f; // ~every 100 weeks, fires ONCE per campaign (day 120+)
         public const int   AshenGambitEarliestDay = 120;
-        public const int   AshenGambitSpawnCount  = 8;     // Ashen Spawn warbands seeded across the Empire
+        public const int   AshenGambitSpawnCount  = 18;    // Ashen Spawn warbands seeded across the Empire
+        public const int   AshenGambitCastleCount = 3;     // Empire castles seized by Ashen lords on the night
 
         // Ashen Plague: parties spawned near the afflicted settlement
         public const int AshenPlagueSpawnCount  = 3;
@@ -1953,6 +1954,10 @@ namespace AshAndEmber
         //   Phase 4 — Spawn AshenGambitSpawnCount Ashen Spawn warbands, each with
         //             minStrength 80, distributed across Empire settlement anchors.
         //             All spawns use the hideout-safe pattern to prevent crashes.
+        //   Phase 4b— Up to AshenGambitCastleCount random Empire castles (not under
+        //             siege, not player-owned) are seized by a random Ashen lord via
+        //             ChangeOwnerOfSettlementAction. Each castle is stabilised to
+        //             prevent an immediate rebellion tick.
         //   Phase 5 — Ensure the Ashen kingdom is at war with every Empire faction,
         //             then surge Ashen lord party morale +50 to drive them onto the
         //             offensive.
@@ -2063,6 +2068,42 @@ namespace AshAndEmber
             }
             catch { }
 
+            // ── Phase 4b: Seize Empire castles in the dead of night ──────────
+            var seizedNames = new List<string>();
+            try
+            {
+                var empireCastles = Settlement.All
+                    .Where(s => s.IsCastle
+                             && !s.IsUnderSiege
+                             && s.OwnerClan?.Kingdom != null
+                             && EmpireKingdomIds.Contains(s.OwnerClan.Kingdom.StringId)
+                             && s.OwnerClan.Leader != Hero.MainHero)
+                    .OrderBy(_ => _rng.Next())
+                    .Take(AshenGambitCastleCount)
+                    .ToList();
+
+                var ashenLords = Hero.AllAliveHeroes
+                    .Where(h => h.IsLord && h.IsAlive && !h.IsDisabled && !h.IsPrisoner
+                             && ColourLordRegistry.IsAshenLord(h))
+                    .ToList();
+
+                if (ashenLords.Count > 0)
+                {
+                    foreach (var castle in empireCastles)
+                    {
+                        try
+                        {
+                            var lord = ashenLords[_rng.Next(ashenLords.Count)];
+                            ChangeOwnerOfSettlementAction.ApplyByDefault(lord, castle);
+                            StabiliseSettlement(castle);
+                            seizedNames.Add(castle.Name?.ToString() ?? "a castle");
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+
             // ── Phase 5: Ashen go on the offensive ───────────────────────────
             try
             {
@@ -2106,11 +2147,18 @@ namespace AshAndEmber
                           + $" and {killedNames[killedNames.Count - 1]} are dead"
                         : $"{killedNames[0]}, {killedNames[1]}, and {killedNames.Count - 2} other rulers are dead";
 
+            string seizedStr = seizedNames.Count == 0 ? "" :
+                seizedNames.Count == 1
+                    ? $"{seizedNames[0]} fell to the Ashen before the sun rose. "
+                    : string.Join(", ", seizedNames.Take(seizedNames.Count - 1))
+                      + $" and {seizedNames[seizedNames.Count - 1]} fell to the Ashen before the sun rose. ";
+
             MBInformationManager.AddQuickInformation(new TextObject(
                 $"The Ashen Gambit — In a single night of cold fire and silence, every Imperial throne was struck at once. " +
                 $"{leaderStr}. Their courts woke to ash on the pillows and cooling blood on the floors. " +
                 (moraleHit > 0 ? $"Dread swept through {moraleHit} Imperial warbands. " : "") +
                 (secHit > 0 ? $"{secHit} Imperial cit{(secHit != 1 ? "ies" : "y")} erupted in panic and suspicion. " : "") +
+                seizedStr +
                 (spawned > 0
                     ? $"{spawned} Ashen Spawn rose from the shadows across the heartlands before dawn. "
                     : "") +
