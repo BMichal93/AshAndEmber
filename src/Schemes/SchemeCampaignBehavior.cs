@@ -145,27 +145,11 @@ namespace AshAndEmber
             }
             catch { }
 
-            // ── Debug probe: static text, no text variables, no SchemeSystem ref ─
-            // Shows even if SchemeSystem fails — confirms menu registration works.
-            try
-            {
-                starter.AddGameMenuOption(
-                    "ldm_scheme_menu", "ldm_scheme_debug",
-                    "[Debug] Check scheme system",
-                    args => { args.IsEnabled = true; return true; },
-                    args =>
-                    {
-                        int cnt = 0;
-                        try { cnt = SchemeSystem.Definitions.Length; } catch { }
-                        MBInformationManager.AddQuickInformation(
-                            new TextObject($"Scheme menu OK. Definitions loaded: {cnt}"));
-                    });
-            }
-            catch { }
-
             // ── One option per scheme — option IDs use letters only (no digits) ─
             // Pattern mirrors Sanctuary: always return true (show all), grey when
-            // player can't afford, guard consequence against disabled-but-clicked edge cases.
+            // player can't afford the base cost, guard consequence against edge cases.
+            // Costs shown here are base (tier-0) minimums; the target picker shows
+            // the actual scaled cost per target (1×–3.4× depending on clan tier).
             try
             {
                 foreach (var def in SchemeSystem.Definitions)
@@ -190,12 +174,12 @@ namespace AshAndEmber
                                     bool canAfford  = playerGold >= captured.GoldCost
                                                    && playerInf  >= captured.InfluenceCost;
                                     string label = captured.Name
-                                        + $"  —  {captured.GoldCost}g / {captured.InfluenceCost} inf"
+                                        + $"  —  from {captured.GoldCost}g / from {captured.InfluenceCost} inf"
                                         + (canAfford ? "" : "  [Insufficient funds]");
                                     MBTextManager.SetTextVariable(textKey, label);
                                     try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                                     args.IsEnabled = canAfford;
-                                    try { args.Tooltip = new TextObject(captured.Description); } catch { }
+                                    try { args.Tooltip = new TextObject(captured.Description + "\nFinal cost scales with target clan tier."); } catch { }
                                 }
                                 catch { }
                                 return true;
@@ -258,13 +242,14 @@ namespace AshAndEmber
 
                 var elements = lords.Select(h =>
                 {
-                    float ch   = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, h, null);
-                    int   cost = SchemeSystem.ComputeGoldCost(_selectedDef, h, null);
-                    bool  blk  = SchemeSystem.IsHardBlocked(_selectedDef.Type, h, null);
-                    bool  cd   = SchemeSystem.IsOnCooldown(_selectedDef.Type, h, null);
+                    float ch      = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, h, null);
+                    int   cost    = SchemeSystem.ComputeGoldCost(_selectedDef, h, null);
+                    int   infCost = SchemeSystem.ComputeInfluenceCost(_selectedDef, h, null);
+                    bool  blk     = SchemeSystem.IsHardBlocked(_selectedDef.Type, h, null);
+                    bool  cd      = SchemeSystem.IsOnCooldown(_selectedDef.Type, h, null);
                     string label = $"{h.Name}  [{h.Clan?.Name} / {h.Clan?.Kingdom?.Name?.ToString() ?? "landless"}]"
                                  + (blk ? "  [BLOCKED]" : "");
-                    string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g  |  Tier: {h.Clan?.Tier ?? 0}"
+                    string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g / {infCost} inf  |  Tier: {h.Clan?.Tier ?? 0}"
                                  + (cd ? "  [5× repeat penalty]" : "");
                     return new InquiryElement(h.StringId, label, null, !blk, hint);
                 }).ToList();
@@ -314,12 +299,14 @@ namespace AshAndEmber
 
                 var elements = settlements.Select(s =>
                 {
-                    float ch   = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, null, s);
-                    int   cost = SchemeSystem.ComputeGoldCost(_selectedDef, null, s);
-                    bool  cd   = SchemeSystem.IsOnCooldown(_selectedDef.Type, null, s);
+                    float ch      = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, null, s);
+                    int   cost    = SchemeSystem.ComputeGoldCost(_selectedDef, null, s);
+                    int   infCost = SchemeSystem.ComputeInfluenceCost(_selectedDef, null, s);
+                    bool  cd      = SchemeSystem.IsOnCooldown(_selectedDef.Type, null, s);
                     string label = $"{s.Name}  [{s.OwnerClan?.Name?.ToString() ?? "?"} / {s.OwnerClan?.Kingdom?.Name?.ToString() ?? "?"}]  "
                                  + $"Security: {(int)(s.Town?.Security ?? 0)}";
-                    string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g" + (cd ? "  [5× repeat penalty]" : "");
+                    string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g / {infCost} inf"
+                                 + (cd ? "  [5× repeat penalty]" : "");
                     return new InquiryElement(s.StringId, label, null, true, hint);
                 }).ToList();
 
@@ -357,6 +344,7 @@ namespace AshAndEmber
 
                 float chance     = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, targetHero, targetSett);
                 int   goldCost   = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
+                int   infCost    = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
                 bool  onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
                 string tName     = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
                 string cdNote    = onCooldown ? "\n[!] Repeat-use penalty — cost is 5× base." : "";
@@ -366,7 +354,7 @@ namespace AshAndEmber
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
                 string body = $"Scheme: {_selectedDef.Name}\n"
                             + $"Target: {tName}\n"
-                            + $"Cost: {goldCost}g  +  {_selectedDef.InfluenceCost} influence{cdNote}\n"
+                            + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
                             + $"Success: {(int)(chance * 100)}%  |  Delay: 1–3 days\n"
                             + traitNote + "\n\n"
                             + "On failure (30% exposed): crime rating, relations hit, possible war.";

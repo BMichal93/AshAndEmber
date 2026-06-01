@@ -73,14 +73,16 @@ namespace AshAndEmber
         internal readonly SkillObject  Skill;
         internal readonly bool         NeedsLord;
         internal readonly bool         NeedsSettlement;
+        internal readonly int          SkillXp;
 
         internal SchemeDefinition(SchemeType type, string name, string desc,
             int gold, int inf, float baseSuccess, SkillObject skill,
-            bool needsLord, bool needsSettlement)
+            bool needsLord, bool needsSettlement, int skillXp)
         {
             Type = type; Name = name; Description = desc;
             GoldCost = gold; InfluenceCost = inf; BaseSuccess = baseSuccess;
             Skill = skill; NeedsLord = needsLord; NeedsSettlement = needsSettlement;
+            SkillXp = skillXp;
         }
     }
 
@@ -102,57 +104,76 @@ namespace AshAndEmber
         private const string AshenKingdomId = "ashen_kingdom";
 
         // ── Definitions ───────────────────────────────────────────────────────
-        internal static readonly SchemeDefinition[] Definitions =
+        // Lazy: DefaultSkills objects are registered by the engine during session
+        // launch. A static readonly field initializer runs at type-load time (which
+        // can happen earlier — e.g. during SyncData) and would throw a
+        // TypeInitializationException, poisoning the type permanently.
+        private static SchemeDefinition[] _definitions;
+        internal static SchemeDefinition[] Definitions
         {
+            get
+            {
+                if (_definitions != null) return _definitions;
+                try { _definitions = BuildDefinitions(); }
+                catch { _definitions = new SchemeDefinition[0]; }
+                return _definitions;
+            }
+        }
+
+        private static SchemeDefinition[] BuildDefinitions() => new[]
+        {
+            // Gold ×3 vs original, Influence ×4 vs original.
+            // Both scale with target clan tier in ComputeGoldCost / ComputeInfluenceCost.
+            // SkillXp awarded to the instigator on success.
             new SchemeDefinition(SchemeType.Assassinate,
                 "Assassinate a Lord",
                 "Hire a blade. On success the target dies quietly. On exposure: war may follow. Hard 14-day retry block per target.",
-                2000, 30, 0.28f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false),
+                6000, 120, 0.28f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false, skillXp: 1500),
 
             new SchemeDefinition(SchemeType.SpreadTerror,
                 "Spread Terror",
                 "Random violence shakes the city. Security drops sharply.",
-                500, 10, 0.45f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true),
+                1500, 40, 0.45f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 400),
 
             new SchemeDefinition(SchemeType.PoisonWell,
                 "Poison a Well",
                 "The garrison sickens. Militia die before anyone connects cause to effect.",
-                800, 15, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true),
+                2400, 60, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 750),
 
             new SchemeDefinition(SchemeType.StageCoup,
                 "Stage a Coup",
                 "Bribe garrison officers. Loyalty collapses — rebellion becomes likely.",
-                1500, 40, 0.20f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true),
+                4500, 160, 0.20f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true, skillXp: 1200),
 
             new SchemeDefinition(SchemeType.SpreadRumors,
                 "Spread Rumors",
                 "Whisper campaigns corrode trust. Loyalty and prosperity fall.",
-                500,  5,  0.40f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true),
+                1500, 20,  0.40f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true, skillXp: 400),
 
             new SchemeDefinition(SchemeType.BurnStorage,
                 "Burn a Storage",
                 "Warehouses catch fire. Food is lost, prosperity crumbles.",
-                600, 10, 0.50f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true),
+                1800, 40, 0.50f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 500),
 
             new SchemeDefinition(SchemeType.BribeSoldiers,
                 "Bribe Soldiers",
                 "A portion of the garrison deserts. They scatter — no one joins you, they simply leave.",
-                1000, 20, 0.35f, DefaultSkills.Charm,  needsLord: false, needsSettlement: true),
+                3000, 80, 0.35f, DefaultSkills.Charm,  needsLord: false, needsSettlement: true, skillXp: 750),
 
             new SchemeDefinition(SchemeType.ForgeDocuments,
                 "Forge Documents",
                 "Fabricated letters damage a lord's reputation with their own faction.",
-                800, 15, 0.40f, DefaultSkills.Charm,   needsLord: true,  needsSettlement: false),
+                2400, 60, 0.40f, DefaultSkills.Charm,   needsLord: true,  needsSettlement: false, skillXp: 750),
 
             new SchemeDefinition(SchemeType.HireAssassin,
                 "Hire an Assassin (wound)",
                 "The blade finds the lord but doesn't finish. Their party is bloodied and weakened.",
-                1200, 20, 0.30f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false),
+                3600, 80, 0.30f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false, skillXp: 1000),
 
             new SchemeDefinition(SchemeType.FalseAccusations,
                 "False Accusations",
                 "Slander carefully placed at the right ears. Clan renown is damaged; their standing erodes.",
-                600, 15, 0.45f, DefaultSkills.Charm,   needsLord: true,  needsSettlement: false),
+                1800, 60, 0.45f, DefaultSkills.Charm,   needsLord: true,  needsSettlement: false, skillXp: 500),
         };
 
         // ── State ─────────────────────────────────────────────────────────────
@@ -175,6 +196,7 @@ namespace AshAndEmber
         // ── Public API ────────────────────────────────────────────────────────
         internal static void Initialize()
         {
+            _definitions = null;
             _pending.Clear();
             _npcCooldowns.Clear();
             _targetCooldowns.Clear();
@@ -219,6 +241,16 @@ namespace AshAndEmber
             return cost;
         }
 
+        /// Effective influence cost, scaling exponentially with target clan tier.
+        /// 1.0× at tier 0, ~7.5× at tier 6 — affordable for minor clans, punishing for high-tier.
+        internal static int ComputeInfluenceCost(SchemeDefinition def,
+            Hero targetHero, Settlement targetSett)
+        {
+            int tier = targetHero?.Clan?.Tier ?? targetSett?.OwnerClan?.Tier ?? 0;
+            float tierMult = (float)Math.Pow(1.4, tier); // 1.0, 1.4, 2.0, 2.7, 3.8, 5.4, 7.5
+            return (int)(def.InfluenceCost * tierMult);
+        }
+
         /// Queue a scheme. Gold and influence are deducted immediately.
         /// Returns false if the instigator cannot afford it, or if the player
         /// already has a scheme in flight (one-at-a-time limit).
@@ -235,13 +267,14 @@ namespace AshAndEmber
             if (IsHardBlocked(type, targetHero, targetSettlement)) return false;
 
             int effectiveGold = ComputeGoldCost(def, targetHero, targetSettlement);
+            int effectiveInf  = ComputeInfluenceCost(def, targetHero, targetSettlement);
 
             if (!isPlayer || !DebugFree)
             {
                 if (instigator.Gold < effectiveGold) return false;
-                if ((instigator.Clan?.Influence ?? 0) < def.InfluenceCost) return false;
+                if ((instigator.Clan?.Influence ?? 0) < effectiveInf) return false;
                 try { instigator.Gold -= effectiveGold; } catch { }
-                try { if (instigator.Clan != null) instigator.Clan.Influence -= def.InfluenceCost; } catch { }
+                try { if (instigator.Clan != null) instigator.Clan.Influence -= effectiveInf; } catch { }
             }
 
             _pending.Add(new PendingScheme
@@ -602,6 +635,15 @@ namespace AshAndEmber
                 }
             }
             catch { }
+
+            // Award skill XP to the instigator on any successful scheme.
+            try
+            {
+                var def = GetDefinition(s.Type);
+                if (def?.Skill != null && def.SkillXp > 0)
+                    instigator.HeroDeveloper?.AddSkillXp(def.Skill, def.SkillXp);
+            }
+            catch { }
         }
 
         // ── Failure effects ───────────────────────────────────────────────────
@@ -637,7 +679,10 @@ namespace AshAndEmber
                 var targetKingdom = targetHero?.Clan?.Kingdom
                                  ?? targetSett?.OwnerClan?.Kingdom
                                  ?? (targetSett?.MapFaction as Kingdom);
-                if (targetKingdom != null && !targetKingdom.IsEliminated && instigator.Clan != null)
+                // Only apply crime rating for player schemes — the API affects the player's
+                // clan regardless of who instigator is, so calling it for NPC schemes would
+                // incorrectly penalise the player for plots they had no part in.
+                if (s.IsPlayer && targetKingdom != null && !targetKingdom.IsEliminated)
                 {
                     float crimeDelta = 30f + _rng.Next(31); // 30–60
                     try { ChangeCrimeRatingAction.Apply(targetKingdom, crimeDelta, false); } catch { }
