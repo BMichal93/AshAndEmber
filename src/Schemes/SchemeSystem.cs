@@ -122,58 +122,67 @@ namespace AshAndEmber
 
         private static SchemeDefinition[] BuildDefinitions() => new[]
         {
-            // Gold ×3 vs original, Influence ×4 vs original.
-            // Both scale with target clan tier in ComputeGoldCost / ComputeInfluenceCost.
-            // SkillXp awarded to the instigator on success.
+            // Costs scale with target clan tier: gold linearly (×1.0–3.4),
+            // influence exponentially (×1.0–7.5, base 1.4^tier).
+            // SkillXp awarded on success.
+            //
+            // Balance principle: permanent > temporary, more impact > less.
+            // Influence hierarchy: assassination (120) > coup (100) > garrison (60)
+            //   > soft lord schemes (40–65) > cheap settlement schemes (20–45).
+            // StageCoup influence is intentionally below assassination — loyalty
+            // and security recover over time; dead lords do not.
+            //
+            // LORD SCHEMES ─────────────────────────────────────────────────────────
             new SchemeDefinition(SchemeType.Assassinate,
                 "Assassinate a Lord",
                 "Hire a blade. On success the target dies quietly. On exposure: war may follow. Hard 14-day retry block per target.",
-                6000, 120, 0.28f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false, skillXp: 1500),
-
-            new SchemeDefinition(SchemeType.SpreadTerror,
-                "Spread Terror",
-                "Random violence shakes the city. Security drops sharply.",
-                1500, 40, 0.45f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 400),
-
-            new SchemeDefinition(SchemeType.PoisonWell,
-                "Poison a Well",
-                "The garrison sickens. Militia die before anyone connects cause to effect.",
-                2400, 60, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 750),
-
-            new SchemeDefinition(SchemeType.StageCoup,
-                "Stage a Coup",
-                "Bribe garrison officers. Loyalty collapses — rebellion becomes likely.",
-                4500, 160, 0.20f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true, skillXp: 1200),
-
-            new SchemeDefinition(SchemeType.SpreadRumors,
-                "Spread Rumors",
-                "Whisper campaigns corrode trust. Loyalty and prosperity fall.",
-                1500, 20,  0.40f, DefaultSkills.Charm,   needsLord: false, needsSettlement: true, skillXp: 400),
-
-            new SchemeDefinition(SchemeType.BurnStorage,
-                "Burn a Storage",
-                "Warehouses catch fire. Food is lost, prosperity crumbles.",
-                1800, 40, 0.50f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 500),
-
-            new SchemeDefinition(SchemeType.BribeSoldiers,
-                "Bribe Soldiers",
-                "A portion of the garrison deserts. They scatter — no one joins you, they simply leave.",
-                3000, 80, 0.35f, DefaultSkills.Charm,  needsLord: false, needsSettlement: true, skillXp: 750),
-
-            new SchemeDefinition(SchemeType.ForgeDocuments,
-                "Forge Documents",
-                "Fabricated letters damage a lord's reputation with their own faction.",
-                2400, 60, 0.40f, DefaultSkills.Charm,   needsLord: true,  needsSettlement: false, skillXp: 750),
+                6000, 120, 0.25f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1500),
 
             new SchemeDefinition(SchemeType.HireAssassin,
                 "Hire an Assassin (wound)",
                 "The blade finds the lord but doesn't finish. Their party is bloodied and weakened.",
-                3600, 80, 0.30f, DefaultSkills.Roguery, needsLord: true,  needsSettlement: false, skillXp: 1000),
+                2500, 65, 0.33f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1000),
+
+            new SchemeDefinition(SchemeType.ForgeDocuments,
+                "Forge Documents",
+                "Fabricated letters damage a lord's reputation with their own faction.",
+                2000, 55, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 750),
 
             new SchemeDefinition(SchemeType.FalseAccusations,
                 "False Accusations",
                 "Slander carefully placed at the right ears. Clan renown is damaged; their standing erodes.",
-                1800, 60, 0.45f, DefaultSkills.Charm,   needsLord: true,  needsSettlement: false, skillXp: 500),
+                1500, 40, 0.45f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 500),
+
+            // SETTLEMENT SCHEMES ───────────────────────────────────────────────────
+            new SchemeDefinition(SchemeType.StageCoup,
+                "Stage a Coup",
+                "Bribe garrison officers. Loyalty collapses — rebellion becomes likely.",
+                4500, 100, 0.20f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 1200),
+
+            new SchemeDefinition(SchemeType.PoisonWell,
+                "Poison a Well",
+                "The garrison sickens. Militia die before anyone connects cause to effect.",
+                2200, 60, 0.38f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 750),
+
+            new SchemeDefinition(SchemeType.BribeSoldiers,
+                "Bribe Soldiers",
+                "A portion of the garrison deserts. They scatter — no one joins you, they simply leave.",
+                2200, 60, 0.32f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 750),
+
+            new SchemeDefinition(SchemeType.BurnStorage,
+                "Burn a Storage",
+                "Warehouses catch fire. Food is lost, prosperity crumbles.",
+                2000, 45, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 500),
+
+            new SchemeDefinition(SchemeType.SpreadTerror,
+                "Spread Terror",
+                "Random violence shakes the city. Security drops sharply.",
+                1500, 35, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 400),
+
+            new SchemeDefinition(SchemeType.SpreadRumors,
+                "Spread Rumors",
+                "Whisper campaigns corrode trust. Loyalty and prosperity fall.",
+                1200, 20, 0.35f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 400),
         };
 
         // ── State ─────────────────────────────────────────────────────────────
