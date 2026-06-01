@@ -169,16 +169,21 @@ namespace AshAndEmber
                                 {
                                     int baseCost = 0;
                                     try { baseCost = SchemeSystem.ComputeGoldCost(captured, null, null, ignoreCooldown: true); } catch { }
-                                    bool canAfford = (Hero.MainHero?.Gold ?? 0) >= baseCost
-                                                  && (Hero.MainHero?.Clan?.Influence ?? 0f) >= captured.InfluenceCost;
+                                    int playerGold = Hero.MainHero?.Gold ?? 0;
+                                    int playerInf  = (int)(Hero.MainHero?.Clan?.Influence ?? 0f);
+                                    bool canAfford = playerGold >= baseCost && playerInf >= captured.InfluenceCost;
                                     bool hardBlock = false;
                                     try { hardBlock = SchemeSystem.IsHardBlocked(captured.Type, null, null); } catch { }
                                     string suffix = hardBlock
                                         ? "  [BLOCKED — cooldown active]"
-                                        : $"  —  {baseCost}g / {captured.InfluenceCost} inf";
+                                        : canAfford
+                                            ? $"  —  {baseCost}g / {captured.InfluenceCost} inf"
+                                            : $"  —  {baseCost}g / {captured.InfluenceCost} inf  [can't afford]";
                                     MBTextManager.SetTextVariable(textKey, captured.Name + suffix);
                                     try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                                    args.IsEnabled = canAfford && !hardBlock;
+                                    // Always enabled/visible — IsEnabled=false hides options in this BL version.
+                                    // Affordability is enforced in the consequence (QueueScheme returns false).
+                                    args.IsEnabled = !hardBlock;
                                     try { args.Tooltip = new TextObject(captured.Description); } catch { }
                                 }
                                 catch { }
