@@ -56,6 +56,8 @@
 // │ The Blind Eye               │ Enter village/city    │ General, no trinket│
 // │ The Pale Compass            │ Enter village/city    │ General, no trinket│
 // │ The Broken Seal             │ Enter city/castle     │ General            │
+// │ The Pale Sigil (rumour)     │ Enter/Leave any       │ General, Day≥30    │
+// │ The Pale Sigil (site)       │ Enter whisper target  │ 7-day deadline     │
 // └─────────────────────────────┴───────────────────────┴──────────────────┘
 //
 // Wiring (CampaignBehavior.cs):
@@ -111,6 +113,8 @@ namespace AshAndEmber
         private static bool   _brokenSealExtraWar   = false; // B also declares war when scouting-pass/charm-fail
         private static string _brokenSealKingdomAId = null; // aggressor kingdom StringId
         private static string _brokenSealKingdomBId = null; // target kingdom StringId
+        private static string _whisperSettlementId  = null; // StringId of the Pale Sigil site; null = no active lead
+        private static int    _whisperDeadline      = 0;   // days remaining to visit the site before it goes cold
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -144,6 +148,8 @@ namespace AshAndEmber
             _brokenSealExtraWar    = false;
             _brokenSealKingdomAId  = null;
             _brokenSealKingdomBId  = null;
+            _whisperSettlementId   = null;
+            _whisperDeadline       = 0;
         }
 
         public static void Save(IDataStore store)
@@ -166,6 +172,8 @@ namespace AshAndEmber
             store.SyncData("SE_BrokenSealExtraWar", ref _brokenSealExtraWar);
             store.SyncData("SE_BrokenSealKingA",    ref _brokenSealKingdomAId);
             store.SyncData("SE_BrokenSealKingB",    ref _brokenSealKingdomBId);
+            store.SyncData("SE_WhisperSite",        ref _whisperSettlementId);
+            store.SyncData("SE_WhisperDeadline",    ref _whisperDeadline);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -176,6 +184,22 @@ namespace AshAndEmber
             try
             {
                 _lastSettlementId = settlement.StringId;
+
+                // Pale Sigil: player arrived at the whispered site within the deadline.
+                // Fires regardless of the normal cooldown — the player made the trip.
+                if (_whisperSettlementId != null
+                    && settlement.StringId == _whisperSettlementId
+                    && _whisperDeadline > 0
+                    && MageKnowledge._deferredInquiry == null)
+                {
+                    _whisperSettlementId = null;
+                    _whisperDeadline     = 0;
+                    _cooldown = MinDaysBetween;
+                    var captured = settlement;
+                    MageKnowledge._deferredInquiry = () => { try { FirePaleSigilInvestigation(captured); } catch { } };
+                    return;
+                }
+
                 if (_cooldown > 0) return;
                 if (_rng.NextDouble() < EncounterChance)
                     TryFireEnter(settlement);
@@ -254,6 +278,13 @@ namespace AshAndEmber
                 if (_brokenSealCountdown == 0)
                     FireBrokenSealConsequence();
             }
+
+            if (_whisperDeadline > 0)
+            {
+                _whisperDeadline--;
+                if (_whisperDeadline == 0)
+                    _whisperSettlementId = null;
+            }
         }
 
         /// Called from MagicCampaignBehavior.OnMapEventEnded.
@@ -304,6 +335,7 @@ namespace AshAndEmber
                 pool.Add(E_BanditWarning);
                 if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
                 if (_hedgeWitchCooldown == 0 && HasHedgeWitchCondition()) pool.Add(E_NightVisitor);
+                if (_whisperSettlementId == null && CampaignTime.Now.ToDays >= 30) pool.Add(E_PaleSigilRumor);
                 pool.Add(EV2_TravelingMonk);
                 pool.Add(EV2_WiseWomanWarning);
                 if (ren >= 600f) pool.Add(EV2_ChildNamedAfterYou);
@@ -338,6 +370,7 @@ namespace AshAndEmber
                 pool.Add(EC2_CityQuarantine);
                 if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
                 if (_hedgeWitchCooldown == 0 && HasHedgeWitchCondition()) pool.Add(E_NightVisitor);
+                if (_whisperSettlementId == null && CampaignTime.Now.ToDays >= 30) pool.Add(E_PaleSigilRumor);
                 if (ren >= 150f) pool.Add(EC3_Philosopher);
                 if (ren >= 250f) pool.Add(EC8_MerchantLedger);
                 if (ren >= 300f) pool.Add(EC8_ReluctantOfficial);
@@ -393,6 +426,7 @@ namespace AshAndEmber
                 pool.Add(LV_ColdDream);
                 pool.Add(LV_ThreeWitches);
                 pool.Add(LV_HollowHour);
+                if (_whisperSettlementId == null && CampaignTime.Now.ToDays >= 30) pool.Add(E_PaleSigilRumor);
                 if (mage)
                 {
                     pool.Add(E_MothersPlea);
@@ -415,6 +449,7 @@ namespace AshAndEmber
                     pool.Add(LC_BloodCollector);
                 }
                 if (ashen) pool.Add(LC4_RecognizedByAshen);
+                if (_whisperSettlementId == null && CampaignTime.Now.ToDays >= 30) pool.Add(E_PaleSigilRumor);
             }
 
             Fire(pool, s);
@@ -5338,6 +5373,213 @@ namespace AshAndEmber
                     break;
                 }
             }
+        }
+
+        // ── E_PaleSigilRumor — enter/leave village or town, day 30+, no active whisper ──
+        // Reveals Ashen activity near a random settlement. Three source variants.
+        // Sets a 7-day window for the player to visit and investigate.
+        private static void E_PaleSigilRumor(Settlement s)
+        {
+            var candidates = Settlement.All
+                .Where(x => (x.IsVillage || x.IsCastle) && x.StringId != s.StringId && x.Name != null)
+                .ToList();
+            if (candidates.Count == 0) return;
+
+            var target   = candidates[_rng.Next(candidates.Count)];
+            string site  = target.Name.ToString();
+            int variant  = _rng.Next(3);
+
+            string title, body;
+            switch (variant)
+            {
+                case 0: // Tavern gossip
+                    title = "✦  The Pale Sigil — Whispers";
+                    body  = $"A traveller at the next table is drinking more than he should and speaking more than he intends. The shape of what he describes takes a moment to become clear: lights moving where no fires should burn near {site}, the kind of silence that settles over people who have decided not to describe what they saw. Not an ordinary misfortune. Not a fire or a flood or a sickness. Something with a particular cold hand behind it. If you mean to look, you have perhaps a week before whatever was left there is moved or gone.";
+                    break;
+                case 1: // Intelligence report
+                    title = "✦  The Pale Sigil — A Report";
+                    body  = $"The message comes through a contact's contact, already paid. No name on it. Terse: unusual activity near {site}, signs in the terrain consistent with Ashen preparation — not presence, but preparation. Something left behind or planted. It has not yet drawn attention from anyone you would rather arrive there first. The rider does not wait for questions. Seven days, at most, before the window closes.";
+                    break;
+                default: // Anonymous letter
+                    title = "✦  The Pale Sigil — Correspondence";
+                    body  = $"A sealed letter finds you without a return address, written in a hand that understands what it is describing. Near {site}, it says, something has been placed. Not hidden — placed, as though for a specific pair of eyes. The word the writer uses for what they found is not a word in ordinary use. They do not interpret it. They say only that you should come quickly, and that they will not be writing again on this subject.";
+                    break;
+            }
+
+            // Store the target now; only commit if the player agrees to go
+            string targetId   = target.StringId;
+            string targetName = site;
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                title, body,
+                new List<InquiryElement>
+                {
+                    new InquiryElement("go",     $"Make for {targetName}. You have seven days.", null, true,
+                        $"The site near {targetName}. Seven days before the trail goes cold."),
+                    new InquiryElement("ignore", "Leave it. You have other roads.", null, true,
+                        "The information goes unacted on. The lead evaporates."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "go":
+                            _whisperSettlementId = targetId;
+                            _whisperDeadline     = 7;
+                            Msg($"You set course for {targetName}. Seven days.", FireColor);
+                            break;
+                        case "ignore":
+                            Msg("You file it away and ride on. If it was important, someone else will find it.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── FirePaleSigilInvestigation — fires when player enters the whisper site within deadline ──
+        private static void FirePaleSigilInvestigation(Settlement s)
+        {
+            string siteName   = s.Name?.ToString() ?? "this place";
+            string scoutHint  = SkillHint(DefaultSkills.Scouting, 0.30f, "Locate the site");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "✦  The Pale Sigil",
+                $"You are in {siteName}. Something here aligns with what you were told — a cold pressure at the edge of attention, a direction that feels more significant than directions usually feel, a silence in a specific hollow where sound should carry. If the reports were accurate, there is something to find. The question is whether you are willing to look for it.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("scout", "Search the area carefully.", null, true, scoutHint),
+                    new InquiryElement("leave", "Leave it undisturbed. Whatever is here can stay hidden.", null, true,
+                        "Nothing gained. Nothing risked."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "scout":
+                            if (SkillRoll(DefaultSkills.Scouting, 0.30f))
+                            {
+                                FirePaleSigilFound(s);
+                            }
+                            else
+                            {
+                                Msg($"You spend hours quartering the ground near {siteName}. Whatever was here, you cannot reach it — disturbed earth, a collapsed hollow, marks that could mean anything or nothing to someone who did not know what they were looking for. You leave with less certainty than you arrived with.", DimColor);
+                            }
+                            break;
+                        case "leave":
+                            Msg("You ride out without looking. The particular silence follows you for a mile or two and then stops.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        private static void FirePaleSigilFound(Settlement s)
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★  The Pale Sigil — Found",
+                "You find it in the place the cold pressure was strongest: a crystal formation laced with grey veins that do not exist in any natural map of the local stone, a ritual cave entrance sealed with marks that predate the settlement above it, an artefact of worked obsidian whose purpose becomes less obscure the longer you hold it. The Ashen have been here. Whatever they left, they left deliberately — or abandoned in great haste, which amounts to the same thing.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Leave it undisturbed. Cover it back over.", null, true,
+                        "Nothing taken. Nothing begun. The ground keeps its secret."),
+                    new InquiryElement("b", "Sit with it. Try to understand what it is.", null, true,
+                        "[50/50] Gain a focus point — or age two years trying to hold what it teaches."),
+                    new InquiryElement("c", "Seal it and send word to the Temple for safeguarding.", null, true,
+                        "[500 coin] +10 renown, +honour. The Temple can keep it safer than the ground can."),
+                    new InquiryElement("d", "Shatter the seal. Let its power spill into the kingdom.", null, true,
+                        "[Destructive] Three villages will feel it. Their hearths will not recover quickly."),
+                    new InquiryElement("e", "Draw its power into yourself.", null, true,
+                        "[Lethal risk, 50/50] Claim two magical talents — or become the Ashen."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            Msg("You cover it back over. The earth settles. Whatever it was waiting for, it will wait longer.", DimColor);
+                            break;
+
+                        case "b":
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                                Msg("You sit with it for an hour. Something clarifies — not a lesson exactly, more like a pressure releasing inward. You come away carrying a little more than you arrived with. A focus, like light caught in old glass.", GoodColor);
+                            }
+                            else
+                            {
+                                AgePlayer(2 * 365);
+                                Msg("You reach toward what it is teaching and it teaches too much, too fast. Two years of your body's time spent in under an hour. The knowledge lands somewhere useful. So does the cost.", BadColor);
+                            }
+                            break;
+
+                        case "c":
+                            if (!ChangeGold(-500)) break;
+                            ChangeRenown(10f);
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            Msg("You arrange a secure courier and write to the Temple — careful language, careful seals. The receipt arrives weeks later with a single line of thanks. The artefact is in hands that know how to keep a thing from being used.", GoodColor);
+                            break;
+
+                        case "d":
+                        {
+                            // Three random villages in the player's kingdom; fall back to any villages
+                            var villages = Settlement.All
+                                .Where(v => v.IsVillage
+                                         && v.MapFaction == Hero.MainHero?.MapFaction
+                                         && v.Village != null)
+                                .OrderBy(_ => _rng.Next())
+                                .Take(3)
+                                .ToList();
+                            if (villages.Count == 0)
+                            {
+                                villages = Settlement.All
+                                    .Where(v => v.IsVillage && v.Village != null)
+                                    .OrderBy(_ => _rng.Next())
+                                    .Take(3)
+                                    .ToList();
+                            }
+                            foreach (var v in villages)
+                            {
+                                try { v.Village.Hearth = Math.Max(10f, v.Village.Hearth * 0.40f); } catch { }
+                            }
+                            string names = string.Join(", ", villages.Select(v => v.Name?.ToString() ?? "a village"));
+                            Msg($"The seal breaks. Something held for a long time begins moving outward through the land. The hearths in {names} burn lower — not from fire, not from cold, but from something that has no ordinary name. You feel what you have done and it does not lift.", BadColor);
+                            break;
+                        }
+
+                        case "e":
+                        {
+                            if (_rng.NextDouble() < 0.5)
+                            {
+                                // Grant up to 2 random talents
+                                int granted = 0;
+                                for (int i = 0; i < 2; i++)
+                                {
+                                    if (TalentSystem.PurchasedCount + granted >= 6) break;
+                                    var available = TalentSystem.All
+                                        .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id))
+                                        .ToList();
+                                    if (available.Count == 0) break;
+                                    var pick = available[_rng.Next(available.Count)];
+                                    TalentSystem.GrantFree(pick.Id, Hero.MainHero);
+                                    Msg($"Something splits open and closes again — the shape of {pick.Name}, taken without ceremony and held.", FireColor);
+                                    granted++;
+                                }
+                                if (granted == 0)
+                                {
+                                    ChangeRenown(15f);
+                                    Msg("The power washes through and finds no new shape to leave behind — you already carry what it would have given. You come away with the sense of something witnessed, and the sense that it witnessed you in return.", FireColor);
+                                }
+                            }
+                            else
+                            {
+                                BecomeAshen();
+                                Msg("The power does not negotiate. It takes the shape of the thing it knows how to make. What walks away from this place is not entirely what arrived. The grey begins at the edges of you and works inward.", AshenColor);
+                            }
+                            break;
+                        }
+                    }
+                }, null, "", false), false, true);
         }
 
         // ── Deferred: FireHedgeWitchCurse — 7 days after E_NightVisitor choice A ──
