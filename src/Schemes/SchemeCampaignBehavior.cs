@@ -147,46 +147,54 @@ namespace AshAndEmber
             catch { }
 
             // ── One option per scheme type ─────────────────────────────────────
-            foreach (var def in SchemeSystem.Definitions)
+            // Outer try/catch: prevents TypeInitializationException on SchemeSystem
+            // from escaping into Bannerlord's native dispatcher and crashing.
+            // Text-variable keys use only letters — digits are not safe in
+            // Bannerlord's text-variable parser (sanctuary uses ALLCAPS_LETTERS only).
+            try
             {
-                SchemeDefinition captured = def;
-                string textKey = $"LDM_SCHEME_{(int)captured.Type}";
-                try
+                foreach (var def in SchemeSystem.Definitions)
                 {
-                    starter.AddGameMenuOption(
-                        "ldm_scheme_menu",
-                        $"ldm_sc_{(int)captured.Type}",
-                        $"{{{textKey}}}",
-                        args =>
-                        {
-                            try
+                    SchemeDefinition captured = def;
+                    string textKey = "LDM_SC_" + captured.Type.ToString().ToUpperInvariant();
+                    try
+                    {
+                        starter.AddGameMenuOption(
+                            "ldm_scheme_menu",
+                            "ldm_sc_" + captured.Type.ToString().ToLowerInvariant(),
+                            "{" + textKey + "}",
+                            args =>
                             {
-                                int baseCost = 0;
-                                try { baseCost = SchemeSystem.ComputeGoldCost(captured, null, null, ignoreCooldown: true); } catch { }
-                                bool canAfford = (Hero.MainHero?.Gold ?? 0) >= baseCost
-                                              && (Hero.MainHero?.Clan?.Influence ?? 0f) >= captured.InfluenceCost;
-                                bool hardBlock = false;
-                                try { hardBlock = SchemeSystem.IsHardBlocked(captured.Type, null, null); } catch { }
-                                string suffix = hardBlock
-                                    ? "  [BLOCKED — cooldown active]"
-                                    : $"  —  {baseCost}g / {captured.InfluenceCost} inf";
-                                MBTextManager.SetTextVariable(textKey, captured.Name + suffix);
-                                try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                                args.IsEnabled = canAfford && !hardBlock;
-                                try { args.Tooltip = new TextObject(captured.Description); } catch { }
-                            }
-                            catch { }
-                            return true;
-                        },
-                        args =>
-                        {
-                            _selectedDef = captured;
-                            if (captured.NeedsLord) OpenLordTargetUI();
-                            else                    OpenSettlementTargetUI();
-                        });
+                                try
+                                {
+                                    int baseCost = 0;
+                                    try { baseCost = SchemeSystem.ComputeGoldCost(captured, null, null, ignoreCooldown: true); } catch { }
+                                    bool canAfford = (Hero.MainHero?.Gold ?? 0) >= baseCost
+                                                  && (Hero.MainHero?.Clan?.Influence ?? 0f) >= captured.InfluenceCost;
+                                    bool hardBlock = false;
+                                    try { hardBlock = SchemeSystem.IsHardBlocked(captured.Type, null, null); } catch { }
+                                    string suffix = hardBlock
+                                        ? "  [BLOCKED — cooldown active]"
+                                        : $"  —  {baseCost}g / {captured.InfluenceCost} inf";
+                                    MBTextManager.SetTextVariable(textKey, captured.Name + suffix);
+                                    try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                                    args.IsEnabled = canAfford && !hardBlock;
+                                    try { args.Tooltip = new TextObject(captured.Description); } catch { }
+                                }
+                                catch { }
+                                return true;
+                            },
+                            args =>
+                            {
+                                _selectedDef = captured;
+                                if (captured.NeedsLord) OpenLordTargetUI();
+                                else                    OpenSettlementTargetUI();
+                            });
+                    }
+                    catch { }
                 }
-                catch { }
             }
+            catch { }
 
             // ── Leave ──────────────────────────────────────────────────────────
             try
