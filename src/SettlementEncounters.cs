@@ -54,6 +54,7 @@
 // │ The Ember Shard             │ Enter village/city    │ General, no trinket│
 // │ The Blind Eye               │ Enter village/city    │ General, no trinket│
 // │ The Pale Compass            │ Enter village/city    │ General, no trinket│
+// │ The Broken Seal             │ Enter city/castle     │ General            │
 // └─────────────────────────────┴───────────────────────┴──────────────────┘
 //
 // Wiring (CampaignBehavior.cs):
@@ -104,6 +105,11 @@ namespace AshAndEmber
         private static int    _trinketCountdown      = 0;   // days until next trinket-dream stage fires
         private static int    _trinketPhase          = 0;   // 0=inactive, 1=first dream, 2=recurring dream
         private static int    _trinketVariant        = 0;   // 1=ember shard, 2=blind eye, 3=pale compass
+        private static int    _brokenSealCountdown  = 0;   // days until kingdom-plot consequence fires
+        private static int    _brokenSealPlotType   = 0;   // 0=inactive, 1=war, 2=annexation, 3=sabotage
+        private static bool   _brokenSealExtraWar   = false; // B also declares war when scouting-pass/charm-fail
+        private static string _brokenSealKingdomAId = null; // aggressor kingdom StringId
+        private static string _brokenSealKingdomBId = null; // target kingdom StringId
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -132,6 +138,11 @@ namespace AshAndEmber
             _trinketCountdown      = 0;
             _trinketPhase          = 0;
             _trinketVariant        = 0;
+            _brokenSealCountdown   = 0;
+            _brokenSealPlotType    = 0;
+            _brokenSealExtraWar    = false;
+            _brokenSealKingdomAId  = null;
+            _brokenSealKingdomBId  = null;
         }
 
         public static void Save(IDataStore store)
@@ -149,6 +160,11 @@ namespace AshAndEmber
             store.SyncData("SE_TrinketCountdown",   ref _trinketCountdown);
             store.SyncData("SE_TrinketPhase",       ref _trinketPhase);
             store.SyncData("SE_TrinketVariant",     ref _trinketVariant);
+            store.SyncData("SE_BrokenSealCD",       ref _brokenSealCountdown);
+            store.SyncData("SE_BrokenSealPlot",     ref _brokenSealPlotType);
+            store.SyncData("SE_BrokenSealExtraWar", ref _brokenSealExtraWar);
+            store.SyncData("SE_BrokenSealKingA",    ref _brokenSealKingdomAId);
+            store.SyncData("SE_BrokenSealKingB",    ref _brokenSealKingdomBId);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -229,6 +245,13 @@ namespace AshAndEmber
                 _trinketCountdown--;
                 if (_trinketCountdown == 0)
                     FireTrinketStage();
+            }
+
+            if (_brokenSealCountdown > 0)
+            {
+                _brokenSealCountdown--;
+                if (_brokenSealCountdown == 0)
+                    FireBrokenSealConsequence();
             }
         }
 
@@ -325,6 +348,7 @@ namespace AshAndEmber
                 pool.Add(EC8_Followed);
                 pool.Add(EC_LocalPriest);
                 pool.Add(EC_TavernStranger);
+                if (_brokenSealCountdown == 0 && _brokenSealPlotType == 0) pool.Add(EC_BrokenSeal);
                 if (_trinketPhase == 0)
                 {
                     pool.Add(EB_TrinketEmberShard);
@@ -4940,6 +4964,232 @@ namespace AshAndEmber
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── EC_BrokenSeal — enter city/castle, general ───────────────────────────
+        // Player stumbles on evidence of a secret inter-kingdom plot.
+        // Four discovery variants; three plot types; deferred 3-day consequence.
+        private static void EC_BrokenSeal(Settlement s)
+        {
+            var kingdoms = Kingdom.All
+                .Where(k => !k.IsEliminated && k.Leader != null && k.Leader.IsAlive
+                         && (Hero.MainHero?.MapFaction == null || k != Hero.MainHero.MapFaction)
+                         && k.StringId != "ashen_kingdom")
+                .ToList();
+            if (kingdoms.Count < 2) return;
+
+            int idxA = _rng.Next(kingdoms.Count);
+            int idxB;
+            do { idxB = _rng.Next(kingdoms.Count); } while (idxB == idxA);
+            Kingdom kA = kingdoms[idxA];
+            Kingdom kB = kingdoms[idxB];
+
+            int plotType = _rng.Next(3) + 1;
+            string plotDesc = plotType switch
+            {
+                1 => $"The document is an order of march. {kA.Name} is prepared to declare war on {kB.Name} — messengers ride in three days.",
+                2 => $"The documents describe a quiet land-grab: a manufactured claim, bribed garrison captains, timed troop movements. {kA.Name} intends to take one of {kB.Name}'s castles without a formal declaration.",
+                _ => $"The instructions are for saboteurs already inside {kB.Name}'s borders — agents moving toward a specific city, with orders to leave it in disorder while keeping {kA.Name}'s hands clean."
+            };
+
+            int variant = _rng.Next(4);
+            string discovery = variant switch
+            {
+                0 => $"Your outriders found a body half off the road a mile back — a courier in {kA.Name}'s colours, throat cut, stripped of valuables but not of the letters inside his coat. One of your men broke the seal before thinking better of it and handed the pages over.",
+                1 => $"Two men in the back corner of the tavern were speaking in the careful lowered voices of people who believe they cannot be heard. They were wrong. Between their cups you caught the shape of it — a plan, a target, a name: {kB.Name}.",
+                2 => $"A soldier in {kA.Name}'s colours, three cups past sober and pleased with himself, drifted to your table and began talking about things soldiers are not supposed to discuss in public places. His sergeant will be furious tomorrow. You, however, are not.",
+                _ => $"The serving girl slid a folded note under your cup as she cleared it and leaned close enough to name a price. She had lifted it from a {kA.Name} messenger an hour ago — their seal intact, {kB.Name}'s name on the outside, and something inside that she had already read and could not unread."
+            };
+
+            _brokenSealKingdomAId = kA.StringId;
+            _brokenSealKingdomBId = kB.StringId;
+            _brokenSealPlotType   = plotType;
+            _brokenSealExtraWar   = false;
+
+            float scoutChance = SkillChance(DefaultSkills.Scouting, 0.30f);
+            string scoutHint  = SkillHint(DefaultSkills.Scouting, 0.30f, $"Reach {kB.Name}'s court in time");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "⚜  The Broken Seal",
+                $"{discovery}\n\n{plotDesc} You now know something you were not meant to know.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Ignore it. Not your concern.", null, true,
+                        "Three days and whatever comes of it comes without your involvement."),
+                    new InquiryElement("b", $"Ride hard and warn {kB.Name}. ({(int)(scoutChance * 100)}% Scouting, then Charm)", null, true,
+                        scoutHint),
+                    new InquiryElement("c", $"Send quiet word to one of {kB.Name}'s lords as you leave.", null, true,
+                        "Not a full warning — enough to unsettle one man, unlikely to stop what is already in motion."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            _brokenSealCountdown = 3;
+                            Msg($"You fold the letter along its old creases and move on. Whatever {kA.Name} is planning, it will reach {kB.Name} without your help or your interference.", DimColor);
+                            break;
+
+                        case "b":
+                            if (SkillRoll(DefaultSkills.Scouting, 0.30f))
+                            {
+                                if (SkillRoll(DefaultSkills.Charm, 0.30f))
+                                {
+                                    // Both pass: plot foiled, +10 relation with Kingdom B, Kingdom A declares war
+                                    _brokenSealPlotType  = 0;
+                                    _brokenSealCountdown = 0;
+                                    Hero leaderB = kB.Leader;
+                                    if (leaderB != null && leaderB != Hero.MainHero)
+                                    {
+                                        ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leaderB, 10, false);
+                                        Msg($"(Relation with {leaderB.Name}: +10)", GoodColor);
+                                    }
+                                    if (!kA.IsAtWarWith(kB))
+                                        try { DeclareWarAction.ApplyByDefault(kA, kB); } catch { }
+                                    Msg($"They believe you. {kB.Name}'s council moves before you have finished explaining — emergency session, counter-orders written, messengers dispatched. The plot is dead. {kA.Name}, knowing the game is up, drops all pretence of patience and reaches for the only option left.", GoodColor);
+                                }
+                                else
+                                {
+                                    // Scouting pass, Charm fail: +5 with leader B, consequence + extra war
+                                    _brokenSealCountdown = 3;
+                                    _brokenSealExtraWar  = true;
+                                    Hero leaderB = kB.Leader;
+                                    if (leaderB != null && leaderB != Hero.MainHero)
+                                    {
+                                        ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leaderB, 5, false);
+                                        Msg($"(Relation with {leaderB.Name}: +5)", GoodColor);
+                                    }
+                                    Msg($"You arrived in time, showed what you had, argued clearly — and were thanked, politely, and not believed. {kB.Name}'s court categorises people who arrive with dramatic letters as a known type of problem. The warning was noted. It was not acted upon. {kA.Name}'s plan will proceed.", DimColor);
+                                }
+                            }
+                            else
+                            {
+                                // Scouting fail: too late, same as Ignore
+                                _brokenSealCountdown = 3;
+                                Msg($"You rode hard and arrived at the wrong gate, the wrong hour, the wrong official. {kB.Name}'s court was unreachable in any useful time. By the time your letter reaches the right desk, three days will have passed. Same result. Different road.", DimColor);
+                            }
+                            break;
+
+                        case "c":
+                        {
+                            _brokenSealCountdown = 3;
+                            var lordsB = Hero.AllAliveHeroes
+                                .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner
+                                         && h != Hero.MainHero && h.MapFaction == kB)
+                                .ToList();
+                            if (lordsB.Count > 0)
+                            {
+                                Hero lord = lordsB[_rng.Next(lordsB.Count)];
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 2, false);
+                                Msg($"(Relation with {lord.Name}: +2)", GoodColor);
+                            }
+                            Msg($"You find one of {kB.Name}'s lords before you ride out and tell them enough to make them uneasy — not everything, not the letter, but enough. Whether they act on it is their business. It probably will not be enough to stop what is already in motion.", DimColor);
+                            break;
+                        }
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireBrokenSealConsequence — 3 days after EC_BrokenSeal A/B-fail/C ──
+        private static void FireBrokenSealConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _brokenSealCountdown = 1; return; }
+
+            var kA        = Kingdom.All.FirstOrDefault(k => k.StringId == _brokenSealKingdomAId);
+            var kB        = Kingdom.All.FirstOrDefault(k => k.StringId == _brokenSealKingdomBId);
+            int plotType  = _brokenSealPlotType;
+            bool extraWar = _brokenSealExtraWar;
+
+            _brokenSealPlotType   = 0;
+            _brokenSealExtraWar   = false;
+            _brokenSealKingdomAId = null;
+            _brokenSealKingdomBId = null;
+
+            if (kA == null || kB == null || kA.IsEliminated || kB.IsEliminated) return;
+
+            void MaybeExtraWar()
+            {
+                if (extraWar && !kB.IsAtWarWith(kA))
+                    try { DeclareWarAction.ApplyByDefault(kB, kA); } catch { }
+            }
+
+            switch (plotType)
+            {
+                case 1: // War
+                {
+                    if (!kA.IsAtWarWith(kB))
+                        try { DeclareWarAction.ApplyByDefault(kA, kB); } catch { }
+                    MaybeExtraWar();
+                    MageKnowledge._deferredInquiry = () =>
+                        Msg($"Three days since the letter. {kA.Name} has declared war on {kB.Name}. You had the order in your hands.", BadColor);
+                    break;
+                }
+                case 2: // Annexation — 50/50
+                {
+                    bool annexed = false;
+                    if (_rng.NextDouble() < 0.5)
+                    {
+                        var castles = Settlement.All
+                            .Where(x => x.IsCastle && x.OwnerClan?.Kingdom == kB
+                                     && x.OwnerClan != null && !x.OwnerClan.IsEliminated)
+                            .ToList();
+                        var lordsA = Hero.AllAliveHeroes
+                            .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner
+                                     && h.MapFaction == kA && h != Hero.MainHero)
+                            .ToList();
+                        if (castles.Count > 0 && lordsA.Count > 0)
+                        {
+                            var castle   = castles[_rng.Next(castles.Count)];
+                            var newOwner = lordsA[_rng.Next(lordsA.Count)];
+                            string cName = castle.Name.ToString();
+                            try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, castle); } catch { }
+                            MaybeExtraWar();
+                            annexed = true;
+                            MageKnowledge._deferredInquiry = () =>
+                                Msg($"{cName} now flies {kA.Name}'s banner. The transfer was quick, quiet, and complete. {kB.Name} is still working out how it happened.", BadColor);
+                        }
+                    }
+                    if (!annexed)
+                    {
+                        MaybeExtraWar();
+                        MageKnowledge._deferredInquiry = () =>
+                            Msg($"The annexation fell through — wrong timing, or a piece that moved before the rest were ready. {kB.Name} holds what it had. This time.", DimColor);
+                    }
+                    break;
+                }
+                case 3: // Sabotage — 50/50
+                {
+                    bool sabotaged = false;
+                    if (_rng.NextDouble() < 0.5)
+                    {
+                        var towns = Settlement.All
+                            .Where(x => x.IsTown && x.Town != null && x.OwnerClan?.Kingdom == kB)
+                            .ToList();
+                        if (towns.Count > 0)
+                        {
+                            var target = towns[_rng.Next(towns.Count)];
+                            string tName = target.Name.ToString();
+                            try
+                            {
+                                target.Town.Prosperity = Math.Max(10f, target.Town.Prosperity - 300f);
+                                target.Town.Security   = Math.Max(0f,  target.Town.Security   - 30f);
+                            } catch { }
+                            MaybeExtraWar();
+                            sabotaged = true;
+                            MageKnowledge._deferredInquiry = () =>
+                                Msg($"{tName} is in disorder — fires, missing officials, spoiled grain stores. Nobody can name the cause clearly, which was the point. {kA.Name}'s agents have already left.", BadColor);
+                        }
+                    }
+                    if (!sabotaged)
+                    {
+                        MaybeExtraWar();
+                        MageKnowledge._deferredInquiry = () =>
+                            Msg($"The saboteurs were caught or turned back. {kB.Name}'s city stands unmarked. Whatever {kA.Name} sent into it, it did not land.", DimColor);
+                    }
+                    break;
+                }
+            }
         }
 
         // ── Deferred: FireHedgeWitchCurse — 7 days after E_NightVisitor choice A ──
