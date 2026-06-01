@@ -366,15 +366,19 @@ namespace AshAndEmber
                 string tName     = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
                 string cdNote    = onCooldown ? "\n[!] Repeat-use penalty — cost is 5× base." : "";
                 bool   isAss     = _selectedDef.Type == SchemeType.Assassinate;
+                bool   isVipers  = _selectedDef.Type == SchemeType.VipersCounsel;
                 string traitNote = isAss
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
+                string failNote  = isVipers
+                    ? "On failure: always exposed — lose relations with target (−50–70) and king (−30–50). No crime rating."
+                    : "On failure (30% exposed): crime rating, relations hit, possible war.";
                 string body = $"Scheme: {_selectedDef.Name}\n"
                             + $"Target: {tName}\n"
                             + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
                             + $"Success: {(int)(chance * 100)}%  |  Delay: 1–3 days\n"
                             + traitNote + "\n\n"
-                            + "On failure (30% exposed): crime rating, relations hit, possible war.";
+                            + failNote;
 
                 InformationManager.ShowInquiry(
                     new InquiryData("Confirm Scheme", body, true, true, "Commit", "Cancel",
