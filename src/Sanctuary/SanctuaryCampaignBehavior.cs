@@ -109,6 +109,15 @@ namespace AshAndEmber
                     .ToList();
                 _permanentSanctuaryIds.Clear();
                 foreach (var s in picks) _permanentSanctuaryIds.Add(s.StringId);
+
+                // Tell the player which Empire towns host sanctuaries this playthrough.
+                if (picks.Count > 0)
+                {
+                    string names = string.Join(" and ", picks.Select(s => s.Name.ToString()));
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Sanctuaries of the Flame have been established in {names}. " +
+                        $"Honourable and Merciful travellers may seek their services there."));
+                }
             }
             catch { }
         }

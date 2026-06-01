@@ -92,7 +92,8 @@ namespace AshAndEmber
         {
             try
             {
-                var npc = Hero.OneToOneConversationHero?.CharacterObject;
+                // Tavernkeepers are generic NPCs, not Hero objects — use CharacterObject directly.
+                var npc = CharacterObject.OneToOneConversationCharacter;
                 if (npc?.Occupation != Occupation.Tavernkeeper) return false;
                 if (Hero.MainHero?.CurrentSettlement?.IsTown != true) return false;
                 // Must afford at least the cheapest scheme (Spread Rumors: 300g)
