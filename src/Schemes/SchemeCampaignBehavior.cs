@@ -226,9 +226,20 @@ namespace AshAndEmber
         {
             try
             {
+                bool isVipers = _selectedDef.Type == SchemeType.VipersCounsel;
+                var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
+
+                if (isVipers && playerKingdom == null)
+                {
+                    MBInformationManager.AddQuickInformation(
+                        new TextObject("You must belong to a kingdom to use Viper's Counsel."));
+                    return;
+                }
+
                 var lords = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && !h.IsChild
-                             && h != Hero.MainHero)
+                             && h != Hero.MainHero
+                             && (!isVipers || (h.Clan?.Kingdom != null && h.Clan.Kingdom == playerKingdom)))
                     .OrderBy(h => h.Clan?.Kingdom?.Name?.ToString() ?? "")
                     .ThenBy(h => h.Name?.ToString() ?? "")
                     .Take(60)
@@ -236,7 +247,9 @@ namespace AshAndEmber
 
                 if (lords.Count == 0)
                 {
-                    MBInformationManager.AddQuickInformation(new TextObject("No valid lord targets found."));
+                    MBInformationManager.AddQuickInformation(new TextObject(isVipers
+                        ? "No rival lords found within your kingdom."
+                        : "No valid lord targets found."));
                     return;
                 }
 
@@ -254,10 +267,14 @@ namespace AshAndEmber
                     return new InquiryElement(h.StringId, label, null, !blk, hint);
                 }).ToList();
 
+                string selectMsg = isVipers
+                    ? "Select a lord from your kingdom to undermine in the king's eyes:"
+                    : "Select the lord to target:";
+
                 MBInformationManager.ShowMultiSelectionInquiry(
                     new MultiSelectionInquiryData(
                         $"Target — {_selectedDef.Name}",
-                        "Select the lord to target:",
+                        selectMsg,
                         elements, true, 1, 1,
                         "Confirm", "Back",
                         OnLordTargetChosen, null),
@@ -349,15 +366,19 @@ namespace AshAndEmber
                 string tName     = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
                 string cdNote    = onCooldown ? "\n[!] Repeat-use penalty — cost is 5× base." : "";
                 bool   isAss     = _selectedDef.Type == SchemeType.Assassinate;
+                bool   isVipers  = _selectedDef.Type == SchemeType.VipersCounsel;
                 string traitNote = isAss
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
+                string failNote  = isVipers
+                    ? "On failure: always exposed — lose relations with target (−50–70) and king (−30–50). No crime rating."
+                    : "On failure (30% exposed): crime rating, relations hit, possible war.";
                 string body = $"Scheme: {_selectedDef.Name}\n"
                             + $"Target: {tName}\n"
                             + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
                             + $"Success: {(int)(chance * 100)}%  |  Delay: 1–3 days\n"
                             + traitNote + "\n\n"
-                            + "On failure (30% exposed): crime rating, relations hit, possible war.";
+                            + failNote;
 
                 InformationManager.ShowInquiry(
                     new InquiryData("Confirm Scheme", body, true, true, "Commit", "Cancel",
