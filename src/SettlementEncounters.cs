@@ -615,11 +615,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Extend the inner fire to the child.", null, true,
-                        "Costs 1 day of life. Gain Merciful."),
+                        "The fire can be given. It is not without cost."),
                     new InquiryElement("b", "Refuse. The road pulls at you.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                     new InquiryElement("c", "Press coins into her hands — see a healer.", null, true,
-                        "Lose 200 gold. Gain Generous."),
+                        "Coin may do what fire cannot. Something shifts."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -652,11 +652,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Grant it. Light his pyre with the inner fire.", null, true,
-                        "Costs 1 day. Gain Merciful. Renown +5."),
+                        "The fire knows how to honour the dead. Others may hear of it."),
                     new InquiryElement("b", "Decline gently. This is not what the fire is for.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                     new InquiryElement("c", "Agree — but name a price.", null, true,
-                        "Gain 200 gold. Lose Honor."),
+                        "She will pay. You will carry the weight of it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -694,13 +694,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Sit with him. You have questions too.", null, true,
-                        TalentSystem.PurchasedCount < 6
-                            ? "Costs 1 day. Learn a random magical talent."
-                            : "Costs 1 day. Your gift is already deep — he gives you what he can."),
+                        "A day at the edge of something old. What you leave with may surprise you."),
                     new InquiryElement("b", "Ask what he sees in you.", null, true,
-                        "Gain Calculating."),
+                        "He sees something. So might you."),
                     new InquiryElement("c", "Keep walking. Old men with milky eyes say many things.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -751,11 +749,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Expose him. You know exactly what these are.", null, true,
-                        "Renown +5. Gain Honor."),
+                        "The truth has its uses. So does being seen to carry it."),
                     new InquiryElement("b", "Make him an offer: you will make a real one for him to sell, for a cut.", null, true,
-                        "Gain 300 gold. Costs 1 day."),
+                        "There is profit here, if you want it."),
                     new InquiryElement("c", "Buy one as a joke. You can afford the amusement.", null, true,
-                        "Lose 50 gold."),
+                        "An amusement. Not your finest hour."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -789,11 +787,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Thank her and leave a coin for her trouble.", null, true,
-                        "Lose 100 gold. Gain Merciful."),
+                        "She risked nothing. You might spend something."),
                     new InquiryElement("b", "Ask for more details — position, numbers, armed?", null, true,
-                        "Gain Calculating. Useful tactical detail gathered."),
+                        "There may be more to learn, if you ask."),
                     new InquiryElement("c", "Nod and ride past.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -829,11 +827,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Send men back to find the thief.", null, true,
-                        "Recover 200 gold. Takes effort."),
+                        "Your men are capable. Results are not certain."),
                     new InquiryElement("b", "Accept the loss. Cities are cities.", null, true,
-                        "Lose 200 gold."),
+                        "An expensive lesson."),
                     new InquiryElement("c", "Have your guards make an example of likely suspects.", null, true,
-                        "50% chance recover gold. Lose Honor. Crime +10."),
+                        "Rough justice. The outcome is uncertain, and the method is not clean."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -874,11 +872,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Tell it honestly. He can do what he likes with the truth.", null, true,
-                        "Renown +15."),
+                        "Songs travel. Your name with them."),
                     new InquiryElement("b", "Decline modestly. Your story is not finished yet.", null, true,
-                        "Renown +5. Gain Honor."),
+                        "Restraint has its own reputation."),
                     new InquiryElement("c", "Embellish freely. Songs should be worth singing.", null, true,
-                        "Renown +20. Lose Honor."),
+                        "A better story than the truth. The song will travel farther."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -912,11 +910,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Challenge him on the spot.", null, true,
-                        "Win: Renown +20, his clan -10 relation. Lose: Renown -10."),
+                        "A public test. The outcome is not guaranteed."),
                     new InquiryElement("b", "Ignore it with visible dignity.", null, true,
-                        "Honor +1. Small renown gain for restraint."),
+                        "Dignity costs nothing. People will notice."),
                     new InquiryElement("c", "Report the insult to the city lord.", null, true,
-                        "Relation +5 with city lord."),
+                        "There are quieter ways to settle things."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -962,11 +960,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Give him a demonstration and answer his questions.", null, true,
-                        "Costs 2 days. Renown +20."),
+                        "Two days of questions. What you show him will travel."),
                     new InquiryElement("b", "Decline. The gift is not a subject for study.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                     new InquiryElement("c", "Give him false information and collect his fee.", null, true,
-                        "Gain 200 gold. Lose Honor."),
+                        "He will believe what you tell him. That costs something."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -999,11 +997,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Acknowledge them — a nod, no more.", null, true,
-                        "Relation +10 with that lord."),
+                        "A nod means something, between such as you."),
                     new InquiryElement("b", "Step aside and let them pass without contact.", null, true,
-                        "Nothing happens."),
+                        "The moment passes."),
                     new InquiryElement("c", "Cross the crowd and speak to them directly.", null, true,
-                        "50/50: Relation +20 — or they are hostile, Crime +10."),
+                        "You may find common ground — or something less comfortable."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1042,11 +1040,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Give them something worth seeing.", null, true,
-                        "Costs 2 days. Renown +30. Morale +10."),
+                        "The fire given freely has weight. Your men will feel it."),
                     new InquiryElement("b", "Decline quietly and ride in.", null, true,
-                        "Renown -5. Honor +1 for the refusal."),
+                        "Some will respect the refusal. Others will not."),
                     new InquiryElement("c", "Do something small and charge for the sight.", null, true,
-                        "Gain 300 gold. Lose Honor."),
+                        "A small thing for coin. Not your finest hour."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1082,11 +1080,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Allow it. Give him a coin for the work.", null, true,
-                        "Lose 100 gold. Gain Merciful. Morale +5."),
+                        "A coin from your own purse. Your men will notice."),
                     new InquiryElement("b", "Allow it.", null, true,
-                        "Morale +3."),
+                        "Let him do his work. Something lifts."),
                     new InquiryElement("c", "Our dead only.", null, true,
-                        "Nothing mechanical."),
+                        "Your dead, properly attended."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1119,11 +1117,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Spend the night reading it properly.", null, true,
-                        "Costs 1 day. Renown +10."),
+                        "A day in their margins. What they knew was not nothing."),
                     new InquiryElement("b", "Take what seems useful and keep moving.", null, true,
-                        "Gain Calculating. Some pages kept for later."),
+                        "A few pages. Understanding them is another matter."),
                     new InquiryElement("c", "Leave it. Other fires are other fires.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1155,11 +1153,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Receive him properly. Let him carry a full account.", null, true,
-                        "Renown +10. Relation +5 with a lord."),
+                        "An honest account travels far. Someone powerful will hear it."),
                     new InquiryElement("b", "A brief word and let him go.", null, true,
-                        "Relation +5 with a lord."),
+                        "Brief but sufficient. His master will note the courtesy."),
                     new InquiryElement("c", "Send him away. You have a battlefield to tend.", null, true,
-                        "Nothing happens."),
+                        "He will say you were occupied. That is true."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1191,11 +1189,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Strict order. No looting, no violence. This city is yours now, not a prize.", null, true,
-                        "Gain Honor. Morale -8. Renown +15 from city folk."),
+                        "Your men will be unhappy. The city will remember."),
                     new InquiryElement("b", "One hour. Then order restored.", null, true,
-                        "Crime +15. Morale +10. Lose Honor."),
+                        "One hour is a long time. Some cities remember for a generation."),
                     new InquiryElement("c", "Declare it a clean capture. The work is done — and you mean it.", null, true,
-                        "Gain Honor. Morale +5. No crime."),
+                        "Clean is easier to carry home."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1236,11 +1234,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Attend and play it carefully.", null, true,
-                        "Renown +5. Relation +10 with city faction."),
+                        "Careful diplomacy has its rewards."),
                     new InquiryElement("b", "Attend and speak plainly.", null, true,
-                        "Gain Honor. Relation +10 with city faction."),
+                        "Honesty may surprise her. The evening could go differently than planned."),
                     new InquiryElement("c", "Decline gracefully.", null, true,
-                        "Nothing happens."),
+                        "She notes the refusal. The road continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1273,11 +1271,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Confront him publicly — let the crowd hear both sides.", null, true,
-                        "Renown +5. Gain Honor. Small crime +5 for disturbing order."),
+                        "The crowd will see the gap between story and fact. Not without cost."),
                     new InquiryElement("b", "Walk past. You've heard it before and worse.", null, true,
-                        "Nothing happens."),
+                        "Some fires cannot be starved."),
                     new InquiryElement("c", "Press a coin into his collection box as you pass.", null, true,
-                        "Gain Merciful. Small amusing scene."),
+                        "An unexpected gesture. The crowd may find it funnier than expected."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1310,11 +1308,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Offer your party's medical supplies to the sick quarter.", null, true,
-                        "Lose 300 gold. Gain Merciful. Normal entry."),
+                        "A gift of your own supplies. The physician's expression may change."),
                     new InquiryElement("b", "Enter by right. You have business here.", null, true,
-                        "Entry granted. Morale -3 — your men are uncomfortable."),
+                        "Your right of entry is not contested. Your men will notice the sick quarter."),
                     new InquiryElement("c", "Turn back and camp outside until it clears.", null, true,
-                        "Nothing. You avoid the city for now."),
+                        "The city can wait."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1350,11 +1348,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Let them keep what they took and add a coin.", null, true,
-                        "Gain Merciful. Lose 150 gold."),
+                        "Something for the road ahead of them, at a cost to you."),
                     new InquiryElement("b", "Take it back and release them without a word.", null, true,
-                        "Nothing happens."),
+                        "The moment passes."),
                     new InquiryElement("c", "Hand them to the city watch.", null, true,
-                        "Lose Honor. Small crime +5."),
+                        "The law has teeth. So does using them on children."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1387,11 +1385,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Accept graciously and send word of thanks.", null, true,
-                        "Relation +10 with that lord."),
+                        "A gesture returned. The relationship continues."),
                     new InquiryElement("b", "Return it with respect — you prefer not to carry obligations.", null, true,
-                        "Gain Honor. Relation +5."),
+                        "You prefer not to carry obligations. He will understand."),
                     new InquiryElement("c", "Accept it and send nothing back.", null, true,
-                        "Relation +5."),
+                        "The gift accepted. The road continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1424,11 +1422,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Go back and find the source.", null, true,
-                        "Costs 1 day. Uncover Ashen influence. Renown +5."),
+                        "A day spent finding what the fire already told you. It may be worse than you expected."),
                     new InquiryElement("b", "Trust your fire and ride. You know what this means.", null, true,
-                        "Flavor message. Nothing mechanical."),
+                        "The knowledge travels with you."),
                     new InquiryElement("c", "Report what you felt to the city lord.", null, true,
-                        "Relation +5. They will not understand — but they will remember."),
+                        "The city lord will not understand what you describe. They will remember that you said it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1464,11 +1462,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Donate to his work generously.", null, true,
-                        "Lose 300 gold. Gain Merciful. Renown +5."),
+                        "A gift large enough to matter. Word travels."),
                     new InquiryElement("b", "Watch for a moment and leave a small coin.", null, true,
-                        "Lose 50 gold. Gain Merciful."),
+                        "A small gesture. He will not stop for it."),
                     new InquiryElement("c", "Offer him a place with your party — traveling with a lord is safer.", null, true,
-                        "Gain Merciful. He may prove useful."),
+                        "The offer is honest. His answer may surprise you."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1503,11 +1501,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Hear her out and adjust your route accordingly.", null, true,
-                        "Gain Merciful. Possible tactical advantage."),
+                        "She may know something worth heeding."),
                     new InquiryElement("b", "Pay for more detail.", null, true,
-                        "Lose 200 gold. Specific intel message."),
+                        "More detail costs more. What she knows is specific."),
                     new InquiryElement("c", "Thank her politely and file it under general caution.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1544,11 +1542,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Ask to see the child and give a proper blessing.", null, true,
-                        mage ? "Costs 1 day. Gain Merciful. Renown +5." : "Gain Merciful. Renown +5."),
+                        mage ? "A proper blessing costs something. The mother will remember." : "A proper moment. The village will remember."),
                     new InquiryElement("b", "Acknowledge it warmly and leave a gift.", null, true,
-                        "Lose 300 gold. Gain Merciful."),
+                        "A gift that matters to a family of this size."),
                     new InquiryElement("c", "Ask them gently to choose another name — it is a burden.", null, true,
-                        "Gain Honor. Small kind scene."),
+                        "You spare the child the weight of a name like yours. The headman may be secretly relieved."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1583,11 +1581,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Try to approach and calm it.", null, true,
-                        "Gain Merciful. It keeps barking, but you tried."),
+                        "You approach. It does not stop, but you tried."),
                     new InquiryElement("b", "Ignore it.", null, true,
-                        "Nothing happens. It doesn't stop."),
+                        "The barking follows you to the village edge."),
                     new InquiryElement("c", "Offer it meat from your pack.", null, true,
-                        "Gain Merciful. It stops. Uncertainly."),
+                        "Meat silences it. Uncertainty does not."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1622,11 +1620,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Step in. Those fees are invented.", null, true,
-                        "Gain Honor. Renown +5. Relation -5 with city faction."),
+                        "The guards recalculate their position. Not without cost to your standing with the city."),
                     new InquiryElement("b", "Pay what they're demanding on her behalf.", null, true,
-                        "Lose 200 gold. Gain Merciful."),
+                        "A gift from your purse. The merchant's expression will be complicated."),
                     new InquiryElement("c", "Every city has its corner tolls. Keep moving.", null, true,
-                        "Lose Honor."),
+                        "Every city has its corner tolls. Not every toll needs your eyes."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1662,11 +1660,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Give him the time the question deserves.", null, true,
-                        "Renown +5. Rich flavor exchange."),
+                        "A question worth an hour of your time."),
                     new InquiryElement("b", "A brief answer and keep moving.", null, true,
-                        "Flavor only."),
+                        "A brief answer for a long question."),
                     new InquiryElement("c", mage ? "Show him, briefly, what the fire sees when it looks at the ash." : "Tell him what you have seen with your own eyes.", null, true,
-                        mage ? "Costs 1 day. Profound flavor." : "Honor +1. He will write this down."),
+                        mage ? "What you show him he cannot un-see." : "He will write this down."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1705,11 +1703,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Intervene. Exile for winter theft is too much.", null, true,
-                        "Gain Merciful. Renown +5."),
+                        "A word of authority, well placed."),
                     new InquiryElement("b", "Pay the value of the grain yourself and end it.", null, true,
-                        "Lose 200 gold. Gain Merciful and Honor."),
+                        "The debt settled. Something releases."),
                     new InquiryElement("c", "Let it proceed. Village justice is village justice.", null, true,
-                        "Nothing happens."),
+                        "Village justice proceeds."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1743,11 +1741,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Crouch down and say a quiet word to her.", null, true,
-                        "Gain Merciful. The fire recognises her. She will remember this."),
+                        "Something passes between you. She will remember."),
                     new InquiryElement("b", "Meet the mother's eyes and give a small nod.", null, true,
-                        "Gain Calculating. The mother will watch for it now."),
+                        "The mother sees you see it. She will watch more carefully."),
                     new InquiryElement("c", "Ride on. This is not yours to name.", null, true,
-                        "Nothing happens. But the fire knows."),
+                        "You ride on. The fire turns back, briefly."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1783,11 +1781,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Buy their freedom. All of them.", null, true,
-                        "Lose 800 gold. Gain Merciful and Honor."),
+                        "All of them, at significant cost. Your coin is as valid as anyone's."),
                     new InquiryElement("b", "Report the auction's legality to the city lord.", null, true,
-                        "Relation +5. The process begins. It will take time."),
+                        "The law will begin its work. Slowly."),
                     new InquiryElement("c", "Ride past.", null, true,
-                        "Lose Honor."),
+                        "The auction continues. You were there."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1824,11 +1822,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Expose him. Let the crowd hear the difference.", null, true,
-                        "Renown +5. Gain Honor. His income ends today."),
+                        "The crowd hears the difference. His pitch ends here."),
                     new InquiryElement("b", "Let him work. People want to believe in fire — even the wrong kind.", null, true,
-                        "Gain Merciful. Nothing mechanical."),
+                        "People want to believe in fire. Even the wrong kind."),
                     new InquiryElement("c", "Approach him privately. Offer him a real lesson instead.", null, true,
-                        "Costs 1 day. The tricks stop. He learns something true."),
+                        "A day and a private lesson. What he does after is his choice."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1861,11 +1859,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Confront them directly.", null, true,
-                        "Gain Honor. They disappear before you reach them. But they know you saw."),
+                        "They will be gone before you reach them. They know you saw."),
                     new InquiryElement("b", "Pretend not to notice and ride on.", null, true,
-                        "They follow for a mile, then stop. The documentation continues elsewhere."),
+                        "They will follow for a time. What they report is out of your hands."),
                     new InquiryElement("c", "Have a message passed: you are not their enemy.", null, true,
-                        "50/50: quiet acknowledgement or no response. The gesture is made."),
+                        "You reach out. Whether anything comes back is uncertain."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1906,11 +1904,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Commit everything available to treating the sick and sealing the well.", null, true,
-                        "Lose 500 gold. Gain Merciful. Morale -5 — your men give up their own supplies."),
+                        "Everything committed. Your men may give up their own supplies."),
                     new InquiryElement("b", "Seal the well and send for specialist help from outside the city.", null, true,
-                        "Morale neutral. Some civilians will suffer before help arrives."),
+                        "Help will come. The gap before it arrives is the cost."),
                     new InquiryElement("c", mage ? "There may be a way to use the fire to purify the water." : "Requisition all available stocks from the city's merchants.", null, true,
-                        mage ? "Costs 2 days. Gain Merciful. The fire can sometimes clean." : "Lose 400 gold. Partial solution."),
+                        mage ? "The fire can sometimes clean. It costs accordingly." : "Partial coverage. Some suffering will not be prevented."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1956,11 +1954,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Ensure they have food, water, and coin before you leave.", null, true,
-                        "Lose 300 gold. Gain Merciful. The weight shifts, slightly."),
+                        "You leave something behind. The weight shifts, slightly."),
                     new InquiryElement("b", "Point them toward the nearest intact village and ride on.", null, true,
-                        "Gain Merciful. Practical."),
+                        "A direction. Practical."),
                     new InquiryElement("c", "Say nothing and leave.", null, true,
-                        "Lose Honor."),
+                        "You leave. They watch you go."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1993,11 +1991,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Pose for a corrected version — if it exists, let it be right.", null, true,
-                        "Renown +10. The authorised portrait becomes the standard."),
+                        "Your face, correctly rendered. The copies will follow."),
                     new InquiryElement("b", "Approve his enterprise and wish him well.", null, true,
-                        "Renown +5. Gain Honor — grace costs nothing."),
+                        "Grace costs nothing. He takes the endorsement and runs with it."),
                     new InquiryElement("c", "Buy all the existing copies.", null, true,
-                        "Lose 300 gold. He will make more. You know this."),
+                        "You buy the copies. He will make more. You know this."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2030,11 +2028,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Give her an honest explanation.", null, true,
-                        "Costs 1 day. Renown +5. She understands something true."),
+                        "A day spent in honest account. What she understands may travel."),
                     new InquiryElement("b", "Deflect kindly. The fire is not a medical subject.", null, true,
-                        "Nothing. She writes it in her notes anyway."),
+                        "The polite version tells her something too."),
                     new InquiryElement("c", "Tell her she is mistaken.", null, true,
-                        "Lose Honor. She does not believe you and notes that too."),
+                        "She does not believe you. She will note that too."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2066,11 +2064,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Destroy it completely.", null, true,
-                        "Costs 1 day. The working is precise and costs accordingly. The marker is gone."),
+                        "An hour's careful work. The cost is in your hands and your years. The thing is gone."),
                     new InquiryElement("b", "Keep it. Knowing it exists is an advantage.", null, true,
-                        "Cold intel artifact. The Ashen will eventually notice its silence."),
+                        "You carry a gap in their network. They will eventually notice the silence."),
                     new InquiryElement("c", "Leave it in place — let them think nothing was found.", null, true,
-                        "Gain Calculating. The deception is yours to manage."),
+                        "They will find the marker undisturbed. The deception is yours to manage."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2101,13 +2099,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Go in yourself — the fire won't harm you the same way.", null, true,
-                        "Costs 1 day. Gain Merciful. Renown +10. You save him."),
+                        "The fire does not burn you the same way. He is in there."),
                     new InquiryElement("b", "Call to him and guide him out with your voice.", null, true,
-                        "50/50: he makes it or the smoke takes him before you reach him."),
+                        "He may follow your voice out. The smoke is patient."),
                     new InquiryElement("c", "Contain the fire from outside — stop it spreading while the watch enters.", null, true,
-                        "Costs 1 day. The building is lost. He survives. Renown +5."),
+                        "The building may be the cost of keeping the fire contained. He survives."),
                     new InquiryElement("d", "Ask the watch what he has in there before committing to anything.", null, true,
-                        "Gain Calculating. The answer changes the calculus considerably."),
+                        "What he has in there changes the calculation considerably."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2168,13 +2166,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Ride straight at them. End this before it becomes something.", null, true,
-                        "Ashen party spawns at gate. You choose the ground."),
+                        "You choose the ground. They will be there."),
                     new InquiryElement("b", "Warn the village headman and set a watch — catch them if they move.", null, true,
-                        "Ashen party spawns at gate, weakened — they lost the advantage. Relation +5."),
+                        "The village is alerted. The scouts lose the advantage."),
                     new InquiryElement("c", "Slip into the village without alerting them. Let them think you didn't notice.", null, true,
-                        "Gain Calculating. They remain. You know they're there. They don't know you know."),
+                        "A different kind of safety. They watch. So do you."),
                     new InquiryElement("d", "Ride in openly and loudly. Let them see your column's full size.", null, true,
-                        "50/50: they retreat or decide size doesn't matter to them."),
+                        "Size may be enough. It may not."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2216,13 +2214,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Show him what the fire actually is — no argument, just the thing itself.", null, true,
-                        "Costs 1 day. He understands something he cannot un-understand. Deep lore exchange."),
+                        "A day spent showing him the real thing. He cannot unknow it."),
                     new InquiryElement("b", "Challenge him formally — demonstrate the difference by working the same problem.", null, true,
-                        "Gain Calculating. You both learn something. His gift is real and different."),
+                        "Working the same problem reveals something. His gift is real, if different."),
                     new InquiryElement("c", "Let him demonstrate first. Eight years of self-teaching is worth hearing.", null, true,
-                        "Flavor. He shows you something you genuinely didn't know. Morale +3."),
+                        "Eight years of self-teaching is worth hearing. He may surprise you."),
                     new InquiryElement("d", "Agree with him — the gift finds what it finds. He's not wrong about that.", null, true,
-                        "Gain Honor. He is surprised. You leave him with something to reconsider."),
+                        "Agreement disarms the whole conversation. You leave him with something."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2258,13 +2256,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Sit with her. Give her the honest answer.", null, true,
-                        "Costs 1 day. She receives it. The knowledge travels forward."),
+                        "A day spent on a question she has carried two years. The knowledge travels forward."),
                     new InquiryElement("b", "Answer but challenge her framing — the question has a better version.", null, true,
-                        "Gain Calculating. She returns with a better question. Rare lore exchange."),
+                        "The question has a better version. So does the exchange."),
                     new InquiryElement("c", "Test her first — see what she actually carries before deciding what she can receive.", null, true,
-                        "Costs 1 day. Her gift is real and specific. Your test reveals something unexpected."),
+                        "A test reveals what she carries. What you find may surprise you."),
                     new InquiryElement("d", "Tell her she needs to find the answer herself — it won't mean anything received.", null, true,
-                        "Gain Honor. She is frustrated, and she has reason to be."),
+                        "She will find the answer herself. She has reason to be frustrated."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2300,13 +2298,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Find them now and end this before it ends somewhere of their choosing.", null, true,
-                        "Ashen party spawns at gate. You're ready. They're not."),
+                        "You choose the confrontation. They are not prepared for it."),
                     new InquiryElement("b", "Alert the city guard — if they're asking about a lord, the lord's guard should know.", null, true,
-                        "Relation +5. They scatter. You lose the confrontation but gain the city's cooperation."),
+                        "The city is alerted. The grey cloaks will scatter — but not be caught."),
                     new InquiryElement("c", "Have your people track them while you conduct your business normally.", null, true,
-                        "Gain Calculating. Your people follow them to a location. You learn something about their network."),
+                        "Your people tail them somewhere specific. What you learn may be worth more than the fight."),
                     new InquiryElement("d", "Do your business and leave faster than expected.", null, true,
-                        "They adjust. Ashen party spawns at gate — smaller, less prepared, but still there."),
+                        "They anticipated the early departure. Not perfectly."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2342,13 +2340,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Meet their eyes and hold them until they make a choice.", null, true,
-                        "They approach. A cold exchange follows. Intel or threat — you'll find out."),
+                        "They approach. What follows is a cold exchange. You will find out what it is."),
                     new InquiryElement("b", "Move through the gate without acknowledgement — you have seen each other, nothing more.", null, true,
-                        "Gain Calculating. Mutual awareness, no confrontation. They track your movements."),
+                        "You pass. They watch. Mutual awareness without confrontation — for now."),
                     new InquiryElement("c", "Signal hostility. You do not want them tracking your column.", null, true,
-                        "Ashen party spawns at gate. You chose the fight. So did they."),
+                        "You signal clearly. So do they. There will be more of them than you expected."),
                     new InquiryElement("d", "Send someone to them with a single question: why are you here?", null, true,
-                        "50/50: they answer, or your messenger returns alone and the gate suddenly has fewer grey cloaks."),
+                        "You ask directly. They may answer, or the question may end the conversation entirely."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2396,13 +2394,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Pursue immediately — they used this gate for a reason and you need to know what.", null, true,
-                        "Ashen party spawns at outer gate. You catch them before they disperse."),
+                        "Immediate pursuit. You catch them before they split."),
                     new InquiryElement("b", "Raise the alarm first, then pursue — the city guard needs to know a gate guard is dead.", null, true,
-                        "Relation +5 with city lord. Ashen party spawns at gate, weaker — guard joins the fight."),
+                        "The city guard needs to know. The fight will be smaller for it."),
                     new InquiryElement("c", "Follow one of them without engaging — find out where they go.", null, true,
-                        "Gain Calculating. You tail the slowest one. The location they reach is more informative than the fight."),
+                        "Following is quieter than fighting. What you find may be more useful."),
                     new InquiryElement("d", "Seal the gate and hold position — let them come to you on your ground.", null, true,
-                        "Ashen party spawns at gate. You hold the chokepoint. The numbers favor you here."),
+                        "You hold the chokepoint. The numbers may favour you."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2439,13 +2437,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Accept the formal duel. The codes that govern fire-carriers still mean something.", null, true,
-                        "Costs 1 day. Gain Honor. Renown +10. The exchange before the end carries lore."),
+                        "The codes still mean something. The exchange before the end carries weight."),
                     new InquiryElement("b", "Accept, but offer him a choice at the end — yield and receive a clean parole.", null, true,
-                        "Costs 1 day. Gain Merciful. Honor +1. He takes the parole. Something changes in him."),
+                        "An offer at the end of a formal exchange. Whether he takes it is his choice."),
                     new InquiryElement("c", "Decline the duel but treat his wounds and release him.", null, true,
-                        "Gain Merciful. Honor +1. He receives this with more complexity than you expected."),
+                        "You decline the form. You treat the wound. He will receive this in his own way."),
                     new InquiryElement("d", "Ask what he wants to say before the duel — he invoked the right but he has something to tell you.", null, true,
-                        "Gain Calculating. Lore exchange. He gives you something and then accepts whatever comes."),
+                        "He invoked the right but he has something to say. You will want to hear it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2493,11 +2491,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Intervene — reopen and treat it properly.", null, true, hint),
                     new InquiryElement("b", "Tell the herb-woman what you see and let her decide.", null, true,
-                        "Gain Honor. She may or may not be able to correct it."),
+                        "Her territory. She will make of it what she can."),
                     new InquiryElement("c", "Give the family coin to fetch a real surgeon from the next town.", null, true,
-                        "Lose 300 gold. Gain Merciful. He waits. That costs time he may not have."),
+                        "A surgeon is coming. He may not have the time for that."),
                     new InquiryElement("d", "Say nothing. You could be wrong.", null, true,
-                        "Nothing. You might be wrong. You are not wrong."),
+                        "You might be wrong."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2545,11 +2543,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Read the full trail — age, numbers, direction, intent.", null, true, hint),
                     new InquiryElement("b", "Warn the village and ask them to watch for more signs.", null, true,
-                        "Relation +5. They are alerted. They won't know what to look for."),
+                        "They are alerted. They won't know what to look for."),
                     new InquiryElement("c", "Mark the location and send the coordinates to the nearest garrison.", null, true,
-                        "Relation +3. Correct process. Slow response time."),
+                        "Correct process. Slow response."),
                     new InquiryElement("d", "Note it and keep moving — you have seen this pattern before.", null, true,
-                        "Nothing. The pattern continues without a report."),
+                        "The pattern continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2592,11 +2590,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Read the lie precisely — what is he hiding and who asked him to.", null, true, hint),
                     new InquiryElement("b", "Tell him you know he's lying and give him a chance to correct it.", null, true,
-                        "Gain Calculating. He may talk. He may not. He will definitely know you can read him."),
+                        "He may talk. He may not. He will know you can read him."),
                     new InquiryElement("c", "Accept the lie and ask everyone else in the inn separately.", null, true,
-                        "Gain Calculating. Someone else was not instructed. 50/50."),
+                        "Someone else may not have been instructed."),
                     new InquiryElement("d", "Leave him to his loyalty. People protect what they have to protect.", null, true,
-                        "Gain Honor. The information stays with him. You respect the choice."),
+                        "Loyalty is its own kind of answer."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2643,11 +2641,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Ease his fear rather than press his duty.", null, true, hint),
                     new InquiryElement("b", "Invoke your authority formally — demand the record as a matter of right.", null, true,
-                        "Relation -3 with city lord. You get the record. He files a complaint."),
+                        "You get the record. He files a note. Someone will read it."),
                     new InquiryElement("c", "Offer him something in return — not a bribe, a guarantee.", null, true,
-                        "Gain Calculating. A specific guarantee costs you nothing but your word. He takes it."),
+                        "A guarantee costs you nothing but your word. That may be enough."),
                     new InquiryElement("d", "Leave it. Frightened clerks produce bad records under pressure anyway.", null, true,
-                        "Nothing. The information stays filed."),
+                        "The information stays filed."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2691,11 +2689,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Read the ledger and find the specific problem.", null, true, hint),
                     new InquiryElement("b", "Side with the auditor — systematic discrepancies are not clerical errors.", null, true,
-                        "Relation -5 with merchant guild. The auditor is grateful. The truth is still unknown."),
+                        "The auditor is grateful. The truth of the ledger is still open."),
                     new InquiryElement("c", "Side with the merchant — a single anomaly could be clerical.", null, true,
-                        "Relation +5 with merchant guild. He may owe you. He may be guilty."),
+                        "He may owe you something. He may be guilty of something."),
                     new InquiryElement("d", "Decline to arbitrate — this is not your ledger or your fight.", null, true,
-                        "Nothing. They continue without you."),
+                        "They continue without you."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2740,11 +2738,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Confirm identity before acting — read who they are without alerting them.", null, true, hint),
                     new InquiryElement("b", "Reverse the tail — follow your follower.", null, true,
-                        "Gain Calculating. 50/50: you get ahead of them or they catch your move."),
+                        "You may get ahead of them, or they may catch your move."),
                     new InquiryElement("c", "Lead them somewhere useful and confront them on your terms.", null, true,
-                        "Renown +5. You pick the ground. The confrontation is controlled."),
+                        "You pick the ground. The confrontation is controlled."),
                     new InquiryElement("d", "Change your route and lose them — you have no time for this today.", null, true,
-                        "Safe. They lose you. You learn nothing about who sent them."),
+                        "They lose you. You learn nothing about who sent them."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2791,11 +2789,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Diagnose and treat — identify the cause and act on it.", null, true, hint),
                     new InquiryElement("b", "Seal the well immediately and send for the nearest physician.", null, true,
-                        "Gain Merciful. The well is sealed. The children wait for help that is two days away."),
+                        "The well is sealed. Help is coming. The children wait."),
                     new InquiryElement("c", "Leave medicine from your supplies and your best guess at the cause.", null, true,
-                        "Lose 200 gold. Gain Merciful. Your guess may be right. The herb-woman will work from it."),
+                        "Your guess may be right. The herb-woman will work from what you leave."),
                     new InquiryElement("d", "Delay your departure until you know they are stable.", null, true,
-                        "Morale -3. Costs half a day. They will be stable or they will not — you stay either way."),
+                        "They will be stable or they will not. You stay either way."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2844,11 +2842,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Read the tactical picture — confirm this is a trap and identify its structure.", null, true, hint),
                     new InquiryElement("b", "Send a fast scout ahead before committing the column.", null, true,
-                        "Costs half a day. The scout confirms the truth of it, whatever it is."),
+                        "A scout confirms the truth of it, whatever it is."),
                     new InquiryElement("c", "Respond as if it's real but at half-speed with flankers out.", null, true,
-                        "If trap: you spring it on your terms. If real: you arrive cautiously. No bad outcome."),
+                        "Caution covers either outcome."),
                     new InquiryElement("d", "Dismiss the rider and send word to the lord mentioned to verify.", null, true,
-                        "Lose Honor if it's real. Gain Calculating if it's not. The truth takes half a day."),
+                        "The truth takes time. Your decision may cost something depending on which truth it is."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2900,11 +2898,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Talk the father down without threats.", null, true, hint),
                     new InquiryElement("b", "Buy the daughter's debt yourself — end the material cause.", null, true,
-                        "Lose 400 gold. Gain Merciful. The debt is ended. The law is satisfied. He releases the knife."),
+                        "You end the material cause. The law is satisfied."),
                     new InquiryElement("c", "Invoke your authority — demand both parties stand down immediately.", null, true,
-                        "Gain Honor. The father complies. He goes to jail anyway. The daughter's situation is unchanged."),
+                        "A lord's direct order resolves the standoff. Not necessarily the problem."),
                     new InquiryElement("d", "Tell the merchant, publicly, that his behaviour is noted and documented.", null, true,
-                        "Gain Calculating. The merchant's position becomes uncomfortable. The father has a witness now."),
+                        "The merchant's position becomes uncomfortable. The father has a witness now."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -2953,11 +2951,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Read the forgery — identify what's wrong and who produced it.", null, true, hint),
                     new InquiryElement("b", "Back the guard's instinct — detain the merchant pending verification.", null, true,
-                        "Relation +5. Correct process. 50/50 if the document was actually real."),
+                        "Backing the guard's instinct. Verification will tell the rest."),
                     new InquiryElement("c", "Wave it through — the seal looks right and you have somewhere to be.", null, true,
-                        "Nothing. It was forged. The merchant clears the gate with contraband."),
+                        "The seal looks right. You have somewhere to be."),
                     new InquiryElement("d", "Ask the merchant directly where the permit was issued.", null, true,
-                        "Gain Calculating. His answer will tell you whether he knows it's forged or is carrying it in good faith."),
+                        "His answer will tell you whether he knows what he is carrying."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3005,11 +3003,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Work alongside him — apply whatever you know.", null, true, hint),
                     new InquiryElement("b", "Give him the decision completely — this is his skill, not yours.", null, true,
-                        "Gain Honor. He makes the best call he can. Your men see you trust him completely."),
+                        "This is his skill. Your men will see you trust him completely."),
                     new InquiryElement("c", "Ask him to explain the clinical picture fully before you say anything.", null, true,
-                        "Gain Calculating. Your question reshapes his thinking. He reaches a better decision."),
+                        "Your question may reshape his thinking. He may reach a better answer."),
                     new InquiryElement("d", "Spend gold on an urgent courier for a specialist while the surgeon holds the situation.", null, true,
-                        "Lose 500 gold. Gain Merciful. The specialist arrives in time for one of the two."),
+                        "The specialist is coming. The surgeon holds the situation until then."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3062,11 +3060,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Correct the read precisely — explain what actually held the centre.", null, true, hint),
                     new InquiryElement("b", "Ask him what he saw from his position before offering a counter-reading.", null, true,
-                        "Gain Calculating. Honor +1. The combined account is better than either alone."),
+                        "The combined account may be better than either alone."),
                     new InquiryElement("c", "Let it stand for now — his read is close enough for the lesson they need today.", null, true,
-                        "Nothing. The wrong model travels forward. It may matter."),
+                        "The wrong model travels forward. It may matter."),
                     new InquiryElement("d", "Bring in a second officer whose position gave them a clear view of the centre.", null, true,
-                        "Morale +3. The third account resolves the question. Both readings are partially correct."),
+                        "A third account may resolve the question."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3112,11 +3110,11 @@ namespace AshAndEmber
                 {
                     new InquiryElement("a", "Work through the division properly — apply the correct precedents.", null, true, hint),
                     new InquiryElement("b", "Give your quartermaster full authority — this is his domain.", null, true,
-                        "Gain Honor. He handles it correctly and resents no implication he couldn't."),
+                        "This is his domain. Trust him with it."),
                     new InquiryElement("c", "Take the military share, return the city merchants' claims, and call the garrison staff claims void.", null, true,
-                        "Gain Calculating. Fast. The garrison staff will be bitter. The merchants will be satisfied."),
+                        "Fast and clean for some. Not for all."),
                     new InquiryElement("d", "Hire a city administrator to manage the civilian claims under your oversight.", null, true,
-                        "Lose 300 gold. The distribution is clean. The city trusts the outcome more."),
+                        "A clean distribution. The city may trust the outcome more."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3170,11 +3168,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Raise your hand in return. Wars end.", null, true,
-                        "Honor +1. Relation +5 with him."),
+                        "The gesture contains the whole of it. Wars end."),
                     new InquiryElement("b", "Walk past as if you have not seen him.", null, true,
-                        "Nothing happens."),
+                        "He watches you pass. The moment passes."),
                     new InquiryElement("c", "Report his presence to the city guard as a potential threat.", null, true,
-                        "Honor -1. Crime +5."),
+                        "He is a veteran with a cup. The city guard will remember this."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3276,9 +3274,9 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Burn the village. Cultists hide among the innocent here.", null, true,
-                        "Village razed. Crime +50. 50% chance −60 relations with settlement owner."),
+                        "Fire answers certainty. What it finds is another matter."),
                     new InquiryElement("b", "Spare them. There is no solid proof.", null, true,
-                        "50% nothing happens. 50% Ashen Spawn descend on the village anyway."),
+                        "Mercy without proof. The outcome will tell you if you were right."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3335,13 +3333,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Let them burn her. She may truly be a witch.", null, true,
-                        "She dies. Calculating +1."),
+                        "The village has made its decision. You agree with it."),
                     new InquiryElement("b", "Watch. You've heard worse ways to spend an afternoon.", null, true,
-                        "She dies. Mercy −1."),
+                        "You watch. You do nothing. This is a choice too."),
                     new InquiryElement("c", "Stop them. There is no proof, only fear.", null, true,
-                        "Mercy +1. 50% chance she was Ashen and casts a curse before falling."),
+                        "No proof, only fear. Stopping them may not end without consequence."),
                     new InquiryElement("d", "Ride on. You don't have time for this.", null, true,
-                        "Nothing happens."),
+                        "The road continues."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3405,15 +3403,15 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Donate 10,000 denars — build it properly.", null, true,
-                        "Sanctuary immediately added to this city's services."),
+                        "A serious investment. The sanctuary will be built."),
                     new InquiryElement("b", "Give 5,000 denars — half now, half later.", null, true,
-                        "50% chance sanctuary is established."),
+                        "Half the sum. Whether it is enough remains to be seen."),
                     new InquiryElement("c", "Spare 500 denars — something is better than nothing.", null, true,
-                        "5% chance sanctuary is established."),
+                        "A small sum. The priest will do what he can with it."),
                     new InquiryElement("d", "Turn him away. You have nothing to give.", null, true,
-                        "Nothing happens."),
+                        "He was turned away by two lords already. A third changes nothing."),
                     new InquiryElement("e", "Have him beaten and driven off.", null, true,
-                        "Mercy −1."),
+                        "He will not return. Neither will some who heard what you did."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3488,13 +3486,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Embrace the cold. Accept what they offer.", null, true,
-                        "You become Ashen and join the Ashen faction."),
+                        "The cold does not wait for second thoughts."),
                     new InquiryElement("b", $"Run. Get out of the ring. (Athletics {(int)(athChance*100)}%)", null, true,
-                        $"Success: escape cleanly. Failure: wounded."),
+                        $"Speed may be enough. It may not."),
                     new InquiryElement("c", $"Fight them off. ({(int)(combChance*100)}% with your best blade skill)", null, true,
-                        $"Success: drive them back. Failure: wounded."),
+                        $"Steel still cuts. The odds are what they are."),
                     new InquiryElement("d", "Burn them with magic. Age 3 days.", null, true,
-                        "The fire scatters them. Costs 3 days of your life."),
+                        "Fire scatters cold things. The cost is paid in years."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3559,11 +3557,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Accept the invitation. Join the cold.", null, true,
-                        "You become Ashen and join the Ashen faction."),
+                        "Invitations from the cold are rarely what they appear to be."),
                     new InquiryElement("b", "Refuse. It was only a dream.", null, true,
-                        "Nothing happens."),
+                        "It was only a dream."),
                     new InquiryElement("c", "Reach back — try to learn what it wants.", null, true,
-                        "30% wounded. 20% become Ashen. 50% gain 1 free focus point."),
+                        "Reaching toward the cold is not without risk. What it wants is not nothing."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3624,11 +3622,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Join them at the fire.", null, true,
-                        "Lose ~2 years of age (min 20). Honor −2, Mercy −2."),
+                        "The dance is not something you will remember clearly in daylight."),
                     new InquiryElement("b", "Ride past without stopping.", null, true,
-                        "Nothing happens."),
+                        "The crossroads is quiet behind you."),
                     new InquiryElement("c", "Intervene — scatter the rite.", null, true,
-                        "Gain 1 focus point. 50% chance they curse you as they flee: +1 year older."),
+                        "You stop something. They may not go quietly."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3681,11 +3679,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Let him stand in it. You can spare the warmth.", null, true,
-                        "Gain 1 focus point. Age 30 days."),
+                        "Warmth given freely returns something. The cost is in days."),
                     new InquiryElement("b", "Refuse. You owe him nothing.", null, true,
-                        "Nothing happens."),
+                        "He folds his coat and walks away."),
                     new InquiryElement("c", "Seize him. What he knows can be taken without the ceremony.", null, true,
-                        "+10 renown. +500 gold. 50% chance: wounded by his curse."),
+                        "What he knows may be taken. What he kept may not be."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3727,11 +3725,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Study the notes. Knowledge does not become false for being forbidden.", null, true,
-                        "Lose Honour. 20% chance: gain 1 focus point."),
+                        "Forbidden knowledge is still knowledge. What it costs is another matter."),
                     new InquiryElement("b", "Leave it. It was sealed for reasons you have no need to unpack.", null, true,
-                        "Nothing happens. The chamber stays as it is."),
+                        "It was sealed for reasons. The chamber stays as it is."),
                     new InquiryElement("c", "Burn it. Some work should not outlive the people who made it.", null, true,
-                        "Gain Honour."),
+                        "Some work should not outlive the people who made it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3776,13 +3774,13 @@ namespace AshAndEmber
                     new List<InquiryElement>
                     {
                         new InquiryElement("a", "Drink it.", null, true,
-                            "50% chance: gain 2 attribute points. 25% chance: become Ashen. 25% chance: die."),
+                            "He says it unlocks something. He says the process is irreversible."),
                         new InquiryElement("b", "Refuse. You've heard enough.", null, true,
-                            "Nothing happens."),
+                            "The road continues."),
                         new InquiryElement("c", "Report him to the city watch.", null, true,
-                            "+5 renown. He is arrested."),
+                            "The watch will be interested. So will others."),
                         new InquiryElement("d", "Beat him and recover your money.", null, true,
-                            "Recover 1000 gold. Lose Mercy."),
+                            "Your coin comes back. Something else may leave with it."),
                     },
                     false, 1, 1, "Decide", "",
                     chosen2 =>
@@ -3897,11 +3895,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", $"Ignore it. {childName} is your child and you love them.", null, true,
-                        "70% nothing happens. 30%: they are lost to the Ashen."),
+                        "Perhaps you are wrong. Perhaps it will pass. Perhaps it is simply waiting."),
                     new InquiryElement("b", $"Isolate {childName} and watch closely.", null, true,
-                        $"−50 relation with {childName}. Gain Calculating. 30% chance the infection claims them."),
+                        $"They will know what you are doing. The cold may slow. It may not stop."),
                     new InquiryElement("c", $"End it. Kill {childName} before they become something they cannot come back from.", null, true,
-                        $"Kill {childName}. Maximum Cruelty and Calculating. Gain 1 focus point."),
+                        $"You do it yourself. You do not ask anyone else to carry it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -3978,11 +3976,11 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Refuse. You don't trust him.", null, true,
-                        "Gain Calculating. Nothing else happens."),
+                        "You refuse. He accepts this with practiced ease."),
                     new InquiryElement($"b", $"Refuse — but question him first. ({(int)(charmChance * 100)}% Charm)", null, true,
                         charmHint),
                     new InquiryElement("c", "Accept. One drop costs you nothing.", null, true,
-                        "Gain 1000 gold. Something may come of it in a few days."),
+                        "One drop. He pays. You ride on a little less certain than before."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -4030,7 +4028,7 @@ namespace AshAndEmber
                         new List<InquiryElement>
                         {
                             new InquiryElement("ok", "Endure it.", null, true,
-                                "Wounded. One year older."),
+                                "Whatever he did with the drop, he did it with intent."),
                         },
                         false, 1, 1, "Endure", "",
                         _ => Msg("Whatever he did with the drop, he did it with intent. You carry the wound and the year and the knowledge that the blood meant something to someone who knew what to do with it.", BadColor),
@@ -4054,7 +4052,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Tell them to go away.", null, true,
-                        "Gain Calculating."),
+                        "A clear answer. They read it correctly."),
                     new InquiryElement("b", "Flirt back.", null, true,
                         "See where it goes."),
                 },
@@ -4140,11 +4138,11 @@ namespace AshAndEmber
                     new List<InquiryElement>
                     {
                         new InquiryElement("a", "Ignore it. You have no obligations here.", null, true,
-                            "Gain Cruel (lose Mercy)."),
+                            "You set the letter aside without reading the second half."),
                         new InquiryElement("b", "Send money. That is all you can offer from here.", null, true,
-                            "Lose the greater of 500 gold or 5% of your current gold."),
+                            "Coin through couriers. It is the form of adequate you can manage from here."),
                         new InquiryElement("c", "Acknowledge the child. Bring them into your household.", null, true,
-                            "The child joins your clan."),
+                            "You acknowledge the child. What follows is yours to carry."),
                     },
                     false, 1, 1, "Decide", "",
                     chosen =>
@@ -4556,10 +4554,10 @@ namespace AshAndEmber
             string childName  = child.Name?.ToString()  ?? "your child";
 
             string cHint = mage
-                ? $"Age 10 years. Both {spouseName} and {childName} survive. Both +10 relation."
+                ? $"The fire through both of them at once. Not a thing meant to be done like this."
                 : "Requires mage ability.";
             string dHint = hasDarkTalent
-                ? $"Sacrifice 100 troops. Lose Mercy and Honour. Both survive. −20 relation with each."
+                ? $"The ritual requires something living. It requires a lot of it."
                 : "Requires Ember, Reap, or Devour Life talent.";
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
@@ -4568,13 +4566,13 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", $"Save {spouseName}.", null, true,
-                        $"{childName} does not survive. −20 relation with {spouseName}."),
+                        $"You put everything into one of them. That is the shape of this decision."),
                     new InquiryElement("b", $"Save {childName}.", null, true,
-                        $"{spouseName} does not survive."),
+                        $"You put everything into one of them. That is the shape of this decision."),
                     new InquiryElement("c", "Channel the fire through both of them.", null, mage, cHint),
                     new InquiryElement("d", "Perform a dark ritual to sustain them.", null, hasDarkTalent, dHint),
                     new InquiryElement("e", "Make a pact with the cold. Pay whatever it asks.", null, true,
-                        $"Become Ashen. Both survive. −50 relation with {spouseName} and {childName}."),
+                        $"The cold accepts immediately. They survive. What you become is the cost."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -4694,9 +4692,9 @@ namespace AshAndEmber
                         new InquiryElement("a", $"Fight it. ({(int)(leadChance * 100)}% Leadership)", null, true,
                             leadHint),
                         new InquiryElement("b", "Let it take you. You are what you are now.", null, true,
-                            "You surrender. Something happens. You will not remember all of it."),
+                            "You stop resisting. You will not remember all of what follows."),
                         new InquiryElement("c", "Kill yourself before it uses you.", null, true,
-                            "You die. Nobody else does."),
+                            "The last decision that is entirely yours."),
                     },
                     false, 1, 1, "Decide", "",
                     chosen =>
@@ -4741,11 +4739,11 @@ namespace AshAndEmber
                     new List<InquiryElement>
                     {
                         new InquiryElement("a", "Discard it. You have read enough.", null, true,
-                            "Nothing happens."),
+                            "You set it down. Someone else will find it eventually."),
                         new InquiryElement("b", "Perform the rite.", null, true,
-                            "Become Devious and Cruel. Gain Reap or Harvest (or attribute point if owned). 50% of your troops die."),
+                            "The author tested this. They wrote that it worked."),
                         new InquiryElement("c", "Report it to the nearest temple. This should not exist.", null, true,
-                            "+10 renown. Gain Honour. Spend 500 gold."),
+                            "The temple will know what to do with it. They have handled this before."),
                     },
                     false, 1, 1, "Decide", "",
                     chosen2 =>
@@ -4788,7 +4786,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Burn it. Some things are better unread.", null, true,
-                        "Gain Honour."),
+                        "Some things are better unread."),
                     new InquiryElement("b", "Read it.", null, true,
                         "See what it contains."),
                 },
@@ -4874,13 +4872,13 @@ namespace AshAndEmber
                     new List<InquiryElement>
                     {
                         new InquiryElement("a", "Say nothing. It is kind of them.", null, true,
-                            "Lose Honour. 20% chance of pregnancy. Sickness arrives in 7 days."),
+                            "Something may come of it. Something else may come of it too."),
                         new InquiryElement("b", "Hang the witch.", null, true,
-                            "Gain Impulsive."),
+                            "You are not a patient person."),
                         new InquiryElement("c", $"Kill them both — the witch and {spouseName} — in fury.", null, true,
-                            "Gain Impulsive and Cruel. Both die."),
+                            "The fury decides for you. Both of them."),
                         new InquiryElement("d", "Tell the witch to go and never come back.", null, true,
-                            "Nothing happens."),
+                            "You end it quietly. No blood, no answers."),
                     },
                     false, 1, 1, "Decide", "",
                     chosen2 =>
@@ -4922,7 +4920,7 @@ namespace AshAndEmber
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Leave it be.", null, true,
-                        "Nothing happens."),
+                        "Whatever is happening in your house continues without you."),
                     new InquiryElement($"b", $"Investigate. ({(int)(scoutChance * 100)}% Scouting)", null, true,
                         scoutHint),
                 },
@@ -4956,7 +4954,7 @@ namespace AshAndEmber
                     "Seven days after the witch's visit. It begins in the night — not a wound, not a fever in the ordinary sense. Something the witch's working cost that was not disclosed in the agreement, or was disclosed in terms that were easy to misread at the time. You come awake cold, unable to stand, your body doing things that the healers will describe later as 'an acute episode' in the careful way healers describe things they do not understand. It takes a week to pass. Some of it does not pass.",
                     new List<InquiryElement>
                     {
-                        new InquiryElement("ok", "Endure it.", null, true, "Wounded."),
+                        new InquiryElement("ok", "Endure it.", null, true, "The price was not explained in advance."),
                     },
                     false, 1, 1, "Endure", "",
                     _ => Msg("You survive it. The healers say you will recover. They mean most of it. Whatever the witch's working extracted as its price, it took it without asking and gave back something approximate.", BadColor),
