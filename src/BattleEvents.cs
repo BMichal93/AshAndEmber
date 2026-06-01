@@ -129,6 +129,10 @@ namespace AshAndEmber
         private static void Initialize()
         {
             _initialized = true;
+            // Only activate in real combat — skip settlement scenes (tavern, keep, etc.)
+            var m = Mission.Current;
+            if (m == null || (!m.IsFieldBattle && !m.IsSiegeBattle && !m.IsSallyOutBattle && !m.IsNavalBattle))
+                return;
             FindAshenTeam();
             BuildActiveEvents();
         }

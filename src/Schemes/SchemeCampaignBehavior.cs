@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -49,10 +50,43 @@ namespace AshAndEmber
             try { SchemeSystem.Save(store); } catch { }
         }
 
-        // ── Session launched: register dialogue ───────────────────────────────
+        // ── Session launched: register dialogue + city-menu option ───────────────
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             RegisterDialogue(starter);
+            RegisterCityMenuOption(starter);
+        }
+
+        private static void RegisterCityMenuOption(CampaignGameStarter starter)
+        {
+            try
+            {
+                starter.AddGameMenuOption(
+                    "town", "ldm_scheme_city",
+                    "Discuss some shadier business...",
+                    args =>
+                    {
+                        try
+                        {
+                            var s = Settlement.CurrentSettlement;
+                            if (s == null || !s.IsTown) return false;
+                            if (Hero.MainHero?.Gold < 300) return false;
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            bool pending = SchemeSystem.PlayerHasPendingScheme();
+                            args.IsEnabled = !pending;
+                            if (pending)
+                                try { args.Tooltip = new TextObject("A scheme is already in motion."); } catch { }
+                            return true;
+                        }
+                        catch { return false; }
+                    },
+                    args =>
+                    {
+                        try { GameMenu.ExitToLast(); } catch { }
+                        MageKnowledge._deferredInquiry = OpenSchemeSelectionUI;
+                    });
+            }
+            catch { }
         }
 
         private static void RegisterDialogue(CampaignGameStarter starter)
@@ -73,7 +107,8 @@ namespace AshAndEmber
             }
             catch { }
 
-            // Keeper responds and closes the dialogue window; consequence opens UI
+            // Keeper responds and closes the dialogue window; consequence defers UI to next tick
+            // so it opens after the dialogue window has fully closed.
             try
             {
                 starter.AddDialogLine(
@@ -82,9 +117,17 @@ namespace AshAndEmber
                     "close_window",
                     "Coin spent here buys silence. Name what you need done.",
                     null,
-                    OpenSchemeSelectionUI,
+                    DeferOpenSchemeSelectionUI,
                     P);
             }
+            catch { }
+        }
+
+        // Dialogue consequence: defer the scheme UI to the next application tick so it
+        // opens after the dialogue window has fully closed and the game state is clean.
+        private static void DeferOpenSchemeSelectionUI()
+        {
+            try { MageKnowledge._deferredInquiry = OpenSchemeSelectionUI; }
             catch { }
         }
 
@@ -125,6 +168,8 @@ namespace AshAndEmber
                 }
 
                 var elements = new List<InquiryElement>();
+                int affordableCount = 0;
+                int playerInfluence = (int)(Hero.MainHero.Clan?.Influence ?? 0);
                 foreach (var def in SchemeSystem.Definitions)
                 {
                     float chance   = SchemeSystem.ComputeSuccessChance(Hero.MainHero, def.Type, null, null);
@@ -143,20 +188,27 @@ namespace AshAndEmber
                                   $"Failure: 70% silent / 30% exposed — crime rating, relations hit, possible war.";
                     bool canAfford = !hardBlock
                                   && Hero.MainHero.Gold >= baseCost
-                                  && (Hero.MainHero.Clan?.Influence ?? 0) >= def.InfluenceCost;
+                                  && playerInfluence >= def.InfluenceCost;
+                    if (canAfford) affordableCount++;
                     string label = def.Name + (canAfford ? "" : hardBlock ? " [blocked]" : " (can't afford)");
                     elements.Add(new InquiryElement(def.Type, label, null, canAfford, hint));
                 }
 
+                string desc = affordableCount > 0
+                    ? "Choose what needs to be arranged:"
+                    : $"You need influence to arrange schemes (you have {playerInfluence}). " +
+                      $"Gain influence through battles and quests. Browse available options below.";
+
+                // minSelectableOptionCount=0 so the list always opens even when everything is unaffordable.
                 MBInformationManager.ShowMultiSelectionInquiry(
                     new MultiSelectionInquiryData(
                         "Schemes",
-                        "Choose what needs to be arranged:",
+                        desc,
                         elements,
-                        true, 1, 1,
+                        true, 0, 1,
                         "Select", "Cancel",
                         OnSchemeTypeChosen, null),
-                    false);
+                    true);
             }
             catch { }
         }
@@ -216,7 +268,7 @@ namespace AshAndEmber
                         true, 1, 1,
                         "Confirm", "Back",
                         OnLordTargetChosen, null),
-                    false);
+                    true);
             }
             catch { }
         }
@@ -271,7 +323,7 @@ namespace AshAndEmber
                         true, 1, 1,
                         "Confirm", "Back",
                         OnSettlementTargetChosen, null),
-                    false);
+                    true);
             }
             catch { }
         }

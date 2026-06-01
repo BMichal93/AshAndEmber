@@ -89,7 +89,6 @@ namespace AshAndEmber
         {
             EnsurePermanentSanctuaries();
             RegisterSanctuaryMenus(starter);
-            RegisterSchemeMenuOption(starter);
         }
 
         // ── Permanent sanctuary selection ─────────────────────────────────────
@@ -368,39 +367,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Scheme city-menu option ────────────────────────────────────────────
-        private static void RegisterSchemeMenuOption(CampaignGameStarter starter)
-        {
-            try
-            {
-                starter.AddGameMenuOption(
-                    "town", "scheme_covert_town",
-                    "Arrange some covert business",
-                    args =>
-                    {
-                        try
-                        {
-                            var s = Settlement.CurrentSettlement;
-                            if (s == null || !s.IsTown) return false;
-                            if (Hero.MainHero?.Gold < 300) return false;
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            bool pending = SchemeSystem.PlayerHasPendingScheme();
-                            args.IsEnabled = !pending;
-                            if (pending)
-                                try { args.Tooltip = new TextObject("A scheme is already in motion."); } catch { }
-                            return true;
-                        }
-                        catch { return false; }
-                    },
-                    args =>
-                    {
-                        try { GameMenu.ExitToLast(); } catch { }
-                        try { SchemeCampaignBehavior.OpenSchemeSelectionUI(); } catch { }
-                    },
-                    false, -1, false);
-            }
-            catch { }
-        }
+        // Scheme city-menu option is now registered by SchemeCampaignBehavior.RegisterCityMenuOption.
 
         // ── Service implementations ────────────────────────────────────────────
 
