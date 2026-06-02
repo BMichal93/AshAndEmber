@@ -41,6 +41,7 @@ namespace AshAndEmber
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
             {
+                campaignStarter.AddModel(new AshenDiplomacyModel());
                 campaignStarter.AddBehavior(new MagicCampaignBehavior());
                 campaignStarter.AddBehavior(new SchemeCampaignBehavior());
                 campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());
