@@ -13,7 +13,7 @@
 //   Protective Rites        — blocks Ashen world events for N days (gold + aging).
 //   Turn the Ashen          — wounds nearby Ashen parties (gold + aging).
 //   Prayer of Healing       — fully heals all wounded troops (gold + aging).
-//   Prayer for a Blessing   — rejuvenate 10 years (expensive gold, min age 20).
+//   Prayer for a Blessing   — rejuvenate 1 year (max(gold/10, 36500), min age 20).
 //
 // NPC effects (daily tick):
 //   • Honourable + Merciful lords currently in a sanctuary city: 0.3% chance/day
@@ -48,8 +48,8 @@ namespace AshAndEmber
         private const int   BaseAgingTurnAshen   =    45;
         private const int   BaseCostHealing      =   800;
         private const int   BaseAgingHealing     =    20;
-        private const int   BaseCostBlessing     =  5000;  // Prayer for a Blessing
-        private const int   BlessingRejuvDays    =  3650;  // ~10 years
+        private const int   BlessingMinCost       = 36500;  // floor cost for Prayer for a Blessing
+        private const int   BlessingRejuvDays    =   365;  // 1 year
         private const int   BlessingMinAge       =    20;
         private const float TempleDiscount       =  0.60f; // Temple members pay 60% (40% off)
         private const int   ProtectiveDays       =    14;
@@ -170,6 +170,12 @@ namespace AshAndEmber
 
         private static int AgingCost(int baseDays)
             => IsTempleMember() ? (int)(baseDays * TempleDiscount) : baseDays;
+
+        private static int BlessingCost()
+        {
+            int raw = Math.Max((Hero.MainHero?.Gold ?? 0) / 10, BlessingMinCost);
+            return IsTempleMember() ? (int)(raw * TempleDiscount) : raw;
+        }
 
         private static void AgeHero(Hero h, int days)
         {
@@ -435,10 +441,10 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            int  cost  = GoldCost(BaseCostBlessing);
+                            int  cost  = BlessingCost();
                             int  years = BlessingRejuvDays / 365;
                             MBTextManager.SetTextVariable("SANCT_BLESS_TEXT",
-                                $"Prayer for a Blessing ({cost}g{LivestockNote(cost)}) — shed ~{years} years of age (floor: {BlessingMinAge})");
+                                $"Prayer for a Blessing ({cost}g{LivestockNote(cost)}) — shed ~{years} year{(years != 1 ? "s" : "")} of age (floor: {BlessingMinAge})");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                             bool canAfford  = CanAffordSanctuary(cost);
                             bool canYounger = Hero.MainHero?.Age > BlessingMinAge + 1f;
@@ -644,7 +650,7 @@ namespace AshAndEmber
         {
             try
             {
-                int cost = GoldCost(BaseCostBlessing);
+                int cost = BlessingCost();
                 var hero = Hero.MainHero;
                 if (hero?.Age <= BlessingMinAge) return;
                 ResolveSanctuaryPayment(cost, () =>
