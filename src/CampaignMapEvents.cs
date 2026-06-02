@@ -109,6 +109,9 @@ namespace AshAndEmber
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
         public const float ChanceFirstGreen      = 0.04f;  // ~every 25 weeks  (rare, spring only)
         public const float ChanceAmberHarvest    = 0.04f;  // ~every 25 weeks  (rare, autumn only)
+        public const float ChanceEmbersOfHope   = 0.06f;  // ~every 17 weeks  (once Ashen hold 6+ towns)
+        public const int   EmbersOfHopeMinTowns  = 6;      // Ashen must hold this many towns to trigger
+        public const int   EmbersOfHopePeaceCount = 3;     // max wars ended per firing
         public const float ChanceAshenGambit     = 0.010f; // ~every 100 weeks, fires ONCE per campaign (day 120+)
         public const int   AshenGambitEarliestDay = 120;
         // Minimum elapsed days between any two world events. Prevents back-to-back clustering.
@@ -283,6 +286,7 @@ namespace AshAndEmber
             TryFireScorchingSun();
             TryFireFirstGreen();
             TryFireAmberHarvest();
+            TryFireEmbersOfHope();
             TryFireAshenGambit();
 
             if (_weeklySlotFilled)
@@ -2435,6 +2439,67 @@ namespace AshAndEmber
                 if (h == null || !h.IsAlive || h.IsChild || h == Hero.MainHero) continue;
                 try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, h, delta, false); } catch { }
             }
+        }
+
+        // ── Event 23: Embers of Hope ──────────────────────────────────────────
+        // Fires once the Ashen kingdom holds at least 6 towns.
+        // The weight of a common darkness is enough to still old hatreds —
+        // up to 3 random wars between non-Ashen kingdoms are ended as rivals
+        // recognise that a greater threat walks among them.
+        private static void TryFireEmbersOfHope()
+        {
+            if (_rng.NextDouble() >= ChanceEmbersOfHope) return;
+            if (!TryClaimWeeklySlot()) return;
+            try
+            {
+                // Condition: Ashen must hold at least EmbersOfHopeMinTowns towns.
+                var ashen = Kingdom.All.FirstOrDefault(k => k.StringId == AshenKingdomId && !k.IsEliminated);
+                if (ashen == null) return;
+
+                int ashenTowns = Settlement.All.Count(s => s.IsTown && s.Town != null && s.MapFaction == ashen);
+                if (ashenTowns < EmbersOfHopeMinTowns) return;
+
+                // Collect every active war between two non-Ashen kingdoms.
+                var kingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated && k.StringId != AshenKingdomId)
+                    .ToList();
+
+                var warPairs = new List<(Kingdom a, Kingdom b)>();
+                for (int i = 0; i < kingdoms.Count; i++)
+                    for (int j = i + 1; j < kingdoms.Count; j++)
+                        if (kingdoms[i].IsAtWarWith(kingdoms[j]))
+                            warPairs.Add((kingdoms[i], kingdoms[j]));
+
+                if (warPairs.Count == 0) return;
+
+                // Fisher-Yates shuffle, then take up to EmbersOfHopePeaceCount pairs.
+                for (int i = warPairs.Count - 1; i > 0; i--)
+                {
+                    int j = _rng.Next(i + 1);
+                    var tmp = warPairs[i]; warPairs[i] = warPairs[j]; warPairs[j] = tmp;
+                }
+
+                var peacedNames = new List<string>();
+                foreach (var (a, b) in warPairs.Take(EmbersOfHopePeaceCount))
+                {
+                    try
+                    {
+                        MakePeaceAction.Apply(a, b);
+                        peacedNames.Add($"{a.Name} and {b.Name}");
+                    }
+                    catch { }
+                }
+
+                if (peacedNames.Count == 0) return;
+
+                string conflicts = string.Join("; ", peacedNames);
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Embers of Hope — the Ashen hold {ashenTowns} cities now. " +
+                    $"Beneath that shadow old quarrels feel small and foolish. " +
+                    $"Banners are lowered and bitter words withdrawn: " +
+                    $"{peacedNames.Count} war{(peacedNames.Count != 1 ? "s" : "")} end{(peacedNames.Count == 1 ? "s" : "")}: {conflicts}."));
+            }
+            catch { }
         }
 
         // ── Event throttle helpers ────────────────────────────────────────────
