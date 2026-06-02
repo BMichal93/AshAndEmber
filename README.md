@@ -569,6 +569,15 @@ Cities owned by **The Temple** and **two randomly chosen Empire towns** (selecte
 
 **Temple member discount:** Temple faction members pay 40% less gold and age 40% less for all rites.
 
+**Livestock payment:** The Sanctuary flame accepts living offerings in lieu of gold. Animals from the player's party inventory are burned at the altar — the conversion rate is deliberately low; the rite demands many beasts, not a token gift.
+
+| Animal | Gold equivalent |
+|--------|----------------|
+| Cow | 50 g |
+| Sheep | 15 g |
+
+When the player has both gold and sufficient livestock, a dialog asks which payment to use. When only one option is available, payment resolves automatically. The livestock balance is shown in the sanctuary menu header.
+
 | Rite | Cost | Effect |
 |------|------|--------|
 | **Prayer of Strength** | 500g | Party morale +40 |
