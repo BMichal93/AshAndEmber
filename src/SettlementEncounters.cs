@@ -3303,6 +3303,12 @@ namespace AshAndEmber
         // ── Helper: become Ashen (full conversion sequence) ───────────────────
         private static void BecomeAshen()
         {
+            // Sync MageKnowledge player flags first so grimoire + spell aging work correctly.
+            // ColourLordRegistry.SetAshen only updates the NPC-tracking sets; MageKnowledge
+            // has its own _isMage / _isAshen flags that drive the player-facing UI and mechanics.
+            try { MageKnowledge.SetMage(true); }  catch { }
+            try { MageKnowledge.SetAshen(true); } catch { }
+
             try { ColourLordRegistry.SetAshen(Hero.MainHero, true); } catch { }
             try { AshenCitySystem.ApplyAshenPersonality(Hero.MainHero); } catch { }
             try { ColourLordRegistry.SetMage(Hero.MainHero, true); } catch { }

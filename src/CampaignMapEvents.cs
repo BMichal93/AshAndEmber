@@ -603,7 +603,8 @@ namespace AshAndEmber
                         : $"{names[0]}, {names[1]}, and {killed - 2} others";
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Fire Fades — {nameList} did not wake this morning. " +
-                        "Something ancient and cold moved through the realm in the dark hours. Their hearths grow cold behind them."));
+                        "Something ancient and cold moved through the realm in the dark hours. Their hearths grow cold behind them. " +
+                        $"[{killed} lord{(killed != 1 ? "s" : "")} killed; home settlements lost hearth and prosperity.]"));
                 }
             }
             catch { }
@@ -960,7 +961,8 @@ namespace AshAndEmber
                     $"long enough that it began to stare back. " +
                     $"Their banners are raised against every throne in Calradia. " +
                     $"The cold does not negotiate. It does not offer terms. " +
-                    $"It only waits."));
+                    $"It only waits. " +
+                    $"[{brokenName} declared war on all kingdoms.]"));
             }
             catch { _declaringBrokenWill = false; }
         }
@@ -1086,7 +1088,8 @@ namespace AshAndEmber
                     $"Whispers from the Ash — {nameStr} heard something in the fire " +
                     $"that they cannot explain and cannot forget. They have gone north. " +
                     $"Their banners are cold. Their eyes are grey. " +
-                    $"Their former lords received only a letter — unsigned, unaddressed, already cold."));
+                    $"Their former lords received only a letter — unsigned, unaddressed, already cold. " +
+                    $"[{names.Count} mage lord{(names.Count != 1 ? "s" : "")} defected to the Ashen.]"));
             }
             catch { }
         }
@@ -1609,7 +1612,8 @@ namespace AshAndEmber
                 $"The court had been held together by one will. Without it, {nameList} " +
                 $"raised their own banners and walked out the gate with everything they owned. " +
                 $"{newLeader} inherits a throne — and a much smaller kingdom. " +
-                $"What was one realm is now many ambitions."));
+                $"What was one realm is now many ambitions. " +
+                $"[{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]"));
         }
 
         // ── Event 19: Mage Fatwa ─────────────────────────────────────────────
