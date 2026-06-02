@@ -36,9 +36,9 @@ namespace AshAndEmber
 
         private static readonly TalentId[] SpellTalents =
         {
-            TalentId.Subjugate, TalentId.Rejuvenate, TalentId.PlantGrowth,
+            TalentId.Rejuvenate, TalentId.PlantGrowth,
             TalentId.BreakWills, TalentId.Inspire, TalentId.Plague,
-            TalentId.Clairvoyance, TalentId.Curse,
+            TalentId.Clairvoyance, TalentId.Extinguish,
         };
 
         private static readonly TalentId[] DamageEnchantments =
@@ -85,7 +85,7 @@ namespace AshAndEmber
                     current = new List<int>();
                     _lordTalents[hero.StringId] = current;
                 }
-                foreach (TalentId t in new[] { TalentId.Curse, TalentId.BreakWills, TalentId.Plague })
+                foreach (TalentId t in new[] { TalentId.Extinguish, TalentId.BreakWills, TalentId.Plague })
                 {
                     if (!current.Contains((int)t))
                         current.Add((int)t);

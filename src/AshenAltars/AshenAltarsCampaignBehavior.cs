@@ -402,6 +402,29 @@ namespace AshAndEmber
             }
             catch { }
 
+            // ── Rite of Subjugation ─────────────────────────────────────────
+            try
+            {
+                starter.AddGameMenuOption(
+                    "altar_menu", "altar_subjugate",
+                    "{ALTAR_SUBJUGATE_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            MBTextManager.SetTextVariable("ALTAR_SUBJUGATE_TEXT",
+                                "Rite of Subjugation (1 prisoner sacrificed)" +
+                                " — give one to the fire, claim the rest");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            args.IsEnabled = CanAffordSubjugate();
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args => PerformSubjugate());
+            }
+            catch { }
+
             // ── Leave ───────────────────────────────────────────────────────
             try
             {
@@ -680,6 +703,91 @@ namespace AshAndEmber
                     target == null
                         ? "Rite of Cold Fire — no enemy party within range."
                         : $"Rite of Cold Fire — {woundedCount} wounded in {targetDesc}. −30 morale.")); }
+            }
+            catch { }
+            finally { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }
+        }
+
+        // ── Rite: Rite of Subjugation ─────────────────────────────────────────
+        private static bool CanAffordSubjugate()
+        {
+            try
+            {
+                int total = MobileParty.MainParty?.PrisonRoster?.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero).Sum(e => e.Number) ?? 0;
+                return total >= 2;
+            }
+            catch { return false; }
+        }
+
+        private static void PerformSubjugate()
+        {
+            try
+            {
+                var prison = MobileParty.MainParty?.PrisonRoster;
+                if (prison == null) { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } return; }
+
+                var prisoners = prison.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero && e.Number > 0)
+                    .OrderBy(e => e.Character.Tier)
+                    .ThenBy(e => e.Character.StringId)
+                    .ToList();
+
+                if (prisoners.Count == 0 || prisoners.Sum(e => e.Number) < 2)
+                {
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "Rite of Subjugation — not enough prisoners. The altar waits."));
+                    try { GameMenu.SwitchToMenu("altar_menu"); } catch { }
+                    return;
+                }
+
+                // Sacrifice the single lowest-tier prisoner
+                var sacrifice = prisoners[0];
+                try { prison.AddToCounts(sacrifice.Character, -1); } catch { }
+                string sacrificeName = sacrifice.Character.Name?.ToString() ?? "a prisoner";
+
+                // Convert all remaining non-hero prisoners to troops
+                var remaining = prison.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero && e.Number > 0).ToList();
+                var roster = MobileParty.MainParty.MemberRoster;
+                int converted = 0;
+                foreach (var e in remaining)
+                {
+                    try
+                    {
+                        int n = e.Number;
+                        prison.AddToCounts(e.Character, -n);
+                        roster.AddToCounts(e.Character, n);
+                        converted += n;
+                    }
+                    catch { }
+                }
+
+                try { MobileParty.MainParty.RecentEventsMorale -= 10f; } catch { }
+
+                string narrative = converted > 0
+                    ? $"The altar takes {sacrificeName}. Not cruelly — coldly. The way fire takes wood: completely, without apology. " +
+                      "The other prisoners watch from the dark. No one tells them what it means. " +
+                      "They understand anyway. By the time the smoke settles, " +
+                      $"{converted} of them have risen and crossed to your side of the room. " +
+                      "They will not speak of it. Neither will you. The fire is satisfied."
+                    : $"The sacrifice is made. The fire takes {sacrificeName}. " +
+                      "The others were already gone, or too few to matter. " +
+                      "The altar does not negotiate.";
+
+                try
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Rite of Subjugation", narrative, true, false,
+                        converted > 0 ? "They serve now." : "The price is paid.", "", null, null));
+                }
+                catch
+                {
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        converted > 0
+                            ? $"Rite of Subjugation — {sacrificeName} consumed. {converted} prisoner{(converted != 1 ? "s" : "")} join your ranks."
+                            : $"Rite of Subjugation — {sacrificeName} sacrificed. No others remained."));
+                }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }

@@ -20,14 +20,14 @@ namespace AshAndEmber
     public enum TalentId
     {
         Gift        = 0,   // Passive — starting talent
-        Subjugate   = 1,   // Spell
+        // 1 reserved (Subjugate — moved to Ashen Altar rites)
         Rejuvenate  = 2,   // Spell
         PlantGrowth = 3,   // Spell
         BreakWills  = 4,   // Spell
         Inspire     = 5,   // Spell
         Plague      = 6,   // Spell
         Clairvoyance= 7,   // Spell
-        Curse       = 8,   // Spell
+        Extinguish  = 8,   // Spell
         DevourLife  = 9,   // Passive
         BattleMage  = 10,  // Passive
         Sorcerer    = 11,  // Passive
@@ -176,13 +176,6 @@ namespace AshAndEmber
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.Subjugate, IsSpell = true, IsEnchantment = false,
-                Category = TalentCategory.Spell, Name = "Subjugate",
-                Lore = "The fire bends toward those who fear losing it most. You press yours against a captive's fear, and they choose service over what you are silently offering instead.",
-                MechanicDesc = "All prisoners of your largest captive group yield and join your ranks. Costs 1 day."
-            },
-            new TalentDef
-            {
                 Id = TalentId.Rejuvenate, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Rejuvenate",
                 Lore = "You press a sliver of your own fire into a wound, just enough to wake theirs. They will not know what was given. You will feel it, briefly.",
@@ -225,9 +218,9 @@ namespace AshAndEmber
             },
             new TalentDef
             {
-                Id = TalentId.Curse, IsSpell = true, IsEnchantment = false,
-                Category = TalentCategory.Spell, Name = "Curse",
-                Lore = "A thread of flame, pulled. The body follows where the fire leads — and you are leading it toward ash.",
+                Id = TalentId.Extinguish, IsSpell = true, IsEnchantment = false,
+                Category = TalentCategory.Spell, Name = "Extinguish",
+                Lore = "You reach into the fire burning in an enemy and close your hand. Not slowly — like snuffing a candle. The body does not understand at first. Then it does.",
                 MechanicDesc = "5–12 soldiers in the nearest enemy party are wounded or killed, and their courage breaks. Costs 1 day."
             },
         };
@@ -400,32 +393,14 @@ namespace AshAndEmber
 
             switch (id)
             {
-                case TalentId.Subjugate:    CastSubjugate();    break;
                 case TalentId.Rejuvenate:   CastRejuvenate();   break;
                 case TalentId.PlantGrowth:  CastPlantGrowth();  break;
                 case TalentId.BreakWills:   CastBreakWills();   break;
                 case TalentId.Inspire:      CastInspire();      break;
                 case TalentId.Plague:       CastPlague();       break;
                 case TalentId.Clairvoyance: CastClairvoyance(); break;
-                case TalentId.Curse:        CastCurse();        break;
+                case TalentId.Extinguish:   CastExtinguish();   break;
             }
-        }
-
-        private static void CastSubjugate()
-        {
-            try
-            {
-                var prisoners = MobileParty.MainParty?.PrisonRoster?.GetTroopRoster()
-                    ?.Where(e => e.Character != null && !e.Character.IsHero && e.Number > 0).ToList();
-                if (prisoners == null || prisoners.Count == 0)
-                { Msg("Subjugate — no prisoners to subjugate."); return; }
-                var entry = prisoners.OrderByDescending(e => e.Number).First();
-                int count = entry.Number;
-                MobileParty.MainParty.PrisonRoster.AddToCounts(entry.Character, -count);
-                MobileParty.MainParty.MemberRoster.AddToCounts(entry.Character,  count);
-                Msg($"Subjugate — {count} {entry.Character.Name}{(count != 1 ? "s" : "")} bend the knee.");
-            }
-            catch { Msg("Subjugate — no suitable prisoners found."); }
         }
 
         private static void CastRejuvenate()
@@ -548,7 +523,7 @@ namespace AshAndEmber
             catch { Msg("Clairvoyance — insight granted."); }
         }
 
-        private static void CastCurse()
+        private static void CastExtinguish()
         {
             try
             {
@@ -560,7 +535,7 @@ namespace AshAndEmber
                              && (p.GetPosition2D - playerPos).Length < 60f)
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
-                if (target == null) { Msg("Curse — no enemy party in range."); return; }
+                if (target == null) { Msg("Extinguish — no enemy party in range."); return; }
                 int count = 5 + _rng.Next(8);
                 int actual = 0;
                 var troops = target.MemberRoster.GetTroopRoster()
@@ -572,7 +547,7 @@ namespace AshAndEmber
                     try { target.MemberRoster.AddToCounts(troops[idx].Character, wound == 1 ? 0 : -1, false, wound); actual++; } catch { }
                 }
                 target.RecentEventsMorale -= 25f;
-                Msg($"Curse — {actual} soul{(actual != 1 ? "s" : "")} marked in {target.Name}. Their courage breaks. -25 morale.");
+                Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -25 morale.");
             }
             catch { }
         }
@@ -581,7 +556,7 @@ namespace AshAndEmber
         {
             switch (id)
             {
-                case TalentId.Curse:
+                case TalentId.Extinguish:
                 case TalentId.Clairvoyance: return 15f;
                 case TalentId.BreakWills:
                 case TalentId.Plague:       return 10f;
@@ -601,9 +576,8 @@ namespace AshAndEmber
                     case TalentId.BreakWills:  NpcBreakWills(caster);  blurb = "casts Unsettle — dread spreads through an enemy party."; break;
                     case TalentId.Inspire:     NpcInspire(caster);     blurb = "kindles their warband — morale rises."; break;
                     case TalentId.Plague:      NpcPlague(caster);      blurb = "works a Wither — a village's hearth fades."; break;
-                    case TalentId.Curse:       NpcCurse(caster);       blurb = "casts Curse — soldiers fall in a distant party."; break;
+                    case TalentId.Extinguish:  NpcExtinguish(caster);  blurb = "casts Extinguish — fires snuffed in a distant party."; break;
                     case TalentId.Rejuvenate:  NpcRejuvenate(caster);  blurb = "draws on Rejuvenate — their wounded recover."; break;
-                    case TalentId.Subjugate:   NpcSubjugate(caster);   blurb = "calls Subjugate — enemy troops break rank."; break;
                     case TalentId.PlantGrowth: NpcPlantGrowth(caster); blurb = "works Quicken — their warband is sustained."; break;
                     case TalentId.Clairvoyance:NpcClairvoyance(caster);blurb = "reads the threads — power flows to them."; break;
                     default: break;
@@ -676,7 +650,7 @@ namespace AshAndEmber
             v.Village.Hearth = Math.Max(10f, v.Village.Hearth * 0.80f);
         }
 
-        private static void NpcCurse(Hero caster)
+        private static void NpcExtinguish(Hero caster)
         {
             Vec2 pos = caster.PartyBelongedTo?.GetPosition2D ?? Vec2.Zero;
             var target = MobileParty.All
@@ -700,31 +674,6 @@ namespace AshAndEmber
             if (wounded.Count == 0) return;
             var entry = wounded[_rng.Next(wounded.Count)];
             try { roster.AddToCounts(entry.Character, 0, false, -Math.Min(entry.WoundedNumber, 2)); } catch { }
-        }
-
-        private static void NpcSubjugate(Hero caster)
-        {
-            var casterParty   = caster.PartyBelongedTo;
-            var casterFaction = casterParty?.MapFaction;
-            if (casterParty == null || casterFaction == null) return;
-            Vec2 pos = casterParty.GetPosition2D;
-            var target = MobileParty.All
-                .Where(p => p.IsActive && p.MapFaction != null
-                         && FactionManager.IsAtWarAgainstFaction(p.MapFaction, casterFaction)
-                         && p.MemberRoster.TotalRegulars > 3
-                         && (p.GetPosition2D - pos).Length < 40f)
-                .OrderBy(p => (p.GetPosition2D - pos).Length).FirstOrDefault();
-            if (target == null) return;
-            var troops = target.MemberRoster.GetTroopRoster()
-                .Where(e => !e.Character.IsHero && e.Number > 0).ToList();
-            if (troops.Count == 0) return;
-            int count = 2 + _rng.Next(3);
-            for (int i = 0; i < count; i++)
-            {
-                var troop = troops[_rng.Next(troops.Count)];
-                try { target.MemberRoster.AddToCounts(troop.Character, -1); } catch { }
-            }
-            target.RecentEventsMorale -= 15f;
         }
 
         private static void NpcPlantGrowth(Hero caster)

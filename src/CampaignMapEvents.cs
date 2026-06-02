@@ -111,6 +111,8 @@ namespace AshAndEmber
         public const float ChanceAmberHarvest    = 0.04f;  // ~every 25 weeks  (rare, autumn only)
         public const float ChanceAshenGambit     = 0.010f; // ~every 100 weeks, fires ONCE per campaign (day 120+)
         public const int   AshenGambitEarliestDay = 120;
+        // Minimum elapsed days between any two world events. Prevents back-to-back clustering.
+        public const int   EventCooldownDays      = 14;
         public const int   AshenGambitSpawnCount  = 18;    // Ashen Spawn warbands seeded across the Empire
         public const int   AshenGambitCastleCount = 3;     // Empire castles seized by Ashen lords on the night
 
@@ -251,11 +253,14 @@ namespace AshAndEmber
         }
 
         /// Called from CampaignBehavior.OnWeeklyTick().
-        /// Each event rolls independently; multiple can fire the same week.
+        /// At most one event fires per tick (TryClaimWeeklySlot ensures this).
+        /// EventCooldownDays must pass between events to prevent clustering.
         public static void WeeklyTick()
         {
-            // World events are disabled once the world has been rekindled.
             if (DragonQuestSystem.WorldRekindled) return;
+            // ── Cooldown gate ─────────────────────────────────────────────────
+            if (ElapsedCampaignDays() - _lastEventElapsedDay < EventCooldownDays) return;
+            _weeklySlotFilled = false;
 
             TryFireAshenPlague();
             TryFireGreatWithering();
@@ -279,6 +284,9 @@ namespace AshAndEmber
             TryFireFirstGreen();
             TryFireAmberHarvest();
             TryFireAshenGambit();
+
+            if (_weeklySlotFilled)
+                _lastEventElapsedDay = (int)ElapsedCampaignDays();
         }
 
         /// Resets state for a fresh new game (called from OnNewGameCreated).
@@ -290,6 +298,9 @@ namespace AshAndEmber
             _debugForceNextTemple    = false;
             _protectedDaysRemaining  = 0;
             _ashenGambitFired        = false;
+            _campaignStartDay        = (int)CampaignTime.Now.ToDays;
+            _weeklySlotFilled        = false;
+            _lastEventElapsedDay     = -EventCooldownDays;
             _brokenKingdomIds.Clear();
             _gotKingdoms.Clear();
             _gotDays.Clear();
@@ -301,6 +312,7 @@ namespace AshAndEmber
         private static void TryFireAshenPlague()
         {
             if (_rng.NextDouble() >= ChanceAshenPlague) return;
+            if (!TryClaimWeeklySlot()) return;
             if (_protectedDaysRemaining > 0)
             {
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -358,6 +370,7 @@ namespace AshAndEmber
         private static void TryFireGreatWithering()
         {
             if (_rng.NextDouble() >= ChanceGreatWithering) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 if (_rng.Next(2) == 0)
@@ -402,6 +415,7 @@ namespace AshAndEmber
         private static void TryFireAshenMarch()
         {
             if (_rng.NextDouble() >= ChanceAshenMarch) return;
+            if (!TryClaimWeeklySlot()) return;
             if (_protectedDaysRemaining > 0)
             {
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -450,6 +464,7 @@ namespace AshAndEmber
         {
             if (_longNightDaysRemaining > 0) return;
             if (_rng.NextDouble() >= ChanceLongNight) return;
+            if (!TryClaimWeeklySlot()) return;
             if (_protectedDaysRemaining > 0)
             {
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -488,6 +503,7 @@ namespace AshAndEmber
         private static void TryFireAshenTide()
         {
             if (_rng.NextDouble() >= ChanceAshenTide) return;
+            if (!TryClaimWeeklySlot()) return;
             if (_protectedDaysRemaining > 0)
             {
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -539,6 +555,7 @@ namespace AshAndEmber
         private static void TryFireFireFades()
         {
             if (_rng.NextDouble() >= ChanceFireFades) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var candidates = Hero.AllAliveHeroes
@@ -602,6 +619,7 @@ namespace AshAndEmber
         private static void TryFireDarkenedRoads()
         {
             if (_rng.NextDouble() >= ChanceDarkenedRoads) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var kingdoms = Kingdom.All
@@ -675,6 +693,7 @@ namespace AshAndEmber
         private static void TryFireSeedsOfBetrayal()
         {
             if (_rng.NextDouble() >= ChanceSeedsOfBetrayal) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var candidates = Kingdom.All
@@ -802,6 +821,11 @@ namespace AshAndEmber
         private static bool _debugForceNextTemple   = false;
         private static int  _protectedDaysRemaining = 0;
         private static bool _ashenGambitFired       = false;
+        private static int  _campaignStartDay       = -1;
+        // Event throttle: at most one event fires per weekly tick, and no event fires
+        // until EventCooldownDays have passed since the last one.
+        private static bool _weeklySlotFilled    = false;
+        private static int  _lastEventElapsedDay = -EventCooldownDays;
 
         // ── Sanctuary / protective rites public API ───────────────────────────
         internal static int  ProtectedDaysRemaining => _protectedDaysRemaining;
@@ -890,8 +914,9 @@ namespace AshAndEmber
         private static void TryFireBrokenWill()
         {
             if (_brokenWillFired >= BrokenWillMaxFires) return;
-            if (CampaignTime.Now.ToDays < BrokenWillEarliestDay) return;
+            if (ElapsedCampaignDays() < BrokenWillEarliestDay) return;
             if (_rng.NextDouble() >= ChanceBrokenWill) return;
+            if (!TryClaimWeeklySlot()) return;
             if (_declaringBrokenWill) return;
             if (_protectedDaysRemaining > 0)
             {
@@ -952,6 +977,7 @@ namespace AshAndEmber
         private static void TryFireTheLongMarch()
         {
             if (_rng.NextDouble() >= ChanceTheLongMarch) return;
+            if (!TryClaimWeeklySlot()) return;
             if (_protectedDaysRemaining > 0)
             {
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -1009,6 +1035,7 @@ namespace AshAndEmber
         private static void TryFireWhispersFromTheAsh()
         {
             if (_rng.NextDouble() >= ChanceWhispers) return;
+            if (!TryClaimWeeklySlot()) return;
             if (_protectedDaysRemaining > 0)
             {
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -1084,6 +1111,7 @@ namespace AshAndEmber
         private static void TryFireTyranny()
         {
             if (_rng.NextDouble() >= ChanceTyranny) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var kingdoms = Kingdom.All
@@ -1270,6 +1298,7 @@ namespace AshAndEmber
         private static void TryFireStolenHeirloom()
         {
             if (_rng.NextDouble() >= ChanceStolenHeirloom) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var kingdoms = Kingdom.All
@@ -1378,6 +1407,7 @@ namespace AshAndEmber
         {
             if (!IsWinter()) return;
             if (_rng.NextDouble() >= ChanceIronWinter) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 // Pick one random northern kingdom rather than devastating all of them at once
@@ -1428,6 +1458,7 @@ namespace AshAndEmber
         {
             if (!IsSummer()) return;
             if (_rng.NextDouble() >= ChanceScorchingSun) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 // Pick one random desert kingdom rather than scorching all of them at once
@@ -1476,6 +1507,7 @@ namespace AshAndEmber
         {
             if (!IsSpring()) return;
             if (_rng.NextDouble() >= ChanceFirstGreen) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 int boosted = 0;
@@ -1504,6 +1536,7 @@ namespace AshAndEmber
         {
             if (!IsAutumn()) return;
             if (_rng.NextDouble() >= ChanceAmberHarvest) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 int villages = 0;
@@ -1592,6 +1625,7 @@ namespace AshAndEmber
         private static void TryFireMageFatwa()
         {
             if (_rng.NextDouble() >= ChanceMageFatwa) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var kingdoms = Kingdom.All
@@ -1683,12 +1717,16 @@ namespace AshAndEmber
         private static void TryFireTheTemple()
         {
             if (_templeFounded) return;
+            // ChangeKingdomAction.ApplyByJoinToKingdom silently rejects tier-0 clans.
+            // Delay the entire event until the player reaches tier 1 so the join offer works.
+            if ((Hero.MainHero?.Clan?.Tier ?? 0) < 1) return;
             if (!_debugForceNextTemple)
             {
-                if (CampaignTime.Now.ToDays < TempleEarliestDay) return;
+                if (ElapsedCampaignDays() < TempleEarliestDay) return;
                 if (_rng.NextDouble() >= ChanceTheTemple) return;
             }
             _debugForceNextTemple = false;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 // ── Pick the founding city ─────────────────────────────────────
@@ -1850,6 +1888,7 @@ namespace AshAndEmber
         private static void TryFirePeasantUnrest()
         {
             if (_rng.NextDouble() >= ChancePeasantUnrest) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var kingdoms = Kingdom.All
@@ -1891,6 +1930,7 @@ namespace AshAndEmber
         private static void TryFireWolfSheepClothing()
         {
             if (_rng.NextDouble() >= ChanceWolfSheepCloth) return;
+            if (!TryClaimWeeklySlot()) return;
             try
             {
                 var kingdoms = Kingdom.All
@@ -2111,8 +2151,9 @@ namespace AshAndEmber
         private static void TryFireAshenGambit()
         {
             if (_ashenGambitFired) return;
-            if (CampaignTime.Now.ToDays < AshenGambitEarliestDay) return;
+            if (ElapsedCampaignDays() < AshenGambitEarliestDay) return;
             if (_rng.NextDouble() >= ChanceAshenGambit) return;
+            if (!TryClaimWeeklySlot()) return;
 
             if (_protectedDaysRemaining > 0)
             {
@@ -2392,16 +2433,32 @@ namespace AshAndEmber
             }
         }
 
-        // ── Seasonal helpers ──────────────────────────────────────────────────
-        // Bannerlord has 84 days per year, 4 seasons of 21 days each.
-        // Season index: 0 = Spring, 1 = Summer, 2 = Autumn, 3 = Winter.
-        private static int GetSeasonIndex()
-            => (int)(CampaignTime.Now.ToDays % 84.0) / 21;
+        // ── Event throttle helpers ────────────────────────────────────────────
+        // Called by each TryFireXxx after its probability roll succeeds.
+        // Returns true (and claims the slot) if no event has fired this tick yet.
+        // Returns false if another event already claimed the slot this tick.
+        private static bool TryClaimWeeklySlot()
+        {
+            if (_weeklySlotFilled) return false;
+            _weeklySlotFilled = true;
+            return true;
+        }
 
-        private static bool IsWinter() => GetSeasonIndex() == 3;
-        private static bool IsSummer() => GetSeasonIndex() == 1;
-        private static bool IsSpring()  => GetSeasonIndex() == 0;
-        private static bool IsAutumn()  => GetSeasonIndex() == 2;
+        // ── Elapsed-days helper ───────────────────────────────────────────────
+        // Returns days elapsed since the campaign started.
+        // Falls back to absolute ToDays for saves loaded without the start-day record.
+        private static double ElapsedCampaignDays()
+            => _campaignStartDay >= 0
+               ? Math.Max(0.0, CampaignTime.Now.ToDays - _campaignStartDay)
+               : CampaignTime.Now.ToDays;
+
+        // ── Seasonal helpers ──────────────────────────────────────────────────
+        // Use Bannerlord's own GetSeasonOfYear property (returns CampaignTime.Seasons enum)
+        // so season detection matches exactly what the player sees on screen.
+        private static bool IsWinter() => CampaignTime.Now.GetSeasonOfYear == CampaignTime.Seasons.Winter;
+        private static bool IsSummer() => CampaignTime.Now.GetSeasonOfYear == CampaignTime.Seasons.Summer;
+        private static bool IsSpring()  => CampaignTime.Now.GetSeasonOfYear == CampaignTime.Seasons.Spring;
+        private static bool IsAutumn()  => CampaignTime.Now.GetSeasonOfYear == CampaignTime.Seasons.Autumn;
 
         // Sets Town loyalty and security to max so code-driven captures don't
         // immediately trigger a rebellion on the next game tick.
@@ -2530,6 +2587,9 @@ namespace AshAndEmber
             int gambitFired = _ashenGambitFired ? 1 : 0;
             store.SyncData("LDM_AshenGambitFired", ref gambitFired);
             _ashenGambitFired = gambitFired != 0;
+
+            store.SyncData("LDM_CampaignStartDay",  ref _campaignStartDay);
+            store.SyncData("LDM_LastEventDay",       ref _lastEventElapsedDay);
         }
     }
 }
