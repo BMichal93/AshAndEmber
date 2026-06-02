@@ -593,6 +593,27 @@ The founding city has its loyalty and security immediately set to 100 to prevent
 
 If none of the three canonical cities are eligible (already Ashen-owned, under siege, or their owner clan is unavailable), a fallback city from the Empire, Khuzait, or Sturgian factions is used instead.
 
+### The Ashen Altars
+
+In **Tyal** and one additional Ashen city chosen randomly at campaign start (from Sibir, Baltakhand, or Amprela), a grey stone altar stands in the town. These altars are announced at game start.
+
+**Access requirement:** Mercy ≤ −1 (Merciless) AND Honor ≤ −1 (Devious). The Ashen do not kneel to the virtuous.
+
+**Sacrifice mechanic:** Every rite kills soldiers from the player's party (lowest-tier troops first) and drains party morale proportional to the sacrifice cost. A tier-N troop is worth N sacrifice points; the altar takes the minimum number of soldiers needed to cover the cost.
+
+**Livestock payment:** If the player has **cows** (100 g each) or **sheep** (30 g each) in their party inventory, those animals can substitute for the gold cost. When both gold and livestock are available, a dialog asks the player to choose.
+
+| Rite | Gold cost | Sacrifice pts | Effect |
+|------|-----------|---------------|--------|
+| **Blood Tribute** | 300 g | 5 | Each surviving non-hero troop type gains 75 XP |
+| **The Ashen Solstice** | 800 g | 10 | Call down an Iron Winter (north) or Scorching Sun (south) — the season check is waived by the sacrifice |
+| **Carrion Gift** | 600 g | 8 | Wounds 30–60 % of the garrison in a random non-Ashen town |
+| **Break Hearts and Wills** | 400 g | 6 | A random non-Ashen town loses 15–25 loyalty and 15–25 security |
+| **Rite of Cold Fire** | 500 g | 7 | Wounds 8–15 soldiers in the nearest non-Ashen lord party within 150 map units; −30 morale |
+
+**NPC behavior:**
+- Ashen lords currently in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears: *"Dark Rite — [lord] made an offering at the Ashen Altar in [city]."*
+
 ### Player-interactive world events
 
 Three events prompt the player for a choice if their clan is **tier 4 or higher** and **in the affected kingdom**. The dialog appears before effects are applied.
