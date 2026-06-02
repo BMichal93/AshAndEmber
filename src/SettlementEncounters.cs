@@ -111,6 +111,7 @@ namespace AshAndEmber
         private static bool   _brokenSealExtraWar   = false; // B also declares war when scouting-pass/charm-fail
         private static string _brokenSealKingdomAId = null; // aggressor kingdom StringId
         private static string _brokenSealKingdomBId = null; // target kingdom StringId
+        private static int    _cinderVigilCooldown  = 0;   // cooldown between Cinder Vigil purge encounters
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -144,6 +145,7 @@ namespace AshAndEmber
             _brokenSealExtraWar    = false;
             _brokenSealKingdomAId  = null;
             _brokenSealKingdomBId  = null;
+            _cinderVigilCooldown   = 0;
         }
 
         public static void Save(IDataStore store)
@@ -166,6 +168,7 @@ namespace AshAndEmber
             store.SyncData("SE_BrokenSealExtraWar", ref _brokenSealExtraWar);
             store.SyncData("SE_BrokenSealKingA",    ref _brokenSealKingdomAId);
             store.SyncData("SE_BrokenSealKingB",    ref _brokenSealKingdomBId);
+            store.SyncData("SE_CinderVigilCD",      ref _cinderVigilCooldown);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -205,6 +208,7 @@ namespace AshAndEmber
             if (_childEventCooldown > 0) _childEventCooldown--;
             if (_familyFeverCooldown > 0) _familyFeverCooldown--;
             if (_hedgeWitchCooldown > 0) _hedgeWitchCooldown--;
+            if (_cinderVigilCooldown > 0) _cinderVigilCooldown--;
 
             if (_hedgeWitchCurse > 0)
             {
@@ -299,6 +303,11 @@ namespace AshAndEmber
 
             var pool = new List<Action<Settlement>>();
 
+            float _days = (float)CampaignTime.Now.ToDays;
+            string _cult = s.Culture?.StringId ?? "";
+            bool _cinderEligible = _cinderVigilCooldown == 0 && _days >= 50f
+                && (_cult == "battania" || _cult == "sturgia" || _cult == "aserai" || _cult == "khuzait");
+
             if (village)
             {
                 pool.Add(E_BanditWarning);
@@ -331,6 +340,7 @@ namespace AshAndEmber
                     if (_childEventCooldown == 0 && HasEligibleChild()) pool.Add(E_DarkeningInheritance);
                 }
                 if (ashen) pool.Add(EV2_DogWontStop);
+                if (_cinderEligible) pool.Add(EC_CinderVigil);
             }
             if (town)
             {
@@ -370,6 +380,7 @@ namespace AshAndEmber
                 pool.Add(EC9_AshenElixir);
                 if (ashen) pool.Add(EC7_AshenSurveillance);
                 if (ashen) pool.Add(E_FellowCold);
+                if (_cinderEligible) pool.Add(EC_CinderVigil);
             }
 
             Fire(pool, s);
@@ -5358,6 +5369,195 @@ namespace AshAndEmber
                     _ => Msg("You survive it. The healers say you will recover. They mean most of it. Whatever the witch's working extracted as its price, it took it without asking and gave back something approximate.", BadColor),
                     null, "", false), false, true);
             };
+        }
+
+        // Grants a random spell or enchantment talent if the player has fewer than 5 of them.
+        private static void GrantMagicalTalent()
+        {
+            int magCount = TalentSystem.AllPurchased
+                .Count(id => { var d = TalentSystem.All.FirstOrDefault(x => x.Id == id);
+                               return d != null && (d.IsSpell || d.IsEnchantment); });
+            if (magCount >= 5) return;
+            var available = TalentSystem.All
+                .Where(t => (t.IsSpell || t.IsEnchantment) && !TalentSystem.Has(t.Id))
+                .ToList();
+            if (available.Count == 0) return;
+            TalentSystem.GrantFree(available[_rng.Next(available.Count)].Id, Hero.MainHero);
+        }
+
+        // ── EC_CinderVigil — enter village or town, Battania/Strugia/Aserai/Khuzait territory ──
+        // Temple soldiers conducting a purge on local practitioners (druids, alchemists, shamans).
+        // Not before day 50. 150-day cooldown between recurrences.
+        private static void EC_CinderVigil(Settlement s)
+        {
+            if (_cinderVigilCooldown > 0) return;
+
+            string cult    = s.Culture?.StringId ?? "";
+            bool isNorth   = cult == "battania" || cult == "sturgia";
+            bool isAserai  = cult == "aserai";
+            bool isKhuzait = cult == "khuzait";
+            if (!isNorth && !isAserai && !isKhuzait) return;
+
+            _cinderVigilCooldown = 150;
+
+            string[] relevantIds = isNorth   ? new[] { "battania", "sturgia" }
+                                 : isAserai  ? new[] { "aserai" }
+                                 : new[] { "khuzait" };
+
+            string target = isNorth ? "druids" : isAserai ? "alchemists" : "shamans";
+
+            string description = isNorth
+                ? "You come across a column of Temple soldiers at a crossroads between burned longhouses. They have cornered a group of druids — seven or eight, most elderly, some with root-stained hands that mark them as practitioners. The officer is reading from a warrant. His men have already drawn weapons. This is organized. Whatever this is, they were sent to do it."
+                : isAserai
+                ? "In the afternoon heat of the market quarter, Temple soldiers have cordoned off a workshop. The scholars inside — three alchemists, a cartographer, an old physician — sit with their hands visible, watching their equipment being smashed methodically. A soldier calls names from a list. Across the street, the market crowd watches in the silence of people who have learned not to ask questions."
+                : "On the edge of the steppe settlement, Temple soldiers have separated a shaman from the rest of the camp and surrounded her on open ground. The camp watches from a distance, held back by a line of spears. She is old. She is not fighting. The soldiers are waiting for something — a word, perhaps, or a reason to act. They will make one if none arrives.";
+
+            var factionLords = Hero.AllAliveHeroes
+                .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && h != Hero.MainHero
+                         && relevantIds.Contains(h.MapFaction?.StringId))
+                .ToList();
+
+            var templeLords = Hero.AllAliveHeroes
+                .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && h != Hero.MainHero
+                         && h.MapFaction?.StringId == "the_temple")
+                .ToList();
+
+            string leadHint   = SkillHint(DefaultSkills.Leadership, 0.30f, "Convince the commander");
+            var bestCombat    = new[] { DefaultSkills.OneHanded, DefaultSkills.TwoHanded, DefaultSkills.Polearm }
+                                    .OrderByDescending(sk => GetSkill(sk)).First();
+            string combatHint = SkillHint(bestCombat, 0.30f, "Drive them off");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★  The Cinder Vigil",
+                description,
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a",
+                        $"Ride past. The {target} will deal with their own fate.",
+                        null, true,
+                        $"Stay out of it. (Mercy -1)"),
+                    new InquiryElement("b",
+                        $"Speak to the soldiers. Argue for the {target}.",
+                        null, true,
+                        $"Reason with the commander. Gain Mercy, Calculating. {leadHint}"),
+                    new InquiryElement("c",
+                        $"Draw your weapon and drive the soldiers off.",
+                        null, true,
+                        $"Force the issue. Gain Calculating -1. -20 with Temple lords. -5 with 3 Empire lords. {combatHint}"),
+                    new InquiryElement("d",
+                        "Offer your assistance to the soldiers. They may be Ashen servants.",
+                        null, true,
+                        "Fall in beside them. Gain Calculating -1. -10 with a local lord. +10 with Temple lords. Gain 1000 gold."),
+                    new InquiryElement("e",
+                        $"Join the killing. The {target} mean nothing to you.",
+                        null, true,
+                        $"Cruelty is its own reward. Gain Mercy -1. -20 with a local lord. +2 with a Temple lord. Gain Reap if you don't have it."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                        {
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            Msg($"You ride past. The sounds follow you down the road a distance. Not far enough.", DimColor);
+                            break;
+                        }
+                        case "b":
+                        {
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            if (SkillRoll(DefaultSkills.Leadership, 0.30f))
+                            {
+                                Msg($"The officer listens. Eventually, he listens. Whatever you said held weight. The {target} are released with a warning that will expire in a week. You take that as the best available outcome.", GoodColor);
+                                if (factionLords.Count > 0)
+                                {
+                                    var lord = factionLords[_rng.Next(factionLords.Count)];
+                                    ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 10, false);
+                                    Msg($"(Relation with {lord.Name}: +10)", GoodColor);
+                                }
+                                GrantMagicalTalent();
+                            }
+                            else
+                            {
+                                Msg($"You argue. The commander listens with the patience of a man who has heard this before and decided it doesn't apply. The {target} are taken anyway. You were not enough.", DimColor);
+                            }
+                            break;
+                        }
+                        case "c":
+                        {
+                            ShiftTrait(DefaultTraits.Calculating, -1);
+                            foreach (var lord in templeLords)
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -20, false);
+                            if (templeLords.Count > 0)
+                                Msg("(Relation with all Temple lords: -20)", BadColor);
+                            var empireLords = Hero.AllAliveHeroes
+                                .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && h != Hero.MainHero
+                                         && (h.MapFaction?.StringId == "empire"   || h.MapFaction?.StringId == "empire_w"
+                                          || h.MapFaction?.StringId == "empire_s" || h.MapFaction?.StringId == "empire_n"))
+                                .OrderBy(_ => _rng.Next()).Take(3).ToList();
+                            foreach (var lord in empireLords)
+                            {
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -5, false);
+                                Msg($"(Relation with {lord.Name}: -5)", BadColor);
+                            }
+                            if (SkillRoll(bestCombat, 0.30f))
+                            {
+                                Msg($"The line breaks. The soldiers pull back in the organized retreat of men who know when a fight has changed. The {target} scatter before anyone reorganizes. You have made enemies today, but the {target} are alive.", GoodColor);
+                                if (factionLords.Count > 0)
+                                {
+                                    var lord = factionLords[_rng.Next(factionLords.Count)];
+                                    ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 10, false);
+                                    Msg($"(Relation with {lord.Name}: +10)", GoodColor);
+                                }
+                                GrantMagicalTalent();
+                            }
+                            else
+                            {
+                                Msg($"You charge. It is not enough. The soldiers hold and the {target} are cut down while you are still fighting through. You survive the engagement. They did not.", BadColor);
+                            }
+                            break;
+                        }
+                        case "d":
+                        {
+                            ShiftTrait(DefaultTraits.Calculating, -1);
+                            if (factionLords.Count > 0)
+                            {
+                                var lord = factionLords[_rng.Next(factionLords.Count)];
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -10, false);
+                                Msg($"(Relation with {lord.Name}: -10)", BadColor);
+                            }
+                            foreach (var lord in templeLords)
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 10, false);
+                            if (templeLords.Count > 0)
+                                Msg("(Relation with Temple lords: +10)", GoodColor);
+                            ChangeGold(1000);
+                            Msg($"You fall in beside the soldiers. The work is brief. The commander thanks you with the formal distance of a man who does not need your name. He leaves a purse. The {target} are gone. The road is clear.", DimColor);
+                            break;
+                        }
+                        case "e":
+                        {
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            if (factionLords.Count > 0)
+                            {
+                                var lord = factionLords[_rng.Next(factionLords.Count)];
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -20, false);
+                                Msg($"(Relation with {lord.Name}: -20)", BadColor);
+                            }
+                            if (templeLords.Count > 0)
+                            {
+                                var lord = templeLords[_rng.Next(templeLords.Count)];
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 2, false);
+                                Msg($"(Relation with {lord.Name}: +2)", GoodColor);
+                            }
+                            if (!TalentSystem.Has(TalentId.Reap))
+                                TalentSystem.GrantFree(TalentId.Reap, Hero.MainHero);
+                            Msg($"You join them. There is a specific kind of ease that comes with it — no decision to make, no weight to carry afterward. When it is over, you feel the familiar warmth. Something given back. The soldiers give you a wide berth on the road home.", BadColor);
+                            break;
+                        }
+                    }
+                }, null, "", false), false, true);
         }
     }
 }
