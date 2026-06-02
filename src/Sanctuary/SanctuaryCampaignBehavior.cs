@@ -708,16 +708,16 @@ namespace AshAndEmber
                     if (heal)
                     {
                         NpcHealPartyFull(hero.PartyBelongedTo);
-                        MBInformationManager.AddQuickInformation(new TextObject(
-                            $"Miracle — {hero.Name} prayed at the sanctuary in {city}. " +
-                            $"The wounded rose from their beds before sunrise."));
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"{hero.Name} — miracle at the sanctuary in {city}. The wounded rose from their beds before sunrise.",
+                            new Color(0.80f, 0.72f, 0.45f)));
                     }
                     else
                     {
                         NpcBoostMorale(hero.PartyBelongedTo);
-                        MBInformationManager.AddQuickInformation(new TextObject(
-                            $"Miracle — {hero.Name} knelt at the sanctuary in {city}. " +
-                            $"A renewal of spirit was reported by the guards on watch."));
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"{hero.Name} — miracle at the sanctuary in {city}. A renewal of spirit was reported by the guards on watch.",
+                            new Color(0.80f, 0.72f, 0.45f)));
                     }
                 }
             }

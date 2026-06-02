@@ -815,21 +815,21 @@ namespace AshAndEmber
                     {
                         case 0:
                             NpcHealPartyPartial(hero.PartyBelongedTo, 0.20f);
-                            MBInformationManager.AddQuickInformation(new TextObject(
-                                $"Dark Rite — {hero.Name} made an offering at the Ashen Altar in {city}. " +
-                                "The injured soldiers recovered swiftly. Something was paid for it."));
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} — dark rite at the altar in {city}. The injured recovered swiftly. Something was paid for it.",
+                                new Color(0.38f, 0.50f, 0.75f)));
                             break;
                         case 1:
                             NpcBoostMorale(hero.PartyBelongedTo, 20f);
-                            MBInformationManager.AddQuickInformation(new TextObject(
-                                $"Dark Rite — {hero.Name} performed a blood rite at the altar in {city}. " +
-                                "The survivors march with cold resolve."));
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} — blood rite at the altar in {city}. The survivors march with cold resolve.",
+                                new Color(0.38f, 0.50f, 0.75f)));
                             break;
                         case 2:
                             NpcCurseNearbyParty(hero.PartyBelongedTo);
-                            MBInformationManager.AddQuickInformation(new TextObject(
-                                $"Dark Rite — {hero.Name} whispered a curse at the altar in {city}. " +
-                                "Something reached out and touched an enemy in the dark."));
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} — curse whispered at the altar in {city}. Something reached out and touched an enemy in the dark.",
+                                new Color(0.38f, 0.50f, 0.75f)));
                             break;
                     }
                 }

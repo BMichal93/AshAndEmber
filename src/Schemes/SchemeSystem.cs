@@ -355,10 +355,12 @@ namespace AshAndEmber
             }
         }
 
-        /// 3% daily global chance — ~1 NPC scheme every 33 days.
+        /// Each eligible lord independently rolls to attempt a scheme each day.
+        /// Villainous or calculating lords scheme readily; honourable lords almost never do
+        /// (they rely on Sanctuary instead). The 20–35-day per-lord cooldown caps each lord
+        /// at roughly 1–2 schemes per year.
         internal static void NpcSchemeTick()
         {
-            if (_rng.NextDouble() > 0.03) return;
             if (Campaign.Current == null) return;
             try
             {
@@ -372,71 +374,97 @@ namespace AshAndEmber
                     .ToList();
                 if (candidates.Count == 0) return;
 
-                var lord = candidates[_rng.Next(candidates.Count)];
-
-                var affordable = Definitions
-                    .Where(d => d.GoldCost <= lord.Gold
-                             && d.InfluenceCost <= (lord.Clan?.Influence ?? 0))
-                    .ToList();
-                if (affordable.Count == 0) return;
-
-                // Assassination: weight 1 (rare). All others: weight 3.
-                var weighted = new List<SchemeDefinition>();
-                foreach (var d in affordable)
-                    weighted.AddRange(Enumerable.Repeat(d,
-                        d.Type == SchemeType.Assassinate ? 1 : 3));
-                if (weighted.Count == 0) return;
-
-                var scheme = weighted[_rng.Next(weighted.Count)];
-
-                Hero       targetHero = null;
-                Settlement targetSett = null;
-
-                if (scheme.NeedsLord)
+                foreach (var lord in candidates)
                 {
-                    List<Hero> lordTargets;
-                    if (scheme.Type == SchemeType.VipersCounsel)
+                    bool schemer;
+                    try
                     {
-                        // Same-kingdom court intrigue — target a rival clan within the same kingdom
-                        lordTargets = Hero.AllAliveHeroes
-                            .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
-                                     && t != lord && t != Hero.MainHero
-                                     && t.Clan != null && t.Clan != lord.Clan
-                                     && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
-                                     && t.Clan.Kingdom == lord.Clan.Kingdom)
-                            .ToList();
+                        // Dishonourable, ruthless, or calculating lords are natural schemers.
+                        // Honourable + merciful lords prefer the Sanctuary — they scheme only rarely.
+                        schemer = lord.GetTraitLevel(DefaultTraits.Honor)      <= 0
+                               || lord.GetTraitLevel(DefaultTraits.Mercy)      <= 0
+                               || lord.GetTraitLevel(DefaultTraits.Calculating) >= 1;
                     }
-                    else
-                    {
-                        lordTargets = Hero.AllAliveHeroes
-                            .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
-                                     && t != Hero.MainHero
-                                     && t.Clan != null && t.Clan != lord.Clan
-                                     && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
-                                     && t.Clan.Kingdom != null && !t.Clan.Kingdom.IsEliminated
-                                     && lord.Clan.Kingdom.IsAtWarWith(t.Clan.Kingdom))
-                            .ToList();
-                    }
-                    if (lordTargets.Count == 0) return;
-                    targetHero = lordTargets[_rng.Next(lordTargets.Count)];
+                    catch { schemer = true; }
+
+                    double chance = schemer ? 0.03 : 0.005;
+                    if (_rng.NextDouble() > chance) continue;
+                    try { TryQueueNpcScheme(lord); } catch { }
+                }
+            }
+            catch { }
+        }
+
+        private static void TryQueueNpcScheme(Hero lord)
+        {
+            // Filter to schemes the lord can afford at base cost (quick pre-filter).
+            var affordable = Definitions
+                .Where(d => d.GoldCost <= lord.Gold
+                         && d.InfluenceCost <= (lord.Clan?.Influence ?? 0))
+                .ToList();
+            if (affordable.Count == 0) return;
+
+            // Assassination: weight 1 (rare). All others: weight 3.
+            var weighted = new List<SchemeDefinition>();
+            foreach (var d in affordable)
+                weighted.AddRange(Enumerable.Repeat(d,
+                    d.Type == SchemeType.Assassinate ? 1 : 3));
+            if (weighted.Count == 0) return;
+
+            var scheme = weighted[_rng.Next(weighted.Count)];
+
+            Hero       targetHero = null;
+            Settlement targetSett = null;
+
+            if (scheme.NeedsLord)
+            {
+                List<Hero> lordTargets;
+                if (scheme.Type == SchemeType.VipersCounsel)
+                {
+                    // Same-kingdom court intrigue — target a rival clan within the same kingdom
+                    lordTargets = Hero.AllAliveHeroes
+                        .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
+                                 && t != lord && t != Hero.MainHero
+                                 && t.Clan != null && t.Clan != lord.Clan
+                                 && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
+                                 && t.Clan.Kingdom == lord.Clan.Kingdom)
+                        .ToList();
                 }
                 else
                 {
-                    var targets = Settlement.All
-                        .Where(s => (s.IsTown || s.IsCastle)
-                                 && s.OwnerClan != null
-                                 && s.OwnerClan != lord.Clan
-                                 && s.OwnerClan.Kingdom != lord.Clan.Kingdom)
+                    lordTargets = Hero.AllAliveHeroes
+                        .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
+                                 && t != Hero.MainHero
+                                 && t.Clan != null && t.Clan != lord.Clan
+                                 && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
+                                 && t.Clan.Kingdom != null && !t.Clan.Kingdom.IsEliminated
+                                 && lord.Clan.Kingdom.IsAtWarWith(t.Clan.Kingdom))
                         .ToList();
-                    if (targets.Count == 0) return;
-                    targetSett = targets[_rng.Next(targets.Count)];
                 }
-
-                bool queued = QueueScheme(lord, scheme.Type, targetHero, targetSett, isPlayer: false);
-                if (queued)
-                    _npcCooldowns[lord.StringId] = 20 + _rng.Next(16);
+                if (lordTargets.Count == 0) return;
+                targetHero = lordTargets[_rng.Next(lordTargets.Count)];
             }
-            catch { }
+            else
+            {
+                var targets = Settlement.All
+                    .Where(s => (s.IsTown || s.IsCastle)
+                             && s.OwnerClan != null
+                             && s.OwnerClan != lord.Clan
+                             && s.OwnerClan.Kingdom != lord.Clan.Kingdom)
+                    .ToList();
+                if (targets.Count == 0) return;
+                targetSett = targets[_rng.Next(targets.Count)];
+            }
+
+            // Verify the lord can actually afford the tier-scaled effective cost before
+            // committing — the base-cost pre-filter above misses tier multipliers.
+            int effectiveGold = ComputeGoldCost(scheme, targetHero, targetSett);
+            int effectiveInf  = ComputeInfluenceCost(scheme, targetHero, targetSett);
+            if (lord.Gold < effectiveGold || (lord.Clan?.Influence ?? 0) < effectiveInf) return;
+
+            bool queued = QueueScheme(lord, scheme.Type, targetHero, targetSett, isPlayer: false);
+            if (queued)
+                _npcCooldowns[lord.StringId] = 20 + _rng.Next(16);
         }
 
         // ── Success chance ────────────────────────────────────────────────────

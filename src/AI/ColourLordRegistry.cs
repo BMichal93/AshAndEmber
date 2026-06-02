@@ -262,7 +262,7 @@ namespace AshAndEmber
 
                     // Blight lords cast hungrily — cold fire demands expression and costs them nothing
                     // Normal lords slow down as age accumulates
-                    int castChance = isBlight ? 18
+                    int castChance = isBlight ? 10
                                    : hero.Age < 50f ? 8
                                    : hero.Age < 70f ? 4
                                    : 2;
@@ -278,7 +278,7 @@ namespace AshAndEmber
                     {
                         TalentSystem.ExecuteNpcMapSpell(hero, chosen);
                         // Blight lords recover quickly; normal lords need several days
-                        _campaignCooldowns[id] = isBlight ? 3 + _rng.Next(4) : 5 + _rng.Next(5);
+                        _campaignCooldowns[id] = isBlight ? 5 + _rng.Next(4) : 5 + _rng.Next(5);
                         if (hero.Clan != null) hero.Clan.Renown += 3f;
                         if (isBlight) ashenCastsToday++;
                     }

@@ -350,12 +350,14 @@ namespace AshAndEmber
 
             // Refund the influence the non-Ashen side spent — peace with the Ashen
             // can never stick, so the AI should not be permanently drained by it.
+            // The larger refund (250) fully covers the peace-proposal cost and leaves
+            // the faction with enough influence to pursue wars against other kingdoms.
             try
             {
                 IFaction other = faction1 == _ashenKingdom ? faction2 : faction1;
                 var otherKingdom = other as Kingdom;
                 var rulingClan = otherKingdom?.RulingClan;
-                if (rulingClan != null) rulingClan.Influence += 100f;
+                if (rulingClan != null) rulingClan.Influence += 250f;
             }
             catch { }
 
@@ -935,6 +937,18 @@ namespace AshAndEmber
             if (_warThrottle == 0)
             {
                 DeclareWarWithAllKingdoms();
+                // Compensate non-Ashen kingdoms for the diplomatic drain of the permanent Ashen
+                // war. Without this, Bannerlord's AI suppresses inter-faction wars because all
+                // kingdoms are perpetually overcommitted fighting the Ashen.
+                try
+                {
+                    foreach (Kingdom k in Kingdom.All)
+                    {
+                        if (k == _ashenKingdom || k.IsEliminated) continue;
+                        if (k.RulingClan != null) k.RulingClan.Influence += 30f;
+                    }
+                }
+                catch { }
                 _warThrottle = WarInterval;
             }
 
