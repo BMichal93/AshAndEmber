@@ -41,6 +41,12 @@
 // │                      │ tier clan heads. Ruling clan loses all influence.   │
 // │                      │ One executed clan defects.                          │
 // ├──────────────────────┼─────────────────────────────────────────────────────┤
+// │ The First Green      │ (Spring only, rare) The world stirs back to life.   │
+// │                      │ All non-Ashen lord parties gain a small morale boost.│
+// ├──────────────────────┼─────────────────────────────────────────────────────┤
+// │ The Amber Harvest    │ (Autumn only, rare) Crops gathered before the cold. │
+// │                      │ All non-Ashen villages gain hearth.                 │
+// ├──────────────────────┼─────────────────────────────────────────────────────┤
 // │ The Ashen Gambit     │ (Once per campaign, day 120+) Ashen assassins strike │
 // │                      │ every Imperial throne in a single night. Empire     │
 // │                      │ leaders die, lords suffer −30 morale, cities −30   │
@@ -101,6 +107,8 @@ namespace AshAndEmber
         public const int   TempleEarliestDay   = 100;
         public const float ChanceIronWinter      = 0.04f;  // ~every 25 weeks  (rare, winter only)
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
+        public const float ChanceFirstGreen      = 0.04f;  // ~every 25 weeks  (rare, spring only)
+        public const float ChanceAmberHarvest    = 0.04f;  // ~every 25 weeks  (rare, autumn only)
         public const float ChanceAshenGambit     = 0.010f; // ~every 100 weeks, fires ONCE per campaign (day 120+)
         public const int   AshenGambitEarliestDay = 120;
         public const int   AshenGambitSpawnCount  = 18;    // Ashen Spawn warbands seeded across the Empire
@@ -268,6 +276,8 @@ namespace AshAndEmber
             TryFireTheTemple();
             TryFireIronWinter();
             TryFireScorchingSun();
+            TryFireFirstGreen();
+            TryFireAmberHarvest();
             TryFireAshenGambit();
         }
 
@@ -1382,7 +1392,63 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Event 16: Game of Thrones ─────────────────────────────────────────
+        // ── Event 16: The First Green ─────────────────────────────────────────
+        // Spring only. The world stirs back to life — flowers push through the
+        // soil, rivers run clear. Ash has not yet smothered the season.
+        // All active lord parties outside the Ashen kingdom receive a small
+        // morale boost (+10 RecentEventsMorale).
+        private static void TryFireFirstGreen()
+        {
+            if (!IsSpring()) return;
+            if (_rng.NextDouble() >= ChanceFirstGreen) return;
+            try
+            {
+                int boosted = 0;
+                foreach (var party in MobileParty.All.ToList())
+                {
+                    if (party == null || !party.IsActive || !party.IsLordParty) continue;
+                    if (party.MapFaction == null || party.MapFaction.IsEliminated) continue;
+                    if (party.MapFaction.StringId == AshenKingdomId) continue;
+                    try { party.RecentEventsMorale += 10f; boosted++; } catch { }
+                }
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"The First Green — flowers push through the soil. Rivers run clear. " +
+                    $"For a week the ash feels further away than it is. " +
+                    $"Across {boosted} warband{(boosted != 1 ? "s" : "")}, soldiers lift their eyes from the grey horizon. " +
+                    $"The world has not forgotten how to be alive."));
+            }
+            catch { }
+        }
+
+        // ── Event 17: The Amber Harvest ───────────────────────────────────────
+        // Autumn only. The crops gave what they promised before the cold comes.
+        // All villages not under the Ashen banner gain +20 hearth as granaries
+        // fill and hearths are stocked for winter.
+        private static void TryFireAmberHarvest()
+        {
+            if (!IsAutumn()) return;
+            if (_rng.NextDouble() >= ChanceAmberHarvest) return;
+            try
+            {
+                int villages = 0;
+                foreach (var s in Settlement.All)
+                {
+                    if (s == null || !s.IsVillage || s.Village == null) continue;
+                    if (s.MapFaction == null || s.MapFaction.StringId == AshenKingdomId) continue;
+                    try { s.Village.Hearth += 20f; villages++; } catch { }
+                }
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"The Amber Harvest — the fields gave what they promised. " +
+                    $"Across {villages} village{(villages != 1 ? "s" : "")}, granaries are full and hearths burn warm. " +
+                    $"There is laughter again, and the smell of fresh bread on the autumn air. " +
+                    $"Let the cold come."));
+            }
+            catch { }
+        }
+
+        // ── Event 18: Game of Thrones ─────────────────────────────────────────
         // Triggered 2 days after a faction leader dies (5% chance, 4+ clan kingdom).
         // All non-ruling, non-player clans leave the kingdom and become independent.
         // They keep their fiefs — the kingdom fractures.
@@ -1438,7 +1504,7 @@ namespace AshAndEmber
                 $"What was one realm is now many ambitions."));
         }
 
-        // ── Event 17: Mage Fatwa ─────────────────────────────────────────────
+        // ── Event 19: Mage Fatwa ─────────────────────────────────────────────
         // Religious terror sweeps a random non-Ashen kingdom. Fanatics hunt
         // mage lords — 0–3 are killed by the mob before the violence is spent.
         // Ashen lords are immune (the mob does not touch what it truly fears).
@@ -1518,7 +1584,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Event 18: The Temple Rises ────────────────────────────────────────
+        // ── Event 20: The Temple Rises ────────────────────────────────────────
         // Once per campaign, after campaign day 100: one of the three canonical
         // cities (Diathma/Makeb/Omor) — or any valid Empire/Khuzait/Sturgia town
         // if none are eligible — breaks away. Its owner clan founds The Temple,
@@ -1701,7 +1767,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Event 19: Peasant Unrest ─────────────────────────────────────────
+        // ── Event 21: Peasant Unrest ─────────────────────────────────────────
         // The people have had enough. Three bands of desperate peasants-turned-
         // brigands take to the roads near a random lord's settlement.
         //
@@ -1739,7 +1805,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Event 20: A Wolf in Sheep's Clothing ─────────────────────────────
+        // ── Event 22: A Wolf in Sheep's Clothing ─────────────────────────────
         // A minor lord in a random kingdom is accused of serving the Ashen.
         //
         // Not in player's kingdom: silent execution, notification only.
@@ -1940,7 +2006,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Event 21: The Ashen Gambit ────────────────────────────────────────
+        // ── Event 23: The Ashen Gambit ────────────────────────────────────────
         // Fires at most once per campaign, no earlier than AshenGambitEarliestDay.
         // Ashen assassins — woven through every Imperial court like cold thread —
         // coordinate their move in a single night of dark fire and silence:
@@ -2259,6 +2325,8 @@ namespace AshAndEmber
 
         private static bool IsWinter() => GetSeasonIndex() == 3;
         private static bool IsSummer() => GetSeasonIndex() == 1;
+        private static bool IsSpring()  => GetSeasonIndex() == 0;
+        private static bool IsAutumn()  => GetSeasonIndex() == 2;
 
         // Sets Town loyalty and security to max so code-driven captures don't
         // immediately trigger a rebellion on the next game tick.
