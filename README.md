@@ -569,6 +569,15 @@ Cities owned by **The Temple** and **two randomly chosen Empire towns** (selecte
 
 **Temple member discount:** Temple faction members pay 40% less gold and age 40% less for all rites.
 
+**Livestock payment:** The Sanctuary flame values living offerings above coin. Animals from the player's party inventory cover more rite cost than their market value — livestock is the cheaper option. The menu header shows your current livestock value.
+
+| Animal | Gold covered toward rite |
+|--------|--------------------------|
+| Cow | 150 g |
+| Sheep | 40 g |
+
+When the player has both gold and sufficient livestock, a dialog asks which payment to use. When only one option is available, payment resolves automatically.
+
 | Rite | Cost | Effect |
 |------|------|--------|
 | **Prayer of Strength** | 500g | Party morale +40 |
@@ -592,6 +601,25 @@ Sometime after campaign day 100, **The Temple Rises** fires once and permanently
 The founding city has its loyalty and security immediately set to 100 to prevent instant rebellion. The Temple is a small kingdom — one city, two clans — and will need allies to survive long-term.
 
 If none of the three canonical cities are eligible (already Ashen-owned, under siege, or their owner clan is unavailable), a fallback city from the Empire, Khuzait, or Sturgian factions is used instead.
+
+### The Ashen Altars
+
+In **Tyal** and one additional Ashen city chosen randomly at campaign start (from Sibir, Baltakhand, or Amprela), a grey stone altar stands in the town. These altars are announced at game start.
+
+**Access requirement:** Mercy ≤ −1 (Merciless) AND Honor ≤ −1 (Devious). The Ashen do not kneel to the virtuous.
+
+**Sacrifice mechanic:** Every rite costs only lives — no gold. Prisoners are drained first (lowest-tier first), then healthy party members if more points are still needed. A tier-N troop is worth N sacrifice points; the altar takes the minimum number needed to cover the cost. Party morale drains proportional to points spent. The menu header shows total available sacrifice points.
+
+| Rite | Sacrifice pts | Effect |
+|------|---------------|--------|
+| **Blood Tribute** | 5 | Each surviving non-hero troop type gains 75 XP |
+| **The Ashen Solstice** | 10 | Call down an Iron Winter (north) or Scorching Sun (south) — the season check is waived by the sacrifice |
+| **Carrion Gift** | 8 | Wounds 30–60 % of the garrison in a random non-Ashen town |
+| **Break Hearts and Wills** | 6 | A random non-Ashen town loses 15–25 loyalty and 15–25 security |
+| **Rite of Cold Fire** | 7 | Wounds 8–15 soldiers in the nearest non-Ashen lord party within 150 map units; −30 morale |
+
+**NPC behavior:**
+- Ashen lords currently in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears: *"Dark Rite — [lord] made an offering at the Ashen Altar in [city]."*
 
 ### Player-interactive world events
 

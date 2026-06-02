@@ -812,6 +812,81 @@ namespace AshAndEmber
         {
             if (!_templeFounded) _debugForceNextTemple = true;
         }
+
+        // ── Ashen Altar forced seasonal events ───────────────────────────────
+        // Called by AshenAltarsCampaignBehavior when a player performs the
+        // Ashen Solstice rite. The season-check guard is intentionally omitted —
+        // the sacrifice is what makes it possible regardless of the calendar.
+        public static void ForceIronWinter()
+        {
+            try
+            {
+                var northKingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated
+                             && System.Array.IndexOf(NorthernKingdoms, k.StringId) >= 0)
+                    .ToList();
+                if (northKingdoms.Count == 0) return;
+                var kingdom = northKingdoms[_rng.Next(northKingdoms.Count)];
+
+                int villages = 0, towns = 0;
+                foreach (var s in Settlement.All)
+                {
+                    if (s == null || s.MapFaction != kingdom) continue;
+                    if (s.IsVillage && s.Village != null)
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
+                    else if (s.IsTown && s.Town != null)
+                        try
+                        {
+                            s.Town.Prosperity = Math.Max(10f, s.Town.Prosperity * 0.5f);
+                            s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
+                            towns++;
+                        }
+                        catch { }
+                }
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Iron Winter (Ashen Altar) — the cold the altar called has descended on {kingdom.Name}. " +
+                    $"{villages} village{(villages != 1 ? "s" : "")} cannot keep their fires lit. " +
+                    $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} halved their stores."));
+            }
+            catch { }
+        }
+
+        public static void ForceScorchingSun()
+        {
+            try
+            {
+                var desertKingdoms = Kingdom.All
+                    .Where(k => !k.IsEliminated
+                             && System.Array.IndexOf(DesertKingdoms, k.StringId) >= 0)
+                    .ToList();
+                if (desertKingdoms.Count == 0) return;
+                var kingdom = desertKingdoms[_rng.Next(desertKingdoms.Count)];
+
+                int villages = 0, towns = 0;
+                foreach (var s in Settlement.All)
+                {
+                    if (s == null || s.MapFaction != kingdom) continue;
+                    if (s.IsVillage && s.Village != null)
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
+                    else if (s.IsTown && s.Town != null)
+                        try
+                        {
+                            s.Town.Prosperity = Math.Max(10f, s.Town.Prosperity * 0.5f);
+                            s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
+                            towns++;
+                        }
+                        catch { }
+                }
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Scorching Sun (Ashen Altar) — the heat the altar called is burning {kingdom.Name}. " +
+                    $"The wells in {villages} village{(villages != 1 ? "s" : "")} are low or dry. " +
+                    $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} rationed their stores."));
+            }
+            catch { }
+        }
+
         private static void TryFireBrokenWill()
         {
             if (_brokenWillFired >= BrokenWillMaxFires) return;
