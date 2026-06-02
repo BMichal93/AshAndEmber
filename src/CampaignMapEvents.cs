@@ -2393,15 +2393,12 @@ namespace AshAndEmber
         }
 
         // ── Seasonal helpers ──────────────────────────────────────────────────
-        // Bannerlord has 84 days per year, 4 seasons of 21 days each.
-        // Season index: 0 = Spring, 1 = Summer, 2 = Autumn, 3 = Winter.
-        private static int GetSeasonIndex()
-            => (int)(CampaignTime.Now.ToDays % 84.0) / 21;
-
-        private static bool IsWinter() => GetSeasonIndex() == 3;
-        private static bool IsSummer() => GetSeasonIndex() == 1;
-        private static bool IsSpring()  => GetSeasonIndex() == 0;
-        private static bool IsAutumn()  => GetSeasonIndex() == 2;
+        // Use the game's own tick-based property so the check matches exactly
+        // what Bannerlord displays to the player (0=Spring,1=Summer,2=Autumn,3=Winter).
+        private static bool IsWinter() => CampaignTime.Now.GetSeasonOfYear == 3;
+        private static bool IsSummer() => CampaignTime.Now.GetSeasonOfYear == 1;
+        private static bool IsSpring()  => CampaignTime.Now.GetSeasonOfYear == 0;
+        private static bool IsAutumn()  => CampaignTime.Now.GetSeasonOfYear == 2;
 
         // Sets Town loyalty and security to max so code-driven captures don't
         // immediately trigger a rebellion on the next game tick.
