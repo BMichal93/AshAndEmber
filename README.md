@@ -584,7 +584,7 @@ When the player has both gold and sufficient livestock, a dialog asks which paym
 | **Protective Rites** | 1 000g + 30 days older | Blocks all Ashen world events for 14 days |
 | **Turn the Ashen** | 1 500g + 45 days older | Wounds 12–20 soldiers in up to 3 Ashen parties within 200 map units; breaks their morale |
 | **Prayer of Healing** | 800g + 20 days older | Fully heals all wounded troops in the party |
-| **Prayer for a Blessing** | 5 000g | Rejuvenates the player by ~10 years (hard floor: age 20) |
+| **Prayer for a Blessing** | max(current gold ÷ 10, 36 500g) | Rejuvenates the player by 1 year (hard floor: age 20) |
 
 When Protective Rites are active, any Ashen world event that would fire instead shows a notification that the ward held. The counter ticks down daily and a notification fires when it expires.
 

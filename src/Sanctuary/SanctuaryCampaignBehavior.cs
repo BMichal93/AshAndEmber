@@ -49,7 +49,7 @@ namespace AshAndEmber
         private const int   BaseCostHealing      =   800;
         private const int   BaseAgingHealing     =    20;
         private const int   BaseCostBlessing     =  5000;  // Prayer for a Blessing
-        private const int   BlessingRejuvDays    =  3650;  // ~10 years
+        private const int   BlessingRejuvDays    =   365;  // 1 year
         private const int   BlessingMinAge       =    20;
         private const float TempleDiscount       =  0.60f; // Temple members pay 60% (40% off)
         private const int   ProtectiveDays       =    14;
@@ -435,10 +435,10 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            int  cost  = GoldCost(BaseCostBlessing);
-                            int  years = BlessingRejuvDays / 365;
+                            int heroGold = Hero.MainHero?.Gold ?? 0;
+                            int cost     = Math.Max(heroGold / 10, 36500);
                             MBTextManager.SetTextVariable("SANCT_BLESS_TEXT",
-                                $"Prayer for a Blessing ({cost}g{LivestockNote(cost)}) — shed ~{years} years of age (floor: {BlessingMinAge})");
+                                $"Prayer for a Blessing ({cost}g{LivestockNote(cost)}) — shed 1 year of age (min age: {BlessingMinAge})");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                             bool canAfford  = CanAffordSanctuary(cost);
                             bool canYounger = Hero.MainHero?.Age > BlessingMinAge + 1f;
@@ -644,7 +644,8 @@ namespace AshAndEmber
         {
             try
             {
-                int cost = GoldCost(BaseCostBlessing);
+                int heroGold = Hero.MainHero?.Gold ?? 0;
+                int cost     = Math.Max(heroGold / 10, 36500);
                 var hero = Hero.MainHero;
                 if (hero?.Age <= BlessingMinAge) return;
                 ResolveSanctuaryPayment(cost, () =>
