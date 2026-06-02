@@ -109,9 +109,12 @@ namespace AshAndEmber
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
         public const float ChanceFirstGreen      = 0.04f;  // ~every 25 weeks  (rare, spring only)
         public const float ChanceAmberHarvest    = 0.04f;  // ~every 25 weeks  (rare, autumn only)
-        public const float ChanceEmbersOfHope   = 0.06f;  // ~every 17 weeks  (once Ashen hold 6+ towns)
-        public const int   EmbersOfHopeMinTowns  = 6;      // Ashen must hold this many towns to trigger
+        public const float ChanceEmbersOfHope    = 0.06f;  // ~every 17 weeks  (once Ashen hold 8+ towns)
+        public const int   EmbersOfHopeMinTowns  = 8;      // Ashen must hold this many towns to trigger
         public const int   EmbersOfHopePeaceCount = 3;     // max wars ended per firing
+        public const float ChanceASlightAtCourt  = 0.05f;  // ~every 20 weeks  (diplomatic incident → war or cold shoulder)
+        public const float ChanceBorderTorches   = 0.05f;  // ~every 20 weeks  (border raid → war or tense standoff)
+        public const float ChanceADebtInBlood    = 0.04f;  // ~every 25 weeks  (murdered envoy → war or shaky inquiry)
         public const float ChanceAshenGambit     = 0.010f; // ~every 100 weeks, fires ONCE per campaign (day 120+)
         public const int   AshenGambitEarliestDay = 120;
         // Minimum elapsed days between any two world events. Prevents back-to-back clustering.
@@ -286,6 +289,9 @@ namespace AshAndEmber
             TryFireScorchingSun();
             TryFireFirstGreen();
             TryFireAmberHarvest();
+            TryFireASlightAtCourt();
+            TryFireBorderTorches();
+            TryFireADebtInBlood();
             TryFireEmbersOfHope();
             TryFireAshenGambit();
 
@@ -2439,6 +2445,174 @@ namespace AshAndEmber
                 if (h == null || !h.IsAlive || h.IsChild || h == Hero.MainHero) continue;
                 try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, h, delta, false); } catch { }
             }
+        }
+
+        // ── Diplomatic incident helpers ───────────────────────────────────────
+        // Maps the relation score between two kings to a probability that an
+        // incident escalates to open war rather than cooling diplomatically.
+        //   rel < −50 → 85%  (already bitter enemies)
+        //   rel < −20 → 65%  (hostile)
+        //   rel <  10 → 45%  (cold/neutral)
+        //   rel <  40 → 25%  (cordial)
+        //          else 10%  (genuine allies)
+        private static double WarChanceFromRelation(int rel)
+        {
+            if (rel < -50) return 0.85;
+            if (rel < -20) return 0.65;
+            if (rel <  10) return 0.45;
+            if (rel <  40) return 0.25;
+            return 0.10;
+        }
+
+        // Fills ka/kb with two non-Ashen kingdoms that are currently at peace
+        // with each other and both have a living leader. Returns false if no
+        // such pair exists.
+        private static bool TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)
+        {
+            ka = kb = null;
+            var pool = Kingdom.All
+                .Where(k => !k.IsEliminated
+                         && k.StringId != AshenKingdomId
+                         && k.Leader != null && k.Leader.IsAlive && !k.Leader.IsChild)
+                .ToList();
+            if (pool.Count < 2) return false;
+
+            var pairs = new List<(Kingdom, Kingdom)>();
+            for (int i = 0; i < pool.Count; i++)
+                for (int j = i + 1; j < pool.Count; j++)
+                    if (!pool[i].IsAtWarWith(pool[j]))
+                        pairs.Add((pool[i], pool[j]));
+
+            if (pairs.Count == 0) return false;
+            var pick = pairs[_rng.Next(pairs.Count)];
+            ka = pick.Item1; kb = pick.Item2;
+            return true;
+        }
+
+        // ── Event 24: A Slight at Court ───────────────────────────────────────
+        // An ambassador was publicly turned away from the rival king's hall.
+        // If the kings already distrust each other the insult draws steel;
+        // otherwise it is swallowed with gritted teeth and lasting bitterness.
+        private static void TryFireASlightAtCourt()
+        {
+            if (_rng.NextDouble() >= ChanceASlightAtCourt) return;
+            if (!TryClaimWeeklySlot()) return;
+            try
+            {
+                if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
+
+                var la = ka.Leader; var lb = kb.Leader;
+                int rel = CharacterRelationManager.GetHeroRelation(la, lb);
+                bool goesToWar = _rng.NextDouble() < WarChanceFromRelation(rel);
+
+                string nameA = ka.Name?.ToString() ?? "a kingdom";
+                string nameB = kb.Name?.ToString() ?? "a rival";
+                string lordA = la?.Name?.ToString() ?? "its lord";
+                string lordB = lb?.Name?.ToString() ?? "its lord";
+
+                if (goesToWar)
+                {
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"A Slight at Court — {lordB} of {nameB} turned away {nameA}'s envoy in the great hall " +
+                        $"and had words said in front of witnesses that could not be unsaid. " +
+                        $"{lordA} answered the insult with a sealed declaration. " +
+                        $"{nameA} and {nameB} are now at war."));
+                }
+                else
+                {
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -15, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"A Slight at Court — {lordB} of {nameB} turned away {nameA}'s envoy, " +
+                        $"but {lordA} chose restraint over retaliation. " +
+                        $"The humiliation is remembered. The border is quieter than it should be."));
+                }
+            }
+            catch { }
+        }
+
+        // ── Event 25: Border Torches ──────────────────────────────────────────
+        // Villages near the shared border burned in the night. Neither crown
+        // claims the act; each accuses the other. Whether war follows depends
+        // on how much the kings already suspect each other.
+        private static void TryFireBorderTorches()
+        {
+            if (_rng.NextDouble() >= ChanceBorderTorches) return;
+            if (!TryClaimWeeklySlot()) return;
+            try
+            {
+                if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
+
+                var la = ka.Leader; var lb = kb.Leader;
+                int rel = CharacterRelationManager.GetHeroRelation(la, lb);
+                bool goesToWar = _rng.NextDouble() < WarChanceFromRelation(rel);
+
+                string nameA = ka.Name?.ToString() ?? "a kingdom";
+                string nameB = kb.Name?.ToString() ?? "a rival";
+                string lordA = la?.Name?.ToString() ?? "its lord";
+                string lordB = lb?.Name?.ToString() ?? "its lord";
+
+                if (goesToWar)
+                {
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Border Torches — villages on the border between {nameA} and {nameB} " +
+                        $"burned in the night. Both sides blame the other. " +
+                        $"The smoke was still rising when the first cavalry crossed the line. " +
+                        $"{nameA} and {nameB} are at war."));
+                }
+                else
+                {
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -10, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Border Torches — villages between {nameA} and {nameB} burned. " +
+                        $"Accusations flew on both sides. {lordA} and {lordB} pulled back from the edge, " +
+                        $"though neither believes the other's denials. The border is tense. The ashes are still warm."));
+                }
+            }
+            catch { }
+        }
+
+        // ── Event 26: A Debt in Blood ─────────────────────────────────────────
+        // A lord's envoy was found dead in the rival kingdom's territory,
+        // his seal broken and his escort missing. The accusation of murder
+        // poisons what little trust remained between the two crowns.
+        private static void TryFireADebtInBlood()
+        {
+            if (_rng.NextDouble() >= ChanceADebtInBlood) return;
+            if (!TryClaimWeeklySlot()) return;
+            try
+            {
+                if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
+
+                var la = ka.Leader; var lb = kb.Leader;
+                int rel = CharacterRelationManager.GetHeroRelation(la, lb);
+                bool goesToWar = _rng.NextDouble() < WarChanceFromRelation(rel);
+
+                string nameA = ka.Name?.ToString() ?? "a kingdom";
+                string nameB = kb.Name?.ToString() ?? "a rival";
+                string lordA = la?.Name?.ToString() ?? "its lord";
+                string lordB = lb?.Name?.ToString() ?? "its lord";
+
+                if (goesToWar)
+                {
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"A Debt in Blood — a {nameA} envoy was found dead in {nameB} territory, " +
+                        $"his seal broken and his escort nowhere to be found. " +
+                        $"{lordA} did not wait for an inquiry. " +
+                        $"{nameA} and {nameB} are at war."));
+                }
+                else
+                {
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -20, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"A Debt in Blood — a {nameA} envoy was found dead in {nameB} territory. " +
+                        $"{lordB} opened an inquiry and sent condolences. {lordA} accepted both, barely. " +
+                        $"The truth may never surface. The suspicion will not leave."));
+                }
+            }
+            catch { }
         }
 
         // ── Event 23: Embers of Hope ──────────────────────────────────────────
