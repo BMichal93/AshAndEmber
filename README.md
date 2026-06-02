@@ -569,14 +569,14 @@ Cities owned by **The Temple** and **two randomly chosen Empire towns** (selecte
 
 **Temple member discount:** Temple faction members pay 40% less gold and age 40% less for all rites.
 
-**Livestock payment:** The Sanctuary flame accepts living offerings in lieu of gold. Animals from the player's party inventory are burned at the altar — the conversion rate is deliberately low; the rite demands many beasts, not a token gift.
+**Livestock payment:** The Sanctuary flame values living offerings above coin. Animals from the player's party inventory cover more rite cost than their market value — livestock is the cheaper option. The menu header shows your current livestock value.
 
-| Animal | Gold equivalent |
-|--------|----------------|
-| Cow | 50 g |
-| Sheep | 15 g |
+| Animal | Gold covered toward rite |
+|--------|--------------------------|
+| Cow | 150 g |
+| Sheep | 40 g |
 
-When the player has both gold and sufficient livestock, a dialog asks which payment to use. When only one option is available, payment resolves automatically. The livestock balance is shown in the sanctuary menu header.
+When the player has both gold and sufficient livestock, a dialog asks which payment to use. When only one option is available, payment resolves automatically.
 
 | Rite | Cost | Effect |
 |------|------|--------|
@@ -608,17 +608,15 @@ In **Tyal** and one additional Ashen city chosen randomly at campaign start (fro
 
 **Access requirement:** Mercy ≤ −1 (Merciless) AND Honor ≤ −1 (Devious). The Ashen do not kneel to the virtuous.
 
-**Sacrifice mechanic:** Every rite kills soldiers from the player's party (lowest-tier troops first) and drains party morale proportional to the sacrifice cost. A tier-N troop is worth N sacrifice points; the altar takes the minimum number of soldiers needed to cover the cost.
+**Sacrifice mechanic:** Every rite costs only lives — no gold. Prisoners are drained first (lowest-tier first), then healthy party members if more points are still needed. A tier-N troop is worth N sacrifice points; the altar takes the minimum number needed to cover the cost. Party morale drains proportional to points spent. The menu header shows total available sacrifice points.
 
-**Livestock payment:** If the player has **cows** (100 g each) or **sheep** (30 g each) in their party inventory, those animals can substitute for the gold cost. When both gold and livestock are available, a dialog asks the player to choose.
-
-| Rite | Gold cost | Sacrifice pts | Effect |
-|------|-----------|---------------|--------|
-| **Blood Tribute** | 300 g | 5 | Each surviving non-hero troop type gains 75 XP |
-| **The Ashen Solstice** | 800 g | 10 | Call down an Iron Winter (north) or Scorching Sun (south) — the season check is waived by the sacrifice |
-| **Carrion Gift** | 600 g | 8 | Wounds 30–60 % of the garrison in a random non-Ashen town |
-| **Break Hearts and Wills** | 400 g | 6 | A random non-Ashen town loses 15–25 loyalty and 15–25 security |
-| **Rite of Cold Fire** | 500 g | 7 | Wounds 8–15 soldiers in the nearest non-Ashen lord party within 150 map units; −30 morale |
+| Rite | Sacrifice pts | Effect |
+|------|---------------|--------|
+| **Blood Tribute** | 5 | Each surviving non-hero troop type gains 75 XP |
+| **The Ashen Solstice** | 10 | Call down an Iron Winter (north) or Scorching Sun (south) — the season check is waived by the sacrifice |
+| **Carrion Gift** | 8 | Wounds 30–60 % of the garrison in a random non-Ashen town |
+| **Break Hearts and Wills** | 6 | A random non-Ashen town loses 15–25 loyalty and 15–25 security |
+| **Rite of Cold Fire** | 7 | Wounds 8–15 soldiers in the nearest non-Ashen lord party within 150 map units; −30 morale |
 
 **NPC behavior:**
 - Ashen lords currently in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears: *"Dark Rite — [lord] made an offering at the Ashen Altar in [city]."*

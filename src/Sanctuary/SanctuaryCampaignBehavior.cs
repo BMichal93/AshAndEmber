@@ -178,11 +178,11 @@ namespace AshAndEmber
         }
 
         // ── Livestock payment ─────────────────────────────────────────────────
-        // Sanctuary rites accept cows and sheep in lieu of gold.
-        // The rate is intentionally lower per animal than at the Ashen Altars —
-        // the flame demands many offerings, not a token herd.
-        private const int SanctuaryCowGoldValue   =  50;   // 1 cow  ≡ 50 g
-        private const int SanctuarySheepGoldValue =  15;   // 1 sheep ≡ 15 g
+        // Sanctuary rites accept livestock in lieu of gold at generous rates —
+        // the flame prefers living offerings over coin. Each animal covers more
+        // rite cost than its market value, making livestock the cheaper option.
+        private const int SanctuaryCowGoldValue   = 150;   // 1 cow  ≡ 150 g toward rite cost
+        private const int SanctuarySheepGoldValue =  40;   // 1 sheep ≡  40 g toward rite cost
 
         private static int ComputeLivestockGold()
         {
@@ -246,11 +246,12 @@ namespace AshAndEmber
                     InformationManager.ShowInquiry(new InquiryData(
                         "Make Your Offering",
                         $"The sanctuary accepts what you bring to it. " +
-                        $"Pay in gold, or bring many animals to be offered at the flame " +
-                        $"(~{cowsNeeded} cow{(cowsNeeded != 1 ? "s" : "")} or ~{sheepNeeded} sheep)?",
+                        $"Gold ({cost}g) will suffice. Or bring livestock — the flame values living offerings " +
+                        $"and will accept fewer than their worth in coin " +
+                        $"(~{cowsNeeded} cow{(cowsNeeded != 1 ? "s" : "")} or ~{sheepNeeded} sheep, cheaper than gold).",
                         true, true,
                         $"Gold ({cost}g)",
-                        $"Animals to the flame (~{cowsNeeded} cows or ~{sheepNeeded} sheep)",
+                        $"Livestock (~{cowsNeeded} cows or ~{sheepNeeded} sheep — cheaper)",
                         () => { if (Hero.MainHero?.Gold >= cost) { Hero.MainHero.Gold -= cost; onPaid(); } },
                         () => { if (PayWithSanctuaryLivestock(cost)) onPaid(); }
                     ));
