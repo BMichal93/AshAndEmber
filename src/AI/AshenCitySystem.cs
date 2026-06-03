@@ -1009,10 +1009,38 @@ namespace AshAndEmber
         public static void OnClanChangedKingdom(Clan clan, Kingdom oldKingdom, Kingdom newKingdom,
             ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification) { }
 
-        // ── Max relations when player goes Ashen ──────────────────────────────
+        // ── Max relations + kingdom join when player goes Ashen ──────────────────
         public static void OnPlayerBecameAshen()
         {
             if (Hero.MainHero == null) return;
+
+            // Move player clan into the Ashen kingdom
+            try
+            {
+                EnsureKingdomAlive();
+                var clan = Hero.MainHero.Clan;
+                if (clan != null && _ashenKingdom != null)
+                {
+                    if (clan.Kingdom != null && clan.Kingdom != _ashenKingdom)
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+
+                    if (clan.Kingdom?.StringId != AshenKingdomId)
+                    {
+                        bool needsRuler = _ashenKingdom.RulingClan == null;
+                        if (needsRuler)
+                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch { }
+                        else
+                            try { ChangeKingdomAction.ApplyByJoinToKingdom(
+                                    clan, _ashenKingdom,
+                                    CampaignTime.Now + CampaignTime.Years(1000),
+                                    false); }
+                            catch { }
+                    }
+                }
+            }
+            catch { }
+
+            // Max relations with all Ashen lords
             try
             {
                 foreach (Hero h in Hero.AllAliveHeroes.ToList())

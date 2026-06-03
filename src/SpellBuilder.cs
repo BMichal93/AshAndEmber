@@ -174,6 +174,9 @@ namespace AshAndEmber
                 }
             }
 
+            if (MageKnowledge.IsAshen)
+                cast.OverrideVisualColor = ColorSchool.Ashen;
+
             return cast;
         }
 

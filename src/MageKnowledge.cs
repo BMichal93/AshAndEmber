@@ -88,25 +88,18 @@ namespace AshAndEmber
                     onResolved?.Invoke();
                     _isAshen = true;
                     ApplyAshenAppearance(Hero.MainHero);
+                    // Apply crime rating to old kingdom before leaving it
+                    try
+                    {
+                        if (Hero.MainHero?.Clan?.Kingdom is TaleWorlds.CampaignSystem.Kingdom oldK)
+                            TaleWorlds.CampaignSystem.Actions.ChangeCrimeRatingAction.Apply(oldK, 50f, true);
+                    }
+                    catch { }
+                    // Leave old kingdom and join the Ashen
                     try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The fire dies. Something colder and older takes its place. The world will see it in your eyes.",
                         new Color(0.3f, 0.35f, 0.7f)));
-                    // Kicked from kingdom — the cold marks you
-                    try
-                    {
-                        if (Hero.MainHero?.Clan?.Kingdom != null)
-                            TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction.ApplyByLeaveKingdom(
-                                Hero.MainHero.Clan, false);
-                    }
-                    catch { }
-                    // Criminal rating spike
-                    try
-                    {
-                        if (Hero.MainHero?.MapFaction is TaleWorlds.CampaignSystem.Kingdom k)
-                            TaleWorlds.CampaignSystem.Actions.ChangeCrimeRatingAction.Apply(k, 50f, true);
-                    }
-                    catch { }
                 },
                 () =>
                 {
