@@ -170,9 +170,12 @@ namespace AshAndEmber
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
             in MissionWeapon affectorWeapon, in Blow blow, in AttackCollisionData attackCollisionData)
         {
-            // Reflect enchantment: bounce a portion of melee damage back at the attacker.
-            try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
-            // Sunder enchantment: heal back a portion from the victim if the attacker is weakened.
+            // Reflect enchantment: melee hits only — ranged weapons are excluded.
+            bool isMeleeHit = true;
+            try { isMeleeHit = affectorWeapon.IsEmpty || !(affectorWeapon.CurrentUsageItem?.IsRangedWeapon ?? false); } catch { }
+            if (isMeleeHit)
+                try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            // Sunder enchantment: applies to all hits (attacker is globally weakened).
             try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
         }
 
