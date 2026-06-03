@@ -15,7 +15,6 @@
 //    long enough to matter.
 // =============================================================================
 
-using System;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.Localization;
@@ -58,17 +57,18 @@ namespace AshAndEmber
             return score + 100f;
         }
 
-        // Peace with the Ashen is impossible — return a deeply negative score so the
-        // AI never proposes it; this covers both the kingdom and individual Ashen clans.
-        // For inter-faction wars: only reduce peace desire when the faction positively wants
-        // peace (score > 0). Leave negative scores alone — a faction already fighting and
-        // not wanting peace should not have that score bumped upward to 0.
+        // Peace with the Ashen is impossible.
+        // For inter-faction wars: subtract 500 from the base peace score with no floor.
+        // This counteracts the war-exhaustion bleed caused by every faction simultaneously
+        // fighting the Ashen — without this large offset, factions arrive at inter-faction
+        // wars already half-exhausted and make peace within days. With -500, a faction
+        // must reach extreme exhaustion (base score > 500) before peace becomes attractive,
+        // matching vanilla Bannerlord war durations.
         public override float GetScoreOfDeclaringPeace(IFaction factionDeclaresPeace, IFaction factionDeclaredPeace)
         {
             float score = base.GetScoreOfDeclaringPeace(factionDeclaresPeace, factionDeclaredPeace);
             if (InvolvesAshen(factionDeclaresPeace, factionDeclaredPeace)) return -10000f;
-            if (score <= 0f) return score; // already against peace — don't interfere
-            return Math.Max(0f, score - 20f);
+            return score - 500f;
         }
     }
 }

@@ -20,7 +20,7 @@ AshAndEmber/
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
 │   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks
-│   ├── CampaignMapEvents.cs         seven rare world events (weekly tick)
+│   ├── CampaignMapEvents.cs         27 world events across two independent weekly slots
 │   ├── BattleEvents.cs              per-battle battlefield events with atmospheric visuals
 │   ├── DragonQuestSystem.cs         main quest — The Last Flight of the Dragons
 │   ├── SettlementEncounters.cs      40+ random events on settlement enter/leave/battle
@@ -284,7 +284,7 @@ Enchantments fire automatically on every qualifying cast in battle.
 | **Ashveil** | Brief magic immunity for healed allies. Duration = 3 s per Restore input. |
 | **Cinder Shell** | Reduces incoming damage for 8 s (5% per input, max 50%). Near-full-health allies also gain a 15 HP damage shield per input for 5 s. |
 | **Hearthlight** | Lifts allied morale. Boost = 12 per Restore input. |
-| **Reflect** | Healed allies reflect 8% of melee damage per input (max 40%) back at attackers for 3–7 s. |
+| **Reflect** | Healed allies reflect 8% of melee damage per input (max 40%) back at attackers for 3–7 s. Ranged hits do not trigger the reflection. |
 
 ### Spell (campaign map)
 
@@ -307,7 +307,7 @@ At campaign start roughly 20% of lords are seeded as mages. A subset are **Ashen
 
 ### Campaign map casting
 
-NPC lords cast on the campaign map independently. Ashen lords cast approximately every 3–7 days; regular mage lords every 5–10 days. Older lords cast less frequently.
+NPC lords cast on the campaign map independently. Ashen lords cast approximately every 3–7 days; regular mage lords every 5–10 days. Older lords cast less frequently. At most one Ashen lord and one regular mage lord produce a visible cast notification per in-game day.
 
 ### Battle AI priority
 
@@ -322,7 +322,7 @@ NPC lords cast on the campaign map independently. Ashen lords cast approximately
 
 Ward is no longer castable by NPC lords — it is now a Restoration talent available only to the player.
 
-Ashen lords skip the no-enemies early exit and cast proactively at all times. First cast is delayed 12 seconds; subsequent casts use the lord's trait-modified cooldown. Ashen spells display cold-blue and grey visuals.
+Ashen lords skip the no-enemies early exit and cast proactively at all times. First cast is delayed 12 seconds; subsequent casts use the lord's trait-modified cooldown. Ashen spells — both NPC and player — display cold-blue and grey visuals.
 
 ### Aging (NPC)
 
@@ -473,11 +473,12 @@ Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. Wh
 
 ### NPC lords
 
-About once every **33 campaign days** globally, a random NPC lord initiates a scheme — paying the same tier-scaled costs, subject to the same rules. Each lord has a 20–35 day personal cooldown. NPCs never target the player directly. High-profile NPC schemes appear in the campaign log with full flavor text.
+A random NPC lord may initiate a scheme each day — at most one new scheme launches per day globally. Each lord has a 20–35 day personal cooldown between schemes. NPCs never target the player directly. NPC scheme results appear in the campaign message log (not as popup notifications).
 
-- **Standard lord and settlement schemes** target enemy factions only.
+- **Standard lord and settlement schemes** can target lords from any foreign kingdom — not just current enemies. Schemes work in peacetime too (intelligence operations, sabotage, court intrigue).
+- **Ashen targets** are valid but uncommon (15% weighting when non-Ashen targets exist) and face an additional −30% success penalty.
 - **Viper's Counsel** (NPC) targets a rival clan within the same kingdom — court intrigue runs both ways.
-- **Scatter the Wolves** (NPC) targets a lord in an enemy kingdom, flooding that kingdom with bandits.
+- **Scatter the Wolves** (NPC) targets a lord in any foreign kingdom, flooding it with bandits.
 
 ---
 
@@ -548,19 +549,30 @@ At campaign start the following settlements are assigned to the Ashen Kingdom. T
 - Personality traits locked to Merciless, Closefisted, and Deceitful.
 - Captured Ashen lords and Ashen Spawn party leaders refuse all dialogue. Encounters with them end with silence.
 
+### Becoming Ashen (player)
+
+When the player takes the cold at age 100 or surrenders to Ashen captors, their clan is automatically moved into the Ashen kingdom. Their spells change to cold-blue visuals. Criminal rating in their old kingdom spikes on departure. The Ashen kingdom is permanently at war with everyone — joining it means joining that war.
+
 ### Criminal status
 
 Non-Ashen players are permanent criminals in Ashen lands. Ashen players have their crime rating cleared daily.
 
 ### Permanent war
 
-Peace with the Ashen is revoked within 1–2 days and war re-declared.
+Peace with the Ashen is revoked within one in-game day and war re-declared. This applies to both the Ashen kingdom and any individual Ashen clan temporarily outside it — peace with a single clan does not stick.
 
 ---
 
 ## Campaign World Events
 
-Twelve rare events fire on the weekly tick. Multiple may fire the same week.
+27 events spread across two independent weekly slots. Every 14 days (after the last event fired) the tick opens both slots simultaneously:
+
+- **General slot** — at most one Ashen, political, or seasonal event fires.
+- **War slot** — at most one inter-faction war event fires (independent of the general slot, so both can fire the same cycle).
+
+A separate weekly safety net checks every 21 days: if no non-Ashen inter-faction wars exist at all, it directly seeds one.
+
+### General events
 
 | Event | Chance/week | Effect |
 |-------|-------------|--------|
@@ -584,6 +596,18 @@ Twelve rare events fire on the weekly tick. Multiple may fire the same week.
 | **Iron Winter** | 4% (winter only) | One random northern kingdom (Sturgia or Northern Empire) loses 50% hearth in villages and 50% prosperity/food in cities. |
 | **Scorching Sun** | 4% (summer only) | One random desert kingdom (Aserai or Southern Empire) loses 50% hearth in villages and 50% prosperity/food in cities. |
 | **Game of Thrones** | 5% on leader death | When a qualifying faction leader dies, the kingdom fractures: all non-ruling clans leave and become independent, keeping their fiefs. Requires 4+ clans; never fires for the Ashen. |
+
+### Inter-faction war events (war slot — independent of general slot)
+
+Each event picks two non-Ashen kingdoms currently at peace and rolls a war chance based on their leaders' relations (hostile: 85%; neutral: 45%; friendly: 10%). If the roll fails, relations drop instead.
+
+| Event | Chance/cycle | What tips the balance |
+|-------|--------------|-----------------------|
+| **A Slight at Court** | 2.5% | An envoy is publicly turned away; the insult demands an answer. |
+| **Border Torches** | 2.5% | Villages near a shared border burn; each crown blames the other. |
+| **A Debt in Blood** | 2% | An old grievance resurfaces; the aggrieved party demands satisfaction. |
+| **The Broken Betrothal** | 2% | A marriage alliance collapses; the spurned faction answers with steel. |
+| **The Treasonous Scroll** | 2% | Documents implicating a lord in treachery surface at court. |
 
 The Ashen are exempt from all betrayal and political-fracture events — their will is cold, singular, and does not break or scheme against itself.
 
