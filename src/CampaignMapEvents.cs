@@ -112,9 +112,11 @@ namespace AshAndEmber
         public const float ChanceEmbersOfHope    = 0.06f;  // ~every 17 weeks  (once Ashen hold 8+ towns)
         public const int   EmbersOfHopeMinTowns  = 8;      // Ashen must hold this many towns to trigger
         public const int   EmbersOfHopePeaceCount = 3;     // max wars ended per firing
-        public const float ChanceASlightAtCourt  = 0.05f;  // ~every 20 weeks  (diplomatic incident → war or cold shoulder)
+        public const float ChanceASlightAtCourt   = 0.05f;  // ~every 20 weeks  (diplomatic incident → war or cold shoulder)
         public const float ChanceBorderTorches   = 0.05f;  // ~every 20 weeks  (border raid → war or tense standoff)
         public const float ChanceADebtInBlood    = 0.04f;  // ~every 25 weeks  (murdered envoy → war or shaky inquiry)
+        public const float ChanceBrokenBetrothal = 0.04f;  // ~every 25 weeks  (dissolved marriage → war or icy silence)
+        public const float ChanceTreasonousScroll= 0.04f;  // ~every 25 weeks  (spy letters → war or tense denial)
         public const float ChanceAshenGambit     = 0.010f; // ~every 100 weeks, fires ONCE per campaign (day 120+)
         public const int   AshenGambitEarliestDay = 120;
         // Minimum elapsed days between any two world events. Prevents back-to-back clustering.
@@ -292,6 +294,8 @@ namespace AshAndEmber
             TryFireASlightAtCourt();
             TryFireBorderTorches();
             TryFireADebtInBlood();
+            TryFireBrokenBetrothal();
+            TryFireTreasonousScroll();
             TryFireEmbersOfHope();
             TryFireAshenGambit();
 
@@ -2610,6 +2614,95 @@ namespace AshAndEmber
                         $"A Debt in Blood — a {nameA} envoy was found dead in {nameB} territory. " +
                         $"{lordB} opened an inquiry and sent condolences. {lordA} accepted both, barely. " +
                         $"The truth may never surface. The suspicion will not leave."));
+                }
+            }
+            catch { }
+        }
+
+        // ── Event 27: The Broken Betrothal ───────────────────────────────────
+        // A political marriage arranged between two noble houses was dissolved —
+        // one side backed out, or the bride fled, or a scandal made it impossible.
+        // The offended house demands satisfaction. Kings who already mistrust each
+        // other interpret the slight as a deliberate act of war; those on good
+        // terms manage a quiet settlement and an awkward silence.
+        private static void TryFireBrokenBetrothal()
+        {
+            if (_rng.NextDouble() >= ChanceBrokenBetrothal) return;
+            if (!TryClaimWeeklySlot()) return;
+            try
+            {
+                if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
+
+                var la = ka.Leader; var lb = kb.Leader;
+                int rel = CharacterRelationManager.GetHeroRelation(la, lb);
+                bool goesToWar = _rng.NextDouble() < WarChanceFromRelation(rel);
+
+                string nameA = ka.Name?.ToString() ?? "a kingdom";
+                string nameB = kb.Name?.ToString() ?? "a rival";
+                string lordA = la?.Name?.ToString() ?? "its lord";
+                string lordB = lb?.Name?.ToString() ?? "its lord";
+
+                if (goesToWar)
+                {
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"The Broken Betrothal — the marriage between {nameA} and {nameB} was called off " +
+                        $"before the ink was dry on the compact. The insult was too great and the timing too suspicious. " +
+                        $"{lordA} returned the gifts and sent soldiers instead. " +
+                        $"{nameA} and {nameB} are at war."));
+                }
+                else
+                {
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -15, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"The Broken Betrothal — the marriage between {nameA} and {nameB} fell apart before it began. " +
+                        $"Gifts were quietly returned. No one mentioned it at court. " +
+                        $"{lordA} and {lordB} exchanged letters that said nothing and meant everything. " +
+                        $"The alliance is over. War was avoided, this time."));
+                }
+            }
+            catch { }
+        }
+
+        // ── Event 28: The Treasonous Scroll ───────────────────────────────────
+        // Letters were intercepted — or claimed to have been — proving that
+        // agents of one kingdom have been bribing officials in the other.
+        // Whether the plot is real or fabricated matters less than the accusation:
+        // kings who already suspect each other rarely need much convincing.
+        private static void TryFireTreasonousScroll()
+        {
+            if (_rng.NextDouble() >= ChanceTreasonousScroll) return;
+            if (!TryClaimWeeklySlot()) return;
+            try
+            {
+                if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
+
+                var la = ka.Leader; var lb = kb.Leader;
+                int rel = CharacterRelationManager.GetHeroRelation(la, lb);
+                bool goesToWar = _rng.NextDouble() < WarChanceFromRelation(rel);
+
+                string nameA = ka.Name?.ToString() ?? "a kingdom";
+                string nameB = kb.Name?.ToString() ?? "a rival";
+                string lordA = la?.Name?.ToString() ?? "its lord";
+                string lordB = lb?.Name?.ToString() ?? "its lord";
+
+                if (goesToWar)
+                {
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"The Treasonous Scroll — letters surfaced in {nameA} proving, or appearing to prove, " +
+                        $"that {nameB} agents have been buying lords and poisoning counsel inside the court. " +
+                        $"{lordA} read the letters, had the messengers arrested, and called his banners. " +
+                        $"{nameA} and {nameB} are at war."));
+                }
+                else
+                {
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -20, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"The Treasonous Scroll — letters surfaced in {nameA} alleging {nameB} spies " +
+                        $"inside the court. {lordB} denied everything and offered to open his archives. " +
+                        $"{lordA} accepted the offer with a smile that did not reach his eyes. " +
+                        $"Both crowns know the investigation will find nothing. Both crowns remember."));
                 }
             }
             catch { }
