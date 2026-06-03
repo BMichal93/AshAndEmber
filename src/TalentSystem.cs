@@ -1,6 +1,7 @@
 // =============================================================================
 // LIFE & DEATH MAGIC — TalentSystem.cs
 // Talent definitions, purchase logic, lore text, and save/load.
+// 21 talents: 7 passive, 8 enchantment (4 damage / 4 restore), 6 campaign spell.
 // =============================================================================
 
 using System;
@@ -46,7 +47,7 @@ namespace AshAndEmber
         Hearthlight = 20,  // Enchantment — Restore: morale boost
         Rouse       = 22,  // REMOVED — kept for save compatibility
         // ── Damage enchantments (continued) ──────────────────────────────────
-        Sunder      = 23,  // Enchantment — Damage: armor shred
+        Sunder      = 23,  // Enchantment — Damage: armor shred + attack reduction (absorbed Sear)
         Consume     = 24,  // REMOVED — kept for save compatibility
         Char        = 25,  // REMOVED — kept for save compatibility (merged into Scatter)
         // ── Restore enchantments (continued) ─────────────────────────────────
@@ -60,6 +61,7 @@ namespace AshAndEmber
         Ashfall     = 31,  // REMOVED — kept for save compatibility
         Fade        = 32,  // Spell — conceal party from enemy scouts
         AshenGift   = 33,  // Info — status card shown when player is Ashen (not purchasable)
+        Immolate    = 34,  // Enchantment — Damage: guaranteed kill at 3+ inputs
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info }
@@ -125,6 +127,13 @@ namespace AshAndEmber
                 Lore = "Those who carry the fire recognise each other from across a room. There is something almost like trust in that. Almost.",
                 MechanicDesc = "Passive. +10 relations with those who carry the fire. Never falls below 0 with them."
             },
+            new TalentDef
+            {
+                Id = TalentId.Flashfire, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.Passive, Name = "Flashfire",
+                Lore = "Sometimes the fire does not wait to be asked twice. It finds the shape again on its own — the same working, the same reach, the same burn. You do not question it. You simply let it.",
+                MechanicDesc = "Passive. Each battle spell has a 10% chance to echo — firing again instantly at no aging cost."
+            },
             // ── Enchantments (Damage) ─────────────────────────────────────────
             new TalentDef
             {
@@ -144,8 +153,15 @@ namespace AshAndEmber
             {
                 Id = TalentId.Sunder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Sunder",
-                Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what a body wears. What holds together begins to separate. Not quickly. But enough.",
-                MechanicDesc = "Enchantment. Damage tears at enemy defences, increasing all damage they receive for 8 seconds. Vulnerability = 5% per Damage input, max 40%."
+                Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what they wear and what they carry. What holds together begins to separate. Not quickly. But enough.",
+                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm for 8 seconds. Vulnerability to incoming damage = 5% per Damage input (max 40%). Attack power reduction = 8% per Damage input (max 40%)."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Immolate, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Immolate",
+                Lore = "Three times the fire has been called. Twice it asked. The third time, it takes. Not the wound — the whole. The body, the heat that kept it standing. The fire does not return what it has already claimed.",
+                MechanicDesc = "Enchantment. Damage sets enemies alight — additional burn damage scales with inputs. At 3 or more Damage inputs, the fire consumes utterly: one target is guaranteed to die."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -211,14 +227,6 @@ namespace AshAndEmber
                 Category = TalentCategory.Spell, Name = "Extinguish",
                 Lore = "You reach into the fire burning in an enemy and close your hand. Not slowly — like snuffing a candle. The body does not understand at first. Then it does.",
                 MechanicDesc = "5–12 soldiers in the nearest enemy party are wounded or killed, and their courage breaks. Costs 1 day."
-            },
-            // ── New passives ──────────────────────────────────────────────────
-            new TalentDef
-            {
-                Id = TalentId.Flashfire, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.Passive, Name = "Flashfire",
-                Lore = "Sometimes the fire does not wait to be asked twice. It finds the shape again on its own — the same working, the same reach, the same burn. You do not question it. You simply let it.",
-                MechanicDesc = "Passive. Each battle spell has a 10% chance to echo — firing again instantly at no aging cost."
             },
             // ── Campaign spells (continued) ────────────────────────────────────
             new TalentDef

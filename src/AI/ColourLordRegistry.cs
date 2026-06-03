@@ -41,7 +41,7 @@ namespace AshAndEmber
         };
 
         private static readonly TalentId[] DamageEnchantments =
-            { TalentId.Scatter, TalentId.Smoulder, TalentId.Sunder };
+            { TalentId.Scatter, TalentId.Smoulder, TalentId.Sunder, TalentId.Immolate };
 
         private static readonly TalentId[] RestoreEnchantments =
             { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight, TalentId.Reflect };
@@ -98,6 +98,9 @@ namespace AshAndEmber
                 // 50% chance of Sunder (cold fire strips the body's defences)
                 if (_rng.Next(2) == 0 && !current.Contains((int)TalentId.Sunder))
                     current.Add((int)TalentId.Sunder);
+                // 40% chance of Immolate (the cold that takes without asking)
+                if (_rng.Next(10) < 4 && !current.Contains((int)TalentId.Immolate))
+                    current.Add((int)TalentId.Immolate);
             }
             else
             {

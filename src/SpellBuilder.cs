@@ -187,6 +187,7 @@ namespace AshAndEmber
 
             if (inMission)
             {
+                SpellEffects.ResetImmolateKill();
                 int multi = cast.BlastCount + cast.MissileCount + cast.BarrierCount + cast.BurstCount;
 
                 if (multi == 0)

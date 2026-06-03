@@ -35,6 +35,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearSunder();        } catch { }
             try { SpellEffects.ClearChar();          } catch { }
             try { SpellEffects.ClearReflect();       } catch { }
+            try { SpellEffects.ClearAttackWeaken();  } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { MagicInputHandler.ResetInputState();  } catch { }
             try { ColourLordAI.ClearCooldowns();        } catch { }
@@ -131,6 +132,7 @@ namespace AshAndEmber
             SpellEffects.TickSunder(dt);
             SpellEffects.TickChar(dt);
             SpellEffects.TickReflect(dt);
+            SpellEffects.TickAttackWeaken(dt);
             SpellEffects.TickMagicMemory(dt);
             SpellEffects.TickHaltedAgents(dt);
             SpellEffects.FlushPendingDeaths();
@@ -151,6 +153,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearSunder();        } catch { }
             try { SpellEffects.ClearChar();          } catch { }
             try { SpellEffects.ClearReflect();       } catch { }
+            try { SpellEffects.ClearAttackWeaken();  } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { SpellEffects.ClearGlows();         } catch { }
             try { SpellEffects.ClearColourCooldown();} catch { }
@@ -169,6 +172,8 @@ namespace AshAndEmber
         {
             // Reflect enchantment: bounce a portion of melee damage back at the attacker.
             try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            // Sunder enchantment: heal back a portion from the victim if the attacker is weakened.
+            try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent,

@@ -16,7 +16,7 @@ AshAndEmber/
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
 │   ├── SpellBuilder.cs              two-phase input parser → SpellCast
-│   ├── TalentSystem.cs              20 talents (7 passive, 7 enchantment, 6 spell)
+│   ├── TalentSystem.cs              21 talents (7 passive, 8 enchantment, 6 spell)
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
 │   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks
@@ -274,7 +274,8 @@ Enchantments fire automatically on every qualifying cast in battle.
 |--------|--------|
 | **Scatter** | Blasts enemies backward (4 m per Damage input) and slows movement 25% per input (max 75%) for 4–8 s. |
 | **Smoulder** | Scorches enemy morale (−12 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
-| **Sunder** | Increases all damage enemies receive for 8 s. Vulnerability = 5% per Damage input, max 40%. |
+| **Sunder** | Increases all damage enemies receive and reduces their attack power for 8 s. Damage vulnerability = 5% per Damage input (max 40%). Attack reduction = 8% per Damage input (max 40%). |
+| **Immolate** | Sets enemies alight — bonus burn damage (10 per Damage input). At 3 or more Damage inputs, the fire consumes utterly: one target in range is guaranteed to die. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
@@ -543,7 +544,7 @@ At campaign start the following settlements are assigned to the Ashen Kingdom. T
 
 - Do not age (birth day reset daily to ~35).
 - Cast spells with no aging cost; 6-second cooldown. Spells display cold-blue and grey visuals.
-- Always carry Scatter + Extinguish + BreakWills + Plague. 50% chance of Smoulder. 50% chance of Sunder.
+- Always carry Scatter + Extinguish + BreakWills + Plague. 50% chance of Smoulder. 50% chance of Sunder. 40% chance of Immolate.
 - Personality traits locked to Merciless, Closefisted, and Deceitful.
 - Captured Ashen lords and Ashen Spawn party leaders refuse all dialogue. Encounters with them end with silence.
 

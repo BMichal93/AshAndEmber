@@ -108,6 +108,7 @@ namespace AshAndEmber
         public static void ExecuteNpcBlast(Agent caster, int formCount,
             int damageCount, int restoreCount, Team casterTeam)
         {
+            ResetImmolateKill();
             var cast = new SpellCast
             {
                 Form = SpellForm.Blast, FormCount = formCount, BlastCount = formCount,
@@ -120,6 +121,7 @@ namespace AshAndEmber
         public static void ExecuteNpcBurst(Agent caster, int formCount,
             int damageCount, int restoreCount, Team casterTeam)
         {
+            ResetImmolateKill();
             var cast = new SpellCast
             {
                 Form = SpellForm.Burst, FormCount = formCount, BurstCount = formCount,
@@ -503,18 +505,45 @@ namespace AshAndEmber
                 }
             }
 
-            // Sunder: shred target armour so they take more damage from all sources.
+            // Sunder: shred target armour (more damage received) and weapon arm (less damage dealt).
             if (CasterHasEnchantment(caster, TalentId.Sunder))
             {
                 try
                 {
-                    float vuln = cast.DamageCount * 10f; // stored as raw value, capped in DamageAgent
+                    float vuln = cast.DamageCount * 10f; // raw value, capped to 40% in DamageAgent
+                    float attackWeaken = Math.Min(0.40f, cast.DamageCount * 0.08f);
                     float duration = 8f;
                     if (!_sunderedAgents.TryGetValue(target, out var existing))
                         _sunderedAgents[target] = (vuln, duration);
                     else
                         _sunderedAgents[target] = (Math.Max(existing.BonusVuln, vuln), Math.Max(existing.Remaining, duration));
+                    if (!_attackWeakenedAgents.TryGetValue(target, out var existingWeak))
+                        _attackWeakenedAgents[target] = (attackWeaken, duration);
+                    else
+                        _attackWeakenedAgents[target] = (Math.Max(existingWeak.ReductionPct, attackWeaken), Math.Max(existingWeak.Remaining, duration));
                     BeginAgentGlow(target, ColorSchool.Red, 2f);
+                }
+                catch { }
+            }
+
+            // Immolate: bonus burn damage per input; at 3+ inputs one target is guaranteed to die.
+            if (CasterHasEnchantment(caster, TalentId.Immolate))
+            {
+                try
+                {
+                    if (cast.DamageCount >= 3 && !_immolateKillUsed)
+                    {
+                        _immolateKillUsed = true;
+                        QueueKill(target);
+                        BeginAgentGlow(target, ColorSchool.Red, 2f);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Immolate — consumed.", new Color(1f, 0.4f, 0.1f)));
+                    }
+                    else
+                    {
+                        DamageAgent(target, cast.DamageCount * 10f);
+                        BeginAgentGlow(target, ColorSchool.Red, 1.5f);
+                    }
                 }
                 catch { }
             }
@@ -640,6 +669,46 @@ namespace AshAndEmber
         }
 
         public static void ClearSunder() => _sunderedAgents.Clear();
+
+        // ── Attack weakening (Sunder enchantment — outgoing damage reduction) ───
+        private static readonly Dictionary<Agent, (float ReductionPct, float Remaining)>
+            _attackWeakenedAgents = new Dictionary<Agent, (float, float)>();
+
+        /// <summary>
+        /// Called from MagicMissionBehavior.OnAgentHit. If the attacker is Sundered,
+        /// heals back a portion of the damage dealt — effectively reducing their attack power.
+        /// </summary>
+        public static void TryApplyAttackWeakening(Agent victim, Agent attacker, int inflictedDamage)
+        {
+            if (victim == null || attacker == null || inflictedDamage <= 0) return;
+            if (!_attackWeakenedAgents.TryGetValue(attacker, out var w) || w.Remaining <= 0f) return;
+            try
+            {
+                float healBack = inflictedDamage * w.ReductionPct;
+                if (healBack >= 1f) HealAgent(victim, healBack);
+            }
+            catch { }
+        }
+
+        public static void TickAttackWeaken(float dt)
+        {
+            foreach (Agent key in _attackWeakenedAgents.Keys.ToList())
+            {
+                var (pct, remaining) = _attackWeakenedAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive())
+                    _attackWeakenedAgents.Remove(key);
+                else
+                    _attackWeakenedAgents[key] = (pct, remaining);
+            }
+        }
+
+        public static void ClearAttackWeaken() => _attackWeakenedAgents.Clear();
+
+        // ── Immolate (per-cast kill flag) ────────────────────────────────────────
+        // Prevents more than one guaranteed kill per spell cast at 3+ Damage inputs.
+        private static bool _immolateKillUsed = false;
+        public static void ResetImmolateKill() => _immolateKillUsed = false;
 
         // ── Char (Char enchantment state — movement slow) ──────────────────────
         // Stores (reduced speed cap, remaining duration). On expire, restores to 10f (unlimited).
