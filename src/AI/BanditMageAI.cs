@@ -191,53 +191,55 @@ namespace AshAndEmber
 
             try
             {
-                if (_isSpecialBattle)
-                {
-                    if (useBurst)
-                        SpellEffects.ExecuteNpcBurst(mage, 3, 2, 0, mage.Team);
-                    else
-                        SpellEffects.ExecuteNpcBlast(mage, 3, 2, 0, mage.Team);
-                }
-                else if (isLooter)
-                {
-                    if (useBurst)
-                        SpellEffects.ExecuteNpcBurst(mage, 1, 1, 0, mage.Team);
-                    else
-                        SpellEffects.ExecuteNpcBlast(mage, 1, 1, 0, mage.Team);
-                }
-                else
-                {
-                    if (useBurst)
-                        SpellEffects.ExecuteNpcBurst(mage, 2, 1, 0, mage.Team);
-                    else
-                        SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, mage.Team);
-                }
-
-                SpellEffects.BeginAgentGlow(mage, ColorSchool.Red, 2f);
-                SpellEffects.TryCastSound(mage.Position, ColorSchool.Red);
-                SpellEffects.TryCastAnimation(mage);
-                SpellEffects.RecordMagicCast(mage.Position);
-
-                _cooldowns[mage] = CooldownDuration;
-
                 string title = GetTitle(mage);
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"The {title} channels the fire!",
                     new Color(0.85f, 0.35f, 0.15f)));
 
+                _cooldowns[mage] = CooldownDuration;
+
+                bool specialBattle = _isSpecialBattle;
+                bool looter        = isLooter;
+                bool burst         = useBurst;
+
                 // The fire burns those who borrow it without the gift.
-                // Practiced cultists survive more often than raw looters.
-                float burnout = _isSpecialBattle ? BurnoutSpecial
-                              : isLooter          ? BurnoutLooter
-                              :                    BurnoutBandit;
-                if (_rng.NextDouble() < burnout)
+                float burnout = specialBattle ? BurnoutSpecial
+                              : looter        ? BurnoutLooter
+                              :                BurnoutBandit;
+                bool willBurnout = _rng.NextDouble() < burnout;
+                if (willBurnout) _mageAgents.Remove(mage);
+
+                SpellEffects.QueueNpcCastWithWindup(mage, () =>
                 {
-                    _mageAgents.Remove(mage);
-                    SpellEffects.QueueKill(mage);
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"The {title} is consumed by the fire.",
-                        new Color(0.6f, 0.2f, 0.1f)));
-                }
+                    if (specialBattle)
+                    {
+                        if (burst) SpellEffects.ExecuteNpcBurst(mage, 3, 2, 0, mage.Team);
+                        else       SpellEffects.ExecuteNpcBlast(mage, 3, 2, 0, mage.Team);
+                    }
+                    else if (looter)
+                    {
+                        if (burst) SpellEffects.ExecuteNpcBurst(mage, 1, 1, 0, mage.Team);
+                        else       SpellEffects.ExecuteNpcBlast(mage, 1, 1, 0, mage.Team);
+                    }
+                    else
+                    {
+                        if (burst) SpellEffects.ExecuteNpcBurst(mage, 2, 1, 0, mage.Team);
+                        else       SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, mage.Team);
+                    }
+
+                    SpellEffects.BeginAgentGlow(mage, ColorSchool.Red, 2f);
+                    SpellEffects.TryCastSound(mage.Position, ColorSchool.Red);
+                    SpellEffects.TryCastAnimation(mage);
+                    SpellEffects.RecordMagicCast(mage.Position);
+
+                    if (willBurnout)
+                    {
+                        SpellEffects.QueueKill(mage);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"The {title} is consumed by the fire.",
+                            new Color(0.6f, 0.2f, 0.1f)));
+                    }
+                });
             }
             catch { }
         }

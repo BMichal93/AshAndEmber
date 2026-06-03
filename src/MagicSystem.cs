@@ -29,6 +29,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearMoves();         } catch { }
             try { SpellEffects.ClearPendingDeaths(); } catch { }
             try { SpellEffects.ClearAnimTimers();    } catch { }
+            try { SpellEffects.ClearCastLoops();     } catch { }
             try { SpellEffects.ClearWard();          } catch { }
             try { SpellEffects.ClearStoneskin();     } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
@@ -117,6 +118,8 @@ namespace AshAndEmber
             SpellEffects.TickGlows(dt);
             SpellEffects.TickColourCooldown(dt);
             SpellEffects.TickAnimClears(dt);
+            SpellEffects.TickCastLoops(dt);
+            SpellEffects.TickPendingNpcCasts(dt);
             SpellEffects.TickMoves(dt);
             SpellEffects.TickAreaEffects(dt);
             SpellEffects.TickMissile(dt);
@@ -133,6 +136,7 @@ namespace AshAndEmber
         protected override void OnEndMission()
         {
             try { SpellEffects.ClearAnimTimers();    } catch { }
+            try { SpellEffects.ClearCastLoops();     } catch { }
             try { SpellEffects.ClearPendingDeaths(); } catch { }
             try { SpellEffects.ClearAreaEffects();   } catch { }
             try { SpellEffects.ClearMissile();       } catch { }

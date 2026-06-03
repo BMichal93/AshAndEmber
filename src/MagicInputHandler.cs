@@ -51,6 +51,9 @@ namespace AshAndEmber
 
             if (focusing)
             {
+                if (!_wasFocusing && inMission)
+                    try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch { }
+
                 _wasFocusing = true;
 
                 if (!inMission && Campaign.Current != null)
@@ -148,6 +151,10 @@ namespace AshAndEmber
 
                 if (!inMission && Campaign.Current != null)
                     Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop;
+
+                // Stop the looping animation before casting — TryCastAnimation takes over from here
+                if (inMission)
+                    try { SpellEffects.EndCastLoop(Agent.Main); } catch { }
 
                 TryCast(inMission);
 
