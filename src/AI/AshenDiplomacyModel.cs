@@ -45,26 +45,29 @@ namespace AshAndEmber
             return base.IsAtConstantWar(faction1, faction2);
         }
 
-        // Boost inter-faction war desire so kingdoms start conflicts readily.
+        // Boost inter-faction war desire strongly so kingdoms start conflicts readily.
+        // +100 is needed because Bannerlord's base score is typically −50 to −100 for
+        // neutral-relation factions; +30 was insufficient to cross the threshold.
         public override float GetScoreOfDeclaringWar(IFaction factionDeclaresWar, IFaction factionDeclaredWar,
             Clan evaluatingClan, out TextObject reason, bool includeReason)
         {
             float score = base.GetScoreOfDeclaringWar(
                 factionDeclaresWar, factionDeclaredWar, evaluatingClan, out reason, includeReason);
             if (InvolvesAshen(factionDeclaresWar, factionDeclaredWar)) return score;
-            return score + 30f;
+            return score + 100f;
         }
 
         // Peace with the Ashen is impossible — return a deeply negative score so the
         // AI never proposes it; this covers both the kingdom and individual Ashen clans.
-        // For inter-faction wars: reduce peace desire by 20, floored at 0 so factions that
-        // barely want peace (score 0-20) are pushed to indifferent, not boosted by the 0.5 floor.
+        // For inter-faction wars: only reduce peace desire when the faction positively wants
+        // peace (score > 0). Leave negative scores alone — a faction already fighting and
+        // not wanting peace should not have that score bumped upward to 0.
         public override float GetScoreOfDeclaringPeace(IFaction factionDeclaresPeace, IFaction factionDeclaredPeace)
         {
             float score = base.GetScoreOfDeclaringPeace(factionDeclaresPeace, factionDeclaredPeace);
             if (InvolvesAshen(factionDeclaresPeace, factionDeclaredPeace)) return -10000f;
-            float adjusted = score - 20f;
-            return adjusted < 0f ? 0f : adjusted;
+            if (score <= 0f) return score; // already against peace — don't interfere
+            return Math.Max(0f, score - 20f);
         }
     }
 }

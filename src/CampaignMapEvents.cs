@@ -266,9 +266,21 @@ namespace AshAndEmber
         public static void WeeklyTick()
         {
             if (DragonQuestSystem.WorldRekindled) return;
+
+            // Independent of the slot system — runs every week and forces inter-faction
+            // conflict if the world has been at peace for too long.
+            try { TryEnsureInterFactionConflict(); } catch { }
+
             // ── Cooldown gate ─────────────────────────────────────────────────
             if (ElapsedCampaignDays() - _lastEventElapsedDay < EventCooldownDays) return;
             _weeklySlotFilled = false;
+
+            // War-triggering events run first so they get first pick of the slot.
+            TryFireASlightAtCourt();
+            TryFireBorderTorches();
+            TryFireADebtInBlood();
+            TryFireBrokenBetrothal();
+            TryFireTreasonousScroll();
 
             TryFireAshenPlague();
             TryFireGreatWithering();
@@ -291,16 +303,42 @@ namespace AshAndEmber
             TryFireScorchingSun();
             TryFireFirstGreen();
             TryFireAmberHarvest();
-            TryFireASlightAtCourt();
-            TryFireBorderTorches();
-            TryFireADebtInBlood();
-            TryFireBrokenBetrothal();
-            TryFireTreasonousScroll();
             TryFireEmbersOfHope();
             TryFireAshenGambit();
 
             if (_weeklySlotFilled)
                 _lastEventElapsedDay = (int)ElapsedCampaignDays();
+        }
+
+        // Runs every week, independent of the event slot. If no inter-faction wars
+        // exist, directly seeds one. Gives new games 30 days to settle first.
+        private static void TryEnsureInterFactionConflict()
+        {
+            int day = (int)ElapsedCampaignDays();
+            if (day < 30) return;
+            if (day - _lastConflictSeedDay < 21) return;
+            _lastConflictSeedDay = day;
+
+            // Count active non-Ashen inter-faction wars
+            int warCount = 0;
+            try
+            {
+                var kingdoms = Kingdom.All.Where(k => !k.IsEliminated && k.StringId != AshenKingdomId).ToList();
+                for (int i = 0; i < kingdoms.Count; i++)
+                    for (int j = i + 1; j < kingdoms.Count; j++)
+                        if (kingdoms[i].IsAtWarWith(kingdoms[j])) warCount++;
+            }
+            catch { }
+
+            // No inter-faction wars at all — seed one; fewer than 2 — 40% chance to seed another.
+            bool needWar = warCount == 0 || (warCount < 2 && _rng.NextDouble() < 0.40);
+            if (!needWar) return;
+            if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
+
+            try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Tensions between {ka.Name} and {kb.Name} finally break — war is declared.",
+                new Color(0.85f, 0.35f, 0.25f)));
         }
 
         /// Resets state for a fresh new game (called from OnNewGameCreated).
@@ -315,6 +353,7 @@ namespace AshAndEmber
             _campaignStartDay        = (int)CampaignTime.Now.ToDays;
             _weeklySlotFilled        = false;
             _lastEventElapsedDay     = -EventCooldownDays;
+            _lastConflictSeedDay     = 0;
             _brokenKingdomIds.Clear();
             _gotKingdoms.Clear();
             _gotDays.Clear();
@@ -841,6 +880,8 @@ namespace AshAndEmber
         // until EventCooldownDays have passed since the last one.
         private static bool _weeklySlotFilled    = false;
         private static int  _lastEventElapsedDay = -EventCooldownDays;
+        // Independent of the slot system — tracks when we last ensured an inter-faction war exists.
+        private static int  _lastConflictSeedDay = 0;
 
         // ── Sanctuary / protective rites public API ───────────────────────────
         internal static int  ProtectedDaysRemaining => _protectedDaysRemaining;
@@ -2924,8 +2965,9 @@ namespace AshAndEmber
             store.SyncData("LDM_AshenGambitFired", ref gambitFired);
             _ashenGambitFired = gambitFired != 0;
 
-            store.SyncData("LDM_CampaignStartDay",  ref _campaignStartDay);
+            store.SyncData("LDM_CampaignStartDay",    ref _campaignStartDay);
             store.SyncData("LDM_LastEventDay",       ref _lastEventElapsedDay);
+            store.SyncData("LDM_LastConflictSeedDay", ref _lastConflictSeedDay);
         }
     }
 }

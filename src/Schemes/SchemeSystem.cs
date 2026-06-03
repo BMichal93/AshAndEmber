@@ -443,17 +443,34 @@ namespace AshAndEmber
                 }
                 else
                 {
+                    // Open to any lord from a different, non-eliminated foreign kingdom —
+                    // not just war enemies. Schemes can be peacetime intelligence operations.
                     lordTargets = Hero.AllAliveHeroes
                         .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
                                  && t != Hero.MainHero
                                  && t.Clan != null && t.Clan != lord.Clan
                                  && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
                                  && t.Clan.Kingdom != null && !t.Clan.Kingdom.IsEliminated
-                                 && lord.Clan.Kingdom.IsAtWarWith(t.Clan.Kingdom))
+                                 && t.Clan.Kingdom != lord.Clan.Kingdom)
                         .ToList();
                 }
                 if (lordTargets.Count == 0) return;
-                targetHero = lordTargets[_rng.Next(lordTargets.Count)];
+
+                // Ashen targets are valid but rare — weight pool 85% non-Ashen / 15% Ashen.
+                var nonAshenTargets = lordTargets
+                    .Where(t => !ColourLordRegistry.IsAshenLord(t)
+                             && t.Clan?.Kingdom?.StringId != AshenKingdomId).ToList();
+                var ashenTargets = lordTargets
+                    .Where(t => ColourLordRegistry.IsAshenLord(t)
+                             || t.Clan?.Kingdom?.StringId == AshenKingdomId).ToList();
+
+                List<Hero> targetPool;
+                if (nonAshenTargets.Count > 0 && ashenTargets.Count > 0)
+                    targetPool = _rng.NextDouble() < 0.85 ? nonAshenTargets : ashenTargets;
+                else
+                    targetPool = lordTargets;
+
+                targetHero = targetPool[_rng.Next(targetPool.Count)];
             }
             else
             {
