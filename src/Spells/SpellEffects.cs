@@ -433,7 +433,7 @@ namespace AshAndEmber
 
         private static void ApplyDamageEnchantments(Agent target, SpellCast cast, Agent caster)
         {
-            // Scatter: push enemies back
+            // Scatter: push enemies back + sear limbs to slow movement (merged Char)
             if (CasterHasEnchantment(caster, TalentId.Scatter))
             {
                 bool isMounted = false;
@@ -449,9 +449,24 @@ namespace AshAndEmber
                     dest.z = target.Position.z;
                     try { QueueMove(target, dest, 0.4f); } catch { }
                 }
+                if (!target.IsHero)
+                {
+                    try
+                    {
+                        float reducedSpeed = Math.Max(1f, 10f - cast.DamageCount * 2.5f);
+                        float duration = 4f + cast.DamageCount * 1f;
+                        if (!_charredAgents.TryGetValue(target, out var cur))
+                            _charredAgents[target] = (reducedSpeed, duration);
+                        else
+                            _charredAgents[target] = (Math.Min(cur.ReducedSpeed, reducedSpeed), Math.Max(cur.Remaining, duration));
+                        target.SetMaximumSpeedLimit(_charredAgents[target].ReducedSpeed, false);
+                        BeginAgentGlow(target, ColorSchool.Red, 2f);
+                    }
+                    catch { }
+                }
             }
 
-            // Smoulder: morale penalty
+            // Smoulder: morale penalty + bewildering random effect (merged Bewilder)
             if (CasterHasEnchantment(caster, TalentId.Smoulder))
             {
                 try
@@ -461,33 +476,31 @@ namespace AshAndEmber
                     target.SetMorale(Math.Max(cur - delta, 0f));
                 }
                 catch { }
-            }
-
-            // Bewilder: random command (not on heroes)
-            if (CasterHasEnchantment(caster, TalentId.Bewilder) && !target.IsHero)
-            {
-                try
+                if (!target.IsHero)
                 {
-                    switch (_rng.Next(4))
+                    try
                     {
-                        case 0: // Panic — route
-                            try { target.SetMorale(0f); } catch { }
-                            break;
-                        case 1: // Charge — force into melee
-                            try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
-                            break;
-                        case 2: // Dismount
-                            bool mounted = false;
-                            try { mounted = target.MountAgent != null; } catch { }
-                            if (mounted) ForceDismount(target);
-                            else try { target.SetMorale(0f); } catch { }
-                            break;
-                        case 3: // Shatter nerve — morale fractured to a quarter
-                            try { target.SetMorale(target.GetMorale() * 0.25f); } catch { }
-                            break;
+                        switch (_rng.Next(4))
+                        {
+                            case 0:
+                                try { target.SetMorale(0f); } catch { }
+                                break;
+                            case 1:
+                                try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+                                break;
+                            case 2:
+                                bool mounted = false;
+                                try { mounted = target.MountAgent != null; } catch { }
+                                if (mounted) ForceDismount(target);
+                                else try { target.SetMorale(0f); } catch { }
+                                break;
+                            case 3:
+                                try { target.SetMorale(target.GetMorale() * 0.25f); } catch { }
+                                break;
+                        }
                     }
+                    catch { }
                 }
-                catch { }
             }
 
             // Sunder: shred target armour so they take more damage from all sources.
@@ -505,29 +518,6 @@ namespace AshAndEmber
                 }
                 catch { }
             }
-
-            // Consume: lifesteal — drain life from every enemy hit.
-            if (CasterHasEnchantment(caster, TalentId.Consume) && caster != null && caster.IsActive())
-            {
-                try { HealAgent(caster, cast.DamageCount * 2f); } catch { }
-            }
-
-            // Char: slow target movement. Uses SetMaximumSpeedLimit (same API as HaltedAgents).
-            if (CasterHasEnchantment(caster, TalentId.Char) && !target.IsHero)
-            {
-                try
-                {
-                    float reducedSpeed = Math.Max(1f, 10f - cast.DamageCount * 2.5f);
-                    float duration = 4f + cast.DamageCount * 1f;
-                    if (!_charredAgents.TryGetValue(target, out var cur))
-                        _charredAgents[target] = (reducedSpeed, duration);
-                    else
-                        _charredAgents[target] = (Math.Min(cur.ReducedSpeed, reducedSpeed), Math.Max(cur.Remaining, duration));
-                    target.SetMaximumSpeedLimit(_charredAgents[target].ReducedSpeed, false);
-                    BeginAgentGlow(target, ColorSchool.Red, 2f);
-                }
-                catch { }
-            }
         }
 
         private static void ApplyRestoreEnchantments(Agent target, SpellCast cast, Agent caster)
@@ -541,12 +531,23 @@ namespace AshAndEmber
                 BeginAgentGlow(target, ColorSchool.White, duration);
             }
 
-            // Cinder Shell: armour boost (damage reduction)
+            // Cinder Shell: armour boost + near-full-health shield (merged Overflow)
             if (CasterHasEnchantment(caster, TalentId.CinderShell))
             {
                 float bonus = cast.RestoreCount * 10f;
                 AddStoneskin(target, bonus, 8f);
                 BeginAgentGlow(target, ColorSchool.Orange, 2f);
+                try
+                {
+                    float hp = target.Health;
+                    float hpMax = target.HealthLimit;
+                    if (hpMax > 0f && hp >= hpMax * 0.90f)
+                    {
+                        float overBonus = cast.RestoreCount * 15f;
+                        AddStoneskin(target, overBonus, 5f);
+                    }
+                }
+                catch { }
             }
 
             // Hearthlight: morale boost
@@ -557,40 +558,6 @@ namespace AshAndEmber
                     float delta = cast.RestoreCount * 12f;
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Min(cur + delta, 100f));
-                }
-                catch { }
-            }
-
-            // Overflow: when a target is already near full health, excess fire becomes a shield.
-            if (CasterHasEnchantment(caster, TalentId.Overflow))
-            {
-                try
-                {
-                    float hp = target.Health;
-                    float hpMax = target.HealthLimit;
-                    // Trigger when at 90%+ health — they were already healthy before or just healed to full.
-                    if (hpMax > 0f && hp >= hpMax * 0.90f)
-                    {
-                        float bonus = cast.RestoreCount * 15f;
-                        AddStoneskin(target, bonus, 5f);
-                        BeginAgentGlow(target, ColorSchool.Orange, 2f);
-                    }
-                }
-                catch { }
-            }
-
-            // Renewal: healing over time — plant a slow-burning ember in the ally.
-            if (CasterHasEnchantment(caster, TalentId.Renewal))
-            {
-                try
-                {
-                    float healPerSec = cast.RestoreCount * 3f;
-                    float duration = 5f;
-                    if (!_renewalAgents.TryGetValue(target, out var cur))
-                        _renewalAgents[target] = (healPerSec, duration);
-                    else
-                        _renewalAgents[target] = (Math.Max(cur.HealPerSec, healPerSec), Math.Max(cur.Remaining, duration));
-                    BeginAgentGlow(target, ColorSchool.White, 2f);
                 }
                 catch { }
             }
@@ -703,28 +670,6 @@ namespace AshAndEmber
                     try { kv.Key.SetMaximumSpeedLimit(10f, false); } catch { }
             _charredAgents.Clear();
         }
-
-        // ── Renewal (Renewal enchantment state — heal over time) ───────────────
-        private static readonly Dictionary<Agent, (float HealPerSec, float Remaining)>
-            _renewalAgents = new Dictionary<Agent, (float, float)>();
-
-        public static void TickRenewal(float dt)
-        {
-            foreach (Agent key in _renewalAgents.Keys.ToList())
-            {
-                var (hps, remaining) = _renewalAgents[key];
-                remaining -= dt;
-                if (remaining <= 0f || key == null || !key.IsActive())
-                    _renewalAgents.Remove(key);
-                else
-                {
-                    HealAgent(key, hps * dt);
-                    _renewalAgents[key] = (hps, remaining);
-                }
-            }
-        }
-
-        public static void ClearRenewal() => _renewalAgents.Clear();
 
         // ── Reflect (Reflect enchantment state — melee damage reflection) ───────
         private static readonly Dictionary<Agent, (float ReflectPct, float Remaining)>

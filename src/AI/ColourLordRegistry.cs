@@ -36,16 +36,15 @@ namespace AshAndEmber
 
         private static readonly TalentId[] SpellTalents =
         {
-            TalentId.Rejuvenate, TalentId.PlantGrowth,
             TalentId.BreakWills, TalentId.Inspire, TalentId.Plague,
             TalentId.Clairvoyance, TalentId.Extinguish,
         };
 
         private static readonly TalentId[] DamageEnchantments =
-            { TalentId.Scatter, TalentId.Smoulder, TalentId.Bewilder, TalentId.Sunder, TalentId.Consume, TalentId.Char };
+            { TalentId.Scatter, TalentId.Smoulder, TalentId.Sunder };
 
         private static readonly TalentId[] RestoreEnchantments =
-            { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight, TalentId.Overflow, TalentId.Renewal, TalentId.Reflect };
+            { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight, TalentId.Reflect };
 
         // ── Public API ────────────────────────────────────────────────────────
         public static bool IsColourLord(Hero hero) =>
@@ -148,9 +147,6 @@ namespace AshAndEmber
             Shuffle(pool);
             int count = 1 + _rng.Next(2); // 1 or 2 talents
             var assigned = pool.Take(count).Select(t => (int)t).ToList();
-
-            // 20% chance of DevourLife
-            if (_rng.Next(100) < 20) assigned.Add((int)TalentId.DevourLife);
 
             // 30% chance for a damage enchantment
             if (_rng.Next(100) < 30)

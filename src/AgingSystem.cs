@@ -51,20 +51,19 @@ namespace AshAndEmber
         /// <summary>
         /// Battle spell aging cost: ceil(totalInputs / 2) days — scales with spell size, no hard cap.
         /// Examples: 1-2 inputs = 1 day | 3-4 = 2 days | 5-6 = 3 days | 7-8 = 4 days.
-        /// BattleMage talent subtracts 1 from the total cost (minimum 1, never free).
-        /// Veteran's Ash talent applies a percentage reduction based on age (max 30%).
+        /// Tempered (BattleMage) talent subtracts 1 from the total cost (minimum 1, never free),
+        /// and beyond age 40 also shaves 0.5% per year off the final cost, capped at 30%.
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
             int cost = (totalInputs + 1) / 2;  // ceil(n/2)
             if (hasBattleMageTalent) cost = Math.Max(1, cost - 1);
 
-            // Veteran's Ash: each year beyond 40 shaves 0.5% off cost, capped at 30%.
+            // Tempered (merged Veteran's Ash): each year beyond 40 shaves 0.5% off cost, capped at 30%.
             // At age 50 → -5%, age 70 → -15%, age 100 → -30% (death threshold).
-            // Combined with BattleMage a big spell still costs at least 1 day.
             try
             {
-                if (TalentSystem.Has(TalentId.VeteranAsh) && Hero.MainHero != null)
+                if (hasBattleMageTalent && Hero.MainHero != null)
                 {
                     float age = (float)Hero.MainHero.Age;
                     if (age > 40f)

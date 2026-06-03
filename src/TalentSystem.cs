@@ -22,41 +22,41 @@ namespace AshAndEmber
     {
         Gift        = 0,   // Passive — starting talent
         // 1 reserved (Subjugate — moved to Ashen Altar rites)
-        Rejuvenate  = 2,   // Spell
-        PlantGrowth = 3,   // Spell
+        Rejuvenate  = 2,   // REMOVED — kept for save compatibility (healing merged into Kindle)
+        PlantGrowth = 3,   // REMOVED — kept for save compatibility
         BreakWills  = 4,   // Spell
         Inspire     = 5,   // Spell
         Plague      = 6,   // Spell
         Clairvoyance= 7,   // Spell
         Extinguish  = 8,   // Spell
-        DevourLife  = 9,   // Passive
+        DevourLife  = 9,   // REMOVED — kept for save compatibility (merged into Reap)
         BattleMage  = 10,  // Passive
         Sorcerer    = 11,  // Passive
         Camaraderie = 12,  // Passive
         Reap        = 13,  // Passive
         Ember       = 14,  // Passive
         // ── Damage enchantments ───────────────────────────────────────────────
-        Scatter     = 15,  // Enchantment — Damage: push back
-        Smoulder    = 16,  // Enchantment — Damage: morale penalty
-        Bewilder    = 17,  // Enchantment — Damage: random command
+        Scatter     = 15,  // Enchantment — Damage: push back + slow (absorbed Char)
+        Smoulder    = 16,  // Enchantment — Damage: morale drain + bewilder (absorbed Bewilder)
+        Bewilder    = 17,  // REMOVED — kept for save compatibility (merged into Smoulder)
         Waver       = 21,  // REMOVED — kept for save compatibility
         // ── Restore enchantments ─────────────────────────────────────────────
         Ashveil     = 18,  // Enchantment — Restore: magic immunity
-        CinderShell = 19,  // Enchantment — Restore: armour boost
+        CinderShell = 19,  // Enchantment — Restore: armour boost + overheal shield (absorbed Overflow)
         Hearthlight = 20,  // Enchantment — Restore: morale boost
         Rouse       = 22,  // REMOVED — kept for save compatibility
-        // ── New damage enchantments ───────────────────────────────────────────
+        // ── Damage enchantments (continued) ──────────────────────────────────
         Sunder      = 23,  // Enchantment — Damage: armor shred
-        Consume     = 24,  // Enchantment — Damage: lifesteal
-        Char        = 25,  // Enchantment — Damage: movement slow
-        // ── New restore enchantments ──────────────────────────────────────────
-        Overflow    = 26,  // Enchantment — Restore: overheal becomes shield
-        Renewal     = 27,  // Enchantment — Restore: heal over time
+        Consume     = 24,  // REMOVED — kept for save compatibility
+        Char        = 25,  // REMOVED — kept for save compatibility (merged into Scatter)
+        // ── Restore enchantments (continued) ─────────────────────────────────
+        Overflow    = 26,  // REMOVED — kept for save compatibility (merged into Cinder Shell)
+        Renewal     = 27,  // REMOVED — kept for save compatibility
         Reflect     = 28,  // Enchantment — Restore: melee damage reflection
-        // ── New passives ──────────────────────────────────────────────────────
+        // ── Passives ──────────────────────────────────────────────────────────
         Flashfire   = 29,  // Passive — 10% chance to echo a battle spell
-        VeteranAsh  = 30,  // Passive — age reduces casting cost (percentage)
-        // ── New campaign spells ────────────────────────────────────────────────
+        VeteranAsh  = 30,  // REMOVED — kept for save compatibility (merged into Tempered)
+        // ── Campaign spells ────────────────────────────────────────────────────
         Ashfall     = 31,  // REMOVED — kept for save compatibility
         Fade        = 32,  // Spell — conceal party from enemy scouts
     }
@@ -93,7 +93,7 @@ namespace AshAndEmber
                 Id = TalentId.BattleMage, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Tempered",
                 Lore = "The forge teaches patience. A slow hand draws more from less; a careful reach into the fire takes without burning.",
-                MechanicDesc = "Passive. Each battle cast costs 1 fewer day (minimum 0)."
+                MechanicDesc = "Passive. Each battle cast costs 1 fewer day (minimum 1). Beyond age 40, each year further reduces cast cost by 0.5%, up to 30% total."
             },
             new TalentDef
             {
@@ -111,17 +111,10 @@ namespace AshAndEmber
             },
             new TalentDef
             {
-                Id = TalentId.DevourLife, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.Passive, Name = "Harvest",
-                Lore = "You take the last warmth from a life you have ended. The fire knows no guilt — it only spreads.",
-                MechanicDesc = "Passive. Executing a captured lord draws back 100 days of youth."
-            },
-            new TalentDef
-            {
                 Id = TalentId.Reap, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Reap",
                 Lore = "Every life spent in your shadow leaves something behind — a warmth, a residue, the last gasp of a flame that burned for your purpose. You have learned to hold a vessel for it.",
-                MechanicDesc = "Passive. Raiding a village draws back 5 days of youth (7-day cooldown). Each prisoner discarded has a 5% chance to draw back 1 day. Learning this marks you."
+                MechanicDesc = "Passive. Raiding a village restores 5 days of youth (7-day cooldown). Each prisoner discarded has a 5% chance to restore 1 day. Executing a captured lord restores 100 days of youth. Learning this marks you."
             },
             new TalentDef
             {
@@ -136,21 +129,14 @@ namespace AshAndEmber
                 Id = TalentId.Scatter, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Scatter",
                 Lore = "The fire does not merely burn — it expels. What it touches, it unmakes and flings aside. You have learned to aim that expulsion.",
-                MechanicDesc = "Enchantment. Damage also blasts enemies backward. Push distance = 4m per Damage input."
+                MechanicDesc = "Enchantment. Damage blasts enemies backward (4m per Damage input) and sears their limbs, reducing movement speed by 25% per Damage input (max 75%) for 4s + 1s per input."
             },
             new TalentDef
             {
                 Id = TalentId.Smoulder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Smoulder",
                 Lore = "The fire knows what frightens. It does not need to kill a man to defeat him — only to let him feel how little warmth he carries. The courage drains out with the heat.",
-                MechanicDesc = "Enchantment. Damage scorches enemy morale. Morale loss = 12 per Damage input."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Bewilder, IsSpell = false, IsEnchantment = true,
-                Category = TalentCategory.Enchantment, Name = "Bewilder",
-                Lore = "The fire is not just heat — it is signal. When you push it through a mind unprepared, the signals cross. Halt, charge, flee, stand. They will not know which they were told.",
-                MechanicDesc = "Enchantment. Damage bewilders enemies with a random effect — instant rout, force charge, dismount (mounted only), or morale fractured to 25%."
+                MechanicDesc = "Enchantment. Damage scorches enemy morale (−12 per Damage input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%."
             },
             new TalentDef
             {
@@ -158,20 +144,6 @@ namespace AshAndEmber
                 Category = TalentCategory.Enchantment, Name = "Sunder",
                 Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what a body wears. What holds together begins to separate. Not quickly. But enough.",
                 MechanicDesc = "Enchantment. Damage tears at enemy defences, increasing all damage they receive for 8 seconds. Vulnerability = 5% per Damage input, max 40%."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Consume, IsSpell = false, IsEnchantment = true,
-                Category = TalentCategory.Enchantment, Name = "Consume",
-                Lore = "The fire in you is hungry. When it reaches into another and burns, something comes back — not much, never as much as was spent, but something. A warmth. A flicker.",
-                MechanicDesc = "Enchantment. Each enemy damaged by your spell restores 2 HP to you per Damage input."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Char, IsSpell = false, IsEnchantment = true,
-                Category = TalentCategory.Enchantment, Name = "Char",
-                Lore = "The fire does not need to kill a man to stop him. It only needs to reach his legs and remind them what burning means. The legs remember long after the pain fades.",
-                MechanicDesc = "Enchantment. Damage sears enemy limbs, reducing their movement speed. Slow = 25% per Damage input, max 75%. Duration = 4s + 1s per input."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -186,7 +158,7 @@ namespace AshAndEmber
                 Id = TalentId.CinderShell, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Cinder Shell",
                 Lore = "Fire hardens what it doesn't consume. The skin does not become stone — it becomes something older. Whatever falls on them will not find the same flesh.",
-                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage for 8 seconds. Protection = 5% per Restore input, max 50%."
+                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage for 8 seconds. Protection = 5% per Restore input, max 50%. When an ally is near full health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
             },
             new TalentDef
             {
@@ -194,20 +166,6 @@ namespace AshAndEmber
                 Category = TalentCategory.Enchantment, Name = "Hearthlight",
                 Lore = "The fire in them has not gone out — it has only dimmed. You reach in and remind it what it is for. They remember, for a moment, that the fire is their friend.",
                 MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 12 per Restore input."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Overflow, IsSpell = false, IsEnchantment = true,
-                Category = TalentCategory.Enchantment, Name = "Overflow",
-                Lore = "A vessel that cannot hold more does not waste what spills — the fire finds another shape for it. Hardness where there was softness. Resistance where there was none.",
-                MechanicDesc = "Enchantment. When restoring an ally already near full health, excess fire hardens into a damage shield. Shield = 15 HP per Restore input, lasts 5s."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Renewal, IsSpell = false, IsEnchantment = true,
-                Category = TalentCategory.Enchantment, Name = "Renewal",
-                Lore = "The best healing is not a single push, but a settling — the fire taking root and burning slow and steady in a wound until the wound forgets itself.",
-                MechanicDesc = "Enchantment. Restore grants allies a healing flame that lingers. +3 HP per second per Restore input for 5 seconds."
             },
             new TalentDef
             {
@@ -219,24 +177,10 @@ namespace AshAndEmber
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.Rejuvenate, IsSpell = true, IsEnchantment = false,
-                Category = TalentCategory.Spell, Name = "Rejuvenate",
-                Lore = "You press a sliver of your own fire into a wound, just enough to wake theirs. They will not know what was given. You will feel it, briefly.",
-                MechanicDesc = "Up to 8 wounded soldiers of each type across all your ranks recover. Costs 1 day."
-            },
-            new TalentDef
-            {
                 Id = TalentId.Inspire, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Kindle",
                 Lore = "You let them feel it briefly — the warmth that says the world cares whether they live. It may be a lie. The fire does not ask.",
-                MechanicDesc = "Your party gains 40 morale and 5 wounded soldiers recover. Costs 1 day."
-            },
-            new TalentDef
-            {
-                Id = TalentId.PlantGrowth, IsSpell = true, IsEnchantment = false,
-                Category = TalentCategory.Spell, Name = "Quicken",
-                Lore = "Seeds carry fire in them — a very old, very patient kind. You ask that patience to end.",
-                MechanicDesc = "Grain grows in proportion to your party's need — one measure per soldier. Costs 1 day."
+                MechanicDesc = "Your party gains 40 morale. Up to 8 wounded soldiers of each troop type recover. Costs 1 day."
             },
             new TalentDef
             {
@@ -274,14 +218,7 @@ namespace AshAndEmber
                 Lore = "Sometimes the fire does not wait to be asked twice. It finds the shape again on its own — the same working, the same reach, the same burn. You do not question it. You simply let it.",
                 MechanicDesc = "Passive. Each battle spell has a 10% chance to echo — firing again instantly at no aging cost."
             },
-            new TalentDef
-            {
-                Id = TalentId.VeteranAsh, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.Passive, Name = "Veteran's Ash",
-                Lore = "The fire does not diminish with age — it concentrates. What once required effort becomes instinct. What once cost you years now costs you less. The debt is still there. It is simply smaller.",
-                MechanicDesc = "Passive. Each year lived beyond 40 reduces battle spell casting cost by 0.5%, up to a maximum of 30% reduction. Does not eliminate costs."
-            },
-            // ── New campaign spells ────────────────────────────────────────────
+            // ── Campaign spells (continued) ────────────────────────────────────
             new TalentDef
             {
                 Id = TalentId.Fade, IsSpell = true, IsEnchantment = false,
@@ -488,8 +425,6 @@ namespace AshAndEmber
 
             switch (id)
             {
-                case TalentId.Rejuvenate:   CastRejuvenate();   break;
-                case TalentId.PlantGrowth:  CastPlantGrowth();  break;
                 case TalentId.BreakWills:   CastBreakWills();   break;
                 case TalentId.Inspire:      CastInspire();      break;
                 case TalentId.Plague:       CastPlague();       break;
@@ -497,43 +432,6 @@ namespace AshAndEmber
                 case TalentId.Extinguish:   CastExtinguish();   break;
                 case TalentId.Fade:         CastFade();         break;
             }
-        }
-
-        private static void CastRejuvenate()
-        {
-            var roster = MobileParty.MainParty?.MemberRoster;
-            if (roster == null) { Msg("Rejuvenate — no party found."); return; }
-            var wounded = roster.GetTroopRoster()
-                .Where(e => !e.Character.IsHero && e.WoundedNumber > 0).ToList();
-            if (wounded.Count == 0) { Msg("Rejuvenate — no wounded soldiers."); return; }
-            int totalHealed = 0;
-            foreach (var entry in wounded)
-            {
-                try
-                {
-                    int healed = Math.Min(entry.WoundedNumber, 8);
-                    roster.AddToCounts(entry.Character, 0, false, -healed);
-                    totalHealed += healed;
-                }
-                catch { }
-            }
-            if (totalHealed > 0)
-                Msg($"Rejuvenate — {totalHealed} soldier{(totalHealed != 1 ? "s" : "")} rise from their wounds.");
-            else
-                Msg("Rejuvenate — the wounds hold.");
-        }
-
-        private static void CastPlantGrowth()
-        {
-            try
-            {
-                int partySize = MobileParty.MainParty?.MemberRoster?.TotalManCount ?? 50;
-                int grain = Math.Max(50, Math.Min(partySize, 200));
-                MobileParty.MainParty?.ItemRoster?.AddToCounts(
-                    TaleWorlds.ObjectSystem.MBObjectManager.Instance.GetObject<TaleWorlds.Core.ItemObject>("grain"), grain);
-                Msg($"Quicken — the soil answers. {grain} grain added.");
-            }
-            catch { Msg("Quicken — the fields are generous."); }
         }
 
         private static void CastBreakWills()
@@ -567,13 +465,11 @@ namespace AshAndEmber
                 int roused = 0;
                 foreach (var entry in wounded)
                 {
-                    if (roused >= 5) break;
-                    int heal = Math.Min(entry.WoundedNumber, 5 - roused);
-                    roster.AddToCounts(entry.Character, 0, false, -heal);
-                    roused += heal;
+                    int heal = Math.Min(entry.WoundedNumber, 8);
+                    try { roster.AddToCounts(entry.Character, 0, false, -heal); roused += heal; } catch { }
                 }
                 string msg = roused > 0
-                    ? $"Kindle — warmth floods your ranks. +40 morale, {roused} soldier{(roused != 1 ? "s" : "")} roused."
+                    ? $"Kindle — warmth floods your ranks. +40 morale, {roused} soldier{(roused != 1 ? "s" : "")} rise from their wounds."
                     : "Kindle — warmth floods your ranks. +40 morale.";
                 Msg(msg);
             }
@@ -706,8 +602,6 @@ namespace AshAndEmber
                     case TalentId.Inspire:     NpcInspire(caster);     blurb = "kindles their warband — morale rises."; break;
                     case TalentId.Plague:      NpcPlague(caster);      blurb = "works a Wither — a village's hearth fades."; break;
                     case TalentId.Extinguish:  NpcExtinguish(caster);  blurb = "casts Extinguish — fires snuffed in a distant party."; break;
-                    case TalentId.Rejuvenate:  NpcRejuvenate(caster);  blurb = "draws on Rejuvenate — their wounded recover."; break;
-                    case TalentId.PlantGrowth: NpcPlantGrowth(caster); blurb = "works Quicken — their warband is sustained."; break;
                     case TalentId.Clairvoyance:NpcClairvoyance(caster);blurb = "reads the threads — power flows to them."; break;
                     default: break;
                 }
@@ -792,34 +686,6 @@ namespace AshAndEmber
                 .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
             if (troops.Count == 0) return;
             try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch { }
-        }
-
-        private static void NpcRejuvenate(Hero caster)
-        {
-            var roster = caster.PartyBelongedTo?.MemberRoster;
-            if (roster == null) return;
-            var wounded = roster.GetTroopRoster()
-                .Where(e => !e.Character.IsHero && e.WoundedNumber > 0).ToList();
-            if (wounded.Count == 0) return;
-            var entry = wounded[_rng.Next(wounded.Count)];
-            try { roster.AddToCounts(entry.Character, 0, false, -Math.Min(entry.WoundedNumber, 2)); } catch { }
-        }
-
-        private static void NpcPlantGrowth(Hero caster)
-        {
-            var party = caster.PartyBelongedTo;
-            if (party == null) return;
-            party.RecentEventsMorale += 15f;
-            var roster = party.MemberRoster;
-            var wounded = roster.GetTroopRoster()
-                .Where(e => !e.Character.IsHero && e.WoundedNumber > 0).ToList();
-            int healed = 0;
-            foreach (var entry in wounded)
-            {
-                if (healed >= 3) break;
-                int h = Math.Min(entry.WoundedNumber, 3 - healed);
-                try { roster.AddToCounts(entry.Character, 0, false, -h); healed += h; } catch { }
-            }
         }
 
         private static void NpcClairvoyance(Hero caster)

@@ -34,7 +34,6 @@ namespace AshAndEmber
             try { SpellEffects.ClearStoneskin();     } catch { }
             try { SpellEffects.ClearSunder();        } catch { }
             try { SpellEffects.ClearChar();          } catch { }
-            try { SpellEffects.ClearRenewal();       } catch { }
             try { SpellEffects.ClearReflect();       } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { MagicInputHandler.ResetInputState();  } catch { }
@@ -131,7 +130,6 @@ namespace AshAndEmber
             SpellEffects.TickStoneskin(dt);
             SpellEffects.TickSunder(dt);
             SpellEffects.TickChar(dt);
-            SpellEffects.TickRenewal(dt);
             SpellEffects.TickReflect(dt);
             SpellEffects.TickMagicMemory(dt);
             SpellEffects.TickHaltedAgents(dt);
@@ -152,7 +150,6 @@ namespace AshAndEmber
             try { SpellEffects.ClearStoneskin();     } catch { }
             try { SpellEffects.ClearSunder();        } catch { }
             try { SpellEffects.ClearChar();          } catch { }
-            try { SpellEffects.ClearRenewal();       } catch { }
             try { SpellEffects.ClearReflect();       } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { SpellEffects.ClearGlows();         } catch { }
