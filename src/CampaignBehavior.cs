@@ -310,6 +310,7 @@ namespace AshAndEmber
                 try { AshenCitySystem.Initialize(); } catch { }
                 try { AshenCitySystem.DailyTick(); } catch { }
                 try { ColourLordRegistry.DailyMapCast(); } catch { }
+                try { TalentSystem.ResetDailyCastCount(); } catch { }
                 try { TalentSystem.EnforceKinship(); } catch { }
                 try { TalentSystem.DailyFadeTick(); } catch { }
                 try { AgingSystem.DailyAgeCheck(); } catch { }

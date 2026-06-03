@@ -59,9 +59,10 @@ namespace AshAndEmber
         // ── Campaign spells ────────────────────────────────────────────────────
         Ashfall     = 31,  // REMOVED — kept for save compatibility
         Fade        = 32,  // Spell — conceal party from enemy scouts
+        AshenGift   = 33,  // Info — status card shown when player is Ashen (not purchasable)
     }
 
-    public enum TalentCategory { Passive, Enchantment, Spell }
+    public enum TalentCategory { Passive, Enchantment, Spell, Info }
 
     public class TalentDef
     {
@@ -69,6 +70,7 @@ namespace AshAndEmber
         public string        Name;
         public bool          IsSpell;        // true = campaign map spell
         public bool          IsEnchantment;  // true = battle enchantment
+        public bool          IsInfo;         // true = display-only, not purchasable
         public TalentCategory Category;
         public string        Lore;
         public string        MechanicDesc;
@@ -226,6 +228,14 @@ namespace AshAndEmber
                 Lore = "You draw your fire inward — not out, not away, but down into the marrow, down past what can be seen or felt. For a time you are still there. You simply stop being visible to those looking for you.",
                 MechanicDesc = "Your party is concealed from enemy scouts for 2 days. Enemy parties will not pursue you. Costs 1 day."
             },
+            // ── Ashen status (info-only, not purchasable) ─────────────────────
+            new TalentDef
+            {
+                Id = TalentId.AshenGift, IsSpell = false, IsEnchantment = false, IsInfo = true,
+                Category = TalentCategory.Info, Name = "The Cold Within",
+                Lore = "The fire is gone. What remains is older, colder, and far more patient. It is not warmth you carry now — it is the memory of warmth and the hollow that followed.",
+                MechanicDesc = "You are Ashen. You do not age. Each casting costs criminal rating instead of years. After your first working each day, each further cast risks the cold stirring against you — a possession that may claim your life."
+            },
         };
 
         // ── Fade spell state ───────────────────────────────────────────────────
@@ -257,6 +267,18 @@ namespace AshAndEmber
             }
         }
 
+        // ── Daily map cast counter ────────────────────────────────────────────
+        private static int _dailyMapCastCount = 0;
+        public static int DailyCastCount => _dailyMapCastCount;
+        public static int GetDailyCastCost() => _dailyMapCastCount == 0 ? 1 : _dailyMapCastCount * 7;
+        public static void ResetDailyCastCount()
+        {
+            if (_dailyMapCastCount > 0 && MageKnowledge.IsMage)
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "Midnight — the toll of your workings resets.", new Color(0.5f, 0.5f, 0.7f)));
+            _dailyMapCastCount = 0;
+        }
+
         // ── Player talent tracking ─────────────────────────────────────────────
         private static readonly HashSet<TalentId> _purchased = new HashSet<TalentId>();
 
@@ -268,6 +290,7 @@ namespace AshAndEmber
         {
             _purchased.Clear();
             _purchased.Add(TalentId.Gift);
+            _dailyMapCastCount = 0;
         }
 
         public static void UnlockAll()
@@ -300,6 +323,14 @@ namespace AshAndEmber
         {
             if (_purchased.Contains(id)) return false;
             if (hero == null) return false;
+
+            var defCheck = All.FirstOrDefault(d => d.Id == id);
+            if (defCheck?.IsInfo == true)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "This cannot be learned.", Color.FromUint(0xFFAAAAAA)));
+                return false;
+            }
 
             int cost = PurchaseCost();
 
@@ -402,6 +433,8 @@ namespace AshAndEmber
 
             if (MageKnowledge.IsAshen)
             {
+                if (_dailyMapCastCount > 0 && _rng.Next(3) == 0)
+                    MageKnowledge.QueuePossessionEvent();
                 try
                 {
                     if (Hero.MainHero?.MapFaction is Kingdom ashenK)
@@ -415,13 +448,20 @@ namespace AshAndEmber
             }
             else
             {
+                int cost = GetDailyCastCost();
                 bool skipAging = Has(TalentId.Sorcerer) && _rng.Next(4) == 0;
                 if (skipAging)
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The fire gives back.", new Color(0.9f, 0.6f, 0.3f)));
                 else
-                    AgingSystem.AgeHero(Hero.MainHero, 1);
+                {
+                    AgingSystem.AgeHero(Hero.MainHero, cost);
+                    if (cost > 1)
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"The fire demands more — {cost} days.", new Color(0.9f, 0.5f, 0.2f)));
+                }
             }
+            _dailyMapCastCount++;
 
             switch (id)
             {

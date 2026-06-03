@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -21,6 +22,7 @@ namespace AshAndEmber
         private static bool   _isAshen          = false;
         internal static Action _deferredInquiry  = null;
         private static readonly HashSet<string> _giftedChildIds = new HashSet<string>();
+        private static readonly Random _rng = new Random();
 
         public static bool IsMage         => _isMage;
         public static bool IsAshen         => _isAshen;
@@ -117,6 +119,74 @@ namespace AshAndEmber
             ), true, true);
         }
 
+        // ── Possession event (Ashen 2nd+ cast per day) ───────────────────────
+
+        public static void QueuePossessionEvent()
+        {
+            _deferredInquiry = ShowPossessionEvent;
+        }
+
+        private static void ShowPossessionEvent()
+        {
+            int lSkill = 0, aSkill = 0;
+            try { lSkill = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0; } catch { }
+            try { aSkill = Hero.MainHero?.GetSkillValue(DefaultSkills.Athletics) ?? 0; } catch { }
+            int lPct = Math.Min(90, (int)(lSkill * 0.3f));
+            int aPct = Math.Min(90, (int)(aSkill * 0.3f));
+            float lChance = Math.Min(0.9f, lSkill * 0.003f);
+            float aChance = Math.Min(0.9f, aSkill * 0.003f);
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Flame Turns",
+                "Dark instincts and cold flame flood your body. The ash stirs something ancient — it recognises itself in you, and it is not yet satisfied.\n\nFor a terrible moment you cannot tell whether you are resisting the cold or whether what fights back is still you.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("surrender", "Surrender to it.", null, true,
+                        "Let the cold take what it wants. It will not need much more."),
+                    new InquiryElement("leader", "Focus your will — fight it from within.", null, true,
+                        $"Leadership test. Skill: {lSkill}. Success chance: {lPct}%."),
+                    new InquiryElement("athlete", "Drive it back — overwhelm it with your body.", null, true,
+                        $"Athletics test. Skill: {aSkill}. Success chance: {aPct}%."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    string choice = chosen?[0]?.Identifier as string;
+                    if (choice == "surrender")
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "You let go. The cold is grateful.", new Color(0.3f, 0.35f, 0.7f)));
+                        try { TaleWorlds.CampaignSystem.Actions.KillCharacterAction.ApplyByOldAge(Hero.MainHero, true); } catch { }
+                    }
+                    else if (choice == "leader")
+                    {
+                        if (_rng.NextDouble() < lChance)
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                "Your will holds. The cold retreats — for now.", new Color(0.7f, 0.7f, 0.9f)));
+                        else
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                "Your will breaks. The cold claims you.", new Color(0.3f, 0.35f, 0.7f)));
+                            try { TaleWorlds.CampaignSystem.Actions.KillCharacterAction.ApplyByOldAge(Hero.MainHero, true); } catch { }
+                        }
+                    }
+                    else if (choice == "athlete")
+                    {
+                        if (_rng.NextDouble() < aChance)
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                "You push it back. The cold recoils.", new Color(0.7f, 0.7f, 0.9f)));
+                        else
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                "Your body gives out. The cold takes you.", new Color(0.3f, 0.35f, 0.7f)));
+                            try { TaleWorlds.CampaignSystem.Actions.KillCharacterAction.ApplyByOldAge(Hero.MainHero, true); } catch { }
+                        }
+                    }
+                },
+                null, "", false
+            ), false, true);
+        }
+
         // ── Ashen appearance ─────────────────────────────────────────────────
         // Called whenever a hero becomes Ashen. Modifies StaticBodyProperties
         // bit fields to approximate ash-white hair. The exact bit layout is
@@ -172,7 +242,7 @@ namespace AshAndEmber
                 : "Hold Left Alt + W/A/D/S, press X to Break, release to cast. Alt+X opens grimoire (when no form started).";
 
             string ashenNote = _isAshen
-                ? "\n[Ashen] Each cast adds criminal rating instead of aging.\n"
+                ? "\n[Ashen] Each cast adds criminal rating instead of aging. After your first working each day, further casts risk possession.\n"
                 : "";
 
             string desc =
@@ -189,11 +259,11 @@ namespace AshAndEmber
                 "  ↑ ← →  Damage  — 25 fire damage each, hits enemies\n" +
                 "  ↓      Restore — 15 healing per ↓, heals allies\n\n" +
                 "Enchantments  (talent side-effects added automatically to Damage or Restore)\n" +
-                "  Damage enchantments:   Scatter · Smoulder · Bewilder · Waver\n" +
-                "  Restore enchantments:  Ashveil · Cinder Shell · Hearthlight · Rouse\n\n" +
-                "Burning cost  (every 2 inputs = 1 day, max 2 days)\n" +
-                "  1-3 inputs = 1 day  |  4+ inputs = 2 days\n" +
-                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost − 1 day (minimum 0).\n" : "") +
+                "  Damage enchantments:   Scatter · Smoulder · Sunder\n" +
+                "  Restore enchantments:  Ashveil · Cinder Shell · Hearthlight · Reflect\n\n" +
+                "Battle casting cost  (ceil(inputs / 2) days — no cap)\n" +
+                "  1-2 inputs = 1 day  |  3-4 = 2 days  |  5-6 = 3 days  |  7-8 = 4 days\n" +
+                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost −1 day (min 1) + age reduction up to 30%.\n" : "") +
                 ashenNote +
                 "\nExample\n" +
                 "  ↑  X  ↑  =  Blast (2.5m), 25 damage, 1 day  (2 inputs).\n" +
@@ -260,9 +330,16 @@ namespace AshAndEmber
                 $"{d.MechanicDesc}\n\n{d.Lore}"
             )).ToList();
 
+            string castDesc = _isAshen
+                ? "Choose a working. Costs criminal rating instead of years." +
+                  (TalentSystem.DailyCastCount > 0 ? " After your first working today, further casts risk possession." : "")
+                : TalentSystem.DailyCastCount == 0
+                    ? "Choose a working. Each costs 1 day. Resonance may spare you once in four."
+                    : $"Choose a working. Working #{TalentSystem.DailyCastCount + 1} today — costs {TalentSystem.GetDailyCastCost()} days. Resonance may spare you.";
+
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "Cast",
-                "Choose a working. Each costs 1 day. Resonance may spare you once in four.",
+                castDesc,
                 elements,
                 true, 1, 1,
                 "Cast", "Cancel",
@@ -291,6 +368,9 @@ namespace AshAndEmber
             TalentCategory? lastCategory = null;
             foreach (var d in all)
             {
+                // Info cards are only shown when the condition is met
+                if (d.IsInfo && d.Id == TalentId.AshenGift && !_isAshen) continue;
+
                 // Insert a disabled separator when the category changes
                 if (d.Category != lastCategory)
                 {
@@ -300,24 +380,27 @@ namespace AshAndEmber
                         TalentCategory.Passive     => "─── Passive ───",
                         TalentCategory.Enchantment => "─── Enchantment ───",
                         TalentCategory.Spell       => "─── Spell ───",
+                        TalentCategory.Info        => "─── Ashen Status ───",
                         _                          => "───────────",
                     };
                     // Negative identifier marks non-selectable separator rows
                     elements.Add(new InquiryElement(-(int)d.Category - 1, header, null, false, ""));
                 }
 
-                bool   owned = TalentSystem.Has(d.Id);
-                string icon  = d.Category == TalentCategory.Spell       ? "✦"
-                             : d.Category == TalentCategory.Enchantment  ? "❋"
-                             :                                              "◆";
-                string tag   = d.Category.ToString().ToLowerInvariant();
+                bool   owned     = TalentSystem.Has(d.Id);
+                bool   selectable = !d.IsInfo && !owned;
+                string icon  = d.IsInfo                              ? "◉"
+                             : d.Category == TalentCategory.Spell   ? "✦"
+                             : d.Category == TalentCategory.Enchantment ? "❋"
+                             :                                            "◆";
+                string tag   = d.IsInfo ? "status" : d.Category.ToString().ToLowerInvariant();
                 string check = owned ? "✓ " : "   ";
                 string label = $"{check}{icon}  {d.Name}   [{tag}]";
                 string hint  = $"【 {d.Name} 】  {tag}\n\n" +
                                $"{d.MechanicDesc}\n\n" +
                                $"{d.Lore}\n\n" +
-                               (owned ? "— Already known —" : $"Cost: {costStr}");
-                elements.Add(new InquiryElement((int)d.Id, label, null, !owned, hint));
+                               (d.IsInfo ? "— Status — not a talent to be learned —" : owned ? "— Already known —" : $"Cost: {costStr}");
+                elements.Add(new InquiryElement((int)d.Id, label, null, selectable, hint));
             }
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(

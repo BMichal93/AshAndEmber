@@ -16,7 +16,7 @@ AshAndEmber/
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
 │   ├── SpellBuilder.cs              two-phase input parser → SpellCast
-│   ├── TalentSystem.cs              22 talents (7 passive, 8 enchantment, 8 spell)
+│   ├── TalentSystem.cs              20 talents (7 passive, 7 enchantment, 6 spell)
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
 │   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks
@@ -203,7 +203,21 @@ Every spell draws on your lifespan. Cost scales with total inputs (form + effect
 | 5–6 | 3 days | 2 days |
 | 7–8 | 4 days | 3 days |
 
-**BattleMage** talent reduces the cost by 1 day (minimum 1 — casts are never free). **Sorcerer** talent reduces it further.
+**Tempered** talent reduces the cost by 1 day (minimum 1 — battle casts are never free), plus up to 30% age-based reduction after age 40.
+
+### Campaign map casting cost
+
+Campaign map spells escalate in cost with each use per calendar day:
+
+| Cast # that day | Cost |
+|-----------------|------|
+| 1st | 1 day |
+| 2nd | 7 days |
+| 3rd | 14 days |
+| 4th | 21 days |
+| … | +7 per additional cast |
+
+The counter resets at midnight — a notification appears in the message log. **Resonance** talent gives a 25% chance to skip the cost entirely on any cast. Ashen players pay criminal rating instead of days (see below).
 
 ### Becoming Ashen
 
@@ -214,6 +228,20 @@ At age 100 a prompt appears: *The Last Ember*. You may:
 
 Ashen mages are completely immune to all magical aging — both the per-cast aging and the daily age check.
 
+### Possession (Ashen players)
+
+Ashen mages do not age, but repeated casting each day risks the cold stirring against them. After the first working each day, each further cast has a **33% chance** to trigger the **Possession** event:
+
+**The Flame Turns** — Dark instincts and cold flame flood your body. You must choose:
+
+| Choice | Outcome |
+|--------|---------|
+| **Surrender to it** | Death — the cold claims what it wants. |
+| **Focus your will** | Leadership test. Success chance = skill × 0.3% (max 90%). Fail → death. |
+| **Overwhelm it with your body** | Athletics test. Success chance = skill × 0.3% (max 90%). Fail → death. |
+
+This is the balancing cost of immortality — spamming map spells as an Ashen carries real risk.
+
 ### Tournament
 
 Casting **any** spell during a tournament kills and disqualifies you instantly.
@@ -222,19 +250,19 @@ Casting **any** spell during a tournament kills and disqualifies you instantly.
 
 ## Talents
 
-Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 7 purchased cost 1 focus point each; 8th onward costs 2 points.
+Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 9 purchased cost 1 focus point each; 10th onward costs 2 points.
 
 ### Passive
 
 | Talent | Effect |
 |--------|--------|
 | **Gift** | You carry the fire. Battle casting enabled. |
-| **BattleMage** | Each battle cast costs 1 fewer day (minimum 0). |
-| **Sorcerer** | Further aging cost reduction. |
-| **Camaraderie** | +10 relations with mage lords; relation cannot fall below 0 with them. |
-| **Reap** | Executing a captured lord restores 100 days. Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner: 5% chance to restore 1 day. |
+| **Tempered** | Each battle cast costs 1 fewer day (minimum 1). Beyond age 40, each year reduces cost by an additional 0.5%, up to 30% total. |
+| **Resonance** | One in four campaign map castings costs no days. |
+| **Kinship** | +10 relations with mage lords; relation cannot fall below 0 with them. |
+| **Reap** | Executing a captured lord restores 100 days. Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner: 5% chance to restore 1 day. Learning this marks you. |
 | **Ember** | 5% chance per battle kill to restore 1 day of youth. |
-| **DevourLife** | (DevourLife passive) absorbs lifeforce on execution. |
+| **Flashfire** | Each battle spell has a 10% chance to echo — firing again instantly at no aging cost. |
 
 ### Enchantment
 
@@ -244,34 +272,31 @@ Enchantments fire automatically on every qualifying cast in battle.
 
 | Talent | Effect |
 |--------|--------|
-| **Scatter** | Blasts non-mounted enemies backward. Push = 4 m per Damage input. |
-| **Smoulder** | Scorches enemy morale. Loss = 12 per Damage input. |
-| **Bewilder** | Random effect on non-hero enemies: instant rout, force charge, dismount, or morale fracture. |
-| **Waver** | 12% chance per hit on a tier 1–2, non-mounted, non-hero enemy to convert them to your team. |
+| **Scatter** | Blasts enemies backward (4 m per Damage input) and slows movement 25% per input (max 75%) for 4–8 s. |
+| **Smoulder** | Scorches enemy morale (−12 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
+| **Sunder** | Increases all damage enemies receive for 8 s. Vulnerability = 5% per Damage input, max 40%. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
 | Talent | Effect |
 |--------|--------|
 | **Ashveil** | Brief magic immunity for healed allies. Duration = 3 s per Restore input. |
-| **CinderShell** | Reduces incoming damage for 8 s. Protection = 5% per Restore input, max 50%. |
+| **Cinder Shell** | Reduces incoming damage for 8 s (5% per input, max 50%). Near-full-health allies also gain a 15 HP damage shield per input for 5 s. |
 | **Hearthlight** | Lifts allied morale. Boost = 12 per Restore input. |
-| **Rouse** | With 3+ Restore inputs, each healed ally has a 15% chance to summon a soldier near you. |
+| **Reflect** | Healed allies reflect 8% of melee damage per input (max 40%) back at attackers for 3–7 s. |
 
 ### Spell (campaign map)
 
-Cast from the grimoire on the campaign map. Each costs 1 aging day (or crime rating if Ashen). NPC mage lords also cast these on the campaign map.
+Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast each day; escalates sharply for repeated use. Crime rating instead of days if Ashen. NPC mage lords also cast these on the campaign map.
 
 | Talent | Effect |
 |--------|--------|
-| **Subjugate** | Your largest prisoner group yields and joins your ranks. |
-| **Rejuvenate** | Up to 8 wounded soldiers per type recover across your roster. |
-| **Inspire** | Party morale +40 and up to 5 wounded soldiers roused. |
-| **PlantGrowth** | Grain grows proportional to party size (50–200 measures). |
-| **BreakWills** | Nearest enemy party within 100 map-units loses 35 morale. |
-| **Plague** | Nearest enemy village loses 20% of its hearth. |
+| **Kindle** | Party morale +40 and up to 8 wounded soldiers per troop type recover. |
+| **Unsettle** | Nearest enemy party within 100 map-units loses 35 morale. |
+| **Wither** | Nearest enemy village loses 20% of its hearth. |
 | **Clairvoyance** | +40 influence, or +1000 gold if not in a kingdom. |
-| **Curse** | 5–12 soldiers in the nearest enemy party are wounded or killed; morale breaks. |
+| **Extinguish** | 5–12 soldiers in the nearest enemy party are wounded or killed; morale breaks. |
+| **Fade** | Your party is concealed from enemy scouts for 2 days. Enemy parties will not pursue you. |
 
 ---
 
@@ -518,7 +543,7 @@ At campaign start the following settlements are assigned to the Ashen Kingdom. T
 
 - Do not age (birth day reset daily to ~35).
 - Cast spells with no aging cost; 6-second cooldown. Spells display cold-blue and grey visuals.
-- Always carry Scatter + Curse + BreakWills + Plague. 50% chance of Smoulder.
+- Always carry Scatter + Extinguish + BreakWills + Plague. 50% chance of Smoulder. 50% chance of Sunder.
 - Personality traits locked to Merciless, Closefisted, and Deceitful.
 - Captured Ashen lords and Ashen Spawn party leaders refuse all dialogue. Encounters with them end with silence.
 
