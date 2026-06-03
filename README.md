@@ -559,7 +559,7 @@ Non-Ashen players are permanent criminals in Ashen lands. Ashen players have the
 
 ### Permanent war
 
-Peace with the Ashen is revoked within one in-game day and war re-declared. This applies to both the Ashen kingdom and any individual Ashen clan temporarily outside it — peace with a single clan does not stick.
+Peace with the Ashen is impossible — the diplomacy AI scores it at −10 000, and any peace that does get forced through is re-declared within one in-game day. This applies to both the Ashen kingdom and any individual Ashen clan temporarily outside it. All other faction diplomacy is unmodified vanilla behavior.
 
 ---
 

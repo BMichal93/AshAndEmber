@@ -316,7 +316,6 @@ namespace AshAndEmber
             int day = (int)ElapsedCampaignDays();
             if (day < 30) return;
             if (day - _lastConflictSeedDay < 21) return;
-            _lastConflictSeedDay = day;
 
             // Count active non-Ashen inter-faction wars
             int warCount = 0;
@@ -329,11 +328,15 @@ namespace AshAndEmber
             }
             catch { }
 
-            // No inter-faction wars at all — seed one; fewer than 2 — 40% chance to seed another.
-            bool needWar = warCount == 0 || (warCount < 2 && _rng.NextDouble() < 0.40);
+            // Only reset the timer if at least one war already exists — if none do,
+            // keep trying every week until one seeds successfully.
+            if (warCount >= 2) { _lastConflictSeedDay = day; return; }
+
+            bool needWar = warCount == 0 || _rng.NextDouble() < 0.40;
             if (!needWar) return;
             if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
 
+            _lastConflictSeedDay = day;
             try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Tensions between {ka.Name} and {kb.Name} finally break — war is declared.",
