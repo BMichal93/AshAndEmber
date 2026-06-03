@@ -23,24 +23,22 @@ namespace AshAndEmber
 {
     internal sealed class AshenDiplomacyModel : DefaultDiplomacyModel
     {
-        private const string AshenKingdomId = "ashen_kingdom";
+        // Covers both the Ashen kingdom and any individual Ashen clan temporarily
+        // outside it — delegates to AshenCitySystem so the clan list stays in one place.
+        private static bool IsAshenFaction(IFaction f) => AshenCitySystem.IsAshenFaction(f);
 
-        // True only when one faction is the Ashen kingdom and the other is a
-        // genuinely different, non-null faction — never matches self-checks or
-        // clan-vs-own-kingdom calls, which avoids triggering ExpelConstantWarClans.
         private static bool IsAshenVsOther(IFaction f1, IFaction f2)
         {
             if (f1 == null || f2 == null || f1 == f2) return false;
-            return f1.StringId == AshenKingdomId ^ f2.StringId == AshenKingdomId;
+            return IsAshenFaction(f1) ^ IsAshenFaction(f2);
         }
 
         private static bool InvolvesAshen(IFaction f1, IFaction f2)
-            => f1?.StringId == AshenKingdomId || f2?.StringId == AshenKingdomId;
+            => IsAshenFaction(f1) || IsAshenFaction(f2);
 
         // The engine queries this before counting a war toward overcommitment and
         // before generating peace proposals. Returning true excludes the Ashen war
-        // from both, making it invisible to normal diplomacy AI.
-        // Guarded to only match genuine Ashen-vs-other-faction pairs.
+        // from both — covers both the Ashen kingdom and individual Ashen clans.
         public override bool IsAtConstantWar(IFaction faction1, IFaction faction2)
         {
             if (IsAshenVsOther(faction1, faction2)) return true;
@@ -57,13 +55,13 @@ namespace AshAndEmber
             return score + 30f;
         }
 
-        // Trim peace desire for inter-faction wars so they end through attrition.
-        // Floored at half the base score so a faction that is truly desperate can
-        // still eventually seek peace rather than fighting to the last man.
+        // Peace with the Ashen is impossible — return a deeply negative score so the
+        // AI never proposes it; this covers both the kingdom and individual Ashen clans.
+        // Floored at half base for inter-faction wars so desperate factions can still seek peace.
         public override float GetScoreOfDeclaringPeace(IFaction factionDeclaresPeace, IFaction factionDeclaredPeace)
         {
             float score = base.GetScoreOfDeclaringPeace(factionDeclaresPeace, factionDeclaredPeace);
-            if (InvolvesAshen(factionDeclaresPeace, factionDeclaredPeace)) return score;
+            if (InvolvesAshen(factionDeclaresPeace, factionDeclaredPeace)) return -10000f;
             float adjusted = score - 20f;
             return adjusted < score * 0.5f ? score * 0.5f : adjusted;
         }

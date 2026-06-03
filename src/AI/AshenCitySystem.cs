@@ -345,8 +345,10 @@ namespace AshAndEmber
         // call here because that crashes during save loading.
         public static void OnPeaceMade(IFaction faction1, IFaction faction2)
         {
-            if (_ashenKingdom == null) return;
-            if (faction1 != _ashenKingdom && faction2 != _ashenKingdom) return;
+            // Re-fetch kingdom reference if null (happens after save/load before daily tick)
+            if (_ashenKingdom == null)
+                _ashenKingdom = Kingdom.All.FirstOrDefault(k => k.StringId == AshenKingdomId);
+            if (!IsAshenFaction(faction1) && !IsAshenFaction(faction2)) return;
 
             // Refund the influence the non-Ashen side spent — peace with the Ashen
             // can never stick, so the AI should not be permanently drained by it.
@@ -1025,6 +1027,14 @@ namespace AshAndEmber
         {
             if (hero == null || hero.Clan == null) return false;
             return _ashenClanIds.Contains(hero.Clan.StringId);
+        }
+
+        // Returns true for both the Ashen kingdom and any individual Ashen clan
+        // that is temporarily outside the kingdom — used by AshenDiplomacyModel.
+        public static bool IsAshenFaction(IFaction f)
+        {
+            if (f == null) return false;
+            return f.StringId == AshenKingdomId || _ashenClanIds.Contains(f.StringId);
         }
 
         public static bool IsAshenSettlement(Settlement settlement) =>

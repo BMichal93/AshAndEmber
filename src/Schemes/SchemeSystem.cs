@@ -842,7 +842,9 @@ namespace AshAndEmber
                 // Flavor notification
                 string consequence = isWarTrigger
                     ? "The discovery may have consequences beyond broken trust."
-                    : "The damage to your standing may be lasting.";
+                    : s.IsPlayer
+                        ? "The damage to your standing may be lasting."
+                        : $"The damage to {inst}'s standing may be lasting.";
                 string ownerLine   = !string.IsNullOrEmpty(tOwner) ? $" {tOwner} has been informed." : "";
 
                 Notify(s,
@@ -908,17 +910,15 @@ namespace AshAndEmber
             catch { return null; }
         }
 
-        // Notify: player schemes always shown; NPC schemes shown only if
-        // high-profile or directed at the player.
+        // Notify: player schemes → popup notification; NPC schemes → console log.
+        // Schemes targeting the player are always shown as popups regardless of instigator.
         private static void Notify(PendingScheme s, string text, Color color)
         {
-            bool isHighProfile  = s.Type == SchemeType.Assassinate
-                               || s.Type == SchemeType.StageCoup
-                               || s.Type == SchemeType.PoisonWell;
             bool targetIsPlayer = s.TargetHeroId == Hero.MainHero?.StringId;
-
-            if (s.IsPlayer || isHighProfile || targetIsPlayer)
+            if (s.IsPlayer || targetIsPlayer)
                 MBInformationManager.AddQuickInformation(new TextObject(text));
+            else
+                InformationManager.DisplayMessage(new InformationMessage(text, color));
         }
 
         // Spawns bandit parties throughout the target kingdom, each tied to the

@@ -16,6 +16,7 @@ using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace AshAndEmber
 {
@@ -752,7 +753,7 @@ namespace AshAndEmber
         }
 
         private static void Msg(string text) =>
-            InformationManager.DisplayMessage(new InformationMessage(text, new Color(0.7f, 0.9f, 0.7f)));
+            MBInformationManager.AddQuickInformation(new TextObject(text));
 
         // ── Save / Load ────────────────────────────────────────────────────────
         public static void Save(IDataStore store)
