@@ -162,15 +162,30 @@ namespace AshAndEmber
                         "The fire stirs in you. Press Alt+X/LB+RB to open your grimoire."),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
+                    new InquiryElement("ashen", "The fire in me died long ago.", null, true,
+                        "You are Ashen. You do not age. Each casting costs criminal standing instead of years. After your first working each day, further casts risk possession. You begin aligned with the Ashen."),
                 },
                 false, 1, 1,
                 "Choose.",
                 "",
                 chosen =>
                 {
-                    bool isMage = chosen?.Any(e => e.Identifier is string s && s == "yes") == true;
+                    bool isMage  = chosen?.Any(e => e.Identifier is string s && s == "yes")   == true;
+                    bool isAshen = chosen?.Any(e => e.Identifier is string s && s == "ashen") == true;
+                    if (isAshen) isMage = true;
                     MageKnowledge.SetMage(isMage);
-                    if (isMage)
+                    if (isAshen)
+                    {
+                        MageKnowledge.SetAshen(true);
+                        MageKnowledge.ApplyAshenAppearance(Hero.MainHero);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The cold settled in you long ago. The world will see it before you speak.",
+                            new Color(0.3f, 0.35f, 0.7f)));
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Casting costs criminal standing. After your first working each day, further casts risk possession. Alt+X = Grimoire.",
+                            new Color(0.3f, 0.35f, 0.7f)));
+                    }
+                    else if (isMage)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The fire stirs. Hold Alt, type form keys (WASD), press X to Break, type effect keys, release Alt to cast.",
@@ -189,6 +204,16 @@ namespace AshAndEmber
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
                     try { AshenCitySystem.DailyTick(); } catch { }
+                    if (isAshen)
+                    {
+                        try
+                        {
+                            if (Hero.MainHero?.Clan?.Kingdom is TaleWorlds.CampaignSystem.Kingdom oldK)
+                                TaleWorlds.CampaignSystem.Actions.ChangeCrimeRatingAction.Apply(oldK, 50f, true);
+                        }
+                        catch { }
+                        try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
+                    }
                     try { ReassignImperialSettlements(); } catch { }
                 },
                 _ =>
