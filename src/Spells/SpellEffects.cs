@@ -1026,6 +1026,12 @@ namespace AshAndEmber
         {
             int li = _castLoops.FindIndex(x => x.agent == agent);
             if (li >= 0) _castLoops.RemoveAt(li);
+            // Queue a short clear so the agent returns to idle if no spell fires.
+            // TryCastAnimation will overwrite this with its own 0.8s timer when a spell does fire.
+            if (agent == null || !agent.IsActive() || agent.Health <= 0f) return;
+            int ci = _animClearTimers.FindIndex(x => x.agent == agent);
+            if (ci >= 0) _animClearTimers[ci] = (agent, 0.15f);
+            else _animClearTimers.Add((agent, 0.15f));
         }
 
         public static void QueueNpcCastWithWindup(Agent agent, Action castAction)
