@@ -247,16 +247,18 @@ namespace AshAndEmber
         {
             try
             {
-                SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, restore, agent.Team);
-                ApplyCastVisuals(agent);
-                SetCooldown(hero);
-                RecordCast(hero, formCount + dmg + restore);
-
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
                     ? (isAshen ? "cold fire tears forward." : "channels a devastating blast.")
                     : (isAshen ? "cold fire lashes out." : "shapes fire into a forward blade.");
                 AnnounceEnemyCast(agent, hero, blurb);
+                SetCooldown(hero);
+                RecordCast(hero, formCount + dmg + restore);
+                SpellEffects.QueueNpcCastWithWindup(agent, () =>
+                {
+                    SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, restore, agent.Team);
+                    ApplyCastVisuals(agent);
+                });
             }
             catch { }
         }
@@ -265,16 +267,18 @@ namespace AshAndEmber
         {
             try
             {
-                SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, restore, agent.Team);
-                ApplyCastVisuals(agent);
-                SetCooldown(hero);
-                RecordCast(hero, formCount + dmg + restore);
-
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
                     ? (isAshen ? "tears the veil — cold fire erupts." : "channels a great eruption.")
                     : (isAshen ? "erupts with cold fire." : "fire bursts outward.");
                 AnnounceEnemyCast(agent, hero, blurb);
+                SetCooldown(hero);
+                RecordCast(hero, formCount + dmg + restore);
+                SpellEffects.QueueNpcCastWithWindup(agent, () =>
+                {
+                    SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, restore, agent.Team);
+                    ApplyCastVisuals(agent);
+                });
             }
             catch { }
         }
@@ -283,13 +287,16 @@ namespace AshAndEmber
         {
             try
             {
-                // 3 Restore inputs: meets the Rouse enchantment threshold (>= 3)
-                // so lords who own Rouse can summon allies when healing.
-                SpellEffects.ExecuteNpcBurst(agent, 2, 0, 3, agent.Team);
-                ApplyCastVisuals(agent);
+                AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
                 SetCooldown(hero);
                 RecordCast(hero, 5);
-                AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
+                // 3 Restore inputs: meets the Rouse enchantment threshold (>= 3)
+                // so lords who own Rouse can summon allies when healing.
+                SpellEffects.QueueNpcCastWithWindup(agent, () =>
+                {
+                    SpellEffects.ExecuteNpcBurst(agent, 2, 0, 3, agent.Team);
+                    ApplyCastVisuals(agent);
+                });
             }
             catch { }
         }

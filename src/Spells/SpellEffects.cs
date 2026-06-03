@@ -799,6 +799,17 @@ namespace AshAndEmber
         private static readonly List<(Agent agent, float remaining)> _animClearTimers
             = new List<(Agent, float)>();
 
+        // Looping cast animation: re-applies the animation every 0.65 s so it plays
+        // continuously while the player holds focus or an NPC is winding up.
+        private const float CastLoopInterval = 0.65f;
+        private static readonly List<(Agent agent, float reapplyIn)> _castLoops
+            = new List<(Agent, float)>();
+
+        // Deferred NPC casts: the action fires after a short wind-up delay.
+        private const float NpcCastWindup = 0.7f;
+        private static readonly List<(Agent agent, float remaining, Action action)> _pendingNpcCasts
+            = new List<(Agent, float, Action)>();
+
         public static void TickAnimClears(float dt)
         {
             for (int i = _animClearTimers.Count - 1; i >= 0; i--)
@@ -820,6 +831,74 @@ namespace AshAndEmber
             }
         }
 
+        public static void TickCastLoops(float dt)
+        {
+            for (int i = _castLoops.Count - 1; i >= 0; i--)
+            {
+                var (a, t) = _castLoops[i];
+                if (a == null || !a.IsActive() || a.Health <= 0f) { _castLoops.RemoveAt(i); continue; }
+                float newT = t - dt;
+                if (newT <= 0f)
+                {
+                    bool mounted    = false; try { mounted    = a.MountAgent != null;  } catch { }
+                    bool usingEquip = false; try { usingEquip = a.IsUsingGameObject;   } catch { }
+                    if (!mounted && !usingEquip)
+                        try { a.SetActionChannel(0, _castAnimCache, true, 0UL); } catch { }
+                    _castLoops[i] = (a, CastLoopInterval);
+                }
+                else _castLoops[i] = (a, newT);
+            }
+        }
+
+        public static void TickPendingNpcCasts(float dt)
+        {
+            for (int i = _pendingNpcCasts.Count - 1; i >= 0; i--)
+            {
+                var (a, t, action) = _pendingNpcCasts[i];
+                if (a == null || !a.IsActive() || a.Health <= 0f)
+                {
+                    EndCastLoop(a);
+                    _pendingNpcCasts.RemoveAt(i);
+                    continue;
+                }
+                float newT = t - dt;
+                if (newT <= 0f)
+                {
+                    EndCastLoop(a);
+                    try { action(); } catch { }
+                    _pendingNpcCasts.RemoveAt(i);
+                }
+                else _pendingNpcCasts[i] = (a, newT, action);
+            }
+        }
+
+        public static void BeginCastLoop(Agent agent)
+        {
+            if (agent == null || !agent.IsActive() || agent.Health <= 0f) return;
+            try { if (agent.MountAgent != null) return; } catch { }
+            try { if (agent.IsUsingGameObject) return; } catch { }
+            // Cancel any pending clear and remove stale loop entry for this agent
+            int ci = _animClearTimers.FindIndex(x => x.agent == agent);
+            if (ci >= 0) _animClearTimers.RemoveAt(ci);
+            int li = _castLoops.FindIndex(x => x.agent == agent);
+            if (li >= 0) _castLoops.RemoveAt(li);
+            try { agent.SetActionChannel(0, _castAnimCache, true, 0UL); } catch { }
+            _castLoops.Add((agent, CastLoopInterval));
+        }
+
+        public static void EndCastLoop(Agent agent)
+        {
+            int li = _castLoops.FindIndex(x => x.agent == agent);
+            if (li >= 0) _castLoops.RemoveAt(li);
+        }
+
+        public static void QueueNpcCastWithWindup(Agent agent, Action castAction)
+        {
+            BeginCastLoop(agent);
+            _pendingNpcCasts.RemoveAll(x => x.agent == agent);
+            _pendingNpcCasts.Add((agent, NpcCastWindup, castAction));
+        }
+
         public static void ClearAnimTimers()
         {
             foreach (var (agent, _) in _animClearTimers)
@@ -828,11 +907,19 @@ namespace AshAndEmber
             _animClearTimers.Clear();
         }
 
+        public static void ClearCastLoops()
+        {
+            _castLoops.Clear();
+            _pendingNpcCasts.Clear();
+        }
+
         public static void TryCastAnimation(Agent agent)
         {
             if (agent == null || !agent.IsActive() || agent.Health <= 0f) return;
             try { if (agent.MountAgent != null) return; } catch { }
             try { if (agent.IsUsingGameObject) return; } catch { }
+            // Stop any ongoing loop so the final cast pose plays cleanly
+            EndCastLoop(agent);
             try
             {
                 agent.SetActionChannel(0, _castAnimCache, true, 0UL);
