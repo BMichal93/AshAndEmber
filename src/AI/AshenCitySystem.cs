@@ -76,8 +76,8 @@ namespace AshAndEmber
         private const  int RecoveryInterval = 3;
         private const  int PrisonerInterval = 2;
 
-        private const int    MinGarrisonCity   = 1500; // overwhelming standing army
-        private const int    MinGarrisonCastle = 800;  // heavy castle garrison
+        private const int    MinGarrisonCity   = 500;
+        private const int    MinGarrisonCastle = 300;
         private const int    MinHeroGold       = 150_000;
         private const string AshenKingdomId    = "ashen_kingdom";
 
@@ -94,6 +94,12 @@ namespace AshAndEmber
             "Lochana", "Syratos",
             // Ostican (Vlandian) — assigned at game start; daily tick enforces retention
             "Ostican",
+            // Additional Ashen cities
+            "Argoron", "Omor",
+            // Castles near Argoron
+            "Atrion",
+            // Castles near Omor
+            "Ov Castle", "Mazhadan", "Mecalovea", "Rhesos",
         };
 
         public static void ResetForNewGame()

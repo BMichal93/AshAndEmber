@@ -1,15 +1,14 @@
 // =============================================================================
 // AshenDiplomacyModel.cs
-// Subclasses DefaultDiplomacyModel with one purpose only: making the Ashen war
-// permanent. All non-Ashen diplomacy is left entirely to the base game.
+// Subclasses DefaultDiplomacyModel with two purposes:
 //
 //  • IsAtConstantWar — marks every Ashen-vs-faction pair as a constant war so
 //    the AI never proposes peace with the Ashen and does not count that war
 //    against a kingdom's overcommitment limit.
 //
-//  • GetScoreOfDeclaringPeace — returns -10000 for any Ashen-involved pair so
-//    the AI treats peace with the Ashen as impossible. All other pairs fall
-//    through to the unmodified base score.
+//  • GetScoreOfDeclaringPeace — returns -10000 for any Ashen-involved pair.
+//    For all other pairs, blocks peace for the first MinWarDays of a war so
+//    kingdoms cannot immediately end a war they just declared.
 // =============================================================================
 
 using TaleWorlds.CampaignSystem;
@@ -19,6 +18,8 @@ namespace AshAndEmber
 {
     internal sealed class AshenDiplomacyModel : DefaultDiplomacyModel
     {
+        private const float MinWarDays = 150f; // ~5 in-game months before peace is possible
+
         private static bool IsAshenFaction(IFaction f) => AshenCitySystem.IsAshenFaction(f);
 
         private static bool IsAshenVsOther(IFaction f1, IFaction f2)
@@ -35,11 +36,20 @@ namespace AshAndEmber
             return base.IsAtConstantWar(faction1, faction2);
         }
 
-        // Only intercept Ashen peace proposals — everything else uses base game logic.
         public override float GetScoreOfDeclaringPeace(IFaction factionDeclaresPeace, IFaction factionDeclaredPeace)
         {
             if (IsAshenFaction(factionDeclaresPeace) || IsAshenFaction(factionDeclaredPeace))
                 return -10000f;
+
+            // Prevent any kingdom from ending a war that started less than MinWarDays ago.
+            try
+            {
+                var stance = factionDeclaresPeace.GetStanceWith(factionDeclaredPeace);
+                if (stance != null && stance.IsAtWar && stance.WarStartDate.ElapsedDaysUntilNow < MinWarDays)
+                    return -5000f;
+            }
+            catch { }
+
             return base.GetScoreOfDeclaringPeace(factionDeclaresPeace, factionDeclaredPeace);
         }
     }
