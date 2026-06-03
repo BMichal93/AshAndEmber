@@ -374,8 +374,12 @@ namespace AshAndEmber
                     .ToList();
                 if (candidates.Count == 0) return;
 
+                // At most one new NPC scheme per day — prevents notification clusters.
+                bool schemeLaunchedToday = false;
                 foreach (var lord in candidates)
                 {
+                    if (schemeLaunchedToday) break;
+
                     bool schemer;
                     try
                     {
@@ -389,7 +393,14 @@ namespace AshAndEmber
 
                     double chance = schemer ? 0.03 : 0.005;
                     if (_rng.NextDouble() > chance) continue;
-                    try { TryQueueNpcScheme(lord); } catch { }
+                    try
+                    {
+                        int countBefore = _pending.Count(p => !p.IsPlayer);
+                        TryQueueNpcScheme(lord);
+                        if (_pending.Count(p => !p.IsPlayer) > countBefore)
+                            schemeLaunchedToday = true;
+                    }
+                    catch { }
                 }
             }
             catch { }

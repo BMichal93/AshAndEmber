@@ -57,13 +57,14 @@ namespace AshAndEmber
 
         // Peace with the Ashen is impossible — return a deeply negative score so the
         // AI never proposes it; this covers both the kingdom and individual Ashen clans.
-        // Floored at half base for inter-faction wars so desperate factions can still seek peace.
+        // For inter-faction wars: reduce peace desire by 20, floored at 0 so factions that
+        // barely want peace (score 0-20) are pushed to indifferent, not boosted by the 0.5 floor.
         public override float GetScoreOfDeclaringPeace(IFaction factionDeclaresPeace, IFaction factionDeclaredPeace)
         {
             float score = base.GetScoreOfDeclaringPeace(factionDeclaresPeace, factionDeclaredPeace);
             if (InvolvesAshen(factionDeclaresPeace, factionDeclaredPeace)) return -10000f;
             float adjusted = score - 20f;
-            return adjusted < score * 0.5f ? score * 0.5f : adjusted;
+            return adjusted < 0f ? 0f : adjusted;
         }
     }
 }
