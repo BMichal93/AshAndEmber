@@ -15,6 +15,7 @@
 //    long enough to matter.
 // =============================================================================
 
+using System;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.Localization;

@@ -274,13 +274,7 @@ namespace AshAndEmber
             // ── Cooldown gate ─────────────────────────────────────────────────
             if (ElapsedCampaignDays() - _lastEventElapsedDay < EventCooldownDays) return;
             _weeklySlotFilled = false;
-
-            // War-triggering events run first so they get first pick of the slot.
-            TryFireASlightAtCourt();
-            TryFireBorderTorches();
-            TryFireADebtInBlood();
-            TryFireBrokenBetrothal();
-            TryFireTreasonousScroll();
+            _warSlotFilled    = false; // war events get their own independent slot
 
             TryFireAshenPlague();
             TryFireGreatWithering();
@@ -303,10 +297,15 @@ namespace AshAndEmber
             TryFireScorchingSun();
             TryFireFirstGreen();
             TryFireAmberHarvest();
+            TryFireASlightAtCourt();
+            TryFireBorderTorches();
+            TryFireADebtInBlood();
+            TryFireBrokenBetrothal();
+            TryFireTreasonousScroll();
             TryFireEmbersOfHope();
             TryFireAshenGambit();
 
-            if (_weeklySlotFilled)
+            if (_weeklySlotFilled || _warSlotFilled)
                 _lastEventElapsedDay = (int)ElapsedCampaignDays();
         }
 
@@ -879,6 +878,7 @@ namespace AshAndEmber
         // Event throttle: at most one event fires per weekly tick, and no event fires
         // until EventCooldownDays have passed since the last one.
         private static bool _weeklySlotFilled    = false;
+        private static bool _warSlotFilled       = false; // separate slot for war-triggering events
         private static int  _lastEventElapsedDay = -EventCooldownDays;
         // Independent of the slot system — tracks when we last ensured an inter-faction war exists.
         private static int  _lastConflictSeedDay = 0;
@@ -2541,7 +2541,7 @@ namespace AshAndEmber
         private static void TryFireASlightAtCourt()
         {
             if (_rng.NextDouble() >= ChanceASlightAtCourt) return;
-            if (!TryClaimWeeklySlot()) return;
+            if (!TryClaimWarSlot()) return;
             try
             {
                 if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
@@ -2583,7 +2583,7 @@ namespace AshAndEmber
         private static void TryFireBorderTorches()
         {
             if (_rng.NextDouble() >= ChanceBorderTorches) return;
-            if (!TryClaimWeeklySlot()) return;
+            if (!TryClaimWarSlot()) return;
             try
             {
                 if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
@@ -2625,7 +2625,7 @@ namespace AshAndEmber
         private static void TryFireADebtInBlood()
         {
             if (_rng.NextDouble() >= ChanceADebtInBlood) return;
-            if (!TryClaimWeeklySlot()) return;
+            if (!TryClaimWarSlot()) return;
             try
             {
                 if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
@@ -2669,7 +2669,7 @@ namespace AshAndEmber
         private static void TryFireBrokenBetrothal()
         {
             if (_rng.NextDouble() >= ChanceBrokenBetrothal) return;
-            if (!TryClaimWeeklySlot()) return;
+            if (!TryClaimWarSlot()) return;
             try
             {
                 if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
@@ -2713,7 +2713,7 @@ namespace AshAndEmber
         private static void TryFireTreasonousScroll()
         {
             if (_rng.NextDouble() >= ChanceTreasonousScroll) return;
-            if (!TryClaimWeeklySlot()) return;
+            if (!TryClaimWarSlot()) return;
             try
             {
                 if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
@@ -2818,6 +2818,15 @@ namespace AshAndEmber
         {
             if (_weeklySlotFilled) return false;
             _weeklySlotFilled = true;
+            return true;
+        }
+
+        // War-triggering events use their own slot so they never compete with
+        // Ashen / political / seasonal events for the main weekly slot.
+        private static bool TryClaimWarSlot()
+        {
+            if (_warSlotFilled) return false;
+            _warSlotFilled = true;
             return true;
         }
 
