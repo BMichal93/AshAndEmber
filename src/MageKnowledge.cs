@@ -55,7 +55,10 @@ namespace AshAndEmber
         {
             Action pending = _deferredInquiry;
             _deferredInquiry = null;
-            pending?.Invoke();
+            if (pending == null) return;
+            if (Campaign.Current != null)
+                Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop;
+            pending.Invoke();
         }
 
         // Legacy no-op kept for CampaignBehavior references
