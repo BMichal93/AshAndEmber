@@ -32,6 +32,10 @@ namespace AshAndEmber
             try { SpellEffects.ClearCastLoops();     } catch { }
             try { SpellEffects.ClearWard();          } catch { }
             try { SpellEffects.ClearStoneskin();     } catch { }
+            try { SpellEffects.ClearSunder();        } catch { }
+            try { SpellEffects.ClearChar();          } catch { }
+            try { SpellEffects.ClearRenewal();       } catch { }
+            try { SpellEffects.ClearReflect();       } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { MagicInputHandler.ResetInputState();  } catch { }
             try { ColourLordAI.ClearCooldowns();        } catch { }
@@ -125,6 +129,10 @@ namespace AshAndEmber
             SpellEffects.TickMissile(dt);
             SpellEffects.TickWard(dt);
             SpellEffects.TickStoneskin(dt);
+            SpellEffects.TickSunder(dt);
+            SpellEffects.TickChar(dt);
+            SpellEffects.TickRenewal(dt);
+            SpellEffects.TickReflect(dt);
             SpellEffects.TickMagicMemory(dt);
             SpellEffects.TickHaltedAgents(dt);
             SpellEffects.FlushPendingDeaths();
@@ -142,6 +150,10 @@ namespace AshAndEmber
             try { SpellEffects.ClearMissile();       } catch { }
             try { SpellEffects.ClearWard();          } catch { }
             try { SpellEffects.ClearStoneskin();     } catch { }
+            try { SpellEffects.ClearSunder();        } catch { }
+            try { SpellEffects.ClearChar();          } catch { }
+            try { SpellEffects.ClearRenewal();       } catch { }
+            try { SpellEffects.ClearReflect();       } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { SpellEffects.ClearGlows();         } catch { }
             try { SpellEffects.ClearColourCooldown();} catch { }
@@ -158,6 +170,8 @@ namespace AshAndEmber
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
             in MissionWeapon affectorWeapon, in Blow blow, in AttackCollisionData attackCollisionData)
         {
+            // Reflect enchantment: bounce a portion of melee damage back at the attacker.
+            try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent,

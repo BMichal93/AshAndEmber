@@ -311,6 +311,7 @@ namespace AshAndEmber
                 try { AshenCitySystem.DailyTick(); } catch { }
                 try { ColourLordRegistry.DailyMapCast(); } catch { }
                 try { TalentSystem.EnforceKinship(); } catch { }
+                try { TalentSystem.DailyFadeTick(); } catch { }
                 try { AgingSystem.DailyAgeCheck(); } catch { }
                 try { CampaignMapEvents.DailyTick(); } catch { }
                 try { SettlementEncounters.DailyTick(); } catch { }

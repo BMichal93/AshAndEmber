@@ -317,6 +317,13 @@ namespace AshAndEmber
                 damage *= (1f - reduction);
             }
 
+            // Sunder enchantment: increase incoming damage (armour shred, max +40%)
+            if (_sunderedAgents.TryGetValue(target, out var sunder) && sunder.Remaining > 0f)
+            {
+                float amplification = Math.Min(0.40f, sunder.BonusVuln / 200f);
+                damage *= (1f + amplification);
+            }
+
             float newHealth = target.Health - damage;
             if (newHealth <= 0f)
             {
@@ -483,57 +490,43 @@ namespace AshAndEmber
                 catch { }
             }
 
-            // Waver: chance to convert a tier 1-2 non-hero, dismounted enemy to the caster's team.
-            // Mounted units are skipped — pulling a rider off mid-teleport is unsafe.
-            // Defaults tier to int.MaxValue on failure so unresolvable characters are never converted.
-            if (CasterHasEnchantment(caster, TalentId.Waver) && !target.IsHero
-                && caster?.Team != null && Mission.Current != null)
+            // Sunder: shred target armour so they take more damage from all sources.
+            if (CasterHasEnchantment(caster, TalentId.Sunder))
             {
-                bool isMounted = false;
-                try { isMounted = target.MountAgent != null; } catch { }
-                int tier = int.MaxValue;
-                try { tier = (target.Character as TaleWorlds.CampaignSystem.CharacterObject)?.Tier ?? int.MaxValue; } catch { }
-                if (!isMounted && tier <= 2 && _rng.NextDouble() < 0.12)
+                try
                 {
-                    try
-                    {
-                        var character = target.Character;
-                        if (character != null) // only kill the original when we can spawn a replacement
-                        {
-                            Vec3 spawnPos = target.Position;
-                            Team spawnTeam = caster.Team;
-
-                            // Snap to ground so the spawn doesn't float or sink
-                            try
-                            {
-                                float gz = spawnPos.z;
-                                Mission.Current.Scene.GetHeightAtPoint(
-                                    spawnPos.AsVec2,
-                                    BodyFlags.CommonCollisionExcludeFlagsForAgent,
-                                    ref gz);
-                                spawnPos.z = gz;
-                            }
-                            catch { }
-
-                            // Remove the original; spawn a copy on the caster's side
-                            QueueKill(target);
-                            var origin = new BasicBattleAgentOrigin(character);
-                            Vec2 spawnDir = Vec2.Forward;
-                            var buildData = new AgentBuildData(origin)
-                                .Team(spawnTeam)
-                                .Controller(AgentControllerType.AI)
-                                .InitialPosition(in spawnPos)
-                                .InitialDirection(in spawnDir);
-                            Agent converted = Mission.Current.SpawnAgent(buildData, false);
-                            if (converted != null)
-                            {
-                                BeginAgentGlowRaw(converted, new Color(1f, 0.45f, 0.1f).ToUnsignedInteger(), 3f);
-                                try { converted.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
-                            }
-                        }
-                    }
-                    catch { }
+                    float vuln = cast.DamageCount * 10f; // stored as raw value, capped in DamageAgent
+                    float duration = 8f;
+                    if (!_sunderedAgents.TryGetValue(target, out var existing))
+                        _sunderedAgents[target] = (vuln, duration);
+                    else
+                        _sunderedAgents[target] = (Math.Max(existing.BonusVuln, vuln), Math.Max(existing.Remaining, duration));
+                    BeginAgentGlow(target, ColorSchool.Red, 2f);
                 }
+                catch { }
+            }
+
+            // Consume: lifesteal — drain life from every enemy hit.
+            if (CasterHasEnchantment(caster, TalentId.Consume) && caster != null && caster.IsActive())
+            {
+                try { HealAgent(caster, cast.DamageCount * 2f); } catch { }
+            }
+
+            // Char: slow target movement. Uses SetMaximumSpeedLimit (same API as HaltedAgents).
+            if (CasterHasEnchantment(caster, TalentId.Char) && !target.IsHero)
+            {
+                try
+                {
+                    float reducedSpeed = Math.Max(1f, 10f - cast.DamageCount * 2.5f);
+                    float duration = 4f + cast.DamageCount * 1f;
+                    if (!_charredAgents.TryGetValue(target, out var cur))
+                        _charredAgents[target] = (reducedSpeed, duration);
+                    else
+                        _charredAgents[target] = (Math.Min(cur.ReducedSpeed, reducedSpeed), Math.Max(cur.Remaining, duration));
+                    target.SetMaximumSpeedLimit(_charredAgents[target].ReducedSpeed, false);
+                    BeginAgentGlow(target, ColorSchool.Red, 2f);
+                }
+                catch { }
             }
         }
 
@@ -568,54 +561,52 @@ namespace AshAndEmber
                 catch { }
             }
 
-            // Rouse: chance to summon an allied soldier near the caster.
-            // Requires 3+ Restore inputs — weak heals do not carry enough fire to rouse anyone.
-            // Finds a living non-hero ally as the template so the spawned unit
-            // always matches the caster's faction — no hardcoded troop IDs needed.
-            if (CasterHasEnchantment(caster, TalentId.Rouse)
-                && cast.RestoreCount >= 3
-                && caster?.Team != null && Mission.Current != null
-                && _rng.NextDouble() < 0.15)
+            // Overflow: when a target is already near full health, excess fire becomes a shield.
+            if (CasterHasEnchantment(caster, TalentId.Overflow))
             {
                 try
                 {
-                    Agent template = null;
-                    foreach (Agent a in Mission.Current.Agents.ToList())
+                    float hp = target.Health;
+                    float hpMax = target.HealthLimit;
+                    // Trigger when at 90%+ health — they were already healthy before or just healed to full.
+                    if (hpMax > 0f && hp >= hpMax * 0.90f)
                     {
-                        if (a.IsActive() && !a.IsMount && !a.IsHero && a.Team == caster.Team)
-                        { template = a; break; }
+                        float bonus = cast.RestoreCount * 15f;
+                        AddStoneskin(target, bonus, 5f);
+                        BeginAgentGlow(target, ColorSchool.Orange, 2f);
                     }
-                    if (template?.Character != null)
-                    {
-                        Vec3 spawnPos = caster.Position + new Vec3(
-                            (float)(_rng.NextDouble() - 0.5) * 3f,
-                            (float)(_rng.NextDouble() - 0.5) * 3f,
-                            0f);
-                        try
-                        {
-                            float gz = spawnPos.z;
-                            Mission.Current.Scene.GetHeightAtPoint(
-                                spawnPos.AsVec2,
-                                BodyFlags.CommonCollisionExcludeFlagsForAgent,
-                                ref gz);
-                            spawnPos.z = gz;
-                        }
-                        catch { }
+                }
+                catch { }
+            }
 
-                        var origin = new BasicBattleAgentOrigin(template.Character);
-                        Vec2 spawnDir = Vec2.Forward;
-                        var buildData = new AgentBuildData(origin)
-                            .Team(caster.Team)
-                            .Controller(AgentControllerType.AI)
-                            .InitialPosition(in spawnPos)
-                            .InitialDirection(in spawnDir);
-                        Agent roused = Mission.Current.SpawnAgent(buildData, false);
-                        if (roused != null)
-                        {
-                            BeginAgentGlowRaw(roused, new Color(0.9f, 0.7f, 0.3f).ToUnsignedInteger(), 3f);
-                            try { roused.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
-                        }
-                    }
+            // Renewal: healing over time — plant a slow-burning ember in the ally.
+            if (CasterHasEnchantment(caster, TalentId.Renewal))
+            {
+                try
+                {
+                    float healPerSec = cast.RestoreCount * 3f;
+                    float duration = 5f;
+                    if (!_renewalAgents.TryGetValue(target, out var cur))
+                        _renewalAgents[target] = (healPerSec, duration);
+                    else
+                        _renewalAgents[target] = (Math.Max(cur.HealPerSec, healPerSec), Math.Max(cur.Remaining, duration));
+                    BeginAgentGlow(target, ColorSchool.White, 2f);
+                }
+                catch { }
+            }
+
+            // Reflect: melee damage reflection — any hit on the warded ally bounces back.
+            if (CasterHasEnchantment(caster, TalentId.Reflect))
+            {
+                try
+                {
+                    float pct = Math.Min(0.40f, cast.RestoreCount * 0.08f);
+                    float duration = 3f + cast.RestoreCount * 1f;
+                    if (!_reflectAgents.TryGetValue(target, out var cur))
+                        _reflectAgents[target] = (pct, duration);
+                    else
+                        _reflectAgents[target] = (Math.Max(cur.ReflectPct, pct), Math.Max(cur.Remaining, duration));
+                    BeginAgentGlow(target, ColorSchool.Orange, 2f);
                 }
                 catch { }
             }
@@ -663,6 +654,137 @@ namespace AshAndEmber
         }
 
         public static void ClearStoneskin() => _stoneskinAgents.Clear();
+
+        // ── Sunder (Sunder enchantment state) ──────────────────────────────────
+        private static readonly Dictionary<Agent, (float BonusVuln, float Remaining)>
+            _sunderedAgents = new Dictionary<Agent, (float, float)>();
+
+        public static void TickSunder(float dt)
+        {
+            foreach (Agent key in _sunderedAgents.Keys.ToList())
+            {
+                var (vuln, remaining) = _sunderedAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive())
+                    _sunderedAgents.Remove(key);
+                else
+                    _sunderedAgents[key] = (vuln, remaining);
+            }
+        }
+
+        public static void ClearSunder() => _sunderedAgents.Clear();
+
+        // ── Char (Char enchantment state — movement slow) ──────────────────────
+        // Stores (reduced speed cap, remaining duration). On expire, restores to 10f (unlimited).
+        private static readonly Dictionary<Agent, (float ReducedSpeed, float Remaining)>
+            _charredAgents = new Dictionary<Agent, (float, float)>();
+
+        public static void TickChar(float dt)
+        {
+            foreach (Agent key in _charredAgents.Keys.ToList())
+            {
+                var (speed, remaining) = _charredAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive())
+                {
+                    if (key != null && key.IsActive())
+                        try { key.SetMaximumSpeedLimit(10f, false); } catch { }
+                    _charredAgents.Remove(key);
+                }
+                else
+                    _charredAgents[key] = (speed, remaining);
+            }
+        }
+
+        public static void ClearChar()
+        {
+            foreach (var kv in _charredAgents)
+                if (kv.Key != null && kv.Key.IsActive())
+                    try { kv.Key.SetMaximumSpeedLimit(10f, false); } catch { }
+            _charredAgents.Clear();
+        }
+
+        // ── Renewal (Renewal enchantment state — heal over time) ───────────────
+        private static readonly Dictionary<Agent, (float HealPerSec, float Remaining)>
+            _renewalAgents = new Dictionary<Agent, (float, float)>();
+
+        public static void TickRenewal(float dt)
+        {
+            foreach (Agent key in _renewalAgents.Keys.ToList())
+            {
+                var (hps, remaining) = _renewalAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive())
+                    _renewalAgents.Remove(key);
+                else
+                {
+                    HealAgent(key, hps * dt);
+                    _renewalAgents[key] = (hps, remaining);
+                }
+            }
+        }
+
+        public static void ClearRenewal() => _renewalAgents.Clear();
+
+        // ── Reflect (Reflect enchantment state — melee damage reflection) ───────
+        private static readonly Dictionary<Agent, (float ReflectPct, float Remaining)>
+            _reflectAgents = new Dictionary<Agent, (float, float)>();
+
+        /// <summary>
+        /// Called from MagicMissionBehavior.OnAgentHit. If the victim has an active
+        /// Reflect buff, deals a portion of the incoming melee damage back to the attacker.
+        /// DamageAgent sets health directly (not through the hit system) so there is no
+        /// reflect-chain risk.
+        /// </summary>
+        public static void TryApplyReflect(Agent victim, Agent attacker, int inflictedDamage)
+        {
+            if (victim == null || attacker == null || attacker.IsMount || inflictedDamage <= 0) return;
+            if (!_reflectAgents.TryGetValue(victim, out var r) || r.Remaining <= 0f) return;
+            try
+            {
+                float reflectDmg = inflictedDamage * r.ReflectPct;
+                if (reflectDmg >= 1f)
+                {
+                    DamageAgent(attacker, reflectDmg);
+                    BeginAgentGlowRaw(victim, new Color(1f, 0.5f, 0.2f).ToUnsignedInteger(), 0.5f);
+                }
+            }
+            catch { }
+        }
+
+        public static void TickReflect(float dt)
+        {
+            foreach (Agent key in _reflectAgents.Keys.ToList())
+            {
+                var (pct, remaining) = _reflectAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive())
+                    _reflectAgents.Remove(key);
+                else
+                    _reflectAgents[key] = (pct, remaining);
+            }
+        }
+
+        public static void ClearReflect() => _reflectAgents.Clear();
+
+        // ── Flashfire (passive — spell echo) ────────────────────────────────────
+        // Prevents recursion if Flashfire somehow echoes into itself.
+        private static bool _flashfireActive = false;
+
+        public static void TryFlashfire(SpellCast cast)
+        {
+            if (!TalentSystem.Has(TalentId.Flashfire)) return;
+            if (_flashfireActive || Agent.Main == null) return;
+            if (_rng.NextDouble() >= 0.10) return;
+            _flashfireActive = true;
+            try
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "Flashfire — the flame echoes.", new Color(1f, 0.85f, 0.3f)));
+                SpellBuilder.Execute(cast, true);
+            }
+            finally { _flashfireActive = false; }
+        }
 
         // ── Dismount helper ────────────────────────────────────────────────────
         public static void ForceDismount(Agent a)

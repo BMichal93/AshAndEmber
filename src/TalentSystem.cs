@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
@@ -38,12 +39,26 @@ namespace AshAndEmber
         Scatter     = 15,  // Enchantment — Damage: push back
         Smoulder    = 16,  // Enchantment — Damage: morale penalty
         Bewilder    = 17,  // Enchantment — Damage: random command
-        Waver       = 21,  // Enchantment — Damage: 12% chance to convert tier 1-2 enemy to your team
+        Waver       = 21,  // REMOVED — kept for save compatibility
         // ── Restore enchantments ─────────────────────────────────────────────
         Ashveil     = 18,  // Enchantment — Restore: magic immunity
         CinderShell = 19,  // Enchantment — Restore: armour boost
         Hearthlight = 20,  // Enchantment — Restore: morale boost
-        Rouse       = 22,  // Enchantment — Restore: 15% chance to summon an allied unit
+        Rouse       = 22,  // REMOVED — kept for save compatibility
+        // ── New damage enchantments ───────────────────────────────────────────
+        Sunder      = 23,  // Enchantment — Damage: armor shred
+        Consume     = 24,  // Enchantment — Damage: lifesteal
+        Char        = 25,  // Enchantment — Damage: movement slow
+        // ── New restore enchantments ──────────────────────────────────────────
+        Overflow    = 26,  // Enchantment — Restore: overheal becomes shield
+        Renewal     = 27,  // Enchantment — Restore: heal over time
+        Reflect     = 28,  // Enchantment — Restore: melee damage reflection
+        // ── New passives ──────────────────────────────────────────────────────
+        Flashfire   = 29,  // Passive — 10% chance to echo a battle spell
+        VeteranAsh  = 30,  // Passive — age reduces casting cost (percentage)
+        // ── New campaign spells ────────────────────────────────────────────────
+        Ashfall     = 31,  // Spell — choke enemy party advance with ash
+        Fade        = 32,  // Spell — conceal party from enemy scouts
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell }
@@ -139,10 +154,24 @@ namespace AshAndEmber
             },
             new TalentDef
             {
-                Id = TalentId.Waver, IsSpell = false, IsEnchantment = true,
-                Category = TalentCategory.Enchantment, Name = "Waver",
-                Lore = "The fire does not only destroy what it finds — sometimes it changes it. A man who feels it pass through him and survive is no longer certain what side he stands on. The doubt is brief. It can be enough.",
-                MechanicDesc = "Enchantment. Damage has a 12% chance to convert a struck enemy to your side. Only affects tier 1–2 units. Cannot affect heroes, lords, or mounted units."
+                Id = TalentId.Sunder, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Sunder",
+                Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what a body wears. What holds together begins to separate. Not quickly. But enough.",
+                MechanicDesc = "Enchantment. Damage tears at enemy defences, increasing all damage they receive for 8 seconds. Vulnerability = 5% per Damage input, max 40%."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Consume, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Consume",
+                Lore = "The fire in you is hungry. When it reaches into another and burns, something comes back — not much, never as much as was spent, but something. A warmth. A flicker.",
+                MechanicDesc = "Enchantment. Each enemy damaged by your spell restores 2 HP to you per Damage input."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Char, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Char",
+                Lore = "The fire does not need to kill a man to stop him. It only needs to reach his legs and remind them what burning means. The legs remember long after the pain fades.",
+                MechanicDesc = "Enchantment. Damage sears enemy limbs, reducing their movement speed. Slow = 25% per Damage input, max 75%. Duration = 4s + 1s per input."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -168,10 +197,24 @@ namespace AshAndEmber
             },
             new TalentDef
             {
-                Id = TalentId.Rouse, IsSpell = false, IsEnchantment = true,
-                Category = TalentCategory.Enchantment, Name = "Rouse",
-                Lore = "The fire knows where to reach. When you pour it into a friend and there is enough left over, sometimes it finds its way to someone who was only waiting for a reason to come.",
-                MechanicDesc = "Enchantment. When you use 3+ Restore inputs, each ally healed has a 15% chance to rouse a new soldier near you."
+                Id = TalentId.Overflow, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Overflow",
+                Lore = "A vessel that cannot hold more does not waste what spills — the fire finds another shape for it. Hardness where there was softness. Resistance where there was none.",
+                MechanicDesc = "Enchantment. When restoring an ally already near full health, excess fire hardens into a damage shield. Shield = 15 HP per Restore input, lasts 5s."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Renewal, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Renewal",
+                Lore = "The best healing is not a single push, but a settling — the fire taking root and burning slow and steady in a wound until the wound forgets itself.",
+                MechanicDesc = "Enchantment. Restore grants allies a healing flame that lingers. +3 HP per second per Restore input for 5 seconds."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Reflect, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Reflect",
+                Lore = "The fire you give is not passive. It waits in the body like an ember under ash, and when something cold strikes — it answers.",
+                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 40%. Lasts 3s + 1s per input."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
@@ -223,7 +266,66 @@ namespace AshAndEmber
                 Lore = "You reach into the fire burning in an enemy and close your hand. Not slowly — like snuffing a candle. The body does not understand at first. Then it does.",
                 MechanicDesc = "5–12 soldiers in the nearest enemy party are wounded or killed, and their courage breaks. Costs 1 day."
             },
+            // ── New passives ──────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.Flashfire, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.Passive, Name = "Flashfire",
+                Lore = "Sometimes the fire does not wait to be asked twice. It finds the shape again on its own — the same working, the same reach, the same burn. You do not question it. You simply let it.",
+                MechanicDesc = "Passive. Each battle spell has a 10% chance to echo — firing again instantly at no aging cost."
+            },
+            new TalentDef
+            {
+                Id = TalentId.VeteranAsh, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.Passive, Name = "Veteran's Ash",
+                Lore = "The fire does not diminish with age — it concentrates. What once required effort becomes instinct. What once cost you years now costs you less. The debt is still there. It is simply smaller.",
+                MechanicDesc = "Passive. Each year lived beyond 40 reduces battle spell casting cost by 0.5%, up to a maximum of 30% reduction. Does not eliminate costs."
+            },
+            // ── New campaign spells ────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.Ashfall, IsSpell = true, IsEnchantment = false,
+                Category = TalentCategory.Spell, Name = "Ashfall",
+                Lore = "You release a cloud of cold ash into the wind — not your fire, but its aftermath. The ash is patient. It settles into lungs, blinds eyes, fills boots. An army can outrun fire. It cannot outrun what fire leaves behind.",
+                MechanicDesc = "The nearest enemy party within 100m suffers -30 morale and 5–8 soldiers are slowed by wounds. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Fade, IsSpell = true, IsEnchantment = false,
+                Category = TalentCategory.Spell, Name = "Fade",
+                Lore = "You draw your fire inward — not out, not away, but down into the marrow, down past what can be seen or felt. For a time you are still there. You simply stop being visible to those looking for you.",
+                MechanicDesc = "Your party is concealed from enemy scouts for 2 days. Enemy parties will not pursue you. Costs 1 day."
+            },
         };
+
+        // ── Fade spell state ───────────────────────────────────────────────────
+        private static int _fadeDaysRemaining = 0;
+        private static PropertyInfo _ignoreByOtherPartiesProp = null;
+        private static bool _ignoreByOtherPartiesResolved = false;
+
+        private static bool TrySetIgnoreByOtherParties(MobileParty party, bool value)
+        {
+            if (!_ignoreByOtherPartiesResolved)
+            {
+                _ignoreByOtherPartiesResolved = true;
+                _ignoreByOtherPartiesProp = typeof(MobileParty).GetProperty("IgnoreByOtherParties",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            }
+            if (_ignoreByOtherPartiesProp == null) return false;
+            try { _ignoreByOtherPartiesProp.SetValue(party, value); return true; } catch { return false; }
+        }
+
+        /// <summary>Call from the daily tick to count down and clear the Fade effect.</summary>
+        public static void DailyFadeTick()
+        {
+            if (_fadeDaysRemaining <= 0) return;
+            _fadeDaysRemaining--;
+            if (_fadeDaysRemaining <= 0)
+            {
+                try { if (MobileParty.MainParty != null) TrySetIgnoreByOtherParties(MobileParty.MainParty, false); } catch { }
+                Msg("Fade — the ash settles. Your party is visible once more.");
+            }
+        }
 
         // ── Player talent tracking ─────────────────────────────────────────────
         private static readonly HashSet<TalentId> _purchased = new HashSet<TalentId>();
@@ -400,6 +502,8 @@ namespace AshAndEmber
                 case TalentId.Plague:       CastPlague();       break;
                 case TalentId.Clairvoyance: CastClairvoyance(); break;
                 case TalentId.Extinguish:   CastExtinguish();   break;
+                case TalentId.Ashfall:      CastAshfall();      break;
+                case TalentId.Fade:         CastFade();         break;
             }
         }
 
@@ -552,6 +656,70 @@ namespace AshAndEmber
             catch { }
         }
 
+        private static void CastAshfall()
+        {
+            try
+            {
+                if (MobileParty.MainParty == null) { Msg("Ashfall — no party to cast from."); return; }
+                Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
+                var target = MobileParty.All
+                    .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)
+                             && p.MemberRoster.TotalRegulars > 0
+                             && (p.GetPosition2D - playerPos).Length < 100f)
+                    .OrderBy(p => (p.GetPosition2D - playerPos).Length)
+                    .FirstOrDefault();
+                if (target == null) { Msg("Ashfall — no enemy party within range."); return; }
+
+                target.RecentEventsMorale -= 30f;
+
+                // Wound soldiers — wounded troops reduce party speed in Bannerlord's movement model.
+                int woundCount = 5 + _rng.Next(4);
+                int actualWounded = 0;
+                var troops = target.MemberRoster.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
+                for (int i = 0; i < woundCount && troops.Count > 0; i++)
+                {
+                    int idx = _rng.Next(troops.Count);
+                    try { target.MemberRoster.AddToCounts(troops[idx].Character, 0, false, 1); actualWounded++; } catch { }
+                }
+
+                Msg($"Ashfall — ash chokes the advance of {target.Name}. -30 morale, {actualWounded} soldier{(actualWounded != 1 ? "s" : "")} slowed by the fall.");
+            }
+            catch { }
+        }
+
+        private static void CastFade()
+        {
+            try
+            {
+                if (MobileParty.MainParty == null) { Msg("Fade — no party to conceal."); return; }
+                _fadeDaysRemaining = 2;
+                bool applied = TrySetIgnoreByOtherParties(MobileParty.MainParty, true);
+                if (applied)
+                {
+                    Msg("Fade — ash wraps your party. For two days, enemy scouts will not find you.");
+                }
+                else
+                {
+                    // Fallback when IgnoreByOtherParties is not accessible: scatter nearby enemies.
+                    Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
+                    int scattered = 0;
+                    foreach (MobileParty p in MobileParty.All.ToList())
+                    {
+                        if (!p.IsActive || p == MobileParty.MainParty) continue;
+                        try { if (!FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)) continue; } catch { continue; }
+                        if ((p.GetPosition2D - playerPos).Length > 80f) continue;
+                        try { p.RecentEventsMorale -= 40f; scattered++; } catch { }
+                    }
+                    string tail = scattered > 0
+                        ? $" {scattered} nearby enemy {(scattered == 1 ? "party is" : "parties are")} thrown into confusion."
+                        : "";
+                    Msg($"Fade — the ash rises around you.{tail}");
+                }
+            }
+            catch { }
+        }
+
         private static float GetBlightCrimeCost(TalentId id)
         {
             switch (id)
@@ -559,7 +727,9 @@ namespace AshAndEmber
                 case TalentId.Extinguish:
                 case TalentId.Clairvoyance: return 15f;
                 case TalentId.BreakWills:
-                case TalentId.Plague:       return 10f;
+                case TalentId.Plague:
+                case TalentId.Ashfall:      return 10f;
+                case TalentId.Fade:         return 5f;
                 default:                    return 5f;
             }
         }
@@ -719,6 +889,12 @@ namespace AshAndEmber
             _purchased.Clear();
             if (list != null)
                 foreach (int v in list) _purchased.Add((TalentId)v);
+
+            // Fade is intentionally not persisted — on load the effect resets.
+            // Explicitly clear IgnoreByOtherParties so a save/load while faded
+            // does not leave the party permanently invisible.
+            _fadeDaysRemaining = 0;
+            try { if (MobileParty.MainParty != null) TrySetIgnoreByOtherParties(MobileParty.MainParty, false); } catch { }
         }
     }
 
