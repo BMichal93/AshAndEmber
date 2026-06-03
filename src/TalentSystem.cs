@@ -57,7 +57,7 @@ namespace AshAndEmber
         Flashfire   = 29,  // Passive — 10% chance to echo a battle spell
         VeteranAsh  = 30,  // Passive — age reduces casting cost (percentage)
         // ── New campaign spells ────────────────────────────────────────────────
-        Ashfall     = 31,  // Spell — choke enemy party advance with ash
+        Ashfall     = 31,  // REMOVED — kept for save compatibility
         Fade        = 32,  // Spell — conceal party from enemy scouts
     }
 
@@ -284,13 +284,6 @@ namespace AshAndEmber
             // ── New campaign spells ────────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.Ashfall, IsSpell = true, IsEnchantment = false,
-                Category = TalentCategory.Spell, Name = "Ashfall",
-                Lore = "You release a cloud of cold ash into the wind — not your fire, but its aftermath. The ash is patient. It settles into lungs, blinds eyes, fills boots. An army can outrun fire. It cannot outrun what fire leaves behind.",
-                MechanicDesc = "The nearest enemy party within 100m suffers -30 morale and 5–8 soldiers are slowed by wounds. Costs 1 day."
-            },
-            new TalentDef
-            {
                 Id = TalentId.Fade, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Fade",
                 Lore = "You draw your fire inward — not out, not away, but down into the marrow, down past what can be seen or felt. For a time you are still there. You simply stop being visible to those looking for you.",
@@ -349,8 +342,8 @@ namespace AshAndEmber
                 new Color(1f, 0.8f, 0.2f)));
         }
 
-        // Cost curve: 1 pt for the first 7 talents after Gift, 2 pts after that. Max 2.
-        public static int PurchaseCost() => _purchased.Count <= 7 ? 1 : 2;
+        // Cost curve: 1 pt until you hold 10 or more talents, 2 pts from that point on.
+        public static int PurchaseCost() => _purchased.Count < 10 ? 1 : 2;
 
         // Grant a talent for free (no focus-point cost). Returns false if already owned.
         public static bool GrantFree(TalentId id, Hero hero)
@@ -502,7 +495,6 @@ namespace AshAndEmber
                 case TalentId.Plague:       CastPlague();       break;
                 case TalentId.Clairvoyance: CastClairvoyance(); break;
                 case TalentId.Extinguish:   CastExtinguish();   break;
-                case TalentId.Ashfall:      CastAshfall();      break;
                 case TalentId.Fade:         CastFade();         break;
             }
         }
@@ -656,38 +648,6 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void CastAshfall()
-        {
-            try
-            {
-                if (MobileParty.MainParty == null) { Msg("Ashfall — no party to cast from."); return; }
-                Vec2 playerPos = MobileParty.MainParty.GetPosition2D;
-                var target = MobileParty.All
-                    .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)
-                             && p.MemberRoster.TotalRegulars > 0
-                             && (p.GetPosition2D - playerPos).Length < 100f)
-                    .OrderBy(p => (p.GetPosition2D - playerPos).Length)
-                    .FirstOrDefault();
-                if (target == null) { Msg("Ashfall — no enemy party within range."); return; }
-
-                target.RecentEventsMorale -= 30f;
-
-                // Wound soldiers — wounded troops reduce party speed in Bannerlord's movement model.
-                int woundCount = 5 + _rng.Next(4);
-                int actualWounded = 0;
-                var troops = target.MemberRoster.GetTroopRoster()
-                    .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
-                for (int i = 0; i < woundCount && troops.Count > 0; i++)
-                {
-                    int idx = _rng.Next(troops.Count);
-                    try { target.MemberRoster.AddToCounts(troops[idx].Character, 0, false, 1); actualWounded++; } catch { }
-                }
-
-                Msg($"Ashfall — ash chokes the advance of {target.Name}. -30 morale, {actualWounded} soldier{(actualWounded != 1 ? "s" : "")} slowed by the fall.");
-            }
-            catch { }
-        }
-
         private static void CastFade()
         {
             try
@@ -727,8 +687,7 @@ namespace AshAndEmber
                 case TalentId.Extinguish:
                 case TalentId.Clairvoyance: return 15f;
                 case TalentId.BreakWills:
-                case TalentId.Plague:
-                case TalentId.Ashfall:      return 10f;
+                case TalentId.Plague:       return 10f;
                 case TalentId.Fade:         return 5f;
                 default:                    return 5f;
             }

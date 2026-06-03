@@ -42,10 +42,10 @@ namespace AshAndEmber
         };
 
         private static readonly TalentId[] DamageEnchantments =
-            { TalentId.Scatter, TalentId.Smoulder, TalentId.Bewilder, TalentId.Waver };
+            { TalentId.Scatter, TalentId.Smoulder, TalentId.Bewilder, TalentId.Sunder, TalentId.Consume, TalentId.Char };
 
         private static readonly TalentId[] RestoreEnchantments =
-            { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight, TalentId.Rouse };
+            { TalentId.Ashveil, TalentId.CinderShell, TalentId.Hearthlight, TalentId.Overflow, TalentId.Renewal, TalentId.Reflect };
 
         // ── Public API ────────────────────────────────────────────────────────
         public static bool IsColourLord(Hero hero) =>
@@ -96,6 +96,9 @@ namespace AshAndEmber
                 // 50% chance of also gaining Smoulder (terror-through-morale drain)
                 if (_rng.Next(2) == 0 && !current.Contains((int)TalentId.Smoulder))
                     current.Add((int)TalentId.Smoulder);
+                // 50% chance of Sunder (cold fire strips the body's defences)
+                if (_rng.Next(2) == 0 && !current.Contains((int)TalentId.Sunder))
+                    current.Add((int)TalentId.Sunder);
             }
             else
             {
