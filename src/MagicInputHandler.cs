@@ -263,6 +263,9 @@ namespace AshAndEmber
                     else
                         AgingSystem.AgeHero(Hero.MainHero, agingDays);
                 }
+                // Flashfire: 10% chance to echo the spell — no additional aging cost.
+                if (inMission)
+                    try { SpellEffects.TryFlashfire(cast); } catch { }
             }
         }
 

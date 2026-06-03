@@ -4736,8 +4736,7 @@ namespace AshAndEmber
 
             bool mage          = MageKnowledge.IsMage;
             bool hasDarkTalent = mage && (TalentSystem.Has(TalentId.Ember)
-                                       || TalentSystem.Has(TalentId.Reap)
-                                       || TalentSystem.Has(TalentId.DevourLife));
+                                       || TalentSystem.Has(TalentId.Reap));
 
             string spouseName = spouse.Name?.ToString() ?? "your spouse";
             string childName  = child.Name?.ToString()  ?? "your child";
@@ -4747,7 +4746,7 @@ namespace AshAndEmber
                 : "Requires mage ability.";
             string dHint = hasDarkTalent
                 ? $"The ritual requires something living. It requires a lot of it."
-                : "Requires Ember, Reap, or Devour Life talent.";
+                : "Requires Ember or Reap talent.";
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "★  The Wasting",
@@ -4949,11 +4948,9 @@ namespace AshAndEmber
                                     Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2);
                                 }
                                 catch { }
-                                // Grant Reap if not owned, then Harvest (DevourLife), else attribute point
+                                // Grant Reap if not owned, else attribute point
                                 if (!TalentSystem.Has(TalentId.Reap))
                                     TalentSystem.GrantFree(TalentId.Reap, Hero.MainHero);
-                                else if (!TalentSystem.Has(TalentId.DevourLife))
-                                    TalentSystem.GrantFree(TalentId.DevourLife, Hero.MainHero);
                                 else
                                     try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 1; } catch { }
                                 KillHalfParty();

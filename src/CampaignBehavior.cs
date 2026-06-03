@@ -310,7 +310,9 @@ namespace AshAndEmber
                 try { AshenCitySystem.Initialize(); } catch { }
                 try { AshenCitySystem.DailyTick(); } catch { }
                 try { ColourLordRegistry.DailyMapCast(); } catch { }
+                try { TalentSystem.ResetDailyCastCount(); } catch { }
                 try { TalentSystem.EnforceKinship(); } catch { }
+                try { TalentSystem.DailyFadeTick(); } catch { }
                 try { AgingSystem.DailyAgeCheck(); } catch { }
                 try { CampaignMapEvents.DailyTick(); } catch { }
                 try { SettlementEncounters.DailyTick(); } catch { }
@@ -635,27 +637,12 @@ namespace AshAndEmber
                 try { victimIsLord = victim.IsLord; } catch { }
                 if (!victimIsLord) return;
 
-                // Player DevourLife: executing a captured lord draws back 100 days
+                // Reap: executing a captured lord draws back 100 days (merged from DevourLife)
                 if (killer == Hero.MainHero
                     && MageKnowledge.IsMage
-                    && TalentSystem.Has(TalentId.DevourLife))
+                    && TalentSystem.Has(TalentId.Reap))
                 {
                     try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
-                }
-
-                // NPC DevourLife: merciless/devious mage lord executioner absorbs 1 day
-                if (killer != Hero.MainHero
-                    && ColourLordRegistry.IsColourLord(killer)
-                    && ColourLordRegistry.HasTalent(killer, TalentId.DevourLife))
-                {
-                    try
-                    {
-                        int merciless = killer.GetTraitLevel(DefaultTraits.Mercy);
-                        int devious   = killer.GetTraitLevel(DefaultTraits.Honor);
-                        if (merciless < 0 || devious < 0)
-                            killer.SetBirthDay(killer.BirthDay + CampaignTime.Days(1));
-                    }
-                    catch { }
                 }
             }
             catch { }
