@@ -207,7 +207,7 @@ namespace AshAndEmber
                 Id = TalentId.BreakWills, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Unsettle",
                 Lore = "You let them feel how thin their fire is. Most men have never faced that knowledge directly. Courage is easier when you cannot see the dark.",
-                MechanicDesc = "The nearest enemy party within 100m loses 35 morale. Costs 1 day."
+                MechanicDesc = "The nearest enemy party within 100m loses 60 morale. Costs 1 day."
             },
             new TalentDef
             {
@@ -504,8 +504,8 @@ namespace AshAndEmber
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Unsettle — no enemy party in range."); return; }
-                target.RecentEventsMorale -= 35f;
-                Msg($"Unsettle — dread settles over {target.Name}. -35 morale.");
+                target.RecentEventsMorale -= 60f;
+                Msg($"Unsettle — dread settles over {target.Name}. -60 morale.");
             }
             catch { }
         }
@@ -711,7 +711,7 @@ namespace AshAndEmber
                          && (p.GetPosition2D - pos).Length < 50f)
                 .OrderBy(p => (p.GetPosition2D - pos).Length).FirstOrDefault();
             if (target == null) return;
-            target.RecentEventsMorale -= 20f;
+            target.RecentEventsMorale -= 35f;
         }
 
         private static void NpcInspire(Hero caster)
