@@ -40,7 +40,9 @@ namespace AshAndEmber
             public float  Remaining;    // negative = no expiry (toggle-only)
             public float  DirTimer;     // Create Yellow direction-change timer
             public float  Power = 1f;   // spell-power multiplier captured at cast time
-            public GameEntity LightEntity; // coloured point light marking the effect area
+            public GameEntity LightEntity;  // coloured point light marking the effect area
+            public GameEntity LightEntity2; // extra persistent column light (1 m above node)
+            public GameEntity LightEntity3; // extra persistent column light (2 m above node)
             public Team   CasterTeam;  // null = affect all teams; NPC effects set this to filter to enemies only
         }
         private static readonly List<AreaEffect> _areaEffects = new List<AreaEffect>();
@@ -63,6 +65,8 @@ namespace AshAndEmber
             if (idx >= 0)
             {
                 try { _areaEffects[idx].LightEntity?.Remove(0); } catch { }
+                try { _areaEffects[idx].LightEntity2?.Remove(0); } catch { }
+                try { _areaEffects[idx].LightEntity3?.Remove(0); } catch { }
                 _areaEffects.RemoveAt(idx);
                 return;
             }
@@ -76,7 +80,11 @@ namespace AshAndEmber
         public static void RemoveAreaEffect(string id)
         {
             foreach (var e in _areaEffects.Where(e => e.Id == id).ToList())
+            {
                 try { e.LightEntity?.Remove(0); } catch { }
+                try { e.LightEntity2?.Remove(0); } catch { }
+                try { e.LightEntity3?.Remove(0); } catch { }
+            }
             _areaEffects.RemoveAll(e => e.Id == id);
         }
 
@@ -418,7 +426,11 @@ namespace AshAndEmber
         public static void ClearAreaEffects()
         {
             foreach (var e in _areaEffects)
+            {
                 try { e.LightEntity?.Remove(0); } catch { }
+                try { e.LightEntity2?.Remove(0); } catch { }
+                try { e.LightEntity3?.Remove(0); } catch { }
+            }
             foreach (var kvp in _haltedAgents)
             {
                 try
