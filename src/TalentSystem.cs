@@ -1,7 +1,7 @@
 // =============================================================================
 // LIFE & DEATH MAGIC — TalentSystem.cs
 // Talent definitions, purchase logic, lore text, and save/load.
-// 21 talents: 7 passive, 8 enchantment (4 damage / 4 restore), 6 campaign spell.
+// 22 talents: 8 passive, 8 enchantment (4 damage / 4 restore), 6 campaign spell.
 // =============================================================================
 
 using System;
@@ -110,10 +110,10 @@ namespace AshAndEmber
             },
             new TalentDef
             {
-                Id = TalentId.Ember, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.Passive, Name = "Ember",
-                Lore = "In the moment of killing, when fire passes from one vessel to another, some scatters. Sometimes a spark finds you. You have learned, not to seek it, but to cup your hands.",
-                MechanicDesc = "Passive. Each kill on the battlefield has a 5% chance to restore 1 day of youth."
+                Id = TalentId.Camaraderie, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.Passive, Name = "Kinship",
+                Lore = "Those who carry the fire recognise each other from across a room. There is something almost like trust in that. Almost.",
+                MechanicDesc = "Passive. +10 relations with those who carry the fire. Never falls below 0 with them."
             },
             new TalentDef
             {
@@ -124,10 +124,10 @@ namespace AshAndEmber
             },
             new TalentDef
             {
-                Id = TalentId.Camaraderie, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.Passive, Name = "Kinship",
-                Lore = "Those who carry the fire recognise each other from across a room. There is something almost like trust in that. Almost.",
-                MechanicDesc = "Passive. +10 relations with those who carry the fire. Never falls below 0 with them."
+                Id = TalentId.Ember, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.Passive, Name = "Ember",
+                Lore = "In the moment of killing, when fire passes from one vessel to another, some scatters. Sometimes a spark finds you. You have learned, not to seek it, but to cup your hands.",
+                MechanicDesc = "Passive. Each kill on the battlefield has a 5% chance to restore 1 day of youth."
             },
             new TalentDef
             {
@@ -204,17 +204,17 @@ namespace AshAndEmber
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.Inspire, IsSpell = true, IsEnchantment = false,
-                Category = TalentCategory.Spell, Name = "Kindle",
-                Lore = "You let them feel it briefly — the warmth that says the world cares whether they live. It may be a lie. The fire does not ask.",
-                MechanicDesc = "Your party gains 40 morale. Up to 8 wounded soldiers of each troop type recover. Costs 1 day."
-            },
-            new TalentDef
-            {
                 Id = TalentId.BreakWills, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Unsettle",
                 Lore = "You let them feel how thin their fire is. Most men have never faced that knowledge directly. Courage is easier when you cannot see the dark.",
                 MechanicDesc = "The nearest enemy party within 100m loses 35 morale. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Inspire, IsSpell = true, IsEnchantment = false,
+                Category = TalentCategory.Spell, Name = "Kindle",
+                Lore = "You let them feel it briefly — the warmth that says the world cares whether they live. It may be a lie. The fire does not ask.",
+                MechanicDesc = "Your party gains 40 morale. Up to 8 wounded soldiers of each troop type recover. Costs 1 day."
             },
             new TalentDef
             {
