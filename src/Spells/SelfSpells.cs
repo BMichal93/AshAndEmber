@@ -120,7 +120,7 @@ namespace AshAndEmber
                     if (!a.IsActive() || a.IsMount) continue;
                     bool isEnemy = _missile.CasterTeam != null && a.Team != _missile.CasterTeam;
                     bool isAlly  = _missile.CasterTeam != null && a.Team == _missile.CasterTeam;
-                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
+                    if (!(wantDmg || (wantHeal && isAlly))) continue;
                     float dx = a.Position.x - mpos.x;
                     float dy = a.Position.y - mpos.y;
                     if (dx * dx + dy * dy > MissileState.DetectRadius * MissileState.DetectRadius) continue;
@@ -164,7 +164,7 @@ namespace AshAndEmber
                     bool isAlly  = m.CasterTeam != null && a.Team == m.CasterTeam;
                     bool wantDmg  = m.Cast.DamageCount  > 0;
                     bool wantHeal = m.Cast.RestoreCount > 0;
-                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
+                    if (!(wantDmg || (wantHeal && isAlly))) continue;
                     if (IsWarded(a)) continue;
                     try
                     {

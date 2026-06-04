@@ -416,8 +416,8 @@ namespace AshAndEmber
             ColorSchool glowColor = cast.VisualColor;
             BeginAgentGlowRaw(target, ColorSchoolData.GetGlowColor(glowColor), 2f);
 
-            // Damage — fire hits enemies
-            if (cast.DamageCount > 0 && isEnemy)
+            // Damage — fire hits everyone (friendly fire)
+            if (cast.DamageCount > 0)
             {
                 DamageAgent(target, cast.DamageCount * 25f);
                 ApplyDamageEnchantments(target, cast, caster);

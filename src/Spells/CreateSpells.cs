@@ -147,6 +147,12 @@ namespace AshAndEmber
                         outPos.z = a.Position.z;
                         try { a.TeleportToPosition(outPos); } catch { }
                     }
+                    if (dmg > 0 && isAlly)
+                    {
+                        BeginAgentGlowRaw(a, ColorSchoolData.GetGlowColor(e.School), 1.5f);
+                        DamageAgent(a, dmg * 2.5f);
+                        SpawnImpactBurst(a.Position, e.School, 3f);
+                    }
                     if (restore > 0 && isAlly)
                     {
                         BeginAgentGlowRaw(a, ColorSchoolData.GetReversedGlowColor(e.School), 1.5f);
@@ -185,7 +191,7 @@ namespace AshAndEmber
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
                     bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
-                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
+                    if (!(wantDmg || (wantHeal && isAlly))) continue;
                     // Horizontal distance so mounted riders at elevation are hit correctly
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > radius) continue;

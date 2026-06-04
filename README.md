@@ -175,7 +175,7 @@ The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Da
 
 ### Multi-form example
 
-`WW SS X UUU` — Blast (5 m) + Burst (5 m) simultaneously, 75 fire damage to enemies. 7 inputs = 2 days cost.
+`WW SS X UUU` — Blast (5 m) + Burst (5 m) simultaneously, 75 fire damage to all units in range including allies. 7 inputs = 2 days cost.
 
 ---
 
@@ -183,9 +183,9 @@ The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Da
 
 | Key | Arrow | Effect | Per count | Targets |
 |-----|-------|--------|-----------|---------|
-| W | ↑ | **Damage** | 25 fire damage | Enemies |
-| A | ← | **Damage** | 25 fire damage | Enemies |
-| D | → | **Damage** | 25 fire damage | Enemies |
+| W | ↑ | **Damage** | 25 fire damage | All units — friendly fire included |
+| A | ← | **Damage** | 25 fire damage | All units — friendly fire included |
+| D | → | **Damage** | 25 fire damage | All units — friendly fire included |
 | S | ↓ | **Restore** | 15 healing | Allies (Burst also heals caster) |
 
 Damage and Restore may be combined in the same cast.
@@ -268,7 +268,7 @@ Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is 
 
 Enchantments fire automatically on every qualifying cast in battle.
 
-**Damage enchantments** (trigger: Damage effect on enemies):
+**Damage enchantments** (trigger: Damage effect — applies to all hit units, allies included):
 
 | Talent | Effect |
 |--------|--------|

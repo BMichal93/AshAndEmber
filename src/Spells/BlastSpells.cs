@@ -1,7 +1,7 @@
 // =============================================================================
 // LIFE & DEATH MAGIC — BlastSpells.cs
 // BLAST FORM: forward cone, 2.5m range per U input, ~49° half-angle (dot 0.65).
-// Hits enemies when DamageCount > 0, allies when RestoreCount > 0.
+// Hits everyone when DamageCount > 0 (friendly fire), allies only when RestoreCount > 0.
 // =============================================================================
 
 using System;
@@ -46,7 +46,7 @@ namespace AshAndEmber
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
                     bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
-                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
+                    if (!(wantDmg || (wantHeal && isAlly))) continue;
                     // Horizontal range check so mounted riders at elevation are not missed.
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > range) continue;
