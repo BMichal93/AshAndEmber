@@ -3312,7 +3312,7 @@ namespace AshAndEmber
             try { ColourLordRegistry.SetAshen(Hero.MainHero, true); } catch { }
             try { AshenCitySystem.ApplyAshenPersonality(Hero.MainHero); } catch { }
             try { ColourLordRegistry.SetMage(Hero.MainHero, true); } catch { }
-            try { AshenCitySystem.OnHeroSetAshen(Hero.MainHero); } catch { }
+            try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
             try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch { }
             // Queue the frenzy event for the next daily tick if there's someone to lose
             if (HasFamilyOrCompanions())
