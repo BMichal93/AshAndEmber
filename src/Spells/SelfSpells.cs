@@ -152,6 +152,7 @@ namespace AshAndEmber
             RecordMagicCast(pos);
 
             int affected = 0;
+            int alliesHit = 0;
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
@@ -168,6 +169,7 @@ namespace AshAndEmber
                     if (IsWarded(a)) continue;
                     try
                     {
+                        if (wantDmg && isAlly) alliesHit++;
                         ApplyEffectsToAgent(a, m.Cast, Agent.Main);
                         SpawnImpactBurst(a.Position, col, 4f);
                         affected++;
@@ -180,6 +182,10 @@ namespace AshAndEmber
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Missile detonates — {m.Cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
                 ColorSchoolData.GetMessageColor(col)));
+            if (alliesHit > 0)
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Friendly fire — {alliesHit} {(alliesHit == 1 ? "ally" : "allies")} hit!",
+                    new Color(1f, 0.35f, 0.1f)));
         }
 
         public static void ClearMissile()
