@@ -170,7 +170,13 @@ namespace AshAndEmber
         private static void TryCast(Agent mage)
         {
             if (Mission.Current == null) return;
-            if (!SpellEffects.HasFreeHand(mage)) return;
+
+            if (!SpellEffects.HasFreeHand(mage))
+            {
+                SpellEffects.TryFreeHandForCast(mage);
+                _cooldowns[mage] = 1.0f; // wait for sheath animation, then retry
+                return;
+            }
 
             var enemies = SpellEffects.EnemiesOf(mage);
             if (enemies.Count == 0) return;
