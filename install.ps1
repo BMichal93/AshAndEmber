@@ -36,8 +36,11 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $ModName    = "AshAndEmber"
-$ModVer     = "v0.9"
+$ModVer     = "v0.10"
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Module files live in the AshAndEmber\ subfolder next to this script.
+# (Allows users to copy-paste that folder directly into Modules\ without running the script.)
+$ModRoot    = Join-Path $ScriptRoot $ModName
 
 function Write-Step ($n, $msg) { Write-Host "`n[$n] $msg" -ForegroundColor Cyan }
 function Write-OK   ($msg)     { Write-Host "    OK  $msg" -ForegroundColor Green }
@@ -134,12 +137,12 @@ if ($BuildFirst) {
     Write-OK "Built: $dllBuilt"
 }
 
-# Find best available DLL
+# Find best available DLL (prefer pre-built inside AshAndEmber\bin\, fall back to src\bin\)
 $sourceDll = $null
 foreach ($c in @(
-    (Join-Path $ScriptRoot "bin\$detectedBin\$ModName.dll"),
-    (Join-Path $ScriptRoot "bin\Win64_Shipping_Client\$ModName.dll"),
-    (Join-Path $ScriptRoot "bin\Gaming.Desktop.x64_Shipping_Client\$ModName.dll"),
+    (Join-Path $ModRoot    "bin\$detectedBin\$ModName.dll"),
+    (Join-Path $ModRoot    "bin\Win64_Shipping_Client\$ModName.dll"),
+    (Join-Path $ModRoot    "bin\Gaming.Desktop.x64_Shipping_Client\$ModName.dll"),
     (Join-Path $ScriptRoot "src\bin\Release\$ModName.dll"),
     (Join-Path $ScriptRoot "src\bin\Debug\$ModName.dll")
 )) { if (Test-Path $c) { $sourceDll = $c; break } }
@@ -167,13 +170,13 @@ $null = New-Item -ItemType Directory -Force $modBinDest
 $null = New-Item -ItemType Directory -Force $modDataDest
 
 # SubModule.xml
-$subXml = Join-Path $ScriptRoot "SubModule.xml"
-if (-not (Test-Path $subXml)) { Write-Fail "SubModule.xml not found next to install.ps1." }
+$subXml = Join-Path $ModRoot "SubModule.xml"
+if (-not (Test-Path $subXml)) { Write-Fail "SubModule.xml not found in $ModRoot." }
 Copy-Item $subXml $modDest -Force
 Write-OK "SubModule.xml"
 
 # ModuleData
-$dataDir = Join-Path $ScriptRoot "ModuleData"
+$dataDir = Join-Path $ModRoot "ModuleData"
 if (Test-Path $dataDir) {
     Copy-Item (Join-Path $dataDir "*") $modDataDest -Recurse -Force
     Get-ChildItem $dataDir -File | ForEach-Object { Write-OK "ModuleData\$($_.Name)" }
