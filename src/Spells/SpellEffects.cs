@@ -93,6 +93,28 @@ namespace AshAndEmber
 
         public static bool ProtectedByMirror(Agent a) => false;
 
+        // Returns true when the agent has at least one hand that isn't occupied.
+        // Off-hand empty + two-handed main weapon → both hands tied, returns false.
+        public static bool HasFreeHand(Agent agent)
+        {
+            try
+            {
+                EquipmentIndex mainIdx = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
+                EquipmentIndex offIdx  = agent.GetWieldedItemIndex(Agent.HandIndex.OffHand);
+
+                if (mainIdx == EquipmentIndex.None) return true;  // main hand empty
+                if (offIdx  != EquipmentIndex.None) return false; // both hands occupied
+
+                // Off-hand empty — blocked only if the main-hand weapon is two-handed
+                EquipmentElement mainWeapon = agent.Equipment[mainIdx];
+                if (!mainWeapon.IsEmpty && (mainWeapon.Item?.PrimaryWeapon?.IsTwoHanded ?? false))
+                    return false;
+
+                return true;
+            }
+            catch { return true; }
+        }
+
         private static readonly Dictionary<string, string> _toggleComboToId
             = new Dictionary<string, string>();
 

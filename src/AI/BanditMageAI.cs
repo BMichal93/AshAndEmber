@@ -170,6 +170,7 @@ namespace AshAndEmber
         private static void TryCast(Agent mage)
         {
             if (Mission.Current == null) return;
+            if (!SpellEffects.HasFreeHand(mage)) return;
 
             var enemies = SpellEffects.EnemiesOf(mage);
             if (enemies.Count == 0) return;

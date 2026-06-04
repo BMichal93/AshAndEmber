@@ -119,6 +119,7 @@ namespace AshAndEmber
         private static void TryCast(Agent agent, Hero hero)
         {
             if (Mission.Current == null) return;
+            if (!SpellEffects.HasFreeHand(agent)) return;
 
             bool isAshen = ColourLordRegistry.IsAshenLord(hero);
 
