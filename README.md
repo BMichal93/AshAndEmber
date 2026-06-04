@@ -162,6 +162,8 @@ Different form types may be mixed freely before Break — all fire simultaneousl
 
 The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Damage ×2.
 
+**Free hand required.** You cannot cast while wielding anything — weapon or shield. Sheathe everything first (**X** on keyboard, or the sheathe button on gamepad). Both hands must be empty.
+
 ---
 
 ## Spell Forms (before Break)
@@ -321,6 +323,8 @@ NPC lords cast on the campaign map independently. Ashen lords cast approximately
    - *Default*: balanced Blast/Burst mix.
 
 Ward is no longer castable by NPC lords — it is now a Restoration talent available only to the player.
+
+NPC mage lords briefly sheathe their weapon immediately before casting. The cast fires roughly 0.7 seconds later, giving the sheath animation time to complete. The AI re-wields automatically after the spell resolves.
 
 Ashen lords skip the no-enemies early exit and cast proactively at all times. First cast is delayed 12 seconds; subsequent casts use the lord's trait-modified cooldown. Ashen spells — both NPC and player — display cold-blue and grey visuals.
 
@@ -728,6 +732,9 @@ Output: `src\bin\Debug\AshAndEmber.dll`. The build copies it to the Modules fold
 
 **"The fire does not stir in you."**  
 You do not carry the Gift. Start a new campaign and accept the prompt.
+
+**"Both hands are full. Free a hand to shape the fire."**  
+You are wielding a weapon or shield. Press **X** to sheathe everything, then cast.
 
 **Spells fire but nothing happens**  
 You may be in a tournament (casting kills you), in a prisoner state, or you mixed form keys incorrectly.

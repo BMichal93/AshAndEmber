@@ -119,13 +119,7 @@ namespace AshAndEmber
         private static void TryCast(Agent agent, Hero hero)
         {
             if (Mission.Current == null) return;
-
-            if (!SpellEffects.HasFreeHand(agent))
-            {
-                SpellEffects.TryFreeHandForCast(agent);
-                _cooldowns[hero.StringId] = 1.0f; // wait for sheath animation, then retry
-                return;
-            }
+            SpellEffects.TryFreeHandForCast(agent); // sheathe visually before cast, never blocks
 
             bool isAshen = ColourLordRegistry.IsAshenLord(hero);
 
