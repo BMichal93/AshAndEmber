@@ -249,7 +249,8 @@ namespace AshAndEmber
                 return;
             }
 
-            if (Agent.Main != null && !SpellEffects.HasFreeHand(Agent.Main))
+            if (Agent.Main != null && !SpellEffects.HasFreeHand(Agent.Main)
+                && !TalentSystem.Has(TalentId.ArmedCasting))
             {
                 Fizzle("Both hands are full. Free a hand to shape the fire.");
                 return;

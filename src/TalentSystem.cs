@@ -63,6 +63,7 @@ namespace AshAndEmber
         Fade        = 32,  // Spell — conceal party from enemy scouts
         AshenGift   = 33,  // Info — status card shown when player is Ashen (not purchasable)
         Immolate    = 34,  // Enchantment — Damage: guaranteed kill at 3+ inputs
+        ArmedCasting = 35, // Passive — cast without sheathing weapons
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info }
@@ -134,6 +135,13 @@ namespace AshAndEmber
                 Category = TalentCategory.Passive, Name = "Flashfire",
                 Lore = "Sometimes the fire does not wait to be asked twice. It finds the shape again on its own — the same working, the same reach, the same burn. You do not question it. You simply let it.",
                 MechanicDesc = "Passive. Each battle spell has a 10% chance to echo — firing again instantly at no aging cost."
+            },
+            new TalentDef
+            {
+                Id = TalentId.ArmedCasting, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.Passive, Name = "Warcast",
+                Lore = "Most who carry the fire release it through open hands — shape first, reach second. You discovered, not by learning but by surviving, that the flame does not ask what you are holding. Only whether you are willing.",
+                MechanicDesc = "Passive. You may cast battle spells without sheathing your weapons. The fire flows through you, not only from you."
             },
             // ── Enchantments (Damage) ─────────────────────────────────────────
             new TalentDef
