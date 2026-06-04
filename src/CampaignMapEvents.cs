@@ -52,6 +52,10 @@
 // │                      │ leaders die, lords suffer −30 morale, cities −30   │
 // │                      │ security. Ashen Spawn flood the heartlands and the  │
 // │                      │ cold armies march.                                  │
+// ├──────────────────────┼─────────────────────────────────────────────────────┤
+// │ The Dead March       │ (Day 50, then ~every 110 days) A necromantic rite   │
+// │                      │ raises the Ashen fallen. Every Ashen garrison and   │
+// │                      │ lord party is reinforced with 40–80 tier-4 troops.  │
 // └──────────────────────┴─────────────────────────────────────────────────────┘
 //
 // DEBUGGING GUIDE:
@@ -123,6 +127,13 @@ namespace AshAndEmber
         public const int   EventCooldownDays      = 14;
         public const int   AshenGambitSpawnCount  = 18;    // Ashen Spawn warbands seeded across the Empire
         public const int   AshenGambitCastleCount = 3;     // Empire castles seized by Ashen lords on the night
+
+        // The Dead March: first fire forced on day 50; recurs every ~110 days (chance-based, 95-day gap)
+        public const float ChanceDeadMarch        = 0.15f; // ~7 weeks after eligible → ~110d avg cycle
+        public const int   DeadMarchFirstDay      = 50;    // forced first fire (no chance roll)
+        public const int   DeadMarchRecurrenceGap = 95;    // minimum days between subsequent fires
+        public const int   DeadMarchMinTroops     = 40;    // tier-4 troops added per garrison / army
+        public const int   DeadMarchMaxTroops     = 80;    // (random in [min, max])
 
         // Ashen Plague: parties spawned near the afflicted settlement
         public const int AshenPlagueSpawnCount  = 3;
@@ -304,6 +315,7 @@ namespace AshAndEmber
             TryFireTreasonousScroll();
             TryFireEmbersOfHope();
             TryFireAshenGambit();
+            TryFireDeadMarch();
 
             if (_weeklySlotFilled || _warSlotFilled)
                 _lastEventElapsedDay = (int)ElapsedCampaignDays();
@@ -352,6 +364,8 @@ namespace AshAndEmber
             _debugForceNextTemple    = false;
             _protectedDaysRemaining  = 0;
             _ashenGambitFired        = false;
+            _deadMarchFirstFired     = false;
+            _deadMarchLastFiredDay   = 0;
             _campaignStartDay        = (int)CampaignTime.Now.ToDays;
             _weeklySlotFilled        = false;
             _lastEventElapsedDay     = -EventCooldownDays;
@@ -877,6 +891,8 @@ namespace AshAndEmber
         private static bool _debugForceNextTemple   = false;
         private static int  _protectedDaysRemaining = 0;
         private static bool _ashenGambitFired       = false;
+        private static bool _deadMarchFirstFired   = false;
+        private static int  _deadMarchLastFiredDay = 0;
         private static int  _campaignStartDay       = -1;
         // Event throttle: at most one event fires per weekly tick, and no event fires
         // until EventCooldownDays have passed since the last one.
@@ -2409,6 +2425,124 @@ namespace AshAndEmber
                 "The cold armies do not wait. They march."));
         }
 
+        // ── Event: The Dead March ─────────────────────────────────────────────
+        // On campaign day 50 the Ashen perform a cold necromantic rite — the
+        // fallen of old campaigns answer. Every Ashen garrison and lord party
+        // is reinforced with 40–80 tier-4 troops from that settlement or lord's
+        // culture. After the first fire the event recurs roughly every 110 days
+        // (chance-based, minimum 95-day gap between fires).
+        //
+        // Troop tier: walks the culture's elite upgrade chain and returns the
+        // first troop that reaches tier 4, or the highest available if the chain
+        // is shorter.
+        //
+        // Safety constraints:
+        //   • Wrapped in try/catch per garrison and per party — one failure does
+        //     not abort the rest of the reinforcement pass.
+        //   • First fire is forced (no chance roll) but still claims the weekly
+        //     slot so it cannot stack with another event in the same tick.
+        private static void TryFireDeadMarch()
+        {
+            int day = (int)ElapsedCampaignDays();
+
+            if (!_deadMarchFirstFired)
+            {
+                if (day < DeadMarchFirstDay) return;
+                // First fire is forced — no chance roll, but claim the slot below.
+            }
+            else
+            {
+                if (day - _deadMarchLastFiredDay < DeadMarchRecurrenceGap) return;
+                if (_rng.NextDouble() >= ChanceDeadMarch) return;
+            }
+
+            if (!TryClaimWeeklySlot()) return;
+
+            try
+            {
+                bool isFirstFire       = !_deadMarchFirstFired;
+                _deadMarchFirstFired   = true;
+                _deadMarchLastFiredDay = day;
+
+                int garrisonsBoosted = 0;
+                int armiesBoosted    = 0;
+
+                // Reinforce every Ashen garrison
+                foreach (var s in Settlement.All)
+                {
+                    try
+                    {
+                        if (s.MapFaction?.StringId != AshenKingdomId) continue;
+                        var garrison = s.Town?.GarrisonParty;
+                        if (garrison?.MemberRoster == null) continue;
+
+                        var troop = GetTroopAtTier(s.Culture, 4);
+                        if (troop == null) continue;
+
+                        int count = DeadMarchMinTroops + _rng.Next(DeadMarchMaxTroops - DeadMarchMinTroops + 1);
+                        garrison.MemberRoster.AddToCounts(troop, count);
+                        garrisonsBoosted++;
+                    }
+                    catch { }
+                }
+
+                // Reinforce every Ashen lord's mobile party
+                foreach (var party in MobileParty.All.ToList())
+                {
+                    try
+                    {
+                        if (party.MapFaction?.StringId != AshenKingdomId) continue;
+                        if (party.IsGarrison) continue;
+                        if (party.LeaderHero == null) continue;
+
+                        var culture = party.LeaderHero.Culture ?? party.MapFaction?.Culture;
+                        var troop   = GetTroopAtTier(culture, 4);
+                        if (troop == null) continue;
+
+                        int count = DeadMarchMinTroops + _rng.Next(DeadMarchMaxTroops - DeadMarchMinTroops + 1);
+                        party.MemberRoster.AddToCounts(troop, count);
+                        armiesBoosted++;
+                    }
+                    catch { }
+                }
+
+                string flavour = isFirstFire
+                    ? "On the fiftieth day the ash stirs in the mountain passes. Shapes walk that do not breathe. " +
+                      "The Ashen do not mourn their fallen — they call them back. " +
+                      "The dead answer because they were never truly released."
+                    : "A grey wind descends from the north carrying no warmth and no sound. " +
+                      "The Ashen count their fallen, and find them present. " +
+                      "The dead march because the cold permits nothing else.";
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"The Dead March — {flavour} " +
+                    $"[{garrisonsBoosted} garrison{(garrisonsBoosted != 1 ? "s" : "")} and " +
+                    $"{armiesBoosted} arm{(armiesBoosted != 1 ? "ies" : "y")} reinforced with risen dead.]"));
+            }
+            catch { }
+        }
+
+        // Walks a culture's elite troop upgrade chain and returns the first troop
+        // that reaches targetTier. Falls back to the highest reachable troop if the
+        // chain is shorter than targetTier.
+        private static CharacterObject GetTroopAtTier(CultureObject culture, int targetTier)
+        {
+            if (culture == null) return null;
+            try
+            {
+                var troop = culture.EliteBasicTroop ?? culture.BasicTroop;
+                if (troop == null) return null;
+                for (int i = 0; i < 10; i++)
+                {
+                    if (troop.Tier >= targetTier) return troop;
+                    if (troop.UpgradeTargets == null || troop.UpgradeTargets.Length == 0) break;
+                    troop = troop.UpgradeTargets[0];
+                }
+                return troop;
+            }
+            catch { return null; }
+        }
+
         // Spawns a looter party of `troopCount` near `anchorPos` using the
         // same hideout-safe pattern as SpawnAshenSpawnParty.
         private static MobileParty SpawnLooterParty(Vec2 anchorPos, int troopCount)
@@ -2976,6 +3110,11 @@ namespace AshAndEmber
             int gambitFired = _ashenGambitFired ? 1 : 0;
             store.SyncData("LDM_AshenGambitFired", ref gambitFired);
             _ashenGambitFired = gambitFired != 0;
+
+            int deadMarchFirst = _deadMarchFirstFired ? 1 : 0;
+            store.SyncData("LDM_DeadMarchFirst",   ref deadMarchFirst);
+            _deadMarchFirstFired = deadMarchFirst != 0;
+            store.SyncData("LDM_DeadMarchLastDay", ref _deadMarchLastFiredDay);
 
             store.SyncData("LDM_CampaignStartDay",    ref _campaignStartDay);
             store.SyncData("LDM_LastEventDay",       ref _lastEventElapsedDay);
