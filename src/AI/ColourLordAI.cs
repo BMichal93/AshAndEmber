@@ -120,6 +120,13 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
 
+            if (!SpellEffects.HasFreeHand(agent))
+            {
+                SpellEffects.TryFreeHandForCast(agent);
+                _cooldowns[hero.StringId] = 1.0f; // wait for sheath animation, then retry
+                return;
+            }
+
             bool isAshen = ColourLordRegistry.IsAshenLord(hero);
 
             var enemies = SpellEffects.EnemiesOf(agent);

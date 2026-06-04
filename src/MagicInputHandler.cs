@@ -249,6 +249,12 @@ namespace AshAndEmber
                 return;
             }
 
+            if (Agent.Main != null && !SpellEffects.HasFreeHand(Agent.Main))
+            {
+                Fizzle("Both hands are full. Free a hand to shape the fire.");
+                return;
+            }
+
             bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
             bool success = SpellBuilder.Execute(cast, inMission);
 

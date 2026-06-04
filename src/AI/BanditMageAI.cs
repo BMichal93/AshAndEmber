@@ -171,6 +171,13 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
 
+            if (!SpellEffects.HasFreeHand(mage))
+            {
+                SpellEffects.TryFreeHandForCast(mage);
+                _cooldowns[mage] = 1.0f; // wait for sheath animation, then retry
+                return;
+            }
+
             var enemies = SpellEffects.EnemiesOf(mage);
             if (enemies.Count == 0) return;
 

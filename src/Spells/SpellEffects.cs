@@ -93,6 +93,54 @@ namespace AshAndEmber
 
         public static bool ProtectedByMirror(Agent a) => false;
 
+        // Returns true when the agent has at least one hand that isn't occupied.
+        // Off-hand empty + two-handed main weapon → both hands tied, returns false.
+        public static bool HasFreeHand(Agent agent)
+        {
+            try
+            {
+                EquipmentIndex mainIdx = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
+                EquipmentIndex offIdx  = agent.GetWieldedItemIndex(Agent.HandIndex.OffHand);
+
+                if (mainIdx == EquipmentIndex.None) return true;  // main hand empty
+                if (offIdx  != EquipmentIndex.None) return false; // both hands occupied
+
+                // Off-hand empty — blocked only if the main-hand weapon is two-handed
+                EquipmentElement mainWeapon = agent.Equipment[mainIdx];
+                if (!mainWeapon.IsEmpty && (mainWeapon.Item?.PrimaryWeapon?.IsTwoHanded ?? false))
+                    return false;
+
+                return true;
+            }
+            catch { return true; }
+        }
+
+        // Sheathes the blocking item so the agent has a free hand for spellcasting.
+        // The NPC cast windup (0.7 s) gives the sheath animation time to complete.
+        // Returns true immediately — the hand will be free by the time the spell fires.
+        public static void TryFreeHandForCast(Agent agent)
+        {
+            try
+            {
+                if (HasFreeHand(agent)) return;
+
+                EquipmentIndex mainIdx = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
+                EquipmentIndex offIdx  = agent.GetWieldedItemIndex(Agent.HandIndex.OffHand);
+
+                if (offIdx != EquipmentIndex.None)
+                {
+                    // Sheathe the off-hand item (typically a shield)
+                    agent.TryToSheathWeaponInHand(Agent.HandIndex.OffHand, Agent.WeaponWieldActionType.WithAnimation);
+                }
+                else if (mainIdx != EquipmentIndex.None)
+                {
+                    // Must be a two-handed weapon — sheathe main hand
+                    agent.TryToSheathWeaponInHand(Agent.HandIndex.MainHand, Agent.WeaponWieldActionType.WithAnimation);
+                }
+            }
+            catch { }
+        }
+
         private static readonly Dictionary<string, string> _toggleComboToId
             = new Dictionary<string, string>();
 
