@@ -18,7 +18,7 @@ namespace AshAndEmber
 {
     internal sealed class AshenDiplomacyModel : DefaultDiplomacyModel
     {
-        private const float MinWarDays = 150f; // ~5 in-game months before peace is possible
+        private const float MinWarDays = 60f; // ~2 in-game months before peace is possible
 
         private static bool IsAshenFaction(IFaction f) => AshenCitySystem.IsAshenFaction(f);
 
