@@ -226,12 +226,6 @@ namespace AshAndEmber
             }
             catch { }
 
-            if (Agent.Main != null && !SpellEffects.HasFreeHand(Agent.Main))
-            {
-                Fizzle("Both hands are full. Free a hand to shape the fire.");
-                return;
-            }
-
             if (IsInTournament())
             {
                 InformationManager.DisplayMessage(new InformationMessage(
@@ -256,6 +250,20 @@ namespace AshAndEmber
             }
 
             bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
+
+            if (Agent.Main != null && !SpellEffects.HasFreeHand(Agent.Main))
+            {
+                SpellEffects.TryFreeHandForCast(Agent.Main);
+                SpellEffects.QueueNpcCastWithWindup(Agent.Main,
+                    () => FirePlayerCast(cast, hasBattleMage, inMission));
+                return;
+            }
+
+            FirePlayerCast(cast, hasBattleMage, inMission);
+        }
+
+        private static void FirePlayerCast(SpellCast cast, bool hasBattleMage, bool inMission)
+        {
             bool success = SpellBuilder.Execute(cast, inMission);
 
             if (success)
