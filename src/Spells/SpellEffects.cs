@@ -98,8 +98,7 @@ namespace AshAndEmber
         {
             try
             {
-                return agent.GetWieldedItemIndex(Agent.HandIndex.MainHand) == EquipmentIndex.None
-                    && agent.GetWieldedItemIndex(Agent.HandIndex.OffHand)  == EquipmentIndex.None;
+                return agent.WieldedWeapon.IsEmpty && agent.WieldedOffhandWeapon.IsEmpty;
             }
             catch { return true; }
         }
@@ -113,15 +112,12 @@ namespace AshAndEmber
             {
                 if (HasFreeHand(agent)) return;
 
-                EquipmentIndex mainIdx = agent.GetWieldedItemIndex(Agent.HandIndex.MainHand);
-                EquipmentIndex offIdx  = agent.GetWieldedItemIndex(Agent.HandIndex.OffHand);
-
-                if (offIdx != EquipmentIndex.None)
+                if (!agent.WieldedOffhandWeapon.IsEmpty)
                 {
                     // Sheathe the off-hand item (typically a shield)
                     agent.TryToSheathWeaponInHand(Agent.HandIndex.OffHand, Agent.WeaponWieldActionType.WithAnimation);
                 }
-                else if (mainIdx != EquipmentIndex.None)
+                else if (!agent.WieldedWeapon.IsEmpty)
                 {
                     // Must be a two-handed weapon — sheathe main hand
                     agent.TryToSheathWeaponInHand(Agent.HandIndex.MainHand, Agent.WeaponWieldActionType.WithAnimation);
