@@ -162,7 +162,7 @@ Different form types may be mixed freely before Break — all fire simultaneousl
 
 The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Damage ×2.
 
-**Free hand required.** You cannot cast while a weapon is in your main hand. Sheathe your weapon first (**X** on keyboard, or the sheathe button on gamepad). Holding a shield alone in your off-hand does not block casting — the fire only needs your dominant hand free.
+**Free hand required.** You cannot cast while wielding anything — weapon or shield. Sheathe everything first (**X** on keyboard, or the sheathe button on gamepad). Both hands must be empty.
 
 ---
 
@@ -734,7 +734,7 @@ Output: `src\bin\Debug\AshAndEmber.dll`. The build copies it to the Modules fold
 You do not carry the Gift. Start a new campaign and accept the prompt.
 
 **"Both hands are full. Free a hand to shape the fire."**  
-You have a weapon in your main hand. Press **X** to sheathe it, then cast. A shield alone in your off-hand is fine.
+You are wielding a weapon or shield. Press **X** to sheathe everything, then cast.
 
 **Spells fire but nothing happens**  
 You may be in a tournament (casting kills you), in a prisoner state, or you mixed form keys incorrectly.

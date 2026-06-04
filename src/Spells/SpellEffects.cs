@@ -93,13 +93,13 @@ namespace AshAndEmber
 
         public static bool ProtectedByMirror(Agent a) => false;
 
-        // Returns true when the main hand is empty (nothing wielded).
-        // A shield alone in the off-hand is not blocking — the casting hand is free.
+        // Returns true only when both hands are empty (nothing wielded).
         public static bool HasFreeHand(Agent agent)
         {
             try
             {
-                return agent.GetWieldedItemIndex(Agent.HandIndex.MainHand) == EquipmentIndex.None;
+                return agent.GetWieldedItemIndex(Agent.HandIndex.MainHand) == EquipmentIndex.None
+                    && agent.GetWieldedItemIndex(Agent.HandIndex.OffHand)  == EquipmentIndex.None;
             }
             catch { return true; }
         }
