@@ -648,7 +648,7 @@ namespace AshAndEmber
         {
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "★  A Mother's Plea",
-                "A woman in rough-spun wool steps into your path as you ride out. She carries a small child — by a single look you can see it is burning with fever. She has heard what you carry inside you. She cries and offers nothing but her prayers.",
+                "A woman in rough-spun wool steps into your path as you ride out. She carries a small child — you can see at a glance it is burning with fever. She has heard what you carry inside you. She weeps and offers nothing but her prayers.",
                 new List<InquiryElement>
                 {
                     new InquiryElement("a", "Extend the inner fire to the child.", null, true,
@@ -1551,7 +1551,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("She tells you the north fork smells wrong — ash-cold, she says. You have no reason to trust this and three good reasons not to. You take the south fork anyway. Nothing happens. That is the best possible outcome.", DimColor);
+                            Msg("She tells you the north fork smells wrong — ash-cold, she says. You have no reason to trust this, and several good reasons not to. You take the south fork anyway. Nothing happens. That is the best possible outcome.", DimColor);
                             break;
                         case "b":
                             ChangeGold(-200);
@@ -1603,7 +1603,7 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, 1);
-                            Msg("The headman blinks. You explain — it is a heavy thing to carry, a name like yours; the child might prefer the freedom of their own history. The headman nods slowly. You think he was secretly hoping you would say exactly that.", GoodColor);
+                            Msg("The headman blinks. You explain — a name as weighted as yours is a heavy thing to carry; the child might prefer the freedom of their own history. The headman nods slowly. You think he was secretly hoping you would say exactly that.", GoodColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -5180,8 +5180,8 @@ namespace AshAndEmber
                         "Three days and whatever comes of it comes without your involvement."),
                     new InquiryElement("b", $"Ride hard and warn {kB.Name}. ({(int)(scoutChance * 100)}% Scouting, then Charm)", null, true,
                         scoutHint),
-                    new InquiryElement("c", $"Send quiet word to one of {kB.Name}'s lords as you leave.", null, true,
-                        "Not a full warning — enough to unsettle one man, unlikely to stop what is already in motion."),
+                    new InquiryElement("c", $"Get word to {kA.Name} — their secret is worth something to them.", null, true,
+                        "They pay for your silence. The plot proceeds. +1,500 gold, +10 with their leader."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -5235,18 +5235,17 @@ namespace AshAndEmber
 
                         case "c":
                         {
+                            // Sell the information back to Kingdom A — plot proceeds, player profits
                             _brokenSealCountdown = 3;
-                            var lordsB = Hero.AllAliveHeroes
-                                .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner
-                                         && h != Hero.MainHero && h.MapFaction == kB)
-                                .ToList();
-                            if (lordsB.Count > 0)
+                            ChangeGold(1500);
+                            Msg("(+1,500 gold)", GoldColor);
+                            Hero leaderA = kA.Leader;
+                            if (leaderA != null && leaderA != Hero.MainHero)
                             {
-                                Hero lord = lordsB[_rng.Next(lordsB.Count)];
-                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 2, false);
-                                Msg($"(Relation with {lord.Name}: +2)", GoodColor);
+                                ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leaderA, 10, false);
+                                Msg($"(Relation with {leaderA.Name}: +10)", GoodColor);
                             }
-                            Msg($"You find one of {kB.Name}'s lords before you ride out and tell them enough to make them uneasy — not everything, not the letter, but enough. Whether they act on it is their business. It probably will not be enough to stop what is already in motion.", DimColor);
+                            Msg($"You find a way to reach {kA.Name}'s people — not with the letter, but with the fact of it: someone nearly broke the seal and you are not that someone. They understand the value of that. The coin arrives quickly and without ceremony. The plan proceeds. {kB.Name} will have no warning.", GoldColor);
                             break;
                         }
                     }
@@ -5448,7 +5447,7 @@ namespace AshAndEmber
                         null, true,
                         $"Force the issue. Gain Calculating -1. -20 with Temple lords. -5 with 3 Empire lords. {combatHint}"),
                     new InquiryElement("d",
-                        "Offer your assistance to the soldiers. They may be Ashen servants.",
+                        $"Offer your assistance to the soldiers. The {target} may be Ashen servants.",
                         null, true,
                         "Fall in beside them. Gain Calculating -1. -10 with a local lord. +10 with Temple lords. Gain 1000 gold."),
                     new InquiryElement("e",

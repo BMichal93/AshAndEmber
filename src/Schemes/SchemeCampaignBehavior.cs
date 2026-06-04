@@ -30,6 +30,7 @@ namespace AshAndEmber
     public class SchemeCampaignBehavior : CampaignBehaviorBase
     {
         private static SchemeDefinition _selectedDef;
+        private static Kingdom          _selectedKingdom;
 
         public override void RegisterEvents()
         {
@@ -187,9 +188,9 @@ namespace AshAndEmber
                             args =>
                             {
                                 if ((Hero.MainHero?.Gold ?? 0) < captured.GoldCost) return;
-                                _selectedDef = captured;
-                                if (captured.NeedsLord) OpenLordTargetUI();
-                                else                    OpenSettlementTargetUI();
+                                _selectedDef     = captured;
+                                _selectedKingdom = null;
+                                OpenFactionFilterUI();
                             });
                     }
                     catch { }
@@ -221,6 +222,78 @@ namespace AshAndEmber
             try { SchemeSystem.NpcSchemeTick(); } catch { }
         }
 
+        // ── Faction filter ────────────────────────────────────────────────────
+        // Step inserted between scheme selection and target selection.
+        // Viper's Counsel skips this step — it always targets the player's own kingdom.
+        internal static void OpenFactionFilterUI()
+        {
+            try
+            {
+                if (_selectedDef == null) return;
+
+                // Viper's Counsel: always targets own kingdom — skip faction step
+                if (_selectedDef.Type == SchemeType.VipersCounsel)
+                {
+                    _selectedKingdom = null;
+                    OpenLordTargetUI();
+                    return;
+                }
+
+                bool needsLord = _selectedDef.NeedsLord;
+
+                // Collect factions that have at least one valid target for this scheme type
+                var factions = Kingdom.All
+                    .Where(k => !k.IsEliminated && k.StringId != "ashen_kingdom"
+                             && (needsLord
+                                 ? k.Heroes.Any(h => h.IsLord && h.IsAlive && !h.IsChild
+                                                  && !h.IsPrisoner && h != Hero.MainHero)
+                                 : Settlement.All.Any(s => (s.IsTown || s.IsCastle)
+                                                        && s.OwnerClan?.Kingdom == k)))
+                    .OrderBy(k => k.Name?.ToString() ?? "")
+                    .ToList();
+
+                if (factions.Count == 0)
+                {
+                    MBInformationManager.AddQuickInformation(new TextObject("No valid factions to scheme against."));
+                    return;
+                }
+
+                var elements = factions.Select(k =>
+                {
+                    int count = needsLord
+                        ? k.Heroes.Count(h => h.IsLord && h.IsAlive && !h.IsChild
+                                           && !h.IsPrisoner && h != Hero.MainHero)
+                        : Settlement.All.Count(s => (s.IsTown || s.IsCastle) && s.OwnerClan?.Kingdom == k);
+                    string hint = needsLord
+                        ? $"{count} lord{(count != 1 ? "s" : "")} available"
+                        : $"{count} settlement{(count != 1 ? "s" : "")} available";
+                    return new InquiryElement(k.StringId, k.Name?.ToString() ?? "?", null, true, hint);
+                }).ToList();
+
+                MBInformationManager.ShowMultiSelectionInquiry(
+                    new MultiSelectionInquiryData(
+                        $"Choose Faction — {_selectedDef.Name}",
+                        "Select the faction to scheme against:",
+                        elements, true, 1, 1,
+                        "Select", "Back",
+                        chosen =>
+                        {
+                            try
+                            {
+                                if (chosen == null || chosen.Count == 0) return;
+                                string kid = chosen[0].Identifier as string;
+                                _selectedKingdom = Kingdom.All.FirstOrDefault(k => k.StringId == kid);
+                                if (_selectedKingdom == null) return;
+                                if (needsLord) OpenLordTargetUI();
+                                else           OpenSettlementTargetUI();
+                            }
+                            catch { }
+                        }, null),
+                    true);
+            }
+            catch { }
+        }
+
         // ── Target selection: lords ───────────────────────────────────────────
         internal static void OpenLordTargetUI()
         {
@@ -236,10 +309,13 @@ namespace AshAndEmber
                     return;
                 }
 
+                // Filter to the selected faction (or own kingdom for Viper's Counsel)
+                Kingdom factionFilter = isVipers ? playerKingdom : _selectedKingdom;
+
                 var lords = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && !h.IsChild
                              && h != Hero.MainHero
-                             && (!isVipers || (h.Clan?.Kingdom != null && h.Clan.Kingdom == playerKingdom)))
+                             && (factionFilter == null || h.Clan?.Kingdom == factionFilter))
                     .OrderBy(h => h.Clan?.Kingdom?.Name?.ToString() ?? "")
                     .ThenBy(h => h.Name?.ToString() ?? "")
                     .Take(60)
@@ -249,7 +325,7 @@ namespace AshAndEmber
                 {
                     MBInformationManager.AddQuickInformation(new TextObject(isVipers
                         ? "No rival lords found within your kingdom."
-                        : "No valid lord targets found."));
+                        : $"No valid lord targets found in {_selectedKingdom?.Name?.ToString() ?? "that faction"}."));
                     return;
                 }
 
@@ -260,20 +336,23 @@ namespace AshAndEmber
                     int   infCost = SchemeSystem.ComputeInfluenceCost(_selectedDef, h, null);
                     bool  blk     = SchemeSystem.IsHardBlocked(_selectedDef.Type, h, null);
                     bool  cd      = SchemeSystem.IsOnCooldown(_selectedDef.Type, h, null);
-                    string label = $"{h.Name}  [{h.Clan?.Name} / {h.Clan?.Kingdom?.Name?.ToString() ?? "landless"}]"
+                    string label = $"{h.Name}  [{h.Clan?.Name}]"
                                  + (blk ? "  [BLOCKED]" : "");
                     string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g / {infCost} inf  |  Tier: {h.Clan?.Tier ?? 0}"
                                  + (cd ? "  [5× repeat penalty]" : "");
                     return new InquiryElement(h.StringId, label, null, !blk, hint);
                 }).ToList();
 
+                string factionLabel = isVipers
+                    ? playerKingdom?.Name?.ToString() ?? "your kingdom"
+                    : _selectedKingdom?.Name?.ToString() ?? "selected faction";
                 string selectMsg = isVipers
-                    ? "Select a lord from your kingdom to undermine in the king's eyes:"
-                    : "Select the lord to target:";
+                    ? $"Select a lord from {factionLabel} to undermine in the king's eyes:"
+                    : $"Select the lord to target in {factionLabel}:";
 
                 MBInformationManager.ShowMultiSelectionInquiry(
                     new MultiSelectionInquiryData(
-                        $"Target — {_selectedDef.Name}",
+                        $"Target — {_selectedDef.Name}  ({factionLabel})",
                         selectMsg,
                         elements, true, 1, 1,
                         "Confirm", "Back",
@@ -301,16 +380,19 @@ namespace AshAndEmber
         {
             try
             {
+                string factionLabel = _selectedKingdom?.Name?.ToString() ?? "selected faction";
+
                 var settlements = Settlement.All
-                    .Where(s => s.IsTown || s.IsCastle)
-                    .OrderBy(s => s.OwnerClan?.Kingdom?.Name?.ToString() ?? "")
-                    .ThenBy(s => s.Name?.ToString() ?? "")
+                    .Where(s => (s.IsTown || s.IsCastle)
+                             && (_selectedKingdom == null || s.OwnerClan?.Kingdom == _selectedKingdom))
+                    .OrderBy(s => s.Name?.ToString() ?? "")
                     .Take(60)
                     .ToList();
 
                 if (settlements.Count == 0)
                 {
-                    MBInformationManager.AddQuickInformation(new TextObject("No valid settlement targets found."));
+                    MBInformationManager.AddQuickInformation(
+                        new TextObject($"No valid settlement targets found in {factionLabel}."));
                     return;
                 }
 
@@ -320,7 +402,7 @@ namespace AshAndEmber
                     int   cost    = SchemeSystem.ComputeGoldCost(_selectedDef, null, s);
                     int   infCost = SchemeSystem.ComputeInfluenceCost(_selectedDef, null, s);
                     bool  cd      = SchemeSystem.IsOnCooldown(_selectedDef.Type, null, s);
-                    string label = $"{s.Name}  [{s.OwnerClan?.Name?.ToString() ?? "?"} / {s.OwnerClan?.Kingdom?.Name?.ToString() ?? "?"}]  "
+                    string label = $"{s.Name}  [{s.OwnerClan?.Name?.ToString() ?? "?"}]  "
                                  + $"Security: {(int)(s.Town?.Security ?? 0)}";
                     string hint  = $"Success: {(int)(ch * 100)}%  |  Cost: {cost}g / {infCost} inf"
                                  + (cd ? "  [5× repeat penalty]" : "");
@@ -329,8 +411,8 @@ namespace AshAndEmber
 
                 MBInformationManager.ShowMultiSelectionInquiry(
                     new MultiSelectionInquiryData(
-                        $"Target — {_selectedDef.Name}",
-                        "Select the settlement to target:",
+                        $"Target — {_selectedDef.Name}  ({factionLabel})",
+                        $"Select the settlement to target in {factionLabel}:",
                         elements, true, 1, 1,
                         "Confirm", "Back",
                         OnSettlementTargetChosen, null),

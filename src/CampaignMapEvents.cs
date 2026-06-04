@@ -426,9 +426,9 @@ namespace AshAndEmber
 
                 if (totalWounded > 0 || spawned > 0)
                     MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Ashen Plague — a grey sickness takes the garrison of {target.Name}. " +
-                        $"{totalWounded} soldier{(totalWounded != 1 ? "s" : "")} fall to their wounds." +
-                        (spawned > 0 ? $" {spawned} Ashen Spawn rise from the dying." : "")));
+                        $"Ashen Plague — a grey sickness sweeps through the garrison of {target.Name}. " +
+                        $"{totalWounded} soldier{(totalWounded != 1 ? "s" : "")} are struck down by fever and ash." +
+                        (spawned > 0 ? $" {spawned} Ashen Spawn close on the afflicted settlement." : "")));
             }
             catch { }
         }
@@ -825,7 +825,7 @@ namespace AshAndEmber
                                 MBInformationManager.AddQuickInformation(new TextObject(
                                     $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive the feast. " +
                                     $"You were part of it. {expelledName} fled before dawn — grateful, and gone. " +
-                                    $"What remains of {oldRulerName} knows a blade when they see the hand that held it."));
+                                    $"{oldRulerName} will know who held the blade."));
                             }
                             catch { }
                         },
@@ -944,7 +944,7 @@ namespace AshAndEmber
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Iron Winter (Ashen Altar) — the cold the altar called has descended on {kingdom.Name}. " +
+                    $"Iron Winter (Ashen Altar) — the cold called by the altar has descended on {kingdom.Name}. " +
                     $"{villages} village{(villages != 1 ? "s" : "")} cannot keep their fires lit. " +
                     $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} halved their stores."));
             }
@@ -979,7 +979,7 @@ namespace AshAndEmber
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Scorching Sun (Ashen Altar) — the heat the altar called is burning {kingdom.Name}. " +
+                    $"Scorching Sun (Ashen Altar) — the heat called by the altar burns {kingdom.Name}. " +
                     $"The wells in {villages} village{(villages != 1 ? "s" : "")} are low or dry. " +
                     $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} rationed their stores."));
             }
@@ -1348,7 +1348,7 @@ namespace AshAndEmber
                         $"Tyranny — {tyrantName} of {kingdomName} called their great lords to feast " +
                         $"and did not let them leave. {exList2} — dead before dawn. " +
                         $"{defectorName} read the invitation and chose the road instead. " +
-                        $"The throne room is emptier now. So is the treasury of those who held it."));
+                        $"The throne room is emptier now. The ruling clan's influence is the price of what happened here."));
                 }
             }
             catch { }
@@ -1926,12 +1926,12 @@ namespace AshAndEmber
                 string body =
                     $"A preacher climbed the steps of the great hall in {cityName} and spoke of fire — " +
                     $"a flame that lives in us all and the cold that walks south to extinguish it.\n\n" +
-                    $"He said the kingdoms argued policy while the Ashen marches restlessly. " +
+                    $"He said the kingdoms argue policy while the Ashen march goes unanswered. " +
                     $"He said that we must stand against them as one, or perish.\n\n" +
                     $"{clanName} listened. Then they left their old banners behind.{secondLine} " +
                     $"They have raised a new standard: The Temple. " +
                     $"Their only declared war is with the Ashen. " +
-                    $"It will not end until one side has run out of ground to stand on.{warningLine}";
+                    $"It will not end until one side has no ground left to stand on.{warningLine}";
 
                 InformationManager.ShowInquiry(new InquiryData(
                     "The Temple Rises",
