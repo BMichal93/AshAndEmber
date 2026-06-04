@@ -74,10 +74,13 @@ namespace AshAndEmber
             }
 
             int affected = 0;
+            int alliesHit = 0;
             foreach (Agent a in targets)
             {
                 try
                 {
+                    if (cast.DamageCount > 0 && casterTeam != null && a.Team != null && a.Team == casterTeam)
+                        alliesHit++;
                     ApplyEffectsToAgent(a, cast, caster);
                     SpawnImpactBurst(a.Position, glowColor, 5f);
                     affected++;
@@ -90,6 +93,10 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{cast.FormSummary()} — {cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
                     ColorSchoolData.GetMessageColor(glowColor)));
+                if (alliesHit > 0)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Friendly fire — {alliesHit} {(alliesHit == 1 ? "ally" : "allies")} hit!",
+                        new Color(1f, 0.35f, 0.1f)));
             }
             else
             {
