@@ -1,6 +1,7 @@
 # Build outputs
 src/bin/
 src/obj/
+dist/
 
 # Visual Studio
 .vs/
