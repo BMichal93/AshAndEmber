@@ -249,21 +249,13 @@ namespace AshAndEmber
                 return;
             }
 
-            bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
-
             if (Agent.Main != null && !SpellEffects.HasFreeHand(Agent.Main))
             {
-                SpellEffects.TryFreeHandForCast(Agent.Main);
-                SpellEffects.QueueNpcCastWithWindup(Agent.Main,
-                    () => FirePlayerCast(cast, hasBattleMage, inMission));
+                Fizzle("Both hands are full. Free a hand to shape the fire.");
                 return;
             }
 
-            FirePlayerCast(cast, hasBattleMage, inMission);
-        }
-
-        private static void FirePlayerCast(SpellCast cast, bool hasBattleMage, bool inMission)
-        {
+            bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
             bool success = SpellBuilder.Execute(cast, inMission);
 
             if (success)
