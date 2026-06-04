@@ -72,11 +72,10 @@ namespace AshAndEmber
                 Power        = token,
                 CasterTeam   = casterTeam
             };
-            node.LightEntity = SpawnAreaLight(node.Position, cast.VisualColor, 12f);
-            // Column of fire lights visible immediately when the barrier goes up
-            SpawnTempLight(pos,                          cast.VisualColor, 10f, 6f);
-            SpawnTempLight(pos + new Vec3(0f, 0f, 1f),  cast.VisualColor, 10f, 6f);
-            SpawnTempLight(pos + new Vec3(0f, 0f, 2f),  cast.VisualColor, 10f, 6f);
+            // Persistent column of three lights — stay lit for the entire barrier lifetime.
+            node.LightEntity  = SpawnAreaLight(pos,                          cast.VisualColor, 12f);
+            node.LightEntity2 = SpawnAreaLight(pos + new Vec3(0f, 0f, 1f),  cast.VisualColor, 10f);
+            node.LightEntity3 = SpawnAreaLight(pos + new Vec3(0f, 0f, 2f),  cast.VisualColor, 10f);
             if (cast.VisualColor != ColorSchool.Ashen)
             {
                 SpawnTempFireParticle(pos,                          6f);
