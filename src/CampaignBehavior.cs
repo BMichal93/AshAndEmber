@@ -898,6 +898,7 @@ namespace AshAndEmber
             try { SettlementEncounters.Save(dataStore); } catch { }
             try { DragonQuestSystem.Save(dataStore); } catch { }
             try { BurningLabQuestSystem.Save(dataStore); } catch { }
+            try { AgingSystem.Save(dataStore); } catch { }
         }
     }
 }

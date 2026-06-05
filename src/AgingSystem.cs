@@ -6,6 +6,7 @@
 // =============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
@@ -18,6 +19,10 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
         private static bool _pendingAshenDecision = false;
+
+        // Tracks which aging milestones the player has already received (ages 50/60/70/80/90).
+        // Persisted so reloading doesn't re-fire a milestone the player already got.
+        private static readonly HashSet<int> _milestonesTriggered = new HashSet<int>();
 
         // ── Core aging ────────────────────────────────────────────────────────
 
@@ -41,6 +46,9 @@ namespace AshAndEmber
                         new Color(0.7f, 0.5f, 0.3f)));
 
                 CheckAgeLimit(hero);
+
+                if (hero == Hero.MainHero)
+                    try { CheckAgingMilestone(hero); } catch { }
             }
             catch { }
         }
@@ -166,6 +174,150 @@ namespace AshAndEmber
                     CheckAgeLimit(Hero.MainHero);
             }
             catch { }
+        }
+
+        // ── Aging milestones ──────────────────────────────────────────────────
+
+        private static readonly int[] _milestoneAges = { 50, 60, 70, 80, 90 };
+
+        private static void CheckAgingMilestone(Hero hero)
+        {
+            int age = (int)hero.Age;
+            foreach (int milestone in _milestoneAges)
+            {
+                if (age >= milestone && _milestonesTriggered.Add(milestone))
+                {
+                    ApplyMilestoneBoon(milestone);
+                    ShowMilestoneEvent(milestone);
+                }
+            }
+        }
+
+        private static void ApplyMilestoneBoon(int milestone)
+        {
+            try
+            {
+                switch (milestone)
+                {
+                    case 50:
+                        if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 75f;
+                        break;
+
+                    case 60:
+                        foreach (var h in Hero.AllAliveHeroes
+                            .Where(h => h.IsAlive && ColourLordRegistry.IsColourLord(h)).ToList())
+                        {
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, h, 2); } catch { }
+                        }
+                        break;
+
+                    case 70:
+                        if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 150f;
+                        try
+                        {
+                            var party70 = Hero.MainHero?.PartyBelongedTo;
+                            if (party70 != null) party70.RecentEventsMorale += 30f;
+                        }
+                        catch { }
+                        break;
+
+                    case 80:
+                        try
+                        {
+                            var roster = Hero.MainHero?.PartyBelongedTo?.MemberRoster;
+                            if (roster != null)
+                            {
+                                foreach (var element in roster.GetTroopRoster().ToList())
+                                {
+                                    if (element.WoundedNumber > 0)
+                                        roster.AddToCounts(element.Character, 0, false, -element.WoundedNumber);
+                                }
+                            }
+                        }
+                        catch { }
+                        break;
+
+                    case 90:
+                        if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 300f;
+                        break;
+                }
+            }
+            catch { }
+        }
+
+        private static void ShowMilestoneEvent(int milestone)
+        {
+            try
+            {
+                string title, body, boon;
+                switch (milestone)
+                {
+                    case 50:
+                        title = "Fifty Years";
+                        body  = "Most who carry the fire never see this birthday. You have. The world has noticed.";
+                        boon  = "+75 renown";
+                        break;
+                    case 60:
+                        title = "Sixty Years";
+                        body  = "There are mages who were children when you first cast. They know your name now — as a warning, or an ideal.";
+                        boon  = "+2 relations with all mage lords";
+                        break;
+                    case 70:
+                        title = "Seventy Years";
+                        body  = "The fire is not burning you alive. It is burning you clear. Your soldiers feel it — something steadier than courage.";
+                        boon  = "+150 renown, party morale +30";
+                        break;
+                    case 80:
+                        title = "Eighty Years";
+                        body  = "You are not living longer. You are burning slower. The wounded at your side rise — the fire lends them what it will not spend on you.";
+                        boon  = "All wounded troops healed";
+                        break;
+                    case 90:
+                        title = "Ninety Years";
+                        body  = "Ten years to the limit. Whatever you have left to do, the fire will remember it long after you are done.";
+                        boon  = "+300 renown";
+                        break;
+                    default:
+                        return;
+                }
+
+                if (MageKnowledge._deferredInquiry == null)
+                {
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        try
+                        {
+                            InformationManager.ShowInquiry(new InquiryData(
+                                title,
+                                $"{body}\n\n{boon}.",
+                                true, false,
+                                "The fire endures.",
+                                null,
+                                () => { }, null));
+                        }
+                        catch { }
+                    };
+                }
+            }
+            catch { }
+        }
+
+        // ── Persistence ───────────────────────────────────────────────────────
+
+        public static void Save(IDataStore store)
+        {
+            var list = _milestonesTriggered.ToList();
+            store.SyncData("AG_Milestones", ref list);
+            if (list != null)
+            {
+                _milestonesTriggered.Clear();
+                foreach (var m in list) _milestonesTriggered.Add(m);
+            }
+        }
+
+        public static void ResetForNewGame()
+        {
+            _milestonesTriggered.Clear();
         }
     }
 }

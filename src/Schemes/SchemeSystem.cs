@@ -213,6 +213,12 @@ namespace AshAndEmber
         // Toggled via Ctrl+Shift+F10 on the campaign map.
         internal static bool DebugFree = false;
 
+        // ── Retaliation window ────────────────────────────────────────────────
+        // When a scheme resolves against the player, open a 1-day window where
+        // all player-queued schemes cost 50% less (gold and influence).
+        private static int _retaliationDays = 0;
+        internal static bool PlayerRetaliationActive => _retaliationDays > 0;
+
         // ── Public API ────────────────────────────────────────────────────────
         internal static void Initialize()
         {
@@ -221,11 +227,32 @@ namespace AshAndEmber
             _npcCooldowns.Clear();
             _targetCooldowns.Clear();
             _playerCooldownKeys.Clear();
+            _retaliationDays = 0;
         }
 
         /// Returns true if the player already has a scheme pending execution.
         internal static bool PlayerHasPendingScheme()
             => _pending.Any(p => p.IsPlayer);
+
+        /// Returns one NPC scheme currently targeting the player (picked at random if multiple).
+        internal static bool TryGetSchemeAgainstPlayer(out Hero instigator, out SchemeType type)
+        {
+            instigator = null; type = SchemeType.Assassinate;
+            var against = _pending.Where(p => !p.IsPlayer && p.TargetHeroId == Hero.MainHero?.StringId).ToList();
+            if (against.Count == 0) return false;
+            var s = against[_rng.Next(against.Count)];
+            instigator = FindHero(s.InstigatorId);
+            type = s.Type;
+            return true;
+        }
+
+        /// Cancels all NPC schemes against the player launched by the given instigator.
+        internal static void CancelSchemesFromInstigator(Hero instigator)
+        {
+            _pending.RemoveAll(p => !p.IsPlayer
+                && p.TargetHeroId == Hero.MainHero?.StringId
+                && p.InstigatorId == instigator?.StringId);
+        }
 
         // Cooldown key for a given scheme+target combination.
         private static string CooldownKey(SchemeType type, string targetId)
@@ -289,6 +316,13 @@ namespace AshAndEmber
             int effectiveGold = ComputeGoldCost(def, targetHero, targetSettlement);
             int effectiveInf  = ComputeInfluenceCost(def, targetHero, targetSettlement);
 
+            // Retaliation window: player schemes cost 50% less for 1 day after an NPC scheme resolves against them
+            if (isPlayer && _retaliationDays > 0)
+            {
+                effectiveGold = effectiveGold / 2;
+                effectiveInf  = effectiveInf  / 2;
+            }
+
             if (!isPlayer || !DebugFree)
             {
                 if (instigator.Gold < effectiveGold) return false;
@@ -337,6 +371,8 @@ namespace AshAndEmber
                         try { NotifyCooldownExpired(key); } catch { }
                 }
             }
+
+            if (_retaliationDays > 0) _retaliationDays--;
 
             for (int i = _pending.Count - 1; i >= 0; i--)
             {
@@ -543,6 +579,23 @@ namespace AshAndEmber
 
             if (ok) ApplySuccess(s, instigator, targetHero, targetSett);
             else    ApplyFailure(s, instigator, targetHero, targetSett);
+
+            // If this was an NPC scheme that resolved against the player, open a 1-day retaliation window.
+            if (!s.IsPlayer)
+            {
+                bool hitPlayer = targetHero == Hero.MainHero
+                              || (targetSett?.OwnerClan != null && targetSett.OwnerClan == Hero.MainHero?.Clan);
+                if (hitPlayer)
+                {
+                    _retaliationDays = 1;
+                    try
+                    {
+                        MBInformationManager.AddQuickInformation(
+                            new TextObject("The fire answers. For the next day, all your schemes cost half their price."));
+                    }
+                    catch { }
+                }
+            }
         }
 
         // ── Success effects ───────────────────────────────────────────────────
@@ -1080,6 +1133,8 @@ namespace AshAndEmber
                 _playerCooldownKeys.Clear();
                 foreach (var k in pckList) _playerCooldownKeys.Add(k);
             }
+
+            store.SyncData("SCH_RetDays", ref _retaliationDays);
         }
     }
 }

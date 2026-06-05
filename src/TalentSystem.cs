@@ -573,6 +573,44 @@ namespace AshAndEmber
                 }
             }
             catch { Msg("Clairvoyance — insight granted."); }
+
+            // Reveal any pending NPC scheme against the player and offer to cancel it for 2000 gold.
+            try
+            {
+                if (SchemeSystem.TryGetSchemeAgainstPlayer(out Hero schemer, out SchemeType schemeType))
+                {
+                    string schemerName = schemer?.Name?.ToString() ?? "someone";
+                    string typeName    = schemeType.ToString();
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        try
+                        {
+                            InformationManager.ShowInquiry(new InquiryData(
+                                "The Fire Sees Further",
+                                $"The threads do not lie. {schemerName} has set a {typeName} scheme against you — it has not yet resolved.\n\nPay 2000 gold now to sever it before it reaches you?",
+                                true, true,
+                                "Pay 2000 gold — cancel the scheme",
+                                "Let it play out",
+                                () =>
+                                {
+                                    if (Hero.MainHero != null && Hero.MainHero.Gold >= 2000)
+                                    {
+                                        Hero.MainHero.ChangeHeroGold(-2000);
+                                        SchemeSystem.CancelSchemesFromInstigator(schemer);
+                                        Msg("The scheme collapses before it begins. 2000 gold spent.");
+                                    }
+                                    else
+                                    {
+                                        Msg("Not enough gold — the scheme remains in motion.");
+                                    }
+                                },
+                                () => { Msg("You know it is coming. That is something."); }));
+                        }
+                        catch { }
+                    };
+                }
+            }
+            catch { }
         }
 
         private static void CastExtinguish()
@@ -717,6 +755,18 @@ namespace AshAndEmber
             target.RecentEventsMorale -= 35f;
             var tClan = target.LeaderHero?.Clan;
             if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - 10f);
+
+            // Mage-to-mage interference: if Unsettle hits a fellow mage lord, threads cross — aging cost and log
+            var targetHero = target.LeaderHero;
+            if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
+            {
+                try { AgingSystem.AgeHero(targetHero, 1); } catch { }
+                string casterName = caster.Name?.ToString() ?? "A mage";
+                string targetName = targetHero.Name?.ToString() ?? "another mage";
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{casterName}'s Unsettle crossed {targetName}'s fire — threads tangled. Both pay.",
+                    new Color(0.55f, 0.40f, 0.70f)));
+            }
         }
 
         private static void NpcInspire(Hero caster)
@@ -748,6 +798,18 @@ namespace AshAndEmber
                 .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
             if (troops.Count == 0) return;
             try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch { }
+
+            // Mage-to-mage interference: if Extinguish hits a fellow mage lord, threads cross
+            var targetHero = target.LeaderHero;
+            if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
+            {
+                try { AgingSystem.AgeHero(targetHero, 1); } catch { }
+                string casterName = caster.Name?.ToString() ?? "A mage";
+                string targetName = targetHero.Name?.ToString() ?? "another mage";
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{casterName}'s Extinguish grazed {targetName}'s fire — the cold spreads where it was not aimed.",
+                    new Color(0.40f, 0.55f, 0.75f)));
+            }
         }
 
         private static void NpcClairvoyance(Hero caster)
