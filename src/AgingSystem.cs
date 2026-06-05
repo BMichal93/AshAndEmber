@@ -1,6 +1,6 @@
 ﻿// =============================================================================
 // LIFE & DEATH MAGIC — AgingSystem.cs
-// Aging cost mechanic: each battle spell costs (totalInputs / 4) days,
+// Aging cost mechanic: each battle spell costs 1.6^(n-1) days (geometric),
 // each campaign spell costs 1 day (Resonance: 25% chance to skip).
 // On reaching age 100, the mage dies.
 // =============================================================================
@@ -49,14 +49,14 @@ namespace AshAndEmber
         public static void ClearKnockdowns() { }
 
         /// <summary>
-        /// Battle spell aging cost: ceil(totalInputs / 2) days — scales with spell size, no hard cap.
-        /// Examples: 1-2 inputs = 1 day | 3-4 = 2 days | 5-6 = 3 days | 7-8 = 4 days.
+        /// Battle spell aging cost: geometric curve 1.6^(n-1) days — weak spells cost little, powerful ones cost a great deal.
+        /// Examples: 1 input = 1 day | 2 = 2 | 3 = 3 | 4 = 4 | 5 = 7 | 6 = 11 | 7 = 17 | 8 = 27 | 9 = 43 | 10 = 69.
         /// Tempered (BattleMage) talent subtracts 1 from the total cost (minimum 1, never free),
         /// and beyond age 40 also shaves 0.5% per year off the final cost, capped at 30%.
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
-            int cost = (totalInputs + 1) / 2;  // ceil(n/2)
+            int cost = Math.Max(1, (int)Math.Round(Math.Pow(1.6, totalInputs - 1)));  // geometric: 1.6^(n-1)
             if (hasBattleMageTalent) cost = Math.Max(1, cost - 1);
 
             // Tempered (merged Veteran's Ash): each year beyond 40 shaves 0.5% off cost, capped at 30%.
