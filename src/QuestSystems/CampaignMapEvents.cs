@@ -1954,10 +1954,17 @@ namespace AshAndEmber
                                 k.StringId == "the_temple" && !k.IsEliminated);
                             var clan = Hero.MainHero?.Clan;
                             if (templeK == null || clan == null) return;
+                            // Leave current kingdom first (same pattern as OnPlayerBecameAshen)
                             if (clan.Kingdom != null && clan.Kingdom != templeK)
                                 try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                            // Use the 4-parameter overload — the 2-param version throws for existing vassals
                             if (clan.Kingdom?.StringId != "the_temple")
-                                ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK);
+                            {
+                                if (templeK.RulingClan == null)
+                                    try { ChangeKingdomAction.ApplyByCreateKingdom(clan, templeK, false); } catch { }
+                                else
+                                    try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK, CampaignTime.Now + CampaignTime.Years(1000), false); } catch { }
+                            }
                             MBInformationManager.AddQuickInformation(new TextObject(
                                 "Your clan answers the call. The Temple's banner is yours now."));
                         }
