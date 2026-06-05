@@ -505,7 +505,10 @@ namespace AshAndEmber
                     .FirstOrDefault();
                 if (target == null) { Msg("Unsettle — no enemy party in range."); return; }
                 target.RecentEventsMorale -= 40f;
-                Msg($"Unsettle — dread settles over {target.Name}. -40 morale.");
+                var tClan = target.LeaderHero?.Clan;
+                if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - 10f);
+                string infLine = tClan != null ? " -10 influence." : "";
+                Msg($"Unsettle — dread settles over {target.Name}. -40 morale.{infLine}");
             }
             catch { }
         }
@@ -712,6 +715,8 @@ namespace AshAndEmber
                 .OrderBy(p => (p.GetPosition2D - pos).Length).FirstOrDefault();
             if (target == null) return;
             target.RecentEventsMorale -= 35f;
+            var tClan = target.LeaderHero?.Clan;
+            if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - 10f);
         }
 
         private static void NpcInspire(Hero caster)

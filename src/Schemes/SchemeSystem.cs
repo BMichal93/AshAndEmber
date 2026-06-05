@@ -430,7 +430,7 @@ namespace AshAndEmber
                     // Same-kingdom court intrigue — target a rival clan within the same kingdom
                     lordTargets = Hero.AllAliveHeroes
                         .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
-                                 && t != lord && t != Hero.MainHero
+                                 && t != lord
                                  && t.Clan != null && t.Clan != lord.Clan
                                  && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
                                  && t.Clan.Kingdom == lord.Clan.Kingdom)
@@ -442,7 +442,6 @@ namespace AshAndEmber
                     // not just war enemies. Schemes can be peacetime intelligence operations.
                     lordTargets = Hero.AllAliveHeroes
                         .Where(t => t.IsLord && t.IsAlive && !t.IsPrisoner && !t.IsChild
-                                 && t != Hero.MainHero
                                  && t.Clan != null && t.Clan != lord.Clan
                                  && lord.Clan.Kingdom != null && !lord.Clan.Kingdom.IsEliminated
                                  && t.Clan.Kingdom != null && !t.Clan.Kingdom.IsEliminated
@@ -561,10 +560,21 @@ namespace AshAndEmber
                     case SchemeType.Assassinate:
                         if (targetHero == null || !targetHero.IsAlive) break;
                         string tAss = targetHero.Name?.ToString() ?? "the lord";
-                        try { KillCharacterAction.ApplyByMurder(targetHero, null, false); } catch { }
-                        Notify(s,
-                            $"Done. {tAss} was found dead this morning — no witnesses, no clear wound.",
-                            col);
+                        if (targetHero == Hero.MainHero)
+                        {
+                            // Player cannot be killed by assassination — wounded instead.
+                            try { targetHero.MakeWounded(); } catch { }
+                            Notify(s,
+                                "An assassin found you in the night. The blade missed the mark — you are wounded, not dead. Watch your back.",
+                                col);
+                        }
+                        else
+                        {
+                            try { KillCharacterAction.ApplyByMurder(targetHero, null, false); } catch { }
+                            Notify(s,
+                                $"Done. {tAss} was found dead this morning — no witnesses, no clear wound.",
+                                col);
+                        }
                         break;
 
                     // ── Spread Terror ─────────────────────────────────────────
