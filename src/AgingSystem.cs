@@ -80,14 +80,20 @@ namespace AshAndEmber
 
         /// <summary>
         /// Reverses aging by <paramref name="days"/> in-game days.
-        /// Shows a message only for the player hero.
+        /// Shows a message only for the player hero. Never reduces age below 20.
         /// </summary>
         public static void RejuvenateHero(Hero hero, int days)
         {
             if (hero == null || days <= 0) return;
             try
             {
+                if (hero.Age <= 20.0) return;
+
                 hero.SetBirthDay(hero.BirthDay + CampaignTime.Days(days));
+
+                // Pin to age 20 floor if the rejuvenation overshot
+                if (hero.Age < 20.0)
+                    hero.SetBirthDay(CampaignTime.Now - CampaignTime.Years(20));
 
                 if (hero == Hero.MainHero)
                     InformationManager.DisplayMessage(new InformationMessage(
