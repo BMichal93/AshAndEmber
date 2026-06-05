@@ -232,41 +232,46 @@ namespace AshAndEmber
                 return;
             }
 
-            string breakKey   = usingController ? "L3" : "X";
-            string inputHint = usingController
-                ? "Hold LB + left stick (↑/←/→/↓), press L3 to Break. Release LB to cast. LB+RB to open grimoire."
-                : "Hold Left Alt + W/A/D/S, press X to Break, release to cast. Alt+X opens grimoire (when no form started).";
+            string stepFocus   = usingController ? "Hold LB"              : "Hold Left Alt";
+            string stepShape   = usingController ? "Left stick ↑ ← → ↓"  : "W  A  D  S";
+            string stepBreak   = usingController ? "Press L3"             : "Press X";
+            string stepRelease = usingController ? "Release LB"           : "Release Left Alt";
+            string openBook    = usingController ? "LB + RB"              : "Left Alt + X  (before any key is pressed)";
 
             string ashenNote = _isAshen
-                ? "\n[Ashen] Each cast adds criminal rating instead of aging. After your first working each day, further casts risk possession.\n"
+                ? "\n[Ashen] Each cast raises criminal rating instead of aging you. After your first working each day, further casts risk possession.\n"
                 : "";
 
             string desc =
-                $"{inputHint}\n\n" +
-                "Channelling\n" +
-                $"  Form keys → Break ({breakKey}) → effect keys → release focus.\n" +
-                "  Mixed forms all fire simultaneously. Effects stack.\n\n" +
-                "Forms  (before Break, mix freely)\n" +
-                "  ↑  Blast   — forward cone, 2.5m per ↑\n" +
-                "  ←  Missile — projectile bolt, +3m range per ←, explodes (+1m blast per ←)\n" +
-                "  →  Barrier — wall of nodes, 1 per →; cast again to release\n" +
-                "  ↓  Burst   — circle around self, 2.5m radius per ↓; also heals caster\n\n" +
-                "Effects  (after Break)\n" +
-                "  ↑ ← →  Damage  — 25 fire damage each, hits enemies\n" +
-                "  ↓      Restore — 15 healing per ↓, heals allies\n\n" +
-                "Enchantments  (talent side-effects added automatically to Damage or Restore)\n" +
-                "  Damage enchantments:   Scatter · Smoulder · Sunder\n" +
-                "  Restore enchantments:  Ashveil · Cinder Shell · Hearthlight · Reflect\n\n" +
-                "Battle casting cost  (ceil(inputs / 2) days — no cap)\n" +
-                "  1-2 inputs = 1 day  |  3-4 = 2 days  |  5-6 = 3 days  |  7-8 = 4 days\n" +
-                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] Cost −1 day (min 1) + age reduction up to 30%.\n" : "") +
+                "── HOW TO CAST ──────────────────────────────────────\n" +
+                $"  1. {stepFocus}  → enter Focus\n" +
+                $"  2. {stepShape}  → shape the spell  (repeat for more power)\n" +
+                $"  3. {stepBreak}  → Break: locks shape, enter power phase\n" +
+                "  4. W / A / D  → Damage   |   S → Heal\n" +
+                $"  5. {stepRelease}  → the spell fires!\n\n" +
+                "  Watch the screen: [ U ▷ U ] shows your formula as you build it.\n" +
+                "  Your hands must be free — sheathe your weapon first.\n\n" +
+                "── SHAPES  (step 2, before Break) ───────────────────\n" +
+                "  W / ↑  Blast    — cone of fire forward  (+2.5 m per W)\n" +
+                "  A / ←  Missile  — fire bolt that explodes  (+3 m range, +1 m blast per A)\n" +
+                "  D / →  Barrier  — summoned wall of nodes  (press again to release)\n" +
+                "  S / ↓  Burst    — ring around you  (+2.5 m radius per S, also heals you)\n" +
+                "  Mix freely — W then S fires a Blast and a Burst at the same time.\n\n" +
+                "── POWER  (step 4, after Break) ─────────────────────\n" +
+                "  W / A / D  →  Damage  — 25 fire damage per press, hits enemies\n" +
+                "  S          →  Restore — 15 healing per press, reaches nearby allies\n" +
+                "  Talents add enchantments automatically — no extra keys needed.\n\n" +
+                "── EXAMPLES  (try these first!) ─────────────────────\n" +
+                "  W, X, W, release        →  Blast,   25 dmg,   1 day\n" +
+                "  A, X, W, release        →  Missile, 25 dmg,   1 day\n" +
+                "  S, X, SS, release       →  Burst,   30 heal,  1 day  (heals you too)\n" +
+                "  AAA, X, WW, release     →  Long missile, 50 dmg,  2 days\n" +
+                "  WW+SS, X, W+S, release  →  Blast+Burst, dmg+heal, 2 days\n\n" +
+                "── BATTLE COST  (days of life per cast) ─────────────\n" +
+                "  Total key presses:  1–2 = 1 day   3–4 = 2 days   5–6 = 3 days   7–8 = 4 days\n" +
+                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] −1 day cost (min 1) + up to 30% age reduction.\n" : "") +
                 ashenNote +
-                "\nExample\n" +
-                "  ↑  X  ↑  =  Blast (2.5m), 25 damage, 1 day  (2 inputs).\n" +
-                "  ←  X  ↑  =  Missile (8m range, 2m blast), 25 damage, 1 day  (2 inputs).\n" +
-                "  ←←←  X  ↑↑↑  =  Missile (9m range, 4m blast), 75 damage, 2 days  (6 inputs).\n" +
-                "  ↓  X  ↓↓  =  Burst (2.5m), +30 restore, 1 day  (3 inputs).  Caster also healed.\n" +
-                "  ↑↑  ↓↓  X  ↑  ↓  =  Blast + Burst, damage + restore, 2 days  (6 inputs)." +
+                $"\n  Open this page: {openBook}" +
                 DragonQuestSystem.GetGrimoireSummary();
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
