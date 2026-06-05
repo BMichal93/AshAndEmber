@@ -131,8 +131,8 @@ namespace AshAndEmber
             // SkillXp awarded on success.
             //
             // Balance principle: permanent > temporary, more impact > less.
-            // Influence hierarchy: assassination (120) > coup (100) > garrison (60)
-            //   > soft lord schemes (40–65) > cheap settlement schemes (20–45).
+            // Influence hierarchy: assassination (80) > coup (70) > garrison (40)
+            //   > soft lord schemes (25–45) > cheap settlement schemes (15–30).
             // StageCoup influence is intentionally below assassination — loyalty
             // and security recover over time; dead lords do not.
             //
@@ -140,65 +140,65 @@ namespace AshAndEmber
             new SchemeDefinition(SchemeType.Assassinate,
                 "Assassinate a Lord",
                 "Hire a blade. On success the target dies quietly. On exposure: war may follow. Hard 14-day retry block per target.",
-                6000, 120, 0.25f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1500),
+                6000, 80, 0.25f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1500),
 
             new SchemeDefinition(SchemeType.HireAssassin,
                 "Hire an Assassin (wound)",
                 "The blade finds the lord but doesn't finish. Their party is bloodied and weakened.",
-                2500, 65, 0.33f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1000),
+                2500, 45, 0.33f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1000),
 
             new SchemeDefinition(SchemeType.ForgeDocuments,
                 "Forge Documents",
                 "Fabricated letters damage a lord's reputation with their own faction.",
-                2000, 55, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 750),
+                2000, 35, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 750),
 
             new SchemeDefinition(SchemeType.FalseAccusations,
                 "False Accusations",
                 "Slander carefully placed at the right ears. Clan renown is damaged; their standing erodes.",
-                1500, 40, 0.45f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 500),
+                1500, 25, 0.45f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 500),
 
             // SETTLEMENT SCHEMES ───────────────────────────────────────────────────
             new SchemeDefinition(SchemeType.StageCoup,
                 "Stage a Coup",
                 "Bribe garrison officers. Loyalty collapses — rebellion becomes likely.",
-                4500, 100, 0.20f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 1200),
+                4500, 70, 0.20f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 1200),
 
             new SchemeDefinition(SchemeType.PoisonWell,
                 "Poison a Well",
                 "The garrison sickens. Militia die before anyone connects cause to effect.",
-                2200, 60, 0.38f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 750),
+                2200, 40, 0.38f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 750),
 
             new SchemeDefinition(SchemeType.BribeSoldiers,
                 "Bribe Soldiers",
                 "A portion of the garrison deserts. They scatter — no one joins you, they simply leave.",
-                2200, 60, 0.32f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 750),
+                2200, 40, 0.32f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 750),
 
             new SchemeDefinition(SchemeType.BurnStorage,
                 "Burn a Storage",
                 "Warehouses catch fire. Food is lost, prosperity crumbles.",
-                2000, 45, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 500),
+                2000, 30, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 500),
 
             new SchemeDefinition(SchemeType.SpreadTerror,
                 "Spread Terror",
                 "Random violence shakes the city. Security drops sharply.",
-                1500, 35, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 400),
+                1500, 25, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 400),
 
             new SchemeDefinition(SchemeType.SpreadRumors,
                 "Spread Rumors",
                 "Whisper campaigns corrode trust. Loyalty and prosperity fall.",
-                1200, 20, 0.35f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 400),
+                1200, 15, 0.35f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 400),
 
             // LORD SCHEME (same kingdom only) ──────────────────────────────────────
             new SchemeDefinition(SchemeType.VipersCounsel,
                 "Viper's Counsel",
                 "Poison the king's ear against a rival clan. Your renown rises; theirs falls. Can only target lords within your own kingdom. On failure, lose standing with both the king and the target.",
-                1800, 60, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 600),
+                1800, 40, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 600),
 
             // LORD SCHEME (targets enemy kingdom via lord) ─────────────────────────
             new SchemeDefinition(SchemeType.ScatterWolves,
                 "Scatter the Wolves",
                 "Pay deserters and brigands to flood a rival kingdom's roads. Bandit parties surge across their lands, tying up lords and bleeding resources. Target a lord — their whole kingdom suffers.",
-                2500, 50, 0.35f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 800),
+                2500, 35, 0.35f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 800),
         };
 
         // ── State ─────────────────────────────────────────────────────────────
