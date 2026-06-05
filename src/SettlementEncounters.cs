@@ -32,7 +32,6 @@
 // │ The Veteran's Question      │ Leave city/castle     │ Mage             │
 // │ The Condemned               │ Leave city/castle     │ Mage             │
 // │ Petitioners' Gate           │ Leave city/castle     │ Mage, Renown≥500 │
-// │ The Lightened Purse         │ Leave city/castle     │ General          │
 // │ The Displaced Noble         │ Leave city/castle     │ General          │
 // │ The Bard's Request          │ Leave city/castle     │ General, Ren≥300 │
 // │ A Detained Soldier          │ Leave city/castle     │ General          │
@@ -412,7 +411,6 @@ namespace AshAndEmber
             }
             if (town)
             {
-                pool.Add(E_LightenedPurse);
                 pool.Add(E_InsultAtGate);
                 pool.Add(LC2_ChildPickpocket);
                 if (ren >= 300f) pool.Add(E_BardsRequest);
@@ -855,50 +853,6 @@ namespace AshAndEmber
         // LEAVE CITY/CASTLE — GENERAL
         // ═════════════════════════════════════════════════════════════════════
 
-        // 24. The Lightened Purse
-        private static void E_LightenedPurse(Settlement s)
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "◆  The Lightened Purse",
-                "A day after leaving the city, your treasurer informs you that a purse is lighter than it should be. A pickpocket — and a skilled one — worked the crowd near the gate.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Send men back to find the thief.", null, true,
-                        "Your men are capable. Results are not certain."),
-                    new InquiryElement("b", "Accept the loss. Cities are cities.", null, true,
-                        "An expensive lesson."),
-                    new InquiryElement("c", "Have your guards make an example of likely suspects.", null, true,
-                        "Rough justice. The outcome is uncertain, and the method is not clean."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ChangeGold(200);
-                            Msg("Your men find the thief in an alley. The purse is returned. The thief is released with a bruise and a warning.", GoldColor);
-                            break;
-                        case "b":
-                            ChangeGold(-200);
-                            Msg("Two hundred gold is the price of learning not to trust city crowds. Expensive lesson.", DimColor);
-                            break;
-                        case "c":
-                            ShiftTrait(DefaultTraits.Honor, -1);
-                            ChangeCrime(10f);
-                            if (_rng.Next(2) == 0)
-                            {
-                                ChangeGold(200);
-                                Msg("The right man is found — or at least a man with the coins. The method is ugly but the result is satisfying in a way that costs something.", BadColor);
-                            }
-                            else
-                            {
-                                Msg("The wrong man is roughed up. The real thief is long gone. The city guard notes what happened.", BadColor);
-                            }
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
 
         // 26. The Bard's Request
         private static void E_BardsRequest(Settlement s)
