@@ -180,8 +180,19 @@ namespace AshAndEmber
 
             if (nearEnemies == 0) return;
 
-            // Surrounded → burst, otherwise → blast
+            int burstEnemies = enemies.Count(a => a.Position.Distance(mage.Position) < 5f);
+            int burstAllies  = SpellEffects.CountAlliesInRadius(mage, 5f);
+            int coneEnemies  = SpellEffects.CountEnemiesInCone(mage, 6f, 0.65f);
+            int coneAllies   = SpellEffects.CountAlliesInCone(mage, 6f, 0.65f);
+
+            // Surrounded → burst to clear space; otherwise → random choice
             bool useBurst = closeEnemies >= 2 || _rng.Next(2) == 0;
+
+            // Redirect to the safer option when one clearly beats the other
+            bool burstFriendlyFire = burstAllies > 0 && burstEnemies <= burstAllies;
+            bool blastFriendlyFire = coneAllies > 0 && coneEnemies <= coneAllies;
+            if (burstFriendlyFire && !blastFriendlyFire) useBurst = false;
+            else if (blastFriendlyFire && !burstFriendlyFire) useBurst = true;
 
             // Spell power tiers:
             //   Looter (untrained):       formCount=1, minimal damage

@@ -174,73 +174,98 @@ namespace AshAndEmber
 
             if (nearEnemies == 0 && !isAshen) return;
 
-            // 3. Attack — differentiated by lord type
+            // 3. Attack — evaluate both zones for friendly fire safety and target density
             int roll = isAshen ? _rng.Next(6) : _rng.Next(4);
 
+            const float BlastDot        = 0.65f;
+            const float BurstCheckRange = 5f;   // formCount=2 burst radius (2 × 2.5 m)
+            float blastRange = isAshen ? 8f : 6f;
+
+            int coneEnemies   = SpellEffects.CountEnemiesInCone(agent, blastRange, BlastDot);
+            int coneAllies    = SpellEffects.CountAlliesInCone(agent, blastRange, BlastDot);
+            int radiusEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < BurstCheckRange);
+            int radiusAllies  = SpellEffects.CountAlliesInRadius(agent, BurstCheckRange);
+
+            // A zone is "safe" when enemies outnumber allies in it.
+            // Ashen lords accept equal counts (reckless); non-Ashen require a strict majority.
+            bool blastSafe = coneEnemies >= 1
+                && (coneAllies == 0 || (isAshen ? coneEnemies >= coneAllies : coneEnemies > coneAllies));
+            bool burstSafe = radiusEnemies >= 1
+                && (radiusAllies == 0 || (isAshen ? radiusEnemies >= radiusAllies : radiusEnemies > radiusAllies));
+
+            // Surrounded — burst to clear space; scale form up when massively outnumbered
             if (closeEnemies >= 3)
             {
-                // Surrounded — always burst to clear space
-                if (isAshen)
-                    CastBurst(agent, hero, roll < 3 ? 2 : 3, roll < 3 ? 2 : 3, 0);
-                else
-                    CastBurst(agent, hero, 2, 2, 0);
+                int form = (closeEnemies >= 5 || (isAshen && roll >= 3)) ? 3 : 2;
+                CastBurst(agent, hero, form, form, 0);
+                return;
             }
-            else
-            {
-                float detectRange = isAshen ? 8f : 6f;
-                int coneCount = SpellEffects.CountEnemiesInCone(agent, detectRange, 0.65f);
 
-                if (coneCount >= 1)
+            if (isAshen)
+            {
+                // Ashen: aggressive, unpredictable — full variety when both zones are clear
+                if (blastSafe && burstSafe)
                 {
-                    if (isAshen)
+                    switch (roll)
                     {
-                        switch (roll)
-                        {
-                            case 0: CastBlast(agent, hero, 3, 3, 0); break; // devastating blast
-                            case 1: CastBurst(agent, hero, 3, 3, 0); break; // mass burst
-                            case 2: CastBlast(agent, hero, 2, 2, 0); break; // solid blast
-                            case 3: CastBurst(agent, hero, 2, 2, 0); break; // medium burst
-                            case 4: CastBlast(agent, hero, 3, 2, 0); break; // wide-range blast
-                            default: CastBurst(agent, hero, 2, 3, 0); break; // deep damage burst
-                        }
-                    }
-                    else if (isCalculating)
-                    {
-                        // Calculating: patient, prefers area burst when multiple enemies
-                        if (coneCount >= 2)
-                            CastBurst(agent, hero, 2, 2, 0);
-                        else if (roll <= 1)
-                            CastBlast(agent, hero, 2, 2, 0);
-                        else
-                            CastBurst(agent, hero, 2, 1, 0);
-                    }
-                    else if (isImpulsive)
-                    {
-                        // Impulsive: direct forward blasts, higher-tempo
-                        if (roll <= 2)
-                            CastBlast(agent, hero, 2, 2, 0);
-                        else
-                            CastBlast(agent, hero, 2, 1, 0);
-                    }
-                    else
-                    {
-                        // Default: balanced mix
-                        if (roll == 0)      CastBlast(agent, hero, 2, 2, 0);
-                        else if (roll == 1) CastBlast(agent, hero, 2, 1, 0);
-                        else if (roll == 2) CastBurst(agent, hero, 2, 2, 0);
-                        else                CastBlast(agent, hero, 2, 2, 0);
+                        case 0: CastBlast(agent, hero, coneEnemies >= 3 ? 3 : 2, coneEnemies >= 3 ? 3 : 2, 0); break;
+                        case 1: CastBurst(agent, hero, radiusEnemies >= 3 ? 3 : 2, radiusEnemies >= 3 ? 3 : 2, 0); break;
+                        case 2: CastBlast(agent, hero, 2, 2, 0); break;
+                        case 3: CastBurst(agent, hero, 2, 2, 0); break;
+                        case 4: CastBlast(agent, hero, 3, coneEnemies >= 3 ? 3 : 2, 0); break;
+                        default: CastBurst(agent, hero, 2, radiusEnemies >= 3 ? 3 : 2, 0); break;
                     }
                 }
-                else if (isAshen)
+                else if (blastSafe)
                 {
-                    // Ashen never idle — harass at range even with no obvious cone target
-                    if (roll < 3) CastBurst(agent, hero, 2, 2, 0);
-                    else          CastBlast(agent, hero, 2, 2, 0);
+                    int form = coneEnemies >= 3 ? 3 : (roll < 3 ? 2 : 3);
+                    CastBlast(agent, hero, form, form, 0);
+                }
+                else if (burstSafe)
+                {
+                    int form = radiusEnemies >= 3 ? 3 : (roll < 3 ? 2 : 3);
+                    CastBurst(agent, hero, form, form, 0);
                 }
                 else if (nearEnemies > 0)
                 {
-                    CastBurst(agent, hero, 2, 1, 0); // light pressure while repositioning
+                    // Ashen never idle — harass even without a clean target
+                    if (roll < 3) CastBurst(agent, hero, 2, 2, 0);
+                    else          CastBlast(agent, hero, 2, 2, 0);
                 }
+            }
+            else if (isCalculating)
+            {
+                // Patient: prefers area bursts when enemies cluster; holds fire for clean shots
+                if (burstSafe && radiusEnemies >= 2)
+                    CastBurst(agent, hero, 2, 2, 0);
+                else if (blastSafe && coneEnemies >= 2)
+                    CastBlast(agent, hero, 2, 2, 0);
+                else if (blastSafe)
+                    CastBlast(agent, hero, 2, 2, 0);
+                else if (burstSafe)
+                    CastBurst(agent, hero, 2, 1, 0);
+                // else: no quality opportunity this tick — wait
+            }
+            else if (isImpulsive)
+            {
+                // Direct: fires as soon as any safe forward target appears
+                if (blastSafe)
+                    CastBlast(agent, hero, 2, 2, 0);
+                else if (burstSafe)
+                    CastBurst(agent, hero, 2, 2, 0);
+                // else: no safe target this tick
+            }
+            else
+            {
+                // Default: balanced mix, avoids friendly fire
+                if (blastSafe && (roll <= 2 || !burstSafe))
+                    CastBlast(agent, hero, 2, 2, 0);
+                else if (burstSafe)
+                    CastBurst(agent, hero, 2, 2, 0);
+                else if (blastSafe)
+                    CastBlast(agent, hero, 2, 2, 0);
+                else if (nearEnemies > 0)
+                    CastBurst(agent, hero, 2, 1, 0); // light pressure while repositioning
             }
         }
 
