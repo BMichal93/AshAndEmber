@@ -437,6 +437,45 @@ namespace AshAndEmber
         internal static int CountEnemiesInCone(Agent source, float range, float dot)
             => ConeAgentsFrom(source, range, dot).Count;
 
+        internal static int CountAlliesInCone(Agent source, float range, float dot)
+        {
+            if (Mission.Current == null || source == null || source.Team == null) return 0;
+            Vec3 fwd = source.LookDirection.NormalizedCopy();
+            int count = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == source || a.Team == null) continue;
+                    if (a.Team != source.Team) continue;
+                    Vec3 to = a.Position - source.Position;
+                    if (to.Length > range) continue;
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
+                    count++;
+                }
+            }
+            catch { }
+            return count;
+        }
+
+        internal static int CountAlliesInRadius(Agent source, float range)
+        {
+            if (Mission.Current == null || source == null || source.Team == null) return 0;
+            int count = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == source || a.Team == null) continue;
+                    if (a.Team != source.Team) continue;
+                    if (a.Position.Distance(source.Position) > range) continue;
+                    count++;
+                }
+            }
+            catch { }
+            return count;
+        }
+
         // ── Apply effect to one agent ─────────────────────────────────────────
         internal static void ApplyEffectsToAgent(Agent target, SpellCast cast, Agent caster)
         {
