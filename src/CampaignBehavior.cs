@@ -120,6 +120,7 @@ namespace AshAndEmber
                 CampaignMapEvents.ResetForNewGame();
                 SettlementEncounters.ResetForNewGame();
                 DragonQuestSystem.ResetForNewGame();
+                BurningLabQuestSystem.ResetForNewGame();
                 ShowLoreIntro();
             }
             catch { }
@@ -348,6 +349,7 @@ namespace AshAndEmber
                 try { CampaignMapEvents.DailyTick(); } catch { }
                 try { SettlementEncounters.DailyTick(); } catch { }
                 try { DragonQuestSystem.DailyTick(); } catch { }
+                try { BurningLabQuestSystem.DailyTick(); } catch { }
                 try { CheckReapPrisonerYield(); } catch { }
                 if (_reapRaidCooldown > 0) _reapRaidCooldown--;
                 _executedLordIds.Clear(); // IDs of executed lords expire after 1 day
@@ -368,6 +370,7 @@ namespace AshAndEmber
                 try { ColourLordRegistry.CheckPopulationBounds(); } catch { }
                 try { ColourLordRegistry.CheckAgeLimit(); } catch { }
                 try { CampaignMapEvents.WeeklyTick(); } catch { }
+                try { BurningLabQuestSystem.WeeklyTick(); } catch { }
             }
             catch { }
         }
@@ -883,6 +886,7 @@ namespace AshAndEmber
             try { CampaignMapEvents.Save(dataStore); } catch { }
             try { SettlementEncounters.Save(dataStore); } catch { }
             try { DragonQuestSystem.Save(dataStore); } catch { }
+            try { BurningLabQuestSystem.Save(dataStore); } catch { }
         }
     }
 }

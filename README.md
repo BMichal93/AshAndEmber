@@ -1,4 +1,4 @@
-# Ash and Ember — v0.12.0
+# Ash and Ember — v0.13.0
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -12,7 +12,7 @@ AshAndEmber/
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
 │   └── troops.xml                   (reserved)
-├── src/                             ~8 500 lines across 32 source files
+├── src/                             ~9 200 lines across 33 source files
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
 │   ├── SpellBuilder.cs              two-phase input parser → SpellCast
@@ -23,6 +23,7 @@ AshAndEmber/
 │   ├── CampaignMapEvents.cs         27 world events across two independent weekly slots
 │   ├── BattleEvents.cs              per-battle battlefield events with atmospheric visuals
 │   ├── DragonQuestSystem.cs         main quest — The Last Flight of the Dragons
+│   ├── BurningLabQuestSystem.cs     questline — The Burning Laboratory (3 branching arcs)
 │   ├── SettlementEncounters.cs      40+ random events on settlement enter/leave/battle
 │   ├── SchoolData.cs                colour school definitions and visual data
 │   ├── SpellDatabase.cs             spell definition registry
@@ -520,6 +521,78 @@ When all three goals are met, a final prompt appears. You may:
 - **Refuse** — the chance passes forever. The game continues.
 
 Refusing the old man at the initial encounter permanently closes the quest.
+
+---
+
+## Questline — The Burning Laboratory
+
+*"Someone was experimenting with creating life from the fire."*
+
+### Trigger
+
+Win a siege as the attacking side. The event cannot fire before **campaign day 80**, and becomes very likely by day 300. It fires **at most once per campaign**.
+
+### Discovery
+
+Inside the captured keep you find a hidden laboratory stocked with scrolls describing forbidden experiments — creating life from ash and fire. Whoever built this place came close to finishing it.
+
+You are given eleven options (minus those whose faction or leader has been eliminated):
+
+| Choice | Effect |
+|--------|--------|
+| **Destroy it** | +Honour. Quest ends. |
+| **Keep it** | Starts **Questline C**. |
+| **Sell it** | +10 000 gold, −Honour. 50 % chance the buyer is an imperial contact → starts **Questline A** with a random imperial faction. |
+| **Give to Rhagea** *(empire_s alive)* | Starts **Questline A** with the Southern Empire. |
+| **Give to Lucorn** *(empire_n alive)* | Starts **Questline A** with the Northern Empire. |
+| **Give to Gairos** *(empire_w alive)* | Starts **Questline A** with the Western Empire. |
+| **Give to Sturgians / Khuzaites / Battanians / Aserai / Vlandians** | Starts **Questline B** with that faction. |
+
+---
+
+### Questline A — The Resurrection of Arencios
+
+The receiving faction's scholars attempt to revive the dead Emperor Arencios.
+
+**Timeline:**
+
+| Delay | Event |
+|-------|-------|
+| +3 days | The rituals begin in secret. |
+| +10 days | Arencios is revived — he possesses a random male lord of the receiving empire and is made its faction leader. His nature (true emperor or Ashen spirit) is determined secretly. |
+| +3 days | Each of the two other empire factions has a **50% chance** to submit — they make peace and share wars, but keep their own kingdoms. |
+| +3 days | Arencios declares war on all non-imperial factions. |
+
+**True Emperor:** Fights all non-imperial factions and the Ashen.
+
+**False Emperor (Ashen spirit):** After 30 more days, the empire secretly allies with the Ashen — peace is enforced daily.
+
+**If Arencios dies:** His empire's settlements are distributed randomly among the surviving imperial factions (empire_s, empire_n, empire_w).
+
+---
+
+### Questline B — The Faction's Gambit
+
+The receiving faction studies the scrolls and attempts the rite. After 3 days, one of three outcomes is rolled (equal probability):
+
+| Outcome | Effect |
+|---------|--------|
+| **They discard it** | Nothing further. Quest ends. |
+| **Goes badly** | The faction is consumed by the Ashen. Every town and castle flips to the Ashen kingdom — one settlement every 3 days until the faction is gone. |
+| **Goes well** | Every week, each lord army in that faction gains **30 tier-4 troops**. However, each week there is a **20% chance** the gift collapses into the "goes badly" outcome. |
+
+---
+
+### Questline C — Personal Rites
+
+You keep the scrolls. Every **7 days** a prompt appears:
+
+| Choice | Effect |
+|--------|--------|
+| **Discard the book** | Quest ends peacefully. |
+| **Perform a rite** | +50 Renown · large XP gain (Athletics, Medicine, Roguery, Leadership, Charm) · −Honour · **5% chance of becoming Ashen** |
+
+The weekly prompts continue indefinitely until you discard the book or the Ashen transformation occurs.
 
 ---
 

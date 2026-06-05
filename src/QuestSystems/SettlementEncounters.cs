@@ -465,6 +465,16 @@ namespace AshAndEmber
         {
             bool mage = MageKnowledge.IsMage;
             bool attWon = _lastBattleAsAttacker && _lastBattleWon;
+
+            // Priority: Burning Laboratory quest fires if attacker won and probability passes.
+            // This gates on campaign day 80–300+ and fires at most once per campaign.
+            if (attWon && BurningLabQuestSystem.RollLabDiscovery())
+            {
+                _cooldown = MinDaysBetween;
+                MageKnowledge._deferredInquiry = BurningLabQuestSystem.ShowInitialDiscovery;
+                return;
+            }
+
             var pool = new List<Action>();
 
             if (attWon)

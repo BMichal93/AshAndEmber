@@ -120,6 +120,7 @@ namespace AshAndEmber
             // Ashen mages are immune to age-death
             if (hero == Hero.MainHero && MageKnowledge.IsAshen) return;
             if (hero != Hero.MainHero && ColourLordRegistry.IsAshenLord(hero)) return;
+            if (hero != Hero.MainHero && BurningLabQuestSystem.IsArenicosHero(hero)) return;
             try
             {
                 if (hero == Hero.MainHero)
