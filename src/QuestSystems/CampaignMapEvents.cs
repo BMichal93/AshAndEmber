@@ -258,6 +258,26 @@ namespace AshAndEmber
                         "The protective rites have faded. The sanctuary's shield is spent."));
             }
 
+            // Deferred Temple join — execute kingdom change during the tick, not inside a UI callback
+            if (_pendingTempleJoin)
+            {
+                _pendingTempleJoin = false;
+                try
+                {
+                    var templeK = Kingdom.All.FirstOrDefault(k =>
+                        k.StringId == "the_temple" && !k.IsEliminated);
+                    var clan = Hero.MainHero?.Clan;
+                    if (templeK != null && clan != null)
+                    {
+                        if (clan.Kingdom != null && clan.Kingdom != templeK)
+                            try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                        if (clan.Kingdom?.StringId != "the_temple")
+                            try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK); } catch { }
+                    }
+                }
+                catch { }
+            }
+
             // The Temple's war with the Ashen is permanent — re-declare if peace is made
             if (_templeFounded)
             {
@@ -364,6 +384,7 @@ namespace AshAndEmber
             _longNightDaysRemaining  = 0;
             _brokenWillFired         = 0;
             _templeFounded           = false;
+            _pendingTempleJoin       = false;
             _debugForceNextTemple    = false;
             _protectedDaysRemaining  = 0;
             _ashenGambitFired        = false;
@@ -891,6 +912,7 @@ namespace AshAndEmber
         //   • Checks !IsAtWarWith before declaring to avoid duplicate war actions.
         private static bool _declaringBrokenWill    = false;
         private static bool _templeFounded          = false;
+        private static bool _pendingTempleJoin      = false;
         private static bool _debugForceNextTemple   = false;
         private static int  _protectedDaysRemaining = 0;
         private static bool _ashenGambitFired       = false;
@@ -1948,27 +1970,11 @@ namespace AshAndEmber
                     "Watch from a distance",
                     () =>
                     {
-                        try
-                        {
-                            var templeK = Kingdom.All.FirstOrDefault(k =>
-                                k.StringId == "the_temple" && !k.IsEliminated);
-                            var clan = Hero.MainHero?.Clan;
-                            if (templeK == null || clan == null) return;
-                            // Leave current kingdom first (same pattern as OnPlayerBecameAshen)
-                            if (clan.Kingdom != null && clan.Kingdom != templeK)
-                                try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                            // Use the 4-parameter overload — the 2-param version throws for existing vassals
-                            if (clan.Kingdom?.StringId != "the_temple")
-                            {
-                                if (templeK.RulingClan == null)
-                                    try { ChangeKingdomAction.ApplyByCreateKingdom(clan, templeK, false); } catch { }
-                                else
-                                    try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK, CampaignTime.Now + CampaignTime.Years(1000), false); } catch { }
-                            }
-                            MBInformationManager.AddQuickInformation(new TextObject(
-                                "Your clan answers the call. The Temple's banner is yours now."));
-                        }
-                        catch { }
+                        // Kingdom actions are not safe inside an inquiry callback.
+                        // Defer to the next daily tick where campaign state is stable.
+                        _pendingTempleJoin = true;
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            "Your clan answers the call. The Temple's banner is yours now."));
                     },
                     null
                 ), true);
@@ -3124,6 +3130,10 @@ namespace AshAndEmber
             store.SyncData("LDM_TempleFounded",    ref templeFounded);
             store.SyncData("LDM_ProtectedDays",    ref _protectedDaysRemaining);
             _templeFounded = templeFounded != 0;
+
+            int pendingJoin = _pendingTempleJoin ? 1 : 0;
+            store.SyncData("LDM_PendingTempleJoin", ref pendingJoin);
+            _pendingTempleJoin = pendingJoin != 0;
 
             int gambitFired = _ashenGambitFired ? 1 : 0;
             store.SyncData("LDM_AshenGambitFired", ref gambitFired);
