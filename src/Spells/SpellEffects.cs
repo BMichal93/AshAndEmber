@@ -514,7 +514,7 @@ namespace AshAndEmber
                 try { isMounted = target.MountAgent != null; } catch { }
                 if (!isMounted)
                 {
-                    float dist = cast.DamageCount * 4f;
+                    float dist = cast.DamageCount * 5f;
                     Vec3 origin = caster?.Position ?? target.Position;
                     Vec3 dir = (target.Position - origin);
                     if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
@@ -527,8 +527,8 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        float reducedSpeed = Math.Max(1f, 10f - cast.DamageCount * 2.5f);
-                        float duration = 4f + cast.DamageCount * 1f;
+                        float reducedSpeed = Math.Max(1f, 10f - cast.DamageCount * 3f);
+                        float duration = 5f + cast.DamageCount * 1f;
                         if (!_charredAgents.TryGetValue(target, out var cur))
                             _charredAgents[target] = (reducedSpeed, duration);
                         else
@@ -545,7 +545,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float delta = cast.DamageCount * 12f;
+                    float delta = cast.DamageCount * 15f;
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Max(cur - delta, 0f));
                 }
@@ -582,9 +582,9 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float vuln = cast.DamageCount * 10f; // raw value, capped to 40% in DamageAgent
-                    float attackWeaken = Math.Min(0.40f, cast.DamageCount * 0.08f);
-                    float duration = 8f;
+                    float vuln = cast.DamageCount * 12f; // raw value, capped to 40% in DamageAgent
+                    float attackWeaken = Math.Min(0.40f, cast.DamageCount * 0.10f);
+                    float duration = 10f;
                     if (!_sunderedAgents.TryGetValue(target, out var existing))
                         _sunderedAgents[target] = (vuln, duration);
                     else
@@ -613,7 +613,7 @@ namespace AshAndEmber
                     }
                     else
                     {
-                        DamageAgent(target, cast.DamageCount * 10f);
+                        DamageAgent(target, cast.DamageCount * 12f);
                         BeginAgentGlow(target, ColorSchool.Red, 1.5f);
                     }
                 }
@@ -626,7 +626,7 @@ namespace AshAndEmber
             // Ashveil: brief magic immunity
             if (CasterHasEnchantment(caster, TalentId.Ashveil))
             {
-                float duration = cast.RestoreCount * 3f;
+                float duration = cast.RestoreCount * 4f;
                 float current  = _wardedAgents.TryGetValue(target, out float t) ? t : 0f;
                 _wardedAgents[target] = Math.Max(current, duration);
                 BeginAgentGlow(target, ColorSchool.White, duration);
@@ -635,8 +635,8 @@ namespace AshAndEmber
             // Cinder Shell: armour boost + near-full-health shield (merged Overflow)
             if (CasterHasEnchantment(caster, TalentId.CinderShell))
             {
-                float bonus = cast.RestoreCount * 10f;
-                AddStoneskin(target, bonus, 8f);
+                float bonus = cast.RestoreCount * 12f;
+                AddStoneskin(target, bonus, 10f);
                 BeginAgentGlow(target, ColorSchool.Orange, 2f);
                 try
                 {
@@ -644,8 +644,8 @@ namespace AshAndEmber
                     float hpMax = target.HealthLimit;
                     if (hpMax > 0f && hp >= hpMax * 0.90f)
                     {
-                        float overBonus = cast.RestoreCount * 15f;
-                        AddStoneskin(target, overBonus, 5f);
+                        float overBonus = cast.RestoreCount * 18f;
+                        AddStoneskin(target, overBonus, 6f);
                     }
                 }
                 catch { }
@@ -656,7 +656,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float delta = cast.RestoreCount * 12f;
+                    float delta = cast.RestoreCount * 15f;
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Min(cur + delta, 100f));
                 }
@@ -668,8 +668,8 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float pct = Math.Min(0.40f, cast.RestoreCount * 0.08f);
-                    float duration = 3f + cast.RestoreCount * 1f;
+                    float pct = Math.Min(0.40f, cast.RestoreCount * 0.10f);
+                    float duration = 4f + cast.RestoreCount * 1f;
                     if (!_reflectAgents.TryGetValue(target, out var cur))
                         _reflectAgents[target] = (pct, duration);
                     else

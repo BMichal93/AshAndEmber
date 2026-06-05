@@ -149,21 +149,21 @@ namespace AshAndEmber
                 Id = TalentId.Scatter, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Scatter",
                 Lore = "The fire does not merely burn — it expels. What it touches, it unmakes and flings aside. You have learned to aim that expulsion.",
-                MechanicDesc = "Enchantment. Damage blasts enemies backward (4m per Damage input) and sears their limbs, reducing movement speed by 25% per Damage input (max 75%) for 4s + 1s per input."
+                MechanicDesc = "Enchantment. Damage blasts enemies backward (5m per Damage input) and sears their limbs, reducing movement speed by 30% per Damage input (max 90%) for 5s + 1s per input."
             },
             new TalentDef
             {
                 Id = TalentId.Smoulder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Smoulder",
                 Lore = "The fire knows what frightens. It does not need to kill a man to defeat him — only to let him feel how little warmth he carries. The courage drains out with the heat.",
-                MechanicDesc = "Enchantment. Damage scorches enemy morale (−12 per Damage input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%."
+                MechanicDesc = "Enchantment. Damage scorches enemy morale (−15 per Damage input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%."
             },
             new TalentDef
             {
                 Id = TalentId.Sunder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Sunder",
                 Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what they wear and what they carry. What holds together begins to separate. Not quickly. But enough.",
-                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm for 8 seconds. Vulnerability to incoming damage = 5% per Damage input (max 40%). Attack power reduction = 8% per Damage input (max 40%)."
+                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm for 10 seconds. Vulnerability to incoming damage = 6% per Damage input (max 40%). Attack power reduction = 10% per Damage input (max 40%)."
             },
             new TalentDef
             {
@@ -178,28 +178,28 @@ namespace AshAndEmber
                 Id = TalentId.Ashveil, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Ashveil",
                 Lore = "Ash does not burn twice. Coat something in it, and the fire cannot find purchase. For a few seconds, what you kindle becomes untouchable.",
-                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 3s per Restore input."
+                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 4s per Restore input."
             },
             new TalentDef
             {
                 Id = TalentId.CinderShell, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Cinder Shell",
                 Lore = "Fire hardens what it doesn't consume. The skin does not become stone — it becomes something older. Whatever falls on them will not find the same flesh.",
-                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage for 8 seconds. Protection = 5% per Restore input, max 50%. When an ally is near full health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
+                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage for 10 seconds. Protection = 6% per Restore input, max 50%. When an ally is near full health, excess fire adds a damage shield of 18 HP per Restore input for 6s."
             },
             new TalentDef
             {
                 Id = TalentId.Hearthlight, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Hearthlight",
                 Lore = "The fire in them has not gone out — it has only dimmed. You reach in and remind it what it is for. They remember, for a moment, that the fire is their friend.",
-                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 12 per Restore input."
+                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 15 per Restore input."
             },
             new TalentDef
             {
                 Id = TalentId.Reflect, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Reflect",
                 Lore = "The fire you give is not passive. It waits in the body like an ember under ash, and when something cold strikes — it answers.",
-                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 40%. Lasts 3s + 1s per input."
+                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 10% of damage per Restore input back at the attacker, max 40%. Lasts 4s + 1s per input."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
