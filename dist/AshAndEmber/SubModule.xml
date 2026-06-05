@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Module>
+    <Name value="Ash and Ember"/>
+    <Id value="AshAndEmber"/>
+    <Version value="v0.11.0.2"/>
+    <SingleplayerModule value="true"/>
+    <MultiplayerModule value="false"/>
+    <DependedModules>
+        <DependedModule Id="Native"/>
+        <DependedModule Id="SandBoxCore"/>
+        <DependedModule Id="Sandbox"/>
+        <DependedModule Id="StoryMode"/>
+    </DependedModules>
+    <SubModules>
+        <SubModule>
+            <Name value="AshAndEmber"/>
+            <DLLName value="AshAndEmber.dll"/>
+            <SubModuleClassType value="AshAndEmber.MainSubModule"/>
+            <Tags>
+                <Tag key="DedicatedServerType" value="none"/>
+            </Tags>
+        </SubModule>
+    </SubModules>
+    <Xmls>
+        <XmlNode>
+            <XmlName id="Items" path="items"/>
+        </XmlNode>
+        <XmlNode>
+            <XmlName id="NPCCharacters" path="troops"/>
+        </XmlNode>
+    </Xmls>
+</Module>
