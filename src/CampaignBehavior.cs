@@ -27,6 +27,12 @@ namespace AshAndEmber
         private int  _lordAnnounceCountdown = -1;
         private bool _lordAnnouncementDone  = false;
         private static readonly Random _rng = new Random();
+        // Guard against HeroKilledEvent firing multiple times for the same execution
+        // (Bannerlord can fire the event twice under certain load conditions).
+        private readonly HashSet<string> _executedLordIds = new HashSet<string>();
+        // Tracks how many days each Ashen lord has been in captivity (StringId → days).
+        // Ashen lords auto-escape after 3 days — the cold does not yield to chains.
+        private readonly Dictionary<string, int> _ashenCaptiveDays = new Dictionary<string, int>();
 
         private static readonly string[] _premonitions =
         {
@@ -344,6 +350,9 @@ namespace AshAndEmber
                 try { DragonQuestSystem.DailyTick(); } catch { }
                 try { CheckReapPrisonerYield(); } catch { }
                 if (_reapRaidCooldown > 0) _reapRaidCooldown--;
+                _executedLordIds.Clear(); // IDs of executed lords expire after 1 day
+                try { CheckAshenPrisonerEscape(); } catch { }
+                try { CheckMageOverexertion(); } catch { }
                 try { TickLordAnnouncement(); } catch { }
                 _dayCounter++;
                 if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
@@ -519,6 +528,88 @@ namespace AshAndEmber
             _prisonerCountSnapshot = current;
         }
 
+        // ── Ashen prisoner auto-escape ────────────────────────────────────────
+        // Ashen lords escape captivity after at most 3 days — the cold does not
+        // yield to chains.
+        private void CheckAshenPrisonerEscape()
+        {
+            try
+            {
+                // Tick up days for each Ashen lord prisoner; release at 3 days.
+                foreach (Hero h in Hero.AllAliveHeroes
+                    .Where(x => x.IsAlive && x.IsPrisoner && ColourLordRegistry.IsAshenLord(x)).ToList())
+                {
+                    if (!_ashenCaptiveDays.TryGetValue(h.StringId, out int days))
+                        days = 0;
+                    days++;
+                    if (days >= 3)
+                    {
+                        _ashenCaptiveDays.Remove(h.StringId);
+                        try { EndCaptivityAction.ApplyByEscape(h, null); } catch { }
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"{h.Name} — the cold does not yield to chains. They walked out of captivity in the night.",
+                            new Color(0.38f, 0.50f, 0.75f)));
+                    }
+                    else
+                    {
+                        _ashenCaptiveDays[h.StringId] = days;
+                    }
+                }
+                // Clear stale entries for heroes no longer a prisoner
+                foreach (string id in _ashenCaptiveDays.Keys.ToList())
+                {
+                    Hero h = null;
+                    try { h = Hero.AllAliveHeroes.FirstOrDefault(x => x.StringId == id); } catch { }
+                    if (h == null || !h.IsPrisoner) _ashenCaptiveDays.Remove(id);
+                }
+            }
+            catch { }
+        }
+
+        // ── Mage overexertion → Ashen whisper ────────────────────────────────
+        // Mage lords aged 80+ hear the cold's call more clearly each day.
+        // The chance scales gradually from ~0.05%/day at 80 to ~0.5%/day at 95.
+        private void CheckMageOverexertion()
+        {
+            try
+            {
+                foreach (Hero h in Hero.AllAliveHeroes
+                    .Where(x => x.IsLord && x.IsAlive && !x.IsChild
+                             && !ColourLordRegistry.IsAshenLord(x)
+                             && ColourLordRegistry.IsColourLord(x)
+                             && x != Hero.MainHero
+                             && x.Age >= 80f).ToList())
+                {
+                    float excess      = Math.Min(15f, (float)h.Age - 80f);
+                    float dailyChance = 0.0005f + excess * 0.00003f; // 0.05%→0.095%/day
+                    if (_rng.NextDouble() < dailyChance)
+                        TryConvertMageToAshen(h, "could feel the cold at the edge of the fire");
+                }
+            }
+            catch { }
+        }
+
+        // ── Ashen conversion helper ───────────────────────────────────────────
+        private static void TryConvertMageToAshen(Hero h, string reason)
+        {
+            if (h == null || !h.IsAlive || ColourLordRegistry.IsAshenLord(h)) return;
+            // Require clan viability so the conversion doesn't collapse a faction.
+            if (h.Clan?.Kingdom != null
+                && h.Clan.Kingdom.Clans.Count(c => c != null && !c.IsEliminated) < 2) return;
+            try
+            {
+                try { ColourLordRegistry.SetAshen(h, true); }              catch { }
+                try { AshenCitySystem.ApplyAshenPersonality(h); }          catch { }
+                try { ColourLordRegistry.SetMage(h, true); }               catch { }
+                try { AshenCitySystem.OnHeroSetAshen(h); }                 catch { }
+                try { MageKnowledge.ApplyAshenAppearance(h); }             catch { }
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{h.Name} — {reason}. The fire did not answer. Something colder did.",
+                    new Color(0.38f, 0.50f, 0.75f)));
+            }
+            catch { }
+        }
+
         private void ApplyNpcBattleAging(MapEvent mapEvent)
         {
             bool playerInvolved = false;
@@ -544,17 +635,22 @@ namespace AshAndEmber
                             if (leader == null || leader == Hero.MainHero
                                 || !ColourLordRegistry.IsColourLord(leader)) continue;
 
-                            int weight = ColourLordAI.ConsumeBattleCasts(leader);
-                            if (weight <= 0) continue;
+                            // agingCost = sum of ComputeBattleAgingCost(inputs) per spell,
+                            // already computed geometrically inside RecordCast.
+                            int agingCost = ColourLordAI.ConsumeBattleCasts(leader);
+                            if (agingCost <= 0) continue;
 
-                            // weight = sum of totalInputs across all spells cast this battle.
-                            // Divide by 3 to match the steeper player scaling (ceil(n/2) per cast).
-                            int agingDays = Math.Max(1, weight / 3);
                             if (!ColourLordRegistry.IsAshenLord(leader))
-                                AgeHeroDeferred(leader, agingDays);
+                            {
+                                AgeHeroDeferred(leader, agingCost);
+                                // Heavy overexertion: if a lord aged 15+ days in one battle,
+                                // the cold whispers to them — 8% chance of Ashen conversion.
+                                if (agingCost >= 15 && _rng.Next(100) < 8)
+                                    TryConvertMageToAshen(leader, "overexerted themselves in battle");
+                            }
                             if (playerInvolved)
                                 InformationManager.DisplayMessage(new InformationMessage(
-                                    $"{leader.Name} is spent by the working — {agingDays} day{(agingDays > 1 ? "s" : "")} older.",
+                                    $"{leader.Name} is spent by the working — {agingCost} day{(agingCost > 1 ? "s" : "")} older.",
                                     new Color(0.5f, 0.4f, 0.7f)));
                         }
                         catch { }
@@ -563,10 +659,37 @@ namespace AshAndEmber
                 catch { }
             }
 
+            // Off-screen battles: ColourLordAI never ran, so _battleCasts is empty.
+            // Apply small random aging (40% chance, 1–3 days) to simulate mages casting.
+            if (!playerInvolved)
+            {
+                try
+                {
+                    foreach (MapEventSide side in new[] { mapEvent.AttackerSide, mapEvent.DefenderSide })
+                    {
+                        if (side == null) continue;
+                        foreach (var meparty in side.Parties)
+                        {
+                            try
+                            {
+                                Hero leader = meparty?.Party?.LeaderHero;
+                                if (leader == null || leader == Hero.MainHero
+                                    || !ColourLordRegistry.IsColourLord(leader)
+                                    || ColourLordRegistry.IsAshenLord(leader)) continue;
+                                if (_rng.NextDouble() < 0.40)
+                                    AgeHeroDeferred(leader, 1 + _rng.Next(3));
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+                return;
+            }
+
             // Also age companion mages travelling in the player's party.
             // ApplyNpcBattleAging only reaches party leaders above; companions are non-leaders
             // and would never be aged otherwise even though ColourLordAI tracks their casts.
-            if (!playerInvolved) return;
             try
             {
                 var roster = MobileParty.MainParty?.MemberRoster;
@@ -577,14 +700,13 @@ namespace AshAndEmber
                     if (companion == null || companion == Hero.MainHero) continue;
                     if (!ColourLordRegistry.IsColourLord(companion)) continue;
 
-                    int weight = ColourLordAI.ConsumeBattleCasts(companion);
-                    if (weight <= 0) continue;
+                    int agingCost = ColourLordAI.ConsumeBattleCasts(companion);
+                    if (agingCost <= 0) continue;
 
-                    int agingDays = Math.Max(1, weight / 4);
                     if (!ColourLordRegistry.IsAshenLord(companion))
-                        AgeHeroDeferred(companion, agingDays);
+                        AgeHeroDeferred(companion, agingCost);
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"{companion.Name} is spent by the working — {agingDays} day{(agingDays > 1 ? "s" : "")} older.",
+                        $"{companion.Name} is spent by the working — {agingCost} day{(agingCost > 1 ? "s" : "")} older.",
                         new Color(0.5f, 0.4f, 0.7f)));
                 }
             }
@@ -662,11 +784,16 @@ namespace AshAndEmber
                 try { victimIsLord = victim.IsLord; } catch { }
                 if (!victimIsLord) return;
 
-                // Reap: executing a captured lord draws back 100 days (merged from DevourLife)
+                // Reap: executing a captured lord draws back 100 campaign days.
+                // Guard with a StringId set — HeroKilledEvent can fire twice under certain
+                // Bannerlord load/save conditions, causing double rejuvenation.
                 if (killer == Hero.MainHero
                     && MageKnowledge.IsMage
-                    && TalentSystem.Has(TalentId.Reap))
+                    && TalentSystem.Has(TalentId.Reap)
+                    && victim.StringId != null
+                    && !_executedLordIds.Contains(victim.StringId))
                 {
+                    _executedLordIds.Add(victim.StringId);
                     try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
                 }
             }
@@ -674,12 +801,22 @@ namespace AshAndEmber
         }
 
         // ── Child inheritance ─────────────────────────────────────────────────
-        // 75% if both parents are mages, 50% if one, 10% otherwise
+        // 75% if both parents are mages, 50% if one, 10% otherwise.
+        // Ashen lords cannot have children — the cold preserves, not creates.
         private void OnHeroCreated(Hero hero, bool bornNaturally)
         {
             if (!bornNaturally) return;
             try
             {
+                // Ashen parents cannot produce living children — still the cold.
+                bool motherAshen = hero.Mother != null && ColourLordRegistry.IsAshenLord(hero.Mother);
+                bool fatherAshen = hero.Father != null && ColourLordRegistry.IsAshenLord(hero.Father);
+                if (motherAshen || fatherAshen)
+                {
+                    try { KillCharacterAction.ApplyByMurder(hero, null, false); } catch { }
+                    return;
+                }
+
                 bool motherMage = hero.Mother != null && (
                     hero.Mother == Hero.MainHero ? MageKnowledge.IsMage
                                                  : ColourLordRegistry.IsColourLord(hero.Mother));
@@ -724,6 +861,21 @@ namespace AshAndEmber
             try { dataStore.SyncData("LDM_ReapRaidCooldown", ref _reapRaidCooldown); } catch { }
             try { dataStore.SyncData("LDM_LordAnnounceCD",   ref _lordAnnounceCountdown); } catch { }
             try { dataStore.SyncData("LDM_LordAnnounceDone", ref _lordAnnouncementDone); } catch { }
+            // Ashen prisoner escape tracker (save/load)
+            try
+            {
+                var capKeys = _ashenCaptiveDays.Keys.ToList();
+                var capVals = _ashenCaptiveDays.Values.ToList();
+                dataStore.SyncData("LDM_AshenCapKeys", ref capKeys);
+                dataStore.SyncData("LDM_AshenCapVals", ref capVals);
+                if (capKeys != null && capVals != null && capKeys.Count == capVals.Count)
+                {
+                    _ashenCaptiveDays.Clear();
+                    for (int i = 0; i < capKeys.Count; i++)
+                        _ashenCaptiveDays[capKeys[i]] = capVals[i];
+                }
+            }
+            catch { }
             try { MageKnowledge.Save(dataStore); } catch { }
             try { ColourLordRegistry.Save(dataStore); } catch { }
             try { AshenCitySystem.Save(dataStore); } catch { }

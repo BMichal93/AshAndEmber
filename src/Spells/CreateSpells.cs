@@ -118,12 +118,13 @@ namespace AshAndEmber
                 bool isEnemy = e.CasterTeam != null && a.Team != e.CasterTeam;
 
                 // Warning zone: push enemies away from the barrier wall.
-                bool inWarningZone = dist > e.Radius && dist < e.Radius + 3.5f;
-                if (inWarningZone && isEnemy && !a.IsHero)
+                // Extended to 5 m beyond radius; heroes get a gentler nudge.
+                bool inWarningZone = dist > e.Radius && dist < e.Radius + 5f;
+                if (inWarningZone && isEnemy)
                 {
                     Vec3 outDir = toH.Length < 0.01f ? new Vec3(1f, 0f, 0f) : toH.NormalizedCopy();
                     bool mounted = false; try { mounted = a.MountAgent != null; } catch { }
-                    float pushDist = mounted ? 4f : 2.5f;
+                    float pushDist = a.IsHero ? 1.5f : (mounted ? 4f : 2.5f);
                     Vec3 dest = a.Position + outDir * pushDist;
                     dest.z = a.Position.z;
                     try { QueueMove(a, dest, 0.3f); } catch { }
@@ -218,6 +219,9 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+
+            // Scatter surviving enemies outward from burst center.
+            if (wantDmg) ScatterEnemies(caster.Position, radius, casterTeam);
 
             // Burst also heals the caster when Restore is active
             if (wantHeal && caster.IsActive())

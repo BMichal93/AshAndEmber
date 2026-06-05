@@ -913,6 +913,44 @@ namespace AshAndEmber
 
         public static void ClearMagicMemory() => _recentMagicEvents.Clear();
 
+        // ── AOE scatter ───────────────────────────────────────────────────────
+        // Nudges nearby non-hero enemies outward from an AOE impact point so
+        // surviving units visibly flee the blast zone.  Heroes hold their ground.
+        // scatterRadius extends beyond hitRadius so units just outside the hit
+        // zone react too (fear response from witnessing the spell).
+        internal static void ScatterEnemies(Vec3 center, float hitRadius, Team casterTeam)
+        {
+            if (Mission.Current == null) return;
+            float scatterRadius = hitRadius + 3f;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a.IsHero) continue;
+                    if (casterTeam != null && a.Team == casterTeam) continue;
+                    float dx = a.Position.x - center.x;
+                    float dy = a.Position.y - center.y;
+                    float dist = (float)Math.Sqrt(dx * dx + dy * dy);
+                    if (dist > scatterRadius) continue;
+                    // Outward direction with ±~20° random lateral variation
+                    float len = dist > 0.01f ? dist : 1f;
+                    Vec3 outDir = new Vec3(dx / len, dy / len, 0f);
+                    float angle = ((float)_rng.NextDouble() - 0.5f) * 0.7f;
+                    float cos = (float)Math.Cos(angle), sin = (float)Math.Sin(angle);
+                    Vec3 scatterDir = new Vec3(
+                        outDir.x * cos - outDir.y * sin,
+                        outDir.x * sin + outDir.y * cos, 0f);
+                    float scatterDist = 2.5f + (float)_rng.NextDouble() * 2.5f;
+                    Vec3 target = new Vec3(
+                        a.Position.x + scatterDir.x * scatterDist,
+                        a.Position.y + scatterDir.y * scatterDist,
+                        a.Position.z);
+                    try { QueueMove(a, target, 0.5f); } catch { }
+                }
+            }
+            catch { }
+        }
+
         // ── Siege check ────────────────────────────────────────────────────────
         public static void IssueChargeToOwnFormations(Agent caster) { }
 

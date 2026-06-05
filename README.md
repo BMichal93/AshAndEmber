@@ -1,4 +1,4 @@
-# Ash and Ember — v0.11.0
+# Ash and Ember — v0.12.0
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -177,7 +177,7 @@ The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Da
 
 ### Multi-form example
 
-`WW SS X UUU` — Blast (5 m) + Burst (5 m) simultaneously, 75 fire damage to all units in range including allies. 7 inputs = 2 days cost.
+`WW SS X UUU` — Blast (5 m) + Burst (5 m) simultaneously, 75 fire damage to all units in range including allies. 7 inputs = 8 days cost.
 
 ---
 
@@ -196,14 +196,22 @@ Damage and Restore may be combined in the same cast.
 
 ## Aging Cost
 
-Every spell draws on your lifespan. Cost scales with total inputs (form + effect combined) — no hard cap:
+Every spell draws on your lifespan. Cost scales **geometrically** with total inputs — weak spells are cheap; powerful spells become very expensive. Hard cap: 84 campaign days (1 Bannerlord year = 4 seasons × 21 days).
 
 | Total inputs | Cost | With BattleMage |
 |--------------|------|-----------------|
 | 1–2 | 1 day | 1 day |
-| 3–4 | 2 days | 1 day |
-| 5–6 | 3 days | 2 days |
-| 7–8 | 4 days | 3 days |
+| 3 | 2 days | 1 day |
+| 4 | 3 days | 2 days |
+| 5 | 4 days | 3 days |
+| 6 | 5 days | 4 days |
+| 7 | 8 days | 7 days |
+| 8 | 11 days | 10 days |
+| 9 | 15 days | 14 days |
+| 10 | 21 days | 20 days |
+| 12 | 41 days | 40 days |
+| 14 | 80 days | 79 days |
+| 16+ | 84 days (cap) | 83 days |
 
 **Tempered** talent reduces the cost by 1 day (minimum 1 — battle casts are never free), plus up to 30% age-based reduction after age 40.
 
@@ -750,3 +758,100 @@ The extinction resurgence fires automatically — a random city will fall to the
 
 **Script reports "Could not auto-detect your Bannerlord installation"**  
 Pass the path manually: `.\install.ps1 -BannerlordPath "D:\Games\Mount & Blade II Bannerlord"`
+
+---
+
+## Changelog
+
+### v0.12.0
+
+**Balance — Spell aging cost is now geometric (applies to player AND mage lords)**
+
+Battle spell cost now follows a geometric curve. Weak spells stay cheap; powerful spells become meaningfully expensive. Hard cap: 84 campaign days (1 Bannerlord year = 4 seasons × 21 days). Mage lords now pay the same geometric rate — previously they were undercharged. Off-screen battles also now apply a small random aging to mage lords who participated.
+
+| Total inputs | Cost | With BattleMage |
+|---|---|---|
+| 1–2 | 1 day | 1 day |
+| 5 | 4 days | 3 days |
+| 7 | 8 days | 7 days |
+| 10 | 21 days | 20 days |
+| 14 | 80 days | 79 days |
+| 16+ | 84 days (cap) | 83 days |
+
+**Bug fix — Minimum mage age is now 20**
+
+Rejuvenation effects (Reap talent, Ember kills) can no longer push hero age below 20.
+
+**Bug fix — Reap lord execution no longer fires twice**
+
+Added deduplication guard against HeroKilledEvent double-firing.
+
+**AI — Enemies scatter after AOE spells**
+
+Surviving non-hero enemies near a Burst, Blast, or Missile explosion scatter outward. Units just outside the hit radius also react.
+
+**AI — Barrier warning zone extended**
+
+Enemies avoid a fire wall from 5 m beyond the barrier edge (was 3.5 m). Hero-tier enemies also nudge away.
+
+**Schemes — "Hire an Assassin (wound)" removed**
+
+Replaced: a failed Assassination now has a 30% chance to bloody the target's escort before the blade breaks off (near-miss outcome instead of a separate scheme).
+
+**World — Ashen lords escape captivity after 3 days**
+
+The cold does not yield to chains. Any Ashen lord held prisoner for 3 days automatically escapes at midnight.
+
+**World — Ashen lords cannot have children**
+
+The cold preserves; it does not create. Births to Ashen parents no longer occur. Instead, mage lords aged 80+ now have a small daily chance of hearing the cold's call and converting to Ashen (chance scales with age). A mage lord who ages 15+ days in a single battle also has an 8% chance of conversion.
+
+**World — NPC mage lords age from all battles, not just player battles**
+
+Mage lords now receive small random aging (1–3 days, 40% chance) from off-screen battles where the player was not present.
+
+### v0.12.2
+
+**AI — Larger NPC blast and burst spells; cost scales automatically**
+
+All mage lord and Ashen lord combat spells now fire at larger form counts, increasing range and radius. Cost adjusts automatically because `RecordCast` feeds each cast through the same geometric aging formula the player uses.
+
+| Situation | Old form | New form | Old range/radius | New range/radius |
+|---|---|---|---|---|
+| Non-Ashen lord — standard blast/burst | 2 | 3 | 5 m | 7.5 m |
+| Non-Ashen lord — near-death defensive burst | 2 | 3 | 5 m | 7.5 m |
+| Non-Ashen lord — surrounded (3–4 enemies) | 2 | 3 | 5 m | 7.5 m |
+| Non-Ashen lord — surrounded (5+ enemies) | 3 | 4 | 7.5 m | 10 m |
+| Ashen lord — standard blast/burst | 2–3 | 3–4 | 5–7.5 m | 7.5–10 m |
+| Ashen lord — heavy cast (many targets) | 3 | 4 | 7.5 m | 10 m |
+| Ashen lord — near-death defensive burst | 3 | 4 | 7.5 m | 10 m |
+| Ashen lord — surrounded (5+) | 3 | 5 | 7.5 m | 12.5 m |
+
+Detection ranges used for the friendly-fire check updated to match (`blastRange` 6→8 m for lords, 8→10 m for Ashen; burst-check radius 5→7.5 m for lords, 5→10 m for Ashen).
+
+Aging cost examples (auto-computed, no manual change needed):
+- Standard lord cast: 6 inputs → **5 days** (was 4 inputs → 3 days)
+- Ashen heavy cast: 8 inputs → **11 days** (was 6 inputs → 5 days)
+- Ashen surrounded 5-cast: 10 inputs → **21 days** (was 6 inputs → 5 days)
+
+---
+
+### v0.12.1
+
+**World events — Whispers from the Ash fires twice as often**
+
+Chance per week raised from 1.5% to 3% (~every 33 weeks instead of ~every 67 weeks). Mage lords defecting to the Ashen are now a more regular part of a long campaign.
+
+**World events — The Temple is nearly guaranteed by day 250**
+
+After day 250 the Temple founding chance jumps from 4%/week to 85%/week, so it fires within 1–2 weeks past that threshold. The normal 4%/week rate still applies between day 100 and day 250.
+
+---
+
+### v0.11.2
+
+NPC spell AI: improved friendly fire avoidance and target-density scaling.
+
+### v0.11.0
+
+Ashen Altars, Sanctuary, Schemes, Dragon Quest, and 27 world events.

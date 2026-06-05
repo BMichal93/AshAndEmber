@@ -1,4 +1,4 @@
-# Ash and Ember — v0.11.0
+# Ash and Ember — v0.12.0
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 

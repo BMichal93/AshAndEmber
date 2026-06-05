@@ -142,11 +142,6 @@ namespace AshAndEmber
                 "Hire a blade. On success the target dies quietly. On exposure: war may follow. Hard 14-day retry block per target.",
                 6000, 80, 0.25f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1500),
 
-            new SchemeDefinition(SchemeType.HireAssassin,
-                "Hire an Assassin (wound)",
-                "The blade finds the lord but doesn't finish. Their party is bloodied and weakened.",
-                2500, 45, 0.33f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 1000),
-
             new SchemeDefinition(SchemeType.ForgeDocuments,
                 "Forge Documents",
                 "Fabricated letters damage a lord's reputation with their own faction.",
@@ -817,6 +812,33 @@ namespace AshAndEmber
 
             if (!caught)
             {
+                // 30% chance the blade found the target but didn't finish —
+                // the party is bloodied and shaken even in failure.
+                bool nearMiss = s.Type == SchemeType.Assassinate && _rng.NextDouble() < 0.30;
+                if (nearMiss && targetHero != null && targetHero.IsAlive)
+                {
+                    try
+                    {
+                        if (targetHero.PartyBelongedTo?.MemberRoster != null)
+                        {
+                            foreach (var e in targetHero.PartyBelongedTo.MemberRoster.GetTroopRoster().ToList())
+                            {
+                                if (e.Character.IsHero) continue;
+                                int toWound = Math.Max(1, (e.Number - e.WoundedNumber) / 6);
+                                if (toWound <= 0) continue;
+                                try { targetHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                            }
+                        }
+                    }
+                    catch { }
+                    if (s.IsPlayer)
+                        Notify(s,
+                            $"The blade found {tName}'s company on the road but lost its nerve before the end. " +
+                            $"The escort is bloodied and shaken. The coin is spent. The lord lives — for now.",
+                            new Color(0.60f, 0.50f, 0.30f));
+                    return;
+                }
+
                 // Silent failure — agent slipped away, nothing to trace
                 if (s.IsPlayer)
                     Notify(s,

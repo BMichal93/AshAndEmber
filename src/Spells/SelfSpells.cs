@@ -179,6 +179,9 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Scatter surviving enemies from the explosion point.
+            if (m.Cast.DamageCount > 0) ScatterEnemies(pos, radius, m.CasterTeam);
+
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Missile detonates — {m.Cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
                 ColorSchoolData.GetMessageColor(col)));

@@ -101,14 +101,17 @@ namespace AshAndEmber
         public const float ChanceSeedsOfBetrayal = 0.013f; // ~every 77 weeks  (very rare)
         public const float ChanceBrokenWill      = 0.010f; // ~every 100 weeks (once or twice per campaign, gated to day 60+)
         public const float ChanceTheLongMarch    = 0.04f;  // ~every 25 weeks  (rare)
-        public const float ChanceWhispers        = 0.015f; // ~every 67 weeks  (very rare)
+        public const float ChanceWhispers        = 0.030f; // ~every 33 weeks  (rare, was 67)
         public const float ChanceTyranny         = 0.02f;  // ~every 50 weeks  (very rare)
         public const float ChanceStolenHeirloom  = 0.02f;  // ~every 50 weeks  (very rare)
         public const float ChancePeasantUnrest   = 0.06f;  // ~every 17 weeks  (medium — like Great Withering)
         public const float ChanceWolfSheepCloth = 0.03f;  // ~every 33 weeks  (rare but not very)
         public const float ChanceMageFatwa      = 0.025f; // ~every 40 weeks  (rare)
-        public const float ChanceTheTemple     = 0.04f;  // once per campaign after day 100 (~25 weeks to fire)
+        public const float ChanceTheTemple      = 0.04f;  // once per campaign after day 100 (~25 weeks to fire)
         public const int   TempleEarliestDay   = 100;
+        // After this day the Temple's founding becomes nearly inevitable (~85%/week).
+        public const int   TempleNearCertainDay = 250;
+        public const float ChanceTempleLatent   = 0.85f; // ~fires within 1–2 weeks past day 250
         public const float ChanceIronWinter      = 0.04f;  // ~every 25 weeks  (rare, winter only)
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
         public const float ChanceFirstGreen      = 0.04f;  // ~every 25 weeks  (rare, spring only)
@@ -1801,7 +1804,11 @@ namespace AshAndEmber
             if (!_debugForceNextTemple)
             {
                 if (ElapsedCampaignDays() < TempleEarliestDay) return;
-                if (_rng.NextDouble() >= ChanceTheTemple) return;
+                // After day 250 the Temple becomes nearly inevitable — high chance each week.
+                float chance = ElapsedCampaignDays() >= TempleNearCertainDay
+                    ? ChanceTempleLatent
+                    : ChanceTheTemple;
+                if (_rng.NextDouble() >= chance) return;
             }
             _debugForceNextTemple = false;
             if (!TryClaimWeeklySlot()) return;

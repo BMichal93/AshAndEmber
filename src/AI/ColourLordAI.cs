@@ -147,9 +147,9 @@ namespace AshAndEmber
             if (hpPct < 0.40f && closeEnemies >= 1)
             {
                 if (isAshen)
-                    CastBurst(agent, hero, 3, 3, 0);
+                    CastBurst(agent, hero, 4, 4, 0); // 10 m radius
                 else
-                    CastBurst(agent, hero, 2, 2, 0);
+                    CastBurst(agent, hero, 3, 3, 0); // 7.5 m radius
                 return;
             }
 
@@ -177,14 +177,16 @@ namespace AshAndEmber
             // 3. Attack — evaluate both zones for friendly fire safety and target density
             int roll = isAshen ? _rng.Next(6) : _rng.Next(4);
 
-            const float BlastDot        = 0.65f;
-            const float BurstCheckRange = 5f;   // formCount=2 burst radius (2 × 2.5 m)
-            float blastRange = isAshen ? 8f : 6f;
+            const float BlastDot = 0.65f;
+            // Detection range and burst-check radius are scaled to match the larger
+            // spell sizes below so the friendly-fire check covers the actual impact zone.
+            float blastRange      = isAshen ? 10f  : 8f;   // was 8 / 6
+            float burstCheckRange = isAshen ? 10f  : 7.5f; // was 5 (formCount=2); now formCount=3-4
 
             int coneEnemies   = SpellEffects.CountEnemiesInCone(agent, blastRange, BlastDot);
             int coneAllies    = SpellEffects.CountAlliesInCone(agent, blastRange, BlastDot);
-            int radiusEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < BurstCheckRange);
-            int radiusAllies  = SpellEffects.CountAlliesInRadius(agent, BurstCheckRange);
+            int radiusEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < burstCheckRange);
+            int radiusAllies  = SpellEffects.CountAlliesInRadius(agent, burstCheckRange);
 
             // A zone is "safe" when enemies outnumber allies in it.
             // Ashen lords accept equal counts (reckless); non-Ashen require a strict majority.
@@ -193,79 +195,83 @@ namespace AshAndEmber
             bool burstSafe = radiusEnemies >= 1
                 && (radiusAllies == 0 || (isAshen ? radiusEnemies >= radiusAllies : radiusEnemies > radiusAllies));
 
-            // Surrounded — burst to clear space; scale form up when massively outnumbered
+            // Surrounded — burst to clear space; all formCounts bumped +1 vs previous
             if (closeEnemies >= 3)
             {
-                int form = (closeEnemies >= 5 || (isAshen && roll >= 3)) ? 3 : 2;
+                // Non-Ashen: 3 (7.5 m) or 4 (10 m) when massively outnumbered
+                // Ashen:     4 (10 m) or 5 (12.5 m)
+                int form = isAshen
+                    ? (closeEnemies >= 5 || roll >= 3 ? 5 : 4)
+                    : (closeEnemies >= 5              ? 4 : 3);
                 CastBurst(agent, hero, form, form, 0);
                 return;
             }
 
             if (isAshen)
             {
-                // Ashen: aggressive, unpredictable — full variety when both zones are clear
+                // Ashen: aggressive, unpredictable — all spells one tier larger than before
                 if (blastSafe && burstSafe)
                 {
                     switch (roll)
                     {
-                        case 0: CastBlast(agent, hero, coneEnemies >= 3 ? 3 : 2, coneEnemies >= 3 ? 3 : 2, 0); break;
-                        case 1: CastBurst(agent, hero, radiusEnemies >= 3 ? 3 : 2, radiusEnemies >= 3 ? 3 : 2, 0); break;
-                        case 2: CastBlast(agent, hero, 2, 2, 0); break;
-                        case 3: CastBurst(agent, hero, 2, 2, 0); break;
-                        case 4: CastBlast(agent, hero, 3, coneEnemies >= 3 ? 3 : 2, 0); break;
-                        default: CastBurst(agent, hero, 2, radiusEnemies >= 3 ? 3 : 2, 0); break;
+                        case 0: CastBlast(agent, hero, coneEnemies >= 3 ? 4 : 3, coneEnemies >= 3 ? 4 : 3, 0); break;
+                        case 1: CastBurst(agent, hero, radiusEnemies >= 3 ? 4 : 3, radiusEnemies >= 3 ? 4 : 3, 0); break;
+                        case 2: CastBlast(agent, hero, 3, 3, 0); break;
+                        case 3: CastBurst(agent, hero, 3, 3, 0); break;
+                        case 4: CastBlast(agent, hero, 4, coneEnemies >= 3 ? 4 : 3, 0); break;
+                        default: CastBurst(agent, hero, 3, radiusEnemies >= 3 ? 4 : 3, 0); break;
                     }
                 }
                 else if (blastSafe)
                 {
-                    int form = coneEnemies >= 3 ? 3 : (roll < 3 ? 2 : 3);
+                    int form = coneEnemies >= 3 ? 4 : 3;
                     CastBlast(agent, hero, form, form, 0);
                 }
                 else if (burstSafe)
                 {
-                    int form = radiusEnemies >= 3 ? 3 : (roll < 3 ? 2 : 3);
+                    int form = radiusEnemies >= 3 ? 4 : 3;
                     CastBurst(agent, hero, form, form, 0);
                 }
                 else if (nearEnemies > 0)
                 {
                     // Ashen never idle — harass even without a clean target
-                    if (roll < 3) CastBurst(agent, hero, 2, 2, 0);
-                    else          CastBlast(agent, hero, 2, 2, 0);
+                    if (roll < 3) CastBurst(agent, hero, 3, 3, 0);
+                    else          CastBlast(agent, hero, 3, 3, 0);
                 }
             }
             else if (isCalculating)
             {
                 // Patient: prefers area bursts when enemies cluster; holds fire for clean shots
                 if (burstSafe && radiusEnemies >= 2)
-                    CastBurst(agent, hero, 2, 2, 0);
+                    CastBurst(agent, hero, 3, 3, 0);
                 else if (blastSafe && coneEnemies >= 2)
-                    CastBlast(agent, hero, 2, 2, 0);
+                    CastBlast(agent, hero, 3, 3, 0);
                 else if (blastSafe)
-                    CastBlast(agent, hero, 2, 2, 0);
+                    CastBlast(agent, hero, 3, 3, 0);
                 else if (burstSafe)
-                    CastBurst(agent, hero, 2, 1, 0);
+                    CastBurst(agent, hero, 3, 2, 0);
                 // else: no quality opportunity this tick — wait
             }
             else if (isImpulsive)
             {
                 // Direct: fires as soon as any safe forward target appears
                 if (blastSafe)
-                    CastBlast(agent, hero, 2, 2, 0);
+                    CastBlast(agent, hero, 3, 3, 0);
                 else if (burstSafe)
-                    CastBurst(agent, hero, 2, 2, 0);
+                    CastBurst(agent, hero, 3, 3, 0);
                 // else: no safe target this tick
             }
             else
             {
                 // Default: balanced mix, avoids friendly fire
                 if (blastSafe && (roll <= 2 || !burstSafe))
-                    CastBlast(agent, hero, 2, 2, 0);
+                    CastBlast(agent, hero, 3, 3, 0);
                 else if (burstSafe)
-                    CastBurst(agent, hero, 2, 2, 0);
+                    CastBurst(agent, hero, 3, 3, 0);
                 else if (blastSafe)
-                    CastBlast(agent, hero, 2, 2, 0);
+                    CastBlast(agent, hero, 3, 3, 0);
                 else if (nearEnemies > 0)
-                    CastBurst(agent, hero, 2, 1, 0); // light pressure while repositioning
+                    CastBurst(agent, hero, 3, 2, 0); // light pressure while repositioning
             }
         }
 
@@ -356,12 +362,13 @@ namespace AshAndEmber
             catch { }
         }
 
-        // Accumulates total formCount weight so post-battle aging scales with spell power.
-        private static void RecordCast(Hero hero, int weight = 1)
+        // Accumulates aging COST (not raw inputs) so NPC lords pay the same geometric
+        // rate as the player: ComputeBattleAgingCost(totalInputs) days per spell cast.
+        private static void RecordCast(Hero hero, int totalInputs = 1)
         {
             if (!_battleCasts.ContainsKey(hero.StringId))
                 _battleCasts[hero.StringId] = 0;
-            _battleCasts[hero.StringId] += weight;
+            _battleCasts[hero.StringId] += AgingSystem.ComputeBattleAgingCost(totalInputs, false);
         }
 
         // Shows a combat-log message when an NPC lord casts against the player.

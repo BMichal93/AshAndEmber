@@ -267,8 +267,10 @@ namespace AshAndEmber
                 "  S, X, SS, release       →  Burst,   30 heal,  1 day  (heals you too)\n" +
                 "  AAA, X, WW, release     →  Long missile, 50 dmg,  2 days\n" +
                 "  WW+SS, X, W+S, release  →  Blast+Burst, dmg+heal, 2 days\n\n" +
-                "── BATTLE COST  (days of life per cast) ─────────────\n" +
-                "  Total key presses:  1–2 = 1 day   3–4 = 2 days   5–6 = 3 days   7–8 = 4 days\n" +
+                "── BATTLE COST  (days of life per cast — geometric) ──\n" +
+                "  1–2 inputs = 1 day   3 = 2 days   4 = 3   5 = 4   6 = 5\n" +
+                "  7 = 8 days   8 = 11   9 = 15   10 = 21   12 = 41   14 = 80\n" +
+                "  Hard cap: 84 days (= 1 year). Mage lords age at the same rate.\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] −1 day cost (min 1) + up to 30% age reduction.\n" : "") +
                 ashenNote +
                 $"\n  Open this page: {openBook}" +

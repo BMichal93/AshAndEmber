@@ -49,14 +49,17 @@ namespace AshAndEmber
         public static void ClearKnockdowns() { }
 
         /// <summary>
-        /// Battle spell aging cost: ceil(totalInputs / 2) days — scales with spell size, no hard cap.
-        /// Examples: 1-2 inputs = 1 day | 3-4 = 2 days | 5-6 = 3 days | 7-8 = 4 days.
+        /// Battle spell aging cost: geometric — round(1.4^(n−1)), capped at 84 days (1 Bannerlord year).
+        /// Bannerlord year = 84 campaign days (4 seasons × 21 days).
+        /// Examples: 1–2 inputs = 1 day | 5 = 4 | 7 = 8 | 10 = 21 | 12 = 41 | 14 = 80 | 16+ = 84 (cap).
         /// Tempered (BattleMage) talent subtracts 1 from the total cost (minimum 1, never free),
         /// and beyond age 40 also shaves 0.5% per year off the final cost, capped at 30%.
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
-            int cost = (totalInputs + 1) / 2;  // ceil(n/2)
+            // Geometric scaling: small spells are cheap; large spells become very expensive.
+            // Base 1.4, standard rounding, hard cap at 84 campaign days (= 1 Bannerlord year).
+            int cost = Math.Min(84, Math.Max(1, (int)(Math.Pow(1.4, totalInputs - 1) + 0.5)));
             if (hasBattleMageTalent) cost = Math.Max(1, cost - 1);
 
             // Tempered (merged Veteran's Ash): each year beyond 40 shaves 0.5% off cost, capped at 30%.
@@ -79,7 +82,8 @@ namespace AshAndEmber
         }
 
         /// <summary>
-        /// Reverses aging by <paramref name="days"/> in-game days.
+        /// Reverses aging by <paramref name="days"/> campaign days, clamped so the hero never drops below age 20.
+        /// Bannerlord year = 84 campaign days (4 seasons × 21 days).
         /// Shows a message only for the player hero.
         /// </summary>
         public static void RejuvenateHero(Hero hero, int days)
@@ -87,6 +91,16 @@ namespace AshAndEmber
             if (hero == null || days <= 0) return;
             try
             {
+                const float MinAge = 20f;
+                float currentAge = (float)hero.Age;
+                if (currentAge <= MinAge) return;
+
+                // Clamp days so we never push below minimum age.
+                // 1 Bannerlord year = 84 campaign days (4 seasons × 21 days).
+                int maxDays = Math.Max(0, (int)((currentAge - MinAge) * 84f));
+                days = Math.Min(days, maxDays);
+                if (days <= 0) return;
+
                 hero.SetBirthDay(hero.BirthDay + CampaignTime.Days(days));
 
                 if (hero == Hero.MainHero)

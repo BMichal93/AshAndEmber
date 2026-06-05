@@ -88,6 +88,10 @@ namespace AshAndEmber
                 catch { }
             }
 
+            // Scatter surviving enemies outward — units inside and just beyond the
+            // cone flee the blast zone (includes agents not directly struck).
+            if (wantDmg) ScatterEnemies(caster.Position, range, casterTeam);
+
             if (caster == Agent.Main)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
