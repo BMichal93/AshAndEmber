@@ -660,7 +660,7 @@ namespace AshAndEmber
             }
 
             // Off-screen battles: ColourLordAI never ran, so _battleCasts is empty.
-            // Apply small random aging (40% chance, 1–3 days) to simulate mages casting.
+            // Apply small random aging (80% chance, 1–3 days) to simulate mages casting.
             if (!playerInvolved)
             {
                 try
@@ -676,7 +676,7 @@ namespace AshAndEmber
                                 if (leader == null || leader == Hero.MainHero
                                     || !ColourLordRegistry.IsColourLord(leader)
                                     || ColourLordRegistry.IsAshenLord(leader)) continue;
-                                if (_rng.NextDouble() < 0.40)
+                                if (_rng.NextDouble() < 0.80)
                                     AgeHeroDeferred(leader, 1 + _rng.Next(3));
                             }
                             catch { }
