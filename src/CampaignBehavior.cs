@@ -352,7 +352,6 @@ namespace AshAndEmber
                 try { BurningLabQuestSystem.DailyTick(); } catch { }
                 try { CheckReapPrisonerYield(); } catch { }
                 if (_reapRaidCooldown > 0) _reapRaidCooldown--;
-                _executedLordIds.Clear(); // IDs of executed lords expire after 1 day
                 try { CheckAshenPrisonerEscape(); } catch { }
                 try { CheckMageOverexertion(); } catch { }
                 try { TickLordAnnouncement(); } catch { }
@@ -864,6 +863,18 @@ namespace AshAndEmber
             try { dataStore.SyncData("LDM_ReapRaidCooldown", ref _reapRaidCooldown); } catch { }
             try { dataStore.SyncData("LDM_LordAnnounceCD",   ref _lordAnnounceCountdown); } catch { }
             try { dataStore.SyncData("LDM_LordAnnounceDone", ref _lordAnnouncementDone); } catch { }
+            // Executed lord IDs — persisted so the double-fire guard survives save/load
+            try
+            {
+                var elList = _executedLordIds.ToList();
+                dataStore.SyncData("LDM_ExecutedLordIds", ref elList);
+                if (elList != null)
+                {
+                    _executedLordIds.Clear();
+                    foreach (var id in elList) _executedLordIds.Add(id);
+                }
+            }
+            catch { }
             // Ashen prisoner escape tracker (save/load)
             try
             {

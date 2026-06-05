@@ -103,6 +103,10 @@ namespace AshAndEmber
 
                 hero.SetBirthDay(hero.BirthDay + CampaignTime.Days(days));
 
+                // Hard floor: float math in the clamp above can drift. Snap back if needed.
+                if ((float)hero.Age < MinAge)
+                    try { hero.SetBirthDay(hero.BirthDay - CampaignTime.Days((int)((MinAge - (float)hero.Age) * 84f) + 1)); } catch { }
+
                 if (hero == Hero.MainHero)
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"The fire gives back — {days} day{(days > 1 ? "s" : "")} younger. Age: {(int)hero.Age}.",

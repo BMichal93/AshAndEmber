@@ -1952,8 +1952,12 @@ namespace AshAndEmber
                         {
                             var templeK = Kingdom.All.FirstOrDefault(k =>
                                 k.StringId == "the_temple" && !k.IsEliminated);
-                            if (templeK == null || Hero.MainHero?.Clan == null) return;
-                            ChangeKingdomAction.ApplyByJoinToKingdom(Hero.MainHero.Clan, templeK);
+                            var clan = Hero.MainHero?.Clan;
+                            if (templeK == null || clan == null) return;
+                            if (clan.Kingdom != null && clan.Kingdom != templeK)
+                                try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                            if (clan.Kingdom?.StringId != "the_temple")
+                                ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK);
                             MBInformationManager.AddQuickInformation(new TextObject(
                                 "Your clan answers the call. The Temple's banner is yours now."));
                         }
