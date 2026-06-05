@@ -4501,20 +4501,29 @@ namespace AshAndEmber
         // ── Deferred: FireTrinketFirstDream — 3 days after picking up a trinket ────
         private static void FireTrinketFirstDream()
         {
-            string title, desc;
+            string title, desc, choiceA, choiceB, choiceC;
             switch (_trinketVariant)
             {
                 case 2:
-                    title = "◈  The Eye Opens";
-                    desc  = "Both sides of the medallion have the same eye in the dream. Both are open. There is nothing behind them — not darkness exactly, but the specific quality of attention that has no object. It is watching you the way a locked door watches a room. You wake with the clear sense that something in your belongings is oriented toward you.";
+                    title   = "◈  The Eye Opens";
+                    desc    = "Both sides of the medallion have the same eye in the dream. Both are open. There is nothing behind them — not darkness exactly, but the specific quality of attention that has no object. It is watching you the way a locked door watches a room. You wake with the clear sense that something in your belongings is oriented toward you.";
+                    choiceA = new[]{ "Hold its gaze.", "Look back at it.", "Don't look away." }[_rng.Next(3)];
+                    choiceB = new[]{ "Keep still. Let it watch.", "Don't acknowledge it.", "Hold still. Don't engage." }[_rng.Next(3)];
+                    choiceC = new[]{ "Leave it at dawn.", "Throw it out at first light.", "Get rid of it in the morning." }[_rng.Next(3)];
                     break;
                 case 3:
-                    title = "◈  A Direction";
-                    desc  = "You are in a dark place and the compass is in your hand. Every direction looks identical except one. The disc has settled on a bearing and what is in that direction is not light exactly, but what light might look like if it could form intentions. The pull is as large as you can imagine and no larger. You wake with your hand closed around nothing and the bearing still vivid in your mind.";
+                    title   = "◈  A Direction";
+                    desc    = "You are in a dark place and the compass is in your hand. Every direction looks identical except one. The disc has settled on a bearing and what is in that direction is not light exactly, but what light might look like if it could form intentions. The pull is as large as you can imagine and no larger. You wake with your hand closed around nothing and the bearing still vivid in your mind.";
+                    choiceA = new[]{ "Follow the bearing.", "Step toward it.", "Go in that direction." }[_rng.Next(3)];
+                    choiceB = new[]{ "Stay where you are.", "Don't follow. Hold your position.", "Hold still. Don't engage." }[_rng.Next(3)];
+                    choiceC = new[]{ "Lose it in the morning.", "Leave it on the road at dawn.", "Get rid of it in the morning." }[_rng.Next(3)];
                     break;
                 default:
-                    title = "◈  Something in the Amber";
-                    desc  = "You dream of flame suspended in resin — perfectly still, not consuming, not going out. In the dream, you reach toward it. It turns toward you. The warmth in that direction is very old. You wake with your hand extended and the smell of resin in your nose.";
+                    title   = "◈  Something in the Amber";
+                    desc    = "You dream of flame suspended in resin — perfectly still, not consuming, not going out. In the dream, you reach toward it. It turns toward you. The warmth in that direction is very old. You wake with your hand extended and the smell of resin in your nose.";
+                    choiceA = new[]{ "Reach toward it.", "Open your hand toward it.", "Let it come closer." }[_rng.Next(3)];
+                    choiceB = new[]{ "Hold still. Don't engage.", "Don't move. Wait it out.", "Keep your hand away." }[_rng.Next(3)];
+                    choiceC = new[]{ "Get rid of it in the morning.", "Throw it at first light.", "Be done with it at dawn." }[_rng.Next(3)];
                     break;
             }
 
@@ -4522,9 +4531,9 @@ namespace AshAndEmber
                 title, desc,
                 new List<InquiryElement>
                 {
-                    new InquiryElement("a", "Reach toward it.", null, true, ""),
-                    new InquiryElement("b", "Hold still. Don't engage.", null, true, ""),
-                    new InquiryElement("c", "Get rid of it in the morning.", null, true, ""),
+                    new InquiryElement("a", choiceA, null, true, ""),
+                    new InquiryElement("b", choiceB, null, true, ""),
+                    new InquiryElement("c", choiceC, null, true, ""),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -4556,29 +4565,92 @@ namespace AshAndEmber
         // ── Deferred: FireTrinketRecurringDream — every 7 days while trinket is held ─
         private static void FireTrinketRecurringDream()
         {
-            string title, desc, successMsg, ageMsg, deathMsg;
+            string title, desc, throwLabel, useLabel, throwMsg, successMsg, ageMsg, deathMsg;
             switch (_trinketVariant)
             {
-                case 2:
-                    title      = "◈  The Eye Again";
-                    desc       = "The dream returns. The iron eye is waiting. It is more open than before, if that has a meaning. The attention behind it has been watching you for seven days straight and has learned something from the observation. You have options now that you did not have at the start.";
-                    successMsg = "You meet the eye and don't look away. The attention intensifies until it is the only thing in the dream. Then it gives you something — a current of influence, recognition from quarters you did not cultivate, a weight of gold arriving by paths you didn't arrange. The eye closes. You wake with the feeling that you paid something you haven't noticed missing yet.";
-                    ageMsg     = "The eye opens all the way. The attention that has been watching you arrives all at once. The years go first — fifty of them, drawn out through you in a single second. You do not have time to regret the decision. You wake old in the way that is permanent, and the medallion in your pocket is cold iron now, nothing more.";
-                    deathMsg   = "The eye opens fully and you see what is behind it. You were not supposed to survive this. The attention was always this size. You had simply not understood how small you were standing in front of it.";
+                case 2: // Blind Eye
+                    title = new[]{ "◈  The Eye Again", "◈  Still Watching", "◈  What the Eye Learned" }[_rng.Next(3)];
+                    desc = new[]{
+                        "The dream returns. The iron eye is waiting. It is more open than before, if that has a meaning. The attention behind it has been watching you for seven days straight and has learned something from the observation. You have options now that you did not have at the start.",
+                        "The dream comes again. The eye in the medallion is as you remember it, but the quality of its attention has changed — less like a gaze, more like recognition. Seven days of being watched and it has arrived at a conclusion. It is ready to show you what that conclusion is. Or you can stop now.",
+                        "You find yourself in the dream with the medallion in your palm. The eye on both sides is open, as it always is, but now it is watching something specific: you. Not your location, not your face — the thing under those. Seven days of study and it has learned something you did not mean to teach."
+                    }[_rng.Next(3)];
+                    throwLabel = new[]{ "Throw it away. Enough.", "Cover it and leave it behind.", "Stop. Walk away from the eye." }[_rng.Next(3)];
+                    useLabel   = new[]{ "Use it.", "Meet its gaze.", "Look back into it." }[_rng.Next(3)];
+                    throwMsg   = new[]{
+                        "You find a river and throw it as far as the current will take it. You don't watch where it goes. You ride on without looking back. The dreams stop.",
+                        "You bury it at a crossroads in the dark, deep enough that frost won't shift it. The sense of being observed lifts with each shovelful of earth. You ride out. The feeling is gone by noon. The dreams stop.",
+                        "You wrap it in cloth and leave it on the threshold of a temple — whatever god watches this place can have the watching. You don't go back. The feeling of attention fades slowly, then all at once. You had not realized how constant it was until it wasn't."
+                    }[_rng.Next(3)];
+                    successMsg = new[]{
+                        "You meet the eye and don't look away. The attention intensifies until it is the only thing in the dream. Then it gives you something — a current of influence, recognition from quarters you did not cultivate, a weight of gold arriving by paths you didn't arrange. The eye closes. You wake with the feeling that you paid something you haven't noticed missing yet.",
+                        "The eye narrows — focused attention becoming focused gift. Something passes through the iris like light through a crack and lands in you. You wake to find three men who owed you favors have paid without being asked. Coin in your purse that wasn't there. The medallion is warm in your pocket. You turn it over. Both eyes are still open. Both sides are still watching.",
+                        "You hold the gaze without flinching for what feels like the whole of the night. At the end of it the attention does not leave, but its character changes — from scrutiny to endorsement. You wake to influence flowing from quarters that had no reason to give it, gold by paths you didn't open, and a steadiness in the camp's regard that has no obvious cause. The eye has decided something in your favour."
+                    }[_rng.Next(3)];
+                    ageMsg = new[]{
+                        "The eye opens all the way. The attention that has been watching you arrives all at once. The years go first — fifty of them, drawn out through you in a single second. You do not have time to regret the decision. You wake old in the way that is permanent, and the medallion in your pocket is cold iron now, nothing more.",
+                        "The gaze becomes total. You feel it pass through you like a census — cataloguing what is there and marking what is owed. The debt is paid in years. Fifty of them leave in a breath. You wake with hands that are slower and a face you do not immediately recognize. The medallion in your pocket has both eyes closed now. You turn it over. Both sides. Closed."
+                    }[_rng.Next(2)];
+                    deathMsg = new[]{
+                        "The eye opens fully and you see what is behind it. You were not supposed to survive this. The attention was always this size. You had simply not understood how small you were standing in front of it.",
+                        "The attention turns absolute. You understand, at the moment it becomes too late, that you were never looking at the eye — the eye was looking at whatever is behind you, and what is behind you has no interest in leaving you intact."
+                    }[_rng.Next(2)];
                     break;
-                case 3:
-                    title      = "◈  The Bearing Again";
-                    desc       = "The dream returns. The compass is in your hand and the bearing is the same bearing it always is. What is in that direction has not moved. It has only become clearer that it is aware of you now — aware that you found it, aware that you have been carrying it. Seven days. You have options.";
-                    successMsg = "You follow the bearing. In the dream it takes you somewhere real enough that you remember it on waking — a room, a face, an exchange that settled three separate debts in your favour. The influence flows in from directions you didn't solicit. Gold arrives by paths you didn't arrange. The compass lies still in your pocket, facing its usual direction.";
-                    ageMsg     = "You reach the end of the bearing. What is there takes what it is owed. Fifty years, precise to the day. You feel each one of them leave. You wake in an older body, the compass still in your hand, the rose still pointing nowhere you can follow now. It is, in every sense, spent.";
-                    deathMsg   = "You arrive at the end of the bearing. What is there is not what you imagined. The compass was not guiding you. It was leading you.";
+                case 3: // Pale Compass
+                    title = new[]{ "◈  The Bearing Again", "◈  Still Pointing", "◈  The Same Direction" }[_rng.Next(3)];
+                    desc = new[]{
+                        "The dream returns. The compass is in your hand and the bearing is the same bearing it always is. What is in that direction has not moved. It has only become clearer that it is aware of you now — aware that you found it, aware that you have been carrying it. Seven days. You have options.",
+                        "The dream comes again and the compass comes with it, warm and precise in your palm. The bearing has not changed by a degree. But the quality of what it points toward has changed — it is attentive now in a way it was not at the start. Seven days of carrying the compass and what is at the end of the bearing has had time to notice. It is ready.",
+                        "You find yourself in the dream with the compass settled in your hand, its rose fixed on the same direction it has held for seven days. What is at the end of that bearing has been patient — patient the way something is patient when it has no reason to hurry. The question now is whether you follow."
+                    }[_rng.Next(3)];
+                    throwLabel = new[]{ "Throw it away. Enough.", "Bury it. Stop following.", "Set it down and walk away." }[_rng.Next(3)];
+                    useLabel   = new[]{ "Use it.", "Follow the bearing.", "Go where it points." }[_rng.Next(3)];
+                    throwMsg   = new[]{
+                        "You find a river and throw it as far as the current will take it. You don't watch where it goes. You ride on without looking back. The dreams stop.",
+                        "You drop it into a gorge on the high road — watch it turn in the air until you can't see it anymore. The bearing it held was pointing somewhere behind you by then. You ride the other direction. The dreams stop.",
+                        "You set it on a stone in an empty field and walk away without picking it up. The rose was still pointing its usual bearing when you last looked. You keep walking. The dreams stop."
+                    }[_rng.Next(3)];
+                    successMsg = new[]{
+                        "You follow the bearing. In the dream it takes you somewhere real enough that you remember it on waking — a room, a face, an exchange that settled three separate debts in your favour. The influence flows in from directions you didn't solicit. Gold arrives by paths you didn't arrange. The compass lies still in your pocket, facing its usual direction.",
+                        "The bearing leads you somewhere in the dream and you arrive. There is a transaction waiting — impersonal, precise, already arranged on your behalf by something with long reach. Three favors consolidated. Gold shifted into your name. Influence moving like water finding its level. You wake with the compass still pointing. It has not yet decided it is done with you.",
+                        "You follow the rose to its conclusion and find what the compass has been promising: not a place, but an arrangement. A favourable redistribution of exactly the resources that matter. You wake with gold that wasn't there and goodwill you didn't earn by visible means, and the compass in your pocket pointing its usual bearing, patient and unremarkable."
+                    }[_rng.Next(3)];
+                    ageMsg = new[]{
+                        "You reach the end of the bearing. What is there takes what it is owed. Fifty years, precise to the day. You feel each one of them leave. You wake in an older body, the compass still in your hand, the rose still pointing nowhere you can follow now. It is, in every sense, spent.",
+                        "The bearing terminates. You arrive. What meets you there is not hostile — it is merely exact. An accounting was kept and now it is settled. Fifty years, measured and drawn. You wake with grey in your hair and a weight in your joints that will not leave. The compass in your hand points at nothing now. The rose has gone still."
+                    }[_rng.Next(2)];
+                    deathMsg = new[]{
+                        "You arrive at the end of the bearing. What is there is not what you imagined. The compass was not guiding you. It was leading you.",
+                        "The bearing ends. What is at the end of it is not geography. The compass was not measuring direction — it was measuring distance to something that does not announce itself. You arrive. You understand, in a final instant of clarity, what you have been carrying toward."
+                    }[_rng.Next(2)];
                     break;
-                default:
-                    title      = "◈  The Amber Again";
-                    desc       = "The dream returns. The flame in the resin is brighter than before. It knows you now — or has learned to expect you. The warmth extends outward with more precision. You could let it in further. You could put the shard somewhere it would never be found. You have been carrying it for seven days and counting.";
-                    successMsg = "You open your hand in the dream and let the warmth come the rest of the way in. It passes through you like a tide: slow, total, indifferent to your comfort. When you wake, your purse is somehow heavier, three lords who have never spoken well of you have revised their estimate, and the fire you carry burns with a steadier quality. You don't know how to explain any of it. You don't try.";
-                    ageMsg     = "The warmth comes all the way in. You let it. For a moment you think it is good. Then the years begin to run. Fifty of them. Not taken — spent, which is different. You wake gasping, and the face looking back at you from still water is the face of someone who came to this late and paid for the privilege. The shard is cold. It won't warm again.";
-                    deathMsg   = "The warmth comes all the way in and keeps coming. You understand, in the last moment, that it was never warmth — it was appetite. The fire inside you feeds it until there is nothing left to feed with. You do not wake.";
+                default: // Ember Shard
+                    title = new[]{ "◈  The Amber Again", "◈  The Flame Returns", "◈  Something Waiting" }[_rng.Next(3)];
+                    desc = new[]{
+                        "The dream returns. The flame in the resin is brighter than before. It knows you now — or has learned to expect you. The warmth extends outward with more precision. You could let it in further. You could put the shard somewhere it would never be found. You have been carrying it for seven days and counting.",
+                        "You dream again. The amber is unchanged — still, translucent, the suspended thing inside it unmoved. But the warmth now has a direction. It is no longer radiating outward. It is orienting toward you specifically. Seven days of carrying it and it has learned your particular temperature. You have a choice to make.",
+                        "The shard is in your hand in the dream. The flame inside it has grown — not larger, but denser. More certain. It presses against the amber walls from inside as if the resin is a consideration, not a boundary. You have been carrying it for seven days. It has been carrying the same question the whole time."
+                    }[_rng.Next(3)];
+                    throwLabel = new[]{ "Throw it away. Enough.", "Put it somewhere it won't be found.", "Be done with it. Drop it in the river." }[_rng.Next(3)];
+                    useLabel   = new[]{ "Use it.", "Let it in.", "Open your hand again." }[_rng.Next(3)];
+                    throwMsg   = new[]{
+                        "You find a river and throw it as far as the current will take it. You don't watch where it goes. You ride on without looking back. The dreams stop.",
+                        "You leave it in a ditch at the roadside, pushed into the mud far enough that no casual eye will find it. The warmth that followed you lingers for half a day. Then it is gone. The dreams stop.",
+                        "You drop it into a well at dusk — listen for the sound of it striking water below. There is no sound. You ride on. The warmth you carried for seven days is simply gone, and you notice its absence the way you notice a tooth when it stops hurting."
+                    }[_rng.Next(3)];
+                    successMsg = new[]{
+                        "You open your hand in the dream and let the warmth come the rest of the way in. It passes through you like a tide: slow, total, indifferent to your comfort. When you wake, your purse is somehow heavier, three lords who have never spoken well of you have revised their estimate, and the fire you carry burns with a steadier quality. You don't know how to explain any of it. You don't try.",
+                        "The shard pulses once, twice — a heartbeat that isn't yours. Something passes between you in the dream, a transaction with no words. You wake with ash on your fingers and a stranger's debt settled in your name. Gold finds you before noon. Morale in the camp runs higher than the weather warrants. The shard in your pocket is warm but ordinary-looking. Nobody else feels it.",
+                        "You hold nothing back in the dream and the warmth holds nothing back in return. It is like standing too close to a forge — your skin does not burn but you understand what burning is. When you wake, three favors have been called in overnight by no one you instructed. Coin arrives. The camp's temper steadies. The shard sits quiet in your coat, waiting."
+                    }[_rng.Next(3)];
+                    ageMsg = new[]{
+                        "The warmth comes all the way in. You let it. For a moment you think it is good. Then the years begin to run. Fifty of them. Not taken — spent, which is different. You wake gasping, and the face looking back at you from still water is the face of someone who came to this late and paid for the privilege. The shard is cold. It won't warm again.",
+                        "The warmth comes all the way in. The amber cracks in the dream — hairline fractures that spread until the whole piece is a web of them. You understand what is being traded before it is finished. Fifty years, drawn precisely through you like thread through a needle. You wake with grey where there wasn't grey and a weight in your joints that will not leave. The shard in your pocket is just amber now."
+                    }[_rng.Next(2)];
+                    deathMsg = new[]{
+                        "The warmth comes all the way in and keeps coming. You understand, in the last moment, that it was never warmth — it was appetite. The fire inside you feeds it until there is nothing left to feed with. You do not wake.",
+                        "You let it in completely and it does not stop. The warmth becomes heat becomes the specific temperature of something feeding. The last clear thought you have is that you were the fuel the whole time. You do not wake."
+                    }[_rng.Next(2)];
                     break;
             }
 
@@ -4586,8 +4658,8 @@ namespace AshAndEmber
                 title, desc,
                 new List<InquiryElement>
                 {
-                    new InquiryElement("a", "Throw it away. Enough.", null, true, ""),
-                    new InquiryElement("b", "Use it.", null, true, ""),
+                    new InquiryElement("a", throwLabel, null, true, ""),
+                    new InquiryElement("b", useLabel,   null, true, ""),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -4597,7 +4669,7 @@ namespace AshAndEmber
                         case "a":
                             _trinketPhase   = 0;
                             _trinketVariant = 0;
-                            Msg("You find a river and throw it as far as the current will take it. You don't watch where it goes. You ride on without looking back. The dreams stop.", DimColor);
+                            Msg(throwMsg, DimColor);
                             break;
                         case "b":
                         {
