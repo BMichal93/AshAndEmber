@@ -563,10 +563,7 @@ namespace AshAndEmber
                         string tAss = targetHero.Name?.ToString() ?? "the lord";
                         try { KillCharacterAction.ApplyByMurder(targetHero, null, false); } catch { }
                         Notify(s,
-                            $"The arrangement proved final. {tAss} was found this morning — " +
-                            $"no wound that tells a clear story, no witnesses. " +
-                            $"The sort of death that never quite closes. " +
-                            $"{inst} received a small folded cloth by way of confirmation.",
+                            $"Done. {tAss} was found dead this morning — no witnesses, no clear wound.",
                             col);
                         break;
 
@@ -576,9 +573,7 @@ namespace AshAndEmber
                         float drop = 25f + _rng.Next(20);
                         try { targetSett.Town.Security = Math.Max(0f, targetSett.Town.Security - drop); } catch { }
                         Notify(s,
-                            $"Fires were set in three places on the same night in {targetSett.Name}. " +
-                            $"A dockmaster was beaten near the market. The city watch is stretched thin. " +
-                            $"Security has dropped and the mood on the streets has curdled.",
+                            $"Violence erupts across {targetSett.Name}. Security falls sharply.",
                             col);
                         break;
 
@@ -601,9 +596,7 @@ namespace AshAndEmber
                         }
                         catch { }
                         Notify(s,
-                            $"The sickness moved through the barracks of {targetSett.Name} quietly. " +
-                            $"Bad water, the garrison surgeon said. By the time they suspected otherwise, " +
-                            $"{killed} militia had already stopped reporting for duty.",
+                            $"Sickness swept the barracks of {targetSett.Name}. {killed} militia are dead.",
                             col);
                         break;
 
@@ -613,9 +606,7 @@ namespace AshAndEmber
                         try { targetSett.Town.Loyalty  = Math.Max(0f, targetSett.Town.Loyalty  - 40f); } catch { }
                         try { targetSett.Town.Security = Math.Max(0f, targetSett.Town.Security - 35f); } catch { }
                         Notify(s,
-                            $"The garrison officers of {targetSett.Name} proved more mercenary than loyal. " +
-                            $"They opened the door, pocketed the coin, and said nothing. " +
-                            $"Loyalty has collapsed. The city may not hold.",
+                            $"The garrison officers took the coin and stepped aside. Loyalty collapses in {targetSett.Name}.",
                             col);
                         break;
 
@@ -625,9 +616,7 @@ namespace AshAndEmber
                         try { targetSett.Town.Loyalty    = Math.Max(0f,  targetSett.Town.Loyalty    - 15f); } catch { }
                         try { targetSett.Town.Prosperity = Math.Max(10f, targetSett.Town.Prosperity * 0.92f); } catch { }
                         Notify(s,
-                            $"The stories reached market stalls and tavern tables in {targetSett.Name} within two days. " +
-                            $"Some weren't even invented — the effective rumor is always half-true. " +
-                            $"Trust in the city's rulers is measurably lower.",
+                            $"Whispers have taken hold in {targetSett.Name}. Loyalty and prosperity fall.",
                             col);
                         break;
 
@@ -637,9 +626,7 @@ namespace AshAndEmber
                         try { targetSett.Town.FoodStocks  = Math.Max(10f, targetSett.Town.FoodStocks  * 0.50f); } catch { }
                         try { targetSett.Town.Prosperity  = Math.Max(10f, targetSett.Town.Prosperity  * 0.85f); } catch { }
                         Notify(s,
-                            $"Three warehouses on the south side of {targetSett.Name} caught in the night. " +
-                            $"The fire crews did what they could, but the grain quarter burned long enough to matter. " +
-                            $"Half the food stocks are ash.",
+                            $"Warehouses burned through the night in {targetSett.Name}. Half the food stocks are lost.",
                             col);
                         break;
 
@@ -662,9 +649,7 @@ namespace AshAndEmber
                         }
                         catch { }
                         Notify(s,
-                            $"A quiet word, a correct number, and a direction to walk. " +
-                            $"{deserted} soldiers in {targetSett.Name} took the offer. " +
-                            $"They didn't go far, but they left the post.",
+                            $"{deserted} soldiers left their posts in {targetSett.Name}. The garrison is weakened.",
                             col);
                         break;
 
@@ -676,9 +661,7 @@ namespace AshAndEmber
                         if (factionLeader != null && factionLeader != targetHero && factionLeader.IsAlive)
                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(targetHero, factionLeader, -55, false); } catch { }
                         Notify(s,
-                            $"Forged letters reached {(factionLeader?.Name?.ToString() ?? "the faction leader")}'s hands " +
-                            $"by three different routes. They looked genuine enough. " +
-                            $"{tForg}'s standing with their own lord has been shaken.",
+                            $"Forged letters reached {(factionLeader?.Name?.ToString() ?? "the faction leader")}. {tForg}'s standing with their lord is shaken.",
                             col);
                         break;
 
@@ -701,9 +684,7 @@ namespace AshAndEmber
                         }
                         catch { }
                         Notify(s,
-                            $"The hired blade found {tHire}'s company on the road. " +
-                            $"They didn't finish the job — either nerve or odds failed them — " +
-                            $"but they bloodied the escort before breaking off. The warband is weakened and shaken.",
+                            $"The blade bloodied {tHire}'s escort and broke off. The warband is wounded and shaken.",
                             col);
                         break;
 
@@ -718,9 +699,7 @@ namespace AshAndEmber
                         // Also damage relations between instigator and target (they'll suspect someone)
                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -20, false); } catch { }
                         Notify(s,
-                            $"Rumor, carefully placed, works like water — it finds the cracks and widens them. " +
-                            $"Enough voices repeating the same slander at the right ears. " +
-                            $"{cAcc}'s reputation has taken a visible hit. {tAcc} cannot easily deny what they haven't heard yet.",
+                            $"Slander reached the right ears. {cAcc}'s renown takes a visible hit.",
                             col);
                         break;
 
@@ -736,9 +715,7 @@ namespace AshAndEmber
                         float viprGain = 30f + _rng.Next(21); // 30–50
                         try { if (instigator.Clan != null) instigator.Clan.Renown += viprGain; } catch { }
                         Notify(s,
-                            $"The king's ear is not easily poisoned — but patience placed the right words at the right moment. " +
-                            $"{cVipr}'s recent deeds were reframed, their loyalty questioned in a dozen small ways. " +
-                            $"Their standing at court has quietly eroded. {inst}'s name rises by comparison.",
+                            $"The king's ear was turned against {cVipr}. Their renown falls; {inst}'s rises.",
                             col);
                         break;
 
@@ -751,9 +728,7 @@ namespace AshAndEmber
                         int scatterSpawned = 0;
                         try { scatterSpawned = SpawnBanditsInKingdom(scatterKingdom, partyCount); } catch { }
                         Notify(s,
-                            $"Coin found the right hands in the right dark corners. Deserters and brigands filter " +
-                            $"into {scatterKingdomName} — {scatterSpawned} parties now roam its roads and passes. " +
-                            $"Lords will spend the coming weeks chasing shadows instead of campaigning.",
+                            $"{scatterSpawned} bandit parties now roam {scatterKingdomName}'s roads. Their lords will spend weeks chasing shadows.",
                             col);
                         break;
                 }
@@ -794,9 +769,7 @@ namespace AshAndEmber
                     try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, king, kDelta, false); } catch { }
                 }
                 Notify(s,
-                    $"SCHEME EXPOSED — The words reached {tVFail} before the king believed them. " +
-                    $"The plot is known, and the king did not appreciate the attempt at manipulation within his own court. " +
-                    $"Relations with both have suffered deeply.",
+                    $"EXPOSED — {tVFail} learned of the plot before the king did. Relations with both have suffered.",
                     new Color(0.80f, 0.20f, 0.18f));
                 return;
             }
@@ -833,8 +806,7 @@ namespace AshAndEmber
                     catch { }
                     if (s.IsPlayer)
                         Notify(s,
-                            $"The blade found {tName}'s company on the road but lost its nerve before the end. " +
-                            $"The escort is bloodied and shaken. The coin is spent. The lord lives — for now.",
+                            $"The blade reached {tName}'s escort but fled before finishing. The lord lives; the coin is spent.",
                             new Color(0.60f, 0.50f, 0.30f));
                     return;
                 }
@@ -842,8 +814,7 @@ namespace AshAndEmber
                 // Silent failure — agent slipped away, nothing to trace
                 if (s.IsPlayer)
                     Notify(s,
-                        $"Your agent found no opening. The arrangement against {tName} is dissolved. " +
-                        $"The coin is gone, and the task remains undone.",
+                        $"No opening found. The scheme against {tName} is dissolved.",
                         new Color(0.55f, 0.55f, 0.55f));
                 return;
             }
@@ -891,16 +862,14 @@ namespace AshAndEmber
 
                 // Flavor notification
                 string consequence = isWarTrigger
-                    ? "The discovery may have consequences beyond broken trust."
+                    ? "War may follow."
                     : s.IsPlayer
-                        ? "The damage to your standing may be lasting."
-                        : $"The damage to {inst}'s standing may be lasting.";
-                string ownerLine   = !string.IsNullOrEmpty(tOwner) ? $" {tOwner} has been informed." : "";
+                        ? "The damage to your standing is lasting."
+                        : $"{inst}'s standing is damaged.";
+                string ownerLine   = !string.IsNullOrEmpty(tOwner) ? $" {tOwner} knows." : "";
 
                 Notify(s,
-                    $"Scheme EXPOSED — The agent was taken alive and questioned. " +
-                    $"{inst}'s plot against {tName} is known.{ownerLine} " +
-                    $"Crime rating rises. Relations have plummeted. {consequence}",
+                    $"EXPOSED — {inst}'s plot against {tName} is known.{ownerLine} Crime rating rises; relations plummet. {consequence}",
                     new Color(0.80f, 0.20f, 0.18f));
             }
             catch { }

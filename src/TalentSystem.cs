@@ -149,28 +149,28 @@ namespace AshAndEmber
                 Id = TalentId.Scatter, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Scatter",
                 Lore = "The fire does not merely burn — it expels. What it touches, it unmakes and flings aside. You have learned to aim that expulsion.",
-                MechanicDesc = "Enchantment. Damage blasts enemies backward (4m per Damage input) and sears their limbs, reducing movement speed by 25% per Damage input (max 75%) for 4s + 1s per input."
+                MechanicDesc = "Enchantment. Damage blasts enemies backward (5m per Damage input) and sears their limbs, reducing movement speed by 25% per Damage input (max 75%) for 4s + 1.5s per input."
             },
             new TalentDef
             {
                 Id = TalentId.Smoulder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Smoulder",
                 Lore = "The fire knows what frightens. It does not need to kill a man to defeat him — only to let him feel how little warmth he carries. The courage drains out with the heat.",
-                MechanicDesc = "Enchantment. Damage scorches enemy morale (−12 per Damage input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%."
+                MechanicDesc = "Enchantment. Damage scorches enemy morale (−15 per Damage input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%."
             },
             new TalentDef
             {
                 Id = TalentId.Sunder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Sunder",
                 Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what they wear and what they carry. What holds together begins to separate. Not quickly. But enough.",
-                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm for 8 seconds. Vulnerability to incoming damage = 5% per Damage input (max 40%). Attack power reduction = 8% per Damage input (max 40%)."
+                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm. Vulnerability to incoming damage = 5% per Damage input (max 50%). Attack power reduction = 10% per Damage input (max 50%). Duration = 8s + 1.5s per Damage input."
             },
             new TalentDef
             {
                 Id = TalentId.Immolate, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Immolate",
                 Lore = "Three times the fire has been called. Twice it asked. The third time, it takes. Not the wound — the whole. The body, the heat that kept it standing. The fire does not return what it has already claimed.",
-                MechanicDesc = "Enchantment. Damage sets enemies alight — additional burn damage scales with inputs. At 3 or more Damage inputs, the fire consumes utterly: one target is guaranteed to die."
+                MechanicDesc = "Enchantment. Damage sets enemies alight — additional burn damage scales with inputs. Guaranteed kills scale with inputs: 3 Damage = 1 kill, 6 Damage = 2 kills, 9 Damage = 3 kills."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -178,28 +178,28 @@ namespace AshAndEmber
                 Id = TalentId.Ashveil, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Ashveil",
                 Lore = "Ash does not burn twice. Coat something in it, and the fire cannot find purchase. For a few seconds, what you kindle becomes untouchable.",
-                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 3s per Restore input."
+                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 4s per Restore input."
             },
             new TalentDef
             {
                 Id = TalentId.CinderShell, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Cinder Shell",
                 Lore = "Fire hardens what it doesn't consume. The skin does not become stone — it becomes something older. Whatever falls on them will not find the same flesh.",
-                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage for 8 seconds. Protection = 5% per Restore input, max 50%. When an ally is near full health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
+                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 5% per Restore input, max 50%. Duration = 6s + 1.5s per Restore input. When an ally is near full health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
             },
             new TalentDef
             {
                 Id = TalentId.Hearthlight, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Hearthlight",
                 Lore = "The fire in them has not gone out — it has only dimmed. You reach in and remind it what it is for. They remember, for a moment, that the fire is their friend.",
-                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 12 per Restore input."
+                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 15 per Restore input."
             },
             new TalentDef
             {
                 Id = TalentId.Reflect, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Reflect",
                 Lore = "The fire you give is not passive. It waits in the body like an ember under ash, and when something cold strikes — it answers.",
-                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 40%. Lasts 3s + 1s per input."
+                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 50%. Lasts 3s + 1.5s per input."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
@@ -207,7 +207,7 @@ namespace AshAndEmber
                 Id = TalentId.BreakWills, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Unsettle",
                 Lore = "You let them feel how thin their fire is. Most men have never faced that knowledge directly. Courage is easier when you cannot see the dark.",
-                MechanicDesc = "The nearest enemy party within 100m loses 60 morale. Costs 1 day."
+                MechanicDesc = "The nearest enemy party within 75m loses 40 morale. Costs 1 day."
             },
             new TalentDef
             {
@@ -228,14 +228,14 @@ namespace AshAndEmber
                 Id = TalentId.Clairvoyance, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Clairvoyance",
                 Lore = "The lines of fire connect every living thing to every other. You read them the way a navigator reads stars — imperfectly, but well enough.",
-                MechanicDesc = "Gain 40 influence. Without a kingdom, the insight becomes gold instead. Costs 1 day."
+                MechanicDesc = "Gain 25 influence. Without a kingdom, the insight becomes gold instead. Costs 1 day."
             },
             new TalentDef
             {
                 Id = TalentId.Extinguish, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Extinguish",
                 Lore = "You reach into the fire burning in an enemy and close your hand. Not slowly — like snuffing a candle. The body does not understand at first. Then it does.",
-                MechanicDesc = "5–12 soldiers in the nearest enemy party are wounded or killed, and their courage breaks. Costs 1 day."
+                MechanicDesc = "3–8 soldiers in the nearest enemy party within 45m are wounded or killed, and their courage breaks. Costs 1 day."
             },
             // ── Campaign spells (continued) ────────────────────────────────────
             new TalentDef
@@ -243,7 +243,7 @@ namespace AshAndEmber
                 Id = TalentId.Fade, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Fade",
                 Lore = "You draw your fire inward — not out, not away, but down into the marrow, down past what can be seen or felt. For a time you are still there. You simply stop being visible to those looking for you.",
-                MechanicDesc = "Your party is concealed from enemy scouts for 2 days. Enemy parties will not pursue you. Costs 1 day."
+                MechanicDesc = "Your party is concealed from enemy scouts for 1 day. Enemy parties will not pursue you. Costs 1 day."
             },
             // ── Ashen status (info-only, not purchasable) ─────────────────────
             new TalentDef
@@ -500,12 +500,12 @@ namespace AshAndEmber
                 var target = MobileParty.All
                     .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)
                              && p.LeaderHero != null
-                             && (p.GetPosition2D - playerPos).Length < 100f)
+                             && (p.GetPosition2D - playerPos).Length < 75f)
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Unsettle — no enemy party in range."); return; }
-                target.RecentEventsMorale -= 60f;
-                Msg($"Unsettle — dread settles over {target.Name}. -60 morale.");
+                target.RecentEventsMorale -= 40f;
+                Msg($"Unsettle — dread settles over {target.Name}. -40 morale.");
             }
             catch { }
         }
@@ -560,13 +560,13 @@ namespace AshAndEmber
             {
                 if (Hero.MainHero?.Clan?.Kingdom != null)
                 {
-                    Hero.MainHero.Clan.Influence += 40f;
-                    Msg("Clairvoyance — the threads of power revealed. +40 influence.");
+                    Hero.MainHero.Clan.Influence += 25f;
+                    Msg("Clairvoyance — the threads of power revealed. +25 influence.");
                 }
                 else
                 {
-                    Hero.MainHero.ChangeHeroGold(1000);
-                    Msg("Clairvoyance — no throne to bend, but the fire finds other currents. +1000 gold.");
+                    Hero.MainHero.ChangeHeroGold(700);
+                    Msg("Clairvoyance — no throne to bend, but the fire finds other currents. +700 gold.");
                 }
             }
             catch { Msg("Clairvoyance — insight granted."); }
@@ -581,11 +581,11 @@ namespace AshAndEmber
                 var target = MobileParty.All
                     .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)
                              && p.MemberRoster.TotalRegulars > 0
-                             && (p.GetPosition2D - playerPos).Length < 60f)
+                             && (p.GetPosition2D - playerPos).Length < 45f)
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Extinguish — no enemy party in range."); return; }
-                int count = 5 + _rng.Next(8);
+                int count = 3 + _rng.Next(6);  // 3–8 (was 5–12)
                 int actual = 0;
                 var troops = target.MemberRoster.GetTroopRoster()
                     .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
@@ -595,8 +595,8 @@ namespace AshAndEmber
                     int wound = _rng.Next(2) == 0 ? 1 : 0;
                     try { target.MemberRoster.AddToCounts(troops[idx].Character, wound == 1 ? 0 : -1, false, wound); actual++; } catch { }
                 }
-                target.RecentEventsMorale -= 25f;
-                Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -25 morale.");
+                target.RecentEventsMorale -= 20f;
+                Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -20 morale.");
             }
             catch { }
         }
@@ -606,7 +606,7 @@ namespace AshAndEmber
             try
             {
                 if (MobileParty.MainParty == null) { Msg("Fade — no party to conceal."); return; }
-                _fadeDaysRemaining = 2;
+                _fadeDaysRemaining = 1;
                 bool applied = TrySetIgnoreByOtherParties(MobileParty.MainParty, true);
                 if (applied)
                 {

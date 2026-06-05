@@ -352,10 +352,10 @@ namespace AshAndEmber
                 damage *= (1f - reduction);
             }
 
-            // Sunder enchantment: increase incoming damage (armour shred, max +40%)
+            // Sunder enchantment: increase incoming damage (armour shred, max +50%)
             if (_sunderedAgents.TryGetValue(target, out var sunder) && sunder.Remaining > 0f)
             {
-                float amplification = Math.Min(0.40f, sunder.BonusVuln / 200f);
+                float amplification = Math.Min(0.50f, sunder.BonusVuln / 200f);
                 damage *= (1f + amplification);
             }
 
@@ -514,7 +514,7 @@ namespace AshAndEmber
                 try { isMounted = target.MountAgent != null; } catch { }
                 if (!isMounted)
                 {
-                    float dist = cast.DamageCount * 4f;
+                    float dist = cast.DamageCount * 5f;  // 5m per input (was 4m)
                     Vec3 origin = caster?.Position ?? target.Position;
                     Vec3 dir = (target.Position - origin);
                     if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
@@ -528,7 +528,7 @@ namespace AshAndEmber
                     try
                     {
                         float reducedSpeed = Math.Max(1f, 10f - cast.DamageCount * 2.5f);
-                        float duration = 4f + cast.DamageCount * 1f;
+                        float duration = 4f + cast.DamageCount * 1.5f;  // was 1f per input
                         if (!_charredAgents.TryGetValue(target, out var cur))
                             _charredAgents[target] = (reducedSpeed, duration);
                         else
@@ -545,7 +545,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float delta = cast.DamageCount * 12f;
+                    float delta = cast.DamageCount * 15f;  // was 12f
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Max(cur - delta, 0f));
                 }
@@ -582,9 +582,9 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float vuln = cast.DamageCount * 10f; // raw value, capped to 40% in DamageAgent
-                    float attackWeaken = Math.Min(0.40f, cast.DamageCount * 0.08f);
-                    float duration = 8f;
+                    float vuln = cast.DamageCount * 10f; // raw value, capped to 50% in DamageAgent
+                    float attackWeaken = Math.Min(0.50f, cast.DamageCount * 0.10f);  // was 0.08f, cap 0.40f
+                    float duration = 8f + cast.DamageCount * 1.5f;  // was fixed 8f
                     if (!_sunderedAgents.TryGetValue(target, out var existing))
                         _sunderedAgents[target] = (vuln, duration);
                     else
@@ -598,14 +598,19 @@ namespace AshAndEmber
                 catch { }
             }
 
-            // Immolate: bonus burn damage per input; at 3+ inputs one target is guaranteed to die.
+            // Immolate: bonus burn damage per input; guaranteed kills = DamageCount / 3
+            // (3 inputs = 1 kill, 6 inputs = 2 kills, 9 inputs = 3 kills).
             if (CasterHasEnchantment(caster, TalentId.Immolate))
             {
                 try
                 {
-                    if (cast.DamageCount >= 3 && !_immolateKillUsed)
+                    // Lazy-init on the first target of this cast
+                    if (_immolateKillsRemaining < 0)
+                        _immolateKillsRemaining = cast.DamageCount / 3;
+
+                    if (cast.DamageCount >= 3 && _immolateKillsRemaining > 0)
                     {
-                        _immolateKillUsed = true;
+                        _immolateKillsRemaining--;
                         QueueKill(target);
                         BeginAgentGlow(target, ColorSchool.Red, 2f);
                         InformationManager.DisplayMessage(new InformationMessage(
@@ -626,7 +631,7 @@ namespace AshAndEmber
             // Ashveil: brief magic immunity
             if (CasterHasEnchantment(caster, TalentId.Ashveil))
             {
-                float duration = cast.RestoreCount * 3f;
+                float duration = cast.RestoreCount * 4f;  // was 3f per input
                 float current  = _wardedAgents.TryGetValue(target, out float t) ? t : 0f;
                 _wardedAgents[target] = Math.Max(current, duration);
                 BeginAgentGlow(target, ColorSchool.White, duration);
@@ -636,7 +641,8 @@ namespace AshAndEmber
             if (CasterHasEnchantment(caster, TalentId.CinderShell))
             {
                 float bonus = cast.RestoreCount * 10f;
-                AddStoneskin(target, bonus, 8f);
+                float shellDuration = 6f + cast.RestoreCount * 1.5f;  // was fixed 8f
+                AddStoneskin(target, bonus, shellDuration);
                 BeginAgentGlow(target, ColorSchool.Orange, 2f);
                 try
                 {
@@ -656,7 +662,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float delta = cast.RestoreCount * 12f;
+                    float delta = cast.RestoreCount * 15f;  // was 12f
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Min(cur + delta, 100f));
                 }
@@ -668,8 +674,8 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float pct = Math.Min(0.40f, cast.RestoreCount * 0.08f);
-                    float duration = 3f + cast.RestoreCount * 1f;
+                    float pct = Math.Min(0.50f, cast.RestoreCount * 0.08f);  // cap raised from 40% to 50%
+                    float duration = 3f + cast.RestoreCount * 1.5f;  // was 1f per input
                     if (!_reflectAgents.TryGetValue(target, out var cur))
                         _reflectAgents[target] = (pct, duration);
                     else
@@ -777,10 +783,11 @@ namespace AshAndEmber
 
         public static void ClearAttackWeaken() => _attackWeakenedAgents.Clear();
 
-        // ── Immolate (per-cast kill flag) ────────────────────────────────────────
-        // Prevents more than one guaranteed kill per spell cast at 3+ Damage inputs.
-        private static bool _immolateKillUsed = false;
-        public static void ResetImmolateKill() => _immolateKillUsed = false;
+        // ── Immolate (per-cast kill counter) ─────────────────────────────────────
+        // Guaranteed kills allowed = DamageCount / 3 (3U=1, 6U=2, 9U=3).
+        // -1 = sentinel meaning "not yet initialised for this cast".
+        private static int _immolateKillsRemaining = -1;
+        public static void ResetImmolateKill() => _immolateKillsRemaining = -1;
 
         // ── Char (Char enchantment state — movement slow) ──────────────────────
         // Stores (reduced speed cap, remaining duration). On expire, restores to 10f (unlimited).

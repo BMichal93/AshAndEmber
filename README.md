@@ -283,19 +283,19 @@ Enchantments fire automatically on every qualifying cast in battle.
 
 | Talent | Effect |
 |--------|--------|
-| **Scatter** | Blasts enemies backward (4 m per Damage input) and slows movement 25% per input (max 75%) for 4–8 s. |
-| **Smoulder** | Scorches enemy morale (−12 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
-| **Sunder** | Increases all damage enemies receive and reduces their attack power for 8 s. Damage vulnerability = 5% per Damage input (max 40%). Attack reduction = 8% per Damage input (max 40%). |
-| **Immolate** | Sets enemies alight — bonus burn damage (10 per Damage input). At 3 or more Damage inputs, the fire consumes utterly: one target in range is guaranteed to die. |
+| **Scatter** | Blasts enemies backward (5 m per Damage input) and slows movement 25% per input (max 75%) for 4 s + 1.5 s per input. |
+| **Smoulder** | Scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
+| **Sunder** | Increases all damage enemies receive and reduces their attack power. Damage vulnerability = 5% per Damage input (max 50%). Attack reduction = 10% per Damage input (max 50%). Duration = 8 s + 1.5 s per Damage input. |
+| **Immolate** | Sets enemies alight — bonus burn damage (10 per Damage input). Guaranteed kills scale with Damage inputs: 3 = 1 kill, 6 = 2 kills, 9 = 3 kills. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
 | Talent | Effect |
 |--------|--------|
-| **Ashveil** | Brief magic immunity for healed allies. Duration = 3 s per Restore input. |
-| **Cinder Shell** | Reduces incoming damage for 8 s (5% per input, max 50%). Near-full-health allies also gain a 15 HP damage shield per input for 5 s. |
-| **Hearthlight** | Lifts allied morale. Boost = 12 per Restore input. |
-| **Reflect** | Healed allies reflect 8% of melee damage per input (max 40%) back at attackers for 3–7 s. Ranged hits do not trigger the reflection. |
+| **Ashveil** | Brief magic immunity for healed allies. Duration = 4 s per Restore input. |
+| **Cinder Shell** | Reduces incoming damage (5% per input, max 50%) for 6 s + 1.5 s per input. Near-full-health allies also gain a 15 HP damage shield per input for 5 s. |
+| **Hearthlight** | Lifts allied morale. Boost = 15 per Restore input. |
+| **Reflect** | Healed allies reflect 8% of melee damage per input (max 50%) back at attackers for 3 s + 1.5 s per input. Ranged hits do not trigger the reflection. |
 
 ### Spell (campaign map)
 
@@ -304,11 +304,11 @@ Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast
 | Talent | Effect |
 |--------|--------|
 | **Kindle** | Party morale +40 and up to 8 wounded soldiers per troop type recover. |
-| **Unsettle** | Nearest enemy party within 100 map-units loses 35 morale. |
+| **Unsettle** | Nearest enemy party within 75 map-units loses 40 morale. |
 | **Wither** | Nearest enemy village loses 20% of its hearth. |
-| **Clairvoyance** | +40 influence, or +1000 gold if not in a kingdom. |
-| **Extinguish** | 5–12 soldiers in the nearest enemy party are wounded or killed; morale breaks. |
-| **Fade** | Your party is concealed from enemy scouts for 2 days. Enemy parties will not pursue you. |
+| **Clairvoyance** | +25 influence, or +700 gold if not in a kingdom. |
+| **Extinguish** | 3–8 soldiers in the nearest enemy party within 45 map-units are wounded or killed; morale breaks. |
+| **Fade** | Your party is concealed from enemy scouts for 1 day. Enemy parties will not pursue you. |
 
 ---
 
