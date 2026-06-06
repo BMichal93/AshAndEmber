@@ -250,6 +250,15 @@ namespace AshAndEmber
                     return;
                 }
 
+                // Trade in Shadows: targets any town (including friendly) — skip faction filter,
+                // go directly to settlement picker with no kingdom restriction.
+                if (_selectedDef.Type == SchemeType.TradeInShadows)
+                {
+                    _selectedKingdom = null;
+                    OpenSettlementTargetUI();
+                    return;
+                }
+
                 bool needsLord = _selectedDef.NeedsLord;
 
                 // Collect factions that have at least one valid target for this scheme type
@@ -452,10 +461,6 @@ namespace AshAndEmber
             {
                 if (_selectedDef == null) return;
 
-                // Minigame pass chance: 30% base + (skill / 600) × 55%, clamped [30%, 85%]
-                // (Not the old NPC formula — this is what the skill check rolls against each turn.)
-                int   playerSkill = Hero.MainHero?.GetSkillValue(_selectedDef.Skill) ?? 0;
-                float chance      = Math.Max(0.30f, Math.Min(0.85f, 0.30f + (playerSkill / 600f) * 0.55f));
                 int   goldCost    = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
                 int   infCost    = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
                 bool  onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
@@ -466,9 +471,13 @@ namespace AshAndEmber
                 string traitNote = isAss
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
-                // Minigame config for display
-                int roguery       = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
-                int charm         = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0;
+                // Minigame info for display
+                int roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
+                int charm   = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0;
+                int skill   = Hero.MainHero?.GetSkillValue(_selectedDef.Skill)   ?? 0;
+                string condFloor = skill >= 300 ? "0 to +5 (always favourable — excellent skill)"
+                                 : skill >= 150 ? "−3 to +5 (reduced downside — good skill)"
+                                 :                "−5 to +5 (full variance — train to improve)";
                 string abilityHints = "";
                 if (roguery >= 150) abilityHints += "  · SLIP PAST (Roguery 150+)\n";
                 if (roguery >= 300) abilityHints += "  · SCOUT AHEAD (Roguery 300+)\n";
@@ -476,17 +485,20 @@ namespace AshAndEmber
                 if (charm   >= 300) abilityHints += "  · SILVER TONGUE (Charm 300+)\n";
                 string abilityBlock = string.IsNullOrEmpty(abilityHints)
                     ? ""
-                    : "Your abilities for this operation:\n" + abilityHints;
+                    : "Unlocked abilities:\n" + abilityHints;
 
                 string bustNote = isVipers
-                    ? "On bust/fail: always exposed — relations hit with target and king, no crime rating."
-                    : "On bust (score >21): agent caught — crime rating, relations hit, possible war.";
+                    ? "On bust: always exposed — relations hit with target and king."
+                    : _selectedDef.Type == SchemeType.TradeInShadows
+                        ? "On bust: caught running contraband — crime rating rises. No war or relations penalty."
+                        : "On bust (score >21): agent caught — crime rating, relations hit, possible war.";
                 string body = $"Scheme: {_selectedDef.Name}\n"
                             + $"Target: {tName}\n"
                             + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n\n"
-                            + $"This scheme is resolved interactively.\n"
-                            + $"Each turn your agent files a field report. You choose how to respond.\n"
-                            + $"Skill check pass chance: {(int)(chance * 100)}%  (Roguery {roguery} / Charm {charm})\n\n"
+                            + $"Interactive minigame — push your luck.\n"
+                            + $"Each turn: choose PRESS (+5) / ADVANCE (+2) / HOLD (0), then field conditions roll.\n"
+                            + $"Field conditions range: {condFloor}\n"
+                            + $"Bust at progress >21. Succeed at ≥{GetRiskSumDisplay(_selectedDef.Type)}.\n\n"
                             + abilityBlock
                             + traitNote + "\n\n"
                             + bustNote;
@@ -559,6 +571,29 @@ namespace AshAndEmber
                 };
             }
             catch { }
+        }
+
+        // Returns the minigame riskSum for display in the confirmation screen
+        // without coupling to SchemeMinigame's private GetConfig.
+        private static int GetRiskSumDisplay(SchemeType type)
+        {
+            switch (type)
+            {
+                case SchemeType.SpreadRumors:
+                case SchemeType.FalseAccusations:  return 9;
+                case SchemeType.SpreadTerror:
+                case SchemeType.BurnStorage:
+                case SchemeType.BribeSoldiers:     return 11;
+                case SchemeType.PoisonWell:
+                case SchemeType.ForgeDocuments:
+                case SchemeType.VipersCounsel:     return 13;
+                case SchemeType.ScatterWolves:     return 15;
+                case SchemeType.HireAssassin:      return 16;
+                case SchemeType.StageCoup:         return 18;
+                case SchemeType.Assassinate:       return 19;
+                case SchemeType.TradeInShadows:    return 8;
+                default:                           return 12;
+            }
         }
 
         private static void ShiftPlayerTrait(TraitObject trait, int delta)

@@ -64,6 +64,7 @@ namespace AshAndEmber
         FalseAccusations,   // Drain clan renown        — Charm
         VipersCounsel,      // Undermine rival clan with king — Charm (same kingdom only)
         ScatterWolves,      // Flood rival kingdom with bandits/deserters — Roguery
+        TradeInShadows,     // Establish black market trade in a town — earns player gold — Roguery
     }
 
     internal sealed class SchemeDefinition
@@ -194,6 +195,14 @@ namespace AshAndEmber
                 "Scatter the Wolves",
                 "Pay deserters and brigands to flood a rival kingdom's roads. Bandit parties surge across their lands, tying up lords and bleeding resources. Target a lord — their whole kingdom suffers.",
                 2500, 35, 0.35f, DefaultSkills.Roguery, needsLord: true, needsSettlement: false, skillXp: 800),
+
+            // PLAYER BENEFIT SCHEME ────────────────────────────────────────────────
+            // Does NOT harm the target — earns gold for the player instead.
+            // Cost is low because it is self-funding; bust consequences are crime rating only.
+            new SchemeDefinition(SchemeType.TradeInShadows,
+                "Trade in Shadows",
+                "Establish a black market trade route through a settlement's underworld. On success: earn gold proportional to the town's prosperity. On bust: caught running contraband — crime rating rises. Targets any town (can be friendly).",
+                600, 10, 0.45f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 600),
         };
 
         // ── State ─────────────────────────────────────────────────────────────
@@ -801,6 +810,23 @@ namespace AshAndEmber
                         try { scatterSpawned = SpawnBanditsInKingdom(scatterKingdom, partyCount); } catch { }
                         Notify(s,
                             $"{scatterSpawned} bandit parties now roam {scatterKingdomName}'s roads. Their lords will spend weeks chasing shadows.",
+                            col);
+                        break;
+
+                    // ── Trade in Shadows ──────────────────────────────────────
+                    // Player-benefit scheme: earns gold based on the town's prosperity.
+                    // Does not harm the settlement — purely self-serving.
+                    case SchemeType.TradeInShadows:
+                        if (targetSett?.Town == null) break;
+                        // Base 800g + 5g per point of prosperity (typical range ~800–6000g)
+                        int shadowGold = 800 + (int)(targetSett.Town.Prosperity * 5f);
+                        string tShadow = targetSett.Name?.ToString() ?? "the settlement";
+                        if (s.IsPlayer)
+                        {
+                            try { instigator.Gold += shadowGold; } catch { }
+                        }
+                        Notify(s,
+                            $"The shadow trade through {tShadow} turned a profit. {shadowGold:N0} gold found its way to your coffers.",
                             col);
                         break;
                 }
