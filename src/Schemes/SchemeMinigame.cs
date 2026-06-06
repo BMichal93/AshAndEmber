@@ -328,7 +328,7 @@ namespace AshAndEmber
             options.Add(new InquiryElement("aggressive",
                 "PUSH HARD — Bold, aggressive move",
                 null, true,
-                "Go in hard. Could rack up serious exposure or barely any. You won't know until you commit. Range: +1 to +7."));
+                "Go in hard. Always adds significant exposure — you won't know how much until you commit. Range: +4 to +10."));
 
             options.Add(new InquiryElement("careful",
                 "TREAD CAREFULLY — Measured approach",
@@ -338,7 +338,7 @@ namespace AshAndEmber
             options.Add(new InquiryElement("defensive",
                 "PULL BACK — Defensive positioning",
                 null, true,
-                "Give ground to reduce heat. Always lowers exposure, but costs a round. Range: −7 to −1."));
+                "Give ground to reduce heat significantly. Always lowers exposure, but costs a round. Range: −4 to −10."));
 
             try
             {
@@ -416,7 +416,7 @@ namespace AshAndEmber
 
                 case "aggressive":
                 {
-                    int roll = 1 + _rng.Next(7); // 1–7
+                    int roll = 4 + _rng.Next(7); // 4–10
                     try { MBInformationManager.AddQuickInformation(
                         new TextObject($"Pushed hard — exposure +{roll}.")); } catch { }
                     ApplyPressRoll(roll);
@@ -435,7 +435,7 @@ namespace AshAndEmber
 
                 case "defensive":
                 {
-                    int roll = -(1 + _rng.Next(7)); // −1 to −7
+                    int roll = -(4 + _rng.Next(7)); // −4 to −10
                     try { MBInformationManager.AddQuickInformation(
                         new TextObject($"Pulled back — exposure {roll}.")); } catch { }
                     ApplyPressRoll(roll);

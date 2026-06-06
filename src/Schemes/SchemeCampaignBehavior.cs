@@ -470,9 +470,9 @@ namespace AshAndEmber
                 string abilityBlock =
                     $"Rounds available (Roguery {roguery}): {rounds}  —  when rounds run out: 50% bust / 50% quiet fail.\n\n"
                     + $"Press-on options (exact value hidden — revealed only after you commit):\n"
-                    + $"  · PUSH HARD      +1 to +7  — aggressive, volatile\n"
-                    + $"  · TREAD CAREFULLY  −3 to +3  — balanced, could go either way\n"
-                    + $"  · PULL BACK      −7 to −1  — always reduces exposure, costs a round\n\n"
+                    + $"  · PUSH HARD       +4 to +10  — aggressive, always builds exposure fast\n"
+                    + $"  · TREAD CAREFULLY  −3 to +3   — balanced, could go either way\n"
+                    + $"  · PULL BACK       −4 to −10  — always reduces exposure significantly, costs a round\n\n"
                     + $"Field abilities (one use each per operation):\n"
                     + $"  · SIDESTEP ({sidePct}% Roguery) — skip this development. Fail: ±8 exposure, advance.\n"
                     + $"  · TALK IT DOWN ({charmPct}% Charm) — reduce heat by 5. Fail: +5 exposure. Stays in current phase.\n\n";
