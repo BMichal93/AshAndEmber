@@ -2,6 +2,72 @@
 
 ---
 
+## v0.14.0
+
+### New mechanic: Aging milestones
+
+Surviving as a mage to old age now pays out. At ages 50, 60, 70, 80, and 90 the player receives a narrative event and a permanent boon.
+
+| Age | Boon |
+|---|---|
+| 50 | +75 renown |
+| 60 | +2 relations with all mage lords |
+| 70 | +150 renown, party morale +30 |
+| 80 | All wounded troops instantly healed |
+| 90 | +300 renown |
+
+Milestones are persisted — they do not re-fire on reload.
+
+### New mechanic: Scheme minigame — Press-on system
+
+The scheme minigame has been redesigned. Instead of a single hidden draw, the player now chooses how their operative approaches each development:
+
+- **Push Hard** — aggressive, hidden roll +1 to +7
+- **Tread Carefully** — balanced, hidden roll −3 to +3
+- **Pull Back** — defensive, always reduces exposure, hidden roll −7 to −1
+
+The exact value is never shown before committing. Each choice costs a round.
+
+**Rounds are limited** and scale with Roguery (base 5, +1 per 100 Roguery, cap 10). When rounds run out without extraction: 50% bust, 50% quiet fail.
+
+**Field abilities** (one use each per operation):
+- **SIDESTEP** (Roguery) — skip the current development entirely. Failure: ±8 exposure, round consumed.
+- **TALK IT DOWN** (Charm) — spend social grace to cool the heat. Success: −5 exposure. Failure: +5 exposure. Does not consume a round.
+
+RECON has been removed.
+
+**Success thresholds** have been rebalanced upward to match the new round economy (12–19, up from 7–16). All schemes now require meaningful decisions across most available rounds.
+
+### Balance: Clairvoyance — scheme detection
+
+Clairvoyance now reveals any pending NPC scheme targeting the player. A prompt appears offering to cancel it for 2,000 gold.
+
+### Balance: Unsettle — influence drain added
+
+Unsettle now also drains 10 influence from the target clan leader on hit (in addition to the existing −40 morale). NPC Unsettle: when cast against a fellow mage lord, threads interfere — the target mage ages 1 day.
+
+### Balance: NPC Extinguish — mage interference
+
+When NPC Extinguish hits a fellow mage lord, threads interfere — the target mage ages 1 day.
+
+### Balance: Ashen war minimum duration reduced
+
+Minimum war duration before peace is possible: 80 days → 60 days (~2 in-game months).
+
+### Fix: Temple join executed inside UI callback
+
+"Join The Temple" kingdom action was called directly inside an inquiry callback, which is not safe during Bannerlord's campaign state. The action is now deferred to the next daily tick. Save/load persisted.
+
+### Fix: Player can only be targeted by schemes as a hero
+
+NPC scheme targeting logic no longer allows the player to be targeted as a settlement owner — only directly as a hero. Prevents unintended scheme resolution against player-owned settlements.
+
+### Removed: Encounter pool pruning
+
+A large number of settlement, battle, and siege encounters have been removed from the random pool. The remaining events are higher quality and less repetitive.
+
+---
+
 ## v0.13.1
 
 - **Fix:** Scheme success/failure messages shortened to 1–2 sentences.
