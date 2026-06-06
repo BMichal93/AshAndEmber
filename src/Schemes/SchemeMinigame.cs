@@ -1,12 +1,18 @@
 // =============================================================================
 // ASH AND EMBER — Schemes/SchemeMinigame.cs
-// Blackjack-style push-your-luck minigame for player scheme resolution.
+// Push-your-luck operation minigame for player scheme resolution.
 // NPC schemes use the original RNG path — this file does not affect them.
 //
-// Each round: a complication card is drawn with a point value. Player chooses
-// DRAW (add value, continue) or STAND (commit current total). Bust if > 21.
-// Roguery 100+ unlocks SKIP (ignore one bad card).
-// Roguery 200+ also unlocks PEEK (preview next card value).
+// Each phase: a field report arrives with an exposure rating. The operative
+// decides to PRESS ON (accept the exposure, continue) or EXTRACT (commit
+// current exposure and resolve the operation). Blown if exposure > 21.
+//
+// SIDESTEP and RECON are available to everyone — Roguery determines success
+// chance. A failed attempt causes a random ±10 exposure adjustment.
+//
+//   Roguery 0   → ~20% ability success
+//   Roguery 250 → ~50% ability success
+//   Roguery 500 → ~80% ability success (cap)
 // =============================================================================
 
 using System;
@@ -23,21 +29,21 @@ namespace AshAndEmber
 {
     internal enum SchemeOutcome
     {
-        SmallLoss,  // total < risk sum
-        Success,    // risk sum <= total <= 21
-        Bust        // total > 21
+        SmallLoss,  // exposure < threshold (extracted short)
+        Success,    // threshold ≤ exposure ≤ 21
+        Bust        // exposure > 21 (operation blown)
     }
 
     internal static class SchemeMinigame
     {
-        private const int BustThreshold = 21;
+        private const int BlownThreshold = 21;
 
         private static readonly Random _rng = new Random();
 
         // ── Per-scheme config ─────────────────────────────────────────────────
         private struct SchemeConfig
         {
-            internal int RiskSum;
+            internal int RiskSum;   // exposure threshold for success
             internal int CardMin;
             internal int CardMax;
         }
@@ -62,7 +68,7 @@ namespace AshAndEmber
             }
         }
 
-        // Exposed for the confirmation dialog — returns only what the UI needs.
+        // Exposed for the confirmation dialog.
         internal struct PublicConfig { internal int RiskSum; }
         internal static PublicConfig GetPublicConfig(SchemeType type)
         {
@@ -70,8 +76,8 @@ namespace AshAndEmber
             return new PublicConfig { RiskSum = c.RiskSum };
         }
 
-        // ── Complication pools (6 per scheme type) ────────────────────────────
-        private static string[] GetComplications(SchemeType type)
+        // ── Field report pools (6 per scheme type) ────────────────────────────
+        private static string[] GetReports(SchemeType type)
         {
             switch (type)
             {
@@ -195,119 +201,125 @@ namespace AshAndEmber
             }
         }
 
-        // ── State ─────────────────────────────────────────────────────────────
+        // ── Operation state ───────────────────────────────────────────────────
         private static SchemeDefinition _def;
         private static Hero             _targetHero;
         private static Settlement       _targetSett;
-        private static int              _total;          // running sum of drawn cards
-        private static int              _round;
-        private static int              _currentValue;   // value of the card currently on display
-        private static int              _peekedValue;    // -1 = not peeked; >=0 = peeked next value
-        private static bool             _skipUsed;
-        private static bool             _peekUsed;
-        private static List<string>     _compPool;
+        private static int              _exposure;       // running exposure total
+        private static int              _phase;
+        private static int              _currentRating;  // exposure rating of the current report
+        private static string           _currentReport;  // text of the current report (for recon redisplay)
+        private static int              _peekedRating;   // -1 = no peek; >=0 = peeked next rating
+        private static bool             _sidestepUsed;
+        private static bool             _reconUsed;
+        private static List<string>     _reportPool;
 
         // ── Entry point ───────────────────────────────────────────────────────
         internal static void Begin(SchemeDefinition def, Hero targetHero, Settlement targetSett)
         {
-            _def          = def;
-            _targetHero   = targetHero;
-            _targetSett   = targetSett;
-            _total        = 0;
-            _round        = 0;
-            _peekedValue  = -1;
-            _skipUsed     = false;
-            _peekUsed     = false;
+            _def           = def;
+            _targetHero    = targetHero;
+            _targetSett    = targetSett;
+            _exposure      = 0;
+            _phase         = 0;
+            _currentReport = "";
+            _peekedRating  = -1;
+            _sidestepUsed  = false;
+            _reconUsed     = false;
 
-            var pool = GetComplications(def.Type);
-            _compPool = pool.OrderBy(_ => _rng.Next()).ToList();
+            var pool = GetReports(def.Type);
+            _reportPool = pool.OrderBy(_ => _rng.Next()).ToList();
 
-            // Debug mode: auto-succeed at max value under 21.
             if (SchemeSystem.DebugFree)
             {
-                _total = GetConfig(def.Type).RiskSum;
+                _exposure = GetConfig(def.Type).RiskSum;
                 Resolve();
                 return;
             }
 
-            DrawAndShow();
+            NextPhase();
         }
 
-        // ── Draw next card and show the round ─────────────────────────────────
-        private static void DrawAndShow()
+        // ── Draw next report and show the phase ───────────────────────────────
+        private static void NextPhase()
         {
-            if (_compPool.Count == 0)
+            if (_reportPool.Count == 0)
             {
-                var pool = GetComplications(_def.Type);
-                _compPool = pool.OrderBy(_ => _rng.Next()).ToList();
+                var pool = GetReports(_def.Type);
+                _reportPool = pool.OrderBy(_ => _rng.Next()).ToList();
             }
 
-            _round++;
-            string comp = _compPool[0];
-            _compPool.RemoveAt(0);
+            _phase++;
+            _currentReport = _reportPool[0];
+            _reportPool.RemoveAt(0);
 
             var cfg = GetConfig(_def.Type);
 
-            // Use peeked value if available, otherwise generate fresh
-            _currentValue = (_peekedValue >= 0) ? _peekedValue : DrawValue(cfg);
-            _peekedValue  = -1; // consumed
+            _currentRating = (_peekedRating >= 0) ? _peekedRating : DrawRating(cfg);
+            _peekedRating  = -1;
 
-            int projectedTotal = _total + _currentValue;
+            ShowPhase(_currentReport, cfg);
+        }
 
-            // Build body text
-            string bustWarning = projectedTotal > BustThreshold
-                ? $"\n⚠  Taking this would bust you! ({projectedTotal} > 21)"
-                : projectedTotal > 21 - cfg.CardMin
-                    ? $"\n   Caution: taking this puts you at {projectedTotal} — close to the bust line."
+        private static void ShowPhase(string report, SchemeConfig cfg)
+        {
+            int projectedExposure = _exposure + _currentRating;
+
+            string warning = projectedExposure > BlownThreshold
+                ? $"\n⚠  Pressing on would blow the operation! ({projectedExposure} > 21)"
+                : projectedExposure > BlownThreshold - cfg.CardMin
+                    ? $"\n   Caution: pressing on brings exposure to {projectedExposure} — close to the limit."
                     : "";
 
-            string body = $"Running total: {_total}  |  Need: ≥{cfg.RiskSum}  |  Bust at: 21  |  Round {_round}"
-                        + $"\n\n\"{comp}\"\nThis complication is worth {_currentValue} points."
-                        + $"\nTaking it would bring your total to {projectedTotal}."
-                        + bustWarning;
+            string body = $"Exposure: {_exposure}  |  Threshold: ≥{cfg.RiskSum}  |  Blown at: 21  |  Phase {_phase}"
+                        + $"\n\nField report:\n\"{report}\""
+                        + $"\n\nThis development is rated {_currentRating} exposure."
+                        + $"\nPressing on raises total exposure to {projectedExposure}."
+                        + warning;
 
-            // Build options
             var options = new List<InquiryElement>();
 
-            // STAND — always available
-            string standResult;
-            if (_total >= cfg.RiskSum)       standResult = $"success secured (total: {_total})";
-            else if (_total > 0)             standResult = $"short of target — small loss (total: {_total}, need {cfg.RiskSum})";
-            else                             standResult = "nothing gained — small loss";
-            options.Add(new InquiryElement("stand",
-                $"STAND — Commit without this card  [{standResult}]",
+            // EXTRACT — always available
+            string extractStatus;
+            if (_exposure >= cfg.RiskSum)    extractStatus = $"threshold reached — operation succeeds (exposure: {_exposure})";
+            else if (_exposure > 0)          extractStatus = $"below threshold — quiet retreat (exposure: {_exposure}, need {cfg.RiskSum})";
+            else                             extractStatus = "nothing achieved — quiet retreat";
+            options.Add(new InquiryElement("extract",
+                $"EXTRACT — Stand down with current exposure  [{extractStatus}]",
                 null, true,
-                $"Lock in your current total of {_total}. " +
-                (_total >= cfg.RiskSum ? "Scheme succeeds." : "Scheme fails — costs are spent, no consequences.")));
+                $"Commit to current exposure of {_exposure}. " +
+                (_exposure >= cfg.RiskSum ? "Operation succeeds." : "Agent retreats cleanly — costs spent, no consequences.")));
 
-            // SKIP — Roguery 100+, one use
-            int roguery = 0;
-            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
-            if (roguery >= 100 && !_skipUsed)
+            // SIDESTEP — available to all, success by Roguery, one use per operation
+            if (!_sidestepUsed)
             {
-                options.Add(new InquiryElement("skip",
-                    "[Street Smarts] SKIP — Discard this complication, draw the next",
+                int pct = AbilitySuccessPct();
+                options.Add(new InquiryElement("sidestep",
+                    $"[SIDESTEP] Navigate around this development  [{pct}% chance]",
                     null, true,
-                    "Use your Roguery expertise to sidestep this obstacle without cost. One use per scheme."));
+                    $"Attempt to bypass this complication cleanly. Success ({pct}%): it is avoided at no cost. "
+                    + "Failure: chaotic outcome — exposure shifts by a random ±10. One use per operation."));
             }
 
-            // PEEK — Roguery 200+, one use, only if not already peeking
-            if (roguery >= 200 && !_peekUsed && _peekedValue < 0)
+            // RECON — available to all, success by Roguery, one use per operation
+            if (!_reconUsed && _peekedRating < 0)
             {
-                options.Add(new InquiryElement("peek",
-                    "[Cold Read] PEEK — Preview the next complication's value",
+                int pct = AbilitySuccessPct();
+                options.Add(new InquiryElement("recon",
+                    $"[RECON] Scout ahead to preview the next development  [{pct}% chance]",
                     null, true,
-                    "Your mastery of Roguery lets you read ahead. See what comes next before committing. One use per scheme."));
+                    $"Attempt to get advance intelligence on what comes next. Success ({pct}%): see the next report's "
+                    + "exposure rating before deciding here. Failure: chaotic outcome — exposure shifts by ±10. One use per operation."));
             }
 
-            // DRAW — take this card
-            string drawLabel = projectedTotal > BustThreshold
-                ? $"DRAW — Take it (+{_currentValue}) — TOTAL: {projectedTotal}  ⚠  BUST!"
-                : $"DRAW — Take it (+{_currentValue}) — new total: {projectedTotal}";
-            options.Add(new InquiryElement("draw", drawLabel, null, true,
-                projectedTotal > BustThreshold
-                    ? "This will bust the scheme. The operation backfires catastrophically."
-                    : $"Accept this complication. Your total becomes {projectedTotal}."));
+            // PRESS ON — accept this development
+            string pressLabel = projectedExposure > BlownThreshold
+                ? $"PRESS ON — Accept (+{_currentRating}) — exposure: {projectedExposure}  ⚠  BLOWN!"
+                : $"PRESS ON — Accept (+{_currentRating}) — new exposure: {projectedExposure}";
+            options.Add(new InquiryElement("advance", pressLabel, null, true,
+                projectedExposure > BlownThreshold
+                    ? "Pressing on blows the operation. Your agent is exposed — consequences will follow."
+                    : $"Accept this development. Exposure becomes {projectedExposure}."));
 
             try
             {
@@ -316,108 +328,118 @@ namespace AshAndEmber
                         $"The Gambit — {_def.Name}",
                         body,
                         options, false, 1, 1,
-                        "Confirm", "Abort Scheme",
-                        chosen => { try { ProcessChoice(chosen?[0]?.Identifier as string ?? "stand"); } catch { } },
+                        "Confirm", "Abort Operation",
+                        chosen => { try { ProcessChoice(chosen?[0]?.Identifier as string ?? "extract"); } catch { } },
                         _      => { try { OnAbort(); } catch { } }),
                     true);
             }
             catch { }
         }
 
-        private static int DrawValue(SchemeConfig cfg)
+        private static int DrawRating(SchemeConfig cfg)
             => cfg.CardMin + _rng.Next(cfg.CardMax - cfg.CardMin + 1);
+
+        // ── Ability success chance (Roguery-based, open to all) ───────────────
+        private static float ComputeAbilityChance()
+        {
+            int roguery = 0;
+            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
+            return Math.Max(0.20f, Math.Min(0.80f, 0.20f + (roguery / 500f) * 0.60f));
+        }
+
+        private static int AbilitySuccessPct()
+            => (int)(ComputeAbilityChance() * 100f);
 
         // ── Choice processing ─────────────────────────────────────────────────
         private static void ProcessChoice(string choiceId)
         {
             switch (choiceId)
             {
-                case "stand":
+                case "extract":
                     Resolve();
                     break;
 
-                case "skip":
-                    _skipUsed = true;
-                    DrawAndShow();
+                case "sidestep":
+                    _sidestepUsed = true;
+                    if (_rng.NextDouble() < ComputeAbilityChance())
+                    {
+                        // Success: bypass this development cleanly
+                        NextPhase();
+                    }
+                    else
+                    {
+                        // Failure: chaotic ±10 exposure
+                        ApplyRandomShift("Sidestep");
+                    }
                     break;
 
-                case "peek":
-                    _peekUsed    = true;
-                    _peekedValue = DrawValue(GetConfig(_def.Type));
-                    RedisplayWithPeek();
+                case "recon":
+                    _reconUsed = true;
+                    if (_rng.NextDouble() < ComputeAbilityChance())
+                    {
+                        // Success: preview next report's rating
+                        _peekedRating = DrawRating(GetConfig(_def.Type));
+                        ShowReconResult(_peekedRating);
+                    }
+                    else
+                    {
+                        // Failure: chaotic ±10 exposure
+                        ApplyRandomShift("Recon");
+                    }
                     break;
 
-                case "draw":
-                    _total += _currentValue;
-                    if (_total > BustThreshold) { OnBust(); return; }
-                    DrawAndShow();
+                case "advance":
+                    _exposure += _currentRating;
+                    if (_exposure > BlownThreshold) { OnBust(); return; }
+                    NextPhase();
                     break;
             }
         }
 
-        // Redisplay the current card with peek information now visible.
-        private static void RedisplayWithPeek()
+        // Applies a random ±10 exposure shift and continues. Handles bust.
+        private static void ApplyRandomShift(string abilityName)
         {
-            var cfg = GetConfig(_def.Type);
-            int projectedTotal = _total + _currentValue;
+            int delta = _rng.Next(2) == 0 ? 10 : -10;
+            _exposure = Math.Max(0, _exposure + delta);
 
-            string bustWarning = projectedTotal > BustThreshold
-                ? $"\n⚠  Taking this would bust you! ({projectedTotal} > 21)"
-                : "";
+            string msg = delta > 0
+                ? $"{abilityName} failed — the attempt drew unwanted attention. Exposure +10."
+                : $"{abilityName} failed — but the confusion bought cover. Exposure −10.";
+            try { MBInformationManager.AddQuickInformation(new TextObject(msg)); } catch { }
 
-            string body = $"Running total: {_total}  |  Need: ≥{cfg.RiskSum}  |  Bust at: 21  |  Round {_round}"
-                        + $"\n\nCurrent complication is worth {_currentValue} points."
-                        + $"\nTaking it would bring your total to {projectedTotal}."
-                        + bustWarning
-                        + $"\n\n[Cold Read] The next complication after this will be worth {_peekedValue} points.";
-
-            var options = new List<InquiryElement>();
-
-            string standResult = _total >= cfg.RiskSum ? $"success (total: {_total})" : $"small loss (total: {_total})";
-            options.Add(new InquiryElement("stand",
-                $"STAND — Commit without this card [{standResult}]",
-                null, true, $"Lock in {_total}."));
-
-            int roguery = 0;
-            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
-            if (roguery >= 100 && !_skipUsed)
-            {
-                options.Add(new InquiryElement("skip",
-                    "[Street Smarts] SKIP — Discard this complication, draw the next",
-                    null, true, "One use per scheme."));
-            }
-
-            string drawLabel = projectedTotal > BustThreshold
-                ? $"DRAW — Take it (+{_currentValue}) — TOTAL: {projectedTotal}  ⚠  BUST!"
-                : $"DRAW — Take it (+{_currentValue}) — new total: {projectedTotal}";
-            options.Add(new InquiryElement("draw", drawLabel, null, true,
-                projectedTotal > BustThreshold ? "This busts the scheme." : $"Total becomes {projectedTotal}."));
-
-            try
-            {
-                MBInformationManager.ShowMultiSelectionInquiry(
-                    new MultiSelectionInquiryData(
-                        $"The Gambit — {_def.Name}",
-                        body,
-                        options, false, 1, 1,
-                        "Confirm", "Abort Scheme",
-                        chosen => { try { ProcessChoice(chosen?[0]?.Identifier as string ?? "stand"); } catch { } },
-                        _      => { try { OnAbort(); } catch { } }),
-                    true);
-            }
-            catch { }
+            if (_exposure > BlownThreshold) { OnBust(); return; }
+            NextPhase();
         }
 
-        // ── Resolve (STAND) ───────────────────────────────────────────────────
+        // Shows the recon success screen, then returns player to the current phase.
+        private static void ShowReconResult(int nextRating)
+        {
+            string body =
+                "Your scout slipped through and returned with advance intelligence.\n\n"
+                + $"The next field report will be rated {nextRating} exposure.\n\n"
+                + "RECON ability expended for this operation.\n"
+                + "Return to decide on the current development.";
+
+            InformationManager.ShowInquiry(
+                new InquiryData(
+                    "Recon — Intelligence Received",
+                    body,
+                    true, false, "Return to Briefing", null,
+                    () => { try { ShowPhase(_currentReport, GetConfig(_def.Type)); } catch { } },
+                    null),
+                true);
+        }
+
+        // ── Resolve (EXTRACT) ─────────────────────────────────────────────────
         private static void Resolve()
         {
             var cfg = GetConfig(_def.Type);
-            SchemeOutcome outcome = _total >= cfg.RiskSum ? SchemeOutcome.Success : SchemeOutcome.SmallLoss;
+            SchemeOutcome outcome = _exposure >= cfg.RiskSum ? SchemeOutcome.Success : SchemeOutcome.SmallLoss;
             try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, outcome); } catch { }
             try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett); } catch { }
         }
 
-        // ── Bust ──────────────────────────────────────────────────────────────
+        // ── Blown ─────────────────────────────────────────────────────────────
         private static void OnBust()
         {
             try { SchemeSystem.ApplyBreakConsequence(_def.Type, Hero.MainHero, _targetHero, _targetSett); } catch { }
@@ -430,7 +452,7 @@ namespace AshAndEmber
             try
             {
                 MBInformationManager.AddQuickInformation(
-                    new TextObject("Your agent retreats. The scheme is abandoned — costs are spent."));
+                    new TextObject("Your agent stands down. The operation is abandoned — costs are spent."));
             }
             catch { }
             try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, days: 2); } catch { }

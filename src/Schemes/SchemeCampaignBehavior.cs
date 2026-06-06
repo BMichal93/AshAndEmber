@@ -462,29 +462,29 @@ namespace AshAndEmber
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
                 int roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
-                string abilityHints = "";
-                if (roguery >= 100) abilityHints += "  · STREET SMARTS — SKIP one complication (Roguery 100+)\n";
-                if (roguery >= 200) abilityHints += "  · COLD READ — PEEK at next card value (Roguery 200+)\n";
-                string abilityBlock = string.IsNullOrEmpty(abilityHints)
-                    ? ""
-                    : "Your abilities for this run:\n" + abilityHints + "\n";
+                int abilityPct = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (roguery / 500f) * 0.60f)) * 100f);
+                string abilityBlock =
+                    $"One-use field abilities (both available to all operatives):\n"
+                    + $"  · SIDESTEP — Navigate around one development ({abilityPct}% Roguery, fail = ±10 exposure)\n"
+                    + $"  · RECON — Scout ahead to preview the next development ({abilityPct}% Roguery, fail = ±10 exposure)\n\n";
 
                 var    cfg      = SchemeMinigame.GetPublicConfig(_selectedDef.Type);
                 string failNote = isAss
-                    ? "On bust: assassin captured — crime +80, relations −80, 60% war."
-                    : "On bust (score >21): scheme backfires — crime rating, relations, or your own holdings suffer.";
+                    ? "If blown (exposure >21): assassin captured — crime +80, relations −80, 60% chance of war."
+                    : "If blown (exposure >21): operation backfires — consequences specific to the scheme type.";
                 string body     = $"Scheme: {_selectedDef.Name}\n"
                                 + $"Target: {tName}\n"
                                 + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
-                                + $"Resolution: The Gambit  |  Need ≥{cfg.RiskSum}, bust at 21\n"
+                                + $"The Gambit  |  Threshold ≥{cfg.RiskSum}  |  Blown at 21\n"
                                 + traitNote + "\n\n"
                                 + abilityBlock
-                                + "Draw complication cards and build a running total. Stand when ready, "
-                                + "or keep drawing and risk busting with serious consequences.\n\n"
+                                + "Receive field reports from your agent. Press on to build exposure toward the "
+                                + "threshold, or extract early for a quiet retreat. Push too far and the operation "
+                                + "is blown.\n\n"
                                 + failNote;
 
                 InformationManager.ShowInquiry(
-                    new InquiryData("Confirm Scheme", body, true, true, "Proceed to Gambit", "Cancel",
+                    new InquiryData("Confirm Operation", body, true, true, "Begin the Gambit", "Stand Down",
                         () => CommitScheme(targetHero, targetSett), null),
                     true);
             }
