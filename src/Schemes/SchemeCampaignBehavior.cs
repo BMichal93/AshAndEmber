@@ -461,12 +461,21 @@ namespace AshAndEmber
                 string traitNote = isAss
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
-                int roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
-                int abilityPct = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (roguery / 500f) * 0.60f)) * 100f);
+                int roguery   = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
+                int charm     = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0;
+                int rounds    = Math.Min(8, 3 + roguery / 100);
+                int sidePct   = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (roguery / 500f) * 0.60f)) * 100f);
+                int charmPct  = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (charm  / 500f) * 0.60f)) * 100f);
+
                 string abilityBlock =
-                    $"One-use field abilities (both available to all operatives):\n"
-                    + $"  · SIDESTEP — Navigate around one development ({abilityPct}% Roguery, fail = ±10 exposure)\n"
-                    + $"  · RECON — Scout ahead to preview the next development ({abilityPct}% Roguery, fail = ±10 exposure)\n\n";
+                    $"Rounds available (Roguery {roguery}): {rounds}  —  when rounds run out: 50% bust / 50% quiet fail.\n\n"
+                    + $"Press-on options (exact value hidden — revealed only after you commit):\n"
+                    + $"  · PUSH HARD      +1 to +7  — aggressive, volatile\n"
+                    + $"  · TREAD CAREFULLY  −3 to +3  — balanced, could go either way\n"
+                    + $"  · PULL BACK      −7 to −1  — always reduces exposure, costs a round\n\n"
+                    + $"Field abilities (one use each per operation):\n"
+                    + $"  · SIDESTEP ({sidePct}% Roguery) — skip this development. Fail: ±8 exposure, advance.\n"
+                    + $"  · TALK IT DOWN ({charmPct}% Charm) — reduce heat by 5. Fail: +5 exposure. Stays in current phase.\n\n";
 
                 var    cfg      = SchemeMinigame.GetPublicConfig(_selectedDef.Type);
                 string failNote = isAss
@@ -478,9 +487,9 @@ namespace AshAndEmber
                                 + $"The Gambit  |  Threshold ≥{cfg.RiskSum}  |  Blown at 21\n"
                                 + traitNote + "\n\n"
                                 + abilityBlock
-                                + "Receive field reports from your agent. Press on to build exposure toward the "
-                                + "threshold, or extract early for a quiet retreat. Push too far and the operation "
-                                + "is blown.\n\n"
+                                + "Receive field reports. Choose how hard your operative pushes — but the outcome "
+                                + "is unknown until you commit. Extract once you reach the threshold, or keep "
+                                + "pushing at your own risk. Rounds are limited — don't run out.\n\n"
                                 + failNote;
 
                 InformationManager.ShowInquiry(

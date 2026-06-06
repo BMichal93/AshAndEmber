@@ -3,16 +3,22 @@
 // Push-your-luck operation minigame for player scheme resolution.
 // NPC schemes use the original RNG path — this file does not affect them.
 //
-// Each phase: a field report arrives with an exposure rating. The operative
-// decides to PRESS ON (accept the exposure, continue) or EXTRACT (commit
-// current exposure and resolve the operation). Blown if exposure > 21.
+// Each phase: a field report arrives. The operative decides HOW to push:
+//   · PUSH HARD (Aggressive): hidden roll +1 to +7 — volatile, high reward
+//   · TREAD CAREFULLY:        hidden roll −3 to +3 — balanced, unpredictable
+//   · PULL BACK (Defensive):  hidden roll −7 to −1 — always reduces exposure
+// Or: EXTRACT to stand down, SIDESTEP (Roguery) to skip, TALK IT DOWN (Charm).
 //
-// SIDESTEP and RECON are available to everyone — Roguery determines success
-// chance. A failed attempt causes a random ±10 exposure adjustment.
+// Rounds are limited — count scales with Roguery (3–8). When rounds run out:
+//   50% → Bust (blown), 50% → Fail (quiet retreat, no consequences).
 //
-//   Roguery 0   → ~20% ability success
-//   Roguery 250 → ~50% ability success
-//   Roguery 500 → ~80% ability success (cap)
+// The exact roll is always hidden until after the choice is made.
+// Blown if exposure > 21. Success if extraction at or above the threshold.
+//
+//   Roguery 0   → 3 rounds, Sidestep ~20%
+//   Roguery 300 → 6 rounds, Sidestep ~56%
+//   Roguery 500 → 8 rounds (cap), Sidestep ~80%
+//   Charm drives Talk It Down on the same 20–80% curve.
 // =============================================================================
 
 using System;
@@ -29,7 +35,7 @@ namespace AshAndEmber
 {
     public enum SchemeOutcome
     {
-        SmallLoss,  // exposure < threshold (extracted short)
+        SmallLoss,  // exposure < threshold (extracted short or rounds exhausted with no bust)
         Success,    // threshold ≤ exposure ≤ 21
         Bust        // exposure > 21 (operation blown)
     }
@@ -44,27 +50,25 @@ namespace AshAndEmber
         private struct SchemeConfig
         {
             internal int RiskSum;   // exposure threshold for success
-            internal int CardMin;
-            internal int CardMax;
         }
 
         private static SchemeConfig GetConfig(SchemeType type)
         {
             switch (type)
             {
-                case SchemeType.SpreadRumors:     return new SchemeConfig { RiskSum = 7,  CardMin = 1, CardMax = 5 };
-                case SchemeType.FalseAccusations: return new SchemeConfig { RiskSum = 7,  CardMin = 1, CardMax = 5 };
-                case SchemeType.SpreadTerror:     return new SchemeConfig { RiskSum = 9,  CardMin = 1, CardMax = 6 };
-                case SchemeType.BurnStorage:      return new SchemeConfig { RiskSum = 9,  CardMin = 1, CardMax = 6 };
-                case SchemeType.BribeSoldiers:    return new SchemeConfig { RiskSum = 9,  CardMin = 1, CardMax = 6 };
-                case SchemeType.PoisonWell:       return new SchemeConfig { RiskSum = 10, CardMin = 2, CardMax = 6 };
-                case SchemeType.ForgeDocuments:   return new SchemeConfig { RiskSum = 10, CardMin = 2, CardMax = 6 };
-                case SchemeType.ScatterWolves:    return new SchemeConfig { RiskSum = 12, CardMin = 2, CardMax = 7 };
-                case SchemeType.VipersCounsel:    return new SchemeConfig { RiskSum = 12, CardMin = 2, CardMax = 7 };
-                case SchemeType.HireAssassin:     return new SchemeConfig { RiskSum = 13, CardMin = 2, CardMax = 7 };
-                case SchemeType.StageCoup:        return new SchemeConfig { RiskSum = 14, CardMin = 3, CardMax = 8 };
-                case SchemeType.Assassinate:      return new SchemeConfig { RiskSum = 16, CardMin = 3, CardMax = 8 };
-                default:                          return new SchemeConfig { RiskSum = 10, CardMin = 2, CardMax = 6 };
+                case SchemeType.SpreadRumors:     return new SchemeConfig { RiskSum = 7  };
+                case SchemeType.FalseAccusations: return new SchemeConfig { RiskSum = 7  };
+                case SchemeType.SpreadTerror:     return new SchemeConfig { RiskSum = 9  };
+                case SchemeType.BurnStorage:      return new SchemeConfig { RiskSum = 9  };
+                case SchemeType.BribeSoldiers:    return new SchemeConfig { RiskSum = 9  };
+                case SchemeType.PoisonWell:       return new SchemeConfig { RiskSum = 10 };
+                case SchemeType.ForgeDocuments:   return new SchemeConfig { RiskSum = 10 };
+                case SchemeType.ScatterWolves:    return new SchemeConfig { RiskSum = 12 };
+                case SchemeType.VipersCounsel:    return new SchemeConfig { RiskSum = 12 };
+                case SchemeType.HireAssassin:     return new SchemeConfig { RiskSum = 13 };
+                case SchemeType.StageCoup:        return new SchemeConfig { RiskSum = 14 };
+                case SchemeType.Assassinate:      return new SchemeConfig { RiskSum = 16 };
+                default:                          return new SchemeConfig { RiskSum = 10 };
             }
         }
 
@@ -205,27 +209,28 @@ namespace AshAndEmber
         private static SchemeDefinition _def;
         private static Hero             _targetHero;
         private static Settlement       _targetSett;
-        private static int              _exposure;       // running exposure total
+        private static int              _exposure;
         private static int              _phase;
-        private static int              _currentRating;  // exposure rating of the current report
-        private static string           _currentReport;  // text of the current report (for recon redisplay)
-        private static int              _peekedRating;   // -1 = no peek; >=0 = peeked next rating
+        private static int              _roundsLimit;
+        private static int              _roundsRemaining;
+        private static string           _currentReport;
         private static bool             _sidestepUsed;
-        private static bool             _reconUsed;
+        private static bool             _charmUsed;
         private static List<string>     _reportPool;
 
         // ── Entry point ───────────────────────────────────────────────────────
         internal static void Begin(SchemeDefinition def, Hero targetHero, Settlement targetSett)
         {
-            _def           = def;
-            _targetHero    = targetHero;
-            _targetSett    = targetSett;
-            _exposure      = 0;
-            _phase         = 0;
-            _currentReport = "";
-            _peekedRating  = -1;
-            _sidestepUsed  = false;
-            _reconUsed     = false;
+            _def             = def;
+            _targetHero      = targetHero;
+            _targetSett      = targetSett;
+            _exposure        = 0;
+            _phase           = 0;
+            _roundsLimit     = ComputeRoundsLimit();
+            _roundsRemaining = _roundsLimit;
+            _currentReport   = "";
+            _sidestepUsed    = false;
+            _charmUsed       = false;
 
             var pool = GetReports(def.Type);
             _reportPool = pool.OrderBy(_ => _rng.Next()).ToList();
@@ -238,6 +243,14 @@ namespace AshAndEmber
             }
 
             NextPhase();
+        }
+
+        // Roguery → rounds: base 3, +1 per 100 points, cap 8.
+        private static int ComputeRoundsLimit()
+        {
+            int roguery = 0;
+            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
+            return Math.Min(8, 3 + roguery / 100);
         }
 
         // ── Draw next report and show the phase ───────────────────────────────
@@ -253,73 +266,79 @@ namespace AshAndEmber
             _currentReport = _reportPool[0];
             _reportPool.RemoveAt(0);
 
-            var cfg = GetConfig(_def.Type);
-
-            _currentRating = (_peekedRating >= 0) ? _peekedRating : DrawRating(cfg);
-            _peekedRating  = -1;
-
-            ShowPhase(_currentReport, cfg);
+            ShowPhase(_currentReport);
         }
 
-        private static void ShowPhase(string report, SchemeConfig cfg)
+        private static void ShowPhase(string report)
         {
-            int projectedExposure = _exposure + _currentRating;
+            var cfg = GetConfig(_def.Type);
+            bool isFinalRound = _roundsRemaining == 1;
 
-            string warning = projectedExposure > BlownThreshold
-                ? $"\n⚠  Pressing on would blow the operation! ({projectedExposure} > 21)"
-                : projectedExposure > BlownThreshold - cfg.CardMin
-                    ? $"\n   Caution: pressing on brings exposure to {projectedExposure} — close to the limit."
-                    : "";
+            string status = _exposure >= cfg.RiskSum
+                ? "threshold reached — extract for success"
+                : $"need {cfg.RiskSum - _exposure} more to reach threshold";
 
-            string body = $"Exposure: {_exposure}  |  Threshold: ≥{cfg.RiskSum}  |  Blown at: 21  |  Phase {_phase}"
+            string finalWarning = isFinalRound
+                ? "\n\n⚠  FINAL ROUND — after this, the operation ends (50% bust / 50% fail if not extracted)."
+                : "";
+
+            string body = $"Exposure: {_exposure}  |  Threshold: ≥{cfg.RiskSum}  |  Blown at: 21"
+                        + $"  |  Round {_phase}/{_roundsLimit}  [{status}]"
                         + $"\n\nField report:\n\"{report}\""
-                        + $"\n\nThis development is rated {_currentRating} exposure."
-                        + $"\nPressing on raises total exposure to {projectedExposure}."
-                        + warning;
+                        + $"\n\nHow does your operative respond?"
+                        + finalWarning;
 
             var options = new List<InquiryElement>();
 
             // EXTRACT — always available
             string extractStatus;
-            if (_exposure >= cfg.RiskSum)    extractStatus = $"threshold reached — operation succeeds (exposure: {_exposure})";
-            else if (_exposure > 0)          extractStatus = $"below threshold — quiet retreat (exposure: {_exposure}, need {cfg.RiskSum})";
+            if (_exposure >= cfg.RiskSum)    extractStatus = "threshold reached — operation succeeds";
+            else if (_exposure > 0)          extractStatus = "below threshold — quiet retreat";
             else                             extractStatus = "nothing achieved — quiet retreat";
             options.Add(new InquiryElement("extract",
-                $"EXTRACT — Stand down with current exposure  [{extractStatus}]",
+                $"EXTRACT — Stand down  [{extractStatus}]",
                 null, true,
-                $"Commit to current exposure of {_exposure}. " +
-                (_exposure >= cfg.RiskSum ? "Operation succeeds." : "Agent retreats cleanly — costs spent, no consequences.")));
+                _exposure >= cfg.RiskSum
+                    ? $"Commit to exposure {_exposure}. Operation succeeds."
+                    : $"Commit to exposure {_exposure}. Agent retreats cleanly — costs spent, no consequences."));
 
-            // SIDESTEP — available to all, success by Roguery, one use per operation
+            // SIDESTEP (Roguery) — one use per operation
             if (!_sidestepUsed)
             {
-                int pct = AbilitySuccessPct();
+                int pct = AbilitySuccessPct(isCharm: false);
                 options.Add(new InquiryElement("sidestep",
-                    $"[SIDESTEP] Navigate around this development  [{pct}% chance]",
+                    $"[SIDESTEP] Navigate around this complication  [{pct}% Roguery]",
                     null, true,
-                    $"Attempt to bypass this complication cleanly. Success ({pct}%): it is avoided at no cost. "
-                    + "Failure: chaotic outcome — exposure shifts by a random ±10. One use per operation."));
+                    $"Bypass this development entirely. Success ({pct}%): advance to the next phase without any exposure cost. "
+                    + "Failure: chaos — exposure shifts ±8 and the round is consumed. One use per operation."));
             }
 
-            // RECON — available to all, success by Roguery, one use per operation
-            if (!_reconUsed && _peekedRating < 0)
+            // TALK IT DOWN (Charm) — one use per operation
+            if (!_charmUsed)
             {
-                int pct = AbilitySuccessPct();
-                options.Add(new InquiryElement("recon",
-                    $"[RECON] Scout ahead to preview the next development  [{pct}% chance]",
+                int pct = AbilitySuccessPct(isCharm: true);
+                options.Add(new InquiryElement("charm",
+                    $"[TALK IT DOWN] Smooth over the complication  [{pct}% Charm]",
                     null, true,
-                    $"Attempt to get advance intelligence on what comes next. Success ({pct}%): see the next report's "
-                    + "exposure rating before deciding here. Failure: chaotic outcome — exposure shifts by ±10. One use per operation."));
+                    $"Use social grace to reduce the heat. Success ({pct}%): −5 exposure. "
+                    + "Failure: +5 exposure. You remain in this phase to make your press decision. One use per operation."));
             }
 
-            // PRESS ON — accept this development
-            string pressLabel = projectedExposure > BlownThreshold
-                ? $"PRESS ON — Accept (+{_currentRating}) — exposure: {projectedExposure}  ⚠  BLOWN!"
-                : $"PRESS ON — Accept (+{_currentRating}) — new exposure: {projectedExposure}";
-            options.Add(new InquiryElement("advance", pressLabel, null, true,
-                projectedExposure > BlownThreshold
-                    ? "Pressing on blows the operation. Your agent is exposed — consequences will follow."
-                    : $"Accept this development. Exposure becomes {projectedExposure}."));
+            // PRESS ON — three hidden-roll options
+            options.Add(new InquiryElement("aggressive",
+                "PUSH HARD — Bold, aggressive move",
+                null, true,
+                "Go in hard. Could rack up serious exposure or barely any. You won't know until you commit. Range: +1 to +7."));
+
+            options.Add(new InquiryElement("careful",
+                "TREAD CAREFULLY — Measured approach",
+                null, true,
+                "Cautious and controlled. Small gain, small loss — or anything in between. Range: −3 to +3."));
+
+            options.Add(new InquiryElement("defensive",
+                "PULL BACK — Defensive positioning",
+                null, true,
+                "Give ground to reduce heat. Always lowers exposure, but costs a round. Range: −7 to −1."));
 
             try
             {
@@ -336,19 +355,22 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static int DrawRating(SchemeConfig cfg)
-            => cfg.CardMin + _rng.Next(cfg.CardMax - cfg.CardMin + 1);
-
-        // ── Ability success chance (Roguery-based, open to all) ───────────────
-        private static float ComputeAbilityChance()
+        // ── Skill-based ability chance ─────────────────────────────────────────
+        private static float ComputeAbilityChance(bool isCharm)
         {
-            int roguery = 0;
-            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
-            return Math.Max(0.20f, Math.Min(0.80f, 0.20f + (roguery / 500f) * 0.60f));
+            int skill = 0;
+            try
+            {
+                skill = isCharm
+                    ? (Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0)
+                    : (Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0);
+            }
+            catch { }
+            return Math.Max(0.20f, Math.Min(0.80f, 0.20f + (skill / 500f) * 0.60f));
         }
 
-        private static int AbilitySuccessPct()
-            => (int)(ComputeAbilityChance() * 100f);
+        private static int AbilitySuccessPct(bool isCharm)
+            => (int)(ComputeAbilityChance(isCharm) * 100f);
 
         // ── Choice processing ─────────────────────────────────────────────────
         private static void ProcessChoice(string choiceId)
@@ -361,73 +383,115 @@ namespace AshAndEmber
 
                 case "sidestep":
                     _sidestepUsed = true;
-                    if (_rng.NextDouble() < ComputeAbilityChance())
+                    if (_rng.NextDouble() < ComputeAbilityChance(isCharm: false))
                     {
-                        // Success: bypass this development cleanly
-                        NextPhase();
+                        try { MBInformationManager.AddQuickInformation(
+                            new TextObject("Sidestep — your operative slipped through cleanly. No exposure taken.")); } catch { }
+                        AdvanceRound();
                     }
                     else
                     {
-                        // Failure: chaotic ±10 exposure
                         ApplyRandomShift("Sidestep");
                     }
                     break;
 
-                case "recon":
-                    _reconUsed = true;
-                    if (_rng.NextDouble() < ComputeAbilityChance())
+                case "charm":
+                    _charmUsed = true;
+                    if (_rng.NextDouble() < ComputeAbilityChance(isCharm: true))
                     {
-                        // Success: preview next report's rating
-                        _peekedRating = DrawRating(GetConfig(_def.Type));
-                        ShowReconResult(_peekedRating);
+                        _exposure = Math.Max(0, _exposure - 5);
+                        try { MBInformationManager.AddQuickInformation(
+                            new TextObject("Talk It Down — smooth words defused the situation. Exposure −5.")); } catch { }
+                        ShowPhase(_currentReport);
                     }
                     else
                     {
-                        // Failure: chaotic ±10 exposure
-                        ApplyRandomShift("Recon");
+                        _exposure += 5;
+                        try { MBInformationManager.AddQuickInformation(
+                            new TextObject("Talk It Down failed — they grew suspicious. Exposure +5.")); } catch { }
+                        if (_exposure > BlownThreshold) { OnBust(); return; }
+                        ShowPhase(_currentReport);
                     }
                     break;
 
-                case "advance":
-                    _exposure += _currentRating;
-                    if (_exposure > BlownThreshold) { OnBust(); return; }
-                    NextPhase();
+                case "aggressive":
+                {
+                    int roll = 1 + _rng.Next(7); // 1–7
+                    try { MBInformationManager.AddQuickInformation(
+                        new TextObject($"Pushed hard — exposure +{roll}.")); } catch { }
+                    ApplyPressRoll(roll);
                     break;
+                }
+
+                case "careful":
+                {
+                    int roll = _rng.Next(7) - 3; // −3 to +3
+                    string rollStr = roll >= 0 ? $"+{roll}" : $"{roll}";
+                    try { MBInformationManager.AddQuickInformation(
+                        new TextObject($"Careful approach — exposure {rollStr}.")); } catch { }
+                    ApplyPressRoll(roll);
+                    break;
+                }
+
+                case "defensive":
+                {
+                    int roll = -(1 + _rng.Next(7)); // −1 to −7
+                    try { MBInformationManager.AddQuickInformation(
+                        new TextObject($"Pulled back — exposure {roll}.")); } catch { }
+                    ApplyPressRoll(roll);
+                    break;
+                }
             }
         }
 
-        // Applies a random ±10 exposure shift and continues. Handles bust.
-        private static void ApplyRandomShift(string abilityName)
+        // Apply a press-on roll and advance the round.
+        private static void ApplyPressRoll(int delta)
         {
-            int delta = _rng.Next(2) == 0 ? 10 : -10;
             _exposure = Math.Max(0, _exposure + delta);
-
-            string msg = delta > 0
-                ? $"{abilityName} failed — the attempt drew unwanted attention. Exposure +10."
-                : $"{abilityName} failed — but the confusion bought cover. Exposure −10.";
-            try { MBInformationManager.AddQuickInformation(new TextObject(msg)); } catch { }
-
             if (_exposure > BlownThreshold) { OnBust(); return; }
+            AdvanceRound();
+        }
+
+        // Decrement rounds, then bust on exhaustion or continue.
+        private static void AdvanceRound()
+        {
+            _roundsRemaining--;
+            if (_roundsRemaining <= 0) { OnRoundsExhausted(); return; }
             NextPhase();
         }
 
-        // Shows the recon success screen, then returns player to the current phase.
-        private static void ShowReconResult(int nextRating)
+        // Applies a random ±8 exposure shift on ability failure, then advances.
+        private static void ApplyRandomShift(string abilityName)
         {
-            string body =
-                "Your scout slipped through and returned with advance intelligence.\n\n"
-                + $"The next field report will be rated {nextRating} exposure.\n\n"
-                + "RECON ability expended for this operation.\n"
-                + "Return to decide on the current development.";
+            int delta = _rng.Next(2) == 0 ? 8 : -8;
+            _exposure = Math.Max(0, _exposure + delta);
 
-            InformationManager.ShowInquiry(
-                new InquiryData(
-                    "Recon — Intelligence Received",
-                    body,
-                    true, false, "Return to Briefing", null,
-                    () => { try { ShowPhase(_currentReport, GetConfig(_def.Type)); } catch { } },
-                    null),
-                true);
+            string msg = delta > 0
+                ? $"{abilityName} failed — drew unwanted attention. Exposure +{delta}."
+                : $"{abilityName} failed — confusion bought cover. Exposure {delta}.";
+            try { MBInformationManager.AddQuickInformation(new TextObject(msg)); } catch { }
+
+            if (_exposure > BlownThreshold) { OnBust(); return; }
+            AdvanceRound();
+        }
+
+        // ── Rounds exhausted ──────────────────────────────────────────────────
+        private static void OnRoundsExhausted()
+        {
+            if (_rng.NextDouble() < 0.50)
+            {
+                try { MBInformationManager.AddQuickInformation(new TextObject(
+                    "Time ran out. Your operative overstayed — the network collapsed. Operation blown.")); } catch { }
+                try { SchemeSystem.ApplyBreakConsequence(_def.Type, Hero.MainHero, _targetHero, _targetSett); } catch { }
+                try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett); } catch { }
+            }
+            else
+            {
+                try { MBInformationManager.AddQuickInformation(new TextObject(
+                    "Time ran out. Your operative withdrew before the net closed — the operation accomplished nothing.")); } catch { }
+                try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, SchemeOutcome.SmallLoss); } catch { }
+                try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, days: 2); } catch { }
+            }
         }
 
         // ── Resolve (EXTRACT) ─────────────────────────────────────────────────
@@ -436,9 +500,8 @@ namespace AshAndEmber
             var cfg = GetConfig(_def.Type);
             SchemeOutcome outcome = _exposure >= cfg.RiskSum ? SchemeOutcome.Success : SchemeOutcome.SmallLoss;
             try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, outcome); } catch { }
-            // SmallLoss extract: same 2-day cooldown as Abort so players aren't penalised
-            // more for a deliberate quiet retreat than for panic-aborting immediately.
-            // Success/Bust use default (7/14-day per-target, 3-day global) — network disrupted.
+            // SmallLoss extract: same 2-day cooldown as Abort — deliberate quiet retreat
+            // shouldn't be penalised more than panic-aborting immediately.
             int cooldownDays = outcome == SchemeOutcome.SmallLoss ? 2 : -1;
             try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, cooldownDays); } catch { }
         }
