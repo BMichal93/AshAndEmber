@@ -56,19 +56,19 @@ namespace AshAndEmber
         {
             switch (type)
             {
-                case SchemeType.SpreadRumors:     return new SchemeConfig { RiskSum = 7  };
-                case SchemeType.FalseAccusations: return new SchemeConfig { RiskSum = 7  };
-                case SchemeType.SpreadTerror:     return new SchemeConfig { RiskSum = 9  };
-                case SchemeType.BurnStorage:      return new SchemeConfig { RiskSum = 9  };
-                case SchemeType.BribeSoldiers:    return new SchemeConfig { RiskSum = 9  };
-                case SchemeType.PoisonWell:       return new SchemeConfig { RiskSum = 10 };
-                case SchemeType.ForgeDocuments:   return new SchemeConfig { RiskSum = 10 };
-                case SchemeType.ScatterWolves:    return new SchemeConfig { RiskSum = 12 };
-                case SchemeType.VipersCounsel:    return new SchemeConfig { RiskSum = 12 };
-                case SchemeType.HireAssassin:     return new SchemeConfig { RiskSum = 13 };
-                case SchemeType.StageCoup:        return new SchemeConfig { RiskSum = 14 };
-                case SchemeType.Assassinate:      return new SchemeConfig { RiskSum = 16 };
-                default:                          return new SchemeConfig { RiskSum = 10 };
+                case SchemeType.SpreadRumors:     return new SchemeConfig { RiskSum = 12 };
+                case SchemeType.FalseAccusations: return new SchemeConfig { RiskSum = 12 };
+                case SchemeType.SpreadTerror:     return new SchemeConfig { RiskSum = 13 };
+                case SchemeType.BurnStorage:      return new SchemeConfig { RiskSum = 13 };
+                case SchemeType.BribeSoldiers:    return new SchemeConfig { RiskSum = 14 };
+                case SchemeType.PoisonWell:       return new SchemeConfig { RiskSum = 15 };
+                case SchemeType.ForgeDocuments:   return new SchemeConfig { RiskSum = 15 };
+                case SchemeType.VipersCounsel:    return new SchemeConfig { RiskSum = 16 };
+                case SchemeType.ScatterWolves:    return new SchemeConfig { RiskSum = 17 };
+                case SchemeType.HireAssassin:     return new SchemeConfig { RiskSum = 17 };
+                case SchemeType.StageCoup:        return new SchemeConfig { RiskSum = 18 };
+                case SchemeType.Assassinate:      return new SchemeConfig { RiskSum = 19 };
+                default:                          return new SchemeConfig { RiskSum = 13 };
             }
         }
 
@@ -245,12 +245,12 @@ namespace AshAndEmber
             NextPhase();
         }
 
-        // Roguery → rounds: base 3, +1 per 100 points, cap 8.
+        // Roguery → rounds: base 5, +1 per 100 points, cap 10.
         private static int ComputeRoundsLimit()
         {
             int roguery = 0;
             try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
-            return Math.Min(8, 3 + roguery / 100);
+            return Math.Min(10, 5 + roguery / 100);
         }
 
         // ── Draw next report and show the phase ───────────────────────────────

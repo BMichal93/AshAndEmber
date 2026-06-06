@@ -463,7 +463,7 @@ namespace AshAndEmber
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
                 int roguery   = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
                 int charm     = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0;
-                int rounds    = Math.Min(8, 3 + roguery / 100);
+                int rounds    = Math.Min(10, 5 + roguery / 100);
                 int sidePct   = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (roguery / 500f) * 0.60f)) * 100f);
                 int charmPct  = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (charm  / 500f) * 0.60f)) * 100f);
 
