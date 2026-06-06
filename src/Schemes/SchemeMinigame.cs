@@ -436,7 +436,11 @@ namespace AshAndEmber
             var cfg = GetConfig(_def.Type);
             SchemeOutcome outcome = _exposure >= cfg.RiskSum ? SchemeOutcome.Success : SchemeOutcome.SmallLoss;
             try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, outcome); } catch { }
-            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett); } catch { }
+            // SmallLoss extract: same 2-day cooldown as Abort so players aren't penalised
+            // more for a deliberate quiet retreat than for panic-aborting immediately.
+            // Success/Bust use default (7/14-day per-target, 3-day global) — network disrupted.
+            int cooldownDays = outcome == SchemeOutcome.SmallLoss ? 2 : -1;
+            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, cooldownDays); } catch { }
         }
 
         // ── Blown ─────────────────────────────────────────────────────────────

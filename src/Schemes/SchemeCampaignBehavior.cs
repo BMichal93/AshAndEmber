@@ -534,6 +534,11 @@ namespace AshAndEmber
                 var capturedSett = targetSett;
                 _selectedDef = null;
 
+                // Stamp per-target cooldown NOW so a save-reload before the first phase
+                // cannot bypass the cost and retry the same target for free. The minigame
+                // will overwrite this with the outcome-correct value on resolution.
+                try { SchemeSystem.PreStampTargetCooldown(capturedDef.Type, capturedHero, capturedSett); } catch { }
+
                 try { GameMenu.SwitchToMenu("town"); } catch { }
 
                 // Defer so menu transition completes before the first inquiry opens.

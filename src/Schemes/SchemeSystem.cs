@@ -1083,8 +1083,21 @@ namespace AshAndEmber
         // ── Minigame API ──────────────────────────────────────────────────────
         // Called by SchemeMinigame after a player operation resolves.
 
+        /// Stamps only the per-target cooldown (no global). Called from CommitScheme
+        /// BEFORE the deferred minigame launches so a save-reload between cost deduction
+        /// and the first phase cannot bypass the cooldown and let the player retry for free.
+        internal static void PreStampTargetCooldown(SchemeType type, Hero targetHero, Settlement targetSett)
+        {
+            string targetId = targetHero?.StringId ?? targetSett?.StringId ?? "";
+            if (string.IsNullOrEmpty(targetId)) return;
+            string cdKey = CooldownKey(type, targetId);
+            _targetCooldowns[cdKey] = type == SchemeType.Assassinate ? 14 : 7;
+            _playerCooldownKeys.Add(cdKey);
+        }
+
         /// Stamps the per-target cooldown and briefly disables the scheme menu.
-        /// Called by SchemeMinigame on stand, bust, or abort.
+        /// Called by SchemeMinigame on extract, bust, or abort. Overwrites the pre-stamp
+        /// from PreStampTargetCooldown with the outcome-correct value.
         internal static void SetPlayerCooldown(SchemeType type, Hero targetHero,
             Settlement targetSett, int days = -1)
         {
@@ -1095,7 +1108,9 @@ namespace AshAndEmber
             _targetCooldowns[cdKey] = cdDays;
             _playerCooldownKeys.Add(cdKey);
             // Brief global cooldown prevents immediate menu re-entry after resolution.
-            _playerGlobalCooldown = Math.Max(_playerGlobalCooldown, Math.Min(cdDays, days >= 0 ? days : 3));
+            // Overwrite directly — the minigame calls this at the end of every path,
+            // so the final call should always win (don't clamp to the pre-stamp value).
+            _playerGlobalCooldown = days >= 0 ? days : 3;
         }
 
         /// Applies the minigame outcome for a player operation.
