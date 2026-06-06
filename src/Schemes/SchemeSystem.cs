@@ -1083,68 +1083,58 @@ namespace AshAndEmber
         // ── Minigame API ──────────────────────────────────────────────────────
         // Called by SchemeMinigame after a player operation resolves.
 
-        /// Sets the global player cooldown (days before they can start another operation).
-        /// Called by SchemeMinigame.FinishOperation before showing the final screen.
-        internal static void SetPlayerCooldown(int days)
-        {
-            _playerGlobalCooldown = Math.Max(0, days);
-        }
-
-        /// Stamps the per-target cooldown immediately when the player commits.
-        /// Must be called BEFORE BeginOperation so the cooldown persists even if
-        /// the player saves and loads mid-minigame (costs spent, game should block retry).
-        internal static void SetPerTargetCooldown(SchemeType type, Hero targetHero, Settlement targetSett)
+        /// Stamps the per-target cooldown and briefly disables the scheme menu.
+        /// Called by SchemeMinigame on stand, bust, or abort.
+        internal static void SetPlayerCooldown(SchemeType type, Hero targetHero,
+            Settlement targetSett, int days = -1)
         {
             string targetId = targetHero?.StringId ?? targetSett?.StringId ?? "";
             if (string.IsNullOrEmpty(targetId)) return;
             string cdKey = CooldownKey(type, targetId);
-            _targetCooldowns[cdKey] = type == SchemeType.Assassinate ? 14 : 7;
+            int cdDays = days >= 0 ? days : (type == SchemeType.Assassinate ? 14 : 7);
+            _targetCooldowns[cdKey] = cdDays;
             _playerCooldownKeys.Add(cdKey);
+            // Brief global cooldown prevents immediate menu re-entry after resolution.
+            _playerGlobalCooldown = Math.Max(_playerGlobalCooldown, Math.Min(cdDays, days >= 0 ? days : 3));
         }
 
         /// Applies the minigame outcome for a player operation.
-        /// Routes to ApplySuccess, a silent-retreat notification, or ApplyBreakConsequences.
-        internal static void ApplyPlayerSchemeOutcome(SchemeOutcome outcome,
-            SchemeType type, Hero targetHero, Settlement targetSett)
+        /// Routes to ApplySuccess, a silent-retreat notification, or ApplyBreakConsequence.
+        internal static void ApplyPlayerSchemeOutcome(SchemeType type, Hero instigator,
+            Hero targetHero, Settlement targetSett, SchemeOutcome outcome)
         {
-            if (Hero.MainHero == null) return;
+            if (instigator == null) return;
 
-            // Build a synthetic PendingScheme so the existing ApplySuccess /
-            // ApplyBreakConsequences helpers can work without modification.
-            var s = new PendingScheme
+            var fake = new PendingScheme
             {
-                InstigatorId       = Hero.MainHero.StringId,
+                InstigatorId       = instigator.StringId ?? "",
                 Type               = type,
-                TargetHeroId       = targetHero?.StringId       ?? "",
-                TargetSettlementId = targetSett?.StringId       ?? "",
+                TargetHeroId       = targetHero?.StringId ?? "",
+                TargetSettlementId = targetSett?.StringId  ?? "",
                 DaysRemaining      = 0,
-                IsPlayer           = true,
+                IsPlayer           = true
             };
 
             switch (outcome)
             {
+                case SchemeOutcome.SmallLoss:
+                {
+                    string tName = targetHero?.Name?.ToString()
+                                ?? targetSett?.Name?.ToString() ?? "the target";
+                    MBInformationManager.AddQuickInformation(
+                        new TextObject($"Your agent withdrew. The operation against {tName} dissolved without trace."));
+                    break;
+                }
                 case SchemeOutcome.Success:
-                    ApplySuccess(s, Hero.MainHero, targetHero, targetSett);
+                    try { ApplySuccess(fake, instigator, targetHero, targetSett); } catch { }
                     break;
 
                 case SchemeOutcome.Bust:
-                    // VipersCounsel has its own surface-always failure path.
-                    if (type == SchemeType.VipersCounsel)
-                        ApplyFailure(s, Hero.MainHero, targetHero, targetSett);
-                    else
-                        ApplyBreakConsequences(s, Hero.MainHero, targetHero, targetSett);
-                    break;
-
-                default: // SmallLoss — agent retreated cleanly
-                    string tSmall = targetHero?.Name?.ToString()
-                                 ?? targetSett?.Name?.ToString()
-                                 ?? "the target";
-                    MBInformationManager.AddQuickInformation(
-                        new TextObject($"Your agent withdrew from {tSmall} without incident."));
+                    try { ApplyBreakConsequence(type, instigator, targetHero, targetSett); } catch { }
                     break;
             }
 
-            // Award full skill XP on success; partial (1/3) on bust (knowledge gained through failure).
+            // Award full skill XP on success; partial (1/3) on bust.
             try
             {
                 var def = GetDefinition(type);
@@ -1154,64 +1144,192 @@ namespace AshAndEmber
                            : outcome == SchemeOutcome.Bust    ? def.SkillXp / 3
                            : 0;
                     if (xp > 0)
-                        Hero.MainHero?.HeroDeveloper?.AddSkillXp(def.Skill, xp);
+                        instigator?.HeroDeveloper?.AddSkillXp(def.Skill, xp);
                 }
             }
             catch { }
         }
 
-        /// Applies the "agent caught" consequences for a busted minigame operation.
-        /// Separated from ApplyFailure so the minigame can call it directly without
-        /// going through the 70/30 random fled/caught split (bust = always caught).
-        private static void ApplyBreakConsequences(PendingScheme s, Hero instigator,
+        /// Per-scheme bust consequences — called directly from the minigame (bust = always caught).
+        internal static void ApplyBreakConsequence(SchemeType type, Hero instigator,
             Hero targetHero, Settlement targetSett)
         {
-            try
+            if (instigator == null) return;
+
+            switch (type)
             {
-                // Crime rating in the target's kingdom
-                var targetKingdom = targetHero?.Clan?.Kingdom
-                                 ?? targetSett?.OwnerClan?.Kingdom
-                                 ?? (targetSett?.MapFaction as Kingdom);
-                if (targetKingdom != null && !targetKingdom.IsEliminated)
+                case SchemeType.Assassinate:
                 {
-                    float crimeDelta = 30f + _rng.Next(31); // 30–60
-                    try { ChangeCrimeRatingAction.Apply(targetKingdom, crimeDelta, false); } catch { }
-                }
-
-                // Heavy relations penalty with target / settlement owner
-                Hero penaltyTarget = targetHero
-                    ?? targetSett?.OwnerClan?.Leader
-                    ?? targetSett?.MapFaction?.Leader as Hero;
-                if (penaltyTarget != null && penaltyTarget.IsAlive && penaltyTarget != instigator)
-                {
-                    int relDelta = -(60 + _rng.Next(21)); // −60 to −80
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, penaltyTarget, relDelta, false); } catch { }
-                }
-
-                // Assassination or coup caught: 40% chance of war declaration
-                bool isWarTrigger = s.Type == SchemeType.Assassinate || s.Type == SchemeType.StageCoup;
-                if (isWarTrigger && _rng.NextDouble() < 0.40)
-                {
-                    var instigKingdom = instigator?.Clan?.Kingdom;
-                    if (instigKingdom != null && targetKingdom != null
+                    var targetKingdom = targetHero?.Clan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 80f, false); } catch { }
+                    if (targetHero != null && targetHero.IsAlive && targetHero != instigator)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -80, false); } catch { }
+                    var instigKingdom = instigator.Clan?.Kingdom;
+                    if (_rng.NextDouble() < 0.60
+                        && instigKingdom != null && targetKingdom != null
                         && instigKingdom != targetKingdom
                         && !instigKingdom.IsEliminated && !targetKingdom.IsEliminated
                         && !instigKingdom.IsAtWarWith(targetKingdom))
-                    {
                         try { DeclareWarAction.ApplyByDefault(instigKingdom, targetKingdom); } catch { }
-                    }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — Your assassin was taken alive. Under interrogation, they spoke your name. War may follow."));
+                    break;
                 }
-
-                string tName      = targetHero?.Name?.ToString()
-                                 ?? targetSett?.Name?.ToString() ?? "the target";
-                string consequence = isWarTrigger
-                    ? " War may follow."
-                    : " The damage to your standing is lasting.";
-
-                MBInformationManager.AddQuickInformation(
-                    new TextObject($"EXPOSED — Your agent was captured near {tName}.{consequence} Crime rating rises; relations collapse."));
+                case SchemeType.ForgeDocuments:
+                {
+                    Hero ownLeader = instigator.Clan?.Kingdom?.Leader;
+                    if (ownLeader != null && ownLeader.IsAlive && ownLeader != instigator)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, ownLeader, -60, false); } catch { }
+                    var targetKingdom = targetHero?.Clan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The forgery unraveled and traced back to you. Your own lord is asking questions."));
+                    break;
+                }
+                case SchemeType.FalseAccusations:
+                {
+                    if (instigator.Clan != null)
+                    {
+                        float loss = Math.Max(80f, instigator.Clan.Renown * 0.10f);
+                        try { instigator.Clan.Renown = Math.Max(0f, instigator.Clan.Renown - loss); } catch { }
+                    }
+                    if (targetHero != null && targetHero.IsAlive)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -60, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The slander was too clumsy. It circled back. Your own reputation is now in question."));
+                    break;
+                }
+                case SchemeType.StageCoup:
+                {
+                    var targetKingdom = targetSett?.OwnerClan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 50f, false); } catch { }
+                    var own = Settlement.All.FirstOrDefault(s =>
+                        (s.IsTown || s.IsCastle) && s.OwnerClan == instigator.Clan && s.Town != null);
+                    if (own?.Town != null)
+                    {
+                        try { own.Town.Loyalty  = Math.Max(0f, own.Town.Loyalty  - 25f); } catch { }
+                        try { own.Town.Security = Math.Max(0f, own.Town.Security - 20f); } catch { }
+                    }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The coup collapsed into riots. Your involvement reached the wrong ears — your own holdings suffer."));
+                    break;
+                }
+                case SchemeType.PoisonWell:
+                {
+                    var targetKingdom = targetSett?.OwnerClan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 70f, false); } catch { }
+                    var own = Settlement.All.FirstOrDefault(s =>
+                        s.IsTown && s.OwnerClan == instigator.Clan && s.Town != null);
+                    if (own?.Town != null)
+                        try { own.Town.FoodStocks = Math.Max(10f, own.Town.FoodStocks * 0.60f); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The agent confused the supply lines. Your own stores were poisoned."));
+                    break;
+                }
+                case SchemeType.BribeSoldiers:
+                {
+                    var targetKingdom = targetSett?.OwnerClan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 60f, false); } catch { }
+                    Hero owner = targetSett?.OwnerClan?.Leader;
+                    if (owner != null && owner.IsAlive && owner != instigator)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The soldiers took your coin and marched straight to their captain."));
+                    break;
+                }
+                case SchemeType.BurnStorage:
+                {
+                    var targetKingdom = targetSett?.OwnerClan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 60f, false); } catch { }
+                    if (targetSett?.Town != null)
+                    {
+                        try { targetSett.Town.FoodStocks = Math.Max(10f, targetSett.Town.FoodStocks * 0.25f); } catch { }
+                        try { targetSett.Town.Prosperity = Math.Max(10f, targetSett.Town.Prosperity * 0.70f); } catch { }
+                    }
+                    Hero owner = targetSett?.OwnerClan?.Leader;
+                    if (owner != null && owner.IsAlive && owner != instigator)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The fire leaped every wall. The destruction is total — and undeniably yours."));
+                    break;
+                }
+                case SchemeType.SpreadTerror:
+                {
+                    var targetKingdom = targetSett?.OwnerClan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 70f, false); } catch { }
+                    Hero owner = targetSett?.OwnerClan?.Leader;
+                    if (owner != null && owner.IsAlive && owner != instigator)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The violence was too organized. It left a trail straight to your doorstep."));
+                    break;
+                }
+                case SchemeType.SpreadRumors:
+                {
+                    var own = Settlement.All.FirstOrDefault(s =>
+                        s.IsTown && s.OwnerClan == instigator.Clan && s.Town != null);
+                    if (own?.Town != null)
+                    {
+                        try { own.Town.Loyalty    = Math.Max(0f,  own.Town.Loyalty    - 20f); } catch { }
+                        try { own.Town.Prosperity = Math.Max(10f, own.Town.Prosperity * 0.92f); } catch { }
+                    }
+                    var targetKingdom = targetSett?.OwnerClan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The rumors warped in transit. Now they're about you. Your own people are whispering."));
+                    break;
+                }
+                case SchemeType.VipersCounsel:
+                {
+                    Hero king = instigator.Clan?.Kingdom?.Leader;
+                    if (king != null && king.IsAlive && king != instigator)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, king, -80, false); } catch { }
+                    if (targetHero != null && targetHero.IsAlive)
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -60, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The king saw through the veil and recognized the hand behind it. You are no longer welcome at court."));
+                    break;
+                }
+                case SchemeType.HireAssassin:
+                {
+                    if (Hero.MainHero?.PartyBelongedTo?.MemberRoster != null)
+                    {
+                        foreach (var e in Hero.MainHero.PartyBelongedTo.MemberRoster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero) continue;
+                            int toWound = Math.Max(1, (e.Number - e.WoundedNumber) / 5);
+                            if (toWound <= 0) continue;
+                            try { Hero.MainHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                        }
+                    }
+                    var targetKingdom = targetHero?.Clan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 50f, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The blade turned around. Your own escort was ambushed."));
+                    break;
+                }
+                case SchemeType.ScatterWolves:
+                {
+                    var ownKingdom = instigator.Clan?.Kingdom;
+                    if (ownKingdom != null && !ownKingdom.IsEliminated)
+                        try { SpawnBanditsInKingdom(ownKingdom, 3); } catch { }
+                    var targetKingdom = targetHero?.Clan?.Kingdom;
+                    if (targetKingdom != null && !targetKingdom.IsEliminated)
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "BUST — The bandits took your coin and went wherever they pleased — including your own roads."));
+                    break;
+                }
             }
-            catch { }
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────

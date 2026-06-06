@@ -452,69 +452,60 @@ namespace AshAndEmber
             {
                 if (_selectedDef == null) return;
 
-                // Minigame pass chance: 30% base + (skill / 600) × 55%, clamped [30%, 85%]
-                // (Not the old NPC formula — this is what the skill check rolls against each turn.)
-                int   playerSkill = Hero.MainHero?.GetSkillValue(_selectedDef.Skill) ?? 0;
-                float chance      = Math.Max(0.30f, Math.Min(0.85f, 0.30f + (playerSkill / 600f) * 0.55f));
-                int   goldCost    = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
-                int   infCost    = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
-                bool  onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
+                int    goldCost  = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
+                int    infCost   = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
+                bool   onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
                 string tName     = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
                 string cdNote    = onCooldown ? "\n[!] Repeat-use penalty — cost is 5× base." : "";
                 bool   isAss     = _selectedDef.Type == SchemeType.Assassinate;
-                bool   isVipers  = _selectedDef.Type == SchemeType.VipersCounsel;
                 string traitNote = isAss
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
-                // Minigame config for display
-                int roguery       = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
-                int charm         = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0;
+                int roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
                 string abilityHints = "";
-                if (roguery >= 150) abilityHints += "  · SLIP PAST (Roguery 150+)\n";
-                if (roguery >= 300) abilityHints += "  · SCOUT AHEAD (Roguery 300+)\n";
-                if (charm   >= 150) abilityHints += "  · SMOOTH IT OVER (Charm 150+)\n";
-                if (charm   >= 300) abilityHints += "  · SILVER TONGUE (Charm 300+)\n";
+                if (roguery >= 100) abilityHints += "  · STREET SMARTS — SKIP one complication (Roguery 100+)\n";
+                if (roguery >= 200) abilityHints += "  · COLD READ — PEEK at next card value (Roguery 200+)\n";
                 string abilityBlock = string.IsNullOrEmpty(abilityHints)
                     ? ""
-                    : "Your abilities for this operation:\n" + abilityHints;
+                    : "Your abilities for this run:\n" + abilityHints + "\n";
 
-                string bustNote = isVipers
-                    ? "On bust/fail: always exposed — relations hit with target and king, no crime rating."
-                    : "On bust (score >21): agent caught — crime rating, relations hit, possible war.";
-                string body = $"Scheme: {_selectedDef.Name}\n"
-                            + $"Target: {tName}\n"
-                            + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n\n"
-                            + $"This scheme is resolved interactively.\n"
-                            + $"Each turn your agent files a field report. You choose how to respond.\n"
-                            + $"Skill check pass chance: {(int)(chance * 100)}%  (Roguery {roguery} / Charm {charm})\n\n"
-                            + abilityBlock
-                            + traitNote + "\n\n"
-                            + bustNote;
+                var    cfg      = SchemeMinigame.GetPublicConfig(_selectedDef.Type);
+                string failNote = isAss
+                    ? "On bust: assassin captured — crime +80, relations −80, 60% war."
+                    : "On bust (score >21): scheme backfires — crime rating, relations, or your own holdings suffer.";
+                string body     = $"Scheme: {_selectedDef.Name}\n"
+                                + $"Target: {tName}\n"
+                                + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
+                                + $"Resolution: The Gambit  |  Need ≥{cfg.RiskSum}, bust at 21\n"
+                                + traitNote + "\n\n"
+                                + abilityBlock
+                                + "Draw complication cards and build a running total. Stand when ready, "
+                                + "or keep drawing and risk busting with serious consequences.\n\n"
+                                + failNote;
 
                 InformationManager.ShowInquiry(
-                    new InquiryData("Confirm Scheme", body, true, true, "Commit", "Cancel",
+                    new InquiryData("Confirm Scheme", body, true, true, "Proceed to Gambit", "Cancel",
                         () => CommitScheme(targetHero, targetSett), null),
                     true);
             }
             catch { }
         }
 
-        // Commits a player scheme:
-        //   1. Validates resources (same checks QueueScheme used to do for the player).
-        //   2. Deducts gold and influence immediately.
-        //   3. Stamps per-target and global cooldowns BEFORE the minigame starts
-        //      so a save-and-load mid-operation cannot bypass the cost.
-        //   4. Applies trait shifts.
-        //   5. Switches away from the game menu.
-        //   6. Defers SchemeMinigame.BeginOperation() to the next tick so the
-        //      menu is fully closed before the first inquiry opens.
         private static void CommitScheme(Hero targetHero, Settlement targetSett)
         {
             try
             {
                 if (_selectedDef == null || Hero.MainHero == null) return;
 
-                // ── Validate and deduct costs ─────────────────────────────────
+                if (SchemeSystem.IsHardBlocked(_selectedDef.Type, targetHero, targetSett))
+                {
+                    MBInformationManager.AddQuickInformation(
+                        new TextObject("That target is currently blocked — the path is not yet clear."));
+                    _selectedDef = null;
+                    try { GameMenu.SwitchToMenu("town"); } catch { }
+                    return;
+                }
+
                 int goldCost = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
                 int infCost  = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
 
@@ -526,36 +517,29 @@ namespace AshAndEmber
                         MBInformationManager.AddQuickInformation(
                             new TextObject("Insufficient funds — the scheme cannot be arranged."));
                         _selectedDef = null;
+                        try { GameMenu.SwitchToMenu("town"); } catch { }
                         return;
                     }
                     try { Hero.MainHero.Gold -= goldCost; } catch { }
                     try { if (Hero.MainHero.Clan != null) Hero.MainHero.Clan.Influence -= infCost; } catch { }
                 }
 
-                // ── Stamp cooldowns NOW, before the minigame ──────────────────
-                // If the player saves mid-minigame and reloads, costs are gone.
-                // The cooldowns ensure they cannot immediately retry for free.
-                try { SchemeSystem.SetPerTargetCooldown(_selectedDef.Type, targetHero, targetSett); } catch { }
-                try { SchemeSystem.SetPlayerCooldown(3); } catch { } // overwritten on real resolution
-
-                // ── Personality shifts ────────────────────────────────────────
-                try { ShiftPlayerTrait(DefaultTraits.Honor,      -1); } catch { }
-                try { ShiftPlayerTrait(DefaultTraits.Calculating, -1); } catch { }
+                try { ShiftPlayerTrait(DefaultTraits.Honor,       -1); } catch { }
+                try { ShiftPlayerTrait(DefaultTraits.Calculating,  -1); } catch { }
                 if (_selectedDef.Type == SchemeType.Assassinate)
                     try { ShiftPlayerTrait(DefaultTraits.Mercy, -1); } catch { }
 
-                // ── Close the menu, then launch the minigame ──────────────────
-                // Capture scheme state before clearing the static fields.
-                SchemeDefinition capturedDef  = _selectedDef;
+                var capturedDef  = _selectedDef;
+                var capturedHero = targetHero;
+                var capturedSett = targetSett;
                 _selectedDef = null;
 
                 try { GameMenu.SwitchToMenu("town"); } catch { }
 
-                // Defer so the menu transition is fully complete before the
-                // first MultiSelectionInquiry opens (matches OpenSchemMenuDeferred pattern).
+                // Defer so menu transition completes before the first inquiry opens.
                 MageKnowledge._deferredInquiry = () =>
                 {
-                    try { SchemeMinigame.BeginOperation(capturedDef, targetHero, targetSett); } catch { }
+                    try { SchemeMinigame.Begin(capturedDef, capturedHero, capturedSett); } catch { }
                 };
             }
             catch { }
