@@ -113,11 +113,22 @@ namespace AshAndEmber
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsTown) return false;
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+
+                            // Disable while a queued NPC-era scheme is still in flight
                             bool pending = false;
                             try { pending = SchemeSystem.PlayerHasPendingScheme(); } catch { }
-                            args.IsEnabled = !pending;
+
+                            // Disable while the post-operation global cooldown is active
+                            bool onCooldown = false;
+                            int  cdDays     = 0;
+                            try { onCooldown = SchemeSystem.PlayerOnGlobalCooldown;
+                                  cdDays     = SchemeSystem.PlayerGlobalCooldownDays; } catch { }
+
+                            args.IsEnabled = !pending && !onCooldown;
                             if (pending)
                                 try { args.Tooltip = new TextObject("A scheme is already in motion."); } catch { }
+                            else if (onCooldown)
+                                try { args.Tooltip = new TextObject($"Network cooling down — {cdDays} day{(cdDays != 1 ? "s" : "")} before the next operation."); } catch { }
                             return true;
                         }
                         catch { return false; }
@@ -441,8 +452,11 @@ namespace AshAndEmber
             {
                 if (_selectedDef == null) return;
 
-                float chance     = SchemeSystem.ComputeSuccessChance(Hero.MainHero, _selectedDef.Type, targetHero, targetSett);
-                int   goldCost   = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
+                // Minigame pass chance: 30% base + (skill / 600) × 55%, clamped [30%, 85%]
+                // (Not the old NPC formula — this is what the skill check rolls against each turn.)
+                int   playerSkill = Hero.MainHero?.GetSkillValue(_selectedDef.Skill) ?? 0;
+                float chance      = Math.Max(0.30f, Math.Min(0.85f, 0.30f + (playerSkill / 600f) * 0.55f));
+                int   goldCost    = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
                 int   infCost    = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
                 bool  onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
                 string tName     = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
@@ -452,15 +466,30 @@ namespace AshAndEmber
                 string traitNote = isAss
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
                     : "\nPersonality: Honor −1  Calculating −1  — on commit";
-                string failNote  = isVipers
-                    ? "On failure: always exposed — lose relations with target (−50–70) and king (−30–50). No crime rating."
-                    : "On failure (30% exposed): crime rating, relations hit, possible war.";
+                // Minigame config for display
+                int roguery       = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
+                int charm         = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0;
+                string abilityHints = "";
+                if (roguery >= 150) abilityHints += "  · SLIP PAST (Roguery 150+)\n";
+                if (roguery >= 300) abilityHints += "  · SCOUT AHEAD (Roguery 300+)\n";
+                if (charm   >= 150) abilityHints += "  · SMOOTH IT OVER (Charm 150+)\n";
+                if (charm   >= 300) abilityHints += "  · SILVER TONGUE (Charm 300+)\n";
+                string abilityBlock = string.IsNullOrEmpty(abilityHints)
+                    ? ""
+                    : "Your abilities for this operation:\n" + abilityHints;
+
+                string bustNote = isVipers
+                    ? "On bust/fail: always exposed — relations hit with target and king, no crime rating."
+                    : "On bust (score >21): agent caught — crime rating, relations hit, possible war.";
                 string body = $"Scheme: {_selectedDef.Name}\n"
                             + $"Target: {tName}\n"
-                            + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
-                            + $"Success: {(int)(chance * 100)}%  |  Delay: 1–3 days\n"
+                            + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n\n"
+                            + $"This scheme is resolved interactively.\n"
+                            + $"Each turn your agent files a field report. You choose how to respond.\n"
+                            + $"Skill check pass chance: {(int)(chance * 100)}%  (Roguery {roguery} / Charm {charm})\n\n"
+                            + abilityBlock
                             + traitNote + "\n\n"
-                            + failNote;
+                            + bustNote;
 
                 InformationManager.ShowInquiry(
                     new InquiryData("Confirm Scheme", body, true, true, "Commit", "Cancel",
@@ -470,31 +499,64 @@ namespace AshAndEmber
             catch { }
         }
 
+        // Commits a player scheme:
+        //   1. Validates resources (same checks QueueScheme used to do for the player).
+        //   2. Deducts gold and influence immediately.
+        //   3. Stamps per-target and global cooldowns BEFORE the minigame starts
+        //      so a save-and-load mid-operation cannot bypass the cost.
+        //   4. Applies trait shifts.
+        //   5. Switches away from the game menu.
+        //   6. Defers SchemeMinigame.BeginOperation() to the next tick so the
+        //      menu is fully closed before the first inquiry opens.
         private static void CommitScheme(Hero targetHero, Settlement targetSett)
         {
             try
             {
-                if (_selectedDef == null) return;
+                if (_selectedDef == null || Hero.MainHero == null) return;
 
-                bool ok = SchemeSystem.QueueScheme(Hero.MainHero, _selectedDef.Type, targetHero, targetSett, isPlayer: true);
+                // ── Validate and deduct costs ─────────────────────────────────
+                int goldCost = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
+                int infCost  = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
 
-                if (ok)
+                if (!SchemeSystem.DebugFree)
                 {
-                    try { ShiftPlayerTrait(DefaultTraits.Honor,      -1); } catch { }
-                    try { ShiftPlayerTrait(DefaultTraits.Calculating, -1); } catch { }
-                    if (_selectedDef.Type == SchemeType.Assassinate)
-                        try { ShiftPlayerTrait(DefaultTraits.Mercy, -1); } catch { }
-
-                    MBInformationManager.AddQuickInformation(new TextObject("Scheme arranged. Results in 1–3 days."));
+                    if (Hero.MainHero.Gold < goldCost
+                        || (Hero.MainHero.Clan?.Influence ?? 0f) < infCost)
+                    {
+                        MBInformationManager.AddQuickInformation(
+                            new TextObject("Insufficient funds — the scheme cannot be arranged."));
+                        _selectedDef = null;
+                        return;
+                    }
+                    try { Hero.MainHero.Gold -= goldCost; } catch { }
+                    try { if (Hero.MainHero.Clan != null) Hero.MainHero.Clan.Influence -= infCost; } catch { }
                 }
-                else
-                {
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        "You cannot arrange this scheme right now — blocked, in flight, or insufficient funds."));
-                }
 
+                // ── Stamp cooldowns NOW, before the minigame ──────────────────
+                // If the player saves mid-minigame and reloads, costs are gone.
+                // The cooldowns ensure they cannot immediately retry for free.
+                try { SchemeSystem.SetPerTargetCooldown(_selectedDef.Type, targetHero, targetSett); } catch { }
+                try { SchemeSystem.SetPlayerCooldown(3); } catch { } // overwritten on real resolution
+
+                // ── Personality shifts ────────────────────────────────────────
+                try { ShiftPlayerTrait(DefaultTraits.Honor,      -1); } catch { }
+                try { ShiftPlayerTrait(DefaultTraits.Calculating, -1); } catch { }
+                if (_selectedDef.Type == SchemeType.Assassinate)
+                    try { ShiftPlayerTrait(DefaultTraits.Mercy, -1); } catch { }
+
+                // ── Close the menu, then launch the minigame ──────────────────
+                // Capture scheme state before clearing the static fields.
+                SchemeDefinition capturedDef  = _selectedDef;
                 _selectedDef = null;
+
                 try { GameMenu.SwitchToMenu("town"); } catch { }
+
+                // Defer so the menu transition is fully complete before the
+                // first MultiSelectionInquiry opens (matches OpenSchemMenuDeferred pattern).
+                MageKnowledge._deferredInquiry = () =>
+                {
+                    try { SchemeMinigame.BeginOperation(capturedDef, targetHero, targetSett); } catch { }
+                };
             }
             catch { }
         }
