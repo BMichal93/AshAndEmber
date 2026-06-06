@@ -219,6 +219,13 @@ namespace AshAndEmber
         private static int _retaliationDays = 0;
         internal static bool PlayerRetaliationActive => _retaliationDays > 0;
 
+        // ── Global player cooldown ────────────────────────────────────────────
+        // Set by the minigame on resolution (3 days) or abort (2 days).
+        // Prevents spamming the scheme menu immediately after any operation.
+        private static int _playerGlobalCooldown = 0;
+        internal static bool PlayerOnGlobalCooldown    => _playerGlobalCooldown > 0;
+        internal static int  PlayerGlobalCooldownDays  => _playerGlobalCooldown;
+
         // ── Public API ────────────────────────────────────────────────────────
         internal static void Initialize()
         {
@@ -227,7 +234,8 @@ namespace AshAndEmber
             _npcCooldowns.Clear();
             _targetCooldowns.Clear();
             _playerCooldownKeys.Clear();
-            _retaliationDays = 0;
+            _retaliationDays      = 0;
+            _playerGlobalCooldown = 0;
         }
 
         /// Returns true if the player already has a scheme pending execution.
@@ -372,7 +380,8 @@ namespace AshAndEmber
                 }
             }
 
-            if (_retaliationDays > 0) _retaliationDays--;
+            if (_retaliationDays      > 0) _retaliationDays--;
+            if (_playerGlobalCooldown > 0) _playerGlobalCooldown--;
 
             for (int i = _pending.Count - 1; i >= 0; i--)
             {
@@ -1007,7 +1016,7 @@ namespace AshAndEmber
         // nearest hideout — critical to avoid the null-hideout crash. Mirrors the
         // SpawnLooterParty pattern in CampaignMapEvents.cs exactly.
         // Returns the number of parties actually created.
-        private static int SpawnBanditsInKingdom(Kingdom kingdom, int partyCount)
+        internal static int SpawnBanditsInKingdom(Kingdom kingdom, int partyCount)
         {
             if (kingdom == null || kingdom.IsEliminated) return 0;
 
@@ -1069,6 +1078,140 @@ namespace AshAndEmber
                 catch { }
             }
             return spawned;
+        }
+
+        // ── Minigame API ──────────────────────────────────────────────────────
+        // Called by SchemeMinigame after a player operation resolves.
+
+        /// Sets the global player cooldown (days before they can start another operation).
+        /// Called by SchemeMinigame.FinishOperation before showing the final screen.
+        internal static void SetPlayerCooldown(int days)
+        {
+            _playerGlobalCooldown = Math.Max(0, days);
+        }
+
+        /// Stamps the per-target cooldown immediately when the player commits.
+        /// Must be called BEFORE BeginOperation so the cooldown persists even if
+        /// the player saves and loads mid-minigame (costs spent, game should block retry).
+        internal static void SetPerTargetCooldown(SchemeType type, Hero targetHero, Settlement targetSett)
+        {
+            string targetId = targetHero?.StringId ?? targetSett?.StringId ?? "";
+            if (string.IsNullOrEmpty(targetId)) return;
+            string cdKey = CooldownKey(type, targetId);
+            _targetCooldowns[cdKey] = type == SchemeType.Assassinate ? 14 : 7;
+            _playerCooldownKeys.Add(cdKey);
+        }
+
+        /// Applies the minigame outcome for a player operation.
+        /// Routes to ApplySuccess, a silent-retreat notification, or ApplyBreakConsequences.
+        internal static void ApplyPlayerSchemeOutcome(SchemeOutcome outcome,
+            SchemeType type, Hero targetHero, Settlement targetSett)
+        {
+            if (Hero.MainHero == null) return;
+
+            // Build a synthetic PendingScheme so the existing ApplySuccess /
+            // ApplyBreakConsequences helpers can work without modification.
+            var s = new PendingScheme
+            {
+                InstigatorId       = Hero.MainHero.StringId,
+                Type               = type,
+                TargetHeroId       = targetHero?.StringId       ?? "",
+                TargetSettlementId = targetSett?.StringId       ?? "",
+                DaysRemaining      = 0,
+                IsPlayer           = true,
+            };
+
+            switch (outcome)
+            {
+                case SchemeOutcome.Success:
+                    ApplySuccess(s, Hero.MainHero, targetHero, targetSett);
+                    break;
+
+                case SchemeOutcome.Bust:
+                    // VipersCounsel has its own surface-always failure path.
+                    if (type == SchemeType.VipersCounsel)
+                        ApplyFailure(s, Hero.MainHero, targetHero, targetSett);
+                    else
+                        ApplyBreakConsequences(s, Hero.MainHero, targetHero, targetSett);
+                    break;
+
+                default: // SmallLoss — agent retreated cleanly
+                    string tSmall = targetHero?.Name?.ToString()
+                                 ?? targetSett?.Name?.ToString()
+                                 ?? "the target";
+                    MBInformationManager.AddQuickInformation(
+                        new TextObject($"Your agent withdrew from {tSmall} without incident."));
+                    break;
+            }
+
+            // Award full skill XP on success; partial (1/3) on bust (knowledge gained through failure).
+            try
+            {
+                var def = GetDefinition(type);
+                if (def?.Skill != null && def.SkillXp > 0)
+                {
+                    int xp = outcome == SchemeOutcome.Success ? def.SkillXp
+                           : outcome == SchemeOutcome.Bust    ? def.SkillXp / 3
+                           : 0;
+                    if (xp > 0)
+                        Hero.MainHero?.HeroDeveloper?.AddSkillXp(def.Skill, xp);
+                }
+            }
+            catch { }
+        }
+
+        /// Applies the "agent caught" consequences for a busted minigame operation.
+        /// Separated from ApplyFailure so the minigame can call it directly without
+        /// going through the 70/30 random fled/caught split (bust = always caught).
+        private static void ApplyBreakConsequences(PendingScheme s, Hero instigator,
+            Hero targetHero, Settlement targetSett)
+        {
+            try
+            {
+                // Crime rating in the target's kingdom
+                var targetKingdom = targetHero?.Clan?.Kingdom
+                                 ?? targetSett?.OwnerClan?.Kingdom
+                                 ?? (targetSett?.MapFaction as Kingdom);
+                if (targetKingdom != null && !targetKingdom.IsEliminated)
+                {
+                    float crimeDelta = 30f + _rng.Next(31); // 30–60
+                    try { ChangeCrimeRatingAction.Apply(targetKingdom, crimeDelta, false); } catch { }
+                }
+
+                // Heavy relations penalty with target / settlement owner
+                Hero penaltyTarget = targetHero
+                    ?? targetSett?.OwnerClan?.Leader
+                    ?? targetSett?.MapFaction?.Leader as Hero;
+                if (penaltyTarget != null && penaltyTarget.IsAlive && penaltyTarget != instigator)
+                {
+                    int relDelta = -(60 + _rng.Next(21)); // −60 to −80
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, penaltyTarget, relDelta, false); } catch { }
+                }
+
+                // Assassination or coup caught: 40% chance of war declaration
+                bool isWarTrigger = s.Type == SchemeType.Assassinate || s.Type == SchemeType.StageCoup;
+                if (isWarTrigger && _rng.NextDouble() < 0.40)
+                {
+                    var instigKingdom = instigator?.Clan?.Kingdom;
+                    if (instigKingdom != null && targetKingdom != null
+                        && instigKingdom != targetKingdom
+                        && !instigKingdom.IsEliminated && !targetKingdom.IsEliminated
+                        && !instigKingdom.IsAtWarWith(targetKingdom))
+                    {
+                        try { DeclareWarAction.ApplyByDefault(instigKingdom, targetKingdom); } catch { }
+                    }
+                }
+
+                string tName      = targetHero?.Name?.ToString()
+                                 ?? targetSett?.Name?.ToString() ?? "the target";
+                string consequence = isWarTrigger
+                    ? " War may follow."
+                    : " The damage to your standing is lasting.";
+
+                MBInformationManager.AddQuickInformation(
+                    new TextObject($"EXPOSED — Your agent was captured near {tName}.{consequence} Crime rating rises; relations collapse."));
+            }
+            catch { }
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────
@@ -1134,7 +1277,8 @@ namespace AshAndEmber
                 foreach (var k in pckList) _playerCooldownKeys.Add(k);
             }
 
-            store.SyncData("SCH_RetDays", ref _retaliationDays);
+            store.SyncData("SCH_RetDays",    ref _retaliationDays);
+            store.SyncData("SCH_GlobCd",     ref _playerGlobalCooldown);
         }
     }
 }
