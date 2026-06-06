@@ -27,7 +27,7 @@ using TaleWorlds.Localization;
 
 namespace AshAndEmber
 {
-    internal enum SchemeOutcome
+    public enum SchemeOutcome
     {
         SmallLoss,  // exposure < threshold (extracted short)
         Success,    // threshold ≤ exposure ≤ 21

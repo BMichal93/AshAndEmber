@@ -105,6 +105,7 @@
     <Compile Include="AI\FireWorshippersSystem.cs"/>
     <Compile Include="Schemes\SchemeSystem.cs"/>
     <Compile Include="Schemes\SchemeCampaignBehavior.cs"/>
+    <Compile Include="Schemes\SchemeMinigame.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.cs"/>
     <Compile Include="Spells\SpellEffects.cs"/>
