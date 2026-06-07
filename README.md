@@ -714,33 +714,56 @@ The Ashen are exempt from all betrayal and political-fracture events — their w
 
 ### The Sanctuary
 
-Cities owned by **The Temple** and **two randomly chosen Empire towns** (selected at new-game start, saved with the campaign) have a **Sanctuary** accessible from the town menu.
+Cities owned by **The Temple** and **four randomly chosen Empire towns** (selected at new-game start, saved with the campaign) have a **Sanctuary** accessible from the town menu.
 
 **Access requirement:** Honor ≥ 1 (Honourable) AND Mercy ≥ 1 (Merciful). Non-qualifying characters cannot use the Sanctuary.
 
-**Temple member discount:** Temple faction members pay 40% less gold and age 40% less for all rites.
+**Temple member discount:** Temple faction members reduce all rite cooldowns by 40%.
 
-**Livestock payment:** The Sanctuary flame values living offerings above coin. Animals from the player's party inventory cover more rite cost than their market value — livestock is the cheaper option. The menu header shows your current livestock value.
+#### How rites work — the Meditation ritual
 
-| Animal | Gold covered toward rite |
-|--------|--------------------------|
-| Cow | 150 g |
-| Sheep | 40 g |
+Selecting a prayer begins a **Meditation ritual**. The game secretly rolls a hidden target threshold. Each round of meditation:
 
-When the player has both gold and sufficient livestock, a dialog asks which payment to use. When only one option is available, payment resolves automatically.
+1. **Costs the player** — troops are wounded or the hero ages (amount and type vary by rite).
+2. **Accumulates hidden progress** — a number of points is added to the pool. How many depends on alignment: the closer Honor + Mercy + Generosity is to maximum (+6), the more points each round yields. Zero alignment = zero progress. Misaligned characters (traits near 0) progress very slowly.
+3. **Prompts the player** — *"Continue the meditation"* or *"Step back — claim what the flame offers."*
 
-| Rite | Cost | Effect |
-|------|------|--------|
-| **Prayer of Strength** | 500g | Party morale +40 |
-| **Protective Rites** | 1 000g + 30 days older | Blocks all Ashen world events for 14 days |
-| **Turn the Ashen** | 1 500g + 45 days older | Wounds 12–20 soldiers in up to 3 Ashen parties within 200 map units; breaks their morale |
-| **Prayer of Healing** | 800g + 20 days older | Fully heals all wounded troops in the party |
-| **Prayer for a Blessing** | 5 000g | Rejuvenates the player by ~10 years (hard floor: age 20) |
+When the player stops: if accumulated progress **≥ hidden target**, the prayer fires. If not, the cost paid is lost and nothing is granted. The target number is never shown.
 
-When Protective Rites are active, any Ashen world event that would fire instead shows a notification that the ward held. The counter ticks down daily and a notification fires when it expires.
+**Atmospheric hints** appear after each round indicating loosely how close you are ("the flame flickers", "the warmth is building", "one more push").
 
-**NPC behavior:**
-- Honourable + Merciful lords currently in a sanctuary city: **0.3% chance per day** to receive a miracle (healing or morale). A notification appears: *"Miracle — [lord] prayed at the sanctuary in [city]."*
+| Rite | Per-round cost | Effect on success |
+|------|----------------|-------------------|
+| **Prayer of Strength** | 2–5 troops wounded | Party morale +40; blessed status (10% daily healing) for 3 days |
+| **Protective Rites** | 2–5 troops wounded + 1–2 days older | Blocks all Ashen world events for 14 days |
+| **Turn the Ashen** | 3–6 troops wounded | Wounds 12–20 soldiers in up to 3 Ashen parties within 200 map units; breaks morale |
+| **Prayer of Healing** | 2–4 days older | Choice: heal all wounded troops **or** activate Steady the Line (fallen count as wounded not dead for 5 days) |
+| **Prayer for a Blessing** | 4–8 days older | Choice: shed ~1 year (floor: age 20) **or** receive Flame Mark (+1/6 trait multiplier for 60 days) |
+
+**Hidden target ranges** (for reference; never shown in-game):
+
+| Rite | Target range | Avg rounds (full alignment) | Avg rounds (min alignment) |
+|------|-------------|---------------------------|--------------------------|
+| Prayer of Strength | 10–18 | 2–3 | 5–8 |
+| Prayer of Healing | 18–30 | 3–5 | 8–14 |
+| Protective Rites | 22–35 | 4–6 | 9–16 |
+| Turn the Ashen | 26–40 | 4–7 | 11–18 |
+| Prayer for a Blessing | 35–55 | 6–9 | 16–25 |
+
+Cooldowns (reduced by 40% for Temple members):
+
+| Rite | Base cooldown |
+|------|--------------|
+| Prayer of Strength | 3 days |
+| Prayer of Healing | 5 days |
+| Protective Rites | 7 days |
+| Turn the Ashen | 5 days |
+| Prayer for a Blessing | 30 days |
+
+When Protective Rites are active, any Ashen world event that would fire instead shows a notification that the ward held. The counter ticks down daily.
+
+**NPC behavior (simulated ritual):** NPC lords simulate 3–4 rounds of meditation when the chance fires. If their simulated accumulation meets the threshold, the effect applies.
+- Honourable + Merciful lords in a sanctuary city: **0.3% chance per day** to attempt a miracle (healing or morale).
 - Temple faction lords: **3% chance per day** to partially heal their wounded; **2% chance** to wound troops in the nearest Ashen party within 100 map units.
 
 ### The Temple
@@ -755,22 +778,47 @@ If none of the three canonical cities are eligible (already Ashen-owned, under s
 
 ### The Ashen Altars
 
-In **Tyal** and one additional Ashen city chosen randomly at campaign start (from Sibir, Baltakhand, or Amprela), a grey stone altar stands in the town. These altars are announced at game start.
+In **Tyal, Sibir, Baltakhand, and Amprela**, a grey stone altar stands permanently in the town. These altars are announced at game start.
 
 **Access requirement:** Mercy ≤ −1 (Merciless) AND Honor ≤ −1 (Devious). The Ashen do not kneel to the virtuous.
 
-**Sacrifice mechanic:** Every rite costs only lives — no gold. Prisoners are drained first (lowest-tier first), then healthy party members if more points are still needed. A tier-N troop is worth N sacrifice points; the altar takes the minimum number needed to cover the cost. Party morale drains proportional to points spent. The menu header shows total available sacrifice points.
+#### How rites work — the Sacrifice ritual
 
-| Rite | Sacrifice pts | Effect |
-|------|---------------|--------|
-| **Blood Tribute** | 5 | Each surviving non-hero troop type gains 75 XP |
-| **The Ashen Solstice** | 10 | Call down an Iron Winter (north) or Scorching Sun (south) — the season check is waived by the sacrifice |
-| **Carrion Gift** | 8 | Wounds 30–60 % of the garrison in a random non-Ashen town |
-| **Break Hearts and Wills** | 6 | A random non-Ashen town loses 15–25 loyalty and 15–25 security |
-| **Rite of Cold Fire** | 7 | Wounds 8–15 soldiers in the nearest non-Ashen lord party within 150 map units; −30 morale |
+Selecting a rite begins a **Sacrifice ritual**. The game secretly rolls a hidden target threshold. Each round of sacrifice:
 
-**NPC behavior:**
-- Ashen lords currently in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears: *"Dark Rite — [lord] made an offering at the Ashen Altar in [city]."*
+1. **Costs the player** — prisoners are killed first (lowest-tier first), then healthy party members if needed. A tier-N troop is worth N sacrifice points. Morale drains proportional to the blood spent. The menu header shows total available sacrifice points.
+2. **Accumulates hidden progress** — a number of points is added to the pool. How many depends on alignment: the more evil the character (low Mercy + Honor + Generosity), the more points each round yields. Zero or positive alignment = zero progress.
+3. **Prompts the player** — *"Offer more"* or *"Complete the rite — take what blood has bought."*
+
+When the player stops: if accumulated progress **≥ hidden target**, the rite fires. If not, the sacrifice was wasted. The target number is never shown. If you run out of available sacrifice before stopping voluntarily, the ritual resolves immediately.
+
+**Atmospheric hints** appear after each round ("something stirs in the stone", "the grey flame leans toward you", "one more offering and it moves").
+
+| Rite | Per-round cost | Effect on success |
+|------|----------------|-------------------|
+| **Blood Tribute** | 2 pts/round | Each surviving non-hero troop type gains 75 XP |
+| **The Ashen Solstice** | 4 pts/round | Choice: Iron Winter (north) or Scorching Sun (south) for 30 days |
+| **Carrion Gift** | 3 pts/round | Wounds 30–60% of a chosen garrison |
+| **Break Hearts and Wills** | 3 pts/round | Drains 15–25 loyalty and security from a chosen city |
+| **Rite of Cold Fire** | 3 pts/round | Wounds 8–15 soldiers in nearest enemy party; −30 morale; freezes for 2 days |
+| **Rite of Subjugation** | 20 morale/round | Sacrifice one prisoner, convert the rest to your party |
+
+*Rite of Subjugation* uses morale as the round cost (not prisoners) so the prison roster is preserved for the conversion effect. After a successful ritual, choose whether to sacrifice the lowest-tier or highest-tier prisoner.
+
+**Hidden target ranges** (for reference; never shown in-game):
+
+| Rite | Target range | Avg rounds (full evil) | Avg rounds (partial evil) |
+|------|-------------|----------------------|--------------------------|
+| Blood Tribute | 10–18 | 2–3 | 5–8 |
+| Rite of Subjugation | 15–25 | 2–4 | 6–11 |
+| Cold Fire / Break Wills | 18–28 / 18–30 | 3–5 | 8–14 |
+| Carrion Gift | 22–35 | 4–6 | 10–17 |
+| Ashen Solstice | 35–55 | 6–9 | 17–26 |
+
+Cooldowns scale with alignment: the more evil the character, the shorter the cooldown.
+
+**NPC behavior (simulated ritual):** NPC lords simulate 3 rounds of sacrifice. If their simulated accumulation meets the threshold, the effect applies.
+- Ashen lords in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears.
 
 ### Player-interactive world events
 
@@ -851,6 +899,37 @@ Pass the path manually: `.\install.ps1 -BannerlordPath "D:\Games\Mount & Blade I
 ---
 
 ## Changelog
+
+### v0.15.0
+
+**Overhaul — Sanctuary and Ashen Altar now use iterative ritual mechanics**
+
+Both systems have been redesigned from flat pay-and-receive interactions into multi-round rituals with hidden target thresholds.
+
+**Sanctuary — Meditation ritual:**
+- Selecting a prayer starts a ritual. The game rolls a secret target threshold (never shown).
+- Each round of Meditation inflicts a cost on the party: troops are wounded (2–6 depending on rite) or the hero ages (1–8 days). Prayer of Healing and Blessing cost aging; the others cost troops.
+- A hidden number of points is added to the accumulated pool each round. Points scale with alignment — (Mercy + Honor + Generosity) / 6 — so high-alignment characters accumulate faster and need fewer rounds.
+- After each round the player chooses *Continue* or *Stop*. If accumulated points ≥ target when they stop, the prayer fires. If not, the cost paid is lost.
+- Atmospheric hints give a vague sense of progress without revealing the number.
+- Cooldowns are unchanged in base length but reduced 40% for Temple members.
+- Gold and livestock payments removed; the ritual cost replaces them.
+
+**Ashen Altar — Sacrifice ritual:**
+- Same structure. The per-round cost is sacrifice points (prisoners first, then healthy party members). Morale drains proportional to blood spent.
+- *Rite of Subjugation* uses 20 morale per round instead of sacrifice points, so the prison roster is preserved for the conversion effect at success.
+- If the player runs out of available sacrifice mid-ritual, the ritual resolves immediately at the current accumulated total.
+
+**NPC lords — simulated rituals:**
+- Both sanctuary lords and altar lords now simulate ritual rounds rather than applying effects directly. They roll 3–4 rounds of the ritual; if their simulated accumulation meets the threshold, the effect applies. Lords with misaligned traits for their system fail their rituals at realistic rates.
+
+**Balance notes:**
+- Full alignment (max traits): 2–3 rounds for easy rites, 6–9 rounds for the hardest.
+- Minimum qualifying alignment: 5–8 rounds for easy rites, 16–25 rounds for the hardest.
+- Characters at zero alignment cannot succeed.
+- The hidden target is rolled fresh each attempt, creating variance even for repeated use of the same rite.
+
+---
 
 ### v0.14.1
 
