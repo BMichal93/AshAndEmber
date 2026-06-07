@@ -117,6 +117,10 @@ namespace AshAndEmber
         private static int    _memoryHungerCountdown = 0;          // days until dissolution fires
         private static int    _poorKnightCooldown     = 0;         // long cooldown so knight event fires rarely
         private static int    _vengefulKnightCountdown = 0;        // days until the mocked knight strikes back
+        private static bool   _lastBattleHadAshenEnemy = false;   // true when enemy side had Ashen parties (not persisted)
+        private static int    _ashenMachineryCooldown  = 0;       // days between crystal-machine finds
+        private static int    _ashenMachineryCountdown = 0;       // days until black-market weapon fires (option D)
+        private static string _ashenMachineryKingdomId = null;    // kingdom targeted by deferred option D
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -157,6 +161,9 @@ namespace AshAndEmber
             _memoryHungerCountdown        = 0;
             _poorKnightCooldown           = 0;
             _vengefulKnightCountdown      = 0;
+            _ashenMachineryCooldown       = 0;
+            _ashenMachineryCountdown      = 0;
+            _ashenMachineryKingdomId      = null;
         }
 
         public static void Save(IDataStore store)
@@ -186,6 +193,9 @@ namespace AshAndEmber
             store.SyncData("SE_MemHungerCD",        ref _memoryHungerCountdown);
             store.SyncData("SE_PoorKnightCD",       ref _poorKnightCooldown);
             store.SyncData("SE_VengefulKnightCD",   ref _vengefulKnightCountdown);
+            store.SyncData("SE_AshenMachineCD",     ref _ashenMachineryCooldown);
+            store.SyncData("SE_AshenMachineTimer",  ref _ashenMachineryCountdown);
+            store.SyncData("SE_AshenMachineKing",   ref _ashenMachineryKingdomId);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -298,6 +308,15 @@ namespace AshAndEmber
                 if (_vengefulKnightCountdown == 0)
                     FireVengefulKnightConsequence();
             }
+
+            if (_ashenMachineryCooldown > 0) _ashenMachineryCooldown--;
+
+            if (_ashenMachineryCountdown > 0)
+            {
+                _ashenMachineryCountdown--;
+                if (_ashenMachineryCountdown == 0)
+                    FireAshenMachineryConsequence();
+            }
         }
 
         /// Called from MagicCampaignBehavior.OnMapEventEnded.
@@ -315,6 +334,17 @@ namespace AshAndEmber
                 _lastBattleWon = (playerAttacker && mapEvent.WinningSide == BattleSideEnum.Attacker)
                               || (playerDefender && mapEvent.WinningSide == BattleSideEnum.Defender);
                 _lastBattleAsAttacker = playerAttacker;
+
+                try
+                {
+                    MapEventSide enemySide = playerAttacker ? mapEvent.DefenderSide : mapEvent.AttackerSide;
+                    _lastBattleHadAshenEnemy = enemySide?.Parties?.Any(p => {
+                        string fId = p.Party?.MapFaction?.StringId ?? "";
+                        return fId == "ashen_kingdom" ||
+                               (p.Party?.LeaderHero != null && ColourLordRegistry.IsAshenLord(p.Party.LeaderHero));
+                    }) == true;
+                }
+                catch { _lastBattleHadAshenEnemy = false; }
 
                 switch (mapEvent.EventType)
                 {
@@ -485,6 +515,11 @@ namespace AshAndEmber
             // Hero-inspired: after a LOST battle, clan tier ≥ 3 — fleeing refugees
             if (!_lastBattleWon && clanTier >= 3)
                 pool.Add(EB_HeroInspired);
+
+            // Crystal machine: mage, won, enemy side had Ashen, no recent find and no deferred D pending
+            if (mage && _lastBattleWon && _lastBattleHadAshenEnemy
+                && _ashenMachineryCooldown == 0 && _ashenMachineryCountdown == 0)
+                pool.Add(EB_AshenMachinery);
 
             FireBattle(pool);
         }
@@ -4734,6 +4769,193 @@ namespace AshAndEmber
                         }
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── AFTER BATTLE: The Cold Machine [Ashen enemy defeated, mage player] ────────────────
+        private static void EB_AshenMachinery()
+        {
+            _ashenMachineryCooldown = 90;
+            bool mage = MageKnowledge.IsMage;
+
+            string intro = mage
+                ? "Among the fallen Ashen your men have found something they brought to you because they did not know what else to do with it. " +
+                  "It is a framework of iron and dark glass packed with crystals arranged in a pattern that makes your teeth ache to look at. " +
+                  "The mages were moving toward it when your soldiers cut them down. You recognise what it is — not the design, but the purpose. " +
+                  "A weapon shaped by someone who understood cold fire from the outside in. It did not fire. Yet."
+                : "Among the fallen Ashen your men have found something and brought it to you because they did not know what else to do with it. " +
+                  "A framework of iron and dark glass packed with crystals, arranged in no pattern you recognise. " +
+                  "The mages were moving toward it when your soldiers cut them down. " +
+                  "You do not know what it does. You know that the Ashen were willing to die for it.";
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "⚗  The Cold Machine",
+                intro,
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Destroy it. Some things should not leave this field.", null, true,
+                        "Nothing happens. It is gone."),
+                    new InquiryElement("b", "Break it apart. The crystals and glass will sell.", null, true,
+                        "+5000 coin. No further consequence."),
+                    new InquiryElement("c", "Point it at an enemy. Choose a target.", null, true,
+                        "A city burns. You age three years. 50% chance of war with that faction."),
+                    new InquiryElement("d", "Sell it to the black market — intact, no questions asked.", null, true,
+                        "+3000 coin now. A city burns in fourteen days. You will not be named."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            Msg("Your soldiers break it with hammers and scatter the pieces across the field. " +
+                                "The crystals go dark one by one as they leave the frame, each one releasing a brief cold pulse you feel in your back teeth. " +
+                                "Then nothing. The field smells like iron and old snow. " +
+                                "You leave it where it lies.", DimColor);
+                            break;
+                        case "b":
+                            ChangeGold(5000);
+                            Msg("The crystals come free cleanly. The glasswork is unusual — someone in the cities will pay for it without asking why. " +
+                                "By the time the baggage train reaches the next waypoint the pieces are already wrapped and labelled by your quartermaster. " +
+                                "Five thousand coin by nightfall. The machine is gone.", GoldColor);
+                            break;
+                        case "c":
+                            ShowKingdomSelectorForMachinery();
+                            break;
+                        case "d":
+                            _ashenMachineryCountdown = 14;
+                            ChangeGold(3000);
+                            Msg("A contact is found through the usual chain of intermediaries. " +
+                                "Three thousand coin changes hands before you have fully explained what you are selling. " +
+                                "They do not ask questions. Neither do you. The machine leaves on a cart you do not follow. " +
+                                "Somewhere, in fourteen days, it will be pointed at something. You will not be named.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        private static void ShowKingdomSelectorForMachinery()
+        {
+            var playerFaction = Hero.MainHero?.MapFaction;
+            var validKingdoms = Kingdom.All
+                .Where(k => !k.IsEliminated
+                         && k.StringId != "ashen_kingdom"
+                         && (IFaction)k != playerFaction)
+                .ToList();
+
+            if (validKingdoms.Count == 0)
+            {
+                Msg("There are no suitable targets remaining. You dismantle the machine.", DimColor);
+                return;
+            }
+
+            var elements = validKingdoms
+                .Select(k => new InquiryElement(k.StringId, k.Name?.ToString() ?? k.StringId, null, true,
+                    "A random city of this faction will be struck by the machine."))
+                .ToList();
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "◆  Choose Your Target",
+                "The machine is cold and ready. Point it. When you activate it you will age three years — " +
+                "the cost of channelling this much cold fire at once. Choose carefully.",
+                elements,
+                false, 1, 1, "Release it", "Pull back",
+                selected =>
+                {
+                    if (selected == null || selected.Count == 0) return;
+                    string kId = selected[0].Identifier as string;
+                    var targetK = Kingdom.All.FirstOrDefault(k => k.StringId == kId);
+                    if (targetK == null) return;
+
+                    AgingSystem.AgeHero(Hero.MainHero, 3 * 365);
+
+                    string cityName = DevastateCityInKingdom(targetK);
+
+                    bool declaredWar = false;
+                    if (_rng.NextDouble() < 0.5)
+                    {
+                        var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
+                        if (playerKingdom != null && !targetK.IsAtWarWith(playerKingdom))
+                        {
+                            try { DeclareWarAction.ApplyByDefault(targetK, playerKingdom); } catch { }
+                            declaredWar = true;
+                        }
+                    }
+
+                    string cityLine = string.IsNullOrEmpty(cityName)
+                        ? "A city in their territory"
+                        : cityName;
+
+                    if (declaredWar)
+                        Msg($"The crystals release all at once. You feel three years leave you in a single breath — not pain, just subtraction. " +
+                            $"{cityLine} takes the discharge. Prosperity, food, order — all of it collapses. " +
+                            $"When the word reaches their council they know it was not natural. " +
+                            $"Someone has already given them your name.", BadColor);
+                    else
+                        Msg($"The crystals release all at once. You feel three years leave you in a single breath — not pain, just subtraction. " +
+                            $"{cityLine} takes the discharge. Prosperity, food, order — all of it collapses. " +
+                            $"The evidence trails away into rumour. No one is certain who held the machine. " +
+                            $"Not yet.", AshenColor);
+                },
+                null, "", false), false, true);
+        }
+
+        private static string DevastateCityInKingdom(Kingdom kingdom)
+        {
+            var towns = Settlement.All
+                .Where(s => s.IsTown && s.Town != null && s.OwnerClan?.Kingdom == kingdom)
+                .ToList();
+            if (towns.Count == 0) return null;
+
+            var target = towns[_rng.Next(towns.Count)];
+            try { target.Town.Prosperity = 0f; } catch { }
+            try { target.Town.Security   = 0f; } catch { }
+            try { target.Town.FoodStocks = 0f; } catch { }
+            try
+            {
+                // Clear garrison roster
+                if (target.Town.GarrisonParty?.MemberRoster != null)
+                {
+                    foreach (var elem in target.Town.GarrisonParty.MemberRoster.GetTroopRoster().ToList())
+                        try { target.Town.GarrisonParty.MemberRoster.AddToCounts(elem.Character, -elem.Number); } catch { }
+                }
+            }
+            catch { }
+
+            return target.Name?.ToString();
+        }
+
+        // ── Deferred: FireAshenMachineryConsequence — 14 days after option D ──
+        private static void FireAshenMachineryConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _ashenMachineryCountdown = 1; return; }
+
+            var validKingdoms = Kingdom.All
+                .Where(k => !k.IsEliminated && k.StringId != "ashen_kingdom"
+                         && (IFaction)k != Hero.MainHero?.MapFaction)
+                .ToList();
+
+            if (validKingdoms.Count == 0) return;
+
+            var targetK = validKingdoms[_rng.Next(validKingdoms.Count)];
+            string cityName = DevastateCityInKingdom(targetK);
+
+            string cityLine = string.IsNullOrEmpty(cityName)
+                ? $"A city in {targetK.Name}'s territory"
+                : $"{cityName}, in {targetK.Name}'s territory";
+
+            MageKnowledge._deferredInquiry = () =>
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "⚗  The Machine Fires",
+                    $"Fourteen days ago you sold something to someone who did not ask questions. " +
+                    $"Today, {cityLine} has been struck by something the survivors cannot describe — only that it came from nowhere and took everything with it. " +
+                    $"Prosperity gone. Food gone. The garrison walks out empty-handed. " +
+                    $"No one is pointing at you. The chain of hands is long. " +
+                    $"You know what you sold.",
+                    new List<InquiryElement> { new InquiryElement("ok", "You know.", null, true, "") },
+                    false, 1, 1, "Close", "",
+                    _ => { }, null, "", false), false, true);
+            };
         }
     }
 }
