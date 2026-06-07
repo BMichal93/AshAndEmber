@@ -3,7 +3,7 @@
 //
 // Adds a "Visit the Sanctuary" option to the campaign map town menu in:
 //   • Every Temple-owned town.
-//   • Two random Empire towns chosen at new-game-start and saved.
+//   • Four random Empire towns chosen at new-game-start and saved.
 //
 // Access requires the player to have Honor ≥ 1 AND Mercy ≥ 1.
 // Temple members receive a 40% discount on all rites.
@@ -55,7 +55,7 @@ namespace AshAndEmber
         private const float TempleDiscount       =  0.60f; // Temple members pay 60% (40% off)
         private const int   ProtectiveDays       =    14;
         private const int   MoralePrayerBoost    =    40;
-        private const int   PermanentSanctuaryCount = 2;
+        private const int   PermanentSanctuaryCount = 4;
 
         private const string TempleKingdomId = "the_temple";
         private const string AshenKingdomId  = "ashen_kingdom";
@@ -114,7 +114,10 @@ namespace AshAndEmber
                 // Tell the player which Empire towns host sanctuaries this playthrough.
                 if (picks.Count > 0)
                 {
-                    string names = string.Join(" and ", picks.Select(s => s.Name.ToString()));
+                    var nameList = picks.Select(s => s.Name.ToString()).ToList();
+                    string names = nameList.Count == 1
+                        ? nameList[0]
+                        : string.Join(", ", nameList.Take(nameList.Count - 1)) + ", and " + nameList.Last();
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Sanctuaries of the Flame have been established in {names}. " +
                         $"Honourable and Merciful travellers may seek their services there."));

@@ -2,8 +2,7 @@
 // ASH AND EMBER — AshenAltars/AshenAltarsCampaignBehavior.cs
 //
 // Adds "Visit the Ashen Altar" to the town menu in:
-//   • Tyal (permanent Ashen altar — always present).
-//   • One additional random Ashen city chosen at new-game-start and saved.
+//   • All starting Ashen cities: Tyal, Sibir, Baltakhand, and Amprela.
 //
 // Access requires Merciless (Mercy ≤ −1) AND Devious (Honor ≤ −1).
 //
@@ -52,10 +51,8 @@ namespace AshAndEmber
 
         private const string AshenKingdomId = "ashen_kingdom";
 
-        // ── State (saved) ──────────────────────────────────────────────────────
-        private static string _secondAltarName = "";   // display name of the second altar city
-
-        private static readonly string[] AltarCandidates = { "Sibir", "Baltakhand", "Amprela" };
+        // All starting Ashen cities that permanently host an altar.
+        private static readonly string[] AshenAltarCities = { "Tyal", "Sibir", "Baltakhand", "Amprela" };
 
         private static readonly Random _rng = new Random();
 
@@ -66,37 +63,23 @@ namespace AshAndEmber
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
         }
 
-        public override void SyncData(IDataStore store)
-        {
-            try { store.SyncData("ALTAR_SecondAltarName", ref _secondAltarName); } catch { }
-        }
+        public override void SyncData(IDataStore store) { }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
-            EnsureSecondAltar();
+            AnnounceAltars();
             RegisterAltarMenus(starter);
         }
 
-        // ── Second altar selection ─────────────────────────────────────────────
-        private static void EnsureSecondAltar()
+        // ── Startup announcement ───────────────────────────────────────────────
+        private static void AnnounceAltars()
         {
-            if (!string.IsNullOrEmpty(_secondAltarName)) return;
             try
             {
-                var candidates = AltarCandidates
-                    .Where(n => Settlement.All.Any(s =>
-                        s.IsTown &&
-                        s.Name.ToString().IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0))
-                    .OrderBy(_ => _rng.Next())
-                    .ToList();
-
-                if (candidates.Count > 0)
-                {
-                    _secondAltarName = candidates[0];
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"The Ashen Altars stand in Tyal and {_secondAltarName}. " +
-                        "Only the Merciless and Devious may kneel before them."));
-                }
+                string names = string.Join(", ", AshenAltarCities);
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Ashen Altars stand in {names}. " +
+                    "Only the Merciless and Devious may kneel before them."));
             }
             catch { }
         }
@@ -109,10 +92,8 @@ namespace AshAndEmber
             try
             {
                 string name = s.Name?.ToString() ?? "";
-                if (name.IndexOf("Tyal", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-                if (!string.IsNullOrEmpty(_secondAltarName)
-                    && name.IndexOf(_secondAltarName, StringComparison.OrdinalIgnoreCase) >= 0) return true;
-                return false;
+                return AshenAltarCities.Any(city =>
+                    name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0);
             }
             catch { return false; }
         }
