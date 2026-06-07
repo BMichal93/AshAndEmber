@@ -3,7 +3,7 @@
 //
 // Adds a "Visit the Sanctuary" option to the campaign map town menu in:
 //   • Every Temple-owned town.
-//   • Two random Empire towns chosen at new-game-start and saved.
+//   • Four random Empire towns chosen at new-game-start and saved.
 //
 // Access requires the player to have Honor ≥ 1 AND Mercy ≥ 1.
 // Temple members receive a 40% discount on all rites.
@@ -12,8 +12,8 @@
 //   Prayer of Strength      — morale boost (gold only).
 //   Protective Rites        — blocks Ashen world events for N days (gold + aging).
 //   Turn the Ashen          — wounds nearby Ashen parties (gold + aging).
-//   Prayer of Healing       — fully heals all wounded troops (gold + aging).
-//   Prayer for a Blessing   — rejuvenate 1 year (max(gold/10, 36500), min age 20).
+//   Prayer of Healing       — heals wounded troops, or activates Steady the Line (gold + aging).
+//   Prayer for a Blessing   — shed a year OR receive a trait mark (flat gold cost).
 //
 // NPC effects (daily tick):
 //   • Honourable + Merciful lords currently in a sanctuary city: 0.3% chance/day
@@ -49,19 +49,51 @@ namespace AshAndEmber
         private const int   BaseAgingTurnAshen   =    45;
         private const int   BaseCostHealing      =   800;
         private const int   BaseAgingHealing     =    20;
-        private const int   BlessingMinCost       = 36500;  // floor cost for Prayer for a Blessing
+        private const int   BlessingFlatCost     = 50000;  // flat gold cost for Prayer for a Blessing
         private const int   BlessingRejuvDays    =   365;  // 1 year
         private const int   BlessingMinAge       =    20;
         private const float TempleDiscount       =  0.60f; // Temple members pay 60% (40% off)
         private const int   ProtectiveDays       =    14;
         private const int   MoralePrayerBoost    =    40;
-        private const int   PermanentSanctuaryCount = 2;
+        private const int   PermanentSanctuaryCount = 4;
+
+        private const int   PrayerCooldownBase    =    3;   // days between Prayer of Strength uses
+        private const int   ProtectiveCooldownBase=    7;
+        private const int   TurnAshenCooldownBase =    5;
+        private const int   HealingCooldownBase   =    5;
+        private const int   BlessingCooldownBase  =   30;
+        private const int   BlessedDays           =    3;   // days blessed status lasts
+        private const int   SteadyLineDays        =    5;   // days Steady the Line lasts
+        private const int   TraitBoostDays        =   60;   // days temp trait boost lasts
+        private const int   TraitDriftThreshold   =   10;   // sanctuary uses before trait nudge
+        private const int   CrossInterferenceDays =   30;   // days altar use debuffs sanctuary mult
 
         private const string TempleKingdomId = "the_temple";
         private const string AshenKingdomId  = "ashen_kingdom";
 
         // ── Permanent (non-Temple) sanctuary settlement IDs ───────────────────
         private static readonly List<string> _permanentSanctuaryIds = new List<string>();
+
+        // Cross-system state (read by AshenAltarsCampaignBehavior)
+        internal static int _lastSanctuaryUseDay = -999;
+        private static int  _sanctuaryUseCount   = 0;
+
+        // Blessed status (Prayer of Strength bonus healing)
+        private static int  _blessedUntilDay      = -1;
+
+        // Steady the Line buff (Prayer of Healing alt option)
+        private static int  _steadyLineUntilDay   = -1;
+
+        // Temporary trait boost (Prayer for a Blessing alt option)
+        private static int  _traitBoostUntilDay   = -1;
+        private static float _traitBoostAmount    = 0f;   // added to raw mult while active
+
+        // Per-rite cooldown tracking (last day each rite was used)
+        private static int  _lastPrayerDay        = -999;
+        private static int  _lastProtectiveDay    = -999;
+        private static int  _lastTurnAshenDay     = -999;
+        private static int  _lastHealingDay       = -999;
+        private static int  _lastBlessingDay      = -999;
 
         private static readonly Random _rng = new Random();
 
@@ -85,6 +117,18 @@ namespace AshAndEmber
                 }
             }
             catch { }
+
+            try { store.SyncData("SANCT_LastUseDay", ref _lastSanctuaryUseDay); } catch { }
+            try { store.SyncData("SANCT_UseCount", ref _sanctuaryUseCount); } catch { }
+            try { store.SyncData("SANCT_BlessedUntilDay", ref _blessedUntilDay); } catch { }
+            try { store.SyncData("SANCT_SteadyLineUntilDay", ref _steadyLineUntilDay); } catch { }
+            try { store.SyncData("SANCT_TraitBoostUntilDay", ref _traitBoostUntilDay); } catch { }
+            try { store.SyncData("SANCT_TraitBoostAmount", ref _traitBoostAmount); } catch { }
+            try { store.SyncData("SANCT_LastPrayerDay", ref _lastPrayerDay); } catch { }
+            try { store.SyncData("SANCT_LastProtectiveDay", ref _lastProtectiveDay); } catch { }
+            try { store.SyncData("SANCT_LastTurnAshenDay", ref _lastTurnAshenDay); } catch { }
+            try { store.SyncData("SANCT_LastHealingDay", ref _lastHealingDay); } catch { }
+            try { store.SyncData("SANCT_LastBlessingDay", ref _lastBlessingDay); } catch { }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -114,7 +158,10 @@ namespace AshAndEmber
                 // Tell the player which Empire towns host sanctuaries this playthrough.
                 if (picks.Count > 0)
                 {
-                    string names = string.Join(" and ", picks.Select(s => s.Name.ToString()));
+                    var nameList = picks.Select(s => s.Name.ToString()).ToList();
+                    string names = nameList.Count == 1
+                        ? nameList[0]
+                        : string.Join(", ", nameList.Take(nameList.Count - 1)) + ", and " + nameList.Last();
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Sanctuaries of the Flame have been established in {names}. " +
                         $"Honourable and Merciful travellers may seek their services there."));
@@ -141,6 +188,20 @@ namespace AshAndEmber
             return _permanentSanctuaryIds.Contains(s.StringId);
         }
 
+        private static int CurrentCampaignDay()
+        {
+            try { return (int)CampaignTime.Now.ToDays; }
+            catch { return 0; }
+        }
+
+        private static bool IsRiteOnCooldown(int lastDay, int baseCooldown, float mult)
+        {
+            int elapsed  = CurrentCampaignDay() - lastDay;
+            float absM   = Math.Min(1f, Math.Abs(mult));
+            int cooldown = Math.Max(1, (int)(baseCooldown * (2f - absM)));
+            return elapsed < cooldown;
+        }
+
         // Returns -1.0 to +1.0. Positive = sanctuary helps fully; 0 = no effect; negative = penalty.
         // Based on Mercy + Honor + Generosity, each clamped to [-2, 2], sum / 6.
         private static float SanctuaryTraitMultiplier()
@@ -152,7 +213,17 @@ namespace AshAndEmber
                 int mercy = h.GetTraitLevel(DefaultTraits.Mercy);
                 int honor = h.GetTraitLevel(DefaultTraits.Honor);
                 int gen   = h.GetTraitLevel(DefaultTraits.Generosity);
-                return (mercy + honor + gen) / 6f;
+                float raw = (mercy + honor + gen) / 6f;
+
+                // Cross-system: recent altar use taints the blessing
+                int altarDay = AshenAltarsCampaignBehavior._lastAltarUseDay;
+                if (CurrentCampaignDay() - altarDay < CrossInterferenceDays)
+                    raw *= 0.5f;
+
+                // Active trait boost (from Prayer for a Blessing alt option)
+                raw += _traitBoostAmount;
+
+                return Math.Max(-1f, Math.Min(1f, raw));
             }
             catch { return 0f; }
         }
@@ -181,14 +252,24 @@ namespace AshAndEmber
             => Hero.MainHero?.Clan?.Kingdom?.StringId == TempleKingdomId;
 
         private static int GoldCost(int base_)
-            => IsTempleMember() ? (int)(base_ * TempleDiscount) : base_;
+        {
+            float cost = IsTempleMember() ? base_ * TempleDiscount : base_;
+            try
+            {
+                int gen = Hero.MainHero?.GetTraitLevel(DefaultTraits.Generosity) ?? 0;
+                // gen=2: -25%, gen=1: -12.5%, gen=-1: +12.5%, gen=-2: +25%
+                cost *= 1f - gen * 0.125f;
+            }
+            catch { }
+            return Math.Max(1, (int)cost);
+        }
 
         private static int AgingCost(int baseDays)
             => IsTempleMember() ? (int)(baseDays * TempleDiscount) : baseDays;
 
         private static int BlessingCost()
         {
-            int raw = Math.Max((Hero.MainHero?.Gold ?? 0) / 10, BlessingMinCost);
+            int raw = BlessingFlatCost;
             return IsTempleMember() ? (int)(raw * TempleDiscount) : raw;
         }
 
@@ -334,13 +415,22 @@ namespace AshAndEmber
                     {
                         try
                         {
+                            int today = CurrentCampaignDay();
                             int rem  = CampaignMapEvents.ProtectedDaysRemaining;
                             int lstk = ComputeLivestockGold();
                             string prot  = rem  > 0 ? $"  [Protective ward active: {rem} days remaining]" : "";
                             string lsNote = lstk > 0 ? $"  [Livestock: {lstk}g value]" : "";
+
+                            string blessedNote = _blessedUntilDay >= today
+                                ? $"  [Blessed: {_blessedUntilDay - today + 1} day(s) remaining]" : "";
+                            string steadyNote = _steadyLineUntilDay >= today
+                                ? $"  [Steady the Line: {_steadyLineUntilDay - today + 1} day(s) remaining]" : "";
+                            string traitNote = _traitBoostUntilDay >= today
+                                ? $"  [Flame Mark: {_traitBoostUntilDay - today + 1} day(s) remaining]" : "";
+
                             string hdr = IsTempleMember()
-                                ? $"The Sanctuary of The Temple. The flame knows you. All rites cost 40% less.{prot}{lsNote}"
-                                : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{prot}{lsNote}";
+                                ? $"The Sanctuary of The Temple. The flame knows you. All rites cost 40% less.{prot}{lsNote}{blessedNote}{steadyNote}{traitNote}"
+                                : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{prot}{lsNote}{blessedNote}{steadyNote}{traitNote}";
                             MBTextManager.SetTextVariable("SANCT_MENU_HEADER", hdr);
                         }
                         catch { }
@@ -359,10 +449,23 @@ namespace AshAndEmber
                         try
                         {
                             int cost = GoldCost(BaseCostPrayer);
+                            float mult = SanctuaryTraitMultiplier();
+                            string cooldownNote = "";
+                            if (IsRiteOnCooldown(_lastPrayerDay, PrayerCooldownBase, mult))
+                            {
+                                args.IsEnabled = false;
+                                float absM = Math.Min(1f, Math.Abs(mult));
+                                int cooldown = Math.Max(1, (int)(PrayerCooldownBase * (2f - absM)));
+                                int daysLeft = cooldown - (CurrentCampaignDay() - _lastPrayerDay);
+                                cooldownNote = $"  [On cooldown: {daysLeft} day(s)]";
+                            }
+                            else
+                            {
+                                args.IsEnabled = CanAffordSanctuary(cost);
+                            }
                             MBTextManager.SetTextVariable("SANCT_PRAY_TEXT",
-                                $"Prayer of Strength ({cost}g{LivestockNote(cost)}) — fortify party morale (+{MoralePrayerBoost})");
+                                $"Prayer of Strength ({cost}g{LivestockNote(cost)}) — fortify party morale (+{MoralePrayerBoost}){cooldownNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            args.IsEnabled = CanAffordSanctuary(cost);
                         }
                         catch { }
                         return true;
@@ -384,11 +487,24 @@ namespace AshAndEmber
                             int cost  = GoldCost(BaseCostProtective);
                             int aging = AgingCost(BaseAgingProtective);
                             int cur   = CampaignMapEvents.ProtectedDaysRemaining;
+                            float mult = SanctuaryTraitMultiplier();
                             string note = cur > 0 ? $"  [active: {cur} days left]" : "";
+                            string cooldownNote = "";
+                            if (IsRiteOnCooldown(_lastProtectiveDay, ProtectiveCooldownBase, mult))
+                            {
+                                args.IsEnabled = false;
+                                float absM = Math.Min(1f, Math.Abs(mult));
+                                int cooldown = Math.Max(1, (int)(ProtectiveCooldownBase * (2f - absM)));
+                                int daysLeft = cooldown - (CurrentCampaignDay() - _lastProtectiveDay);
+                                cooldownNote = $"  [On cooldown: {daysLeft} day(s)]";
+                            }
+                            else
+                            {
+                                args.IsEnabled = CanAffordSanctuary(cost);
+                            }
                             MBTextManager.SetTextVariable("SANCT_RITES_TEXT",
-                                $"Protective Rites ({cost}g{LivestockNote(cost)}, +{aging} days older) — ward Ashen events for {ProtectiveDays} days{note}");
+                                $"Protective Rites ({cost}g{LivestockNote(cost)}, +{aging} days older) — ward Ashen events for {ProtectiveDays} days{note}{cooldownNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            args.IsEnabled = CanAffordSanctuary(cost);
                         }
                         catch { }
                         return true;
@@ -409,10 +525,23 @@ namespace AshAndEmber
                         {
                             int cost  = GoldCost(BaseCostTurnAshen);
                             int aging = AgingCost(BaseAgingTurnAshen);
+                            float mult = SanctuaryTraitMultiplier();
+                            string cooldownNote = "";
+                            if (IsRiteOnCooldown(_lastTurnAshenDay, TurnAshenCooldownBase, mult))
+                            {
+                                args.IsEnabled = false;
+                                float absM = Math.Min(1f, Math.Abs(mult));
+                                int cooldown = Math.Max(1, (int)(TurnAshenCooldownBase * (2f - absM)));
+                                int daysLeft = cooldown - (CurrentCampaignDay() - _lastTurnAshenDay);
+                                cooldownNote = $"  [On cooldown: {daysLeft} day(s)]";
+                            }
+                            else
+                            {
+                                args.IsEnabled = CanAffordSanctuary(cost);
+                            }
                             MBTextManager.SetTextVariable("SANCT_TURN_TEXT",
-                                $"Turn the Ashen ({cost}g{LivestockNote(cost)}, +{aging} days older) — banish and wound nearby Ashen parties");
+                                $"Turn the Ashen ({cost}g{LivestockNote(cost)}, +{aging} days older) — banish and wound nearby Ashen parties{cooldownNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            args.IsEnabled = CanAffordSanctuary(cost);
                         }
                         catch { }
                         return true;
@@ -433,10 +562,23 @@ namespace AshAndEmber
                         {
                             int cost  = GoldCost(BaseCostHealing);
                             int aging = AgingCost(BaseAgingHealing);
+                            float mult = SanctuaryTraitMultiplier();
+                            string cooldownNote = "";
+                            if (IsRiteOnCooldown(_lastHealingDay, HealingCooldownBase, mult))
+                            {
+                                args.IsEnabled = false;
+                                float absM = Math.Min(1f, Math.Abs(mult));
+                                int cooldown = Math.Max(1, (int)(HealingCooldownBase * (2f - absM)));
+                                int daysLeft = cooldown - (CurrentCampaignDay() - _lastHealingDay);
+                                cooldownNote = $"  [On cooldown: {daysLeft} day(s)]";
+                            }
+                            else
+                            {
+                                args.IsEnabled = CanAffordSanctuary(cost);
+                            }
                             MBTextManager.SetTextVariable("SANCT_HEAL_TEXT",
-                                $"Prayer of Healing ({cost}g{LivestockNote(cost)}, +{aging} days older) — fully heal all wounded troops");
+                                $"Prayer of Healing ({cost}g{LivestockNote(cost)}, +{aging} days older) — heal the wounded or steady the line{cooldownNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            args.IsEnabled = CanAffordSanctuary(cost);
                         }
                         catch { }
                         return true;
@@ -445,7 +587,7 @@ namespace AshAndEmber
             }
             catch { }
 
-            // ── Prayer for a Blessing (rejuvenation) ────────────────────────
+            // ── Prayer for a Blessing (rejuvenation / trait mark) ───────────
             try
             {
                 starter.AddGameMenuOption(
@@ -456,13 +598,24 @@ namespace AshAndEmber
                         try
                         {
                             int  cost  = BlessingCost();
-                            int  years = BlessingRejuvDays / 365;
+                            float mult = SanctuaryTraitMultiplier();
+                            string cooldownNote = "";
+                            if (IsRiteOnCooldown(_lastBlessingDay, BlessingCooldownBase, mult))
+                            {
+                                args.IsEnabled = false;
+                                float absM = Math.Min(1f, Math.Abs(mult));
+                                int cooldown = Math.Max(1, (int)(BlessingCooldownBase * (2f - absM)));
+                                int daysLeft = cooldown - (CurrentCampaignDay() - _lastBlessingDay);
+                                cooldownNote = $"  [On cooldown: {daysLeft} day(s)]";
+                            }
+                            else
+                            {
+                                bool canAfford  = CanAffordSanctuary(cost);
+                                args.IsEnabled  = canAfford;
+                            }
                             MBTextManager.SetTextVariable("SANCT_BLESS_TEXT",
-                                $"Prayer for a Blessing ({cost}g{LivestockNote(cost)}) — shed ~{years} year{(years != 1 ? "s" : "")} of age (floor: {BlessingMinAge})");
+                                $"Prayer for a Blessing ({cost}g{LivestockNote(cost)}) — shed a year or receive the flame's mark{cooldownNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            bool canAfford  = CanAffordSanctuary(cost);
-                            bool canYounger = Hero.MainHero?.Age > BlessingMinAge + 1f;
-                            args.IsEnabled  = canAfford && canYounger;
                         }
                         catch { }
                         return true;
@@ -504,9 +657,13 @@ namespace AshAndEmber
                     try { MobileParty.MainParty.RecentEventsMorale += boost; } catch { }
                     string narrative;
                     if (boost > 0)
+                    {
+                        _blessedUntilDay = CurrentCampaignDay() + BlessedDays;
                         narrative = "The candles are the same ones that have burned here for decades — the wax is built up in long columns, the flames do not flicker. You speak no words aloud. The fire listens anyway.\n\n" +
                             "When you rise, the weight is not gone, but it sits differently. Your men will feel it before they know why — a steadiness in the line, a fraction less give in the shoulders. " +
-                            "It is a small thing. It is also everything.";
+                            "It is a small thing. It is also everything.\n\n" +
+                            $"For the next {BlessedDays} days your surgeons will find their patients cooperative.";
+                    }
                     else if (boost == 0)
                         narrative = "The candles burn indifferently. You kneel and speak the words, but the fire does not stir for you. " +
                             "It is not hostile — it simply does not know what you are. You leave having paid. Nothing else changed.";
@@ -514,6 +671,9 @@ namespace AshAndEmber
                         narrative = "The candles falter when you enter. The priest takes a half-step back. You speak the words anyway, and the fire answers — " +
                             "but not with warmth. A chill passes through your ranks outside, sudden and sourceless. " +
                             $"Party morale drops by {-boost}. The flame does not forgive what you have become.";
+                    _lastPrayerDay = CurrentCampaignDay();
+                    _lastSanctuaryUseDay = CurrentCampaignDay();
+                    _sanctuaryUseCount++;
                     try
                     {
                         InformationManager.ShowInquiry(new InquiryData(
@@ -536,7 +696,7 @@ namespace AshAndEmber
                 int   cost   = GoldCost(BaseCostProtective);
                 int   aging  = AgingCost(BaseAgingProtective);
                 float mult   = SanctuaryTraitMultiplier();
-                int   days   = Math.Max(0, (int)(ProtectiveDays * mult));
+                int   days   = mult > 0.01f ? Math.Max(7, (int)(ProtectiveDays * mult)) : Math.Max(0, (int)(ProtectiveDays * mult));
                 ResolveSanctuaryPayment(cost, () =>
                 {
                     AgeHero(Hero.MainHero, aging);
@@ -544,15 +704,41 @@ namespace AshAndEmber
                     if (mult > 0.01f)
                     {
                         CampaignMapEvents.StartProtection(days);
+
+                        float px = 0f, py = 0f;
+                        try { px = MobileParty.MainParty.GetPosition2D.x; py = MobileParty.MainParty.GetPosition2D.y; } catch { }
+                        float rangeSquared = 200f * 200f;
+                        var nearbyAshen = MobileParty.All
+                            .Where(p =>
+                            {
+                                if (!p.IsActive || p.MapFaction?.StringId != AshenKingdomId) return false;
+                                float dx = p.GetPosition2D.x - px, dy = p.GetPosition2D.y - py;
+                                return dx * dx + dy * dy < rangeSquared;
+                            })
+                            .Take(3).ToList();
+                        string ashenNote = nearbyAshen.Count > 0
+                            ? $"\n\nThe flame shows you what hunts nearby: {string.Join(", ", nearbyAshen.Select(p => p.Name?.ToString() ?? "?"))}."
+                            : "\n\nNo grey things stir within sight of the flame right now.";
+
                         narrative = "The priest draws symbols in ash across your palms and speaks words that are not quite in any language you recognise. The flame on the altar burns a shade hotter for a moment, then returns to itself.\n\n" +
                             $"You will carry this for {days} days. The grey things that hunt in the cold will find your scent harder to follow. " +
                             "It does not make you invisible. It makes you less interesting to whatever thinks of you as prey.\n\n" +
-                            "The priest does not say farewell. He simply returns to his candles.";
+                            "The priest does not say farewell. He simply returns to his candles." +
+                            ashenNote;
+
+                        _lastProtectiveDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
                     }
                     else if (mult >= -0.01f)
+                    {
                         narrative = "The priest performs the rite. The flame does not respond. Your palms are marked with ash, " +
                             "but something is missing — the ward does not seat itself in you. " +
                             "The Ashen will find your scent as easily as they would have before. You have paid for something that did not arrive.";
+                        _lastProtectiveDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
+                    }
                     else
                     {
                         // Penalty: Ashen events become more likely for a period (simulated as shorter protection, negative message)
@@ -560,6 +746,9 @@ namespace AshAndEmber
                             "For the next week something cold will have an easier time finding you. " +
                             $"The priest does not apologise. He simply steps back and watches you leave.";
                         // Apply brief negative protection (the CampaignMapEvents flag can only protect, so we just notify)
+                        _lastProtectiveDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
                     }
                     try
                     {
@@ -620,12 +809,18 @@ namespace AshAndEmber
                                 }
                                 totalWounded += wounded;
                                 try { party.RecentEventsMorale -= 35f * mult; } catch { }
+                                // Drain food stocks, forcing them to slow and forage
+                                try { party.Food = Math.Min(party.Food, 0f); } catch { }
                             }
                             catch { }
                         }
                         narrative = targets.Count == 0
                             ? "The rite is spoken. The flame surges briefly and then settles. The grey things are not close enough to feel it."
-                            : $"{targets.Count} Ashen part{(targets.Count > 1 ? "ies" : "y")} have recoiled from the flame. {totalWounded} cold soldiers are on their knees.";
+                            : $"{targets.Count} Ashen part{(targets.Count > 1 ? "ies" : "y")} have recoiled from the flame. {totalWounded} cold soldiers are on their knees. Their supplies have scattered into the snow.";
+
+                        _lastTurnAshenDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
                     }
                     else if (mult < -0.01f)
                     {
@@ -637,9 +832,17 @@ namespace AshAndEmber
                         }
                         narrative = $"The rite inverts. Instead of burning the Ashen, the flame marks you for them. " +
                             $"{boosted} Ashen part{(boosted != 1 ? "ies" : "y")} sense you through the cold. The priest steps away from the altar quickly.";
+                        _lastTurnAshenDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
                     }
                     else
+                    {
                         narrative = "The rite is spoken. The flame stirs but does not reach — you carry nothing in you it can use as a weapon against the cold.";
+                        _lastTurnAshenDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
+                    }
 
                     try { InformationManager.ShowInquiry(new InquiryData("Turn the Ashen", narrative, true, false, "The flame holds.", "", null, null)); }
                     catch { MBInformationManager.AddQuickInformation(new TextObject(narrative.Length > 80 ? narrative.Substring(0, 80) + "…" : narrative)); }
@@ -660,64 +863,116 @@ namespace AshAndEmber
                 {
                     AgeHero(Hero.MainHero, aging);
 
-                    int healed = 0, wounded = 0;
-                    var roster = MobileParty.MainParty?.MemberRoster;
-
-                    if (mult > 0.01f)
+                    // Offer two choices: Heal the Wounded or Steady the Line
+                    try
                     {
-                        // Heal a fraction of wounds proportional to trait strength
-                        if (roster != null)
+                        InformationManager.ShowInquiry(new InquiryData(
+                            "The Flame Offers Two Gifts",
+                            $"The priest's hands are steady. The flame has enough in it for what you need. Choose how it spends itself.\n\n" +
+                            "Heal the Wounded — the injured rise from their cots. Those who were done fighting today are not.\n\n" +
+                            $"Steady the Line — the flame does not heal wounds that exist, but for {SteadyLineDays} days the men who fall in battle are carried back rather than left. Your troops will count as wounded rather than dead more often.",
+                            true, true,
+                            "Heal the Wounded",
+                            "Steady the Line",
+                            () =>
+                            {
+                                // Heal the Wounded branch
+                                int healed = 0, wounded = 0;
+                                var roster = MobileParty.MainParty?.MemberRoster;
+                                if (mult > 0.01f)
+                                {
+                                    if (roster != null)
+                                    {
+                                        foreach (var e in roster.GetTroopRoster().ToList())
+                                        {
+                                            if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
+                                            int heal = Math.Max(1, (int)(e.WoundedNumber * mult));
+                                            try { roster.AddToCounts(e.Character, 0, false, -heal); healed += heal; }
+                                            catch { }
+                                        }
+                                    }
+                                    try { if (Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints) Hero.MainHero.HitPoints = Hero.MainHero.MaxHitPoints; } catch { }
+                                }
+                                else if (mult < -0.01f)
+                                {
+                                    int toWound = Math.Max(1, (int)(5 * Math.Abs(mult)));
+                                    if (roster != null)
+                                    {
+                                        foreach (var e in roster.GetTroopRoster().ToList())
+                                        {
+                                            if (e.Character.IsHero) continue;
+                                            int healthy = e.Number - e.WoundedNumber;
+                                            int w = Math.Min(healthy, toWound - wounded);
+                                            if (w <= 0) continue;
+                                            try { roster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
+                                            if (wounded >= toWound) break;
+                                        }
+                                    }
+                                }
+                                _lastHealingDay = CurrentCampaignDay();
+                                _lastSanctuaryUseDay = CurrentCampaignDay();
+                                _sanctuaryUseCount++;
+                                string healNarrative;
+                                if (healed > 0)
+                                    healNarrative = $"The priest says a word you don't catch. Then another. By the third, the bandaged men in your camp are sitting up — " +
+                                        $"not better, exactly, but less far from it. {healed} soldier{(healed != 1 ? "s" : "")} who should have needed another week are " +
+                                        "folding their blankets and checking their equipment. They don't ask how. Some things don't improve from asking.";
+                                else if (wounded > 0)
+                                    healNarrative = $"The priest speaks and the flame answers, but what it sends out is cold. " +
+                                        $"Your men outside are worse than they were — {wounded} soldier{(wounded != 1 ? "s" : "")} have taken a turn for the worse, " +
+                                        "wounds reopening or simply deepening. The fire does not answer the faithless with mercy.";
+                                else
+                                    healNarrative = "The priest speaks the words. The flame listens but does not act — you carry nothing in you it recognises as worth healing. " +
+                                        "You have paid. The fire decided what that bought.";
+                                try
+                                {
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "Prayer of Healing", healNarrative, true, false, "It is enough.", "", null, null));
+                                }
+                                catch { MBInformationManager.AddQuickInformation(new TextObject(healed > 0
+                                    ? $"Prayer of Healing — {healed} soldier{(healed != 1 ? "s" : "")} restored."
+                                    : wounded > 0 ? $"Prayer of Healing — the flame penalised you. {wounded} soldiers worsened."
+                                    : "Prayer of Healing — no effect.")); }
+                            },
+                            () =>
+                            {
+                                // Steady the Line branch
+                                _steadyLineUntilDay = CurrentCampaignDay() + SteadyLineDays;
+                                _lastHealingDay = CurrentCampaignDay();
+                                _lastSanctuaryUseDay = CurrentCampaignDay();
+                                _sanctuaryUseCount++;
+                                string steadyNarrative = $"The priest does not touch you. He stands at the altar and speaks to the flame alone. When he finishes, the candles burn with a steadier light.\n\n" +
+                                    $"For the next {SteadyLineDays} days, the flame will carry your fallen back from the edge. The surgeons will find their work comes easier. " +
+                                    "Men who would have been lost will instead be found on cots by morning.";
+                                try
+                                {
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "Steady the Line", steadyNarrative, true, false, "The line holds.", "", null, null));
+                                }
+                                catch { MBInformationManager.AddQuickInformation(new TextObject($"Steady the Line active for {SteadyLineDays} days.")); }
+                            }));
+                    }
+                    catch
+                    {
+                        // Fallback: direct healing
+                        int healed = 0;
+                        var roster = MobileParty.MainParty?.MemberRoster;
+                        if (mult > 0.01f && roster != null)
                         {
                             foreach (var e in roster.GetTroopRoster().ToList())
                             {
                                 if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
                                 int heal = Math.Max(1, (int)(e.WoundedNumber * mult));
-                                try { roster.AddToCounts(e.Character, 0, false, -heal); healed += heal; }
-                                catch { }
+                                try { roster.AddToCounts(e.Character, 0, false, -heal); healed += heal; } catch { }
                             }
                         }
-                        try { if (Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints) Hero.MainHero.HitPoints = Hero.MainHero.MaxHitPoints; } catch { }
+                        _lastHealingDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
+                        MBInformationManager.AddQuickInformation(new TextObject(healed > 0
+                            ? $"Prayer of Healing — {healed} soldier{(healed != 1 ? "s" : "")} restored."
+                            : "Prayer of Healing — no effect."));
                     }
-                    else if (mult < -0.01f)
-                    {
-                        // Penalty: wound some healthy troops
-                        int toWound = Math.Max(1, (int)(5 * Math.Abs(mult)));
-                        if (roster != null)
-                        {
-                            foreach (var e in roster.GetTroopRoster().ToList())
-                            {
-                                if (e.Character.IsHero) continue;
-                                int healthy = e.Number - e.WoundedNumber;
-                                int w = Math.Min(healthy, toWound - wounded);
-                                if (w <= 0) continue;
-                                try { roster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
-                                if (wounded >= toWound) break;
-                            }
-                        }
-                    }
-
-                    string healNarrative;
-                    if (healed > 0)
-                        healNarrative = $"The priest says a word you don't catch. Then another. By the third, the bandaged men in your camp are sitting up — " +
-                            $"not better, exactly, but less far from it. {healed} soldier{(healed != 1 ? "s" : "")} who should have needed another week are " +
-                            "folding their blankets and checking their equipment. They don't ask how. Some things don't improve from asking.";
-                    else if (wounded > 0)
-                        healNarrative = $"The priest speaks and the flame answers, but what it sends out is cold. " +
-                            $"Your men outside are worse than they were — {wounded} soldier{(wounded != 1 ? "s" : "")} have taken a turn for the worse, " +
-                            "wounds reopening or simply deepening. The fire does not answer the faithless with mercy.";
-                    else
-                        healNarrative = "The priest speaks the words. The flame listens but does not act — you carry nothing in you it recognises as worth healing. " +
-                            "You have paid. The fire decided what that bought.";
-
-                    try
-                    {
-                        InformationManager.ShowInquiry(new InquiryData(
-                            "Prayer of Healing", healNarrative, true, false, "It is enough.", "", null, null));
-                    }
-                    catch { MBInformationManager.AddQuickInformation(new TextObject(healed > 0
-                        ? $"Prayer of Healing — {healed} soldier{(healed != 1 ? "s" : "")} restored."
-                        : wounded > 0 ? $"Prayer of Healing — the flame penalised you. {wounded} soldiers worsened."
-                        : "Prayer of Healing — no effect.")); }
                 });
             }
             catch { }
@@ -734,44 +989,100 @@ namespace AshAndEmber
                 if (hero == null) return;
                 ResolveSanctuaryPayment(cost, () =>
                 {
-                    string blessNarrative;
-                    if (mult > 0.01f)
-                    {
-                        float currentAge = hero.Age;
-                        int   maxRejuv   = (int)Math.Max(0f, (currentAge - BlessingMinAge) * 365.25f);
-                        int   actualDays = Math.Min((int)(BlessingRejuvDays * mult), maxRejuv);
-                        if (actualDays > 0) try { AgingSystem.RejuvenateHero(hero, actualDays); } catch { }
-                        int yearsGained = actualDays / 365;
-                        blessNarrative = yearsGained > 0
-                            ? $"The priest does not explain what he is doing. He places both hands on the altar, speaks without pause for several minutes, " +
-                              "and when he finishes the candles are slightly shorter than they were. So are you, in a way that doesn't show in a mirror but " +
-                              $"shows in how your joints feel the next morning. {yearsGained} year{(yearsGained != 1 ? "s" : "")} paid back. " +
-                              "You don't ask where they went. Some debts are settled in kinds of coin you don't want to examine."
-                            : "The priest completes the rite. The flame does what it can, but finds very little left to return. " +
-                              "You are already near the limit of what this place can offer.";
-                    }
-                    else if (mult < -0.01f)
-                    {
-                        // Penalty: age the player
-                        int penalty = Math.Max(1, (int)(180 * Math.Abs(mult)));
-                        try { AgingSystem.AgeHero(hero, penalty); } catch { }
-                        blessNarrative = $"The priest begins the words. The flame answers — but coldly, violently, as if offended by what it finds in you. " +
-                            $"When it is done you feel older, not younger. {penalty / 365f:F1} years pressed back into you by something that refused to be given to the likes of what you are. " +
-                            "The priest does not meet your eyes as you leave.";
-                    }
-                    else
-                        blessNarrative = "The priest completes the rite. The flame does not respond to you — not with hostility, but with indifference. " +
-                            "You carry nothing it recognises as worth returning. The candles burned for nothing. You paid for the attempt.";
-
+                    // Offer two choices: Shed a year OR Flame marks you
                     try
                     {
                         InformationManager.ShowInquiry(new InquiryData(
-                            "Prayer for a Blessing", blessNarrative, true, false, "So be it.", "", null, null));
+                            "What Will You Ask of the Flame?",
+                            "The flame waits. It has enough in it for one thing.",
+                            true, true,
+                            "Shed a year",
+                            "The flame marks you",
+                            () =>
+                            {
+                                // Rejuvenation branch
+                                string blessNarrative;
+                                if (mult > 0.01f)
+                                {
+                                    float currentAge = hero.Age;
+                                    int   maxRejuv   = (int)Math.Max(0f, (currentAge - BlessingMinAge) * 365.25f);
+                                    int   actualDays = Math.Min((int)(BlessingRejuvDays * mult), maxRejuv);
+                                    if (actualDays > 0) try { AgingSystem.RejuvenateHero(hero, actualDays); } catch { }
+                                    int yearsGained = actualDays / 365;
+                                    blessNarrative = yearsGained > 0
+                                        ? $"The priest does not explain what he is doing. He places both hands on the altar, speaks without pause for several minutes, " +
+                                          "and when he finishes the candles are slightly shorter than they were. So are you, in a way that doesn't show in a mirror but " +
+                                          $"shows in how your joints feel the next morning. {yearsGained} year{(yearsGained != 1 ? "s" : "")} paid back. " +
+                                          "You don't ask where they went. Some debts are settled in kinds of coin you don't want to examine."
+                                        : "The priest completes the rite. The flame does what it can, but finds very little left to return. " +
+                                          "You are already near the limit of what this place can offer.";
+                                }
+                                else if (mult < -0.01f)
+                                {
+                                    int penalty = Math.Max(1, (int)(180 * Math.Abs(mult)));
+                                    try { AgingSystem.AgeHero(hero, penalty); } catch { }
+                                    blessNarrative = $"The priest begins the words. The flame answers — but coldly, violently, as if offended by what it finds in you. " +
+                                        $"When it is done you feel older, not younger. {penalty / 365f:F1} years pressed back into you by something that refused to be given to the likes of what you are. " +
+                                        "The priest does not meet your eyes as you leave.";
+                                }
+                                else
+                                    blessNarrative = "The priest completes the rite. The flame does not respond to you — not with hostility, but with indifference. " +
+                                        "You carry nothing it recognises as worth returning. The candles burned for nothing. You paid for the attempt.";
+
+                                _lastBlessingDay = CurrentCampaignDay();
+                                _lastSanctuaryUseDay = CurrentCampaignDay();
+                                _sanctuaryUseCount++;
+                                try
+                                {
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "Prayer for a Blessing", blessNarrative, true, false, "So be it.", "", null, null));
+                                }
+                                catch { MBInformationManager.AddQuickInformation(new TextObject(
+                                    mult > 0.01f ? "Prayer for a Blessing — years returned."
+                                    : mult < -0.01f ? "Prayer for a Blessing — the flame aged you."
+                                    : "Prayer for a Blessing — no effect.")); }
+                            },
+                            () =>
+                            {
+                                // Flame marks you branch
+                                _traitBoostUntilDay = CurrentCampaignDay() + TraitBoostDays;
+                                _traitBoostAmount = 1f / 6f;
+                                _lastBlessingDay = CurrentCampaignDay();
+                                _lastSanctuaryUseDay = CurrentCampaignDay();
+                                _sanctuaryUseCount++;
+                                string markNarrative = "The priest says nothing. He presses his thumb against your brow and the candles burn a shade brighter for a breath. " +
+                                    "When you walk out, the men at the gate seem easier around you — as if something they couldn't name before has settled. " +
+                                    $"The effect will fade in {TraitBoostDays} days.";
+                                try
+                                {
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "The Flame Marks You", markNarrative, true, false, "I carry it now.", "", null, null));
+                                }
+                                catch { MBInformationManager.AddQuickInformation(new TextObject($"Flame mark active for {TraitBoostDays} days.")); }
+                            }));
                     }
-                    catch { MBInformationManager.AddQuickInformation(new TextObject(
-                        mult > 0.01f ? "Prayer for a Blessing — years returned."
-                        : mult < -0.01f ? "Prayer for a Blessing — the flame aged you."
-                        : "Prayer for a Blessing — no effect.")); }
+                    catch
+                    {
+                        // Fallback: rejuvenation only
+                        string blessNarrative;
+                        if (mult > 0.01f)
+                        {
+                            float currentAge = hero.Age;
+                            int   maxRejuv   = (int)Math.Max(0f, (currentAge - BlessingMinAge) * 365.25f);
+                            int   actualDays = Math.Min((int)(BlessingRejuvDays * mult), maxRejuv);
+                            if (actualDays > 0) try { AgingSystem.RejuvenateHero(hero, actualDays); } catch { }
+                            int yearsGained = actualDays / 365;
+                            blessNarrative = yearsGained > 0
+                                ? $"Prayer for a Blessing — {yearsGained} year{(yearsGained != 1 ? "s" : "")} returned."
+                                : "Prayer for a Blessing — the flame could not return more.";
+                        }
+                        else
+                            blessNarrative = "Prayer for a Blessing — no effect.";
+                        _lastBlessingDay = CurrentCampaignDay();
+                        _lastSanctuaryUseDay = CurrentCampaignDay();
+                        _sanctuaryUseCount++;
+                        MBInformationManager.AddQuickInformation(new TextObject(blessNarrative));
+                    }
                 });
             }
             catch { }
@@ -781,6 +1092,64 @@ namespace AshAndEmber
         // ── NPC daily tick ─────────────────────────────────────────────────────
         private static void OnDailyTick()
         {
+            int today = CurrentCampaignDay();
+
+            // Blessed status: partially heal wounded troops each day
+            if (_blessedUntilDay >= today && MobileParty.MainParty?.MemberRoster != null)
+            {
+                foreach (var e in MobileParty.MainParty.MemberRoster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
+                    int heal = Math.Max(1, (int)(e.WoundedNumber * 0.10f));
+                    try { MobileParty.MainParty.MemberRoster.AddToCounts(e.Character, 0, false, -heal); } catch { }
+                }
+            }
+
+            // Trait boost expiry
+            if (_traitBoostUntilDay >= 0 && today > _traitBoostUntilDay)
+            {
+                _traitBoostAmount = 0f;
+                _traitBoostUntilDay = -1;
+            }
+
+            // Trait drift: every TraitDriftThreshold sanctuary uses, nudge traits up
+            if (_sanctuaryUseCount > 0 && _sanctuaryUseCount % TraitDriftThreshold == 0)
+            {
+                try
+                {
+                    var h = Hero.MainHero;
+                    if (h != null)
+                    {
+                        int mercy = h.GetTraitLevel(DefaultTraits.Mercy);
+                        int honor = h.GetTraitLevel(DefaultTraits.Honor);
+                        int gen   = h.GetTraitLevel(DefaultTraits.Generosity);
+                        if (mercy <= honor && mercy <= gen && mercy < 2)
+                            h.SetTraitLevel(DefaultTraits.Mercy, mercy + 1);
+                        else if (honor <= mercy && honor <= gen && honor < 2)
+                            h.SetTraitLevel(DefaultTraits.Honor, honor + 1);
+                        else if (gen < 2)
+                            h.SetTraitLevel(DefaultTraits.Generosity, gen + 1);
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            "The flame has changed you. A virtue has deepened in you without your noticing."));
+                    }
+                }
+                catch { }
+                _sanctuaryUseCount = 0; // reset after drift fires
+            }
+
+            // Steady the Line: extra daily healing while active
+            if (_steadyLineUntilDay >= today && MobileParty.MainParty?.MemberRoster != null)
+            {
+                int healed = 0;
+                foreach (var e in MobileParty.MainParty.MemberRoster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
+                    int heal = Math.Min(e.WoundedNumber, 2);
+                    try { MobileParty.MainParty.MemberRoster.AddToCounts(e.Character, 0, false, -heal); healed += heal; } catch { }
+                    if (healed >= 3) break;
+                }
+            }
+
             // ── Honourable + Merciful lords in any sanctuary city ─────────────
             try
             {
