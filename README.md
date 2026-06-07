@@ -1,4 +1,4 @@
-# Ash and Ember — v0.13.0
+# Ash and Ember — v0.14.1
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -12,10 +12,11 @@ AshAndEmber/
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
 │   └── troops.xml                   (reserved)
-├── src/                             ~9 200 lines across 33 source files
+├── src/                             ~9 400 lines across 34 source files
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
 │   ├── SpellBuilder.cs              two-phase input parser → SpellCast
+│   ├── SpellMinigame.cs             arcane sequence memory game for campaign map casting
 │   ├── TalentSystem.cs              21 talents (7 passive, 8 enchantment, 6 spell)
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
@@ -301,14 +302,29 @@ Enchantments fire automatically on every qualifying cast in battle.
 
 Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast each day; escalates sharply for repeated use. Crime rating instead of days if Ashen. NPC mage lords also cast these on the campaign map.
 
+#### Arcane sequence
+
+When you cast a campaign spell, a 3-step ritual description appears — two sentences per step. Each step has three variant phrasings; one is drawn at random each cast. The description disappears, then you are asked to identify each step's exact phrasing from its three variants. Your recall score scales the spell's output power — the aging cost is always paid regardless of score.
+
+| Correct | Multiplier | Flavour |
+|---------|-----------|---------|
+| 3 / 3 | **1.50×** | Resonance — the rite was perfect. |
+| 2 / 3 | **1.00×** | The working takes hold. *(baseline)* |
+| 1 / 3 | **0.75×** | The words blur — the fire catches unevenly. |
+| 0 / 3 | **0.50×** | The words scatter — the fire finds its own shape. |
+
+A **"Cast without the rite"** button on the sequence screen skips the minigame and fires the spell at 1.00×.
+
+The values in the table below are baseline (2/3 recall, 1.00×).
+
 | Talent | Effect |
 |--------|--------|
 | **Kindle** | Party morale +40 and up to 8 wounded soldiers per troop type recover. |
-| **Unsettle** | Nearest enemy party within 75 map-units loses 40 morale. |
+| **Unsettle** | Nearest enemy party within 75 map-units loses 40 morale and −10 influence. |
 | **Wither** | Nearest enemy village loses 20% of its hearth. |
 | **Clairvoyance** | +25 influence, or +700 gold if not in a kingdom. |
-| **Extinguish** | 3–8 soldiers in the nearest enemy party within 45 map-units are wounded or killed; morale breaks. |
-| **Fade** | Your party is concealed from enemy scouts for 1 day. Enemy parties will not pursue you. |
+| **Extinguish** | 5–12 soldiers in the nearest enemy party within 60 map-units are wounded or killed; −30 morale. |
+| **Fade** | Your party is concealed from enemy scouts for 2 days. A perfect recall (3/3) extends this to 3 days. |
 
 ---
 
@@ -835,6 +851,25 @@ Pass the path manually: `.\install.ps1 -BannerlordPath "D:\Games\Mount & Blade I
 ---
 
 ## Changelog
+
+### v0.14.1
+
+**New mechanic — Ritual memory minigame for campaign map casting**
+
+Casting a campaign spell now opens a short ritual memory game. A 3-step ritual description appears (two sentences per step, drawn from three possible variants per step). The player must then identify each step's exact phrasing from its three variants. Recall score scales the spell's output power. The aging cost is always paid.
+
+| Correct | Multiplier |
+|---------|-----------|
+| 3 / 3 | 1.50× |
+| 2 / 3 | 1.00× (baseline — unchanged from previous behaviour) |
+| 1 / 3 | 0.75× |
+| 0 / 3 | 0.50× |
+
+A "Cast without the rite" button skips the minigame at 1.00× for players who prefer the direct route.
+
+All six campaign spell effects now scale with the multiplier: morale deltas, influence, gold, hearth reduction, troop count, and Fade duration (3/3 extends concealment by one extra day).
+
+---
 
 ### v0.12.0
 
