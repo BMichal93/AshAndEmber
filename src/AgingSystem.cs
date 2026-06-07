@@ -68,7 +68,7 @@ namespace AshAndEmber
             // Geometric scaling: small spells are cheap; large spells become very expensive.
             // Base 1.4, standard rounding, hard cap at 84 campaign days (= 1 Bannerlord year).
             int cost = Math.Min(84, Math.Max(1, (int)(Math.Pow(1.4, totalInputs - 1) + 0.5)));
-            if (hasBattleMageTalent) cost = Math.Max(1, cost - 1);
+            if (hasBattleMageTalent) cost = Math.Max(0, cost - 1);
 
             // Tempered (merged Veteran's Ash): each year beyond 40 shaves 0.5% off cost, capped at 30%.
             // At age 50 → -5%, age 70 → -15%, age 100 → -30% (death threshold).

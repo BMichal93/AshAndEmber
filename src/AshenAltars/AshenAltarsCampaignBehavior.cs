@@ -117,17 +117,34 @@ namespace AshAndEmber
             catch { return false; }
         }
 
-        private static bool PlayerCanUseAltar()
+        // Returns -1.0 to +1.0. Positive = altar rewards the dark soul; 0 = no effect; negative = penalty.
+        // Based on reversed Mercy + Honor + Generosity: the more evil, the stronger the benefit.
+        private static float AltarTraitMultiplier()
         {
             var h = Hero.MainHero;
-            if (h == null) return false;
+            if (h == null) return 0f;
             try
             {
-                return h.GetTraitLevel(DefaultTraits.Mercy)  <= -1
-                    && h.GetTraitLevel(DefaultTraits.Honor) <= -1;
+                int mercy = h.GetTraitLevel(DefaultTraits.Mercy);
+                int honor = h.GetTraitLevel(DefaultTraits.Honor);
+                int gen   = h.GetTraitLevel(DefaultTraits.Generosity);
+                // -6 = max evil → multiplier 1.0; 0 → 0; +6 = max good → -1.0
+                return -(mercy + honor + gen) / 6f;
             }
-            catch { return false; }
+            catch { return 0f; }
         }
+
+        private static string AltarTraitNote(float mult)
+        {
+            if (mult >= 0.8f)  return "  [The cold knows you — full power]";
+            if (mult >= 0.4f)  return "  [Partial power]";
+            if (mult >= 0.01f) return "  [Faint dark blessing]";
+            if (mult >= -0.01f)return "  [No benefit — you are not cold enough]";
+            if (mult >= -0.5f) return "  [PENALTY — the altar punishes your warmth]";
+            return "  [HEAVY PENALTY — the grey flame burns against you]";
+        }
+
+        private static bool PlayerCanUseAltar() => true;
 
         private static bool NpcCanUseAltar(Hero h)
         {
@@ -251,12 +268,11 @@ namespace AshAndEmber
                         try
                         {
                             if (!HasAshenAltar(Settlement.CurrentSettlement)) return false;
-                            bool access = PlayerCanUseAltar();
+                            float mult = AltarTraitMultiplier();
                             MBTextManager.SetTextVariable("ALTAR_ENTER_TEXT",
-                                access ? "Visit the Ashen Altar"
-                                       : "Visit the Ashen Altar [Requires Merciless + Devious]");
+                                "Visit the Ashen Altar" + AltarTraitNote(mult));
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
-                            args.IsEnabled = access;
+                            args.IsEnabled = true;
                             return true;
                         }
                         catch { return false; }
@@ -447,26 +463,46 @@ namespace AshAndEmber
         {
             try
             {
-                int killed = SacrificeForRite(SacrificePtsBloodTribute);
+                float mult   = AltarTraitMultiplier();
+                int   killed = SacrificeForRite(SacrificePtsBloodTribute);
+                string narrative;
 
                 var roster = MobileParty.MainParty?.MemberRoster;
-                if (roster != null)
+                if (mult > 0.01f)
                 {
-                    foreach (var e in roster.GetTroopRoster().ToList())
-                    {
-                        if (e.Character.IsHero) continue;
-                        try { roster.AddToCounts(e.Character, 0, false, 0, XpPerBloodTribute); } catch { }
-                    }
+                    int xp = Math.Max(1, (int)(XpPerBloodTribute * mult));
+                    if (roster != null)
+                        foreach (var e in roster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero) continue;
+                            try { roster.AddToCounts(e.Character, 0, false, 0, xp); } catch { }
+                        }
+                    narrative = killed > 0
+                        ? $"The blade does not hesitate. The man who kneels does not beg. The survivors watch without expression. " +
+                          $"By morning they carry themselves differently. {killed} paid the altar its price. The rest are better for it."
+                        : "The altar receives the offering. Your men will know it in their steps by morning.";
                 }
-
-                string narrative = killed > 0
-                    ? $"The blade does not hesitate. The man who kneels does not beg. In the silence that follows, " +
-                      "something shifts in the room — not light, not warmth, but intention. " +
-                      $"The survivors watch without expression. They will not speak of this. " +
-                      $"But by morning they will carry themselves differently. " +
-                      $"{killed} paid the altar its price. The rest are better for it."
-                    : "The altar receives the offering. The blood already soaked into the stone is enough. " +
-                      "Your men will know it in their steps by morning, though none of them could say why.";
+                else if (mult < -0.01f)
+                {
+                    // Penalty: the blood sacrifice angers the grey flame — it drains your troops instead
+                    int toWound = Math.Max(1, (int)(5 * Math.Abs(mult)));
+                    int wounded = 0;
+                    if (roster != null)
+                        foreach (var e in roster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero) continue;
+                            int healthy = e.Number - e.WoundedNumber;
+                            int w = Math.Min(healthy, toWound - wounded);
+                            if (w <= 0) continue;
+                            try { roster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
+                            if (wounded >= toWound) break;
+                        }
+                    narrative = $"The grey flame refuses the offering. It takes the warmth in the blood as an insult — your troops recoil from the altar. " +
+                        $"{wounded} soldier{(wounded != 1 ? "s are" : " is")} worse for having been near it. The cold does not forgive softness.";
+                }
+                else
+                    narrative = "The blood is spilled. The altar does not respond — the grey flame finds nothing in you worth rewarding. " +
+                        "You have paid. Nothing changed.";
 
                 try
                 {
@@ -474,7 +510,7 @@ namespace AshAndEmber
                         "Blood Tribute", narrative, true, false, "The blood is spent.", "", null, null));
                 }
                 catch { MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Blood Tribute — {killed} slain at the altar. The survivors are hardened.")); }
+                    $"Blood Tribute — {killed} slain at the altar.")); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }
@@ -483,45 +519,49 @@ namespace AshAndEmber
         // ── Rite: The Ashen Solstice ───────────────────────────────────────────
         private static void PerformAshenSolstice()
         {
+            float mult = AltarTraitMultiplier();
             try
             {
-                try
+                if (mult <= 0.01f)
                 {
-                    InformationManager.ShowInquiry(new InquiryData(
-                        "The Ashen Solstice",
-                        "The altar waits. Which season will you call down?\n\n" +
-                        "Iron Winter grips the north — the cold that breaks rivers and empties granaries, " +
-                        "striking Sturgia and the Northern Empire.\n\n" +
-                        "Scorching Sun burns the south — the sky white with heat that cracks the wells, " +
-                        "falling on Aserai and the Southern Empire.",
-                        true, true,
-                        "Iron Winter (north)",
-                        "Scorching Sun (south)",
-                        () =>
-                        {
-                            int killed = SacrificeForRite(SacrificePtsAshenSolstice);
-                            CampaignMapEvents.ForceIronWinter();
-                            MBInformationManager.AddQuickInformation(new TextObject(
-                                $"The Ashen Solstice — {killed} soul{(killed != 1 ? "s" : "")} paid the cold its due. " +
-                                "The north remembers what winter is supposed to mean."));
-                        },
-                        () =>
-                        {
-                            int killed = SacrificeForRite(SacrificePtsAshenSolstice);
-                            CampaignMapEvents.ForceScorchingSun();
-                            MBInformationManager.AddQuickInformation(new TextObject(
-                                $"The Ashen Solstice — {killed} soul{(killed != 1 ? "s" : "")} turned to ash and smoke. " +
-                                "The south bakes under a sky that will not relent."));
-                        }
-                    ));
-                }
-                catch
-                {
-                    // Fallback: just fire Iron Winter
                     int killed = SacrificeForRite(SacrificePtsAshenSolstice);
-                    CampaignMapEvents.ForceIronWinter();
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"The Ashen Solstice — {killed} paid the cold. The north darkens."));
+                    string msg = mult < -0.01f
+                        ? $"The Ashen Solstice — the ritual backfires. The altar turns the seasons against your own lands. {killed} sacrificed in vain."
+                        : $"The Ashen Solstice — {killed} sacrificed, but the grey flame finds nothing in you worth the season's toll. Nothing changes.";
+                    MBInformationManager.AddQuickInformation(new TextObject(msg));
+                }
+                else
+                {
+                    try
+                    {
+                        InformationManager.ShowInquiry(new InquiryData(
+                            "The Ashen Solstice",
+                            "The altar waits. Which season will you call down?\n\n" +
+                            "Iron Winter grips the north — the cold that breaks rivers and empties granaries.\n\n" +
+                            "Scorching Sun burns the south — the sky white with heat that cracks the wells.",
+                            true, true,
+                            "Iron Winter (north)", "Scorching Sun (south)",
+                            () =>
+                            {
+                                int killed = SacrificeForRite(SacrificePtsAshenSolstice);
+                                CampaignMapEvents.ForceIronWinter();
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    $"The Ashen Solstice — {killed} soul{(killed != 1 ? "s" : "")} paid the cold. The north darkens."));
+                            },
+                            () =>
+                            {
+                                int killed = SacrificeForRite(SacrificePtsAshenSolstice);
+                                CampaignMapEvents.ForceScorchingSun();
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    $"The Ashen Solstice — {killed} soul{(killed != 1 ? "s" : "")} turned to smoke. The south bakes."));
+                            }));
+                    }
+                    catch
+                    {
+                        int killed = SacrificeForRite(SacrificePtsAshenSolstice);
+                        CampaignMapEvents.ForceIronWinter();
+                        MBInformationManager.AddQuickInformation(new TextObject($"The Ashen Solstice — {killed} paid the cold. The north darkens."));
+                    }
                 }
             }
             catch { }
@@ -533,51 +573,53 @@ namespace AshAndEmber
         {
             try
             {
-                int killed = SacrificeForRite(SacrificePtsCarrionGift);
+                float mult   = AltarTraitMultiplier();
+                int   killed = SacrificeForRite(SacrificePtsCarrionGift);
+                string narrative;
 
-                var candidates = Settlement.All
-                    .Where(s => s.IsTown
-                             && s.MapFaction?.StringId != AshenKingdomId
-                             && s.Town?.GarrisonParty?.MemberRoster?.TotalManCount > 0)
-                    .ToList();
-
-                string targetName   = "a distant city";
-                int    totalWounded = 0;
-
-                if (candidates.Count > 0)
+                if (mult > 0.01f)
                 {
-                    var target   = candidates[_rng.Next(candidates.Count)];
-                    targetName   = target.Name?.ToString() ?? "a distant city";
-                    var garrison = target.Town.GarrisonParty;
-
-                    foreach (var e in garrison.MemberRoster.GetTroopRoster().ToList())
+                    var candidates = Settlement.All
+                        .Where(s => s.IsTown && s.MapFaction?.StringId != AshenKingdomId
+                                 && s.Town?.GarrisonParty?.MemberRoster?.TotalManCount > 0).ToList();
+                    string targetName = "a distant city"; int totalWounded = 0;
+                    if (candidates.Count > 0)
                     {
-                        if (e.Character.IsHero) continue;
-                        int healthy = e.Number - e.WoundedNumber;
-                        if (healthy <= 0) continue;
-                        float pct   = 0.30f + (float)_rng.NextDouble() * 0.30f;  // 30–60 %
-                        int toWound = Math.Max(1, (int)(healthy * pct));
-                        try { garrison.MemberRoster.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch { }
+                        var target = candidates[_rng.Next(candidates.Count)];
+                        targetName = target.Name?.ToString() ?? "a distant city";
+                        foreach (var e in target.Town.GarrisonParty.MemberRoster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero) continue;
+                            int healthy = e.Number - e.WoundedNumber; if (healthy <= 0) continue;
+                            int toWound = Math.Max(1, (int)(healthy * (0.30f + (float)_rng.NextDouble() * 0.30f) * mult));
+                            try { target.Town.GarrisonParty.MemberRoster.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch { }
+                        }
                     }
+                    narrative = totalWounded > 0
+                        ? $"The smoke travels to {targetName}. {totalWounded} soldier{(totalWounded != 1 ? "s are" : " is")} on their backs."
+                        : "The plague travels but finds no suitable garrison.";
                 }
-
-                string narrative = totalWounded > 0
-                    ? $"The smoke curls out of the altar in a shape that is not smoke. It moves across distances that should take days. " +
-                      $"Somewhere in {targetName}, the garrison is coughing. Their commander does not understand why the men look grey. " +
-                      $"{totalWounded} soldier{(totalWounded != 1 ? "s are" : " is")} on their backs. " +
-                      "They will not improve soon."
-                    : "The plague leaves the altar and travels, but finds empty barracks or already-ruined walls. " +
-                      "The grey sickness settles into the stones and waits. It is patient.";
-
-                try
+                else if (mult < -0.01f)
                 {
-                    InformationManager.ShowInquiry(new InquiryData(
-                        "Carrion Gift", narrative, true, false, "Let it spread.", "", null, null));
+                    // Penalty: wound own garrison or party
+                    int toWound = Math.Max(1, (int)(8 * Math.Abs(mult))), wounded = 0;
+                    var roster  = MobileParty.MainParty?.MemberRoster;
+                    if (roster != null)
+                        foreach (var e in roster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero) continue;
+                            int healthy = e.Number - e.WoundedNumber; int w = Math.Min(healthy, toWound - wounded);
+                            if (w <= 0) continue;
+                            try { roster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
+                            if (wounded >= toWound) break;
+                        }
+                    narrative = $"The grey plague reverses. It finds the warmest source available — your own men. {wounded} of your soldiers are now sick.";
                 }
-                catch { MBInformationManager.AddQuickInformation(new TextObject(
-                    totalWounded > 0
-                        ? $"Carrion Gift — {totalWounded} garrison troops in {targetName} are wounded."
-                        : "Carrion Gift — the grey plague found no suitable garrison.")); }
+                else
+                    narrative = "The plague leaves the altar and dissipates. The grey flame finds nothing in you worth channelling. The sacrifice was wasted.";
+
+                try { InformationManager.ShowInquiry(new InquiryData("Carrion Gift", narrative, true, false, "Let it spread.", "", null, null)); }
+                catch { MBInformationManager.AddQuickInformation(new TextObject(narrative.Length > 80 ? narrative.Substring(0, 80) + "…" : narrative)); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }
@@ -588,47 +630,47 @@ namespace AshAndEmber
         {
             try
             {
-                int killed = SacrificeForRite(SacrificePtsBreakWills);
+                float mult   = AltarTraitMultiplier();
+                int   killed = SacrificeForRite(SacrificePtsBreakWills);
+                string narrative;
 
-                var candidates = Settlement.All
-                    .Where(s => s.IsTown
-                             && s.MapFaction?.StringId != AshenKingdomId
-                             && s.Town != null)
-                    .ToList();
-
-                string targetName   = "a distant city";
-                float  loyaltyDrain = 0f;
-                float  secDrain     = 0f;
-
-                if (candidates.Count > 0)
+                if (mult > 0.01f)
                 {
-                    var target   = candidates[_rng.Next(candidates.Count)];
-                    targetName   = target.Name?.ToString() ?? "a distant city";
-                    loyaltyDrain = 15f + (float)_rng.NextDouble() * 10f;   // 15–25
-                    secDrain     = 15f + (float)_rng.NextDouble() * 10f;   // 15–25
-                    try { target.Town.Loyalty  = Math.Max(0f, target.Town.Loyalty  - loyaltyDrain); } catch { }
-                    try { target.Town.Security = Math.Max(0f, target.Town.Security - secDrain);     } catch { }
+                    var candidates = Settlement.All
+                        .Where(s => s.IsTown && s.MapFaction?.StringId != AshenKingdomId && s.Town != null).ToList();
+                    string targetName = "a distant city"; float loyaltyDrain = 0f, secDrain = 0f;
+                    if (candidates.Count > 0)
+                    {
+                        var target = candidates[_rng.Next(candidates.Count)];
+                        targetName = target.Name?.ToString() ?? "a distant city";
+                        loyaltyDrain = (15f + (float)_rng.NextDouble() * 10f) * mult;
+                        secDrain     = (15f + (float)_rng.NextDouble() * 10f) * mult;
+                        try { target.Town.Loyalty  = Math.Max(0f, target.Town.Loyalty  - loyaltyDrain); } catch { }
+                        try { target.Town.Security = Math.Max(0f, target.Town.Security - secDrain);     } catch { }
+                    }
+                    narrative = loyaltyDrain > 0f
+                        ? $"In {targetName}, the guards are harder to rouse. The merchants close early. Nobody can say why. Loyalty −{(int)loyaltyDrain}. Security −{(int)secDrain}."
+                        : "The despair travels but finds no suitable city.";
                 }
-
-                string narrative = loyaltyDrain > 0f
-                    ? $"You feel the pull of something leaving the altar — not substance, but certainty. " +
-                      $"In {targetName} tonight, the guards are harder to rouse. The merchants are closing early. " +
-                      $"Nobody can say why the city feels like a place that has already lost. " +
-                      $"Loyalty −{(int)loyaltyDrain}. Security −{(int)secDrain}. " +
-                      "The cold works slowly and does not stop."
-                    : "The despair travels out of the altar and moves across the land, but every suitable city it finds " +
-                      "is either ash already or fortified beyond the reach of quiet ruin. " +
-                      "It will find cracks eventually.";
-
-                try
+                else if (mult < -0.01f)
                 {
-                    InformationManager.ShowInquiry(new InquiryData(
-                        "Break Hearts and Wills", narrative, true, false, "Let them despair.", "", null, null));
+                    // Penalty: drain loyalty from player's current settlement
+                    var playerSettlement = Settlement.CurrentSettlement ?? Hero.MainHero?.CurrentSettlement;
+                    if (playerSettlement?.Town != null)
+                    {
+                        float drain = (10f + (float)_rng.NextDouble() * 10f) * Math.Abs(mult);
+                        try { playerSettlement.Town.Loyalty  = Math.Max(0f, playerSettlement.Town.Loyalty  - drain); } catch { }
+                        try { playerSettlement.Town.Security = Math.Max(0f, playerSettlement.Town.Security - drain); } catch { }
+                        narrative = $"The grey flame turns your warmth against itself. The despair settles here, in {playerSettlement.Name}. Loyalty and security drop by {(int)drain}.";
+                    }
+                    else
+                        narrative = "The grey flame refuses you. The despair finds nowhere to land.";
                 }
-                catch { MBInformationManager.AddQuickInformation(new TextObject(
-                    loyaltyDrain > 0f
-                        ? $"Break Hearts and Wills — {targetName} loyalty −{(int)loyaltyDrain}, security −{(int)secDrain}."
-                        : "Break Hearts and Wills — no suitable city found.")); }
+                else
+                    narrative = "The despair leaves the altar and dissipates. You are not cold enough to direct it. The sacrifice achieved nothing.";
+
+                try { InformationManager.ShowInquiry(new InquiryData("Break Hearts and Wills", narrative, true, false, "Let them despair.", "", null, null)); }
+                catch { MBInformationManager.AddQuickInformation(new TextObject(narrative.Length > 80 ? narrative.Substring(0, 80) + "…" : narrative)); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }
@@ -639,70 +681,70 @@ namespace AshAndEmber
         {
             try
             {
-                int killed = SacrificeForRite(SacrificePtsColdFire);
+                float mult   = AltarTraitMultiplier();
+                int   killed = SacrificeForRite(SacrificePtsColdFire);
+                string narrative;
 
-                float px = 0f, py = 0f;
-                try { px = MobileParty.MainParty.GetPosition2D.x; py = MobileParty.MainParty.GetPosition2D.y; } catch { }
-                const float rangeSquared = 150f * 150f;
-
-                var target = MobileParty.All
-                    .Where(p =>
-                    {
-                        if (!p.IsActive || p.IsMainParty) return false;
-                        if (p.MapFaction?.StringId == AshenKingdomId) return false;
-                        if (p.LeaderHero == null) return false;
-                        float dx = p.GetPosition2D.x - px, dy = p.GetPosition2D.y - py;
-                        return dx * dx + dy * dy < rangeSquared;
-                    })
-                    .OrderBy(p =>
-                    {
-                        float dx = p.GetPosition2D.x - px, dy = p.GetPosition2D.y - py;
-                        return dx * dx + dy * dy;
-                    })
-                    .FirstOrDefault();
-
-                string targetDesc   = "";
-                int    woundedCount = 0;
-
-                if (target != null)
+                if (mult > 0.01f)
                 {
-                    targetDesc = target.Name?.ToString() ?? "an enemy party";
-                    int toWound = 8 + _rng.Next(8);   // 8–15
-                    int wounded = 0;
+                    float px = 0f, py = 0f;
+                    try { px = MobileParty.MainParty.GetPosition2D.x; py = MobileParty.MainParty.GetPosition2D.y; } catch { }
+                    const float rangeSquared = 150f * 150f;
+                    var target = MobileParty.All
+                        .Where(p =>
+                        {
+                            if (!p.IsActive || p.IsMainParty) return false;
+                            if (p.MapFaction?.StringId == AshenKingdomId) return false;
+                            if (p.LeaderHero == null) return false;
+                            float dx = p.GetPosition2D.x - px, dy = p.GetPosition2D.y - py;
+                            return dx * dx + dy * dy < rangeSquared;
+                        })
+                        .OrderBy(p => { float dx = p.GetPosition2D.x - px, dy = p.GetPosition2D.y - py; return dx * dx + dy * dy; })
+                        .FirstOrDefault();
 
-                    foreach (var e in target.MemberRoster.GetTroopRoster().ToList())
+                    if (target != null)
+                    {
+                        string targetDesc = target.Name?.ToString() ?? "an enemy party";
+                        int toWound = (int)((8 + _rng.Next(8)) * mult);
+                        int wounded = 0;
+                        foreach (var e in target.MemberRoster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero) continue;
+                            int healthy = e.Number - e.WoundedNumber;
+                            int w = Math.Min(healthy, toWound - wounded);
+                            if (w <= 0) continue;
+                            try { target.MemberRoster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
+                            if (wounded >= toWound) break;
+                        }
+                        try { target.RecentEventsMorale -= 30f * mult; } catch { }
+                        narrative = $"Out in the dark, {targetDesc}'s column has halted. {wounded} soldier{(wounded != 1 ? "s are" : " is")} on one knee. The cold has introduced itself.";
+                    }
+                    else
+                        narrative = "The cold fire rushes out, hungry, and finds nothing close enough to settle on. It retreats.";
+                }
+                else if (mult < -0.01f)
+                {
+                    // Penalty: wound own party troops
+                    int toWound = (int)((5 + _rng.Next(5)) * Math.Abs(mult));
+                    int wounded = 0;
+                    foreach (var e in MobileParty.MainParty.MemberRoster.GetTroopRoster().ToList())
                     {
                         if (e.Character.IsHero) continue;
                         int healthy = e.Number - e.WoundedNumber;
                         int w = Math.Min(healthy, toWound - wounded);
                         if (w <= 0) continue;
-                        try { target.MemberRoster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
+                        try { MobileParty.MainParty.MemberRoster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
                         if (wounded >= toWound) break;
                     }
-                    woundedCount = wounded;
-                    try { target.RecentEventsMorale -= 30f; } catch { }
+                    narrative = wounded > 0
+                        ? $"The cold fire has no target it can reach — no cruelty to amplify. It turns inward instead. {wounded} of your own soldiers collapse, shivering."
+                        : "The cold fire turns on you and finds no purchase. It simply fades. The altar does not forgive generosity.";
                 }
+                else
+                    narrative = "The cold fire reaches out and finds the world indifferent. You lack the coldness to direct it. The sacrifice was wasted.";
 
-                string narrative = target == null
-                    ? "The cold fire rushes out of the altar, hungry, and finds nothing close enough to settle on. " +
-                      "It retreats. The altar does not ask for explanations. " +
-                      "You return to your own and wait for a better hour."
-                    : $"The flame on the altar burns the wrong colour for a moment. " +
-                      "Then it remembers what it is and returns. " +
-                      $"Out in the dark, {targetDesc}'s column has halted without being ordered to. " +
-                      $"{woundedCount} soldier{(woundedCount != 1 ? "s are" : " is")} on one knee. " +
-                      "The commanders are shouting for reports that will not come. " +
-                      "The cold has introduced itself.";
-
-                try
-                {
-                    InformationManager.ShowInquiry(new InquiryData(
-                        "Rite of Cold Fire", narrative, true, false, "Cold enough.", "", null, null));
-                }
-                catch { MBInformationManager.AddQuickInformation(new TextObject(
-                    target == null
-                        ? "Rite of Cold Fire — no enemy party within range."
-                        : $"Rite of Cold Fire — {woundedCount} wounded in {targetDesc}. −30 morale.")); }
+                try { InformationManager.ShowInquiry(new InquiryData("Rite of Cold Fire", narrative, true, false, "Cold enough.", "", null, null)); }
+                catch { MBInformationManager.AddQuickInformation(new TextObject(narrative.Length > 80 ? narrative.Substring(0, 80) + "…" : narrative)); }
             }
             catch { }
             finally { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }

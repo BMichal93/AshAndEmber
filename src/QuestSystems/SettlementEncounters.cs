@@ -111,6 +111,12 @@ namespace AshAndEmber
         private static string _brokenSealKingdomAId = null; // aggressor kingdom StringId
         private static string _brokenSealKingdomBId = null; // target kingdom StringId
         private static int    _cinderVigilCooldown  = 0;   // cooldown between Cinder Vigil purge encounters
+        private static int    _hopeMageConsequenceCountdown = 0;   // days until the youth's castle rebellion stirs
+        private static string _hopeMageSettlementId = null;        // settlement where the youth was encountered
+        private static bool   _memoryHungerConsumed  = false;      // player chose to "give in" to memory hunger
+        private static int    _memoryHungerCountdown = 0;          // days until dissolution fires
+        private static int    _poorKnightCooldown     = 0;         // long cooldown so knight event fires rarely
+        private static int    _vengefulKnightCountdown = 0;        // days until the mocked knight strikes back
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -144,7 +150,13 @@ namespace AshAndEmber
             _brokenSealExtraWar    = false;
             _brokenSealKingdomAId  = null;
             _brokenSealKingdomBId  = null;
-            _cinderVigilCooldown   = 0;
+            _cinderVigilCooldown          = 0;
+            _hopeMageConsequenceCountdown = 0;
+            _hopeMageSettlementId         = null;
+            _memoryHungerConsumed         = false;
+            _memoryHungerCountdown        = 0;
+            _poorKnightCooldown           = 0;
+            _vengefulKnightCountdown      = 0;
         }
 
         public static void Save(IDataStore store)
@@ -168,6 +180,12 @@ namespace AshAndEmber
             store.SyncData("SE_BrokenSealKingA",    ref _brokenSealKingdomAId);
             store.SyncData("SE_BrokenSealKingB",    ref _brokenSealKingdomBId);
             store.SyncData("SE_CinderVigilCD",      ref _cinderVigilCooldown);
+            store.SyncData("SE_HopeMageCD",         ref _hopeMageConsequenceCountdown);
+            store.SyncData("SE_HopeMageSettlement", ref _hopeMageSettlementId);
+            store.SyncData("SE_MemHungerConsumed",  ref _memoryHungerConsumed);
+            store.SyncData("SE_MemHungerCD",        ref _memoryHungerCountdown);
+            store.SyncData("SE_PoorKnightCD",       ref _poorKnightCooldown);
+            store.SyncData("SE_VengefulKnightCD",   ref _vengefulKnightCountdown);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -257,6 +275,29 @@ namespace AshAndEmber
                 if (_brokenSealCountdown == 0)
                     FireBrokenSealConsequence();
             }
+
+            if (_hopeMageConsequenceCountdown > 0)
+            {
+                _hopeMageConsequenceCountdown--;
+                if (_hopeMageConsequenceCountdown == 0)
+                    FireHopeMageConsequence();
+            }
+
+            if (_memoryHungerConsumed && _memoryHungerCountdown > 0)
+            {
+                _memoryHungerCountdown--;
+                if (_memoryHungerCountdown == 0)
+                    FireMemoryHungerDissolution();
+            }
+
+            if (_poorKnightCooldown > 0) _poorKnightCooldown--;
+
+            if (_vengefulKnightCountdown > 0)
+            {
+                _vengefulKnightCountdown--;
+                if (_vengefulKnightCountdown == 0)
+                    FireVengefulKnightConsequence();
+            }
         }
 
         /// Called from MagicCampaignBehavior.OnMapEventEnded.
@@ -297,6 +338,7 @@ namespace AshAndEmber
             bool mage   = MageKnowledge.IsMage;
             bool ashen  = MageKnowledge.IsAshen;
             float ren   = Hero.MainHero?.Clan?.Renown ?? 0f;
+            int clanTier = Hero.MainHero?.Clan?.Tier ?? 0;
             bool village = s.IsVillage;
             bool town    = s.IsTown || s.IsCastle;
 
@@ -323,14 +365,15 @@ namespace AshAndEmber
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
-                    pool.Add(EV4_GiftedChild);
-                    pool.Add(EV7_SelfTaughtMage);
+                    if (!ashen) pool.Add(EV4_GiftedChild);
+                    if (!ashen) pool.Add(EV7_SelfTaughtMage);
                     pool.Add(EV8_TheLie);
-                    if (ren >= 600f) pool.Add(EV7_OldMastersStudent);
-                    pool.Add(E_EmberTithe);
+                    if (!ashen && ren >= 600f) pool.Add(EV7_OldMastersStudent);
+                    if (!ashen) pool.Add(E_EmberTithe);
                     if (_childEventCooldown == 0 && HasEligibleChild()) pool.Add(E_DarkeningInheritance);
                 }
                 if (ashen) pool.Add(EV2_DogWontStop);
+                if (ashen) pool.Add(EV_MemoryHunger);
                 if (_cinderEligible) pool.Add(EC_CinderVigil);
             }
             if (town)
@@ -340,8 +383,7 @@ namespace AshAndEmber
                 if (_hedgeWitchCooldown == 0 && HasHedgeWitchCondition()) pool.Add(E_NightVisitor);
                 if (ren >= 250f) pool.Add(EC8_MerchantLedger);
                 if (ren >= 300f) pool.Add(EC8_ReluctantOfficial);
-                pool.Add(EC8_Followed);
-                pool.Add(EC_LocalPriest);
+                if (!ashen) pool.Add(EC_LocalPriest);
                 pool.Add(EC_TavernStranger);
                 if (_brokenSealCountdown == 0 && _brokenSealPlotType == 0) pool.Add(EC_BrokenSeal);
                 if (_trinketPhase == 0)
@@ -352,11 +394,16 @@ namespace AshAndEmber
                 }
                 if (mage)
                 {
-                    pool.Add(E_EmberTithe);
+                    if (!ashen) pool.Add(E_EmberTithe);
                     if (_childEventCooldown == 0 && HasEligibleChild()) pool.Add(E_DarkeningInheritance);
                 }
                 pool.Add(EC9_AshenElixir);
+                if (ashen) pool.Add(EV_MemoryHunger);
                 if (_cinderEligible) pool.Add(EC_CinderVigil);
+                // Poor knight wants to prove himself in tournament (or just encountered by chance)
+                if (!ashen && _poorKnightCooldown == 0) pool.Add(EC_PoorKnight);
+                // Tavern harassment — clan tier < 5, not Ashen
+                if (!ashen && clanTier < 5) pool.Add(EC_TavernHarassment);
             }
 
             Fire(pool, s);
@@ -375,26 +422,26 @@ namespace AshAndEmber
             if (village)
             {
                 pool.Add(LV8_PoisonedWell);
-                pool.Add(LV8_BattleSetup);
                 pool.Add(LV_ColdEmbrace);
                 pool.Add(LV_ColdDream);
                 pool.Add(LV_ThreeWitches);
                 pool.Add(LV_HollowHour);
-                if (mage)
+                if (mage && !ashen)
                 {
                     pool.Add(E_MothersPlea);
                 }
             }
             if (town)
             {
-                if (ren >= 300f) pool.Add(E_BardsRequest);
-                pool.Add(LC8_GateStandoff);
-                pool.Add(LC8_ForgeryAtGate);
+                if (!ashen && ren >= 300f) pool.Add(E_BardsRequest);
                 if (mage)
                 {
                     pool.Add(LC_BloodCollector);
                 }
                 if (ashen) pool.Add(LC4_RecognizedByAshen);
+                // Encounter: Hope — young mage afraid of Ashen; clan tier ≥ 2, non-Ashen mage
+                int clanTier = Hero.MainHero?.Clan?.Tier ?? 0;
+                if (mage && !ashen && clanTier >= 2) pool.Add(LC_YoungMageHope);
             }
 
             Fire(pool, s);
@@ -418,12 +465,26 @@ namespace AshAndEmber
 
         private static void TryFireBattle()
         {
-            bool mage = MageKnowledge.IsMage;
-            float ren = Hero.MainHero?.Clan?.Renown ?? 0f;
+            bool mage  = MageKnowledge.IsMage;
+            bool ashen = MageKnowledge.IsAshen;
+            float ren  = Hero.MainHero?.Clan?.Renown ?? 0f;
+            int   ashenCasts = MagicInputHandler.AshenBattleCastCount;
+            int   clanTier   = Hero.MainHero?.Clan?.Tier ?? 0;
             var pool  = new List<Action>();
 
             pool.Add(EB8_FieldTriage);
-            pool.Add(EB8_BattleDebrief);
+
+            if (ashen && ashenCasts >= 3)
+            {
+                // More casts = higher weight: 1 copy at 3 casts, up to 3 copies at 5+
+                int weight = Math.Min(ashenCasts - 2, 3);
+                for (int i = 0; i < weight; i++)
+                    pool.Add(EB_AshenMemoryDrain);
+            }
+
+            // Hero-inspired: after a LOST battle, clan tier ≥ 3 — fleeing refugees
+            if (!_lastBattleWon && clanTier >= 3)
+                pool.Add(EB_HeroInspired);
 
             FireBattle(pool);
         }
@@ -882,6 +943,426 @@ namespace AshAndEmber
                             }
                             else
                                 Msg("The message goes in. Nothing comes back. Either it was not received, or received and set aside, or received and filed under 'noted.' The Ashen are not hurried correspondents.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // NEW ENCOUNTERS — ENTER CITY (general)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // EC_PoorKnight — Young knight in worn gear wants to prove himself [Leadership]
+        private static void EC_PoorKnight(Settlement s)
+        {
+            _poorKnightCooldown = 60; // long cooldown so this doesn't repeat constantly
+            bool hasTournament = false;
+            try { hasTournament = s.Town?.HasTournament ?? false; } catch { }
+            string context = hasTournament
+                ? "The tournament yard is buzzing with preparations when you spot him"
+                : "You notice him near the training ground";
+
+            float leadershipChance = SkillChance(DefaultSkills.Leadership, 0.38f);
+            string coachHint = SkillHint(DefaultSkills.Leadership, 0.38f, "Steady him — teach him what he is missing");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "⚔  The Knight Without Fortune",
+                $"{context}: a young man in dented, mismatched armour polishing a blade that has seen better decades. " +
+                "The other knights are laughing at him from across the yard. He does not look at them. " +
+                "He looks at the gate and polishes the blade anyway. There is something in his eyes that has nothing to do with the armour.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Ride past. It is not your concern.", null, true,
+                        "The yard and its laughter fall behind you."),
+                    new InquiryElement("b", "Outfit him — armour, horse, the works.", null, true,
+                        $"−2000 coin. +1 Generous. {coachHint}"),
+                    new InquiryElement("c", "Join the laughter.", null, true,
+                        "He hears you. Everyone hears you."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            MageKnowledge._deferredInquiry = () =>
+                                Msg("Word drifts back to you two days later: he entered, lost in the second round, and rode out without speaking to anyone. Nobody noticed.", DimColor);
+                            break;
+                        case "b":
+                            if (!ChangeGold(-2000)) { Msg("You do not have enough coin.", BadColor); _poorKnightCooldown = 0; break; }
+                            ShiftTrait(DefaultTraits.Generosity, 1);
+                            if (SkillRoll(DefaultSkills.Leadership, 0.38f))
+                            {
+                                // B: he wins
+                                var cataphract = MBObjectManager.Instance.GetObject<CharacterObject>("imperial_elite_cataphract")
+                                             ?? MBObjectManager.Instance.GetObject<CharacterObject>("empire_cataphract");
+                                if (cataphract != null)
+                                    try { MobileParty.MainParty.MemberRoster.AddToCounts(cataphract, 1); } catch { }
+                                ChangeRenown(10f);
+                                Msg("Against every expectation in that yard, he wins. Not through luck — through something prepared and stubborn. " +
+                                    "He comes to you afterward, the new armour bloodied and proving its worth, and asks to ride with you. " +
+                                    "You have gained a seasoned Imperial Cataphract — and a knight who will remember exactly who gave him the chance.", GoodColor);
+                            }
+                            else
+                            {
+                                // C: he dies happy
+                                AddMorale(-4f);
+                                Msg("He rides in well-equipped and hopeful and is unhorsed in the third bout by a man twice his experience. " +
+                                    "The fall breaks something that should not be broken. He is carried off the field. " +
+                                    "They say he was smiling when they reached him. He had the armour. He had the horse. He had his chance. " +
+                                    "He went in having been taken seriously by someone.", DimColor);
+                            }
+                            break;
+                        case "c":
+                            // D: he swears revenge
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            _vengefulKnightCountdown = 7 + _rng.Next(5);
+                            Msg("He looks up when he hears you. He finds your face. His jaw tightens and he goes back to polishing. " +
+                                "He enters the tournament angry, and the anger carries him further than expected — three rounds, maybe four. " +
+                                "Then it runs out. He loses. Before he rides out he looks back at you and says one sentence: " +
+                                "\"I will remember who laughed.\"", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // EC_TavernHarassment — Noble groping a serving girl; clan tier < 5 [Athletics on option 3]
+        private static void EC_TavernHarassment(Settlement s)
+        {
+            float athleticsChance = SkillChance(DefaultSkills.Athletics, 0.40f);
+            string fightHint = SkillHint(DefaultSkills.Athletics, 0.40f, "Back him down before it becomes a brawl");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "★  The Tavern",
+                "The common room is loud enough. Not loud enough to cover it. A minor lord with two men-at-arms at his back has his hand on the arm of a serving girl who is clearly not interested. " +
+                "The tavernkeeper starts toward them — the lord's man steps in front and tells him to sit. The tavernkeeper sits. " +
+                "Everyone in the room pretends not to notice.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Drink your beer. It is not your business.", null, true,
+                        "It is not your business. You are very certain of this."),
+                    new InquiryElement("b", "Laugh with the noble — make a friend.", null, true,
+                        "You know how this goes. So does he."),
+                    new InquiryElement("c", "Tell him to get off her.", null, true, fightHint),
+                    new InquiryElement("d", "Send for the city guard.", null, true,
+                        "The guard will come. Whether that helps anyone is a different question."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            // A: -1 honour, -1 mercy
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            Msg("You drink your beer. Across the room the lord takes the girl behind the counter. " +
+                                "Later, when he comes back out, he and his men are laughing about something. " +
+                                "She is crying in the scullery. You paid for the beer and left. " +
+                                "Nobody in the room looked at anyone else on the way out.", BadColor);
+                            break;
+                        case "b":
+                            // B: -1 mercy, +5 rel with city lord
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            ChangeRelWithOwner(s, 5);
+                            Msg("You make a joke. He laughs. His men laugh. He sends you a jug of the good wine from behind the bar — " +
+                                "the tavernkeeper's own, you notice — and raises it across the room. " +
+                                "You have made a friend. You are both exactly the kind of people this room deserved tonight.", BadColor);
+                            break;
+                        case "c":
+                            // C success: +1 honour +10 renown -10 rel. D fail: +1 honour -20 rel +20 crime
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            if (SkillRoll(DefaultSkills.Athletics, 0.40f))
+                            {
+                                ChangeRenown(10f);
+                                ChangeRelWithOwner(s, -10);
+                                Msg("You stand up. The room goes quiet with the specific quality of rooms that have been waiting for someone to stand up. " +
+                                    "The lord reads your face and reads the room and lets go. He calls you a few things on his way out that confirm your assessment of him. " +
+                                    "The girl is gone by the time the door closes behind him. The tavernkeeper sets the good wine in front of you without being asked. " +
+                                    "The room breathes again.", GoodColor);
+                            }
+                            else
+                            {
+                                ChangeRelWithOwner(s, -20);
+                                var kingdom = s.MapFaction as TaleWorlds.CampaignSystem.Kingdom;
+                                if (kingdom != null) try { ChangeCrimeRatingAction.Apply(kingdom, 20f, false); } catch { }
+                                Msg("You stand up. So do his men. What follows is not the clean confrontation you intended — " +
+                                    "it is a tavern brawl with a lord's hired muscle, and you come out of it reported to the guard for disturbing the peace. " +
+                                    "On the positive side: the girl got out during the noise. " +
+                                    "The lord filed a formal complaint. Your crime rating in this kingdom just went up by twenty.", BadColor);
+                            }
+                            break;
+                        case "d":
+                            // E: guards side with noble, crime +10, rel -5
+                            ChangeRelWithOwner(s, -5);
+                            {
+                                var kingdom = s.MapFaction as TaleWorlds.CampaignSystem.Kingdom;
+                                if (kingdom != null) try { ChangeCrimeRatingAction.Apply(kingdom, 10f, false); } catch { }
+                            }
+                            Msg("The guard arrives before long. They apologise to the lord for the interruption. " +
+                                "They ask you to come with them for questioning about what you saw and why you sent for them. " +
+                                "The lord's men are still in the tavern. The girl is still in the tavern. " +
+                                "You can only imagine what happens next. " +
+                                "Your crime rating in this kingdom went up by ten.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireVengefulKnightConsequence — 7–11 days after EC_PoorKnight option C ──
+        private static void FireVengefulKnightConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _vengefulKnightCountdown = 1; return; }
+            ChangeRelWithRandomLord(-8);
+            ChangeRenown(-5f);
+            MageKnowledge._deferredInquiry = () =>
+                Msg("Word finds you on the road: the knight you laughed at in the tournament has been telling anyone who will listen. " +
+                    "Not about the loss — about who laughed, and why, and what that means about you. " +
+                    "A lord who heard him agrees. Your reputation has taken a small but specific hit.", BadColor);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // NEW ENCOUNTERS — LEAVE CITY (mage, non-Ashen, clan tier ≥ 2)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // LC_YoungMageHope — A young mage afraid of the Ashen asks about hope [Leadership]
+        private static void LC_YoungMageHope(Settlement s)
+        {
+            float leadershipChance = SkillChance(DefaultSkills.Leadership, 0.35f);
+            string hint = SkillHint(DefaultSkills.Leadership, 0.35f, "Steady them — give them something to hold");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "✦  There Is Always Hope",
+                "A young man waits at the city gate with the stiff posture of someone who practiced what they would say and forgot it anyway. " +
+                "He can feel the fire in you from here. His own gift is new — two years, maybe three. " +
+                "He has heard what the Ashen do to people like him. He wants to know if it has to end that way.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "\"There is always hope. If you know what you are, you can choose what you become.\"", null, true, hint),
+                    new InquiryElement("b", "Ignore him. You have somewhere to be.", null, true,
+                        "He watches you ride out. The gate closes."),
+                    new InquiryElement("c", "\"Run. Leave this city and don't come back.\"", null, true, hint),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Leadership, 0.35f))
+                            {
+                                ShiftTrait(DefaultTraits.Honor, 1);
+                                ChangeRenown(5f);
+                                Msg("He listens to you — not to the words, but to the way you say them. Something settles in him, then hardens. " +
+                                    "A week later, word reaches you from the north: a young mage was seen leading a small band of volunteers against an Ashen raiding column. " +
+                                    "They held the village road. Against expectation, they held it. " +
+                                    "His name is already travelling faster than he is. He inspired them not by being powerful — by being certain.", GoodColor);
+                                // Deferred consequence: castle town stirs — rebellion chance in ~14 days
+                                _hopeMageConsequenceCountdown = 14;
+                                _hopeMageSettlementId = s.StringId;
+                            }
+                            else
+                            {
+                                Msg("You give him the words but not the weight — the right speech without the certainty behind it. " +
+                                    "He nods and thanks you and you can see he is no more certain than before. " +
+                                    "He will make a choice based on fear, not on what you said. You do not know what that choice will be.", DimColor);
+                                // Youth defects to Ashen — no mechanical consequence, narrative only
+                                Msg("Three days later, the city guard reports a young man was seen leaving north " +
+                                    "toward the grey hills. He took nothing but his coat.", BadColor);
+                            }
+                            break;
+                        case "b":
+                            Msg("He watches you ride out. His question travels with you farther than it should. " +
+                                "You had an answer. You chose not to spend it.", DimColor);
+                            break;
+                        case "c":
+                            if (SkillRoll(DefaultSkills.Leadership, 0.35f))
+                            {
+                                ShiftTrait(DefaultTraits.Honor, 1);
+                                ChangeRenown(5f);
+                                Msg("He takes the warning seriously — the directness of it lands where the gentler version wouldn't. " +
+                                    "He is gone from the city by nightfall. You will not hear from him again, " +
+                                    "but something in how he moved when you spoke told you he understood exactly what 'run' meant.", GoodColor);
+                                // No city rebellion — he simply escaped; that is the whole of this outcome
+                            }
+                            else
+                            {
+                                Msg("He hears the urgency but not the reason. He runs — but without direction, without a plan, " +
+                                    "toward the grey hills rather than away from them. " +
+                                    "Your warning sent him exactly where you were warning him away from.", BadColor);
+                                Msg("A week later, the Ashen gain a recruit.", BadColor);
+                                // No city rebellion — he went to the wrong side
+                            }
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // NEW ENCOUNTERS — AFTER BATTLE (clan tier ≥ 3, lost battle)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // EB_HeroInspired — Fleeing refugees after a lost battle; hard choices
+        private static void EB_HeroInspired()
+        {
+            float ridingChance  = SkillChance(DefaultSkills.Riding, 0.38f);
+            float combatChance  = SkillChance(DefaultSkills.OneHanded, 0.35f);
+            string ridingHint   = SkillHint(DefaultSkills.Riding, 0.38f, "Get the children out before the pursuit catches you");
+            string combatHint   = SkillHint(DefaultSkills.OneHanded, 0.35f, "Hold them long enough for the others to clear the road");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "⚔  What the Road Holds",
+                "Retreating, you overtake a knot of villagers fleeing the same way — two dozen people with what they could carry. " +
+                "Children. A cart with one wheel about to fail. Soldiers from the other side are on the road behind you and closing. " +
+                "These people will not outrun them.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Use them to slow the pursuit — they are not your concern.", null, true,
+                        "The pursuit slows. You clear the road. The villagers do not."),
+                    new InquiryElement("b", "Get the children on horseback and ride hard.", null, true, ridingHint),
+                    new InquiryElement("c", "Turn and hold the pursuit long enough for them to clear the road.", null, true, combatHint),
+                    new InquiryElement("d", "Ride on. You cannot fight a retreat and a rescue.", null, true,
+                        "You ride on. The sound behind you is what it is."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            Msg("The villagers scatter into the fields as the soldiers push through. " +
+                                "Not all of them make it to the treeline. Your retreat clears. " +
+                                "Your men do not look at each other.", BadColor);
+                            break;
+                        case "b":
+                            if (SkillRoll(DefaultSkills.Riding, 0.38f))
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                Msg("You load what you can onto your horses and ride hard. The pursuit reaches the abandoned cart and slows. " +
+                                    "Enough distance opens. You clear the road with seven children who will grow up knowing exactly what happened at that junction.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                WoundMainHero(2);
+                                Msg("You get the children mounted but the pursuit is faster than the road allows. " +
+                                    "You take two wounds getting the last group clear — an arrow in the shoulder, then a blade across your arm at the horse's flank. " +
+                                    "You clear the road. Some of the children arrive before you do, and have to wait.", GoodColor);
+                            }
+                            break;
+                        case "c":
+                            if (SkillRoll(DefaultSkills.OneHanded, 0.35f))
+                            {
+                                ShiftTrait(DefaultTraits.Honor, 1);
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                ChangeRenown(15f);
+                                Msg("You turn and hold the road alone long enough for the villagers to reach the treeline. " +
+                                    "The pursuit pulls back when they realise what they are dealing with. " +
+                                    "The story of the lord who turned on a routed road travels faster than you do.", GoodColor);
+                            }
+                            else
+                            {
+                                // Permadeath risk — player is wounded seriously
+                                ShiftTrait(DefaultTraits.Honor, 1);
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                ChangeRenown(100f);
+                                WoundMainHero(5);
+                                Msg("You hold them. You hold them longer than anyone watching expected. " +
+                                    "The villagers clear the road. You do not clear the road afterward with the same ease. " +
+                                    "The story of what you did at that junction will outlast the battle that preceded it.", GoodColor);
+                                // Critical wound — check if fatal
+                                if (Hero.MainHero != null && Hero.MainHero.IsWounded)
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        "You are badly wounded. The surgeons are doing what they can."));
+                            }
+                            break;
+                        case "d":
+                            Msg("You ride on. The sound behind you is what it is. Your men ride with you " +
+                                "and do not say anything, which is its own kind of verdict.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        private static void WoundMainHero(int count)
+        {
+            try
+            {
+                var roster = MobileParty.MainParty?.MemberRoster;
+                if (roster == null || Hero.MainHero == null) return;
+                // Wound the hero directly by marking them wounded (simulated as party morale loss + hero wound)
+                Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - count * 10);
+            }
+            catch { }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // NEW ENCOUNTERS — ENTER VILLAGE/TOWN (Ashen only, random)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // EV_MemoryHunger — Ashen only; fading memories; potentially fatal choice
+        private static void EV_MemoryHunger(Settlement s)
+        {
+            float leadershipChance = SkillChance(DefaultSkills.Leadership, 0.30f);
+            string hint = SkillHint(DefaultSkills.Leadership, 0.30f, "Resist the hunger — hold what remains");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "◆  The Memory-Hunger",
+                "It arrives without announcement: a sudden and absolute certainty that something you once knew — " +
+                "the texture of a particular moment, a conversation, a face you loved — is no longer retrievable. " +
+                "The cold in you is not mourning it. It is hungry. " +
+                "It wants to finish what it started.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Try to remember — force the memory back from the edge.", null, true, hint),
+                    new InquiryElement("b", "Give in — let it take what it wants.", null, true,
+                        "What you give it, it will use. You will not be the same after. " +
+                        "You may not survive the exchange at all."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Leadership, 0.30f))
+                            {
+                                Msg("You hold it. Not the memory — the memory is gone and does not return — but yourself. " +
+                                    "The hunger reaches a limit and stops. You are in a village street " +
+                                    "and you are still you, with one fewer thing that was yours. " +
+                                    "The cold continues at the same pace. It is patient.", AshenColor);
+                                ShiftTrait(DefaultTraits.Mercy, -1);
+                            }
+                            else
+                            {
+                                Msg("You reach for it and find the reaching itself has been consumed. " +
+                                    "When you surface you are standing in the street and you do not know how long you have been standing. " +
+                                    "Your men are watching you from a careful distance. " +
+                                    "In the hours you cannot account for, money changed hands — debts settled with people you cannot now name, " +
+                                    "coin pressed into fists for reasons that made complete sense to whoever was doing it. " +
+                                    "Something has passed through you and the thing that came out the other side is quieter than what went in.", BadColor);
+                                ShiftTrait(DefaultTraits.Mercy, -1);
+                                ShiftTrait(DefaultTraits.Generosity, -1);
+                                ChangeGold(-500);
+                            }
+                            break;
+                        case "b":
+                            // Give in: big XP gain but 7-day death timer
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 2; } catch { }
+                            ShiftTrait(DefaultTraits.Mercy, -2);
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            Msg("You open the door. Something floods through you — cold, complete, and enormously purposeful. " +
+                                "You understand things about the fire that you did not understand before. " +
+                                "You cannot remember what you gave it. " +
+                                "Your men back away from you without being told to.", AshenColor);
+                            MBInformationManager.AddQuickInformation(new TextObject(
+                                "The cold is consuming you. Something fundamental is leaving. You have perhaps seven days."));
+                            // Schedule a deferred "dissolution" event — player receives warning; after 7 days, game over
+                            _memoryHungerConsumed     = true;
+                            _memoryHungerCountdown    = 7;
                             break;
                     }
                 }, null, "", false), false, true);
@@ -1523,6 +2004,73 @@ namespace AshAndEmber
                         case "d":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("He names the issuing office correctly but the date is yesterday, which is too fast for the permit office's actual processing time — they take three days minimum. He knows the date is wrong, which means he knows what he is carrying and where it came from. He does not flinch when you point this out. He is a professional. You have him detained not for the document but for his knowledge of the document's real origin. That is a better charge.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── AFTER BATTLE (Ashen): Memory Drain ────────────────────────────────
+        // Fires when an Ashen player cast 3+ spells in a single battle.
+        // Choices: resist (Leadership roll), accept loss, or feed it (gains XP, larger loss).
+        private static void EB_AshenMemoryDrain()
+        {
+            // Pick one of the three humane traits to drain (the ones Ashen players are losing)
+            var candidates = new[] { DefaultTraits.Mercy, DefaultTraits.Honor, DefaultTraits.Generosity };
+            var drainTrait = candidates[_rng.Next(candidates.Length)];
+            string traitName = drainTrait == DefaultTraits.Mercy ? "Mercy"
+                             : drainTrait == DefaultTraits.Honor ? "Honor" : "Generosity";
+
+            float leadershipChance = SkillChance(DefaultSkills.Leadership, 0.35f);
+            string resistHint = SkillHint(DefaultSkills.Leadership, 0.35f, "Hold the memory through will");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "◆  The Fading",
+                "Afterward, in the quiet, you reach for something and it is not there. A name. A face. Something that was yours. " +
+                "The working took more than years this time — it reached further back and took something you did not offer. " +
+                "You are aware of the shape of what is missing. You are not certain you know what it was.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Hold on. Reach for it — force it back.", null, true, resistHint),
+                    new InquiryElement("b", "Let it go. There was a cost. You paid it.", null, true,
+                        $"What is gone is gone. You remain. {traitName} fades."),
+                    new InquiryElement("c", "Feed it more. If it wants to take, let it take — and take something in return.", null, true,
+                        $"A deeper trade. More is lost. Something is gained."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Leadership, 0.35f))
+                            {
+                                Msg("You force it. The memory surfaces — incomplete, edges worn, but present. A face. The shape of a place. " +
+                                    "Something that was yours is still yours. The effort costs you the rest of the evening. " +
+                                    "You are aware the cold is patient.", AshenColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(drainTrait, -1);
+                                Msg($"You reach for it and find the reaching itself is unfamiliar — the path to it has gone cold. " +
+                                    $"You hold the effort until it becomes clear that there is nothing left to hold. {traitName} fades. " +
+                                    "The cold does not announce itself. It simply expands.", BadColor);
+                            }
+                            break;
+                        case "b":
+                            ShiftTrait(drainTrait, -1);
+                            ChangeGold(-300);
+                            Msg($"{traitName} fades. Something else goes with it — the thread of a connection you can no longer name. " +
+                                "Three hundred coin gone by morning, in a sequence of decisions you do not entirely remember making. " +
+                                "You paid what was asked. You are still here. The accounting is unclear.", BadColor);
+                            break;
+                        case "c":
+                            ShiftTrait(drainTrait, -1);
+                            ShiftTrait(candidates[_rng.Next(candidates.Length)], -1);
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            ChangeRenown(-10f);
+                            Msg("You open the door. Something passes through you in both directions — you feel the loss clearly, two things, maybe more. " +
+                                "What returns is not the same shape as what left. It is colder. It is useful. " +
+                                "Your men look at you strangely over the fire that evening. You do not ask them why.", AshenColor);
                             break;
                     }
                 }, null, "", false), false, true);
@@ -3923,6 +4471,60 @@ namespace AshAndEmber
                     break;
                 }
             }
+        }
+
+        // ── Deferred: FireHopeMageConsequence — 14 days after LC_YoungMageHope ──────
+        private static void FireHopeMageConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _hopeMageConsequenceCountdown = 1; return; }
+            var settlement = _hopeMageSettlementId != null
+                ? Settlement.All.FirstOrDefault(s => s.StringId == _hopeMageSettlementId)
+                : null;
+            _hopeMageSettlementId = null;
+            string sName = settlement?.Name?.ToString() ?? "that city";
+
+            if (settlement?.Town != null)
+            {
+                // Drop loyalty to near-zero so Bannerlord's native rebellion system fires within 1-2 days.
+                try { settlement.Town.Loyalty  = 5f; } catch { }
+                try { settlement.Town.Security = 0f; } catch { }
+            }
+
+            MageKnowledge._deferredInquiry = () =>
+                Msg($"The walls of {sName} are lit by torches held by the city's own people tonight. " +
+                    "The young mage who marched north came back with a name and a story, and the story found every ear that was ready for it. " +
+                    $"Loyalty in {sName} has collapsed. The city is on the verge of tearing itself loose from its lord.", AshenColor);
+        }
+
+        // ── Deferred: FireMemoryHungerDissolution — 7 days after EV_MemoryHunger choice B ──
+        private static void FireMemoryHungerDissolution()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _memoryHungerCountdown = 1; return; }
+            _memoryHungerConsumed  = false;
+            MageKnowledge._deferredInquiry = () =>
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "◆  The End of the Hunger",
+                    "You wake before dawn and there is nothing left. Not the fire. Not the cold. Not the name you called yourself before either of them arrived. " +
+                    "What is looking at the ceiling of your tent through your eyes is not you. " +
+                    "It is not certain what it is. " +
+                    "It is aware that this is the end of the person who made the choice that brought it here.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "I am still here.", null, true,
+                            "You are not. But the thing that says so is convincing."),
+                    },
+                    false, 1, 1, "", "",
+                    _ =>
+                    {
+                        try
+                        {
+                            if (Hero.MainHero != null && Hero.MainHero.IsAlive)
+                                KillCharacterAction.ApplyByOldAge(Hero.MainHero, true);
+                        }
+                        catch { }
+                    }, null, "", false), false, true);
+            };
         }
 
         // ── Deferred: FireHedgeWitchCurse — 7 days after E_NightVisitor choice A ──

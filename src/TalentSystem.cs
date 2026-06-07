@@ -99,7 +99,7 @@ namespace AshAndEmber
                 Id = TalentId.BattleMage, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Tempered",
                 Lore = "The forge teaches patience. A slow hand draws more from less; a careful reach into the fire takes without burning.",
-                MechanicDesc = "Passive. Each battle cast costs 1 fewer day (minimum 1). Beyond age 40, each year further reduces cast cost by 0.5%, up to 30% total."
+                MechanicDesc = "Passive. Each battle cast costs 1 fewer day (minimum 0 — small spells can be free). Beyond age 40, each year further reduces cast cost by 0.5%, up to 30% total."
             },
             new TalentDef
             {

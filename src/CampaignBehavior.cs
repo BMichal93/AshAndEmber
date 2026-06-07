@@ -213,10 +213,15 @@ namespace AshAndEmber
                     try { AshenCitySystem.DailyTick(); } catch { }
                     if (isAshen)
                     {
+                        // Mark the player as a criminal in every non-Ashen kingdom so lords
+                        // and guards treat them as an enemy from the start.
                         try
                         {
-                            if (Hero.MainHero?.Clan?.Kingdom is TaleWorlds.CampaignSystem.Kingdom oldK)
-                                TaleWorlds.CampaignSystem.Actions.ChangeCrimeRatingAction.Apply(oldK, 50f, true);
+                            foreach (var k in TaleWorlds.CampaignSystem.Kingdom.All.ToList())
+                            {
+                                if (k.StringId == "ashen_kingdom" || k.IsEliminated) continue;
+                                TaleWorlds.CampaignSystem.Actions.ChangeCrimeRatingAction.Apply(k, 80f, false);
+                            }
                         }
                         catch { }
                         try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }

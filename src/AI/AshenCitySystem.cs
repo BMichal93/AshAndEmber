@@ -210,8 +210,9 @@ namespace AshAndEmber
             try
             {
                 _ashenKingdom = Kingdom.CreateKingdom(AshenKingdomId);
-                var culture = homeSettlement.OwnerClan?.Culture
-                           ?? MBObjectManager.Instance.GetObject<CultureObject>("sturgia");
+                // Always use Sturgian culture so all Ashen cities share Tyal's visual theme.
+                var culture = MBObjectManager.Instance.GetObject<CultureObject>("sturgia")
+                           ?? homeSettlement.OwnerClan?.Culture;
                 _ashenKingdom.InitializeKingdom(
                     new TextObject("The Ashen"),
                     new TextObject("Ashen"),
@@ -339,8 +340,10 @@ namespace AshAndEmber
             {
                 int cur = CharacterRelationManager.GetHeroRelation(Hero.MainHero, hero);
                 if (cur < 100)
-                    ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                        Hero.MainHero, hero, 100 - cur, false);
+                    // SetHeroRelation directly instead of ApplyRelationChangeBetweenHeroes to
+                    // avoid awarding charm XP, which otherwise causes the player to jump to
+                    // level 34 immediately when starting as Ashen (one +100 per Ashen lord).
+                    CharacterRelationManager.SetHeroRelation(Hero.MainHero, hero, 100);
             }
             catch { }
         }
@@ -415,6 +418,8 @@ namespace AshAndEmber
 
         private static CharacterObject GetHighestTierTroop(CultureObject culture)
         {
+            // Force Sturgian troops so all Ashen garrisons share the same unit theme as Tyal.
+            culture = MBObjectManager.Instance.GetObject<CultureObject>("sturgia") ?? culture;
             if (culture == null) return null;
             try
             {

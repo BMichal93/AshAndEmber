@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -140,16 +141,30 @@ namespace AshAndEmber
             return _permanentSanctuaryIds.Contains(s.StringId);
         }
 
-        private static bool PlayerCanUseSanctuary()
+        // Returns -1.0 to +1.0. Positive = sanctuary helps fully; 0 = no effect; negative = penalty.
+        // Based on Mercy + Honor + Generosity, each clamped to [-2, 2], sum / 6.
+        private static float SanctuaryTraitMultiplier()
         {
             var h = Hero.MainHero;
-            if (h == null) return false;
+            if (h == null) return 0f;
             try
             {
-                return h.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Honor) >= 1
-                    && h.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Mercy)  >= 1;
+                int mercy = h.GetTraitLevel(DefaultTraits.Mercy);
+                int honor = h.GetTraitLevel(DefaultTraits.Honor);
+                int gen   = h.GetTraitLevel(DefaultTraits.Generosity);
+                return (mercy + honor + gen) / 6f;
             }
-            catch { return false; }
+            catch { return 0f; }
+        }
+
+        private static string SanctuaryTraitNote(float mult)
+        {
+            if (mult >= 0.8f)  return "  [Flame knows you — full blessing]";
+            if (mult >= 0.4f)  return "  [Partial blessing]";
+            if (mult >= 0.01f) return "  [Faint blessing — cold soul]";
+            if (mult >= -0.01f)return "  [No benefit — the flame does not know you]";
+            if (mult >= -0.5f) return "  [PENALTY — the flame recoils from your darkness]";
+            return "  [HEAVY PENALTY — the flame burns against you]";
         }
 
         private static bool NpcCanUseSanctuary(Hero h)
@@ -295,12 +310,11 @@ namespace AshAndEmber
                         try
                         {
                             if (!HasSanctuary(Settlement.CurrentSettlement)) return false;
-                            bool access = PlayerCanUseSanctuary();
+                            float mult = SanctuaryTraitMultiplier();
                             MBTextManager.SetTextVariable("SANCT_ENTER_TEXT",
-                                access ? "Visit the Sanctuary"
-                                       : "Visit the Sanctuary [Requires Honourable + Merciful]");
+                                "Visit the Sanctuary" + SanctuaryTraitNote(mult));
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
-                            args.IsEnabled = access;
+                            args.IsEnabled = true;
                             return true;
                         }
                         catch { return false; }
@@ -482,20 +496,33 @@ namespace AshAndEmber
         {
             try
             {
-                int cost = GoldCost(BaseCostPrayer);
+                int   cost = GoldCost(BaseCostPrayer);
+                float mult = SanctuaryTraitMultiplier();
+                int   boost = (int)(MoralePrayerBoost * mult);
                 ResolveSanctuaryPayment(cost, () =>
                 {
-                    try { MobileParty.MainParty.RecentEventsMorale += MoralePrayerBoost; } catch { }
+                    try { MobileParty.MainParty.RecentEventsMorale += boost; } catch { }
+                    string narrative;
+                    if (boost > 0)
+                        narrative = "The candles are the same ones that have burned here for decades — the wax is built up in long columns, the flames do not flicker. You speak no words aloud. The fire listens anyway.\n\n" +
+                            "When you rise, the weight is not gone, but it sits differently. Your men will feel it before they know why — a steadiness in the line, a fraction less give in the shoulders. " +
+                            "It is a small thing. It is also everything.";
+                    else if (boost == 0)
+                        narrative = "The candles burn indifferently. You kneel and speak the words, but the fire does not stir for you. " +
+                            "It is not hostile — it simply does not know what you are. You leave having paid. Nothing else changed.";
+                    else
+                        narrative = "The candles falter when you enter. The priest takes a half-step back. You speak the words anyway, and the fire answers — " +
+                            "but not with warmth. A chill passes through your ranks outside, sudden and sourceless. " +
+                            $"Party morale drops by {-boost}. The flame does not forgive what you have become.";
                     try
                     {
                         InformationManager.ShowInquiry(new InquiryData(
-                            "Prayer of Strength",
-                            "The candles are the same ones that have burned here for decades — the wax is built up in long columns, the flames do not flicker. You speak no words aloud. The fire listens anyway.\n\n" +
-                            "When you rise, the weight is not gone, but it sits differently. Your men will feel it before they know why — a steadiness in the line, a fraction less give in the shoulders. " +
-                            "It is a small thing. It is also everything.",
-                            true, false, "So be it.", "", null, null));
+                            "Prayer of Strength", narrative, true, false, "So be it.", "", null, null));
                     }
-                    catch { MBInformationManager.AddQuickInformation(new TextObject($"Prayer of Strength — the flame holds. Party morale rises by {MoralePrayerBoost}.")); }
+                    catch { MBInformationManager.AddQuickInformation(new TextObject(boost > 0
+                        ? $"Prayer of Strength — +{boost} morale."
+                        : boost == 0 ? "Prayer of Strength — no effect. The flame does not know you."
+                        : $"Prayer of Strength — the flame recoils. {boost} morale.")); }
                 });
             }
             catch { }
@@ -506,23 +533,43 @@ namespace AshAndEmber
         {
             try
             {
-                int cost  = GoldCost(BaseCostProtective);
-                int aging = AgingCost(BaseAgingProtective);
+                int   cost   = GoldCost(BaseCostProtective);
+                int   aging  = AgingCost(BaseAgingProtective);
+                float mult   = SanctuaryTraitMultiplier();
+                int   days   = Math.Max(0, (int)(ProtectiveDays * mult));
                 ResolveSanctuaryPayment(cost, () =>
                 {
                     AgeHero(Hero.MainHero, aging);
-                    CampaignMapEvents.StartProtection(ProtectiveDays);
+                    string narrative;
+                    if (mult > 0.01f)
+                    {
+                        CampaignMapEvents.StartProtection(days);
+                        narrative = "The priest draws symbols in ash across your palms and speaks words that are not quite in any language you recognise. The flame on the altar burns a shade hotter for a moment, then returns to itself.\n\n" +
+                            $"You will carry this for {days} days. The grey things that hunt in the cold will find your scent harder to follow. " +
+                            "It does not make you invisible. It makes you less interesting to whatever thinks of you as prey.\n\n" +
+                            "The priest does not say farewell. He simply returns to his candles.";
+                    }
+                    else if (mult >= -0.01f)
+                        narrative = "The priest performs the rite. The flame does not respond. Your palms are marked with ash, " +
+                            "but something is missing — the ward does not seat itself in you. " +
+                            "The Ashen will find your scent as easily as they would have before. You have paid for something that did not arrive.";
+                    else
+                    {
+                        // Penalty: Ashen events become more likely for a period (simulated as shorter protection, negative message)
+                        narrative = "The rite goes wrong. The flame recoils from the ash that is already in you, and instead of warding you it marks you. " +
+                            "For the next week something cold will have an easier time finding you. " +
+                            $"The priest does not apologise. He simply steps back and watches you leave.";
+                        // Apply brief negative protection (the CampaignMapEvents flag can only protect, so we just notify)
+                    }
                     try
                     {
                         InformationManager.ShowInquiry(new InquiryData(
-                            "Protective Rites",
-                            "The priest draws symbols in ash across your palms and speaks words that are not quite in any language you recognise. The flame on the altar burns a shade hotter for a moment, then returns to itself.\n\n" +
-                            $"You will carry this for {ProtectiveDays} days. The grey things that hunt in the cold will find your scent harder to follow. " +
-                            "It does not make you invisible. It makes you less interesting to whatever thinks of you as prey.\n\n" +
-                            "The priest does not say farewell. He simply returns to his candles.",
-                            true, false, "I understand.", "", null, null));
+                            "Protective Rites", narrative, true, false, "I understand.", "", null, null));
                     }
-                    catch { MBInformationManager.AddQuickInformation(new TextObject($"Protective Rites — the sanctuary's blessing holds for {ProtectiveDays} days.")); }
+                    catch { MBInformationManager.AddQuickInformation(new TextObject(days > 0
+                        ? $"Protective Rites — ward active for {days} days."
+                        : mult < 0 ? "Protective Rites — the rite misfired. The cold is now closer."
+                        : "Protective Rites — no ward formed.")); }
                 });
             }
             catch { }
@@ -533,8 +580,9 @@ namespace AshAndEmber
         {
             try
             {
-                int cost  = GoldCost(BaseCostTurnAshen);
-                int aging = AgingCost(BaseAgingTurnAshen);
+                int   cost  = GoldCost(BaseCostTurnAshen);
+                int   aging = AgingCost(BaseAgingTurnAshen);
+                float mult  = SanctuaryTraitMultiplier();
                 ResolveSanctuaryPayment(cost, () =>
                 {
                     AgeHero(Hero.MainHero, aging);
@@ -542,60 +590,59 @@ namespace AshAndEmber
                     float px = 0f, py = 0f;
                     try { px = MobileParty.MainParty.GetPosition2D.x; py = MobileParty.MainParty.GetPosition2D.y; } catch { }
                     float rangeSquared = 200f * 200f;
+                    string narrative;
 
-                    var targets = MobileParty.All
-                        .Where(p => p.IsActive && !p.IsMainParty
-                                 && p.MapFaction?.StringId == AshenKingdomId)
-                        .Select(p =>
-                        {
-                            float dx = p.GetPosition2D.x - px, dy = p.GetPosition2D.y - py;
-                            return (party: p, dist2: dx * dx + dy * dy);
-                        })
-                        .Where(t => t.dist2 < rangeSquared)
-                        .OrderBy(t => t.dist2)
-                        .Take(3)
-                        .Select(t => t.party)
-                        .ToList();
-
-                    int totalWounded = 0;
-                    foreach (var party in targets)
+                    if (mult > 0.01f)
                     {
-                        int toWound = 12 + _rng.Next(9), wounded = 0;
-                        try
+                        var targets = MobileParty.All
+                            .Where(p => p.IsActive && !p.IsMainParty
+                                     && p.MapFaction?.StringId == AshenKingdomId)
+                            .Select(p => { float dx = p.GetPosition2D.x - px, dy = p.GetPosition2D.y - py; return (party: p, dist2: dx * dx + dy * dy); })
+                            .Where(t => t.dist2 < rangeSquared)
+                            .OrderBy(t => t.dist2)
+                            .Take(3).Select(t => t.party).ToList();
+
+                        int totalWounded = 0;
+                        foreach (var party in targets)
                         {
-                            foreach (var e in party.MemberRoster.GetTroopRoster().ToList())
+                            int toWound = Math.Max(1, (int)((12 + _rng.Next(9)) * mult)), wounded = 0;
+                            try
                             {
-                                if (e.Character.IsHero) continue;
-                                int healthy = e.Number - e.WoundedNumber;
-                                int w = Math.Min(healthy, toWound - wounded);
-                                if (w <= 0) continue;
-                                party.MemberRoster.AddToCounts(e.Character, 0, false, w);
-                                wounded += w;
-                                if (wounded >= toWound) break;
+                                foreach (var e in party.MemberRoster.GetTroopRoster().ToList())
+                                {
+                                    if (e.Character.IsHero) continue;
+                                    int healthy = e.Number - e.WoundedNumber;
+                                    int w = Math.Min(healthy, toWound - wounded);
+                                    if (w <= 0) continue;
+                                    party.MemberRoster.AddToCounts(e.Character, 0, false, w);
+                                    wounded += w;
+                                    if (wounded >= toWound) break;
+                                }
+                                totalWounded += wounded;
+                                try { party.RecentEventsMorale -= 35f * mult; } catch { }
                             }
-                            totalWounded += wounded;
-                            try { party.RecentEventsMorale -= 35f; } catch { }
+                            catch { }
                         }
-                        catch { }
+                        narrative = targets.Count == 0
+                            ? "The rite is spoken. The flame surges briefly and then settles. The grey things are not close enough to feel it."
+                            : $"{targets.Count} Ashen part{(targets.Count > 1 ? "ies" : "y")} have recoiled from the flame. {totalWounded} cold soldiers are on their knees.";
                     }
-
-                    string narrative = targets.Count == 0
-                        ? "The rite is spoken. The flame on the altar surges briefly and then settles. The priest says nothing — " +
-                          "the prayer was heard, but whatever grey things move in the cold are not close enough to feel it. " +
-                          "Sometimes that is the only answer the flame gives."
-                        : $"The priest does not stop speaking even as the light changes. Outside, something is happening — " +
-                          $"you can feel it through the stone floor, a vibration that is not quite sound. " +
-                          $"{targets.Count} Ashen part{(targets.Count > 1 ? "ies" : "y")} have recoiled from it. " +
-                          $"{totalWounded} cold soldiers are on their knees in the dark, wondering what struck them. " +
-                          "The flame on the altar returns to its ordinary size. The priest finishes his words.";
-                    try
+                    else if (mult < -0.01f)
                     {
-                        InformationManager.ShowInquiry(new InquiryData(
-                            "Turn the Ashen", narrative, true, false, "The flame holds.", "", null, null));
+                        // Penalty: the Ashen sense the player and gain morale
+                        int boosted = 0;
+                        foreach (var p in MobileParty.All.Where(p => p.IsActive && !p.IsMainParty && p.MapFaction?.StringId == AshenKingdomId).Take(3))
+                        {
+                            try { p.RecentEventsMorale += 20f; boosted++; } catch { }
+                        }
+                        narrative = $"The rite inverts. Instead of burning the Ashen, the flame marks you for them. " +
+                            $"{boosted} Ashen part{(boosted != 1 ? "ies" : "y")} sense you through the cold. The priest steps away from the altar quickly.";
                     }
-                    catch { MBInformationManager.AddQuickInformation(new TextObject(targets.Count == 0
-                        ? "Turn the Ashen — no Ashen are close enough to feel it."
-                        : $"Turn the Ashen — {targets.Count} part{(targets.Count > 1 ? "ies" : "y")}, {totalWounded} wounded.")); }
+                    else
+                        narrative = "The rite is spoken. The flame stirs but does not reach — you carry nothing in you it can use as a weapon against the cold.";
+
+                    try { InformationManager.ShowInquiry(new InquiryData("Turn the Ashen", narrative, true, false, "The flame holds.", "", null, null)); }
+                    catch { MBInformationManager.AddQuickInformation(new TextObject(narrative.Length > 80 ? narrative.Substring(0, 80) + "…" : narrative)); }
                 });
             }
             catch { }
@@ -606,32 +653,62 @@ namespace AshAndEmber
         {
             try
             {
-                int cost  = GoldCost(BaseCostHealing);
-                int aging = AgingCost(BaseAgingHealing);
+                int   cost  = GoldCost(BaseCostHealing);
+                int   aging = AgingCost(BaseAgingHealing);
+                float mult  = SanctuaryTraitMultiplier();
                 ResolveSanctuaryPayment(cost, () =>
                 {
                     AgeHero(Hero.MainHero, aging);
 
-                    int healed = 0;
+                    int healed = 0, wounded = 0;
                     var roster = MobileParty.MainParty?.MemberRoster;
-                    if (roster != null)
+
+                    if (mult > 0.01f)
                     {
-                        foreach (var e in roster.GetTroopRoster().ToList())
+                        // Heal a fraction of wounds proportional to trait strength
+                        if (roster != null)
                         {
-                            if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
-                            try { roster.AddToCounts(e.Character, 0, false, -e.WoundedNumber); healed += e.WoundedNumber; }
-                            catch { }
+                            foreach (var e in roster.GetTroopRoster().ToList())
+                            {
+                                if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
+                                int heal = Math.Max(1, (int)(e.WoundedNumber * mult));
+                                try { roster.AddToCounts(e.Character, 0, false, -heal); healed += heal; }
+                                catch { }
+                            }
+                        }
+                        try { if (Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints) Hero.MainHero.HitPoints = Hero.MainHero.MaxHitPoints; } catch { }
+                    }
+                    else if (mult < -0.01f)
+                    {
+                        // Penalty: wound some healthy troops
+                        int toWound = Math.Max(1, (int)(5 * Math.Abs(mult)));
+                        if (roster != null)
+                        {
+                            foreach (var e in roster.GetTroopRoster().ToList())
+                            {
+                                if (e.Character.IsHero) continue;
+                                int healthy = e.Number - e.WoundedNumber;
+                                int w = Math.Min(healthy, toWound - wounded);
+                                if (w <= 0) continue;
+                                try { roster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
+                                if (wounded >= toWound) break;
+                            }
                         }
                     }
-                    try { if (Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints) Hero.MainHero.HitPoints = Hero.MainHero.MaxHitPoints; } catch { }
 
-                    string healNarrative = healed > 0
-                        ? $"The priest says a word you don't catch. Then another. By the third, the bandaged men in your camp are sitting up — " +
-                          $"not better, exactly, but less far from it. {healed} soldier{(healed != 1 ? "s" : "")} who should have needed another week are " +
-                          "folding their blankets and checking their equipment. They don't ask how. Some things don't improve from asking."
-                        : "The priest speaks the words regardless. The flame does its work through stone and distance. " +
-                          "When you return to your men you find none of them wounded — the blessing confirmed what was already true. " +
-                          "It is not the most dramatic outcome. It is still something.";
+                    string healNarrative;
+                    if (healed > 0)
+                        healNarrative = $"The priest says a word you don't catch. Then another. By the third, the bandaged men in your camp are sitting up — " +
+                            $"not better, exactly, but less far from it. {healed} soldier{(healed != 1 ? "s" : "")} who should have needed another week are " +
+                            "folding their blankets and checking their equipment. They don't ask how. Some things don't improve from asking.";
+                    else if (wounded > 0)
+                        healNarrative = $"The priest speaks and the flame answers, but what it sends out is cold. " +
+                            $"Your men outside are worse than they were — {wounded} soldier{(wounded != 1 ? "s" : "")} have taken a turn for the worse, " +
+                            "wounds reopening or simply deepening. The fire does not answer the faithless with mercy.";
+                    else
+                        healNarrative = "The priest speaks the words. The flame listens but does not act — you carry nothing in you it recognises as worth healing. " +
+                            "You have paid. The fire decided what that bought.";
+
                     try
                     {
                         InformationManager.ShowInquiry(new InquiryData(
@@ -639,7 +716,8 @@ namespace AshAndEmber
                     }
                     catch { MBInformationManager.AddQuickInformation(new TextObject(healed > 0
                         ? $"Prayer of Healing — {healed} soldier{(healed != 1 ? "s" : "")} restored."
-                        : "Prayer of Healing — no wounded to restore.")); }
+                        : wounded > 0 ? $"Prayer of Healing — the flame penalised you. {wounded} soldiers worsened."
+                        : "Prayer of Healing — no effect.")); }
                 });
             }
             catch { }
@@ -650,35 +728,50 @@ namespace AshAndEmber
         {
             try
             {
-                int cost = BlessingCost();
-                var hero = Hero.MainHero;
-                if (hero?.Age <= BlessingMinAge) return;
+                int   cost = BlessingCost();
+                float mult = SanctuaryTraitMultiplier();
+                var   hero = Hero.MainHero;
+                if (hero == null) return;
                 ResolveSanctuaryPayment(cost, () =>
                 {
-                    float currentAge = hero.Age;
-                    int   maxRejuv   = (int)Math.Max(0f, (currentAge - BlessingMinAge) * 365.25f);
-                    int   actualDays = Math.Min(BlessingRejuvDays, maxRejuv);
+                    string blessNarrative;
+                    if (mult > 0.01f)
+                    {
+                        float currentAge = hero.Age;
+                        int   maxRejuv   = (int)Math.Max(0f, (currentAge - BlessingMinAge) * 365.25f);
+                        int   actualDays = Math.Min((int)(BlessingRejuvDays * mult), maxRejuv);
+                        if (actualDays > 0) try { AgingSystem.RejuvenateHero(hero, actualDays); } catch { }
+                        int yearsGained = actualDays / 365;
+                        blessNarrative = yearsGained > 0
+                            ? $"The priest does not explain what he is doing. He places both hands on the altar, speaks without pause for several minutes, " +
+                              "and when he finishes the candles are slightly shorter than they were. So are you, in a way that doesn't show in a mirror but " +
+                              $"shows in how your joints feel the next morning. {yearsGained} year{(yearsGained != 1 ? "s" : "")} paid back. " +
+                              "You don't ask where they went. Some debts are settled in kinds of coin you don't want to examine."
+                            : "The priest completes the rite. The flame does what it can, but finds very little left to return. " +
+                              "You are already near the limit of what this place can offer.";
+                    }
+                    else if (mult < -0.01f)
+                    {
+                        // Penalty: age the player
+                        int penalty = Math.Max(1, (int)(180 * Math.Abs(mult)));
+                        try { AgingSystem.AgeHero(hero, penalty); } catch { }
+                        blessNarrative = $"The priest begins the words. The flame answers — but coldly, violently, as if offended by what it finds in you. " +
+                            $"When it is done you feel older, not younger. {penalty / 365f:F1} years pressed back into you by something that refused to be given to the likes of what you are. " +
+                            "The priest does not meet your eyes as you leave.";
+                    }
+                    else
+                        blessNarrative = "The priest completes the rite. The flame does not respond to you — not with hostility, but with indifference. " +
+                            "You carry nothing it recognises as worth returning. The candles burned for nothing. You paid for the attempt.";
 
-                    if (actualDays > 0)
-                        try { AgingSystem.RejuvenateHero(hero, actualDays); } catch { }
-
-                    int yearsGained = actualDays / 365;
-                    string blessNarrative = yearsGained > 0
-                        ? $"The priest does not explain what he is doing. He places both hands on the altar, speaks without pause for several minutes, " +
-                          "and when he finishes the candles are slightly shorter than they were. So are you, in a way that doesn't show in a mirror but " +
-                          $"shows in how your joints feel the next morning. {yearsGained} year{(yearsGained != 1 ? "s" : "")} paid back. " +
-                          "You don't ask where they went. Some debts are settled in kinds of coin you don't want to examine."
-                        : "The priest completes the rite. The flame does what it can. You are as young as the sanctuary will allow — " +
-                          "which is to say, the years behind you are already as few as this place can make them. " +
-                          "There is something clarifying about reaching a limit.";
                     try
                     {
                         InformationManager.ShowInquiry(new InquiryData(
-                            "Prayer for a Blessing", blessNarrative, true, false, "Some debts are settled.", "", null, null));
+                            "Prayer for a Blessing", blessNarrative, true, false, "So be it.", "", null, null));
                     }
-                    catch { MBInformationManager.AddQuickInformation(new TextObject(yearsGained > 0
-                        ? $"Prayer for a Blessing — {yearsGained} year{(yearsGained != 1 ? "s" : "")} returned."
-                        : "Prayer for a Blessing — already as young as the rites allow.")); }
+                    catch { MBInformationManager.AddQuickInformation(new TextObject(
+                        mult > 0.01f ? "Prayer for a Blessing — years returned."
+                        : mult < -0.01f ? "Prayer for a Blessing — the flame aged you."
+                        : "Prayer for a Blessing — no effect.")); }
                 });
             }
             catch { }

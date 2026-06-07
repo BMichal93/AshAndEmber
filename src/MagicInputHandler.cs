@@ -38,6 +38,11 @@ namespace AshAndEmber
 
         public static bool InputSuppressed { get; private set; }
 
+        // Counts how many times an Ashen player cast in the current battle mission.
+        // Reset by ResetInputState (called on mission end via MagicSystem).
+        private static int _ashenBattleCastCount = 0;
+        public  static int AshenBattleCastCount  => _ashenBattleCastCount;
+
         public static void Tick(bool inMission)
         {
             ColourKnowledge.FlushDeferredInquiry();
@@ -174,6 +179,7 @@ namespace AshAndEmber
             _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
             _prevBreakPad  = false;
             InputSuppressed = false;
+            _ashenBattleCastCount = 0;
         }
 
         private static void AppendForm(string dir)
@@ -266,7 +272,10 @@ namespace AshAndEmber
                 if (agingDays > 0)
                 {
                     if (MageKnowledge.IsAshen)
+                    {
                         ApplyBlightCastCost(agingDays);
+                        if (inMission) _ashenBattleCastCount++;
+                    }
                     else
                         AgingSystem.AgeHero(Hero.MainHero, agingDays);
                 }
