@@ -188,7 +188,7 @@ namespace AshAndEmber
                 if (affectedAgent == null || affectedAgent.IsMount) return;
                 if (agentState != AgentState.Killed) return;
                 if (!MageKnowledge.IsMage || !TalentSystem.Has(TalentId.Ember)) return;
-                if (_rng.NextDouble() < 0.05)
+                if (_rng.NextDouble() < 0.10)
                     AgingSystem.RejuvenateHero(Hero.MainHero, 1);
             }
             catch { }

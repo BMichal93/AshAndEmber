@@ -269,6 +269,18 @@ namespace AshAndEmber
             {
                 try { if (Agent.Main != null) SpellEffects.RecordMagicCast(Agent.Main.Position); } catch { }
                 int agingDays = cast.AgingDays(hasBattleMage);
+
+                // Kinship: each allied mage lord in this battle reduces aging cost by 10% (max 50%)
+                if (inMission && TalentSystem.Has(TalentId.Camaraderie))
+                {
+                    int mageCount = CountAlliedMagesInBattle();
+                    if (mageCount > 0)
+                    {
+                        float reduction = Math.Min(0.50f, mageCount * 0.10f);
+                        agingDays = Math.Max(0, (int)Math.Round(agingDays * (1f - reduction)));
+                    }
+                }
+
                 if (agingDays > 0)
                 {
                     if (MageKnowledge.IsAshen)
@@ -312,6 +324,23 @@ namespace AshAndEmber
                 }
             }
             catch { }
+        }
+
+        private static int CountAlliedMagesInBattle()
+        {
+            if (Mission.Current == null || Agent.Main == null) return 0;
+            int count = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents)
+                {
+                    if (!a.IsActive() || !a.IsHero || a == Agent.Main || a.Team != Agent.Main.Team) continue;
+                    Hero h = (a.Character as TaleWorlds.CampaignSystem.CharacterObject)?.HeroObject;
+                    if (h != null && ColourLordRegistry.IsColourLord(h)) count++;
+                }
+            }
+            catch { }
+            return count;
         }
 
         private static void Fizzle(string msg) =>

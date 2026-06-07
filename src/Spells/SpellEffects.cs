@@ -348,14 +348,14 @@ namespace AshAndEmber
             // Cinder Shell enchantment: reduce incoming damage
             if (_stoneskinAgents.TryGetValue(target, out var skin) && skin.Remaining > 0f)
             {
-                float reduction = Math.Min(0.5f, skin.BonusArmor / 200f);
+                float reduction = Math.Min(0.5f, skin.BonusArmor / 100f);
                 damage *= (1f - reduction);
             }
 
             // Sunder enchantment: increase incoming damage (armour shred, max +50%)
             if (_sunderedAgents.TryGetValue(target, out var sunder) && sunder.Remaining > 0f)
             {
-                float amplification = Math.Min(0.50f, sunder.BonusVuln / 200f);
+                float amplification = Math.Min(0.50f, sunder.BonusVuln / 100f);
                 damage *= (1f + amplification);
             }
 
@@ -560,7 +560,16 @@ namespace AshAndEmber
                                 try { target.SetMorale(0f); } catch { }
                                 break;
                             case 1:
-                                try { target.Formation?.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+                                try
+                                {
+                                    target.SetMorale(target.GetMorale() * 0.5f);
+                                    if (!_charredAgents.TryGetValue(target, out var curPanic))
+                                        _charredAgents[target] = (0f, 2f);
+                                    else
+                                        _charredAgents[target] = (0f, Math.Max(curPanic.Remaining, 2f));
+                                    target.SetMaximumSpeedLimit(0f, false);
+                                }
+                                catch { }
                                 break;
                             case 2:
                                 bool mounted = false;
@@ -598,23 +607,35 @@ namespace AshAndEmber
                 catch { }
             }
 
-            // Immolate: bonus burn damage per input; guaranteed kills = DamageCount / 3
-            // (3 inputs = 1 kill, 6 inputs = 2 kills, 9 inputs = 3 kills).
+            // Immolate: burn damage per input; kills scale with inputs.
+            // ≥3 inputs: guaranteed kills (DamageCount / 3 per cast).
+            // 2 inputs: 50% chance to kill. 1 input: 33% chance to kill.
             if (CasterHasEnchantment(caster, TalentId.Immolate))
             {
                 try
                 {
-                    // Lazy-init on the first target of this cast
                     if (_immolateKillsRemaining < 0)
                         _immolateKillsRemaining = cast.DamageCount / 3;
 
-                    if (cast.DamageCount >= 3 && _immolateKillsRemaining > 0)
+                    bool doGuaranteedKill = cast.DamageCount >= 3 && _immolateKillsRemaining > 0;
+                    bool doProbKill = !doGuaranteedKill && (
+                        (cast.DamageCount == 2 && _rng.NextDouble() < 0.50) ||
+                        (cast.DamageCount == 1 && _rng.NextDouble() < 0.33));
+
+                    if (doGuaranteedKill)
                     {
                         _immolateKillsRemaining--;
                         QueueKill(target);
                         BeginAgentGlow(target, ColorSchool.Red, 2f);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Immolate — consumed.", new Color(1f, 0.4f, 0.1f)));
+                    }
+                    else if (doProbKill)
+                    {
+                        QueueKill(target);
+                        BeginAgentGlow(target, ColorSchool.Red, 2f);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Immolate — the fire claims.", new Color(1f, 0.4f, 0.1f)));
                     }
                     else
                     {
@@ -648,7 +669,7 @@ namespace AshAndEmber
                 {
                     float hp = target.Health;
                     float hpMax = target.HealthLimit;
-                    if (hpMax > 0f && hp >= hpMax * 0.90f)
+                    if (hpMax > 0f && hp >= hpMax * 0.80f)
                     {
                         float overBonus = cast.RestoreCount * 15f;
                         AddStoneskin(target, overBonus, 5f);
@@ -674,8 +695,8 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float pct = Math.Min(0.50f, cast.RestoreCount * 0.08f);  // cap raised from 40% to 50%
-                    float duration = 3f + cast.RestoreCount * 1.5f;  // was 1f per input
+                    float pct = Math.Min(0.50f, cast.RestoreCount * 0.08f);
+                    float duration = 3f + (float)Math.Sqrt(cast.RestoreCount) * 4f;
                     if (!_reflectAgents.TryGetValue(target, out var cur))
                         _reflectAgents[target] = (pct, duration);
                     else
