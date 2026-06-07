@@ -1449,7 +1449,7 @@ namespace AshAndEmber
 
                     string city = hero.CurrentSettlement?.Name?.ToString() ?? "the altar";
 
-                    switch (_rng.Next(3))
+                    switch (_rng.Next(5))
                     {
                         case 0:
                             NpcHealPartyPartial(hero.PartyBelongedTo, 0.20f);
@@ -1468,6 +1468,18 @@ namespace AshAndEmber
                             InformationManager.DisplayMessage(new InformationMessage(
                                 $"{hero.Name} — curse whispered at the altar in {city}. Something reached out and touched an enemy in the dark.",
                                 new Color(0.38f, 0.50f, 0.75f)));
+                            break;
+                        case 3:
+                            if (NpcCarrionGiftGarrison(hero, out string plagueTarget))
+                                InformationManager.DisplayMessage(new InformationMessage(
+                                    $"{hero.Name} — carrion rite at the altar in {city}. A grey sickness reached {plagueTarget}.",
+                                    new Color(0.38f, 0.50f, 0.75f)));
+                            break;
+                        case 4:
+                            if (NpcBreakWillsCity(hero, out string despairTarget))
+                                InformationManager.DisplayMessage(new InformationMessage(
+                                    $"{hero.Name} — despair rite at the altar in {city}. {despairTarget} grows restless and fearful.",
+                                    new Color(0.38f, 0.50f, 0.75f)));
                             break;
                     }
                 }
@@ -1491,6 +1503,51 @@ namespace AshAndEmber
         {
             if (party == null) return;
             try { party.RecentEventsMorale += amount; } catch { }
+        }
+
+        // Wounds 10–20% of a random non-Ashen garrison. Returns true and sets targetName if successful.
+        private static bool NpcCarrionGiftGarrison(Hero caster, out string targetName)
+        {
+            targetName = "";
+            try
+            {
+                var candidates = Settlement.All
+                    .Where(s => s.IsTown && s.MapFaction?.StringId != AshenKingdomId
+                             && s.Town?.GarrisonParty?.MemberRoster?.TotalManCount > 0)
+                    .ToList();
+                if (candidates.Count == 0) return false;
+                var target = candidates[_rng.Next(candidates.Count)];
+                targetName = target.Name?.ToString() ?? "a distant garrison";
+                foreach (var e in target.Town.GarrisonParty.MemberRoster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero) continue;
+                    int healthy = e.Number - e.WoundedNumber; if (healthy <= 0) continue;
+                    int toWound = Math.Max(1, (int)(healthy * (0.10f + (float)_rng.NextDouble() * 0.10f)));
+                    try { target.Town.GarrisonParty.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                }
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // Drains 5–10 loyalty and security from a random non-Ashen city. Returns true and sets targetName if successful.
+        private static bool NpcBreakWillsCity(Hero caster, out string targetName)
+        {
+            targetName = "";
+            try
+            {
+                var candidates = Settlement.All
+                    .Where(s => s.IsTown && s.MapFaction?.StringId != AshenKingdomId && s.Town != null)
+                    .ToList();
+                if (candidates.Count == 0) return false;
+                var target = candidates[_rng.Next(candidates.Count)];
+                targetName = target.Name?.ToString() ?? "a distant city";
+                float drain = 5f + (float)_rng.NextDouble() * 5f;
+                try { target.Town.Loyalty  = Math.Max(0f, target.Town.Loyalty  - drain); } catch { }
+                try { target.Town.Security = Math.Max(0f, target.Town.Security - drain); } catch { }
+                return true;
+            }
+            catch { return false; }
         }
 
         private static void NpcCurseNearbyParty(MobileParty source)

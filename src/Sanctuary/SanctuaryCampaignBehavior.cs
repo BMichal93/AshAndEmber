@@ -1165,21 +1165,29 @@ namespace AshAndEmber
                     if (_rng.NextDouble() > 0.003) continue;   // 0.3% per qualifying lord per day
 
                     string city = hero.CurrentSettlement?.Name?.ToString() ?? "the sanctuary";
-                    bool   heal = _rng.Next(2) == 0;
 
-                    if (heal)
+                    switch (_rng.Next(3))
                     {
-                        NpcHealPartyFull(hero.PartyBelongedTo);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"{hero.Name} — miracle at the sanctuary in {city}. The wounded rose from their beds before sunrise.",
-                            new Color(0.80f, 0.72f, 0.45f)));
-                    }
-                    else
-                    {
-                        NpcBoostMorale(hero.PartyBelongedTo);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"{hero.Name} — miracle at the sanctuary in {city}. A renewal of spirit was reported by the guards on watch.",
-                            new Color(0.80f, 0.72f, 0.45f)));
+                        case 0:
+                            NpcHealPartyFull(hero.PartyBelongedTo);
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} — miracle at the sanctuary in {city}. The wounded rose from their beds before sunrise.",
+                                new Color(0.80f, 0.72f, 0.45f)));
+                            break;
+                        case 1:
+                            NpcBoostMorale(hero.PartyBelongedTo);
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} — miracle at the sanctuary in {city}. A renewal of spirit was reported by the guards on watch.",
+                                new Color(0.80f, 0.72f, 0.45f)));
+                            break;
+                        case 2:
+                            // Protective ward equivalent: partial steady-the-line (heal a fraction per day for 2 days, simulated as double heal now)
+                            NpcHealPartyPartial(hero.PartyBelongedTo, 0.20f);
+                            NpcHealPartyPartial(hero.PartyBelongedTo, 0.20f);
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} — a ward from the sanctuary in {city}. Their injuries are knitting faster than they should.",
+                                new Color(0.80f, 0.72f, 0.45f)));
+                            break;
                     }
                 }
             }
@@ -1264,6 +1272,7 @@ namespace AshAndEmber
                 if (wounded >= toWound) break;
             }
             try { target.RecentEventsMorale -= 20f; } catch { }
+            try { target.Food = Math.Min(target.Food, 0f); } catch { }   // scatter their supplies
         }
     }
 }
