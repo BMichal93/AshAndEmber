@@ -351,7 +351,7 @@ namespace AshAndEmber
                     if (chosen?.Count > 0)
                     {
                         var id = (TalentId)(int)chosen[0].Identifier;
-                        _deferredInquiry = () => TalentSystem.ExecuteMapSpell(id);
+                        _deferredInquiry = () => SpellMinigame.Begin(id);
                     }
                 },
                 null, "", false

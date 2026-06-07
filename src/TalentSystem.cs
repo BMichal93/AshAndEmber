@@ -442,7 +442,9 @@ namespace AshAndEmber
             All.FirstOrDefault(d => d.Id == id) ?? All[0];
 
         // ── Campaign map spell execution ──────────────────────────────────────
-        public static void ExecuteMapSpell(TalentId id)
+        // powerMult scales spell output (1.0 = baseline). Always called via
+        // SpellMinigame which determines the multiplier from recall score.
+        public static void ExecuteMapSpell(TalentId id, float powerMult = 1f)
         {
             if (!Has(id)) return;
             var def = GetDef(id);
@@ -482,16 +484,16 @@ namespace AshAndEmber
 
             switch (id)
             {
-                case TalentId.BreakWills:   CastBreakWills();   break;
-                case TalentId.Inspire:      CastInspire();      break;
-                case TalentId.Plague:       CastPlague();       break;
-                case TalentId.Clairvoyance: CastClairvoyance(); break;
-                case TalentId.Extinguish:   CastExtinguish();   break;
-                case TalentId.Fade:         CastFade();         break;
+                case TalentId.BreakWills:   CastBreakWills(powerMult);   break;
+                case TalentId.Inspire:      CastInspire(powerMult);      break;
+                case TalentId.Plague:       CastPlague(powerMult);       break;
+                case TalentId.Clairvoyance: CastClairvoyance(powerMult); break;
+                case TalentId.Extinguish:   CastExtinguish(powerMult);   break;
+                case TalentId.Fade:         CastFade(powerMult);         break;
             }
         }
 
-        private static void CastBreakWills()
+        private static void CastBreakWills(float mult)
         {
             try
             {
@@ -504,39 +506,43 @@ namespace AshAndEmber
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Unsettle — no enemy party in range."); return; }
-                target.RecentEventsMorale -= 40f;
+                int morale = (int)(40f * mult);
+                target.RecentEventsMorale -= morale;
                 var tClan = target.LeaderHero?.Clan;
-                if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - 10f);
-                string infLine = tClan != null ? " -10 influence." : "";
-                Msg($"Unsettle — dread settles over {target.Name}. -40 morale.{infLine}");
+                float infLoss = 10f * mult;
+                if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - infLoss);
+                string infLine = tClan != null ? $" -{(int)infLoss} influence." : "";
+                Msg($"Unsettle — dread settles over {target.Name}. -{morale} morale.{infLine}");
             }
             catch { }
         }
 
-        private static void CastInspire()
+        private static void CastInspire(float mult)
         {
             try
             {
                 if (MobileParty.MainParty == null) return;
-                MobileParty.MainParty.RecentEventsMorale += 40f;
+                int morale = (int)(40f * mult);
+                MobileParty.MainParty.RecentEventsMorale += morale;
+                int healPerTroop = Math.Max(1, (int)(8f * mult));
                 var roster = MobileParty.MainParty.MemberRoster;
                 var wounded = roster.GetTroopRoster()
                     .Where(e => !e.Character.IsHero && e.WoundedNumber > 0).ToList();
                 int roused = 0;
                 foreach (var entry in wounded)
                 {
-                    int heal = Math.Min(entry.WoundedNumber, 8);
+                    int heal = Math.Min(entry.WoundedNumber, healPerTroop);
                     try { roster.AddToCounts(entry.Character, 0, false, -heal); roused += heal; } catch { }
                 }
                 string msg = roused > 0
-                    ? $"Kindle — warmth floods your ranks. +40 morale, {roused} soldier{(roused != 1 ? "s" : "")} rise from their wounds."
-                    : "Kindle — warmth floods your ranks. +40 morale.";
+                    ? $"Kindle — warmth floods your ranks. +{morale} morale, {roused} soldier{(roused != 1 ? "s" : "")} rise from their wounds."
+                    : $"Kindle — warmth floods your ranks. +{morale} morale.";
                 Msg(msg);
             }
             catch { }
         }
 
-        private static void CastPlague()
+        private static void CastPlague(float mult)
         {
             try
             {
@@ -550,26 +556,29 @@ namespace AshAndEmber
                     .OrderBy(s => (s.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Wither — no enemy villages found."); return; }
-                float before = target.Village.Hearth;
-                target.Village.Hearth = Math.Max(10f, before * 0.80f);
-                Msg($"Wither — something old settles over {target.Name}. Hearth reduced by 20%.");
+                float before    = target.Village.Hearth;
+                float reduction = 0.20f * mult;
+                target.Village.Hearth = Math.Max(10f, before * (1f - reduction));
+                Msg($"Wither — something old settles over {target.Name}. Hearth reduced by {(int)(reduction * 100f)}%.");
             }
             catch { }
         }
 
-        private static void CastClairvoyance()
+        private static void CastClairvoyance(float mult)
         {
             try
             {
                 if (Hero.MainHero?.Clan?.Kingdom != null)
                 {
-                    Hero.MainHero.Clan.Influence += 25f;
-                    Msg("Clairvoyance — the threads of power revealed. +25 influence.");
+                    int influence = (int)(25f * mult);
+                    Hero.MainHero.Clan.Influence += influence;
+                    Msg($"Clairvoyance — the threads of power revealed. +{influence} influence.");
                 }
                 else
                 {
-                    Hero.MainHero.ChangeHeroGold(700);
-                    Msg("Clairvoyance — no throne to bend, but the fire finds other currents. +700 gold.");
+                    int gold = (int)(700f * mult);
+                    Hero.MainHero.ChangeHeroGold(gold);
+                    Msg($"Clairvoyance — no throne to bend, but the fire finds other currents. +{gold} gold.");
                 }
             }
             catch { Msg("Clairvoyance — insight granted."); }
@@ -613,7 +622,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void CastExtinguish()
+        private static void CastExtinguish(float mult)
         {
             try
             {
@@ -626,32 +635,35 @@ namespace AshAndEmber
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Extinguish — no enemy party in range."); return; }
-                int count = 5 + _rng.Next(8);  // 5–12
+                int count  = (int)((5 + _rng.Next(8)) * mult);  // base 5–12, scaled
+                int morale = (int)(30f * mult);
                 int actual = 0;
                 var troops = target.MemberRoster.GetTroopRoster()
                     .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
                 for (int i = 0; i < count && troops.Count > 0; i++)
                 {
-                    int idx = _rng.Next(troops.Count);
+                    int idx   = _rng.Next(troops.Count);
                     int wound = _rng.Next(2) == 0 ? 1 : 0;
                     try { target.MemberRoster.AddToCounts(troops[idx].Character, wound == 1 ? 0 : -1, false, wound); actual++; } catch { }
                 }
-                target.RecentEventsMorale -= 30f;
-                Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -30 morale.");
+                target.RecentEventsMorale -= morale;
+                Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -{morale} morale.");
             }
             catch { }
         }
 
-        private static void CastFade()
+        private static void CastFade(float mult)
         {
             try
             {
                 if (MobileParty.MainParty == null) { Msg("Fade — no party to conceal."); return; }
-                _fadeDaysRemaining = 1;
+                // Perfect recall (1.25×) extends concealment by an extra day.
+                _fadeDaysRemaining = mult >= 1.20f ? 2 : 1;
+                int days = _fadeDaysRemaining + 1;
                 bool applied = TrySetIgnoreByOtherParties(MobileParty.MainParty, true);
                 if (applied)
                 {
-                    Msg("Fade — ash wraps your party. For two days, enemy scouts will not find you.");
+                    Msg($"Fade — ash wraps your party. For {days} days, enemy scouts will not find you.");
                 }
                 else
                 {
