@@ -550,7 +550,7 @@ namespace AshAndEmber
                     target.SetMorale(Math.Max(cur - delta, 0f));
                 }
                 catch { }
-                if (!target.IsHero)
+                if (!target.IsHero && _rng.Next(100) < Math.Min(100, cast.DamageCount * 25))
                 {
                     try
                     {
