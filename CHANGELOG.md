@@ -2,6 +2,31 @@
 
 ---
 
+## v0.14.1
+
+### New mechanic: Arcane sequence minigame for campaign map spell casting
+
+Casting a campaign spell now opens a short memory game before the spell fires.
+
+**Phase 1 — Sequence.** Three arcane words drawn from a spell-specific pool appear on screen. Each spell has its own thematic word set (e.g. Unsettle draws from SHADOW / DREAD / VEIL / SILENCE / HOLLOW / COLD).
+
+**Phase 2 — Recall.** The words disappear. The player is asked to identify each word in order from a shuffled list of four options (one correct, three distractors from other pools).
+
+**Score → power multiplier:**
+
+| Correct | Multiplier | Message |
+|---------|-----------|---------|
+| 3 / 3 | 1.25× | Resonance — the incantation was perfect. |
+| 2 / 3 | 1.00× | The working takes hold. |
+| 1 / 3 | 0.85× | The words blur — the fire catches unevenly. |
+| 0 / 3 | 0.75× | The words scatter — the fire finds its own shape. |
+
+The aging cost is always paid — the rite was spoken. A "Cast without the rite" button on the sequence screen skips the minigame and fires at 1.00×.
+
+All six spell `Cast*` methods now accept a power multiplier and scale their numerical outputs accordingly: morale deltas, influence, gold, hearth reduction percentage, troop count, and Fade concealment duration (perfect recall grants one extra day).
+
+---
+
 ## v0.14.0
 
 ### New mechanic: Aging milestones

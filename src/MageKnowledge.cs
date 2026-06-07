@@ -273,6 +273,17 @@ namespace AshAndEmber
                 "  Hard cap: 84 days (= 1 year). Mage lords age at the same rate.\n" +
                 (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] −1 day cost (min 1) + up to 30% age reduction.\n" : "") +
                 ashenNote +
+                "\n── CAMPAIGN SPELLS  (outside a mission → \"Cast\") ────────\n" +
+                "  Three arcane words arise. Commit them to memory.\n" +
+                "  You are then asked to name each word in order\n" +
+                "  from a shuffled list of four choices.\n\n" +
+                "  Score → power multiplier:\n" +
+                "    3/3 correct → 1.25×   Resonance — perfect.\n" +
+                "    2/3 correct → 1.00×   Baseline.\n" +
+                "    1/3 correct → 0.85×   Flickering.\n" +
+                "    0/3 correct → 0.75×   Scattered.\n\n" +
+                "  The aging cost is always paid.\n" +
+                "  \"Cast without the rite\" skips the game at 1.00×.\n" +
                 $"\n  Open this page: {openBook}" +
                 DragonQuestSystem.GetGrimoireSummary();
 
