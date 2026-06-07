@@ -304,14 +304,14 @@ Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast
 
 #### Arcane sequence
 
-When you cast a campaign spell, three arcane words drawn from that spell's word pool appear on screen. You are then asked to identify each word in order from a shuffled list of four options. Your recall score scales the spell's output power — the aging cost is always paid regardless of score.
+When you cast a campaign spell, a 3-step ritual description appears — two sentences per step. Each step has three variant phrasings; one is drawn at random each cast. The description disappears, then you are asked to identify each step's exact phrasing from its three variants. Your recall score scales the spell's output power — the aging cost is always paid regardless of score.
 
 | Correct | Multiplier | Flavour |
 |---------|-----------|---------|
-| 3 / 3 | **1.25×** | Resonance — the incantation was perfect. |
+| 3 / 3 | **1.50×** | Resonance — the rite was perfect. |
 | 2 / 3 | **1.00×** | The working takes hold. *(baseline)* |
-| 1 / 3 | **0.85×** | The words blur — the fire catches unevenly. |
-| 0 / 3 | **0.75×** | The words scatter — the fire finds its own shape. |
+| 1 / 3 | **0.75×** | The words blur — the fire catches unevenly. |
+| 0 / 3 | **0.50×** | The words scatter — the fire finds its own shape. |
 
 A **"Cast without the rite"** button on the sequence screen skips the minigame and fires the spell at 1.00×.
 
@@ -854,16 +854,16 @@ Pass the path manually: `.\install.ps1 -BannerlordPath "D:\Games\Mount & Blade I
 
 ### v0.14.1
 
-**New mechanic — Arcane sequence minigame for campaign map casting**
+**New mechanic — Ritual memory minigame for campaign map casting**
 
-Casting a campaign spell now triggers a short memory game: three arcane words appear on screen, then you are asked to identify each one in order from a shuffled list of four options. Your recall score scales the spell's output power. The aging cost is always paid.
+Casting a campaign spell now opens a short ritual memory game. A 3-step ritual description appears (two sentences per step, drawn from three possible variants per step). The player must then identify each step's exact phrasing from its three variants. Recall score scales the spell's output power. The aging cost is always paid.
 
 | Correct | Multiplier |
 |---------|-----------|
-| 3 / 3 | 1.25× |
+| 3 / 3 | 1.50× |
 | 2 / 3 | 1.00× (baseline — unchanged from previous behaviour) |
-| 1 / 3 | 0.85× |
-| 0 / 3 | 0.75× |
+| 1 / 3 | 0.75× |
+| 0 / 3 | 0.50× |
 
 A "Cast without the rite" button skips the minigame at 1.00× for players who prefer the direct route.
 
