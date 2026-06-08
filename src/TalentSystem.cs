@@ -251,7 +251,7 @@ namespace AshAndEmber
                 Id = TalentId.Ashstorm, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Ashstorm",
                 Lore = "The fire knows no walls. Stone does not argue with it. You raise your hands toward a distant tower and the flame answers — not as warmth, but as judgment.",
-                MechanicDesc = "A storm of fire falls on the nearest enemy town or castle within 50 map units. 10–30 garrison soldiers are killed, food stores are burnt, security drops, and prosperity is scorched. Costs 2 days."
+                MechanicDesc = "A storm of fire falls on the nearest enemy town or castle within 50 map units. 10–30 garrison soldiers are killed, food stores are burnt, security drops, and prosperity is scorched. Costs 1 day (standard map spell cost)."
             },
             // ── Ashen status (info-only, not purchasable) ─────────────────────
             new TalentDef
@@ -475,9 +475,7 @@ namespace AshAndEmber
             }
             else
             {
-                int baseCost = GetDailyCastCost();
-                // Ashstorm is more costly — always +1 extra day on top of the daily cost.
-                int cost = id == TalentId.Ashstorm ? baseCost + 1 : baseCost;
+                int cost = GetDailyCastCost();
                 bool skipAging = Has(TalentId.Sorcerer) && (_dailyMapCastCount == 0 || _rng.Next(4) == 0);
                 if (skipAging)
                     InformationManager.DisplayMessage(new InformationMessage(
