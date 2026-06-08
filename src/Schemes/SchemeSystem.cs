@@ -442,6 +442,32 @@ namespace AshAndEmber
                     }
                     catch { }
                 }
+
+                // If a scheme was just queued against the player, give a vague whisper (~30% chance).
+                if (schemeLaunchedToday)
+                {
+                    try
+                    {
+                        bool targetsPlayer = _pending.Any(p => !p.IsPlayer
+                            && p.TargetHeroId == Hero.MainHero?.StringId
+                            && p.DaysRemaining >= 1);
+                        if (targetsPlayer && _rng.Next(100) < 30)
+                        {
+                            string[] whispers =
+                            {
+                                "Whispers from the court reach you — someone's designs toward you feel hostile.",
+                                "A merchant on the road gives you an odd look, then moves on. You notice. You file it away.",
+                                "Someone in the tavern stops talking when you enter. The silence has a shape to it.",
+                                "A courier avoids your route. Small things accumulate.",
+                                "You catch a name spoken low in a crowded square — yours, you think. The speaker is already gone.",
+                            };
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                whispers[_rng.Next(whispers.Length)],
+                                new Color(0.55f, 0.45f, 0.6f)));
+                        }
+                    }
+                    catch { }
+                }
             }
             catch { }
         }

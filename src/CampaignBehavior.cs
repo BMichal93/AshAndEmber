@@ -853,8 +853,16 @@ namespace AshAndEmber
         {
             try
             {
-                if (_rng.Next(100) < 10)
+                if (_rng.Next(100) < 20)
+                {
                     ColourLordRegistry.SetMage(companion, true);
+                    // Companions with the gift always carry 1–3 enchantments.
+                    int enchants = 1 + _rng.Next(3);
+                    ColourLordRegistry.AssignCompanionEnchantments(companion, enchants);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{companion.Name} carries the inner fire — {enchants} working{(enchants != 1 ? "s" : "")} already shaped in them.",
+                        new Color(0.75f, 0.55f, 0.95f)));
+                }
             }
             catch { }
         }
