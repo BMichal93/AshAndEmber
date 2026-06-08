@@ -2707,11 +2707,7 @@ namespace AshAndEmber
         // They reach out the cold and wait.
         private static void LV_ColdEmbrace(Settlement s)
         {
-            int   oneH    = Hero.MainHero?.GetSkillValue(DefaultSkills.OneHanded) ?? 0;
-            int   twoH    = Hero.MainHero?.GetSkillValue(DefaultSkills.TwoHanded) ?? 0;
-            int   best    = Math.Max(oneH, twoH);
-            float athChance  = Math.Min(0.90f, 0.35f + (Hero.MainHero?.GetSkillValue(DefaultSkills.Athletics) ?? 0) * 0.003f);
-            float combChance = Math.Min(0.90f, 0.35f + best * 0.003f);
+            float athChance = Math.Min(0.90f, 0.35f + (Hero.MainHero?.GetSkillValue(DefaultSkills.Athletics) ?? 0) * 0.003f);
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "★ The Circle Closes",
@@ -2724,9 +2720,9 @@ namespace AshAndEmber
                     new InquiryElement("a", "Embrace the cold. Accept what they offer.", null, true,
                         "The cold does not wait for second thoughts."),
                     new InquiryElement("b", $"Run. Get out of the ring. (Athletics {(int)(athChance*100)}%)", null, true,
-                        $"Speed may be enough. It may not."),
-                    new InquiryElement("c", $"Fight them off. ({(int)(combChance*100)}% with your best blade skill)", null, true,
-                        $"Steel still cuts. The odds are what they are."),
+                        "Speed may be enough. It may not."),
+                    new InquiryElement("c", "Fight them off. Draw your blade — let steel answer the cold.", null, true,
+                        "Eight of them. They move without fear. So do you."),
                     new InquiryElement("d", "Burn them with magic. Age 3 days.", null, true,
                         "Fire scatters cold things. The cost is paid in years."),
                 },
@@ -2756,17 +2752,10 @@ namespace AshAndEmber
                             }
                             break;
                         case "c":
-                            if (_rng.NextDouble() < combChance)
-                                Msg("You draw and move. They are not afraid of blades — " +
-                                    "but blades still cut. You take two down before the others scatter. " +
-                                    "Not elegantly, but you come out the other side standing.", GoodColor);
-                            else
-                            {
-                                WoundPlayer();
-                                Msg("You were outnumbered, and they moved without fear. " +
-                                    "You take wounds before you manage to break the ring. " +
-                                    "They let you go when you clear them. You are not sure why.", BadColor);
-                            }
+                            TriggerEncounterBattle(s, 8);
+                            Msg("You draw. They do not flinch — they never do. " +
+                                "The ring tightens. Whatever happens next happens in the open, " +
+                                "blade against cold, until one side stops moving.", BadColor);
                             break;
                         case "d":
                             AgePlayer(3);
