@@ -35,157 +35,161 @@ namespace AshAndEmber
         private static readonly Dictionary<TalentId, string[][]> _rituals =
             new Dictionary<TalentId, string[][]>
         {
+            // Each step has three variants that differ by exactly one key word.
+            // The player must remember which word appeared in the ritual, not which
+            // sentence "looks right" — first-word scanning gives nothing away.
+
             [TalentId.Inspire] = new[]
             {
-                new[] // Step 1 — opening: how you connect
+                new[] // Step 1 — what you lift the fire toward
                 {
-                    "Take a few deep breaths. Reach towards your inner fire.",
-                    "Take exactly three long breaths. Reach towards the fires burning in your soul.",
-                    "Hold your breath once. Then reach towards the warmth inside you.",
+                    "Breathe until the fire stirs on its own. Lift it toward your hands.",
+                    "Breathe until the fire stirs on its own. Lift it toward your voice.",
+                    "Breathe until the fire stirs on its own. Lift it toward your chest.",
                 },
-                new[] // Step 2 — middle: how you feel and hold it
+                new[] // Step 2 — how the warmth widens
                 {
-                    "Feel its warmth spreading. Let it fill you with certainty.",
-                    "Feel it burning steadily. Let it rise through your chest.",
-                    "Feel its rhythm pulse. Let it flow from heart to hands.",
+                    "Let the warmth widen outward. Do not direct it — let it find the men beside you.",
+                    "Let the warmth widen inward. Do not direct it — let it find the men beside you.",
+                    "Let the warmth widen upward. Do not direct it — let it find the men beside you.",
                 },
-                new[] // Step 3 — close: how you release it outward
+                new[] // Step 3 — what it passes through
                 {
-                    "Extend it outward in one swift motion. Let it find every soldier who marches with you.",
-                    "Open your arms wide. Pour the warmth into the air your companions breathe.",
-                    "Breathe it out gently. Let it drift to every hearth in your company.",
+                    "Release it all at once. What you carry passes to them like heat through stone.",
+                    "Release it all at once. What you carry passes to them like light through cloud.",
+                    "Release it all at once. What you carry passes to them like wind through grass.",
                 },
             },
 
             [TalentId.BreakWills] = new[]
             {
-                new[] // Step 1 — opening: how you focus
+                new[] // Step 1 — what thread you find
                 {
-                    "Narrow your focus to a single point. Find the thread that binds their courage.",
-                    "Still your mind completely. Find the line where your fire ends and theirs begins.",
-                    "Close your eyes for a moment. Locate the shape of their conviction.",
+                    "Still yourself completely. Find the thread of doubt that already runs through them.",
+                    "Still yourself completely. Find the thread of fear that already runs through them.",
+                    "Still yourself completely. Find the thread of cold that already runs through them.",
                 },
-                new[] // Step 2 — middle: how you reach toward them
+                new[] // Step 2 — where you press
                 {
-                    "Reach toward their resolve. Feel where it is thinnest.",
-                    "Press gently against their will. Find the places where doubt already lives.",
-                    "Extend toward their certainty. Search for what they are trying not to fear.",
+                    "Reach toward their resolve. Press where it is thinnest.",
+                    "Reach toward their resolve. Press where it is coldest.",
+                    "Reach toward their resolve. Press where it is darkest.",
                 },
-                new[] // Step 3 — close: how you release the working
+                new[] // Step 3 — what form you release it as
                 {
-                    "Let the shadow in. Release it without hesitation.",
-                    "Turn the fire cold at the edges. Send it forward like a held breath.",
-                    "Release it all at once. Do not soften what you send.",
+                    "Release it as shadow. Do not draw any part of it back.",
+                    "Release it as cold. Do not draw any part of it back.",
+                    "Release it as weight. Do not draw any part of it back.",
                 },
             },
 
             [TalentId.Plague] = new[]
             {
-                new[] // Step 1 — opening: sinking the fire low
+                new[] // Step 1 — what quality the fire takes
                 {
-                    "Let the fire sink low in your body. Make it slow and patient.",
-                    "Draw the fire downward, into the earth. Let it become heavy and deliberate.",
-                    "Pull the fire close to the ground. Feel it thicken and slow.",
+                    "Lower the fire until it is slow. Patient. Close to the earth.",
+                    "Lower the fire until it is cold. Patient. Close to the earth.",
+                    "Lower the fire until it is still. Patient. Close to the earth.",
                 },
-                new[] // Step 2 — middle: reaching toward the target
+                new[] // Step 2 — what you reach toward
                 {
-                    "Reach toward their roots. Follow what feeds and shelters them.",
-                    "Extend toward their hearth fires. Feel the warmth that sustains them.",
-                    "Press toward their foundations. Find what holds their life together.",
+                    "Reach toward what feeds them. The fire knows where the roots run.",
+                    "Reach toward what shelters them. The fire knows where the roots run.",
+                    "Reach toward what holds them. The fire knows where the roots run.",
                 },
-                new[] // Step 3 — close: releasing the blight
+                new[] // Step 3 — what it falls like
                 {
-                    "Release it as a slow exhalation. Let it work without haste.",
-                    "Open your palm toward the earth. Let it fall and take hold quietly.",
-                    "Send it gently, like ash settling. It will do what you ask of it.",
+                    "Let it fall like ash settling. Do not hurry what it does.",
+                    "Let it fall like rain settling. Do not hurry what it does.",
+                    "Let it fall like cold settling. Do not hurry what it does.",
                 },
             },
 
             [TalentId.Clairvoyance] = new[]
             {
-                new[] // Step 1 — opening: stilling yourself
+                new[] // Step 1 — what the fire goes further than
                 {
-                    "Quiet the noise around you. Let the fire reach further than your eyes.",
-                    "Still your thoughts completely. Let the fire travel where you cannot follow.",
-                    "Close your eyes. Let the fire seek what is beyond your ordinary sight.",
+                    "Close your eyes. Let the fire go further than your sight can follow.",
+                    "Close your eyes. Let the fire go further than your voice can follow.",
+                    "Close your eyes. Let the fire go further than your reach can follow.",
                 },
-                new[] // Step 2 — middle: following the threads
+                new[] // Step 2 — what gathers in the warmth
                 {
-                    "Follow the threads of influence. They run warm where power truly gathers.",
-                    "Trace the lines of loyalty. They burn brighter near those who are trusted.",
-                    "Read the currents of intention. They shift near those who plan and scheme.",
+                    "Follow the warmth where it pools around hidden decisions.",
+                    "Follow the warmth where it pools around hidden intentions.",
+                    "Follow the warmth where it pools around hidden loyalties.",
                 },
-                new[] // Step 3 — close: drawing knowledge back
+                new[] // Step 3 — what it settles into
                 {
-                    "Gather what the fire finds. Draw it back into yourself as understanding.",
-                    "Pull the knowledge inward. Let it settle into something you can use.",
-                    "Bring the sight home. Let it harden into certainty you can act on.",
+                    "Draw back what you found. Let it settle into something you can use.",
+                    "Draw back what you found. Let it settle into something you can trust.",
+                    "Draw back what you found. Let it settle into something you can name.",
                 },
             },
 
             [TalentId.Extinguish] = new[]
             {
-                new[] // Step 1 — opening: compressing the fire
+                new[] // Step 1 — the final quality of the compressed fire
                 {
-                    "Compress the fire between your hands. Make it small, hot, and precise.",
-                    "Harden the fire to a dense point. Let the pressure build until it aches.",
-                    "Condense the fire down to nothing visible. Hold it until it is almost unbearable.",
+                    "Compress the fire between your hands until it is small and hard and still.",
+                    "Compress the fire between your hands until it is small and hard and dense.",
+                    "Compress the fire between your hands until it is small and hard and bright.",
                 },
-                new[] // Step 2 — middle: locking onto the target
+                new[] // Step 2 — where you fix your attention
                 {
-                    "Fix your gaze on the horizon where they march. Their fires burn there.",
-                    "Lock your attention on their position. Feel the heat of their numbers.",
-                    "Find the warmth of their presence across the distance. It is unmistakable.",
+                    "Find the warmth of their position across the distance. Fix it in your eyes.",
+                    "Find the warmth of their position across the distance. Fix it in your mind.",
+                    "Find the warmth of their position across the distance. Fix it in your will.",
                 },
-                new[] // Step 3 — close: releasing the strike
+                new[] // Step 3 — the character of the motion
                 {
-                    "Release it cleanly, all at once. Let it arrive before doubt can follow.",
-                    "Send it in a single sharp motion. Do not hold any part of it back.",
-                    "Let it go without hesitation. One strike — nothing softened.",
+                    "Send it in one sharp motion. Do not soften any part of what you release.",
+                    "Send it in one clean motion. Do not soften any part of what you release.",
+                    "Send it in one swift motion. Do not soften any part of what you release.",
                 },
             },
 
             [TalentId.Ashstorm] = new[]
             {
-                new[] // Step 1 — opening: gathering the fire above
+                new[] // Step 1 — what the fire does above you
                 {
-                    "Raise your eyes to the sky. Pull the fire upward, away from the earth.",
-                    "Look toward the horizon where they shelter. Draw the fire above you like a held breath.",
-                    "Tilt your head back. Let the fire climb past your hands and gather at height.",
+                    "Tilt your head back. Pull the fire high above you and let it hold.",
+                    "Tilt your head back. Pull the fire high above you and let it build.",
+                    "Tilt your head back. Pull the fire high above you and let it turn.",
                 },
-                new[] // Step 2 — middle: focusing on the target
+                new[] // Step 2 — what you lock onto
                 {
-                    "Lock onto the shape of their walls. Feel the warmth trapped inside them.",
-                    "Fix the settlement in your mind. The fire already knows where it is needed.",
-                    "Find the stone and mortar in your thoughts. The fire wants what hides within.",
+                    "Find the settlement in your mind. Lock onto the shape of its walls.",
+                    "Find the settlement in your mind. Lock onto the shape of its roofs.",
+                    "Find the settlement in your mind. Lock onto the shape of its gates.",
                 },
-                new[] // Step 3 — close: releasing the storm
+                new[] // Step 3 — what it falls toward
                 {
-                    "Open both hands at once. Let it fall without restraint.",
-                    "Push it out — all of it — toward the distant walls. Do not pull any back.",
-                    "Release your breath and the fire together. Let gravity do the rest.",
+                    "Open both hands at once. Let it fall toward the stone.",
+                    "Open both hands at once. Let it fall toward the walls.",
+                    "Open both hands at once. Let it fall toward the fires.",
                 },
             },
 
             [TalentId.Fade] = new[]
             {
-                new[] // Step 1 — opening: thinning the fire
+                new[] // Step 1 — what absorbs your outline
                 {
-                    "Thin the fire until it becomes translucent. Let the air absorb it.",
-                    "Soften the fire's edges gently. Let it blur into the space around you.",
-                    "Draw the fire inward until it barely registers. Make yourself quiet.",
+                    "Thin the fire until it barely registers. Let the air absorb your outline.",
+                    "Thin the fire until it barely registers. Let the dark absorb your outline.",
+                    "Thin the fire until it barely registers. Let the cold absorb your outline.",
                 },
-                new[] // Step 2 — middle: letting the veil settle
+                new[] // Step 2 — what comes down around you
                 {
-                    "Breathe without sound. Let the veil come to rest over you naturally.",
-                    "Stand very still. Let the mist find its way to you on its own.",
-                    "Exhale slowly and completely. Let the ash drift down and cover your outline.",
+                    "Stand still. Let the veil come down around you rather than moving toward it.",
+                    "Stand still. Let the mist come down around you rather than moving toward it.",
+                    "Stand still. Let the ash come down around you rather than moving toward it.",
                 },
-                new[] // Step 3 — close: holding the concealment
+                new[] // Step 3 — what you release
                 {
-                    "Hold the shape of yourself. Release only the light.",
-                    "Keep the form intact. Let only the brightness go.",
-                    "Maintain what you are. Extinguish only what can be seen.",
+                    "Release only the light. Keep everything else exactly as it is.",
+                    "Release only the heat. Keep everything else exactly as it is.",
+                    "Release only the shape. Keep everything else exactly as it is.",
                 },
             },
         };
