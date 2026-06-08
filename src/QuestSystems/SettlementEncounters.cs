@@ -1511,21 +1511,6 @@ namespace AshAndEmber
                 var enemy = CampaignMapEvents.SpawnCombatPartyAt(s.GetPosition2D, troops);
                 if (enemy == null) return;
 
-                // Close enough for immediate encounter detection.
-                try { enemy.Position2D = main.Position2D + new Vec2(0.05f, 0f); } catch { }
-
-                // Attempt a direct transition to the battle mission.
-                // PlayerEncounter.StartBattle() is the correct call on Bannerlord 1.x;
-                // wrapped in try/catch so the proximity fallback above handles any
-                // version where the method signature differs.
-                try
-                {
-                    if (PlayerEncounter.Current == null)
-                        PlayerEncounter.Start();
-                    PlayerEncounter.Current.SetupFields(main, enemy);
-                    PlayerEncounter.StartBattle();
-                }
-                catch { }
             }
             catch { }
         }

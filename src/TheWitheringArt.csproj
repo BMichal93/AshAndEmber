@@ -86,6 +86,7 @@
     <Compile Include="SchoolData.cs"/>
     <Compile Include="SpellDatabase.cs"/>
     <Compile Include="MageKnowledge.cs"/>
+    <Compile Include="SpellMinigame.cs"/>
     <Compile Include="ActiveEffects.cs"/>
     <Compile Include="SpellBuilder.cs"/>
     <Compile Include="TalentSystem.cs"/>

@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.Core;
@@ -99,8 +100,8 @@ namespace AshAndEmber
         {
             try
             {
-                TaleWorlds.Core.CharacterObject troop = null;
-                foreach (var c in TaleWorlds.Core.CharacterObject.All)
+                CharacterObject troop = null;
+                foreach (var c in CharacterObject.All)
                 {
                     if (c.StringId == troopId) { troop = c; break; }
                 }

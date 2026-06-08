@@ -720,7 +720,6 @@ namespace AshAndEmber
                         }
                         totalWounded += w;
                         try { p.RecentEventsMorale -= 35f * mult; } catch { }
-                        try { p.Food = Math.Min(p.Food, 0f); } catch { }
                     }
                     string msg = targets.Count == 0
                         ? "The rite is spoken. The flame surges and settles. No grey things are close enough to feel it."
@@ -1052,7 +1051,6 @@ namespace AshAndEmber
                 if (w >= toWound) break;
             }
             try { target.RecentEventsMorale -= 20f; } catch { }
-            try { target.Food = Math.Min(target.Food, 0f); } catch { }
         }
     }
 }

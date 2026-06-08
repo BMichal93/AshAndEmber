@@ -1079,10 +1079,9 @@ namespace AshAndEmber
             // Solstice passive benefits
             if (_solsticeUntilDay >= today && MobileParty.MainParty != null)
             {
-                if (_solsticeType == "winter") try { MobileParty.MainParty.Food += 2f; } catch { }
+                if (_solsticeType == "winter") { }
                 else if (_solsticeType == "sun")
                 {
-                    try { MobileParty.MainParty.Food += 2f; } catch { }
                     try { MobileParty.MainParty.RecentEventsMorale += 0.5f; } catch { }
                 }
             }

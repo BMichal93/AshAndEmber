@@ -134,7 +134,7 @@ namespace AshAndEmber
                             .Where(p => p != main && p.IsActive && !p.IsGarrison
                                 && p.MapFaction != null
                                 && FactionManager.IsAtWarAgainstFaction(p.MapFaction, mainFaction))
-                            .OrderBy(p => (p.Position2D - main.Position2D).LengthSquared)
+                            .OrderBy(p => (p.GetPosition2D - main.GetPosition2D).LengthSquared)
                             .FirstOrDefault();
                     }
                 }
@@ -142,9 +142,8 @@ namespace AshAndEmber
 
                 if (enemy != null)
                 {
-                    try { enemy.Position2D = main.Position2D + new Vec2(0.1f, 0f); } catch { }
                     MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
-                        "[DEBUG] Enemy warped to your position — engage to enter battle."));
+                        "[DEBUG] Enemy found nearby — engage to enter battle."));
                 }
                 else
                 {
@@ -152,7 +151,7 @@ namespace AshAndEmber
                     try
                     {
                         CampaignMapEvents.SpawnAshenAmbushNear(
-                            main.Position2D + new Vec2(0.1f, 0f), 30, 0f);
+                            main.GetPosition2D + new Vec2(0.1f, 0f), 30, 0f);
                     }
                     catch { }
                     MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
