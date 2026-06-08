@@ -3022,6 +3022,11 @@ namespace AshAndEmber
         public static void SpawnAshenAmbushNear(Vec2 pos, int troops, float minStrength)
             => SpawnAshenSpawnParty(pos, troops, minStrength);
 
+        // Returns the spawned party so callers (e.g. settlement encounter combat
+        // triggers) can pass it directly into PlayerEncounter.SetupFields.
+        public static MobileParty SpawnCombatPartyAt(Vec2 pos, int troops)
+            => SpawnAshenSpawnParty(pos, troops, 0f);
+
         // ── Party spawning helper ─────────────────────────────────────────────
         // Creates a single Ashen Spawn bandit party near anchorPos, registers
         // it with FireWorshippersSystem, and returns it (or null on failure).

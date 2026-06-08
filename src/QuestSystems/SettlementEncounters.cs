@@ -472,6 +472,7 @@ namespace AshAndEmber
                 // Encounter: Hope — young mage afraid of Ashen; clan tier ≥ 2, non-Ashen mage
                 int clanTier = Hero.MainHero?.Clan?.Tier ?? 0;
                 if (mage && !ashen && clanTier >= 2) pool.Add(LC_YoungMageHope);
+                pool.Add(EL_InsultAtGate);
             }
 
             Fire(pool, s);
@@ -1494,6 +1495,93 @@ namespace AshAndEmber
         {
             try { CampaignMapEvents.SpawnAshenAmbushNear(s.GetPosition2D, troops, minStrength); }
             catch { }
+        }
+
+        // Spawns a hostile party and immediately starts a field battle mission.
+        // Uses PlayerEncounter.Start/SetupFields/StartBattle for a direct transition;
+        // if that API path fails the party is still placed adjacent to the player
+        // so Bannerlord's own encounter detection fires on the next campaign tick.
+        private static void TriggerEncounterBattle(Settlement s, int troops)
+        {
+            try
+            {
+                var main = MobileParty.MainParty;
+                if (main == null) return;
+
+                var enemy = CampaignMapEvents.SpawnCombatPartyAt(s.GetPosition2D, troops);
+                if (enemy == null) return;
+
+                // Close enough for immediate encounter detection.
+                try { enemy.Position2D = main.Position2D + new Vec2(0.05f, 0f); } catch { }
+
+                // Attempt a direct transition to the battle mission.
+                // PlayerEncounter.StartBattle() is the correct call on Bannerlord 1.x;
+                // wrapped in try/catch so the proximity fallback above handles any
+                // version where the method signature differs.
+                try
+                {
+                    if (PlayerEncounter.Current == null)
+                        PlayerEncounter.Start();
+                    PlayerEncounter.Current.SetupFields(main, enemy);
+                    PlayerEncounter.StartBattle();
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        // ── LEAVE CITY/CASTLE: An Insult at the Gate ─────────────────────────
+        // A drunk lord's retainer blocks your path. The "fight" option calls
+        // TriggerEncounterBattle which spawns the enemy and starts the real battle.
+        private static void EL_InsultAtGate(Settlement s)
+        {
+            string charmHint = SkillHint(DefaultSkills.Charm, 0.35f, "Silence him without a blade");
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "⚔  An Insult at the Gate",
+                "A lord's retainer — drunk, loud, and clearly off a leash — blocks your path at the city gate. He makes a comment about your banner. Then about your horse. Then about you. He has four men behind him who look just sober enough to hold weapons. The gate guards are watching from thirty paces and doing nothing.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("walk",  "Walk past. He is not worth the blood.", null, true,
+                        "He'll say something worse as you pass. You will not turn around."),
+                    new InquiryElement("words", "Answer him. One sentence, precisely chosen.", null, true, charmHint),
+                    new InquiryElement("fight", "Draw. He asked for this with every word.", null, true,
+                        "He and his men will find out what that costs. Right here, right now."),
+                    new InquiryElement("coin",  "Pay the gate guards to remove him.", null, true,
+                        "Thirty coin. Fast. Quiet. Done."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "walk":
+                            Msg("He shouts something at your back. You do not turn around. You can hear him crowing to his men as you ride. It means nothing. You remember it anyway.", DimColor);
+                            break;
+                        case "words":
+                            if (SkillRoll(DefaultSkills.Charm, 0.35f))
+                            {
+                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                ChangeRenown(5f);
+                                Msg("You stop. You say one thing — something he cannot answer without making himself smaller in front of his own men. The silence that follows is very loud. He lets you pass.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Honor, -1);
+                                Msg("You try. He interrupts. His men laugh. You ride out having said something that didn't land — and he knows it.", BadColor);
+                            }
+                            break;
+                        case "fight":
+                            TriggerEncounterBattle(s, 5);
+                            Msg("You draw. He does too, half a second slower, and his men scramble behind him. Whatever happens next happens in the open, in daylight, with witnesses.", BadColor);
+                            break;
+                        case "coin":
+                            ChangeGold(-30);
+                            ChangeRelWithOwner(s, 2);
+                            Msg("Thirty coin to the senior guard. He walks over, says three words. The retainer moves off — not happy, but moving. You ride out.", DimColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
         }
 
         // ── ENTER VILLAGE: The Self-Taught Mage (mage-gated) ───────────────
