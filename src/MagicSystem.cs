@@ -5,7 +5,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
@@ -98,6 +100,64 @@ namespace AshAndEmber
                     }
                 }
                 catch { }
+
+                // Ctrl+Shift+F11 — debug combat trigger: warp nearest hostile to player (or spawn one)
+                try
+                {
+                    if (TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftControl)
+                     && TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftShift)
+                     && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.F11))
+                    {
+                        DebugTriggerCombat();
+                    }
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        private static void DebugTriggerCombat()
+        {
+            try
+            {
+                var main = MobileParty.MainParty;
+                if (main == null) return;
+
+                // Look for the nearest party we're at war with
+                MobileParty enemy = null;
+                try
+                {
+                    var mainFaction = main.MapFaction;
+                    if (mainFaction != null)
+                    {
+                        enemy = MobileParty.All
+                            .Where(p => p != main && p.IsActive && !p.IsGarrison
+                                && p.MapFaction != null
+                                && FactionManager.IsAtWarAgainstFaction(p.MapFaction, mainFaction))
+                            .OrderBy(p => (p.Position2D - main.Position2D).LengthSquared)
+                            .FirstOrDefault();
+                    }
+                }
+                catch { }
+
+                if (enemy != null)
+                {
+                    try { enemy.Position2D = main.Position2D + new Vec2(0.1f, 0f); } catch { }
+                    MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
+                        "[DEBUG] Enemy warped to your position — engage to enter battle."));
+                }
+                else
+                {
+                    // No existing hostile — spawn a fresh Ashen ambush party
+                    try
+                    {
+                        CampaignMapEvents.SpawnAshenAmbushNear(
+                            main.Position2D + new Vec2(0.1f, 0f), 30, 0f);
+                    }
+                    catch { }
+                    MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
+                        "[DEBUG] No hostile found — Ashen ambush spawned nearby."));
+                }
             }
             catch { }
         }
@@ -188,7 +248,7 @@ namespace AshAndEmber
                 if (affectedAgent == null || affectedAgent.IsMount) return;
                 if (agentState != AgentState.Killed) return;
                 if (!MageKnowledge.IsMage || !TalentSystem.Has(TalentId.Ember)) return;
-                if (_rng.NextDouble() < 0.05)
+                if (_rng.NextDouble() < 0.10)
                     AgingSystem.RejuvenateHero(Hero.MainHero, 1);
             }
             catch { }

@@ -25,16 +25,45 @@ namespace AshAndEmber
             "mountain_bandit",
             "steppe_bandit",
             "desert_bandit",
+            // Custom Fire Worshipper troop tree
+            "fire_devotee",
+            "fire_zealot",
+            "ember_caller",
+            "ember_shaman",
+            // Custom Ashen Spawn troop tree
+            "ashen_thrall",
+            "ashen_invoker",
+            // Custom Wandering Circle troop tree
+            "circle_acolyte",
+            "circle_druid",
+            "circle_shaman",
+        };
+
+        // Troops that always receive the special-battle (cultist) tier regardless of party flag
+        private static readonly HashSet<string> _cultistTroops = new HashSet<string>
+        {
+            "fire_devotee", "fire_zealot", "ember_caller", "ember_shaman",
+            "ashen_thrall", "ashen_invoker",
+            "circle_acolyte", "circle_druid", "circle_shaman",
         };
 
         private static readonly Dictionary<string, string> _titles = new Dictionary<string, string>
         {
-            { "looter",           "Fire Zealot"   },
-            { "forest_bandit",    "Hedge Witch"    },
-            { "sea_raider",       "Ashen Caller"   },
-            { "mountain_bandit",  "Ash Shaman"     },
-            { "steppe_bandit",    "Wind Dancer"    },
-            { "desert_bandit",    "Ember Binder"  },
+            { "looter",           "Fire Zealot"    },
+            { "forest_bandit",    "Hedge Witch"     },
+            { "sea_raider",       "Ashen Caller"    },
+            { "mountain_bandit",  "Ash Shaman"      },
+            { "steppe_bandit",    "Wind Dancer"     },
+            { "desert_bandit",    "Ember Binder"    },
+            { "fire_devotee",     "Fire Devotee"    },
+            { "fire_zealot",      "Fire Zealot"     },
+            { "ember_caller",     "Ember Caller"    },
+            { "ember_shaman",     "Ember Sorcerer"  },
+            { "ashen_thrall",     "Ashen Thrall"    },
+            { "ashen_invoker",    "Ashen Invoker"   },
+            { "circle_acolyte",   "Acolyte"         },
+            { "circle_druid",     "Druid"           },
+            { "circle_shaman",    "Shaman"          },
         };
 
         private const float CooldownDuration = 18f;
@@ -198,8 +227,9 @@ namespace AshAndEmber
             //   Looter (untrained):       formCount=1, minimal damage
             //   Regular bandit casters:   formCount=2, modest damage
             //   Fire Worshippers / Ashen: formCount=3, heavy damage
-            string troopId = (mage.Character as TaleWorlds.CampaignSystem.CharacterObject)?.StringId ?? "";
-            bool isLooter  = troopId == "looter";
+            string troopId   = (mage.Character as TaleWorlds.CampaignSystem.CharacterObject)?.StringId ?? "";
+            bool isLooter    = troopId == "looter";
+            bool isCultist   = _cultistTroops.Contains(troopId);
 
             try
             {
@@ -214,16 +244,19 @@ namespace AshAndEmber
                 bool looter        = isLooter;
                 bool burst         = useBurst;
 
+                // Custom cultist troops are always treated as special-tier regardless of party flag.
+                bool effectiveSpecial = specialBattle || isCultist;
+
                 // The fire burns those who borrow it without the gift.
-                float burnout = specialBattle ? BurnoutSpecial
-                              : looter        ? BurnoutLooter
-                              :                BurnoutBandit;
+                float burnout = effectiveSpecial ? BurnoutSpecial
+                              : looter           ? BurnoutLooter
+                              :                   BurnoutBandit;
                 bool willBurnout = _rng.NextDouble() < burnout;
                 if (willBurnout) _mageAgents.Remove(mage);
 
                 SpellEffects.QueueNpcCastWithWindup(mage, () =>
                 {
-                    if (specialBattle)
+                    if (effectiveSpecial)
                     {
                         if (burst) SpellEffects.ExecuteNpcBurst(mage, 3, 2, 0, mage.Team);
                         else       SpellEffects.ExecuteNpcBlast(mage, 3, 2, 0, mage.Team);

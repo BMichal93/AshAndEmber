@@ -64,6 +64,7 @@ namespace AshAndEmber
         AshenGift   = 33,  // Info — status card shown when player is Ashen (not purchasable)
         Immolate    = 34,  // Enchantment — Damage: guaranteed kill at 3+ inputs
         ArmedCasting = 35, // Passive — cast without sheathing weapons
+        Ashstorm     = 36, // Spell  — bombard a nearby enemy settlement
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info }
@@ -106,14 +107,14 @@ namespace AshAndEmber
                 Id = TalentId.Sorcerer, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Resonance",
                 Lore = "Some days the fire gives back what it takes. You cannot predict it — only listen for it.",
-                MechanicDesc = "Passive. One in four campaign map castings costs no days."
+                MechanicDesc = "Passive. Your first campaign map cast each day costs no days. Subsequent casts have a 25% chance to be free."
             },
             new TalentDef
             {
                 Id = TalentId.Camaraderie, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Kinship",
                 Lore = "Those who carry the fire recognise each other from across a room. There is something almost like trust in that. Almost.",
-                MechanicDesc = "Passive. +10 relations with those who carry the fire. Never falls below 0 with them."
+                MechanicDesc = "Passive. +10 relations with mage lords, floor of 0. In battle alongside allied mage lords: −10% battle spell aging cost per allied mage (max −50%)."
             },
             new TalentDef
             {
@@ -127,7 +128,7 @@ namespace AshAndEmber
                 Id = TalentId.Ember, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Ember",
                 Lore = "In the moment of killing, when fire passes from one vessel to another, some scatters. Sometimes a spark finds you. You have learned, not to seek it, but to cup your hands.",
-                MechanicDesc = "Passive. Each kill on the battlefield has a 5% chance to restore 1 day of youth."
+                MechanicDesc = "Passive. Each kill on the battlefield has a 10% chance to restore 1 day of youth."
             },
             new TalentDef
             {
@@ -163,14 +164,14 @@ namespace AshAndEmber
                 Id = TalentId.Sunder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Sunder",
                 Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what they wear and what they carry. What holds together begins to separate. Not quickly. But enough.",
-                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm. Vulnerability to incoming damage = 5% per Damage input (max 50%). Attack power reduction = 10% per Damage input (max 50%). Duration = 8s + 1.5s per Damage input."
+                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm. Vulnerability to incoming damage = 10% per Damage input (max 50% at 5 inputs). Attack power reduction = 10% per Damage input (max 50%). Duration = 8s + 1.5s per Damage input."
             },
             new TalentDef
             {
                 Id = TalentId.Immolate, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Immolate",
                 Lore = "Three times the fire has been called. Twice it asked. The third time, it takes. Not the wound — the whole. The body, the heat that kept it standing. The fire does not return what it has already claimed.",
-                MechanicDesc = "Enchantment. Damage sets enemies alight — additional burn damage scales with inputs. Guaranteed kills scale with inputs: 3 Damage = 1 kill, 6 Damage = 2 kills, 9 Damage = 3 kills."
+                MechanicDesc = "Enchantment. Damage sets enemies alight — additional burn damage scales with inputs. At 1 Damage: 33% chance to kill. At 2 Damage: 50% chance to kill. At 3+ Damage: guaranteed kills (DamageCount / 3)."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -185,7 +186,7 @@ namespace AshAndEmber
                 Id = TalentId.CinderShell, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Cinder Shell",
                 Lore = "Fire hardens what it doesn't consume. The skin does not become stone — it becomes something older. Whatever falls on them will not find the same flesh.",
-                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 5% per Restore input, max 50%. Duration = 6s + 1.5s per Restore input. When an ally is near full health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
+                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 10% per Restore input (max 50% at 5 inputs). Duration = 6s + 1.5s per Restore input. When an ally is above 80% health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
             },
             new TalentDef
             {
@@ -199,7 +200,7 @@ namespace AshAndEmber
                 Id = TalentId.Reflect, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Reflect",
                 Lore = "The fire you give is not passive. It waits in the body like an ember under ash, and when something cold strikes — it answers.",
-                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 50%. Lasts 3s + 1.5s per input."
+                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 50%. Duration scales with diminishing returns: 7s at 1 input, ~10s at 3, ~16s at 10."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
@@ -235,7 +236,7 @@ namespace AshAndEmber
                 Id = TalentId.Extinguish, IsSpell = true, IsEnchantment = false,
                 Category = TalentCategory.Spell, Name = "Extinguish",
                 Lore = "You reach into the fire burning in an enemy and close your hand. Not slowly — like snuffing a candle. The body does not understand at first. Then it does.",
-                MechanicDesc = "3–8 soldiers in the nearest enemy party within 45m are wounded or killed, and their courage breaks. Costs 1 day."
+                MechanicDesc = "5–12 soldiers in the nearest enemy party within 60m are wounded or killed, and their courage breaks. −30 morale. Costs 1 day."
             },
             // ── Campaign spells (continued) ────────────────────────────────────
             new TalentDef
@@ -244,6 +245,13 @@ namespace AshAndEmber
                 Category = TalentCategory.Spell, Name = "Fade",
                 Lore = "You draw your fire inward — not out, not away, but down into the marrow, down past what can be seen or felt. For a time you are still there. You simply stop being visible to those looking for you.",
                 MechanicDesc = "Your party is concealed from enemy scouts for 1 day. Enemy parties will not pursue you. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Ashstorm, IsSpell = true, IsEnchantment = false,
+                Category = TalentCategory.Spell, Name = "Ashstorm",
+                Lore = "The fire knows no walls. Stone does not argue with it. You raise your hands toward a distant tower and the flame answers — not as warmth, but as judgment.",
+                MechanicDesc = "A storm of fire falls on the nearest enemy town or castle within 50 map units. 10–30 garrison soldiers are killed, food stores are burnt, security drops, and prosperity is scorched. Costs 1 day (standard map spell cost)."
             },
             // ── Ashen status (info-only, not purchasable) ─────────────────────
             new TalentDef
@@ -442,7 +450,9 @@ namespace AshAndEmber
             All.FirstOrDefault(d => d.Id == id) ?? All[0];
 
         // ── Campaign map spell execution ──────────────────────────────────────
-        public static void ExecuteMapSpell(TalentId id)
+        // powerMult scales spell output (1.0 = baseline). Always called via
+        // SpellMinigame which determines the multiplier from recall score.
+        public static void ExecuteMapSpell(TalentId id, float powerMult = 1f)
         {
             if (!Has(id)) return;
             var def = GetDef(id);
@@ -466,7 +476,7 @@ namespace AshAndEmber
             else
             {
                 int cost = GetDailyCastCost();
-                bool skipAging = Has(TalentId.Sorcerer) && _rng.Next(4) == 0;
+                bool skipAging = Has(TalentId.Sorcerer) && (_dailyMapCastCount == 0 || _rng.Next(4) == 0);
                 if (skipAging)
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The fire gives back.", new Color(0.9f, 0.6f, 0.3f)));
@@ -482,16 +492,17 @@ namespace AshAndEmber
 
             switch (id)
             {
-                case TalentId.BreakWills:   CastBreakWills();   break;
-                case TalentId.Inspire:      CastInspire();      break;
-                case TalentId.Plague:       CastPlague();       break;
-                case TalentId.Clairvoyance: CastClairvoyance(); break;
-                case TalentId.Extinguish:   CastExtinguish();   break;
-                case TalentId.Fade:         CastFade();         break;
+                case TalentId.BreakWills:   CastBreakWills(powerMult);   break;
+                case TalentId.Inspire:      CastInspire(powerMult);      break;
+                case TalentId.Plague:       CastPlague(powerMult);       break;
+                case TalentId.Clairvoyance: CastClairvoyance(powerMult); break;
+                case TalentId.Extinguish:   CastExtinguish(powerMult);   break;
+                case TalentId.Fade:         CastFade(powerMult);         break;
+                case TalentId.Ashstorm:     CastAshstorm(powerMult);     break;
             }
         }
 
-        private static void CastBreakWills()
+        private static void CastBreakWills(float mult)
         {
             try
             {
@@ -504,39 +515,43 @@ namespace AshAndEmber
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Unsettle — no enemy party in range."); return; }
-                target.RecentEventsMorale -= 40f;
+                int morale = (int)(40f * mult);
+                target.RecentEventsMorale -= morale;
                 var tClan = target.LeaderHero?.Clan;
-                if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - 10f);
-                string infLine = tClan != null ? " -10 influence." : "";
-                Msg($"Unsettle — dread settles over {target.Name}. -40 morale.{infLine}");
+                float infLoss = 10f * mult;
+                if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - infLoss);
+                string infLine = tClan != null ? $" -{(int)infLoss} influence." : "";
+                Msg($"Unsettle — dread settles over {target.Name}. -{morale} morale.{infLine}");
             }
             catch { }
         }
 
-        private static void CastInspire()
+        private static void CastInspire(float mult)
         {
             try
             {
                 if (MobileParty.MainParty == null) return;
-                MobileParty.MainParty.RecentEventsMorale += 40f;
+                int morale = (int)(40f * mult);
+                MobileParty.MainParty.RecentEventsMorale += morale;
+                int healPerTroop = Math.Max(1, (int)(8f * mult));
                 var roster = MobileParty.MainParty.MemberRoster;
                 var wounded = roster.GetTroopRoster()
                     .Where(e => !e.Character.IsHero && e.WoundedNumber > 0).ToList();
                 int roused = 0;
                 foreach (var entry in wounded)
                 {
-                    int heal = Math.Min(entry.WoundedNumber, 8);
+                    int heal = Math.Min(entry.WoundedNumber, healPerTroop);
                     try { roster.AddToCounts(entry.Character, 0, false, -heal); roused += heal; } catch { }
                 }
                 string msg = roused > 0
-                    ? $"Kindle — warmth floods your ranks. +40 morale, {roused} soldier{(roused != 1 ? "s" : "")} rise from their wounds."
-                    : "Kindle — warmth floods your ranks. +40 morale.";
+                    ? $"Kindle — warmth floods your ranks. +{morale} morale, {roused} soldier{(roused != 1 ? "s" : "")} rise from their wounds."
+                    : $"Kindle — warmth floods your ranks. +{morale} morale.";
                 Msg(msg);
             }
             catch { }
         }
 
-        private static void CastPlague()
+        private static void CastPlague(float mult)
         {
             try
             {
@@ -550,26 +565,29 @@ namespace AshAndEmber
                     .OrderBy(s => (s.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Wither — no enemy villages found."); return; }
-                float before = target.Village.Hearth;
-                target.Village.Hearth = Math.Max(10f, before * 0.80f);
-                Msg($"Wither — something old settles over {target.Name}. Hearth reduced by 20%.");
+                float before    = target.Village.Hearth;
+                float reduction = 0.20f * mult;
+                target.Village.Hearth = Math.Max(10f, before * (1f - reduction));
+                Msg($"Wither — something old settles over {target.Name}. Hearth reduced by {(int)(reduction * 100f)}%.");
             }
             catch { }
         }
 
-        private static void CastClairvoyance()
+        private static void CastClairvoyance(float mult)
         {
             try
             {
                 if (Hero.MainHero?.Clan?.Kingdom != null)
                 {
-                    Hero.MainHero.Clan.Influence += 25f;
-                    Msg("Clairvoyance — the threads of power revealed. +25 influence.");
+                    int influence = (int)(25f * mult);
+                    Hero.MainHero.Clan.Influence += influence;
+                    Msg($"Clairvoyance — the threads of power revealed. +{influence} influence.");
                 }
                 else
                 {
-                    Hero.MainHero.ChangeHeroGold(700);
-                    Msg("Clairvoyance — no throne to bend, but the fire finds other currents. +700 gold.");
+                    int gold = (int)(700f * mult);
+                    Hero.MainHero.ChangeHeroGold(gold);
+                    Msg($"Clairvoyance — no throne to bend, but the fire finds other currents. +{gold} gold.");
                 }
             }
             catch { Msg("Clairvoyance — insight granted."); }
@@ -613,7 +631,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void CastExtinguish()
+        private static void CastExtinguish(float mult)
         {
             try
             {
@@ -622,36 +640,39 @@ namespace AshAndEmber
                 var target = MobileParty.All
                     .Where(p => p.IsActive && FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)
                              && p.MemberRoster.TotalRegulars > 0
-                             && (p.GetPosition2D - playerPos).Length < 45f)
+                             && (p.GetPosition2D - playerPos).Length < 60f)
                     .OrderBy(p => (p.GetPosition2D - playerPos).Length)
                     .FirstOrDefault();
                 if (target == null) { Msg("Extinguish — no enemy party in range."); return; }
-                int count = 3 + _rng.Next(6);  // 3–8 (was 5–12)
+                int count  = (int)((5 + _rng.Next(8)) * mult);  // base 5–12, scaled
+                int morale = (int)(30f * mult);
                 int actual = 0;
                 var troops = target.MemberRoster.GetTroopRoster()
                     .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
                 for (int i = 0; i < count && troops.Count > 0; i++)
                 {
-                    int idx = _rng.Next(troops.Count);
+                    int idx   = _rng.Next(troops.Count);
                     int wound = _rng.Next(2) == 0 ? 1 : 0;
                     try { target.MemberRoster.AddToCounts(troops[idx].Character, wound == 1 ? 0 : -1, false, wound); actual++; } catch { }
                 }
-                target.RecentEventsMorale -= 20f;
-                Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -20 morale.");
+                target.RecentEventsMorale -= morale;
+                Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -{morale} morale.");
             }
             catch { }
         }
 
-        private static void CastFade()
+        private static void CastFade(float mult)
         {
             try
             {
                 if (MobileParty.MainParty == null) { Msg("Fade — no party to conceal."); return; }
-                _fadeDaysRemaining = 1;
+                // Perfect recall (1.25×) extends concealment by an extra day.
+                _fadeDaysRemaining = mult >= 1.20f ? 2 : 1;
+                int days = _fadeDaysRemaining + 1;
                 bool applied = TrySetIgnoreByOtherParties(MobileParty.MainParty, true);
                 if (applied)
                 {
-                    Msg("Fade — ash wraps your party. For two days, enemy scouts will not find you.");
+                    Msg($"Fade — ash wraps your party. For {days} days, enemy scouts will not find you.");
                 }
                 else
                 {
@@ -678,6 +699,7 @@ namespace AshAndEmber
         {
             switch (id)
             {
+                case TalentId.Ashstorm:
                 case TalentId.Extinguish:
                 case TalentId.Clairvoyance: return 15f;
                 case TalentId.BreakWills:
@@ -685,6 +707,51 @@ namespace AshAndEmber
                 case TalentId.Fade:         return 5f;
                 default:                    return 5f;
             }
+        }
+
+        private static void CastAshstorm(float mult)
+        {
+            try
+            {
+                if (MobileParty.MainParty == null) return;
+                Vec2 playerPos     = MobileParty.MainParty.GetPosition2D;
+                var  playerFaction = MobileParty.MainParty.MapFaction;
+
+                var target = Settlement.All
+                    .Where(s => (s.IsTown || s.IsCastle)
+                             && s.Town != null
+                             && s.MapFaction != null
+                             && FactionManager.IsAtWarAgainstFaction(s.MapFaction, playerFaction)
+                             && (s.GetPosition2D - playerPos).Length < 50f)
+                    .OrderBy(s => (s.GetPosition2D - playerPos).Length)
+                    .FirstOrDefault();
+
+                if (target == null) { Msg("Ashstorm — no enemy settlement within reach."); return; }
+
+                // Kill garrison soldiers
+                int toKill = (int)((10 + _rng.Next(20)) * mult);
+                int killed = 0;
+                var garrison = target.Town?.GarrisonParty?.MemberRoster;
+                if (garrison != null)
+                {
+                    var troops = garrison.GetTroopRoster()
+                        .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
+                    for (int i = 0; i < toKill && troops.Count > 0; i++)
+                    {
+                        int idx = _rng.Next(troops.Count);
+                        try { garrison.AddToCounts(troops[idx].Character, -1); killed++; } catch { }
+                    }
+                }
+
+                // Burn food stores, drop prosperity and security
+                try { target.Town.FoodStocks    -= (int)(150f * mult); }            catch { }
+                try { target.Town.Prosperity    = Math.Max(100f, target.Town.Prosperity - (int)(250f * mult)); } catch { }
+                try { target.Town.Security      = Math.Max(0f,   target.Town.Security   - (int)(25f  * mult)); } catch { }
+
+                string killLine = killed > 0 ? $" {killed} garrison soldier{(killed != 1 ? "s" : "")} consumed." : "";
+                Msg($"Ashstorm — fire rains over {target.Name}.{killLine} Food burns. The walls remember it.");
+            }
+            catch { }
         }
 
         // ── NPC campaign map spell execution ─────────────────────────────────

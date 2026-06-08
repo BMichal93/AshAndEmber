@@ -2,6 +2,31 @@
 
 ---
 
+## v0.14.1
+
+### New mechanic: Arcane sequence minigame for campaign map spell casting
+
+Casting a campaign spell now opens a short memory game before the spell fires.
+
+**Phase 1 — The Rite.** A 3-step ritual description appears, two sentences per step. Each spell has its own ritual text; each step has three variant phrasings, and one is drawn at random each cast.
+
+**Phase 2 — Recall.** The description disappears. The player is asked to identify each step's exact phrasing from its three variants — one dialog per step.
+
+**Score → power multiplier:**
+
+| Correct | Multiplier | Message |
+|---------|-----------|---------|
+| 3 / 3 | 1.50× | Resonance — the rite was perfect. |
+| 2 / 3 | 1.00× | The working takes hold. |
+| 1 / 3 | 0.75× | The words blur — the fire catches unevenly. |
+| 0 / 3 | 0.50× | The words scatter — the fire finds its own shape. |
+
+The aging cost is always paid. A "Cast without the rite" button on the ritual screen skips the minigame and fires at 1.00×.
+
+All six spell `Cast*` methods accept a power multiplier and scale their numerical outputs accordingly: morale deltas, influence, gold, hearth reduction percentage, troop count, and Fade concealment duration (perfect recall grants one extra day).
+
+---
+
 ## v0.14.0
 
 ### New mechanic: Aging milestones

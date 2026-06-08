@@ -162,6 +162,31 @@ namespace AshAndEmber
             _lordTalents[heroId] = assigned;
         }
 
+        // ── Companion enchantment assignment ─────────────────────────────────
+        // Guarantees at least `count` enchantments for companions who carry the gift.
+        public static void AssignCompanionEnchantments(Hero hero, int count)
+        {
+            if (hero == null || count <= 0) return;
+            if (!_lordTalents.TryGetValue(hero.StringId, out var list))
+            {
+                list = new List<int>();
+                _lordTalents[hero.StringId] = list;
+            }
+
+            var pool = DamageEnchantments.Concat(RestoreEnchantments).ToList();
+            Shuffle(pool);
+            int added = 0;
+            foreach (TalentId t in pool)
+            {
+                if (!list.Contains((int)t))
+                {
+                    list.Add((int)t);
+                    added++;
+                    if (added >= count) break;
+                }
+            }
+        }
+
         // ── Population regulator ──────────────────────────────────────────────
         public static void CheckPopulationBounds()
         {
