@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 
@@ -57,12 +58,29 @@ namespace AshAndEmber
                 {
                     TryRenameParty(party, "Fire Worshippers");
                     _fireWorshipperIds.Add(party.StringId);
+                    InjectCustomTroops(party, "fire_devotee", 2 + _rng.Next(4));
                 }
                 else if (isAshenCategory)
                 {
                     TryRenameParty(party, "Ashen Spawn");
                     _ashenSpawnIds.Add(party.StringId);
+                    InjectCustomTroops(party, "ashen_thrall", 3 + _rng.Next(5));
                 }
+            }
+            catch { }
+        }
+
+        private static void InjectCustomTroops(MobileParty party, string troopId, int count)
+        {
+            try
+            {
+                TaleWorlds.Core.CharacterObject troop = null;
+                foreach (var c in TaleWorlds.Core.CharacterObject.All)
+                {
+                    if (c.StringId == troopId) { troop = c; break; }
+                }
+                if (troop == null) return;
+                party.MemberRoster.AddToCounts(troop, count);
             }
             catch { }
         }
@@ -106,6 +124,8 @@ namespace AshAndEmber
             if (party == null) return;
             TryRenameParty(party, "Ashen Spawn");
             _ashenSpawnIds.Add(party.StringId);
+            InjectCustomTroops(party, "ashen_thrall",  3 + _rng.Next(6));
+            InjectCustomTroops(party, "ashen_invoker", 1 + _rng.Next(3));
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────

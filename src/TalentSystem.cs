@@ -64,6 +64,7 @@ namespace AshAndEmber
         AshenGift   = 33,  // Info — status card shown when player is Ashen (not purchasable)
         Immolate    = 34,  // Enchantment — Damage: guaranteed kill at 3+ inputs
         ArmedCasting = 35, // Passive — cast without sheathing weapons
+        Ashstorm     = 36, // Spell  — bombard a nearby enemy settlement
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info }
@@ -244,6 +245,13 @@ namespace AshAndEmber
                 Category = TalentCategory.Spell, Name = "Fade",
                 Lore = "You draw your fire inward — not out, not away, but down into the marrow, down past what can be seen or felt. For a time you are still there. You simply stop being visible to those looking for you.",
                 MechanicDesc = "Your party is concealed from enemy scouts for 1 day. Enemy parties will not pursue you. Costs 1 day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Ashstorm, IsSpell = true, IsEnchantment = false,
+                Category = TalentCategory.Spell, Name = "Ashstorm",
+                Lore = "The fire knows no walls. Stone does not argue with it. You raise your hands toward a distant tower and the flame answers — not as warmth, but as judgment.",
+                MechanicDesc = "A storm of fire falls on the nearest enemy town or castle within 50 map units. 10–30 garrison soldiers are killed, food stores are burnt, security drops, and prosperity is scorched. Costs 2 days."
             },
             // ── Ashen status (info-only, not purchasable) ─────────────────────
             new TalentDef
@@ -467,7 +475,9 @@ namespace AshAndEmber
             }
             else
             {
-                int cost = GetDailyCastCost();
+                int baseCost = GetDailyCastCost();
+                // Ashstorm is more costly — always +1 extra day on top of the daily cost.
+                int cost = id == TalentId.Ashstorm ? baseCost + 1 : baseCost;
                 bool skipAging = Has(TalentId.Sorcerer) && (_dailyMapCastCount == 0 || _rng.Next(4) == 0);
                 if (skipAging)
                     InformationManager.DisplayMessage(new InformationMessage(
@@ -490,6 +500,7 @@ namespace AshAndEmber
                 case TalentId.Clairvoyance: CastClairvoyance(powerMult); break;
                 case TalentId.Extinguish:   CastExtinguish(powerMult);   break;
                 case TalentId.Fade:         CastFade(powerMult);         break;
+                case TalentId.Ashstorm:     CastAshstorm(powerMult);     break;
             }
         }
 
@@ -690,6 +701,7 @@ namespace AshAndEmber
         {
             switch (id)
             {
+                case TalentId.Ashstorm:
                 case TalentId.Extinguish:
                 case TalentId.Clairvoyance: return 15f;
                 case TalentId.BreakWills:
@@ -697,6 +709,51 @@ namespace AshAndEmber
                 case TalentId.Fade:         return 5f;
                 default:                    return 5f;
             }
+        }
+
+        private static void CastAshstorm(float mult)
+        {
+            try
+            {
+                if (MobileParty.MainParty == null) return;
+                Vec2 playerPos     = MobileParty.MainParty.GetPosition2D;
+                var  playerFaction = MobileParty.MainParty.MapFaction;
+
+                var target = Settlement.All
+                    .Where(s => (s.IsTown || s.IsCastle)
+                             && s.Town != null
+                             && s.MapFaction != null
+                             && FactionManager.IsAtWarAgainstFaction(s.MapFaction, playerFaction)
+                             && (s.GetPosition2D - playerPos).Length < 50f)
+                    .OrderBy(s => (s.GetPosition2D - playerPos).Length)
+                    .FirstOrDefault();
+
+                if (target == null) { Msg("Ashstorm — no enemy settlement within reach."); return; }
+
+                // Kill garrison soldiers
+                int toKill = (int)((10 + _rng.Next(20)) * mult);
+                int killed = 0;
+                var garrison = target.Town?.GarrisonParty?.MemberRoster;
+                if (garrison != null)
+                {
+                    var troops = garrison.GetTroopRoster()
+                        .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
+                    for (int i = 0; i < toKill && troops.Count > 0; i++)
+                    {
+                        int idx = _rng.Next(troops.Count);
+                        try { garrison.AddToCounts(troops[idx].Character, -1); killed++; } catch { }
+                    }
+                }
+
+                // Burn food stores, drop prosperity and security
+                try { target.Town.FoodStocks    -= (int)(150f * mult); }            catch { }
+                try { target.Town.Prosperity    = Math.Max(100f, target.Town.Prosperity - (int)(250f * mult)); } catch { }
+                try { target.Town.Security      = Math.Max(0f,   target.Town.Security   - (int)(25f  * mult)); } catch { }
+
+                string killLine = killed > 0 ? $" {killed} garrison soldier{(killed != 1 ? "s" : "")} consumed." : "";
+                Msg($"Ashstorm — fire rains over {target.Name}.{killLine} Food burns. The walls remember it.");
+            }
+            catch { }
         }
 
         // ── NPC campaign map spell execution ─────────────────────────────────

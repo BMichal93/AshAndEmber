@@ -145,6 +145,28 @@ namespace AshAndEmber
                 },
             },
 
+            [TalentId.Ashstorm] = new[]
+            {
+                new[] // Step 1 — opening: gathering the fire above
+                {
+                    "Raise your eyes to the sky. Pull the fire upward, away from the earth.",
+                    "Look toward the horizon where they shelter. Draw the fire above you like a held breath.",
+                    "Tilt your head back. Let the fire climb past your hands and gather at height.",
+                },
+                new[] // Step 2 — middle: focusing on the target
+                {
+                    "Lock onto the shape of their walls. Feel the warmth trapped inside them.",
+                    "Fix the settlement in your mind. The fire already knows where it is needed.",
+                    "Find the stone and mortar in your thoughts. The fire wants what hides within.",
+                },
+                new[] // Step 3 — close: releasing the storm
+                {
+                    "Open both hands at once. Let it fall without restraint.",
+                    "Push it out — all of it — toward the distant walls. Do not pull any back.",
+                    "Release your breath and the fire together. Let gravity do the rest.",
+                },
+            },
+
             [TalentId.Fade] = new[]
             {
                 new[] // Step 1 — opening: thinning the fire
