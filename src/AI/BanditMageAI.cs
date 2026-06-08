@@ -33,6 +33,10 @@ namespace AshAndEmber
             // Custom Ashen Spawn troop tree
             "ashen_thrall",
             "ashen_invoker",
+            // Custom Wandering Circle troop tree
+            "circle_acolyte",
+            "circle_druid",
+            "circle_shaman",
         };
 
         // Troops that always receive the special-battle (cultist) tier regardless of party flag
@@ -40,6 +44,7 @@ namespace AshAndEmber
         {
             "fire_devotee", "fire_zealot", "ember_caller", "ember_shaman",
             "ashen_thrall", "ashen_invoker",
+            "circle_acolyte", "circle_druid", "circle_shaman",
         };
 
         private static readonly Dictionary<string, string> _titles = new Dictionary<string, string>
@@ -56,6 +61,9 @@ namespace AshAndEmber
             { "ember_shaman",     "Ember Sorcerer"  },
             { "ashen_thrall",     "Ashen Thrall"    },
             { "ashen_invoker",    "Ashen Invoker"   },
+            { "circle_acolyte",   "Acolyte"         },
+            { "circle_druid",     "Druid"           },
+            { "circle_shaman",    "Shaman"          },
         };
 
         private const float CooldownDuration = 18f;

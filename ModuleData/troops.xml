@@ -248,4 +248,130 @@
     </skills>
   </NPCCharacter>
 
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       WANDERING CIRCLE — nomadic seers who carry the Inner Fire as
+       ritual wisdom rather than weapon.  Found among steppe and desert
+       bandit parties renamed to "Wandering Circle".
+       acolyte (T1) → druid (T2) → shaman (T3, elite)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <NPCCharacter id="circle_acolyte"
+                name="{=circle_acolyte_name}Acolyte"
+                age="0"
+                level="9"
+                culture="Culture.battania"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <face_key_template value="BodyProperty.fighter_mid"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.wrapped_stick"/>
+        <equipment slot="Item2" id="Item.stone"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.hand_axe"/>
+        <equipment slot="Item2" id="Item.stone"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="35"/>
+      <skill id="OneHanded"  value="30"/>
+      <skill id="Throwing"   value="40"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.circle_druid"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="circle_druid"
+                name="{=circle_druid_name}Druid"
+                age="0"
+                level="19"
+                culture="Culture.battania"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <face_key_template value="BodyProperty.fighter_mid"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.short_sword"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.hand_axe"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="55"/>
+      <skill id="OneHanded"  value="50"/>
+      <skill id="Throwing"   value="90"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.circle_shaman"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="circle_shaman"
+                name="{=circle_shaman_name}Shaman"
+                age="0"
+                level="29"
+                culture="Culture.battania"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <face_key_template value="BodyProperty.fighter_mid"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Item3" id="Item.fighting_axe"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Item3" id="Item.short_sword"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="75"/>
+      <skill id="OneHanded"  value="65"/>
+      <skill id="Throwing"   value="130"/>
+    </skills>
+  </NPCCharacter>
+
 </NPCCharacters>
+

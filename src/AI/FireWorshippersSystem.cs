@@ -1,8 +1,10 @@
 // =============================================================================
 // LIFE & DEATH MAGIC — AI/FireWorshippersSystem.cs
-// Renames ~10% of newly created Looter / forest_bandit parties to
-// "Fire Worshippers" and ~10% of sea_raider / mountain_bandit parties to
-// "Ashen Spawn". Tracked parties are guaranteed at least one bandit mage.
+// Renames ~10% of newly created bandit parties to one of three special types:
+//   • "Fire Worshippers"  — from Looter / forest_bandit parties
+//   • "Ashen Spawn"       — from sea_raider / mountain_bandit parties
+//   • "Wandering Circle"  — from steppe_bandit / desert_bandit parties
+// Tracked parties are guaranteed at least one bandit mage.
 // =============================================================================
 
 using System;
@@ -19,8 +21,9 @@ namespace AshAndEmber
     {
         private const float RenameChance = 0.10f; // 10% of qualifying parties
 
-        private static readonly HashSet<string> _fireWorshipperIds = new HashSet<string>();
-        private static readonly HashSet<string> _ashenSpawnIds     = new HashSet<string>();
+        private static readonly HashSet<string> _fireWorshipperIds   = new HashSet<string>();
+        private static readonly HashSet<string> _ashenSpawnIds       = new HashSet<string>();
+        private static readonly HashSet<string> _wanderingCircleIds  = new HashSet<string>();
         private static readonly Random _rng = new Random();
 
         // Troop IDs that qualify each category
@@ -32,6 +35,10 @@ namespace AshAndEmber
         {
             "sea_raider", "mountain_bandit",
         };
+        private static readonly HashSet<string> _wanderingCircleTroops = new HashSet<string>
+        {
+            "steppe_bandit", "desert_bandit",
+        };
 
         public static bool IsFireWorshipper(MobileParty party) =>
             party != null && _fireWorshipperIds.Contains(party.StringId);
@@ -39,8 +46,11 @@ namespace AshAndEmber
         public static bool IsAshenSpawn(MobileParty party) =>
             party != null && _ashenSpawnIds.Contains(party.StringId);
 
+        public static bool IsWanderingCircle(MobileParty party) =>
+            party != null && _wanderingCircleIds.Contains(party.StringId);
+
         public static bool IsSpecialParty(MobileParty party) =>
-            IsFireWorshipper(party) || IsAshenSpawn(party);
+            IsFireWorshipper(party) || IsAshenSpawn(party) || IsWanderingCircle(party);
 
         // ── Hook: called when any mobile party is created ─────────────────────
         public static void OnPartyCreated(MobileParty party)
@@ -48,23 +58,38 @@ namespace AshAndEmber
             if (party == null || !party.IsActive) return;
             try
             {
-                bool isFireCategory  = ContainsFireTroop(party);
-                bool isAshenCategory = ContainsAshenTroop(party);
+                bool isFireCategory    = ContainsTroop(party, _fireWorshipperTroops);
+                bool isAshenCategory   = ContainsTroop(party, _ashenSpawnTroops);
+                bool isCircleCategory  = ContainsTroop(party, _wanderingCircleTroops);
 
-                if (!isFireCategory && !isAshenCategory) return;
+                if (!isFireCategory && !isAshenCategory && !isCircleCategory) return;
                 if (_rng.NextDouble() >= RenameChance) return;
 
-                if (isFireCategory && (!isAshenCategory || _rng.Next(2) == 0))
+                // Resolve ties by random choice
+                var matching = new List<int>();
+                if (isFireCategory)   matching.Add(0);
+                if (isAshenCategory)  matching.Add(1);
+                if (isCircleCategory) matching.Add(2);
+                int pick = matching[_rng.Next(matching.Count)];
+
+                if (pick == 0)
                 {
                     TryRenameParty(party, "Fire Worshippers");
                     _fireWorshipperIds.Add(party.StringId);
                     InjectCustomTroops(party, "fire_devotee", 2 + _rng.Next(4));
                 }
-                else if (isAshenCategory)
+                else if (pick == 1)
                 {
                     TryRenameParty(party, "Ashen Spawn");
                     _ashenSpawnIds.Add(party.StringId);
                     InjectCustomTroops(party, "ashen_thrall", 3 + _rng.Next(5));
+                }
+                else
+                {
+                    TryRenameParty(party, "Wandering Circle");
+                    _wanderingCircleIds.Add(party.StringId);
+                    InjectCustomTroops(party, "circle_acolyte", 2 + _rng.Next(4));
+                    InjectCustomTroops(party, "circle_druid",   1 + _rng.Next(2));
                 }
             }
             catch { }
@@ -91,24 +116,12 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static bool ContainsFireTroop(MobileParty party)
+        private static bool ContainsTroop(MobileParty party, HashSet<string> troopIds)
         {
             try
             {
                 foreach (var entry in party.MemberRoster.GetTroopRoster())
-                    if (entry.Character != null && _fireWorshipperTroops.Contains(entry.Character.StringId))
-                        return true;
-            }
-            catch { }
-            return false;
-        }
-
-        private static bool ContainsAshenTroop(MobileParty party)
-        {
-            try
-            {
-                foreach (var entry in party.MemberRoster.GetTroopRoster())
-                    if (entry.Character != null && _ashenSpawnTroops.Contains(entry.Character.StringId))
+                    if (entry.Character != null && troopIds.Contains(entry.Character.StringId))
                         return true;
             }
             catch { }
@@ -131,14 +144,19 @@ namespace AshAndEmber
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(TaleWorlds.CampaignSystem.IDataStore store)
         {
-            var fw = _fireWorshipperIds.ToList();
+            var fw  = _fireWorshipperIds.ToList();
             var as_ = _ashenSpawnIds.ToList();
-            store.SyncData("LDM_FireWorshippers", ref fw);
-            store.SyncData("LDM_AshenSpawnIds",   ref as_);
+            var wc  = _wanderingCircleIds.ToList();
+            store.SyncData("LDM_FireWorshippers",   ref fw);
+            store.SyncData("LDM_AshenSpawnIds",     ref as_);
+            store.SyncData("LDM_WanderingCircleIds", ref wc);
+
             _fireWorshipperIds.Clear();
-            if (fw != null) foreach (var id in fw) _fireWorshipperIds.Add(id);
+            if (fw  != null) foreach (var id in fw)  _fireWorshipperIds.Add(id);
             _ashenSpawnIds.Clear();
             if (as_ != null) foreach (var id in as_) _ashenSpawnIds.Add(id);
+            _wanderingCircleIds.Clear();
+            if (wc  != null) foreach (var id in wc)  _wanderingCircleIds.Add(id);
         }
     }
 }
