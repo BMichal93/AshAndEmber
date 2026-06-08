@@ -9,7 +9,9 @@
 // rite fires. Stopping short wastes the sacrifice.
 //
 // Altars: Tyal, Sibir, Baltakhand, Amprela.
-// Access: Mercy ≤ −1 AND Honor ≤ −1.
+// Any hero may approach. Alignment −(Mercy+Honor+Generosity)/6 determines yield.
+// Zero or wrong alignment gives 1 pt/round — success requires many rounds of sacrifice
+// for a weakened reward.
 //
 // NPC effects (daily tick):
 //   Ashen lords in altar cities: 0.5% chance/day to perform a dark rite.
@@ -53,12 +55,16 @@ namespace AshAndEmber
         private const int SolsticeTargetLo  = 35; private const int SolsticeTargetHi  = 55;
 
         // Cooldowns (base days)
-        private const int BloodTributeCooldownBase = 3;
+        private const int BloodTributeCooldownBase =  7;
         private const int SolsticeCooldownBase     = 14;
-        private const int CarrionGiftCooldownBase  = 5;
-        private const int BreakWillsCooldownBase   = 5;
-        private const int ColdFireCooldownBase     = 3;
-        private const int SubjugateCooldownBase    = 5;
+        private const int CarrionGiftCooldownBase  =  7;
+        private const int BreakWillsCooldownBase   =  7;
+        private const int ColdFireCooldownBase     =  7;
+        private const int SubjugateCooldownBase    =  7;
+
+        // Location depletion: after DepletionThreshold ritual starts the stone rests
+        private const int DepletionThreshold    =  5;
+        private const int DepletionCooldown     = 30;
 
         private const string AshenKingdomId = "ashen_kingdom";
         private static readonly string[] AshenAltarCities = { "Tyal", "Sibir", "Baltakhand", "Amprela" };
@@ -82,6 +88,9 @@ namespace AshAndEmber
         private static int _lastColdFireDay     = -999;
         private static int _lastSubjugateDay    = -999;
 
+        private static readonly Dictionary<string, int> _locationUses          = new Dictionary<string, int>();
+        private static readonly Dictionary<string, int> _locationDepletedUntil = new Dictionary<string, int>();
+
         // ── CampaignBehaviorBase ───────────────────────────────────────────────
         public override void RegisterEvents()
         {
@@ -103,6 +112,24 @@ namespace AshAndEmber
             try { store.SyncData("ALTAR_LastBreakWillsDay", ref _lastBreakWillsDay); } catch { }
             try { store.SyncData("ALTAR_LastColdFireDay", ref _lastColdFireDay); } catch { }
             try { store.SyncData("ALTAR_LastSubjugateDay", ref _lastSubjugateDay); } catch { }
+            try
+            {
+                var luKeys = _locationUses.Keys.ToList();
+                var luVals = _locationUses.Values.ToList();
+                store.SyncData("ALTAR_LocUseKeys", ref luKeys);
+                store.SyncData("ALTAR_LocUseVals", ref luVals);
+                if (luKeys != null && luVals != null)
+                { _locationUses.Clear(); for (int i = 0; i < Math.Min(luKeys.Count, luVals.Count); i++) _locationUses[luKeys[i]] = luVals[i]; }
+            } catch { }
+            try
+            {
+                var ldKeys = _locationDepletedUntil.Keys.ToList();
+                var ldVals = _locationDepletedUntil.Values.ToList();
+                store.SyncData("ALTAR_LocDepKeys", ref ldKeys);
+                store.SyncData("ALTAR_LocDepVals", ref ldVals);
+                if (ldKeys != null && ldVals != null)
+                { _locationDepletedUntil.Clear(); for (int i = 0; i < Math.Min(ldKeys.Count, ldVals.Count); i++) _locationDepletedUntil[ldKeys[i]] = ldVals[i]; }
+            } catch { }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -154,6 +181,36 @@ namespace AshAndEmber
             return cooldown - (CurrentCampaignDay() - lastDay);
         }
 
+        private static bool IsLocationDepleted()
+        {
+            string id = Settlement.CurrentSettlement?.StringId ?? "";
+            if (string.IsNullOrEmpty(id)) return false;
+            return _locationDepletedUntil.TryGetValue(id, out int until) && CurrentCampaignDay() <= until;
+        }
+
+        private static int LocationDepletedDaysLeft()
+        {
+            string id = Settlement.CurrentSettlement?.StringId ?? "";
+            if (!_locationDepletedUntil.TryGetValue(id, out int until)) return 0;
+            return Math.Max(0, until - CurrentCampaignDay());
+        }
+
+        private static void RecordLocationUse()
+        {
+            string id = Settlement.CurrentSettlement?.StringId ?? "";
+            if (string.IsNullOrEmpty(id)) return;
+            if (!_locationUses.TryGetValue(id, out int count)) count = 0;
+            count++;
+            if (count >= DepletionThreshold)
+            {
+                _locationDepletedUntil[id] = CurrentCampaignDay() + DepletionCooldown;
+                _locationUses[id] = 0;
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "The altar is spent. The stone needs time to drink before it can give again."));
+            }
+            else _locationUses[id] = count;
+        }
+
         // +1.0 = full dark power (max evil); 0 = no benefit; negative = penalty.
         internal static float AltarTraitMultiplier()
         {
@@ -189,9 +246,9 @@ namespace AshAndEmber
             if (mult >= 0.8f)  return "  [The cold knows you — full power]";
             if (mult >= 0.4f)  return "  [Partial power]";
             if (mult >= 0.01f) return "  [Faint dark blessing]";
-            if (mult >= -0.01f)return "  [No benefit — you are not cold enough]";
-            if (mult >= -0.5f) return "  [PENALTY — the altar punishes your warmth]";
-            return "  [HEAVY PENALTY — the grey flame burns against you]";
+            if (mult >= -0.01f)return "  [Stranger — many rounds needed; weak reward]";
+            if (mult >= -0.5f) return "  [PENALTY — great sacrifice for lesser yield]";
+            return "  [HEAVY PENALTY — every round costs you greatly; reward barely moves]";
         }
 
         private static bool NpcCanUseAltar(Hero h)
@@ -302,9 +359,10 @@ namespace AshAndEmber
         }
 
         // ── Ritual core ────────────────────────────────────────────────────────
+        // Floor of 1 so any hero can succeed — but unaligned heroes sacrifice many more lives for weak rewards.
         private static int RollRoundPoints(float mult)
         {
-            if (mult <= 0f) return 0;
+            if (mult <= 0f) return 1;
             int raw = 3 + _rng.Next(8); // 3–10
             return Math.Max(1, (int)Math.Round(raw * mult));
         }
@@ -447,9 +505,11 @@ namespace AshAndEmber
                             var fp = MobileParty.All.FirstOrDefault(p => p.StringId == _frozenPartyId && p.IsActive);
                             frozenNote = $"  [Cold Fire freeze on {fp?.Name?.ToString() ?? _frozenPartyId}: {_frozenUntilDay - today + 1} day(s)]";
                         }
+                        string deplNote = IsLocationDepleted()
+                            ? $"  [SPENT — returns in {LocationDepletedDaysLeft()} day(s)]" : "";
                         MBTextManager.SetTextVariable("ALTAR_MENU_HEADER",
                             $"The Ashen Altar. Stone worn smooth by blood that never fully dried. " +
-                            $"The flame here is grey, and it is always hungry.{ptsNote}{solNote}{frozenNote}");
+                            $"The flame here is grey, and it is always hungry.{ptsNote}{solNote}{frozenNote}{deplNote}");
                     }
                     catch { }
                 });
@@ -466,7 +526,8 @@ namespace AshAndEmber
                         {
                             float mult = AltarTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastBloodTributeDay, BloodTributeCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastBloodTributeDay, BloodTributeCooldownBase, mult))
                             { args.IsEnabled = false; cd = $"  [On cooldown: {CooldownDaysLeft(_lastBloodTributeDay, BloodTributeCooldownBase, mult)} day(s)]"; }
                             else args.IsEnabled = TotalSacrificePoints() >= SacrificePerRound_Low;
                             MBTextManager.SetTextVariable("ALTAR_BLOODTRIBUTE_TEXT",
@@ -490,7 +551,8 @@ namespace AshAndEmber
                         {
                             float mult = AltarTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastSolsticeDay, SolsticeCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastSolsticeDay, SolsticeCooldownBase, mult))
                             { args.IsEnabled = false; cd = $"  [On cooldown: {CooldownDaysLeft(_lastSolsticeDay, SolsticeCooldownBase, mult)} day(s)]"; }
                             else args.IsEnabled = TotalSacrificePoints() >= SacrificePerRound_High;
                             MBTextManager.SetTextVariable("ALTAR_SOLSTICE_TEXT",
@@ -514,7 +576,8 @@ namespace AshAndEmber
                         {
                             float mult = AltarTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastCarrionDay, CarrionGiftCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastCarrionDay, CarrionGiftCooldownBase, mult))
                             { args.IsEnabled = false; cd = $"  [On cooldown: {CooldownDaysLeft(_lastCarrionDay, CarrionGiftCooldownBase, mult)} day(s)]"; }
                             else args.IsEnabled = TotalSacrificePoints() >= SacrificePerRound_Mid;
                             MBTextManager.SetTextVariable("ALTAR_CARRION_TEXT",
@@ -538,7 +601,8 @@ namespace AshAndEmber
                         {
                             float mult = AltarTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastBreakWillsDay, BreakWillsCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastBreakWillsDay, BreakWillsCooldownBase, mult))
                             { args.IsEnabled = false; cd = $"  [On cooldown: {CooldownDaysLeft(_lastBreakWillsDay, BreakWillsCooldownBase, mult)} day(s)]"; }
                             else args.IsEnabled = TotalSacrificePoints() >= SacrificePerRound_Mid;
                             MBTextManager.SetTextVariable("ALTAR_BREAKWILLS_TEXT",
@@ -562,7 +626,8 @@ namespace AshAndEmber
                         {
                             float mult = AltarTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastColdFireDay, ColdFireCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastColdFireDay, ColdFireCooldownBase, mult))
                             { args.IsEnabled = false; cd = $"  [On cooldown: {CooldownDaysLeft(_lastColdFireDay, ColdFireCooldownBase, mult)} day(s)]"; }
                             else args.IsEnabled = TotalSacrificePoints() >= SacrificePerRound_Mid;
                             MBTextManager.SetTextVariable("ALTAR_COLDFIRE_TEXT",
@@ -586,7 +651,8 @@ namespace AshAndEmber
                         {
                             float mult = AltarTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastSubjugateDay, SubjugateCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastSubjugateDay, SubjugateCooldownBase, mult))
                             { args.IsEnabled = false; cd = $"  [On cooldown: {CooldownDaysLeft(_lastSubjugateDay, SubjugateCooldownBase, mult)} day(s)]"; }
                             else args.IsEnabled = CanAffordSubjugate();
                             MBTextManager.SetTextVariable("ALTAR_SUBJUGATE_TEXT",
@@ -621,6 +687,7 @@ namespace AshAndEmber
             _lastBloodTributeDay = CurrentCampaignDay();
             _lastAltarUseDay     = CurrentCampaignDay();
             _altarUseCount++;
+            RecordLocationUse();
 
             RunAltarRitual(
                 "Blood Tribute", target, mult, SacrificePerRound_Low,
@@ -652,6 +719,7 @@ namespace AshAndEmber
             _lastSolsticeDay = CurrentCampaignDay();
             _lastAltarUseDay = CurrentCampaignDay();
             _altarUseCount++;
+            RecordLocationUse();
 
             RunAltarRitual(
                 "The Ashen Solstice", target, mult, SacrificePerRound_High,
@@ -706,6 +774,7 @@ namespace AshAndEmber
             _lastCarrionDay  = CurrentCampaignDay();
             _lastAltarUseDay = CurrentCampaignDay();
             _altarUseCount++;
+            RecordLocationUse();
 
             RunAltarRitual(
                 "Carrion Gift", target, mult, SacrificePerRound_Mid,
@@ -786,6 +855,7 @@ namespace AshAndEmber
             _lastBreakWillsDay = CurrentCampaignDay();
             _lastAltarUseDay   = CurrentCampaignDay();
             _altarUseCount++;
+            RecordLocationUse();
 
             RunAltarRitual(
                 "Break Hearts and Wills", target, mult, SacrificePerRound_Mid,
@@ -856,6 +926,7 @@ namespace AshAndEmber
             _lastColdFireDay = CurrentCampaignDay();
             _lastAltarUseDay = CurrentCampaignDay();
             _altarUseCount++;
+            RecordLocationUse();
 
             RunAltarRitual(
                 "Rite of Cold Fire", target, mult, SacrificePerRound_Mid,
@@ -918,6 +989,7 @@ namespace AshAndEmber
             _lastSubjugateDay = CurrentCampaignDay();
             _lastAltarUseDay  = CurrentCampaignDay();
             _altarUseCount++;
+            RecordLocationUse();
 
             var prison = MobileParty.MainParty?.PrisonRoster;
             if (prison == null) { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } return; }

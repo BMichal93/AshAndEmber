@@ -9,7 +9,9 @@
 // meet or exceed the target, the prayer fires. Stopping short wastes the cost.
 //
 // Sanctuaries: Temple-owned towns + 4 random Empire towns.
-// Access: Honor ≥ 1 AND Mercy ≥ 1.
+// Any hero may approach. Alignment (Mercy+Honor+Generosity)/6 determines yield per
+// round and effect strength. Zero alignment gives 1 pt/round — success is possible
+// but requires many painful rounds for little reward.
 // Temple members reduce all rite cooldowns by 40%.
 //
 // NPC effects (daily tick):
@@ -48,11 +50,15 @@ namespace AshAndEmber
         private const int PermanentSanctuaryCount = 4;
 
         // Cooldowns (base days; Temple reduces by 40%)
-        private const int PrayerCooldownBase    =  3;
-        private const int ProtectiveCooldownBase=  7;
-        private const int TurnAshenCooldownBase =  5;
-        private const int HealingCooldownBase   =  5;
+        private const int PrayerCooldownBase    =  7;
+        private const int ProtectiveCooldownBase= 10;
+        private const int TurnAshenCooldownBase = 10;
+        private const int HealingCooldownBase   = 14;
         private const int BlessingCooldownBase  = 30;
+
+        // Location depletion: after DepletionThreshold ritual starts the flame rests
+        private const int DepletionThreshold    =  5;
+        private const int DepletionCooldown     = 30;
 
         // Ritual target ranges (hidden from player — lo inclusive, hi inclusive)
         private const int PrayerTargetLo   = 10; private const int PrayerTargetHi   = 18;
@@ -81,6 +87,9 @@ namespace AshAndEmber
         private static int  _lastTurnAshenDay  = -999;
         private static int  _lastHealingDay    = -999;
         private static int  _lastBlessingDay   = -999;
+
+        private static readonly Dictionary<string, int> _locationUses          = new Dictionary<string, int>();
+        private static readonly Dictionary<string, int> _locationDepletedUntil = new Dictionary<string, int>();
 
         private static readonly Random _rng = new Random();
 
@@ -111,6 +120,24 @@ namespace AshAndEmber
             try { store.SyncData("SANCT_LastTurnAshenDay", ref _lastTurnAshenDay); } catch { }
             try { store.SyncData("SANCT_LastHealingDay", ref _lastHealingDay); } catch { }
             try { store.SyncData("SANCT_LastBlessingDay", ref _lastBlessingDay); } catch { }
+            try
+            {
+                var luKeys = _locationUses.Keys.ToList();
+                var luVals = _locationUses.Values.ToList();
+                store.SyncData("SANCT_LocUseKeys", ref luKeys);
+                store.SyncData("SANCT_LocUseVals", ref luVals);
+                if (luKeys != null && luVals != null)
+                { _locationUses.Clear(); for (int i = 0; i < Math.Min(luKeys.Count, luVals.Count); i++) _locationUses[luKeys[i]] = luVals[i]; }
+            } catch { }
+            try
+            {
+                var ldKeys = _locationDepletedUntil.Keys.ToList();
+                var ldVals = _locationDepletedUntil.Values.ToList();
+                store.SyncData("SANCT_LocDepKeys", ref ldKeys);
+                store.SyncData("SANCT_LocDepVals", ref ldVals);
+                if (ldKeys != null && ldVals != null)
+                { _locationDepletedUntil.Clear(); for (int i = 0; i < Math.Min(ldKeys.Count, ldVals.Count); i++) _locationDepletedUntil[ldKeys[i]] = ldVals[i]; }
+            } catch { }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -182,6 +209,36 @@ namespace AshAndEmber
             return cooldown - (CurrentCampaignDay() - lastDay);
         }
 
+        private static bool IsLocationDepleted()
+        {
+            string id = Settlement.CurrentSettlement?.StringId ?? "";
+            if (string.IsNullOrEmpty(id)) return false;
+            return _locationDepletedUntil.TryGetValue(id, out int until) && CurrentCampaignDay() <= until;
+        }
+
+        private static int LocationDepletedDaysLeft()
+        {
+            string id = Settlement.CurrentSettlement?.StringId ?? "";
+            if (!_locationDepletedUntil.TryGetValue(id, out int until)) return 0;
+            return Math.Max(0, until - CurrentCampaignDay());
+        }
+
+        private static void RecordLocationUse()
+        {
+            string id = Settlement.CurrentSettlement?.StringId ?? "";
+            if (string.IsNullOrEmpty(id)) return;
+            if (!_locationUses.TryGetValue(id, out int count)) count = 0;
+            count++;
+            if (count >= DepletionThreshold)
+            {
+                _locationDepletedUntil[id] = CurrentCampaignDay() + DepletionCooldown;
+                _locationUses[id] = 0;
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "The flame here is spent. This sanctuary needs time to recover."));
+            }
+            else _locationUses[id] = count;
+        }
+
         // +1.0 = full flame blessing; 0 = no effect; negative = penalty.
         internal static float SanctuaryTraitMultiplier()
         {
@@ -218,9 +275,9 @@ namespace AshAndEmber
             if (mult >= 0.8f)  return "  [Flame knows you — full blessing]";
             if (mult >= 0.4f)  return "  [Partial blessing]";
             if (mult >= 0.01f) return "  [Faint blessing — cold soul]";
-            if (mult >= -0.01f)return "  [No benefit — the flame does not know you]";
-            if (mult >= -0.5f) return "  [PENALTY — the flame recoils from your darkness]";
-            return "  [HEAVY PENALTY — the grey flame burns against you]";
+            if (mult >= -0.01f)return "  [Stranger — many rounds needed; weak reward]";
+            if (mult >= -0.5f) return "  [PENALTY — the flame recoils; great cost, lesser yield]";
+            return "  [HEAVY PENALTY — every round will bleed you; reward barely flickers]";
         }
 
         private static bool NpcCanUseSanctuary(Hero h)
@@ -243,10 +300,10 @@ namespace AshAndEmber
         }
 
         // ── Ritual core ────────────────────────────────────────────────────────
-        // Points gained per meditation round. Always ≥ 0 for positive mult.
+        // Points gained per meditation round. Floor of 1 so unaligned heroes can still succeed — slowly.
         private static int RollRoundPoints(float mult)
         {
-            if (mult <= 0f) return 0;
+            if (mult <= 0f) return 1; // 1 pt/round regardless; alignment accelerates yield
             int raw = 3 + _rng.Next(8); // 3–10
             return Math.Max(1, (int)Math.Round(raw * mult));
         }
@@ -400,9 +457,11 @@ namespace AshAndEmber
                         string blessNote = _blessedUntilDay >= today ? $"  [Blessed: {_blessedUntilDay - today + 1} day(s)]" : "";
                         string steadNote = _steadyLineUntilDay >= today ? $"  [Steady the Line: {_steadyLineUntilDay - today + 1} day(s)]" : "";
                         string traitNote = _traitBoostUntilDay >= today ? $"  [Flame Mark: {_traitBoostUntilDay - today + 1} day(s)]" : "";
+                        string deplNote = IsLocationDepleted()
+                            ? $"  [SPENT — returns in {LocationDepletedDaysLeft()} day(s)]" : "";
                         string hdr = IsTempleMember()
-                            ? $"The Sanctuary of The Temple. The flame knows you. Cooldowns reduced.{protNote}{blessNote}{steadNote}{traitNote}"
-                            : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{protNote}{blessNote}{steadNote}{traitNote}";
+                            ? $"The Sanctuary of The Temple. The flame knows you. Cooldowns reduced.{protNote}{blessNote}{steadNote}{traitNote}{deplNote}"
+                            : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{protNote}{blessNote}{steadNote}{traitNote}{deplNote}";
                         MBTextManager.SetTextVariable("SANCT_MENU_HEADER", hdr);
                     }
                     catch { }
@@ -420,7 +479,8 @@ namespace AshAndEmber
                         {
                             float mult = SanctuaryTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastPrayerDay, PrayerCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastPrayerDay, PrayerCooldownBase, mult))
                             {
                                 args.IsEnabled = false;
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastPrayerDay, PrayerCooldownBase, mult)} day(s)]";
@@ -447,7 +507,8 @@ namespace AshAndEmber
                             float mult = SanctuaryTraitMultiplier();
                             int cur = CampaignMapEvents.ProtectedDaysRemaining;
                             string cd = "", active = cur > 0 ? $"  [active: {cur} day(s) left]" : "";
-                            if (IsRiteOnCooldown(_lastProtectiveDay, ProtectiveCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastProtectiveDay, ProtectiveCooldownBase, mult))
                             {
                                 args.IsEnabled = false;
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastProtectiveDay, ProtectiveCooldownBase, mult)} day(s)]";
@@ -473,7 +534,8 @@ namespace AshAndEmber
                         {
                             float mult = SanctuaryTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastTurnAshenDay, TurnAshenCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastTurnAshenDay, TurnAshenCooldownBase, mult))
                             {
                                 args.IsEnabled = false;
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastTurnAshenDay, TurnAshenCooldownBase, mult)} day(s)]";
@@ -499,7 +561,8 @@ namespace AshAndEmber
                         {
                             float mult = SanctuaryTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastHealingDay, HealingCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastHealingDay, HealingCooldownBase, mult))
                             {
                                 args.IsEnabled = false;
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastHealingDay, HealingCooldownBase, mult)} day(s)]";
@@ -525,7 +588,8 @@ namespace AshAndEmber
                         {
                             float mult = SanctuaryTraitMultiplier();
                             string cd = "";
-                            if (IsRiteOnCooldown(_lastBlessingDay, BlessingCooldownBase, mult))
+                            if (IsLocationDepleted()) { args.IsEnabled = false; }
+                            else if (IsRiteOnCooldown(_lastBlessingDay, BlessingCooldownBase, mult))
                             {
                                 args.IsEnabled = false;
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastBlessingDay, BlessingCooldownBase, mult)} day(s)]";
@@ -562,6 +626,7 @@ namespace AshAndEmber
             _lastPrayerDay       = CurrentCampaignDay();
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
+            RecordLocationUse();
 
             RunSanctuaryRitual(
                 "Prayer of Strength",
@@ -590,6 +655,7 @@ namespace AshAndEmber
             _lastProtectiveDay   = CurrentCampaignDay();
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
+            RecordLocationUse();
 
             RunSanctuaryRitual(
                 "Protective Rites",
@@ -629,6 +695,7 @@ namespace AshAndEmber
             _lastTurnAshenDay    = CurrentCampaignDay();
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
+            RecordLocationUse();
 
             RunSanctuaryRitual(
                 "Turn the Ashen",
@@ -679,6 +746,7 @@ namespace AshAndEmber
             _lastHealingDay      = CurrentCampaignDay();
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
+            RecordLocationUse();
 
             RunSanctuaryRitual(
                 "Prayer of Healing",
@@ -756,6 +824,7 @@ namespace AshAndEmber
             _lastBlessingDay     = CurrentCampaignDay();
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
+            RecordLocationUse();
 
             RunSanctuaryRitual(
                 "Prayer for a Blessing",
