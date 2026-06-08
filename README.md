@@ -734,11 +734,11 @@ When the player stops: if accumulated progress **≥ hidden target**, the prayer
 
 | Rite | Per-round cost | Effect on success |
 |------|----------------|-------------------|
-| **Prayer of Strength** | 2–5 troops wounded | Party morale +40; blessed status (10% daily healing) for 3 days |
-| **Protective Rites** | 2–5 troops wounded + 1–2 days older | Blocks all Ashen world events for 14 days |
-| **Turn the Ashen** | 3–6 troops wounded | Wounds 12–20 soldiers in up to 3 Ashen parties within 200 map units; breaks morale |
-| **Prayer of Healing** | 2–4 days older | Choice: heal all wounded troops **or** activate Steady the Line (fallen count as wounded not dead for 5 days) |
-| **Prayer for a Blessing** | 4–8 days older | Choice: shed ~1 year (floor: age 20) **or** receive Flame Mark (+1/6 trait multiplier for 60 days) |
+| **Prayer of Strength** | 8–15 hero HP | Party morale +40; blessed status (10% daily healing) for 3 days |
+| **Protective Rites** | 12–20 hero HP + 1 day older | Blocks all Ashen world events for 14 days |
+| **Turn the Ashen** | 15–25 hero HP | Wounds 12–20 soldiers in up to 3 Ashen parties within 200 map units; breaks morale |
+| **Prayer of Healing** | 12–20 hero HP | Choice: heal all wounded troops **or** activate Steady the Line (fallen count as wounded not dead for 5 days) |
+| **Prayer for a Blessing** | 15–25 hero HP + 2–4 days older | Choice: shed ~1 year (floor: age 20) **or** receive Flame Mark (+1/6 trait multiplier for 60 days) |
 
 **Hidden target ranges** (for reference; never shown in-game):
 
@@ -756,11 +756,11 @@ Cooldowns (base; reduced 40% for Temple members; longer at lower alignment):
 
 | Rite | Base cooldown | Note |
 |------|--------------|------|
-| Prayer of Strength | 7 days | Costs troops — use before healing |
-| Prayer of Healing | 7 days | Costs aging — the recovery tool for wounded troops |
-| Protective Rites | 10 days | Costs troops + aging |
-| Turn the Ashen | 10 days | Costs troops |
-| Prayer for a Blessing | 30 days | Costs aging |
+| Prayer of Strength | 7 days | Costs hero HP — weakens you to bolster morale |
+| Prayer of Healing | 7 days | Costs hero HP — you bleed so your soldiers don't have to |
+| Protective Rites | 10 days | Costs hero HP + 1 day aging |
+| Turn the Ashen | 10 days | Costs hero HP — heavy drain for offensive use |
+| Prayer for a Blessing | 30 days | Costs hero HP + 2–4 days aging — the heaviest rite |
 
 **Location depletion:** after 5 ritual starts at a single Sanctuary (any mix of rites), the flame there rests for 30 days and all options are disabled. Travel to another Sanctuary to continue. The counter and recovery timer are shown in the sub-menu header.
 
@@ -925,7 +925,7 @@ Both systems have been redesigned from flat pay-and-receive interactions into mu
 
 **Sanctuary — Meditation ritual:**
 - Selecting a prayer starts a ritual. The game rolls a secret target threshold (never shown).
-- Each round of Meditation inflicts a cost on the party: troops are wounded (2–6 depending on rite) or the hero ages (1–8 days). Prayer of Healing and Blessing cost aging; the others cost troops.
+- Each round of Meditation inflicts a self-sacrifice cost on the hero: 8–25 HP drained per round depending on rite (clamped to 1 HP minimum — the ritual never kills you outright). The two heaviest rites also cost days of life (aging): Protective Rites 1 day/round, Prayer for a Blessing 2–4 days/round.
 - A hidden number of points is added to the accumulated pool each round. Points scale with alignment — (Mercy + Honor + Generosity) / 6 — so high-alignment characters accumulate faster and need fewer rounds.
 - After each round the player chooses *Continue* or *Stop*. If accumulated points ≥ target when they stop, the prayer fires. If not, the cost paid is lost.
 - Atmospheric hints give a vague sense of progress without revealing the number.
@@ -944,7 +944,7 @@ Both systems have been redesigned from flat pay-and-receive interactions into mu
 - Access gates removed: any hero may attempt any rite. `RollRoundPoints` now returns a floor of 1 pt/round at zero or misaligned multiplier, so success is always possible — but requires ~14–45 rounds depending on rite difficulty, and rewards scale with alignment so a zero-trait hero succeeds for almost nothing.
 - Cooldowns raised to prevent spam: Sanctuary healing 5 → 7 days (matching the wounding rites it recovers from), Turn the Ashen and Protective 5/7 → 10 days, Blood Tribute and Cold Fire 3 → 7 days. Blessing and Solstice unchanged.
 - Location depletion added: after 5 ritual starts at any one sanctuary or altar, the location rests 30 days. Forces travel rather than sitting in one city indefinitely.
-- Sanctuary rite menu options now show per-round cost type (e.g., "2–5 wounded/round", "2–4 days aging/round") so players know what they are committing to before entering.
+- Sanctuary rite menu options now show per-round HP cost (e.g., "8–15 hero HP/round") so players know what self-sacrifice they are committing to before entering.
 - The hidden target is rolled fresh each attempt, creating variance even for repeated use of the same rite.
 
 ---

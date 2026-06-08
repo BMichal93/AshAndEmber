@@ -320,40 +320,34 @@ namespace AshAndEmber
         }
 
         // Applies one round of meditation cost. Returns narrative string.
-        private static string ApplyMeditationCost_Troops(int minWounded, int maxWounded)
+        // The hero bleeds for the flame — never killed (clamped to 1 HP).
+        private static string ApplyMeditationCost_SelfHP(int minHP, int maxHP)
         {
-            int toWound = minWounded + _rng.Next(maxWounded - minWounded + 1);
-            int wounded = 0;
-            var roster  = MobileParty.MainParty?.MemberRoster;
-            if (roster != null)
-            {
-                foreach (var e in roster.GetTroopRoster().ToList())
-                {
-                    if (e.Character.IsHero) continue;
-                    int healthy = e.Number - e.WoundedNumber;
-                    int w = Math.Min(healthy, toWound - wounded);
-                    if (w <= 0) continue;
-                    try { roster.AddToCounts(e.Character, 0, false, w); wounded += w; } catch { }
-                    if (wounded >= toWound) break;
-                }
-            }
-            return wounded > 0
-                ? $"The meditation takes its toll. {wounded} of your men feel the weight of it — they will need rest before they are themselves again."
-                : "The meditation takes its toll. Your men are unsettled but none have fallen.";
+            var hero = Hero.MainHero;
+            if (hero == null) return "The fire inside you finds nothing to burn.";
+            int damage = minHP + _rng.Next(maxHP - minHP + 1);
+            int actual = Math.Min(damage, hero.HitPoints - 1);
+            try { hero.HitPoints = Math.Max(1, hero.HitPoints - actual); } catch { }
+            if (actual <= 0)
+                return "You have almost nothing left to give. The flame takes what it can find — a heartbeat, a shiver.";
+            return hero.HitPoints <= 15
+                ? $"You give {actual} of your own blood to the flame. You are barely standing. The fire is very close to the skin now."
+                : $"You give {actual} of your own blood to the flame. The wound is yours. The fire drinks it.";
         }
 
         private static string ApplyMeditationCost_Aging(int minDays, int maxDays)
         {
             int days = minDays + _rng.Next(maxDays - minDays + 1);
             AgeHero(Hero.MainHero, days);
-            return $"The prayer pulls at you from inside. Time passes differently here. You have given {days} day{(days != 1 ? "s" : "")} of your life to the flame.";
+            return $"Time passes differently here. You have given {days} day{(days != 1 ? "s" : "")} of your life to the flame.";
         }
 
-        private static string ApplyMeditationCost_TroopsAndAging(int minWounded, int maxWounded, int minDays, int maxDays)
+        // HP drain + years of life — for the heaviest rites.
+        private static string ApplyMeditationCost_SelfHP_Aging(int minHP, int maxHP, int minDays, int maxDays)
         {
-            string troopNarr  = ApplyMeditationCost_Troops(minWounded, maxWounded);
-            string agingNarr  = ApplyMeditationCost_Aging(minDays, maxDays);
-            return troopNarr + " " + agingNarr;
+            string hpNarr    = ApplyMeditationCost_SelfHP(minHP, maxHP);
+            string agingNarr = ApplyMeditationCost_Aging(minDays, maxDays);
+            return hpNarr + " " + agingNarr;
         }
 
         // Core ritual loop (shared by all five rites).
@@ -486,7 +480,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastPrayerDay, PrayerCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_PRAY_TEXT",
-                                $"Prayer of Strength (2–5 wounded/round) — fortify party morale (+{MoralePrayerBoost}){cd}");
+                                $"Prayer of Strength (8–15 hero HP/round) — fortify party morale (+{MoralePrayerBoost}){cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -514,7 +508,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastProtectiveDay, ProtectiveCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_RITES_TEXT",
-                                $"Protective Rites (2–5 wounded + 1–2 days aging/round) — ward against Ashen events for {ProtectiveDays} days{active}{cd}");
+                                $"Protective Rites (12–20 hero HP + 1 day aging/round) — ward against Ashen events for {ProtectiveDays} days{active}{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -541,7 +535,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastTurnAshenDay, TurnAshenCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_TURN_TEXT",
-                                $"Turn the Ashen (3–6 wounded/round) — banish and wound nearby Ashen parties{cd}");
+                                $"Turn the Ashen (15–25 hero HP/round) — banish and wound nearby Ashen parties{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -568,7 +562,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastHealingDay, HealingCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_HEAL_TEXT",
-                                $"Prayer of Healing (2–4 days aging/round) — heal the wounded or steady the line{cd}");
+                                $"Prayer of Healing (12–20 hero HP/round) — heal the wounded or steady the line{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -595,7 +589,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastBlessingDay, BlessingCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_BLESS_TEXT",
-                                $"Prayer for a Blessing (4–8 days aging/round) — shed a year or receive the flame's mark{cd}");
+                                $"Prayer for a Blessing (15–25 hero HP + 2–4 days aging/round) — shed a year or receive the flame's mark{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -631,7 +625,7 @@ namespace AshAndEmber
             RunSanctuaryRitual(
                 "Prayer of Strength",
                 target, mult,
-                () => ApplyMeditationCost_Troops(2, 5),
+                () => ApplyMeditationCost_SelfHP(8, 15),
                 () =>
                 {
                     // Success: boost morale and start blessed status
@@ -660,7 +654,7 @@ namespace AshAndEmber
             RunSanctuaryRitual(
                 "Protective Rites",
                 target, mult,
-                () => ApplyMeditationCost_TroopsAndAging(2, 5, 1, 2),
+                () => ApplyMeditationCost_SelfHP_Aging(12, 20, 1, 1),
                 () =>
                 {
                     // Success: ward active
@@ -700,7 +694,7 @@ namespace AshAndEmber
             RunSanctuaryRitual(
                 "Turn the Ashen",
                 target, mult,
-                () => ApplyMeditationCost_Troops(3, 6),
+                () => ApplyMeditationCost_SelfHP(15, 25),
                 () =>
                 {
                     float px = 0f, py = 0f;
@@ -751,7 +745,7 @@ namespace AshAndEmber
             RunSanctuaryRitual(
                 "Prayer of Healing",
                 target, mult,
-                () => ApplyMeditationCost_Aging(2, 4),
+                () => ApplyMeditationCost_SelfHP(12, 20),
                 () =>
                 {
                     // Success: offer two options
@@ -829,7 +823,7 @@ namespace AshAndEmber
             RunSanctuaryRitual(
                 "Prayer for a Blessing",
                 target, mult,
-                () => ApplyMeditationCost_Aging(4, 8),
+                () => ApplyMeditationCost_SelfHP_Aging(15, 25, 2, 4),
                 () =>
                 {
                     // Success: offer two choices
