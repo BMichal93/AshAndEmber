@@ -1,31 +1,36 @@
 // =============================================================================
 // ASH AND EMBER — AshenQuestSystem.cs
-// The Final Silence — Ashen player campaign goal.
+// The Hunger of the Void — Ashen player campaign goal.
 //
-// Trigger : Ashen player defeats a mage lord's (non-Ashen ColourLord) party
-//           for the first time.
-// Event   : The deep cold speaks — a pressure older than any Ashen lord.
-// Quest   : Active if player accepts the calling.
+// Trigger : Ashen player executes a prisoner lord for the first time.
 //
-// Goals
-//   1. Reach Clan Tier 6            (establish cold dominion)
-//   2. Capture Pravend              (claim the warm heart)
-//   3. Reach Hero Level 25          (master the cold's power)
+// Sequence
+//   1. "The Silence After"   — two-part Hunger vision (accept or refuse).
+//   2. Prereq goals          — Clan Tier 6 + capture Epicrotea.
+//   3. Wasteland Rite        — unlocked after prereqs; cast via town menu.
+//   4. Seven capitals        — consecrate all seven with the Wasteland Rite.
+//   5. Finale                — mage lords die; the world goes dark.
+//                              Player hero dies (game-over screen).
 //
-// Completion → final prompt → extinguish the last warmth or refuse.
+// Seven target capitals
+//   Pravend, Epicrotea, Pen Cannoc, Husn Fulq, Quyaz, Sargot, Marunath
+//   (Epicrotea is also the prereq conquest target — capture it, then consecrate it.)
 //
-// Ending (Yes)
-//   · All non-Ashen mage lords and mage companions die.
-//   · The world goes cold and still.
-//   · Player hero dies — Bannerlord game-over screen.
-//
-// Ending (No)  → quest fails, game continues normally.
+// Wasteland Rite effects
+//   · The settlement is marked as a Wasteland (tracked in _wastelandCities).
+//   · HasAshenAltar() returns true for Wasteland cities — altar rites become
+//     available there automatically.
+//   · All bound villages are permanently looted.
+//   · If the settlement is one of the seven capitals, _capitalsCount increments.
 //
 // Save keys
-//   LDM_AshenQPhase      int   0=idle 1=event-ready 2=active 3=all-done 4=frozen 5=failed
-//   LDM_AshenQGoal1-3    bool
-//   LDM_WorldFrozen      bool
-//   LDM_AshenQEndPhase   int
+//   LDM_VoidPhase        int
+//   LDM_VoidPreG1        bool   (Tier 6)
+//   LDM_VoidPreG2        bool   (Epicrotea)
+//   LDM_VoidCapCount     int    (capitals wastelanified)
+//   LDM_VoidFrozen       bool
+//   LDM_VoidEndPhase     int
+//   LDM_VoidWastelandIds List<string>
 // =============================================================================
 
 using System;
@@ -45,65 +50,69 @@ namespace AshAndEmber
     public static class AshenQuestSystem
     {
         // ── Quest phases ──────────────────────────────────────────────────────
-        private const int PhaseIdle       = 0;
-        private const int PhaseEventReady = 1;  // event pending, fires on next map tick
-        private const int PhaseActive     = 2;  // quest running
-        private const int PhaseAllDone    = 3;  // all goals met, final prompt pending
-        private const int PhaseFrozen     = 4;  // ending triggered
-        private const int PhaseFailed     = 5;  // player refused
+        private const int PhaseIdle         = 0;
+        private const int PhaseHungerReady  = 1;  // execution happened, vision 1 pending
+        private const int PhaseHunger2Ready = 2;  // vision 1 accepted, vision 2 pending
+        private const int PhasePrereqs      = 3;  // working toward tier 6 + Epicrotea
+        private const int PhaseWasteland    = 4;  // rite unlocked, 7 capitals needed
+        private const int PhaseAllDone      = 5;  // 7 capitals done, finale pending
+        private const int PhaseFrozen       = 6;  // ending triggered
+        private const int PhaseFailed       = 7;
 
-        private static int  _phase       = PhaseIdle;
-        private static bool _goal1Done   = false; // clan tier
-        private static bool _goal2Done   = false; // Pravend capture
-        private static bool _goal3Done   = false; // hero level
-        private static bool _worldFrozen = false;
-        private static int  _endingPhase = 0;     // 0=not started 1-4=in progress
+        private static int  _phase          = PhaseIdle;
+        private static bool _prereqGoal1    = false; // Clan Tier 6
+        private static bool _prereqGoal2    = false; // Epicrotea captured
+        private static int  _capitalsCount  = 0;
+        private static bool _worldFrozen    = false;
+        private static int  _endingPhase    = 0;
 
+        private static readonly HashSet<string> _wastelandCities = new HashSet<string>();
         private static readonly Random _rng = new Random();
 
         // ── Tuning ────────────────────────────────────────────────────────────
-        public const int    TargetClanTier  = 6;
-        public const int    TargetHeroLevel = 25;
-        public const string PravendMarker   = "Pravend";
+        public const int    TargetClanTier    = 6;
+        public const int    RequiredCapitals  = 7;
+        public const string EpicroteaMarker   = "Epicrotea";
+
+        public static readonly string[] TargetCapitalNames =
+        {
+            "Pravend",    // Vlandia
+            "Epicrotea",  // Northern Empire — also the prereq capture target
+            "Pen Cannoc", // Battania
+            "Husn Fulq",  // Southern Empire
+            "Quyaz",      // Aserai / Khuzait
+            "Sargot",     // Western Empire
+            "Marunath",   // Battanian / Northern Empire (reassigned in mod)
+        };
 
         // ── Public accessors ──────────────────────────────────────────────────
-        public static bool IsActive     => _phase == PhaseActive;
-        public static bool IsAllDone    => _phase == PhaseAllDone;
-        public static bool IsDone       => _phase == PhaseFrozen || _phase == PhaseFailed;
-        public static bool WorldFrozen  => _worldFrozen;
-        public static bool Goal1Done    => _goal1Done;
-        public static bool Goal2Done    => _goal2Done;
-        public static bool Goal3Done    => _goal3Done;
+        public static bool IsActive           => _phase >= PhasePrereqs && _phase < PhaseFrozen;
+        public static bool IsDone             => _phase == PhaseFrozen || _phase == PhaseFailed;
+        public static bool WorldFrozen        => _worldFrozen;
+        public static bool IsWastelandUnlocked => _phase == PhaseWasteland
+                                               || _phase == PhaseAllDone
+                                               || _phase == PhaseFrozen;
+        public static int  CapitalsCount      => _capitalsCount;
 
-        // ── Called from CampaignBehavior.OnMapEventEnded ──────────────────────
-        public static void OnMapEventEnded(MapEvent mapEvent)
+        public static bool IsWastelandCity(string settlementId)
+            => !string.IsNullOrEmpty(settlementId) && _wastelandCities.Contains(settlementId);
+
+        public static bool IsTargetCapital(string cityName)
+        {
+            if (string.IsNullOrEmpty(cityName)) return false;
+            return TargetCapitalNames.Any(n =>
+                cityName.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        // ── Called from CampaignBehavior.OnHeroKilled ─────────────────────────
+        public static void OnHeroExecuted(Hero victim)
         {
             if (_phase != PhaseIdle) return;
             if (!MageKnowledge.IsAshen) return;
-            try
-            {
-                bool playerAttacker = mapEvent.AttackerSide?.Parties
-                    .Any(p => p.Party == PartyBase.MainParty) == true;
-                bool playerWon = (playerAttacker && mapEvent.WinningSide == BattleSideEnum.Attacker)
-                              || (!playerAttacker && mapEvent.WinningSide == BattleSideEnum.Defender);
-                if (!playerWon) return;
-
-                var enemySide = playerAttacker ? mapEvent.DefenderSide : mapEvent.AttackerSide;
-                if (enemySide == null) return;
-                bool mageLordDefeated = false;
-                foreach (var meparty in enemySide.Parties)
-                {
-                    Hero leader = meparty?.Party?.LeaderHero;
-                    if (leader != null
-                        && ColourLordRegistry.IsColourLord(leader)
-                        && !ColourLordRegistry.IsAshenLord(leader))
-                    { mageLordDefeated = true; break; }
-                }
-                if (!mageLordDefeated) return;
-
-                _phase = PhaseEventReady;
-            }
-            catch { }
+            if (victim == null || !victim.IsLord || victim.IsChild) return;
+            _phase = PhaseHungerReady;
+            if (MageKnowledge._deferredInquiry == null)
+                MageKnowledge._deferredInquiry = ShowHungerVision1;
         }
 
         // ── Called from CampaignBehavior.OnDailyTick ─────────────────────────
@@ -118,24 +127,18 @@ namespace AshAndEmber
             if (_worldFrozen) return;
             if (!MageKnowledge.IsAshen) return;
 
-            if (_phase == PhaseEventReady && MageKnowledge._deferredInquiry == null)
+            // Flush pending hunger visions
+            if (_phase == PhaseHunger2Ready && MageKnowledge._deferredInquiry == null)
             {
-                _phase = PhaseIdle;
-                MageKnowledge._deferredInquiry = ShowCallingEvent;
+                MageKnowledge._deferredInquiry = ShowHungerVision2;
                 return;
             }
 
-            if (_phase != PhaseActive && _phase != PhaseAllDone) return;
+            if (_phase != PhasePrereqs && _phase != PhaseAllDone) return;
 
-            if (_phase == PhaseActive)
+            if (_phase == PhasePrereqs)
             {
-                CheckGoals();
-                if (_goal1Done && _goal2Done && _goal3Done && _phase == PhaseActive)
-                {
-                    _phase = PhaseAllDone;
-                    if (MageKnowledge._deferredInquiry == null)
-                        MageKnowledge._deferredInquiry = ShowFinalPrompt;
-                }
+                CheckPrereqGoals();
             }
             else if (_phase == PhaseAllDone && MageKnowledge._deferredInquiry == null)
             {
@@ -143,94 +146,87 @@ namespace AshAndEmber
             }
         }
 
-        // ── Goal checks ───────────────────────────────────────────────────────
-        private static void CheckGoals()
+        // ── Prereq goal checks ────────────────────────────────────────────────
+        private static void CheckPrereqGoals()
         {
             try
             {
-                if (!_goal1Done && (Hero.MainHero?.Clan?.Tier ?? 0) >= TargetClanTier)
+                if (!_prereqGoal1 && (Hero.MainHero?.Clan?.Tier ?? 0) >= TargetClanTier)
                 {
-                    _goal1Done = true;
+                    _prereqGoal1 = true;
                     if (MageKnowledge._deferredInquiry == null)
-                        MageKnowledge._deferredInquiry = () => ShowGoalComplete(1);
+                        MageKnowledge._deferredInquiry = ShowPrereqGoalComplete1;
                 }
             }
             catch { }
             try
             {
-                if (!_goal2Done)
+                if (!_prereqGoal2)
                 {
-                    var pravend = Settlement.All.FirstOrDefault(s =>
-                        s.Name.ToString().IndexOf(PravendMarker, StringComparison.OrdinalIgnoreCase) >= 0
+                    var epicrotea = Settlement.All.FirstOrDefault(s =>
+                        s.Name.ToString().IndexOf(EpicroteaMarker, StringComparison.OrdinalIgnoreCase) >= 0
                         && (s.IsTown || s.IsCastle));
-                    if (pravend != null && pravend.OwnerClan == Hero.MainHero?.Clan)
+                    if (epicrotea != null && epicrotea.OwnerClan == Hero.MainHero?.Clan)
                     {
-                        _goal2Done = true;
+                        _prereqGoal2 = true;
                         if (MageKnowledge._deferredInquiry == null)
-                            MageKnowledge._deferredInquiry = () => ShowGoalComplete(2);
+                            MageKnowledge._deferredInquiry = ShowPrereqGoalComplete2;
                     }
                 }
             }
             catch { }
             try
             {
-                if (!_goal3Done && (Hero.MainHero?.Level ?? 0) >= TargetHeroLevel)
-                {
-                    _goal3Done = true;
-                    if (MageKnowledge._deferredInquiry == null)
-                        MageKnowledge._deferredInquiry = () => ShowGoalComplete(3);
-                }
+                if (_prereqGoal1 && _prereqGoal2)
+                    UnlockWastelandRite();
             }
             catch { }
         }
 
-        // ── The Calling event ─────────────────────────────────────────────────
-        private static void ShowCallingEvent()
+        private static void UnlockWastelandRite()
+        {
+            _phase = PhaseWasteland;
+            InformationManager.DisplayMessage(new InformationMessage(
+                "The Wasteland Rite is revealed. Visit an Ashen-owned city to consecrate it.",
+                new Color(0.4f, 0.5f, 0.85f)));
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Consecrate {RequiredCapitals} capitals. Epicrotea awaits the rite first.",
+                new Color(0.35f, 0.45f, 0.80f)));
+        }
+
+        // ── The Silence After (vision 1) ──────────────────────────────────────
+        private static void ShowHungerVision1()
         {
             try
             {
                 InformationManager.ShowInquiry(new InquiryData(
-                    "The Calling",
+                    "The Silence After",
 
-                    "Something moves through you after the battle — not feeling, not thought, " +
-                    "but a pressure from the cold itself. Older than the Ashen. " +
-                    "Older than anyone who chose the cold.\n\n" +
-                    "You have felt it before, briefly. Now it is close enough to speak.\n\n" +
-                    "Not in words. In the absence of words. In the way a room goes quiet when something certain enters it.\n\n" +
-                    "The mage you defeated carried a fire that will not relight. " +
-                    "That fire fed a world that has burned too long — too bright, too wasteful, too warm. " +
-                    "It never asked whether the warmth was wanted. It simply burned.\n\n" +
-                    "The cold does not burn. It waits. It endures. " +
-                    "It takes back everything that was taken.\n\n" +
-                    "There is a way to finish it. Not a battle — a completion. " +
-                    "Every flame in Calradia extinguished at once. " +
-                    "The mage-lords who carry the last fire. The warm cities. " +
-                    "The wandering gifted who will never know what they almost started.\n\n" +
-                    "The cold has been patient for a very long time.\n\n" +
-                    "It is asking you to be the last thing it needs.",
+                    "The moment the lord's fire goes out, you feel something you have not felt before.\n\n" +
+                    "Not satisfaction. Not power. Something older.\n\n" +
+                    "The space where their flame was — it is not empty. " +
+                    "Something is there that was there before the flame, waiting. " +
+                    "It was always there, behind every fire that was ever extinguished. " +
+                    "You could feel it as cold. But it is not cold. " +
+                    "Cold is just what it feels like from the outside.\n\n" +
+                    "From the inside, it is absence made complete. " +
+                    "A void that has been growing for ages and has finally found something to look through.\n\n" +
+                    "It is looking through you now.\n\n" +
+                    "And it is showing you something.",
 
                     true, true,
-                    "I hear it. Tell me the path.",
-                    "The cold will have to wait.",
+                    "Look into it.",
+                    "Shut it out.",
 
                     () =>
                     {
-                        _phase = PhaseActive;
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Quest added: The Final Silence.",
-                            new Color(0.35f, 0.45f, 0.75f)));
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"Goals: Clan Tier {TargetClanTier}  ·  Capture Pravend  ·  Reach Level {TargetHeroLevel}",
-                            new Color(0.3f, 0.4f, 0.7f)));
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Check quest progress in the Grimoire (Alt+X).",
-                            new Color(0.3f, 0.4f, 0.65f)));
+                        _phase = PhaseHunger2Ready;
                     },
                     () =>
                     {
                         _phase = PhaseFailed;
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The cold withdraws. It has waited before. It will wait again.",
+                            "You closed the door on it. It will not knock again.",
                             new Color(0.5f, 0.5f, 0.55f)));
                     }
                 ), true, true);
@@ -238,51 +234,195 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Goal completion pop-ups ───────────────────────────────────────────
-        private static void ShowGoalComplete(int goal)
+        // ── The Hunger Speaks (vision 2) ──────────────────────────────────────
+        private static void ShowHungerVision2()
         {
             try
             {
-                string title, body, button;
-                switch (goal)
-                {
-                    case 1:
-                        title = "Cold Dominion";
-                        body  = "Your name reaches every corner of Calradia. Lords who built walls against the cold " +
-                                "now negotiate with you instead. They are afraid, which means they are already half-gone.\n\n" +
-                                "The cold said: *establish dominion.*\n\n" +
-                                "What you have is more than dominion. It is inevitability.\n\n" +
-                                "The first condition is met.";
-                        button = "Calradia is listening.";
-                        break;
-                    case 2:
-                        title = "The Warm Heart";
-                        body  = "You stand in the great hall of Pravend. The fires they kept burning here — " +
-                                "the great hearths, the torches, the eternal flames of their ancestors — " +
-                                "have all gone out. Not by force. By consequence.\n\n" +
-                                "The warmth this city held was deliberate. They chose it. " +
-                                "Tended it. Believed it was proof that the cold had limits.\n\n" +
-                                "You are the proof that it does not.\n\n" +
-                                "The second condition is met.";
-                        button = "The heart is cold now.";
-                        break;
-                    default:
-                        title = "The Cold at Full Depth";
-                        body  = "You have been through enough cold — enough endurance, enough silence, " +
-                                "enough battles in the grey half-light — to have become something the cold " +
-                                "trusts completely.\n\n" +
-                                "The inner fire burned in you once. " +
-                                "What burns now is its opposite: not absence, but presence. " +
-                                "The cold is not nothing. It is everything the warmth refused to be.\n\n" +
-                                "The third condition is met.";
-                        button = "I am what remains.";
-                        break;
-                }
-
                 InformationManager.ShowInquiry(new InquiryData(
-                    title, body, true, false, button, "",
+                    "The Hunger",
+
+                    "It shows you a city.\n\n" +
+                    "Not burning — the opposite. Every fire in it extinguished at once, " +
+                    "as if the city itself exhaled and did not breathe in again. " +
+                    "The streets are still. The people are still. " +
+                    "Not dead — emptied. Preserved in the grey permanence the cold has always offered.\n\n" +
+                    "This is the Wasteland Rite. " +
+                    "Not a spell, not a ritual — a consecration. " +
+                    "When the cold has been given enough, a city can be remade in its image. " +
+                    "The warmth does not survive it. The altars rise on their own.\n\n" +
+                    "The void shows you which cities must answer.\n\n" +
+                    "Seven of them. The beating hearts of the warm world — " +
+                    "Pravend, Epicrotea, Pen Cannoc, Husn Fulq, Quyaz, Sargot, Marunath. " +
+                    "Capitals. Centres. The places the warm world has built its faith around.\n\n" +
+                    "To reach the Wasteland Rite, you must first establish your dominion — " +
+                    "Clan Tier 6 — and claim Epicrotea. Stand in its great hall. " +
+                    "Let the cold settle there. The rite will come to you.\n\n" +
+                    "Then: city by city, until all seven stand emptied.\n\n" +
+                    "The void has been waiting a very long time for someone who could carry this.\n\n" +
+                    "It believes, with something that is not hope but functions like it, that you can.",
+
+                    true, true,
+                    "I will carry it.",
+                    "This is not what I chose.",
+
+                    () =>
+                    {
+                        _phase = PhasePrereqs;
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Quest added: The Hunger of the Void.",
+                            new Color(0.38f, 0.50f, 0.85f)));
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"Goals: Clan Tier {TargetClanTier}  ·  Capture Epicrotea  ·  Then: consecrate 7 capitals.",
+                            new Color(0.35f, 0.45f, 0.80f)));
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "Check quest progress in the Grimoire (Alt+X).",
+                            new Color(0.35f, 0.45f, 0.75f)));
+                    },
+                    () =>
+                    {
+                        _phase = PhaseFailed;
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The void withdraws. Something that was waiting closes. " +
+                            "It will not show you this again.",
+                            new Color(0.5f, 0.5f, 0.55f)));
+                    }
+                ), true, true);
+            }
+            catch { }
+        }
+
+        // ── Prereq goal pop-ups ───────────────────────────────────────────────
+        private static void ShowPrereqGoalComplete1()
+        {
+            try
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Cold Dominion",
+
+                    "Your name reaches every corner of Calradia now. " +
+                    "Lords who built walls against the cold send emissaries instead. " +
+                    "They are afraid — which means they are already part of the way there.\n\n" +
+                    "The first condition is met. Epicrotea remains.",
+
+                    true, false, "Calradia is listening.", "",
                     () => { }, () => { }
                 ), true, true);
+            }
+            catch { }
+        }
+
+        private static void ShowPrereqGoalComplete2()
+        {
+            try
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "The Warm Heart",
+
+                    "You stand in Epicrotea. The fires they kept burning here — " +
+                    "the great torches, the hearths of the ancient court — " +
+                    "flicker as you walk its halls.\n\n" +
+                    "The void stirs. You can feel what Epicrotea is to the warm world: " +
+                    "a centre, a symbol, a place that has believed in itself for a very long time.\n\n" +
+                    "The Wasteland Rite is here now. You can feel it waiting, " +
+                    "the way you felt the cold waiting behind every flame you have ever snuffed.\n\n" +
+                    "The second condition is met. " +
+                    "Visit any Ashen-owned city and look for the Wasteland Rite.",
+
+                    true, false, "Begin the consecrations.", "",
+                    () => { }, () => { }
+                ), true, true);
+            }
+            catch { }
+        }
+
+        // ── Wasteland Rite (called from AshenAltarsCampaignBehavior) ──────────
+        public static void ShowWastelandRiteDialog(Settlement settlement)
+        {
+            if (settlement == null) return;
+            try
+            {
+                string cityName   = settlement.Name?.ToString() ?? "this city";
+                bool   isCapital  = IsTargetCapital(cityName);
+                string capitalNote = isCapital
+                    ? $"\n\nThis is one of the seven. The void hungers for it. [{_capitalsCount}/{RequiredCapitals} claimed]"
+                    : $"\n\nThis is not one of the seven capitals, but the cold will take anything offered. [{_capitalsCount}/{RequiredCapitals} capitals]";
+
+                InformationManager.ShowInquiry(new InquiryData(
+                    "The Wasteland Rite",
+
+                    $"You stand at the centre of {cityName}. " +
+                    "The cold within you reaches out — not to warm, but to void.\n\n" +
+                    "The Wasteland Rite does not destroy. It hollows. " +
+                    "Every fire in this city goes out at once. The villages fall silent. " +
+                    "The stone remembers nothing but cold.\n\n" +
+                    "What remains will serve the grey march permanently. " +
+                    "An altar will rise here, as it does in all true Ashen cities. " +
+                    "The people who remain will serve, or they will not remain." +
+                    capitalNote,
+
+                    true, true,
+                    "Consecrate it. Let the cold have it.",
+                    "Not yet.",
+
+                    () => { OnWastelandRiteConfirmed(settlement); },
+                    () => { }
+                ), true, true);
+            }
+            catch { }
+        }
+
+        private static void OnWastelandRiteConfirmed(Settlement settlement)
+        {
+            if (settlement == null) return;
+            try
+            {
+                _wastelandCities.Add(settlement.StringId);
+
+                // Permanently loot all bound villages
+                try
+                {
+                    foreach (Settlement v in Settlement.All)
+                    {
+                        if (!v.IsVillage || v.Village?.Bound != settlement) continue;
+                        try { v.Village.VillageState = Village.VillageStates.Looted; } catch { }
+                        try { v.Village.Hearth = 1f; } catch { }
+                    }
+                }
+                catch { }
+
+                // Lock town stats
+                try
+                {
+                    if (settlement.Town != null)
+                    {
+                        settlement.Town.Loyalty  = 100f;
+                        settlement.Town.Security = 100f;
+                    }
+                }
+                catch { }
+
+                bool isCapital = IsTargetCapital(settlement.Name?.ToString() ?? "");
+                if (isCapital)
+                {
+                    _capitalsCount++;
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{settlement.Name} — consecrated to the void. [{_capitalsCount}/{RequiredCapitals} capitals]",
+                        new Color(0.4f, 0.5f, 0.9f)));
+
+                    if (_capitalsCount >= RequiredCapitals && _phase == PhaseWasteland)
+                    {
+                        _phase = PhaseAllDone;
+                        if (MageKnowledge._deferredInquiry == null)
+                            MageKnowledge._deferredInquiry = ShowFinalPrompt;
+                    }
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{settlement.Name} — consecrated. The void grows.",
+                        new Color(0.38f, 0.50f, 0.80f)));
+                }
             }
             catch { }
         }
@@ -293,36 +433,40 @@ namespace AshAndEmber
             try
             {
                 InformationManager.ShowInquiry(new InquiryData(
-                    "The Final Silence",
+                    "The Seven Are Done",
 
-                    "It is possible now. All three conditions are met.\n\n" +
-                    "To finish it, the cold would move through you and out — through every mage-lord " +
-                    "still carrying the fire, every gifted wanderer, every warm thing still burning in Calradia. " +
+                    "All seven capitals stand consecrated.\n\n" +
+                    "The void has what it asked for — " +
+                    "the warm world's centres, hollowed, remade, " +
+                    "altars rising in the silence where the fires were.\n\n" +
+                    "One act remains. " +
+                    "The mage-lords still carry the last fires in Calradia — " +
+                    "the wandering gifted, the warm-blooded lords who refused the cold. " +
+                    "The void will move through you and extinguish them all at once. " +
                     "Not destruction. Completion.\n\n" +
+                    "What comes after is permanent. " +
                     "The world will not end. It will simply stop burning.\n\n" +
-                    "What comes after is not nothing. It is permanence. " +
-                    "The cold has always been more patient than the flame — " +
-                    "and now it will have the world it was always going to have.\n\n" +
-                    "The calling is complete. This is what it was asking.\n\n" +
-                    "It will not ask again.",
+                    "The void has been patient for a very long time.\n\n" +
+                    "It is ready now. So are you.",
 
                     true, true,
-                    "Extinguish it all. Let the cold settle.",
-                    "Not yet. Not like this.",
+                    "Finish it. Let the cold have everything.",
+                    "Not like this. Not yet.",
 
                     () =>
                     {
                         _phase       = PhaseFrozen;
                         _endingPhase = 1;
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The cold begins to move. There is no calling it back.",
-                            new Color(0.4f, 0.5f, 0.85f)));
+                            "The cold moves through you. There is no calling it back.",
+                            new Color(0.4f, 0.5f, 0.9f)));
                     },
                     () =>
                     {
                         _phase = PhaseFailed;
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The cold withdraws. It will outlast your hesitation. It always does.",
+                            "The void withdraws. It has outlasted everything before you. " +
+                            "It will outlast your hesitation too.",
                             new Color(0.5f, 0.5f, 0.55f)));
                     }
                 ), true, true);
@@ -331,11 +475,10 @@ namespace AshAndEmber
         }
 
         // ── Ending sequence ───────────────────────────────────────────────────
-        // Called from DailyTick when _endingPhase > 0.
-        // Phase 1: Set frozen flag, kill mage lords (up to 5).
+        // Phase 1: Set frozen, kill mage lords (up to 5).
         // Phase 2: Kill remaining mage lords (up to 10).
         // Phase 3: Kill remaining mage lords + mage companions.
-        // Phase 4: Show final dialog → player dies.
+        // Phase 4: Final dialog → player dies.
         private static void TickEnding()
         {
             try
@@ -354,7 +497,7 @@ namespace AshAndEmber
                         break;
 
                     case 3:
-                        KillMageLords(20);   // finish remaining mage lords
+                        KillMageLords(20);
                         KillMageCompanions();
                         _endingPhase = 4;
                         break;
@@ -379,12 +522,8 @@ namespace AshAndEmber
                     if (killed >= cap) break;
                     if (!h.IsAlive || h.IsChild || h == Hero.MainHero) continue;
                     if (!ColourLordRegistry.IsColourLord(h)) continue;
-                    if (ColourLordRegistry.IsAshenLord(h)) continue; // Ashen are spared
-                    try
-                    {
-                        KillCharacterAction.ApplyByMurder(h, null, false);
-                        killed++;
-                    }
+                    if (ColourLordRegistry.IsAshenLord(h)) continue;
+                    try { KillCharacterAction.ApplyByMurder(h, null, false); killed++; }
                     catch { }
                 }
             }
@@ -409,31 +548,32 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Final dialog before player death ─────────────────────────────────
+        // ── Final dialog ──────────────────────────────────────────────────────
         private static void ShowEndingDialog()
         {
             try
             {
                 InformationManager.ShowInquiry(new InquiryData(
-                    "The Cold Complete",
+                    "The Void Complete",
 
                     "The last fire goes out.\n\n" +
                     "Not violently. Not with struggle. " +
-                    "The warmth was always going to exhaust itself — you simply helped it understand that.\n\n" +
-                    "You feel it move through you, the cold that has been waiting since the world was young. " +
-                    "It does not take from you. It completes you. " +
+                    "The warmth was always going to end — you simply made it certain.\n\n" +
+                    "You feel it move through you, the void that has been waiting since the world was young. " +
+                    "It does not take from you. It acknowledges you. " +
                     "Every mage whose fire shudders and releases in the same moment — " +
-                    "you are aware of all of them. " +
-                    "Brief flares of recognition, then nothing.\n\n" +
+                    "you are briefly, perfectly aware of all of them. " +
+                    "Bright recognitions, then silence.\n\n" +
                     "The world does not end. It settles.\n\n" +
-                    "The battles are done. The warmth is done. " +
-                    "The grey march has arrived at the place it was always walking toward.\n\n" +
-                    "Somewhere a city wakes to a morning with no fire in the rafters. " +
+                    "Somewhere a city wakes to grey light and altars where hearths used to be. " +
                     "Somewhere a child is born who will never know the burning wars. " +
-                    "Somewhere the cold holds everything it was promised — " +
-                    "and the world, still and grey and permanent, does not argue.\n\n" +
-                    "You remain. But what you were is complete.\n\n" +
-                    "The cold does not need you anymore.\n\nAnd so it keeps you.\n\nForever.",
+                    "Somewhere the void holds everything it was promised — " +
+                    "the seven capitals, the empty roads, the permanent grey morning — " +
+                    "and the world, still and cold and finished, does not argue.\n\n" +
+                    "The grey march has arrived.\n\n" +
+                    "You were the last thing it needed.\n\n" +
+                    "The void does not need you anymore.\n\n" +
+                    "And so it keeps you.\n\nForever.",
 
                     true, false,
                     "It is done.",
@@ -449,53 +589,82 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Grimoire summary (called by MageKnowledge) ────────────────────────
+        // ── Grimoire summary ──────────────────────────────────────────────────
         public static string GetGrimoireSummary()
         {
-            if (_phase == PhaseIdle || _phase == PhaseEventReady)
-                return "";
+            switch (_phase)
+            {
+                case PhaseIdle:
+                case PhaseHungerReady:
+                case PhaseHunger2Ready:
+                    return "";
 
-            if (_phase == PhaseFailed)
-                return "\nQuest Failed: The Final Silence.\n" +
-                       "The cold withdraws. It will wait.\n";
+                case PhaseFailed:
+                    return "\nQuest Failed: The Hunger of the Void.\n" +
+                           "The void closed. It will not show you this again.\n";
 
-            if (_phase == PhaseFrozen || _worldFrozen)
-                return "\nThe world is still. The cold is complete.\n";
+                case PhaseFrozen:
+                    return "\nThe void is complete. The world is still.\n";
 
-            string g1 = _goal1Done ? "✓" : "○";
-            string g2 = _goal2Done ? "✓" : "○";
-            string g3 = _goal3Done ? "✓" : "○";
+                case PhasePrereqs:
+                {
+                    string g1 = _prereqGoal1 ? "✓" : "○";
+                    string g2 = _prereqGoal2 ? "✓" : "○";
+                    return $"\nQuest: The Hunger of the Void\n" +
+                           $"  {g1}  Cold dominion  (Clan Tier {TargetClanTier})\n" +
+                           $"  {g2}  Claim the warm heart  (capture Epicrotea)\n" +
+                           "  ○  Wasteland Rite  [locked until both conditions met]\n";
+                }
 
-            string status = _phase == PhaseAllDone
-                ? "\n  [All conditions met — awaiting your decision.]\n"
-                : "";
+                case PhaseWasteland:
+                case PhaseAllDone:
+                {
+                    string done  = _phase == PhaseAllDone ? "\n  [All seven consecrated — awaiting final rite.]\n" : "";
+                    string caps  = string.Join(", ", TargetCapitalNames.Select(n =>
+                    {
+                        bool consecrated = _wastelandCities.Any(id =>
+                        {
+                            var s = Settlement.All.FirstOrDefault(x => x.StringId == id);
+                            return s != null && s.Name.ToString().IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0;
+                        });
+                        return consecrated ? $"[✓{n}]" : n;
+                    }));
+                    return $"\nQuest: The Hunger of the Void\n" +
+                           $"  Consecrate the seven capitals  [{_capitalsCount}/{RequiredCapitals}]\n" +
+                           $"  {caps}\n" +
+                           done;
+                }
 
-            return $"\nQuest: The Final Silence\n" +
-                   $"  {g1}  Establish cold dominion  (Clan Tier {TargetClanTier})\n" +
-                   $"  {g2}  Claim the warm heart     (capture Pravend)\n" +
-                   $"  {g3}  Master the cold's power  (Level {TargetHeroLevel})\n" +
-                   status;
+                default:
+                    return "";
+            }
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
         {
-            store.SyncData("LDM_AshenQPhase",    ref _phase);
-            store.SyncData("LDM_AshenQGoal1",    ref _goal1Done);
-            store.SyncData("LDM_AshenQGoal2",    ref _goal2Done);
-            store.SyncData("LDM_AshenQGoal3",    ref _goal3Done);
-            store.SyncData("LDM_WorldFrozen",    ref _worldFrozen);
-            store.SyncData("LDM_AshenQEndPhase", ref _endingPhase);
+            store.SyncData("LDM_VoidPhase",    ref _phase);
+            store.SyncData("LDM_VoidPreG1",    ref _prereqGoal1);
+            store.SyncData("LDM_VoidPreG2",    ref _prereqGoal2);
+            store.SyncData("LDM_VoidCapCount", ref _capitalsCount);
+            store.SyncData("LDM_VoidFrozen",   ref _worldFrozen);
+            store.SyncData("LDM_VoidEndPhase", ref _endingPhase);
+
+            var wList = _wastelandCities.ToList();
+            store.SyncData("LDM_VoidWastelandIds", ref wList);
+            _wastelandCities.Clear();
+            if (wList != null) foreach (var id in wList) _wastelandCities.Add(id);
         }
 
         public static void ResetForNewGame()
         {
-            _phase       = PhaseIdle;
-            _goal1Done   = false;
-            _goal2Done   = false;
-            _goal3Done   = false;
-            _worldFrozen = false;
-            _endingPhase = 0;
+            _phase         = PhaseIdle;
+            _prereqGoal1   = false;
+            _prereqGoal2   = false;
+            _capitalsCount = 0;
+            _worldFrozen   = false;
+            _endingPhase   = 0;
+            _wastelandCities.Clear();
         }
     }
 }

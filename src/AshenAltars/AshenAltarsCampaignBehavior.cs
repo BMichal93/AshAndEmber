@@ -162,7 +162,8 @@ namespace AshAndEmber
             {
                 string name = s.Name?.ToString() ?? "";
                 return AshenAltarCities.Any(city =>
-                    name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0);
+                    name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0)
+                    || AshenQuestSystem.IsWastelandCity(s.StringId);
             }
             catch { return false; }
         }
@@ -488,6 +489,38 @@ namespace AshAndEmber
                         catch { return false; }
                     },
                     args => { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
+            // Wasteland Rite — unlocked after the Hunger of the Void sequence
+            try
+            {
+                starter.AddGameMenuOption("town", "wasteland_rite", "{WASTELAND_RITE_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            if (!AshenQuestSystem.IsWastelandUnlocked) return false;
+                            var s = Settlement.CurrentSettlement;
+                            if (s == null || !s.IsTown) return false;
+                            bool isAshenOwned = s.MapFaction?.StringId == AshenKingdomId;
+                            if (!isAshenOwned) return false;
+                            bool alreadyDone = AshenQuestSystem.IsWastelandCity(s.StringId);
+                            MBTextManager.SetTextVariable("WASTELAND_RITE_TEXT",
+                                alreadyDone
+                                    ? "Wasteland Rite  [already consecrated]"
+                                    : "Perform the Wasteland Rite");
+                            args.IsEnabled = !alreadyDone;
+                            return true;
+                        }
+                        catch { return false; }
+                    },
+                    args =>
+                    {
+                        try { AshenQuestSystem.ShowWastelandRiteDialog(Settlement.CurrentSettlement); }
+                        catch { }
+                    },
                     false, -1, false);
             }
             catch { }

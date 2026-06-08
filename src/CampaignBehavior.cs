@@ -409,7 +409,6 @@ namespace AshAndEmber
                 try { CheckReapRaidYield(mapEvent); } catch { }
                 try { SettlementEncounters.OnMapEventEnded(mapEvent); } catch { }
                 try { DragonQuestSystem.OnMapEventEnded(mapEvent); } catch { }
-                try { AshenQuestSystem.OnMapEventEnded(mapEvent); } catch { }
                 // Refresh snapshot so battle-captured prisoners don't count as discards
                 try { _prisonerCountSnapshot = MobileParty.MainParty?.PrisonRoster?.TotalManCount ?? _prisonerCountSnapshot; } catch { }
             }
@@ -806,6 +805,8 @@ namespace AshAndEmber
                     _executedLordIds.Add(victim.StringId);
                     try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
                 }
+                if (killer == Hero.MainHero)
+                    try { AshenQuestSystem.OnHeroExecuted(victim); } catch { }
             }
             catch { }
         }
