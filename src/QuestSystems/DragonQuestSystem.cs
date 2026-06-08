@@ -79,6 +79,7 @@ namespace AshAndEmber
         public static void OnMapEventEnded(MapEvent mapEvent)
         {
             if (_phase != PhaseIdle) return;
+            if (MageKnowledge.IsAshen) return;
             try
             {
                 // Only fires if player won
