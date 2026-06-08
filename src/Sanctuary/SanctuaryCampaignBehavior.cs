@@ -71,7 +71,8 @@ namespace AshAndEmber
         private const string AshenKingdomId  = "ashen_kingdom";
 
         private static readonly List<string> _permanentSanctuaryIds = new List<string>();
-        private static bool _sanctuariesAnnounced = false;
+        private static bool _sanctuariesAnnounced       = false;
+        private static bool _needsAnnouncementAfterSync = false;
 
         // Cross-system state (read by AshenAltarsCampaignBehavior)
         internal static int _lastSanctuaryUseDay = -999;
@@ -162,16 +163,11 @@ namespace AshAndEmber
                     .OrderBy(_ => _rng.Next()).Take(PermanentSanctuaryCount).ToList();
                 _permanentSanctuaryIds.Clear();
                 foreach (var s in picks) _permanentSanctuaryIds.Add(s.StringId);
+                // Don't announce here — SyncData hasn't run yet, so _permanentSanctuaryIds
+                // still holds freshly-randomised (wrong) picks. Set a flag instead and
+                // let OnDailyTick fire the toast after SyncData has corrected the list.
                 if (picks.Count > 0 && !_sanctuariesAnnounced)
-                {
-                    _sanctuariesAnnounced = true;
-                    var names = picks.Select(s => s.Name.ToString()).ToList();
-                    string joined = names.Count == 1 ? names[0]
-                        : string.Join(", ", names.Take(names.Count - 1)) + ", and " + names.Last();
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Sanctuaries of the Flame have been established in {joined}. " +
-                        "Honourable and Merciful travellers may seek their rites there."));
-                }
+                    _needsAnnouncementAfterSync = true;
             }
             catch { }
         }
@@ -882,6 +878,29 @@ namespace AshAndEmber
         private static void OnDailyTick()
         {
             int today = CurrentCampaignDay();
+
+            // First tick after session start: SyncData has now run with correct IDs,
+            // so announce the real sanctuary names (not the random pre-sync picks).
+            if (_needsAnnouncementAfterSync && !_sanctuariesAnnounced && _permanentSanctuaryIds.Count > 0)
+            {
+                _needsAnnouncementAfterSync = false;
+                _sanctuariesAnnounced = true;
+                try
+                {
+                    var names = _permanentSanctuaryIds
+                        .Select(id => Settlement.All.FirstOrDefault(s => s.StringId == id)?.Name?.ToString())
+                        .Where(n => !string.IsNullOrEmpty(n)).ToList();
+                    if (names.Count > 0)
+                    {
+                        string joined = names.Count == 1 ? names[0]
+                            : string.Join(", ", names.Take(names.Count - 1)) + ", and " + names.Last();
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            $"Sanctuaries of the Flame have been established in {joined}. " +
+                            "Honourable and Merciful travellers may seek their rites there."));
+                    }
+                }
+                catch { }
+            }
 
             // Blessed status: 10% healing per day
             if (_blessedUntilDay >= today && MobileParty.MainParty?.MemberRoster != null)

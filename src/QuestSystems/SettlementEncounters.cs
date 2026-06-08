@@ -3179,13 +3179,13 @@ namespace AshAndEmber
                             break;
                         case "b":
                             if (!ChangeGold(-1000)) return;
-                            ShowElixirChoice();
+                            MageKnowledge._deferredInquiry = ShowElixirChoice;
                             break;
                         case "c":
                             if (SkillRoll(DefaultSkills.Charm, 0.30f))
                             {
                                 Msg("You do not raise your voice. You do not need to. He reads the situation correctly and decides that a free demonstration is preferable to the alternative. He is correct.", GoodColor);
-                                ShowElixirChoice();
+                                MageKnowledge._deferredInquiry = ShowElixirChoice;
                             }
                             else
                             {
@@ -4203,7 +4203,7 @@ namespace AshAndEmber
                             Msg("You burn it in the keep's hearth without reading beyond the first page. The fire takes it quickly — more quickly than paper should. Whatever was in the cipher, it goes with the rest. The room feels different when you leave it. Not better. Just different.", GoodColor);
                             break;
                         case "b":
-                            ShowRitePrompt();
+                            MageKnowledge._deferredInquiry = ShowRitePrompt;
                             break;
                     }
                 }, null, "", false), false, true);
@@ -4337,7 +4337,7 @@ namespace AshAndEmber
                             break;
                         case "b":
                             if (SkillRoll(DefaultSkills.Scouting, 0.35f))
-                                ShowRevelation();
+                                MageKnowledge._deferredInquiry = ShowRevelation;
                             else
                                 Msg("You watch the house for three mornings without finding anything out of the ordinary. Whatever the servant saw, the timing was either coincidence or whoever it was has learned to move more carefully. The question stays open.", DimColor);
                             break;
@@ -4881,7 +4881,7 @@ namespace AshAndEmber
                                 "Five thousand coin by nightfall. The machine is gone.", GoldColor);
                             break;
                         case "c":
-                            ShowKingdomSelectorForMachinery();
+                            MageKnowledge._deferredInquiry = ShowKingdomSelectorForMachinery;
                             break;
                         case "d":
                             _ashenMachineryCountdown = 14;
