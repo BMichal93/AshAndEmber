@@ -716,7 +716,7 @@ The Ashen are exempt from all betrayal and political-fracture events — their w
 
 Cities owned by **The Temple** and **four randomly chosen Empire towns** (selected at new-game start, saved with the campaign) have a **Sanctuary** accessible from the town menu.
 
-**Access requirement:** Honor ≥ 1 (Honourable) AND Mercy ≥ 1 (Merciful). Non-qualifying characters cannot use the Sanctuary.
+**Open access:** Any hero may approach a Sanctuary. Alignment (Mercy + Honor + Generosity) determines yield per round and effect strength. Full alignment yields ~6.5 pts/round. Zero alignment yields 1 pt/round — success is possible but requires many painful rounds for a weakened reward.
 
 **Temple member discount:** Temple faction members reduce all rite cooldowns by 40%.
 
@@ -725,7 +725,7 @@ Cities owned by **The Temple** and **four randomly chosen Empire towns** (select
 Selecting a prayer begins a **Meditation ritual**. The game secretly rolls a hidden target threshold. Each round of meditation:
 
 1. **Costs the player** — troops are wounded or the hero ages (amount and type vary by rite).
-2. **Accumulates hidden progress** — a number of points is added to the pool. How many depends on alignment: the closer Honor + Mercy + Generosity is to maximum (+6), the more points each round yields. Zero alignment = zero progress. Misaligned characters (traits near 0) progress very slowly.
+2. **Accumulates hidden progress** — points per round = `round(roll(3–10) × mult)`, where `mult = (Mercy + Honor + Generosity) / 6`. At full alignment (+6 total) you average 6.5 pts/round. At zero alignment you always earn exactly 1 pt/round — success is slow but not impossible. The reward on success is also scaled by mult, so a zero-alignment character who grinds through earns a much weaker effect.
 3. **Prompts the player** — *"Continue the meditation"* or *"Step back — claim what the flame offers."*
 
 When the player stops: if accumulated progress **≥ hidden target**, the prayer fires. If not, the cost paid is lost and nothing is granted. The target number is never shown.
@@ -742,23 +742,27 @@ When the player stops: if accumulated progress **≥ hidden target**, the prayer
 
 **Hidden target ranges** (for reference; never shown in-game):
 
-| Rite | Target range | Avg rounds (full alignment) | Avg rounds (min alignment) |
-|------|-------------|---------------------------|--------------------------|
-| Prayer of Strength | 10–18 | 2–3 | 5–8 |
-| Prayer of Healing | 18–30 | 3–5 | 8–14 |
-| Protective Rites | 22–35 | 4–6 | 9–16 |
-| Turn the Ashen | 26–40 | 4–7 | 11–18 |
-| Prayer for a Blessing | 35–55 | 6–9 | 16–25 |
+| Rite | Target range | Avg rounds — max (all +2) | Avg rounds — typical (all +1) | Avg rounds — zero traits |
+|------|-------------|--------------------------|------------------------------|--------------------------|
+| Prayer of Strength | 10–18 | 2–3 | 4–5 | ~14 |
+| Prayer of Healing | 18–30 | 3–5 | 7–9 | ~24 |
+| Protective Rites | 22–35 | 4–6 | 8–11 | ~29 |
+| Turn the Ashen | 26–40 | 4–7 | 10–12 | ~33 |
+| Prayer for a Blessing | 35–55 | 6–9 | 13–17 | ~45 |
 
-Cooldowns (reduced by 40% for Temple members):
+*Zero-trait heroes earn 1 pt/round; rounds needed ≈ avg target. The reward is also scaled down.*
 
-| Rite | Base cooldown |
-|------|--------------|
-| Prayer of Strength | 3 days |
-| Prayer of Healing | 5 days |
-| Protective Rites | 7 days |
-| Turn the Ashen | 5 days |
-| Prayer for a Blessing | 30 days |
+Cooldowns (base; reduced 40% for Temple members; longer at lower alignment):
+
+| Rite | Base cooldown | Note |
+|------|--------------|------|
+| Prayer of Strength | 7 days | Costs troops — use before healing |
+| Prayer of Healing | 7 days | Costs aging — the recovery tool for wounded troops |
+| Protective Rites | 10 days | Costs troops + aging |
+| Turn the Ashen | 10 days | Costs troops |
+| Prayer for a Blessing | 30 days | Costs aging |
+
+**Location depletion:** after 5 ritual starts at a single Sanctuary (any mix of rites), the flame there rests for 30 days and all options are disabled. Travel to another Sanctuary to continue. The counter and recovery timer are shown in the sub-menu header.
 
 When Protective Rites are active, any Ashen world event that would fire instead shows a notification that the ward held. The counter ticks down daily.
 
@@ -780,14 +784,14 @@ If none of the three canonical cities are eligible (already Ashen-owned, under s
 
 In **Tyal, Sibir, Baltakhand, and Amprela**, a grey stone altar stands permanently in the town. These altars are announced at game start.
 
-**Access requirement:** Mercy ≤ −1 (Merciless) AND Honor ≤ −1 (Devious). The Ashen do not kneel to the virtuous.
+**Open access:** Any hero may approach an altar. Alignment (−(Mercy + Honor + Generosity) / 6) determines yield. Full evil alignment yields ~6.5 pts/round. Zero or virtuous alignment yields 1 pt/round — success requires enormous sacrifice for a weakened reward.
 
 #### How rites work — the Sacrifice ritual
 
 Selecting a rite begins a **Sacrifice ritual**. The game secretly rolls a hidden target threshold. Each round of sacrifice:
 
 1. **Costs the player** — prisoners are killed first (lowest-tier first), then healthy party members if needed. A tier-N troop is worth N sacrifice points. Morale drains proportional to the blood spent. The menu header shows total available sacrifice points.
-2. **Accumulates hidden progress** — a number of points is added to the pool. How many depends on alignment: the more evil the character (low Mercy + Honor + Generosity), the more points each round yields. Zero or positive alignment = zero progress.
+2. **Accumulates hidden progress** — points per round = `round(roll(3–10) × mult)`, where `mult = −(Mercy + Honor + Generosity) / 6`. At maximum evil (−6 total) you average 6.5 pts/round. At zero or virtuous alignment you earn exactly 1 pt/round. The reward on success is also scaled by mult.
 3. **Prompts the player** — *"Offer more"* or *"Complete the rite — take what blood has bought."*
 
 When the player stops: if accumulated progress **≥ hidden target**, the rite fires. If not, the sacrifice was wasted. The target number is never shown. If you run out of available sacrifice before stopping voluntarily, the ritual resolves immediately.
@@ -807,15 +811,28 @@ When the player stops: if accumulated progress **≥ hidden target**, the rite f
 
 **Hidden target ranges** (for reference; never shown in-game):
 
-| Rite | Target range | Avg rounds (full evil) | Avg rounds (partial evil) |
-|------|-------------|----------------------|--------------------------|
-| Blood Tribute | 10–18 | 2–3 | 5–8 |
-| Rite of Subjugation | 15–25 | 2–4 | 6–11 |
-| Cold Fire / Break Wills | 18–28 / 18–30 | 3–5 | 8–14 |
-| Carrion Gift | 22–35 | 4–6 | 10–17 |
-| Ashen Solstice | 35–55 | 6–9 | 17–26 |
+| Rite | Target range | Avg rounds — max evil (all −2) | Avg rounds — typical (all −1) | Avg rounds — zero alignment |
+|------|-------------|-------------------------------|------------------------------|----------------------------|
+| Blood Tribute | 10–18 | 2–3 | 4–5 | ~14 |
+| Rite of Subjugation | 15–25 | 2–4 | 6–8 | ~20 |
+| Cold Fire / Break Wills | 18–28 / 18–30 | 3–5 | 7–9 | ~23–24 |
+| Carrion Gift | 22–35 | 4–6 | 8–11 | ~29 |
+| Ashen Solstice | 35–55 | 6–9 | 13–17 | ~45 |
 
-Cooldowns scale with alignment: the more evil the character, the shorter the cooldown.
+*Zero-alignment heroes earn 1 pt/round and sacrifice many more lives for a weaker reward.*
+
+Cooldowns (base; longer at lower alignment):
+
+| Rite | Base cooldown |
+|------|--------------|
+| Blood Tribute | 7 days |
+| Rite of Cold Fire | 7 days |
+| Break Hearts and Wills | 7 days |
+| Carrion Gift | 7 days |
+| Rite of Subjugation | 7 days |
+| The Ashen Solstice | 14 days |
+
+**Location depletion:** after 5 ritual starts at a single altar (any mix of rites), the stone rests for 30 days and all options are disabled. Travel to another altar city. The counter and recovery timer are shown in the sub-menu header.
 
 **NPC behavior (simulated ritual):** NPC lords simulate 3 rounds of sacrifice. If their simulated accumulation meets the threshold, the effect applies.
 - Ashen lords in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears.
@@ -923,10 +940,11 @@ Both systems have been redesigned from flat pay-and-receive interactions into mu
 **NPC lords — simulated rituals:**
 - Both sanctuary lords and altar lords now simulate ritual rounds rather than applying effects directly. They roll 3–4 rounds of the ritual; if their simulated accumulation meets the threshold, the effect applies. Lords with misaligned traits for their system fail their rituals at realistic rates.
 
-**Balance notes:**
-- Full alignment (max traits): 2–3 rounds for easy rites, 6–9 rounds for the hardest.
-- Minimum qualifying alignment: 5–8 rounds for easy rites, 16–25 rounds for the hardest.
-- Characters at zero alignment cannot succeed.
+**Balance (v0.15.1 update):**
+- Access gates removed: any hero may attempt any rite. `RollRoundPoints` now returns a floor of 1 pt/round at zero or misaligned multiplier, so success is always possible — but requires ~14–45 rounds depending on rite difficulty, and rewards scale with alignment so a zero-trait hero succeeds for almost nothing.
+- Cooldowns raised to prevent spam: Sanctuary healing 5 → 7 days (matching the wounding rites it recovers from), Turn the Ashen and Protective 5/7 → 10 days, Blood Tribute and Cold Fire 3 → 7 days. Blessing and Solstice unchanged.
+- Location depletion added: after 5 ritual starts at any one sanctuary or altar, the location rests 30 days. Forces travel rather than sitting in one city indefinitely.
+- Sanctuary rite menu options now show per-round cost type (e.g., "2–5 wounded/round", "2–4 days aging/round") so players know what they are committing to before entering.
 - The hidden target is rolled fresh each attempt, creating variance even for repeated use of the same rite.
 
 ---

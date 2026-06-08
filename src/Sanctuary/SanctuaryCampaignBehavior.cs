@@ -53,7 +53,7 @@ namespace AshAndEmber
         private const int PrayerCooldownBase    =  7;
         private const int ProtectiveCooldownBase= 10;
         private const int TurnAshenCooldownBase = 10;
-        private const int HealingCooldownBase   = 14;
+        private const int HealingCooldownBase   =  7;
         private const int BlessingCooldownBase  = 30;
 
         // Location depletion: after DepletionThreshold ritual starts the flame rests
@@ -486,7 +486,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastPrayerDay, PrayerCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_PRAY_TEXT",
-                                $"Prayer of Strength — meditate to fortify party morale (+{MoralePrayerBoost}){cd}");
+                                $"Prayer of Strength (2–5 wounded/round) — fortify party morale (+{MoralePrayerBoost}){cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -514,7 +514,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastProtectiveDay, ProtectiveCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_RITES_TEXT",
-                                $"Protective Rites — ward against Ashen events for {ProtectiveDays} days{active}{cd}");
+                                $"Protective Rites (2–5 wounded + 1–2 days aging/round) — ward against Ashen events for {ProtectiveDays} days{active}{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -541,7 +541,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastTurnAshenDay, TurnAshenCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_TURN_TEXT",
-                                $"Turn the Ashen — banish and wound nearby Ashen parties{cd}");
+                                $"Turn the Ashen (3–6 wounded/round) — banish and wound nearby Ashen parties{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -568,7 +568,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastHealingDay, HealingCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_HEAL_TEXT",
-                                $"Prayer of Healing — heal the wounded or steady the line{cd}");
+                                $"Prayer of Healing (2–4 days aging/round) — heal the wounded or steady the line{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -595,7 +595,7 @@ namespace AshAndEmber
                                 cd = $"  [On cooldown: {CooldownDaysLeft(_lastBlessingDay, BlessingCooldownBase, mult)} day(s)]";
                             }
                             MBTextManager.SetTextVariable("SANCT_BLESS_TEXT",
-                                $"Prayer for a Blessing — shed a year or receive the flame's mark{cd}");
+                                $"Prayer for a Blessing (4–8 days aging/round) — shed a year or receive the flame's mark{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
