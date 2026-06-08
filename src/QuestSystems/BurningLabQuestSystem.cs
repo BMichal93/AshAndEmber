@@ -138,6 +138,9 @@ namespace AshAndEmber
         public static bool IsArenicosHero(Hero h) =>
             h != null && _arenicosHeroId != null && h.StringId == _arenicosHeroId;
 
+        /// True if the current Arenicos is the genuine emperor spirit; false if it is an Ashen impostor.
+        public static bool ArenicosIsTrue => _arenicosIsTrue;
+
         /// Called from SettlementEncounters.TryFireSiege().
         /// Returns true if the lab discovery event should fire this siege.
         /// Handles internal day-gate and probability scaling.
@@ -521,6 +524,17 @@ namespace AshAndEmber
 
             // Make his clan the ruling clan of the empire
             try { ChangeRulingClanAction.Apply(empire, chosen.Clan); } catch { }
+
+            // Grant immense renown and influence — the emperor's legend dwarfs any living lord
+            try
+            {
+                if (chosen.Clan != null)
+                {
+                    chosen.Clan.Renown    = Math.Max(chosen.Clan.Renown,    50000f);
+                    chosen.Clan.Influence = Math.Max(chosen.Clan.Influence, 50000f);
+                }
+            }
+            catch { }
 
             // Rename: "[Lord name] (Emperor Arenicos)"
             try { chosen.SetName(new TextObject(chosen.Name.ToString() + " (Emperor Arenicos)"), chosen.FirstName); } catch { }
