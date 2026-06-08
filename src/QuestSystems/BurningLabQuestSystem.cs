@@ -167,32 +167,32 @@ namespace AshAndEmber
                 elements.Add(new InquiryElement("destroy", "Destroy it. These experiments are a sin against the fire.", null, true,
                     "The scrolls burn. The knowledge dies with them. You feel cleaner for it. (+Honour)"));
                 elements.Add(new InquiryElement("keep", "Keep it. There may be use in this.", null, true,
-                    "The scrolls are yours. What you do with them remains to be seen. (Questline C)"));
+                    "The scrolls are yours. What you do with them remains to be seen."));
                 elements.Add(new InquiryElement("sell", "Sell it. Someone will pay for secrets this dark.", null, true,
                     "+10 000 gold. −Honour. The buyer's identity is their own business. (May reach an imperial court.)"));
 
                 // Imperial leaders
                 AddImperialOption(elements, "empire_s", "give_s",
                     "Give it to Rhagea — perhaps she can use it to restore the Empire.",
-                    "The Southern Empire receives the scrolls. Rhagea's scholars will study them. (Questline A)");
+                    "The Southern Empire receives the scrolls. Rhagea's scholars will study them.");
                 AddImperialOption(elements, "empire_n", "give_n",
                     "Give it to Lucorn — the North has the scholars for this.",
-                    "The Northern Empire receives the scrolls. Lucorn's court will decide their fate. (Questline A)");
+                    "The Northern Empire receives the scrolls. Lucorn's court will decide their fate.");
                 AddImperialOption(elements, "empire_w", "give_w",
                     "Give it to Gairos — the West has the ambition for it.",
-                    "The Western Empire receives the scrolls. Gairos's mages will not sleep for weeks. (Questline A)");
+                    "The Western Empire receives the scrolls. Gairos's mages will not sleep for weeks.");
 
                 // Non-imperial factions
                 AddFactionOption(elements, "sturgia",  "give_sturgia",  "Give it to the Sturgians — iron hands may steady iron knowledge.",
-                    "Sturgia receives the scrolls. What they do with fire-made-life is their own affair. (Questline B)");
+                    "Sturgia receives the scrolls. What they do with fire-made-life is their own affair.");
                 AddFactionOption(elements, "khuzait",  "give_khuzait",  "Give it to the Khuzaites — the steppe lords keep their own counsel.",
-                    "The Khuzait Khanate receives the scrolls. The wind carries secrets far. (Questline B)");
+                    "The Khuzait Khanate receives the scrolls. The wind carries secrets far.");
                 AddFactionOption(elements, "battania", "give_battania", "Give it to the Battanians — they understand old power.",
-                    "Battania receives the scrolls. They know things about life and death that predate the Empire. (Questline B)");
+                    "Battania receives the scrolls. They know things about life and death that predate the Empire.");
                 AddFactionOption(elements, "aserai",   "give_aserai",   "Give it to the Aserai — scholars of the deep south.",
-                    "The Aserai receive the scrolls. Desert silence is good for dangerous research. (Questline B)");
+                    "The Aserai receive the scrolls. Desert silence is good for dangerous research.");
                 AddFactionOption(elements, "vlandia",  "give_vlandia",  "Give it to the Vlandians — wealth buys discretion.",
-                    "Vlandia receives the scrolls. Their coin and their ambition will put these to use. (Questline B)");
+                    "Vlandia receives the scrolls. Their coin and their ambition will put these to use.");
 
                 if (elements.Count < 2)
                 {
@@ -672,17 +672,20 @@ namespace AshAndEmber
             Hero ar = FindArenicosHero();
             string arName = ar?.Name?.ToString() ?? "Arencios";
 
-            Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
             Kingdom ashen = GetKingdom(AshenKingdomId);
-
-            if (arenicosEmpire != null && ashen != null)
+            if (ashen != null && !ashen.IsEliminated)
             {
-                try
+                foreach (string empId in EmpireIds)
                 {
-                    if (arenicosEmpire.IsAtWarWith(ashen))
-                        MakePeaceAction.Apply(arenicosEmpire, ashen);
+                    Kingdom empK = GetKingdom(empId);
+                    if (empK == null || empK.IsEliminated) continue;
+                    try
+                    {
+                        if (empK.IsAtWarWith(ashen))
+                            MakePeaceAction.Apply(empK, ashen);
+                    }
+                    catch { }
                 }
-                catch { }
             }
 
             Notify(
@@ -694,15 +697,18 @@ namespace AshAndEmber
         private static void MaintainFalseEmperorAlliance()
         {
             if (!_qaFalseAllianceActive) return;
-            Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
             Kingdom ashen = GetKingdom(AshenKingdomId);
-            if (arenicosEmpire != null && !arenicosEmpire.IsEliminated
-             && ashen != null && !ashen.IsEliminated)
+            if (ashen == null || ashen.IsEliminated) return;
+
+            // Keep all living empire factions at peace with Ashen while the false emperor lives
+            foreach (string empId in EmpireIds)
             {
+                Kingdom empK = GetKingdom(empId);
+                if (empK == null || empK.IsEliminated) continue;
                 try
                 {
-                    if (arenicosEmpire.IsAtWarWith(ashen))
-                        MakePeaceAction.Apply(arenicosEmpire, ashen);
+                    if (empK.IsAtWarWith(ashen))
+                        MakePeaceAction.Apply(empK, ashen);
                 }
                 catch { }
             }
