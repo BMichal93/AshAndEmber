@@ -201,15 +201,10 @@ namespace AshAndEmber
                 }
 
                 string body =
-                    "The castle is yours. Your soldiers are still clearing the halls when one of them calls for you — " +
-                    "a locked door, hidden behind a tapestry, sealed with something that resists the usual persuasion.\n\n" +
-                    "Inside: a laboratory. Not a smithy or a storeroom. Shelves floor to ceiling, every surface covered in " +
-                    "scroll-cases and sealed glass jars containing things that do not bear close examination. " +
-                    "Someone spent years here. Someone was trying to create life from fire — not birth it, not grow it. " +
-                    "Create it. From nothing. From ash and heat and something darker.\n\n" +
-                    "The scrolls are legible. Dense. Dangerous. The work is unfinished but further along than you expected. " +
-                    "Whoever built this place understood things that should not be understood.\n\n" +
-                    "The torches in the hall burn slightly wrong. You notice. You always notice.\n\n" +
+                    "A hidden door in a captured castle. Behind it: a laboratory. Shelves of scroll-cases, sealed jars, " +
+                    "things that do not bear close examination.\n\n" +
+                    "Someone was trying to create life from fire — not grow it, not birth it. Create it. " +
+                    "The scrolls are legible. Dense. Dangerous. Further along than you expected.\n\n" +
                     "What do you do with what you have found?";
 
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(

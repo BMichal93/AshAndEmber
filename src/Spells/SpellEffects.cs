@@ -290,16 +290,17 @@ namespace AshAndEmber
         }
 
         // ── Deferred death queue ───────────────────────────────────────────────
-        private static readonly List<Agent> _pendingDeaths = new List<Agent>();
+        private static readonly List<(Agent Target, Agent Owner)> _pendingDeaths
+            = new List<(Agent, Agent)>();
 
-        public static void QueueKill(Agent target)
+        public static void QueueKill(Agent target, Agent owner = null)
         {
             if (target == null || target.IsHero) return;
             bool usingEquip = false;
             try { usingEquip = target.IsUsingGameObject; } catch { }
             if (usingEquip) { try { target.Health = 1f; } catch { } return; }
-            if (target.IsActive() && !_pendingDeaths.Contains(target))
-                _pendingDeaths.Add(target);
+            if (target.IsActive() && !_pendingDeaths.Exists(e => e.Target == target))
+                _pendingDeaths.Add((target, owner));
         }
 
         public static void FlushPendingDeaths()
@@ -312,17 +313,17 @@ namespace AshAndEmber
             { _pendingDeaths.Clear(); return; }
             var snapshot = _pendingDeaths.ToList();
             _pendingDeaths.Clear();
-            foreach (Agent a in snapshot)
+            foreach (var (target, owner) in snapshot)
             {
                 if (mission.CurrentState != Mission.State.Continuing) return;
                 if (Agent.Main == null || !Agent.Main.IsActive()) return;
-                if (a?.IsActive() == true) KillAgent(a);
+                if (target?.IsActive() == true) KillAgent(target, owner);
             }
         }
 
         public static void ClearPendingDeaths() => _pendingDeaths.Clear();
 
-        public static void KillAgent(Agent target)
+        public static void KillAgent(Agent target, Agent owner = null)
         {
             if (target == null || !target.IsActive()) return;
             if (target.IsHero)
@@ -332,7 +333,7 @@ namespace AshAndEmber
             if (usingEquip) { try { target.Health = 1f; } catch { } return; }
             try
             {
-                Blow blow = BuildBlow(target, DamageTypes.Cut, 2000f);
+                Blow blow = BuildBlow(target, DamageTypes.Cut, 2000f, owner);
                 target.Die(blow, (Agent.KillInfo)0);
                 return;
             }
@@ -341,7 +342,7 @@ namespace AshAndEmber
             try { target.MakeDead(true, ActionIndexCache.Create("act_strike_walk_right_stance"), 0); } catch { }
         }
 
-        public static void DamageAgent(Agent target, float damage, ColorSchool? school = null)
+        public static void DamageAgent(Agent target, float damage, ColorSchool? school = null, Agent owner = null)
         {
             if (target == null || !target.IsActive()) return;
 
@@ -362,7 +363,7 @@ namespace AshAndEmber
             float newHealth = target.Health - damage;
             if (newHealth <= 0f)
             {
-                if (!target.IsHero) QueueKill(target);
+                if (!target.IsHero) QueueKill(target, owner);
                 else try { target.Health = 1f; } catch { }
             }
             else try { target.Health = newHealth; } catch { }
@@ -374,10 +375,10 @@ namespace AshAndEmber
             try { target.Health = Math.Min(target.HealthLimit, target.Health + amount); } catch { }
         }
 
-        private static Blow BuildBlow(Agent target, DamageTypes type, float magnitude)
+        private static Blow BuildBlow(Agent target, DamageTypes type, float magnitude, Agent owner = null)
         {
             Blow blow = new Blow();
-            blow.OwnerId          = Agent.Main?.Index ?? 0;
+            blow.OwnerId          = (owner ?? Agent.Main)?.Index ?? 0;
             blow.DamageType       = type;
             blow.BaseMagnitude    = magnitude;
             blow.InflictedDamage  = (int)magnitude;
@@ -491,7 +492,7 @@ namespace AshAndEmber
             // Damage — fire hits everyone (friendly fire)
             if (cast.DamageCount > 0)
             {
-                DamageAgent(target, cast.DamageCount * 25f);
+                DamageAgent(target, cast.DamageCount * 25f, owner: caster);
                 ApplyDamageEnchantments(target, cast, caster);
             }
 
@@ -574,7 +575,7 @@ namespace AshAndEmber
                             case 2:
                                 bool mounted = false;
                                 try { mounted = target.MountAgent != null; } catch { }
-                                if (mounted) ForceDismount(target);
+                                if (mounted) ForceDismount(target, caster);
                                 else try { target.SetMorale(0f); } catch { }
                                 break;
                             case 3:
@@ -625,21 +626,21 @@ namespace AshAndEmber
                     if (doGuaranteedKill)
                     {
                         _immolateKillsRemaining--;
-                        QueueKill(target);
+                        QueueKill(target, caster);
                         BeginAgentGlow(target, ColorSchool.Red, 2f);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Immolate — consumed.", new Color(1f, 0.4f, 0.1f)));
                     }
                     else if (doProbKill)
                     {
-                        QueueKill(target);
+                        QueueKill(target, caster);
                         BeginAgentGlow(target, ColorSchool.Red, 2f);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Immolate — the fire claims.", new Color(1f, 0.4f, 0.1f)));
                     }
                     else
                     {
-                        DamageAgent(target, cast.DamageCount * 10f);
+                        DamageAgent(target, cast.DamageCount * 10f, owner: caster);
                         BeginAgentGlow(target, ColorSchool.Red, 1.5f);
                     }
                 }
@@ -901,14 +902,14 @@ namespace AshAndEmber
         }
 
         // ── Dismount helper ────────────────────────────────────────────────────
-        public static void ForceDismount(Agent a)
+        public static void ForceDismount(Agent a, Agent owner = null)
         {
             Agent mount = null;
             try { mount = a.MountAgent; } catch { }
             if (mount == null || !mount.IsActive()) return;
             try
             {
-                Blow b = BuildBlow(mount, DamageTypes.Blunt, mount.HealthLimit + 1f);
+                Blow b = BuildBlow(mount, DamageTypes.Blunt, mount.HealthLimit + 1f, owner);
                 mount.Die(b, (Agent.KillInfo)0);
             }
             catch { }
