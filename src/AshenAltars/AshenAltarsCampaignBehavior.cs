@@ -70,6 +70,8 @@ namespace AshAndEmber
         private static readonly string[] AshenAltarCities = { "Tyal", "Sibir", "Baltakhand", "Amprela" };
         private static readonly Random _rng = new Random();
 
+        private static bool _altarsAnnounced = false;
+
         // Cross-system state (read by SanctuaryCampaignBehavior)
         internal static int _lastAltarUseDay  = -999;
         private static int  _altarUseCount    = 0;
@@ -100,6 +102,7 @@ namespace AshAndEmber
 
         public override void SyncData(IDataStore store)
         {
+            try { store.SyncData("ALTAR_Announced", ref _altarsAnnounced); } catch { }
             try { store.SyncData("ALTAR_LastUseDay", ref _lastAltarUseDay); } catch { }
             try { store.SyncData("ALTAR_UseCount", ref _altarUseCount); } catch { }
             try { store.SyncData("ALTAR_SolsticeUntilDay", ref _solsticeUntilDay); } catch { }
@@ -140,6 +143,8 @@ namespace AshAndEmber
 
         private static void AnnounceAltars()
         {
+            if (_altarsAnnounced) return;
+            _altarsAnnounced = true;
             try
             {
                 MBInformationManager.AddQuickInformation(new TextObject(

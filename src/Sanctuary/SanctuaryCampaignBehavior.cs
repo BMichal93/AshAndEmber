@@ -71,6 +71,7 @@ namespace AshAndEmber
         private const string AshenKingdomId  = "ashen_kingdom";
 
         private static readonly List<string> _permanentSanctuaryIds = new List<string>();
+        private static bool _sanctuariesAnnounced = false;
 
         // Cross-system state (read by AshenAltarsCampaignBehavior)
         internal static int _lastSanctuaryUseDay = -999;
@@ -109,6 +110,7 @@ namespace AshAndEmber
                 if (ids != null) { _permanentSanctuaryIds.Clear(); foreach (var id in ids) _permanentSanctuaryIds.Add(id); }
             }
             catch { }
+            try { store.SyncData("SANCT_Announced", ref _sanctuariesAnnounced); } catch { }
             try { store.SyncData("SANCT_LastUseDay", ref _lastSanctuaryUseDay); } catch { }
             try { store.SyncData("SANCT_UseCount", ref _sanctuaryUseCount); } catch { }
             try { store.SyncData("SANCT_BlessedUntilDay", ref _blessedUntilDay); } catch { }
@@ -160,8 +162,9 @@ namespace AshAndEmber
                     .OrderBy(_ => _rng.Next()).Take(PermanentSanctuaryCount).ToList();
                 _permanentSanctuaryIds.Clear();
                 foreach (var s in picks) _permanentSanctuaryIds.Add(s.StringId);
-                if (picks.Count > 0)
+                if (picks.Count > 0 && !_sanctuariesAnnounced)
                 {
+                    _sanctuariesAnnounced = true;
                     var names = picks.Select(s => s.Name.ToString()).ToList();
                     string joined = names.Count == 1 ? names[0]
                         : string.Join(", ", names.Take(names.Count - 1)) + ", and " + names.Last();
