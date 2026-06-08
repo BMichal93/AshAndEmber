@@ -130,7 +130,7 @@
   </NPCCharacter>
 
   <NPCCharacter id="ember_shaman"
-                name="{=ember_shaman_name}Ember Shaman"
+                name="{=ember_shaman_name}Ember Sorcerer"
                 age="0"
                 level="26"
                 culture="Culture.looter"

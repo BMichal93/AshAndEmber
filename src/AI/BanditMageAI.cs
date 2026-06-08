@@ -53,7 +53,7 @@ namespace AshAndEmber
             { "fire_devotee",     "Fire Devotee"    },
             { "fire_zealot",      "Fire Zealot"     },
             { "ember_caller",     "Ember Caller"    },
-            { "ember_shaman",     "Ember Shaman"    },
+            { "ember_shaman",     "Ember Sorcerer"  },
             { "ashen_thrall",     "Ashen Thrall"    },
             { "ashen_invoker",    "Ashen Invoker"   },
         };
