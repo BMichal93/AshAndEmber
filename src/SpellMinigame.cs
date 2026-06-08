@@ -233,7 +233,7 @@ namespace AshAndEmber
                 body,
                 true, true,
                 "I am ready.", "Cast without the rite.",
-                ShowRecall,
+                () => { MageKnowledge._deferredInquiry = ShowRecall; },
                 () => { try { TalentSystem.ExecuteMapSpell(_spellId, 1f); } catch { } }
             ), true, true);
         }
@@ -287,7 +287,7 @@ namespace AshAndEmber
                         try { MBInformationManager.AddQuickInformation(new TextObject(toast)); } catch { }
 
                         _position++;
-                        ShowRecall();
+                        MageKnowledge._deferredInquiry = ShowRecall;
                     }
                     catch { }
                 },
