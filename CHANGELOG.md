@@ -2,6 +2,47 @@
 
 ---
 
+## v0.16
+
+### Spell Minigame — overhaul
+- Ritual text reworked from single words to full two-sentence descriptions per step.
+- Each step now has **10 variant phrasings** (was 3); recall screen always shows 3 options (correct + 2 random draws from the pool).
+- New multipliers: 0/3 = **0.50×**, 1/3 = **0.80×**, 2/3 = **1.20×**, 3/3 = **1.50×**.
+- Fixed dialog re-entrance bug where clicking *Continue* refreshed the current screen instead of advancing.
+- Fixed per-encounter multi-screen dialog re-entrance bug in Settlement Encounters.
+
+### Sanctuary — iterative ritual system
+- Replaced flat-fee troop/aging costs with a per-round hero HP self-sacrifice mechanic.
+- Each rite now has a hidden target; the player meditates round by round and chooses when to stop.
+- Per-rite choices on success: Prayer of Healing offers *Heal the Wounded* or *Steady the Line*; Prayer for a Blessing offers *Shed a Year* or *Flame Mark*.
+- Added per-rite cooldowns, location depletion (5 uses → 30-day rest), and cross-system interference with Ashen Altars.
+- Expanded to **4 permanent Sanctuaries** in Empire towns.
+- Fixed sanctuary announcement firing on every game load; fixed announcement showing wrong settlement names.
+
+### Ashen Altars — iterative ritual system
+- Mirrored refactor: per-round sacrifice cost, hidden target, player chooses when to stop.
+- Altars now in all four starting cities: Tyal, Sibir, Baltakhand, Amprela.
+- Added Carrion Gift and Break Wills target-selection screen on success.
+- Added per-rite cooldowns, location depletion, and NPC daily dark-rite effects.
+- Fixed altar announcement firing on every game load.
+
+### Settlement Encounters
+- New encounter: **An Insult at the Gate** — provocation that can escalate to field combat.
+- **LV_ColdEmbrace**: replaced dice-roll outcome with a real field battle.
+
+### Troops & spells
+- Added **Wandering Circle** troop tree: Acolyte → Druid → Ember Sorcerer (renamed from Ember Shaman).
+- Added **Ashstorm** as a campaign-map siege spell; rebalanced to standard map spell cost.
+- Added companion magic abilities.
+
+### Balance
+- Rebalanced talents: Sunder, Cinder Shell, Reflect, Smoulder, Kinship, Extinguish, Immolate, Resonance, Ember.
+
+### Schemes
+- Added Scheme Whispers feature.
+
+---
+
 ## v0.14.1
 
 ### New mechanic: Arcane sequence minigame for campaign map spell casting
