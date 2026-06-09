@@ -65,6 +65,7 @@ namespace AshAndEmber
         private static int  _capitalsCount  = 0;
         private static bool _worldFrozen    = false;
         private static int  _endingPhase    = 0;
+        internal static AshenQuestLog _questLog = null;
 
         private static readonly HashSet<string> _wastelandCities = new HashSet<string>();
         private static readonly Random _rng = new Random();
@@ -138,6 +139,7 @@ namespace AshAndEmber
 
             if (_phase == PhasePrereqs)
             {
+                if (_questLog == null) try { EnsureQuestLog(); } catch { }
                 CheckPrereqGoals();
             }
             else if (_phase == PhaseAllDone && MageKnowledge._deferredInquiry == null)
@@ -154,6 +156,7 @@ namespace AshAndEmber
                 if (!_prereqGoal1 && (Hero.MainHero?.Clan?.Tier ?? 0) >= TargetClanTier)
                 {
                     _prereqGoal1 = true;
+                    try { _questLog?.LogPrereq1(); } catch { }
                     if (MageKnowledge._deferredInquiry == null)
                         MageKnowledge._deferredInquiry = ShowPrereqGoalComplete1;
                 }
@@ -169,6 +172,7 @@ namespace AshAndEmber
                     if (epicrotea != null && epicrotea.OwnerClan == Hero.MainHero?.Clan)
                     {
                         _prereqGoal2 = true;
+                        try { _questLog?.LogPrereq2(); } catch { }
                         if (MageKnowledge._deferredInquiry == null)
                             MageKnowledge._deferredInquiry = ShowPrereqGoalComplete2;
                     }
@@ -186,6 +190,7 @@ namespace AshAndEmber
         private static void UnlockWastelandRite()
         {
             _phase = PhaseWasteland;
+            try { _questLog?.LogWastelandUnlocked(); } catch { }
             InformationManager.DisplayMessage(new InformationMessage(
                 "The Wasteland Rite is revealed. Visit an Ashen-owned city to consecrate it.",
                 new Color(0.4f, 0.5f, 0.85f)));
@@ -269,6 +274,7 @@ namespace AshAndEmber
                     () =>
                     {
                         _phase = PhasePrereqs;
+                        try { _questLog = new AshenQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Quest added: The Hunger of the Void.",
                             new Color(0.38f, 0.50f, 0.85f)));
@@ -406,6 +412,7 @@ namespace AshAndEmber
                 if (isCapital)
                 {
                     _capitalsCount++;
+                    try { _questLog?.LogCapital(settlement.Name?.ToString() ?? "", _capitalsCount); } catch { }
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{settlement.Name} — consecrated to the void. [{_capitalsCount}/{RequiredCapitals} capitals]",
                         new Color(0.4f, 0.5f, 0.9f)));
@@ -413,6 +420,7 @@ namespace AshAndEmber
                     if (_capitalsCount >= RequiredCapitals && _phase == PhaseWasteland)
                     {
                         _phase = PhaseAllDone;
+                        try { _questLog?.LogAllDone(); } catch { }
                         if (MageKnowledge._deferredInquiry == null)
                             MageKnowledge._deferredInquiry = ShowFinalPrompt;
                     }
@@ -457,6 +465,7 @@ namespace AshAndEmber
                     {
                         _phase       = PhaseFrozen;
                         _endingPhase = 1;
+                        try { _questLog?.LogComplete(); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The cold moves through you. There is no calling it back.",
                             new Color(0.4f, 0.5f, 0.9f)));
@@ -464,6 +473,7 @@ namespace AshAndEmber
                     () =>
                     {
                         _phase = PhaseFailed;
+                        try { _questLog?.LogFailed(); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The void withdraws. It has outlasted everything before you. " +
                             "It will outlast your hesitation too.",
@@ -656,6 +666,13 @@ namespace AshAndEmber
             if (wList != null) foreach (var id in wList) _wastelandCities.Add(id);
         }
 
+        private static void EnsureQuestLog()
+        {
+            _questLog = new AshenQuestLog();
+            _questLog.StartQuest();
+            _questLog.LogCatchUp(_prereqGoal1, _prereqGoal2, _phase >= PhaseWasteland, _capitalsCount, _phase == PhaseAllDone);
+        }
+
         public static void ResetForNewGame()
         {
             _phase         = PhaseIdle;
@@ -664,7 +681,75 @@ namespace AshAndEmber
             _capitalsCount = 0;
             _worldFrozen   = false;
             _endingPhase   = 0;
+            _questLog      = null;
             _wastelandCities.Clear();
+        }
+    }
+
+    public sealed class AshenQuestLog : QuestBase
+    {
+        public AshenQuestLog()
+            : base("ldm_ashen_quest", Hero.MainHero, CampaignTime.Never, 0) { }
+
+        public override TextObject Title => new TextObject("The Hunger of the Void");
+        public override bool IsRemainingTimeHidden => true;
+
+        protected override void InitializeQuestOnGameLoad()
+        {
+            AshenQuestSystem._questLog = this;
+        }
+
+        protected override void RegisterEvents() { }
+        protected override void HoldNotificationOnce() { }
+        protected override void HoldAfterTick(float realDt) { }
+
+        internal void LogStarted() =>
+            AddLog(new TextObject(
+                "The void has shown you its design — seven capitals consecrated with the Wasteland Rite. " +
+                "First: establish dominion (Clan Tier 6) and claim Epicrotea."));
+
+        internal void LogPrereq1() =>
+            AddLog(new TextObject(
+                "Clan Tier 6 reached. Cold dominion established. The first condition is met."));
+
+        internal void LogPrereq2() =>
+            AddLog(new TextObject(
+                "Epicrotea taken. The warm heart has been entered. The second condition is met."));
+
+        internal void LogWastelandUnlocked() =>
+            AddLog(new TextObject(
+                "The Wasteland Rite is revealed. Visit any Ashen-controlled city to consecrate it. " +
+                $"Seven capitals must answer: {string.Join(", ", AshenQuestSystem.TargetCapitalNames)}."));
+
+        internal void LogCapital(string name, int count) =>
+            AddLog(new TextObject(
+                $"{name} consecrated to the void. [{count}/{AshenQuestSystem.RequiredCapitals}] capitals done."));
+
+        internal void LogAllDone() =>
+            AddLog(new TextObject(
+                "All seven capitals stand consecrated. The void is ready. The final rite awaits."));
+
+        internal void LogComplete()
+        {
+            AddLog(new TextObject("The last fire goes out. The world settles into grey permanence."));
+            CompleteQuestWithSuccess();
+        }
+
+        internal void LogFailed()
+        {
+            AddLog(new TextObject(
+                "The void withdraws. It has outlasted everything before you. It will outlast your hesitation too."));
+            CompleteQuestWithFail();
+        }
+
+        internal void LogCatchUp(bool pre1, bool pre2, bool wasteland, int capCount, bool allDone)
+        {
+            AddLog(new TextObject("The Hunger of the Void — quest resumed from save."));
+            if (pre1) AddLog(new TextObject("Clan Tier 6 reached. Cold dominion established."));
+            if (pre2) AddLog(new TextObject("Epicrotea taken. The Wasteland Rite revealed."));
+            if (wasteland && capCount > 0)
+                AddLog(new TextObject($"{capCount} of {AshenQuestSystem.RequiredCapitals} capitals consecrated."));
+            if (allDone) AddLog(new TextObject("All seven capitals are done. The final rite awaits."));
         }
     }
 }
