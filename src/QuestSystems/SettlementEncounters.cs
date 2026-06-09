@@ -1409,42 +1409,8 @@ namespace AshAndEmber
         // EVENT 120 — AFTER RAID (fourth batch)
         // ═══════════════════════════════════════════════════════════════════
 
-        // 120. Under the Floor
-        private static void ER3_CellarSurvivors()
-        {
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "☠  Under the Floor",
-                "As your party prepares to leave, one of your men kicks through a root cellar door in a burned cottage. A family is in the dark below — grandparents, two young children — who have been in there since the raid began. They emerge slowly, covered in dust, squinting at the light. They do not speak. They are waiting to see what you do next.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Ensure they have food, water, and coin before you leave.", null, true,
-                        "You leave something behind. The weight shifts, slightly."),
-                    new InquiryElement("b", "Point them toward the nearest intact village and ride on.", null, true,
-                        "A direction. Practical."),
-                    new InquiryElement("c", "Say nothing and leave.", null, true,
-                        "You leave. They watch you go."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            ChangeGold(-300);
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You have food and water left at the cellar entrance, coin pressed into the grandfather's hands. He holds it and looks at you. You rode in this morning and took what was here. You rode out this afternoon and left what was needed.", DimColor);
-                            break;
-                        case "b":
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            Msg("You point east and tell them the village name. The grandfather nods. The children stare at you the whole time you are giving the directions, not blinking, and you find you cannot meet their eyes while you speak.", DimColor);
-                            break;
-                        case "c":
-                            ShiftTrait(DefaultTraits.Honor, -1);
-                            Msg("Your party moves out. The four of them stand in the light of the burned cottage and watch you go. The youngest child does not know to be afraid yet. She is still at the age where she assumes the adults around her know what is happening.", BadColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
+        // 120. Under the Floor - removed
+
 
         // 129. Left Behind (mage, after siege)
         private static void ES4_AshenCrystal()
