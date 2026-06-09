@@ -458,8 +458,8 @@ namespace AshAndEmber
         }
 
         // ── Event 2: Great Withering ──────────────────────────────────────────
-        // Coin-flip: either a random village loses 80% of its hearth, or a
-        // random city loses 50% of its prosperity.
+        // Coin-flip: either a random village loses 100% of its hearth, or a
+        // random city loses 100% of its prosperity.
         private static void TryFireGreatWithering()
         {
             if (_rng.NextDouble() >= ChanceGreatWithering) return;
@@ -468,7 +468,7 @@ namespace AshAndEmber
             {
                 if (_rng.Next(2) == 0)
                 {
-                    // Village: reduce hearth to 20% of current (= -80%)
+                    // Village: reduce hearth to floor (= -100%)
                     var villages = Settlement.All
                         .Where(s => s.IsVillage && s.Village != null && s.Village.Hearth > 20f)
                         .ToList();
@@ -476,15 +476,15 @@ namespace AshAndEmber
 
                     var target = villages[_rng.Next(villages.Count)];
                     float before = target.Village.Hearth;
-                    target.Village.Hearth = Math.Max(10f, before * 0.20f);
+                    target.Village.Hearth = 10f;
 
                     MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Great Withering — the hearth-fires of {target.Name} gutter and die. " +
-                        $"Hearth: {before:F0} → {target.Village.Hearth:F0}."));
+                        $"Great Withering — the hearth-fires of {target.Name} go out and do not return. " +
+                        $"The village is hollow. Hearth: {before:F0} → {target.Village.Hearth:F0}."));
                 }
                 else
                 {
-                    // City: reduce prosperity by 50%
+                    // City: reduce prosperity to floor (= -100%)
                     var cities = Settlement.All
                         .Where(s => s.IsTown && s.Town != null && s.Town.Prosperity > 50f)
                         .ToList();
@@ -492,10 +492,10 @@ namespace AshAndEmber
 
                     var target = cities[_rng.Next(cities.Count)];
                     float before = target.Town.Prosperity;
-                    target.Town.Prosperity = Math.Max(10f, before * 0.50f);
+                    target.Town.Prosperity = 10f;
 
                     MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Great Withering — something cold and old passes through {target.Name}. " +
+                        $"Great Withering — the grey reaches {target.Name}. The markets close. The streets empty. Nothing recovers. " +
                         $"Prosperity: {before:F0} → {target.Town.Prosperity:F0}."));
                 }
             }
