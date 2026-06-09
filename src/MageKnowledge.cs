@@ -264,9 +264,9 @@ namespace AshAndEmber
                 "── EXAMPLES  (try these first!) ─────────────────────\n" +
                 "  W, X, W, release        →  Blast,   25 dmg,   1 day\n" +
                 "  A, X, W, release        →  Missile, 25 dmg,   1 day\n" +
-                "  S, X, SS, release       →  Burst,   30 heal,  1 day  (heals you too)\n" +
-                "  AAA, X, WW, release     →  Long missile, 50 dmg,  2 days\n" +
-                "  WW+SS, X, W+S, release  →  Blast+Burst, dmg+heal, 2 days\n\n" +
+                "  S, X, SS, release       →  Burst,   30 heal,  2 days  (heals you too)\n" +
+                "  AAA, X, WW, release     →  Long missile, 50 dmg,  4 days\n" +
+                "  WW+SS, X, W+S, release  →  Blast+Burst, dmg+heal, 5 days\n\n" +
                 "── BATTLE COST  (days of life per cast — geometric) ──\n" +
                 "  1–2 inputs = 1 day   3 = 2 days   4 = 3   5 = 4   6 = 5\n" +
                 "  7 = 8 days   8 = 11   9 = 15   10 = 21   12 = 41   14 = 80\n" +
@@ -275,12 +275,12 @@ namespace AshAndEmber
                 ashenNote +
                 "\n── CAMPAIGN SPELLS  (outside a mission → \"Cast\") ────────\n" +
                 "  A 3-step ritual description appears. Commit it to memory.\n" +
-                "  Each step has three variant phrasings — one is shown each cast.\n" +
-                "  You are then asked to pick the correct phrasing for each step.\n\n" +
+                "  Each step has many variant phrasings — one is shown each cast.\n" +
+                "  You are then asked to pick the correct phrasing from three options.\n\n" +
                 "  Score → power multiplier:\n" +
                 "    3/3 correct → 1.50×   Resonance — the rite was perfect.\n" +
-                "    2/3 correct → 1.00×   Baseline.\n" +
-                "    1/3 correct → 0.75×   Flickering.\n" +
+                "    2/3 correct → 1.20×   Amplified.\n" +
+                "    1/3 correct → 0.80×   Flickering.\n" +
                 "    0/3 correct → 0.50×   Scattered.\n\n" +
                 "  The aging cost is always paid.\n" +
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +

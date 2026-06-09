@@ -454,9 +454,16 @@ namespace AshAndEmber
 
                 int    goldCost  = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
                 int    infCost   = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
+                bool   retaliation = SchemeSystem.PlayerRetaliationActive;
+                if (retaliation)
+                {
+                    goldCost /= 2;
+                    infCost  /= 2;
+                }
                 bool   onCooldown = SchemeSystem.IsOnCooldown(_selectedDef.Type, targetHero, targetSett);
                 string tName     = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "target";
                 string cdNote    = onCooldown ? "\n[!] Repeat-use penalty — cost is 5× base." : "";
+                if (retaliation) cdNote += "\nRetaliation — the fire answers: costs halved today.";
                 bool   isAss     = _selectedDef.Type == SchemeType.Assassinate;
                 string traitNote = isAss
                     ? "\nPersonality: Honor −1  Calculating −1  Mercy −1  — on commit"
@@ -517,6 +524,12 @@ namespace AshAndEmber
 
                 int goldCost = SchemeSystem.ComputeGoldCost(_selectedDef, targetHero, targetSett);
                 int infCost  = SchemeSystem.ComputeInfluenceCost(_selectedDef, targetHero, targetSett);
+
+                if (SchemeSystem.PlayerRetaliationActive)
+                {
+                    goldCost /= 2;
+                    infCost  /= 2;
+                }
 
                 if (!SchemeSystem.DebugFree)
                 {

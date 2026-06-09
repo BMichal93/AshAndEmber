@@ -666,9 +666,9 @@ namespace AshAndEmber
             try
             {
                 if (MobileParty.MainParty == null) { Msg("Fade — no party to conceal."); return; }
-                // Perfect recall (1.25×) extends concealment by an extra day.
+                // Strong recall (≥1.20×) extends concealment by an extra day.
                 _fadeDaysRemaining = mult >= 1.20f ? 2 : 1;
-                int days = _fadeDaysRemaining + 1;
+                int days = _fadeDaysRemaining;
                 bool applied = TrySetIgnoreByOtherParties(MobileParty.MainParty, true);
                 if (applied)
                 {

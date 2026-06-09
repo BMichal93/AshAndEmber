@@ -718,7 +718,7 @@ namespace AshAndEmber
                             if (w >= toWound) break;
                         }
                         totalWounded += w;
-                        try { p.RecentEventsMorale -= 35f * mult; } catch { }
+                        try { p.RecentEventsMorale -= 35f * Math.Max(0.1f, mult); } catch { }
                     }
                     string msg = targets.Count == 0
                         ? "The rite is spoken. The flame surges and settles. No grey things are close enough to feel it."

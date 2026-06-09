@@ -31,7 +31,8 @@ namespace AshAndEmber
         private static bool   _inEffectPhase  = false;
         private static bool   _wasFocusing    = false;
         private static string _lastDisplayed  = "";
-        private const  int    MaxLen          = 10;
+        // 12 so the full debug combo (UUDDLLRRULDR) fits in the form buffer.
+        private const  int    MaxLen          = 12;
 
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
         private static bool _prevBreakPad;

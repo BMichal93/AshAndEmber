@@ -481,6 +481,7 @@ namespace AshAndEmber
         private static void Fire(List<Action<Settlement>> pool, Settlement s)
         {
             if (pool.Count == 0) return;
+            if (MageKnowledge._deferredInquiry != null) return; // don't clobber a queued quest popup
             _cooldown = MinDaysBetween;
             Action<Settlement> chosen = pool[_rng.Next(pool.Count)];
             MageKnowledge._deferredInquiry = () => { try { chosen(s); } catch { } };
@@ -489,6 +490,7 @@ namespace AshAndEmber
         private static void FireBattle(List<Action> pool)
         {
             if (pool.Count == 0) return;
+            if (MageKnowledge._deferredInquiry != null) return; // don't clobber a queued quest popup
             _cooldown = MinDaysBetween;
             Action chosen = pool[_rng.Next(pool.Count)];
             MageKnowledge._deferredInquiry = () => { try { chosen(); } catch { } };

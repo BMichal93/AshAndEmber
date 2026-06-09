@@ -1318,7 +1318,7 @@ namespace AshAndEmber
 
         private static double ElapsedCampaignDays()
         {
-            try { return CampaignTime.Now.ToDays; }
+            try { return CampaignMapEvents.ElapsedCampaignDays(); }
             catch { return 0.0; }
         }
     }
