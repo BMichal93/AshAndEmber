@@ -700,8 +700,7 @@ namespace AshAndEmber
         }
 
         protected override void RegisterEvents() { }
-        protected override void HoldNotificationOnce() { }
-        protected override void HoldAfterTick(float realDt) { }
+        protected override void SetDialogs() { }
 
         internal void LogStarted() =>
             AddLog(new TextObject(
