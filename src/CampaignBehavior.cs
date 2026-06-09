@@ -120,6 +120,7 @@ namespace AshAndEmber
                 CampaignMapEvents.ResetForNewGame();
                 SettlementEncounters.ResetForNewGame();
                 DragonQuestSystem.ResetForNewGame();
+                AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
                 ShowLoreIntro();
             }
@@ -354,6 +355,7 @@ namespace AshAndEmber
                 try { CampaignMapEvents.DailyTick(); } catch { }
                 try { SettlementEncounters.DailyTick(); } catch { }
                 try { DragonQuestSystem.DailyTick(); } catch { }
+                try { AshenQuestSystem.DailyTick(); } catch { }
                 try { BurningLabQuestSystem.DailyTick(); } catch { }
                 try { CheckReapPrisonerYield(); } catch { }
                 if (_reapRaidCooldown > 0) _reapRaidCooldown--;
@@ -803,6 +805,8 @@ namespace AshAndEmber
                     _executedLordIds.Add(victim.StringId);
                     try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
                 }
+                if (killer == Hero.MainHero)
+                    try { AshenQuestSystem.OnHeroExecuted(victim); } catch { }
             }
             catch { }
         }
@@ -910,6 +914,7 @@ namespace AshAndEmber
             try { CampaignMapEvents.Save(dataStore); } catch { }
             try { SettlementEncounters.Save(dataStore); } catch { }
             try { DragonQuestSystem.Save(dataStore); } catch { }
+            try { AshenQuestSystem.Save(dataStore); } catch { }
             try { BurningLabQuestSystem.Save(dataStore); } catch { }
             try { AgingSystem.Save(dataStore); } catch { }
         }

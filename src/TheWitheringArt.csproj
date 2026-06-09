@@ -81,6 +81,7 @@
   <ItemGroup>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.cs"/>
+    <Compile Include="QuestSystems\AshenQuestSystem.cs"/>
     <Compile Include="QuestSystems\BurningLabQuestSystem.cs"/>
     <Compile Include="AgingSystem.cs"/>
     <Compile Include="SchoolData.cs"/>

@@ -58,6 +58,7 @@ namespace AshAndEmber
         private static bool _goal3Done      = false; // hero level
         private static bool _worldRekindled = false;
         private static int  _endingPhase    = 0;     // 0=not started 1-4=in progress
+        internal static DragonQuestLog _questLog = null;
 
         private static readonly Random _rng = new Random();
 
@@ -79,6 +80,7 @@ namespace AshAndEmber
         public static void OnMapEventEnded(MapEvent mapEvent)
         {
             if (_phase != PhaseIdle) return;
+            if (MageKnowledge.IsAshen) return;
             try
             {
                 // Only fires if player won
@@ -131,10 +133,12 @@ namespace AshAndEmber
             // Check goals in active quest
             if (_phase == PhaseActive)
             {
+                if (_questLog == null) try { EnsureQuestLog(); } catch { }
                 CheckGoals();
                 if (_goal1Done && _goal2Done && _goal3Done && _phase == PhaseActive)
                 {
                     _phase = PhaseAllDone;
+                    try { _questLog?.LogAllDone(); } catch { }
                     if (MageKnowledge._deferredInquiry == null)
                         MageKnowledge._deferredInquiry = ShowFinalPrompt;
                 }
@@ -155,6 +159,7 @@ namespace AshAndEmber
                 if (!_goal1Done && (Hero.MainHero?.Clan?.Tier ?? 0) >= TargetClanTier)
                 {
                     _goal1Done = true;
+                    try { _questLog?.LogGoal1(); } catch { }
                     if (MageKnowledge._deferredInquiry == null)
                         MageKnowledge._deferredInquiry = () => ShowGoalComplete(1);
                 }
@@ -171,6 +176,7 @@ namespace AshAndEmber
                     if (tyal != null && tyal.OwnerClan == Hero.MainHero?.Clan)
                     {
                         _goal2Done = true;
+                        try { _questLog?.LogGoal2(); } catch { }
                         if (MageKnowledge._deferredInquiry == null)
                             MageKnowledge._deferredInquiry = () => ShowGoalComplete(2);
                     }
@@ -183,6 +189,7 @@ namespace AshAndEmber
                 if (!_goal3Done && (Hero.MainHero?.Level ?? 0) >= TargetHeroLevel)
                 {
                     _goal3Done = true;
+                    try { _questLog?.LogGoal3(); } catch { }
                     if (MageKnowledge._deferredInquiry == null)
                         MageKnowledge._deferredInquiry = () => ShowGoalComplete(3);
                 }
@@ -227,6 +234,7 @@ namespace AshAndEmber
                     {
                         // Accept — quest begins
                         _phase = PhaseActive;
+                        try { _questLog = new DragonQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Quest added: The Last Flight of the Dragons.",
                             new Color(0.75f, 0.55f, 0.3f)));
@@ -326,6 +334,7 @@ namespace AshAndEmber
                         // Yes — begin ending sequence
                         _phase       = PhaseRekindled;
                         _endingPhase = 1;
+                        try { _questLog?.LogComplete(); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The fire begins to move. There is no taking it back.",
                             new Color(0.9f, 0.65f, 0.15f)));
@@ -334,6 +343,7 @@ namespace AshAndEmber
                     {
                         // No — quest fails
                         _phase = PhaseFailed;
+                        try { _questLog?.LogFailed(); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The chance fleets. Whatever he offered is gone. The world turns as it will.",
                             new Color(0.5f, 0.5f, 0.55f)));
@@ -554,6 +564,17 @@ namespace AshAndEmber
             store.SyncData("LDM_EndingPhase",    ref _endingPhase);
         }
 
+        private static void EnsureQuestLog()
+        {
+            _questLog = new DragonQuestLog();
+            _questLog.StartQuest();
+            _questLog.LogStarted();
+            if (_goal1Done) _questLog.LogGoal1();
+            if (_goal2Done) _questLog.LogGoal2();
+            if (_goal3Done) _questLog.LogGoal3();
+            if (_goal1Done && _goal2Done && _goal3Done) _questLog.LogAllDone();
+        }
+
         public static void ResetForNewGame()
         {
             _phase          = PhaseIdle;
@@ -562,12 +583,63 @@ namespace AshAndEmber
             _goal3Done      = false;
             _worldRekindled = false;
             _endingPhase    = 0;
+            _questLog       = null;
         }
 
         public static void OnGameStart()
         {
             // If a rekindled save is loaded, ensure world events stay off
             // (checked via WorldRekindled property in CampaignMapEvents)
+        }
+    }
+
+    public sealed class DragonQuestLog : QuestBase
+    {
+        public DragonQuestLog()
+            : base("ldm_dragon_quest", Hero.MainHero, CampaignTime.Never, 0) { }
+
+        public override TextObject Title => new TextObject("The Last Flight of the Dragons");
+        public override bool IsRemainingTimeHidden => true;
+
+        protected override void InitializeQuestOnGameLoad()
+        {
+            DragonQuestSystem._questLog = this;
+        }
+
+        protected override void RegisterEvents() { }
+        protected override void HoldNotificationOnce() { }
+        protected override void HoldAfterTick(float realDt) { }
+
+        internal void LogStarted() =>
+            AddLog(new TextObject(
+                "The old mage's last words: gain a grasp on the world, enter the cold heart, gain the power — then rekindle everything. Three conditions, and a sacrifice at the end."));
+
+        internal void LogGoal1() =>
+            AddLog(new TextObject(
+                "Clan Tier 6 reached. Your name is known across Calradia. The first condition is met."));
+
+        internal void LogGoal2() =>
+            AddLog(new TextObject(
+                "Tyal taken. The cold heart has been entered and understood. The second condition is met."));
+
+        internal void LogGoal3() =>
+            AddLog(new TextObject(
+                "The inner fire burns at full height. The third condition is met."));
+
+        internal void LogAllDone() =>
+            AddLog(new TextObject(
+                "All three conditions are met. The rekindling is possible. The choice remains."));
+
+        internal void LogComplete()
+        {
+            AddLog(new TextObject("The fire is released. The world has its morning. The cost was everything."));
+            CompleteQuestWithSuccess();
+        }
+
+        internal void LogFailed()
+        {
+            AddLog(new TextObject("The chance is gone. Whatever the old mage was offering died with your refusal."));
+            CompleteQuestWithFail();
         }
     }
 }

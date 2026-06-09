@@ -285,7 +285,7 @@ namespace AshAndEmber
                 "  The aging cost is always paid.\n" +
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +
                 $"\n  Open this page: {openBook}" +
-                DragonQuestSystem.GetGrimoireSummary();
+                (_isAshen ? AshenQuestSystem.GetGrimoireSummary() : DragonQuestSystem.GetGrimoireSummary());
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
 
