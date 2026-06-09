@@ -31,13 +31,12 @@ namespace AshAndEmber
             // ── False Emperor — opening ───────────────────────────────────────
             try { starter.AddDialogLine("ar_false_start",
                 "start", "ar_reply",
-                "You come before the Emperor. The warmth in you is noticed. " +
-                "Everything warm is noticed now. Say what you came to say.",
+                "Come forward. I have learned to be patient with arrivals. There have been many. Say what you came to say.",
                 IsFalseEmperor, null, P); } catch { }
 
             try { starter.AddDialogLine("ar_false_pretalk",
                 "lord_pretalk", "ar_reply",
-                "Speak. Warmth that lingers too long makes me... uncomfortable.",
+                "You return. I find I remember your face very clearly. I find I remember most things very clearly, now.",
                 IsFalseEmperor, null, P); } catch { }
 
             // ── Shared player responses ───────────────────────────────────────
@@ -63,8 +62,7 @@ namespace AshAndEmber
 
             try { starter.AddDialogLine("ar_false_barter",
                 "lord_barter_question", "close_window",
-                "Trade requires equal footing. There is no equal footing here. " +
-                "There is only the Emperor, and everything else.",
+                "Put it away. What I want and what you can offer are rarely the same kind of thing.",
                 IsFalseEmperor, null, P); } catch { }
 
             // ── Defeat / surrender ────────────────────────────────────────────
@@ -80,12 +78,12 @@ namespace AshAndEmber
 
             try { starter.AddDialogLine("ar_false_defeat_1",
                 "defeated_lord_start_1", "close_window",
-                "This vessel will mend. I will not feel what you have done to it. I never do.",
+                "You are better than the last one who stood where you are standing. I noted the difference. I will remember this.",
                 IsFalseEmperor, null, P); } catch { }
 
             try { starter.AddDialogLine("ar_false_defeat_2",
                 "defeated_lord_start_2", "close_window",
-                "You have struck something old and cold. You will understand what that means later.",
+                "I have been in this position before. Not recently — but I remember how it resolved. Have patience with the process.",
                 IsFalseEmperor, null, P); } catch { }
 
             // ── Special request ───────────────────────────────────────────────
@@ -97,7 +95,7 @@ namespace AshAndEmber
 
             try { starter.AddDialogLine("ar_false_special",
                 "lord_special_request", "close_window",
-                "A request. How mortal of you.",
+                "You want something. I have noted it. Whether it can be given is a separate question.",
                 IsFalseEmperor, null, P); } catch { }
 
             // ── Prisoner ──────────────────────────────────────────────────────
@@ -108,7 +106,7 @@ namespace AshAndEmber
 
             try { starter.AddDialogLine("ar_false_prisoner",
                 "prisoner_chat", "close_window",
-                "You have caged a body. The thing that wears it thanks you for the silence.",
+                "I have been in smaller rooms. I have been in rooms with no door. You learn to wait.",
                 IsFalseEmperor, null, P); } catch { }
         }
 

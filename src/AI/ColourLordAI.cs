@@ -22,7 +22,8 @@ namespace AshAndEmber
         private const float DefaultCooldown     = 25f;
         private const float ImpulsiveCooldown   = 15f;
         private const float CalculatingCooldown = 35f;
-        private const float AshenCooldown      = 6f;  // Ashen lords cast ~4× more often
+        private const float AshenCooldown       = 6f;  // Ashen lords cast ~4× more often
+        private const float FalseEmperorCooldown = 3f; // False emperor casts ~2× more often than Ashen
 
         private static readonly Dictionary<string, float> _cooldowns   = new Dictionary<string, float>();
         private static readonly Dictionary<string, int>   _battleCasts = new Dictionary<string, int>();
@@ -91,7 +92,8 @@ namespace AshAndEmber
                         Hero h = (a.Character as CharacterObject)?.HeroObject;
                         if (h == null || !ColourLordRegistry.IsColourLord(h)) continue;
                         bool ashen = ColourLordRegistry.IsAshenLord(h);
-                        float maxJitter = ashen ? AshenCooldown * 2f : DefaultCooldown * 0.6f;
+                        bool isFE  = ashen && BurningLabQuestSystem.IsArenicosHero(h) && !BurningLabQuestSystem.ArenicosIsTrue;
+                        float maxJitter = isFE ? FalseEmperorCooldown * 2f : ashen ? AshenCooldown * 2f : DefaultCooldown * 0.6f;
                         float jitter = (float)_rng.NextDouble() * maxJitter;
                         if (jitter > 0f) _cooldowns[h.StringId] = jitter;
                     }
@@ -122,6 +124,7 @@ namespace AshAndEmber
             SpellEffects.TryFreeHandForCast(agent); // sheathe visually before cast, never blocks
 
             bool isAshen = ColourLordRegistry.IsAshenLord(hero);
+            bool isFalseEmperor = isAshen && BurningLabQuestSystem.IsArenicosHero(hero) && !BurningLabQuestSystem.ArenicosIsTrue;
 
             var enemies = SpellEffects.EnemiesOf(agent);
             var allies  = SpellEffects.AlliesOf(agent);
@@ -143,10 +146,12 @@ namespace AshAndEmber
             catch { }
 
             // 0. Defensive burst when endangered — Ward is now a Restoration talent, not NPC-castable.
-            //    Ashen lords respond with overwhelming force; others with a space-clearing burst.
+            //    False emperor responds with maximum devastation; Ashen with overwhelming force.
             if (hpPct < 0.40f && closeEnemies >= 1)
             {
-                if (isAshen)
+                if (isFalseEmperor)
+                    CastBurst(agent, hero, 5, 5, 0); // 12.5 m radius
+                else if (isAshen)
                     CastBurst(agent, hero, 4, 4, 0); // 10 m radius
                 else
                     CastBurst(agent, hero, 3, 3, 0); // 7.5 m radius
@@ -198,16 +203,32 @@ namespace AshAndEmber
             // Surrounded — burst to clear space; all formCounts bumped +1 vs previous
             if (closeEnemies >= 3)
             {
-                // Non-Ashen: 3 (7.5 m) or 4 (10 m) when massively outnumbered
-                // Ashen:     4 (10 m) or 5 (12.5 m)
-                int form = isAshen
-                    ? (closeEnemies >= 5 || roll >= 3 ? 5 : 4)
-                    : (closeEnemies >= 5              ? 4 : 3);
+                // False emperor: always maximum; Ashen: 4–5; non-Ashen: 3–4
+                int form = isFalseEmperor ? 5
+                         : isAshen ? (closeEnemies >= 5 || roll >= 3 ? 5 : 4)
+                                   : (closeEnemies >= 5              ? 4 : 3);
                 CastBurst(agent, hero, form, form, 0);
                 return;
             }
 
-            if (isAshen)
+            if (isFalseEmperor)
+            {
+                // False emperor: maximum power always — cold fire has no patience
+                if (blastSafe && burstSafe)
+                {
+                    if (roll < 3) CastBlast(agent, hero, 5, 5, 0);
+                    else          CastBurst(agent, hero, 5, 5, 0);
+                }
+                else if (blastSafe) CastBlast(agent, hero, 5, 5, 0);
+                else if (burstSafe) CastBurst(agent, hero, 5, 5, 0);
+                else
+                {
+                    // Cold fire doesn't wait for a clean target
+                    if (roll < 3) CastBurst(agent, hero, 4, 5, 0);
+                    else          CastBlast(agent, hero, 4, 5, 0);
+                }
+            }
+            else if (isAshen)
             {
                 // Ashen: aggressive, unpredictable — all spells one tier larger than before
                 if (blastSafe && burstSafe)
@@ -350,7 +371,8 @@ namespace AshAndEmber
             {
                 if (ColourLordRegistry.IsAshenLord(hero))
                 {
-                    _cooldowns[hero.StringId] = AshenCooldown;
+                    bool isFE = BurningLabQuestSystem.IsArenicosHero(hero) && !BurningLabQuestSystem.ArenicosIsTrue;
+                    _cooldowns[hero.StringId] = isFE ? FalseEmperorCooldown : AshenCooldown;
                     return;
                 }
                 float cd = DefaultCooldown;

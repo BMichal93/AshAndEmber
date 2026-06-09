@@ -113,6 +113,25 @@ namespace AshAndEmber
             _lordTalents.TryGetValue(hero.StringId, out var list) &&
             list.Contains((int)id);
 
+        /// Registers the false emperor as mage+Ashen with the full arsenal.
+        /// Skips clan movement and appearance change — he wears the emperor's face.
+        public static void SetFalseEmperor(Hero hero)
+        {
+            if (hero == null) return;
+            _mageIds.Add(hero.StringId);
+            _ashenIds.Add(hero.StringId);
+            _lordTalents[hero.StringId] = new List<int>
+            {
+                (int)TalentId.Extinguish,
+                (int)TalentId.BreakWills,
+                (int)TalentId.Plague,
+                (int)TalentId.Scatter,
+                (int)TalentId.Smoulder,
+                (int)TalentId.Sunder,
+                (int)TalentId.Immolate,
+            };
+        }
+
         public static void ResetForNewGame()
         {
             _seeded = false;
@@ -265,9 +284,11 @@ namespace AshAndEmber
                 try { heroById = Hero.AllAliveHeroes.ToDictionary(h => h.StringId, h => h); }
                 catch { return; }
 
-                // At most one Ashen lord and one regular mage lord cast per campaign day.
+                // At most 2 false emperor casts, 1 Ashen, and 1 regular mage lord cast per campaign day.
+                int falseEmperorCastsToday = 0;
                 int ashenCastsToday  = 0;
                 int normalCastsToday = 0;
+                const int MaxFalseEmperorCastsPerDay = 2;
                 const int MaxAshenCastsPerDay  = 1;
                 const int MaxNormalCastsPerDay = 1;
 
@@ -277,24 +298,28 @@ namespace AshAndEmber
                     if (hero == null || !hero.IsAlive || hero.IsPrisoner) continue;
 
                     bool isBlight = IsAshenLord(hero);
+                    bool isFalseEmperor = isBlight
+                        && BurningLabQuestSystem.IsArenicosHero(hero)
+                        && !BurningLabQuestSystem.ArenicosIsTrue;
 
                     // Skip once the per-type daily cap is reached
-                    if (isBlight  && ashenCastsToday  >= MaxAshenCastsPerDay)  continue;
+                    if (isFalseEmperor  && falseEmperorCastsToday >= MaxFalseEmperorCastsPerDay) continue;
+                    if (!isFalseEmperor && isBlight && ashenCastsToday >= MaxAshenCastsPerDay)   continue;
                     if (!isBlight && normalCastsToday >= MaxNormalCastsPerDay) continue;
 
                     // First encounter: seed a random initial offset so lords don't all
                     // cast on the same day after seeding or loading a save.
                     if (!_campaignCooldowns.ContainsKey(id))
-                        _campaignCooldowns[id] = isBlight ? _rng.Next(7) : _rng.Next(8);
+                        _campaignCooldowns[id] = isFalseEmperor ? _rng.Next(3) : isBlight ? _rng.Next(7) : _rng.Next(8);
 
                     if (_campaignCooldowns.TryGetValue(id, out int cd) && cd > 0)
                     { _campaignCooldowns[id] = cd - 1; continue; }
 
-                    // Blight lords cast hungrily — cold fire demands expression and costs them nothing
-                    // Normal lords slow down as age accumulates
-                    int castChance = isBlight ? 10
-                                   : hero.Age < 50f ? 8
-                                   : hero.Age < 70f ? 4
+                    // False emperor casts voraciously; Blight lords cast hungrily; normal lords slow with age
+                    int castChance = isFalseEmperor ? 30
+                                   : isBlight       ? 10
+                                   : hero.Age < 50f  ? 8
+                                   : hero.Age < 70f  ? 4
                                    : 2;
                     if (_rng.Next(100) >= castChance) continue;
 
@@ -307,11 +332,14 @@ namespace AshAndEmber
                     try
                     {
                         TalentSystem.ExecuteNpcMapSpell(hero, chosen);
-                        // Blight lords recover quickly; normal lords need several days
-                        _campaignCooldowns[id] = isBlight ? 5 + _rng.Next(4) : 5 + _rng.Next(5);
+                        // False emperor recovers fastest; Blight lords quickly; normal lords need days
+                        _campaignCooldowns[id] = isFalseEmperor ? 2 + _rng.Next(3)
+                                               : isBlight       ? 5 + _rng.Next(4)
+                                                                 : 5 + _rng.Next(5);
                         if (hero.Clan != null) hero.Clan.Renown += 3f;
-                        if (isBlight) ashenCastsToday++;
-                        else          normalCastsToday++;
+                        if (isFalseEmperor) falseEmperorCastsToday++;
+                        else if (isBlight)  ashenCastsToday++;
+                        else                normalCastsToday++;
                     }
                     catch { }
                 }

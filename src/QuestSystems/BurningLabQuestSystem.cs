@@ -82,7 +82,7 @@ namespace AshAndEmber
         private const int  QAPhaseReviveDelay  = 10;
         private const int  QAPhaseAllyDelay    = 3;
         private const int  QAPhaseWarDelay     = 3;
-        private const int  QAFalseAllianceDelay = 30;
+        private const int  QAFalseAllianceDelay = 50;
 
         private const int  QBOutcomeDelay      = 3;
         private const int  QBConversionDelay   = 3;  // days between each settlement capture
@@ -118,6 +118,13 @@ namespace AshAndEmber
         private static int    _qaFalseAllianceTimer = 0;
         private static bool   _qaAshenMerged = false;
         private static bool   _qaWitheringFired = false;
+        private static int    _qaAnchorThrottle = 0;    // not saved — resets on load
+        private static int    _qaReplenishCooldown = 0; // not saved — resets on load
+
+        // Quest journal logs — restored via InitializeQuestOnGameLoad on each log's class
+        internal static BurningLabQALog _qaQuestLog = null;
+        internal static BurningLabQBLog _qbQuestLog = null;
+        internal static BurningLabQCLog _qcQuestLog = null;
 
         // Quest B
         private static int    _qbSubPhase          = 0;
@@ -131,6 +138,8 @@ namespace AshAndEmber
         // Quest C
         private static bool   _qcActive            = false;
         private static int    _qcWeeklyTimer       = 0;
+        private static int    _qcWhisperTimer      = 0;
+        private static int    _qcWhisperIndex      = 0;
 
         private static readonly Random _rng = new Random();
 
@@ -148,6 +157,15 @@ namespace AshAndEmber
 
         /// StringId of the empire kingdom that hosts Arenicos.
         public static string ArenicosEmpireId => _qaEmpireId;
+
+        /// True when a false-emperor Arenicos (Ashen impostor) is currently alive.
+        public static bool FalseEmperorIsAlive =>
+            !_arenicosIsTrue
+            && _arenicosHeroId != null
+            && Hero.AllAliveHeroes.Any(h => h.StringId == _arenicosHeroId && h.IsAlive);
+
+        /// True after the Withering ending has fired (90 % town threshold met).
+        public static bool WitheringFired => _qaWitheringFired;
 
         /// Called from SettlementEncounters.TryFireSiege().
         /// Returns true if the lab discovery event should fire this siege.
@@ -306,6 +324,8 @@ namespace AshAndEmber
             store.SyncData("BLQ_QCActive",        ref qcActive);
             _qcActive = qcActive != 0;
             store.SyncData("BLQ_QCTimer",         ref _qcWeeklyTimer);
+            store.SyncData("BLQ_QCWhisperTimer",  ref _qcWhisperTimer);
+            store.SyncData("BLQ_QCWhisperIndex",  ref _qcWhisperIndex);
         }
 
         public static void ResetForNewGame()
@@ -321,6 +341,10 @@ namespace AshAndEmber
             _qaFalseAllianceTimer    = 0;
             _qaAshenMerged           = false;
             _qaWitheringFired        = false;
+            _qaAnchorThrottle        = 0;
+            _qaQuestLog              = null;
+            _qbQuestLog              = null;
+            _qcQuestLog              = null;
             _qbSubPhase              = 0;
             _qbTimer                 = 0;
             _qbFactionId             = null;
@@ -330,6 +354,8 @@ namespace AshAndEmber
             _qbWeeklyBoostCooldown   = 0;
             _qcActive                = false;
             _qcWeeklyTimer           = 0;
+            _qcWhisperTimer          = 0;
+            _qcWhisperIndex          = 0;
         }
 
         // ── Initial choice handler ─────────────────────────────────────────────
@@ -353,9 +379,11 @@ namespace AshAndEmber
                         "The Burning Laboratory — the scrolls are yours now. You have not read them in full. " +
                         "You are not certain you are ready to. But they are in your saddlebag, " +
                         "wrapped in oilcloth, and they have not stopped feeling warm since you picked them up.");
-                    _phase    = PhaseQC;
-                    _qcActive = true;
-                    _qcWeeklyTimer = QCWeeklyDelay;
+                    _phase          = PhaseQC;
+                    _qcActive       = true;
+                    _qcWeeklyTimer  = QCWeeklyDelay;
+                    _qcWhisperTimer = 2;
+                    try { _qcQuestLog = new BurningLabQCLog(); _qcQuestLog.StartQuest(); _qcQuestLog.LogStarted(); } catch { }
                     break;
 
                 case "sell":
@@ -415,6 +443,7 @@ namespace AshAndEmber
             Notify(
                 $"The Burning Laboratory — the scrolls have been delivered to {empName}. " +
                 "They are not the kind of people who read slowly.");
+            try { _qaQuestLog = new BurningLabQALog(); _qaQuestLog.StartQuest(); _qaQuestLog.LogStarted(empName); } catch { }
         }
 
         private static void TickQA()
@@ -538,6 +567,9 @@ namespace AshAndEmber
             _arenicosHeroId = chosen.StringId;
             _arenicosIsTrue  = _rng.Next(2) == 0; // 50/50
 
+            if (!_arenicosIsTrue)
+                try { ColourLordRegistry.SetFalseEmperor(chosen); } catch { }
+
             // Make his clan the ruling clan of the empire
             try { ChangeRulingClanAction.Apply(empire, chosen.Clan); } catch { }
 
@@ -575,6 +607,7 @@ namespace AshAndEmber
                 $"He calls himself Arencios. He says he has been waiting a long time.\n\n" +
                 $"{trueStr}\n\n" +
                 $"He has already begun issuing orders. The court — for the moment — is obeying.");
+            try { _qaQuestLog?.LogRevival(heroName, _arenicosIsTrue); } catch { }
         }
 
         private static void FireOtherEmpireSubmission()
@@ -590,10 +623,16 @@ namespace AshAndEmber
                 if (k != null && !k.IsEliminated) otherEmpireIds.Add(id);
             }
 
+            // Guarantee at least one submission: pick a mandatory joiner, then roll for the rest.
+            string guaranteedId = otherEmpireIds.Count > 0
+                ? otherEmpireIds[_rng.Next(otherEmpireIds.Count)]
+                : null;
+
             var submittedNames = new List<string>();
             foreach (string id in otherEmpireIds)
             {
-                if (_rng.Next(2) == 0) continue; // 50% chance to refuse
+                bool guaranteed = id == guaranteedId;
+                if (!guaranteed && _rng.Next(2) == 0) continue; // 50% chance to refuse (non-guaranteed)
                 Kingdom other = GetKingdom(id);
                 if (other == null || other.IsEliminated) continue;
 
@@ -690,7 +729,57 @@ namespace AshAndEmber
 
                 if (_qaAshenMerged && !_qaWitheringFired)
                     CheckWitheringCondition();
+
+                if (!_arenicosIsTrue)
+                    TryReplenishFalseEmperorArmy(ar);
             }
+        }
+
+        private static CharacterObject[] GetReplenishTroops()
+        {
+            var ids = new[] { "ember_shaman", "ashen_invoker", "circle_shaman", "ember_caller" };
+            var result = ids.Select(id => CharacterObject.Find(id)).Where(c => c != null).ToArray();
+            return result.Length > 0 ? result : null;
+        }
+
+        private static void TryReplenishFalseEmperorArmy(Hero arHero)
+        {
+            if (_qaReplenishCooldown > 0) { _qaReplenishCooldown--; return; }
+            try
+            {
+                MobileParty party = arHero?.PartyBelongedTo;
+                if (party == null) return;
+
+                int current = party.MemberRoster.TotalManCount;
+                if (current >= 50) return;
+
+                const int ReplenishTarget = 200;
+                int needed = ReplenishTarget - current;
+                if (needed <= 0) return;
+
+                CharacterObject[] troops = GetReplenishTroops();
+                if (troops == null || troops.Length == 0) return;
+
+                int added = 0;
+                while (added < needed)
+                {
+                    CharacterObject troop = troops[_rng.Next(troops.Length)];
+                    int batch = Math.Min(10 + _rng.Next(6), needed - added);
+                    try { party.MemberRoster.AddToCounts(troop, batch); added += batch; }
+                    catch { break; }
+                }
+
+                if (added > 0)
+                {
+                    string arName = arHero.Name?.ToString() ?? "The false emperor";
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{arName} — the cold answers. {added} Ashen warriors emerge from shadow.",
+                        new Color(0.4f, 0.5f, 0.8f)));
+                }
+
+                _qaReplenishCooldown = 2; // wait 2 days before checking again
+            }
+            catch { }
         }
 
         private static void CheckWitheringCondition()
@@ -713,6 +802,13 @@ namespace AshAndEmber
             _qaWitheringFired = true;
             _qaSubPhase = 9;
             _phase = PhaseEnded;
+
+            try
+            {
+                if (MageKnowledge.IsAshen) { _qaQuestLog?.LogWitheringVictory(); _qaQuestLog?.CompleteSuccess(); }
+                else                       { _qaQuestLog?.LogWitheringDefeat();  _qaQuestLog?.CompleteFail();   }
+            }
+            catch { }
 
             if (MageKnowledge._deferredInquiry == null)
                 MageKnowledge._deferredInquiry = ShowWitheringPrompt;
@@ -808,11 +904,41 @@ namespace AshAndEmber
                 $"The Burning Laboratory — {arName}'s empire has revealed its true allegiance. " +
                 "The grey banners lower. The cold warriors of the Ashen march under the imperial eagle now. " +
                 "The Ashen and the Empire are one. Whatever stands against them stands alone.");
+            try { _qaQuestLog?.LogMerger(arName); } catch { }
         }
 
         private static void MaintainFalseEmperorAlliance()
         {
-            // No-op: after the Ashen merger, war-lock is enforced by AshenDiplomacyModel.
+            if (!_qaFalseAllianceActive) return;
+
+            // Re-anchor any Ashen clan that drifted out of Arenicos's empire.
+            // Throttled to every 3 days — mirrors AshenCitySystem's _clanThrottle pattern
+            // and avoids firing ChangeKingdomAction on every daily tick.
+            if (_qaAnchorThrottle > 0) { _qaAnchorThrottle--; return; }
+            _qaAnchorThrottle = 3;
+
+            Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
+            if (arenicosEmpire == null || arenicosEmpire.IsEliminated) return;
+
+            int anchored = 0;
+            foreach (var clan in Clan.All.ToList())
+            {
+                if (anchored >= 2) break;
+                if (clan == null || clan.IsEliminated) continue;
+                if (clan.Leader == null || !ColourLordRegistry.IsAshenLord(clan.Leader)) continue;
+                if (clan.Kingdom == arenicosEmpire) continue;
+
+                try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                try
+                {
+                    ChangeKingdomAction.ApplyByJoinToKingdom(
+                        clan, arenicosEmpire,
+                        CampaignTime.Now + CampaignTime.Years(1000),
+                        false);
+                }
+                catch { }
+                anchored++;
+            }
         }
 
         private static void FireArenicosDeathSplit()
@@ -857,6 +983,7 @@ namespace AshAndEmber
                     $"The Burning Laboratory — with the false emperor gone, the cold alliance shatters. " +
                     $"The Ashen withdraw from {empName} and vanish back into their own dark. " +
                     "The empire endures — diminished, uncertain, no longer the void's instrument.");
+                try { _qaQuestLog?.LogFalseEmperorDead(); _qaQuestLog?.CompleteSuccess(); } catch { }
                 return;
             }
 
@@ -871,6 +998,7 @@ namespace AshAndEmber
             if (targets.Count == 0)
             {
                 Notify("The Burning Laboratory — Arencios's empire has no imperial heirs to split among. His fiefs remain.");
+                try { _qaQuestLog?.LogTrueEmperorDead(); _qaQuestLog?.CompleteFail(); } catch { }
                 return;
             }
 
@@ -901,6 +1029,12 @@ namespace AshAndEmber
                 $"The Burning Laboratory — with {empName}'s false emperor gone, the realm he assembled " +
                 $"fragments back toward the borders it came from. {moved} settlement{(moved != 1 ? "s" : "")} " +
                 "change hands as surviving imperial lords carve out what they can before the war takes it.");
+            try
+            {
+                if (_arenicosIsTrue) { _qaQuestLog?.LogTrueEmperorDead(); _qaQuestLog?.CompleteFail(); }
+                else                 { _qaQuestLog?.LogFalseEmperorDead(); _qaQuestLog?.CompleteSuccess(); }
+            }
+            catch { }
         }
 
         // ── Questline B ────────────────────────────────────────────────────────
@@ -918,6 +1052,7 @@ namespace AshAndEmber
                 $"The Burning Laboratory — the scrolls have been handed over to {factionName}. " +
                 "A sealed box, a payment, a handshake that meant different things to each party. " +
                 "They will read them. What happens next is their decision.");
+            try { _qbQuestLog = new BurningLabQBLog(); _qbQuestLog.StartQuest(); _qbQuestLog.LogStarted(factionName); } catch { }
         }
 
         private static void TickQB()
@@ -966,6 +1101,7 @@ namespace AshAndEmber
                     "and burned them. No announcement. No explanation. " +
                     "One of their scholars was seen leaving the court the following morning, carrying only a small pack. " +
                     "Nobody went looking for him.");
+                try { _qbQuestLog?.LogOutcomeDiscard(); _qbQuestLog?.CompleteFail(); } catch { }
             }
             else if (roll == 1)
             {
@@ -993,6 +1129,7 @@ namespace AshAndEmber
                     "The scholars who performed the rite did not come out. Their guards did not go in. " +
                     "Three days later the windows of the tower were dark, then lit by something that was not fire. " +
                     "The grey has found a foothold. It spreads from the inside.");
+                try { _qbQuestLog?.LogOutcomeBad(); } catch { }
             }
             else
             {
@@ -1007,6 +1144,7 @@ namespace AshAndEmber
                     "Their armies ride out heavier and stranger than they did before. " +
                     "The fire they found in those scrolls is in their soldiers now. " +
                     "Temporarily. Everything is temporary.");
+                try { _qbQuestLog?.LogOutcomeGood(); } catch { }
             }
         }
 
@@ -1015,6 +1153,7 @@ namespace AshAndEmber
             if (_qbSettlementQueue.Count == 0)
             {
                 Notify("The Burning Laboratory — the grey tide has consumed everything it was given. The faction is no more.");
+                try { _qbQuestLog?.LogBadComplete(); _qbQuestLog?.CompleteFail(); } catch { }
                 _qbSubPhase = 9;
                 _phase      = PhaseEnded;
                 return;
@@ -1060,6 +1199,7 @@ namespace AshAndEmber
             Kingdom faction = GetKingdom(_qbFactionId);
             if (faction == null || faction.IsEliminated)
             {
+                try { _qbQuestLog?.CompleteFail(); } catch { }
                 _phase = PhaseEnded;
                 return;
             }
@@ -1126,6 +1266,13 @@ namespace AshAndEmber
             if (!_qcActive) return;
             if (_qcWeeklyTimer > 0)
                 _qcWeeklyTimer--;
+            if (_qcWhisperTimer > 0)
+                _qcWhisperTimer--;
+            else
+            {
+                FireQCWhisper();
+                _qcWhisperTimer = 2;
+            }
         }
 
         private static void TickQCWeeklyPrompt()
@@ -1139,12 +1286,70 @@ namespace AshAndEmber
             MageKnowledge._deferredInquiry = ShowQCWeeklyPrompt;
         }
 
+        private static readonly string[] _qcWhispers =
+        {
+            "You found yourself reading again last night. You do not remember picking up the scrolls.",
+            "The fire in your hands looked different this morning. Cooler. You told yourself it was the cold.",
+            "You dreamed of the scholar who wrote this. He was standing in a city that no longer exists. He did not look up.",
+            "There is a passage near the end you cannot read twice in succession. The words shift between readings.",
+            "Your servants have started giving you more space. You have not asked them to.",
+            "The fire answered slower this morning. Like something else was listening first.",
+            "You found a margin note in a hand that is not the scholar's. It says: do not finish this.",
+            "You woke with the scrolls in your hands. You do not remember taking them from the saddlebag.",
+            "The words in the last chapter are in a language you do not know. You understood them anyway.",
+            "Someone in camp asked if you were well. You said yes. You are less certain than you were.",
+        };
+
+        private static void FireQCWhisper()
+        {
+            string msg = _qcWhispers[_qcWhisperIndex % _qcWhispers.Length];
+            _qcWhisperIndex++;
+            Notify("The Burning Laboratory — " + msg);
+        }
+
         private static void ShowQCWeeklyPrompt()
         {
             if (!_qcActive) return;
             try
             {
-                InformationManager.ShowInquiry(new InquiryData(
+                var elements = new List<InquiryElement>();
+
+                elements.Add(new InquiryElement("perform", "Perform the rite.", null, true,
+                    "Long, strange, exhausting. Something about the fire inside. The price is ambiguous in all the ways that matter."));
+
+                AddImperialOption(elements, "empire_s", "give_s",
+                    "Pass them to Rhagea's scholars.",
+                    "The Southern Empire receives the scrolls.");
+                AddImperialOption(elements, "empire_n", "give_n",
+                    "Pass them to Lucorn's court.",
+                    "The Northern Empire receives the scrolls.");
+                AddImperialOption(elements, "empire_w", "give_w",
+                    "Pass them to Gairos's mages.",
+                    "The Western Empire receives the scrolls.");
+
+                AddFactionOption(elements, "sturgia",  "give_sturgia",
+                    "Pass them to the Sturgians.",
+                    "Sturgia receives the scrolls.");
+                AddFactionOption(elements, "khuzait",  "give_khuzait",
+                    "Pass them to the Khuzaites.",
+                    "The Khuzait Khanate receives the scrolls.");
+                AddFactionOption(elements, "battania", "give_battania",
+                    "Pass them to the Battanians.",
+                    "Battania receives the scrolls.");
+                AddFactionOption(elements, "aserai",   "give_aserai",
+                    "Pass them to the Aserai.",
+                    "The Aserai receive the scrolls.");
+                AddFactionOption(elements, "vlandia",  "give_vlandia",
+                    "Pass them to the Vlandians.",
+                    "Vlandia receives the scrolls.");
+
+                elements.Add(new InquiryElement("sell", "Sell them. You have carried them long enough to know their value.", null, true,
+                    "+10 000 gold. −Honour. The buyer's identity is their own business."));
+
+                elements.Add(new InquiryElement("discard", "Set them aside. Into the fire.", null, true,
+                    "The scrolls burn. The knowledge dies. The warmth stops."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "The Burning Laboratory — The Scrolls",
 
                     "The scrolls are still there. You have read further than you intended. " +
@@ -1153,28 +1358,91 @@ namespace AshAndEmber
                     "The price, described in the dry language of an old scholar, is ambiguous in all the ways that matter.\n\n" +
                     "The last paragraph is marked. Someone read this before you.",
 
-                    true, true,
-                    "Perform the rite.",
-                    "Set the scrolls aside.",
-                    () =>
+                    elements,
+                    false, 1, 1,
+                    "Decide",
+                    "",
+                    chosen =>
                     {
-                        try { PerformQCRite(); }
+                        try { HandleQCWeeklyChoice(chosen?[0]?.Identifier as string ?? "discard"); }
                         catch { }
                     },
-                    () =>
-                    {
-                        // Discard
-                        _qcActive = false;
-                        _phase    = PhaseEnded;
-                        Notify(
-                            "The Burning Laboratory — the scrolls go into the fire. " +
-                            "You watch them burn. It takes longer than it should. " +
-                            "The last line is still readable when the ashes cool. " +
-                            "You do not write it down.");
-                    }
-                ), true, true);
+                    null, "", false
+                ), false);
             }
             catch { }
+        }
+
+        private static void HandleQCWeeklyChoice(string id)
+        {
+            switch (id)
+            {
+                case "perform":
+                    try { PerformQCRite(); } catch { }
+                    break;
+
+                case "sell":
+                {
+                    _qcActive = false;
+                    try { _qcQuestLog?.LogGivenAway("a merchant"); _qcQuestLog?.CompleteFail(); } catch { }
+                    GainGold(10000);
+                    ShiftHonour(-1);
+                    bool soldToImperial = _rng.Next(100) < SellImperialChance;
+                    string receivingEmpireId = soldToImperial ? PickLivingImperialEmpireId() : null;
+                    if (receivingEmpireId != null)
+                    {
+                        Kingdom emp = Kingdom.All.FirstOrDefault(k => k.StringId == receivingEmpireId && !k.IsEliminated);
+                        string empName = emp?.Name?.ToString() ?? "an imperial court";
+                        Notify(
+                            "The Burning Laboratory — the scrolls change hands in a tavern you will not visit again. " +
+                            $"Three days later you hear the name: {empName}. Their scholars are already at work.");
+                        StartQuestlineA(receivingEmpireId);
+                    }
+                    else
+                    {
+                        Notify(
+                            "The Burning Laboratory — the buyer did not give a name. The scrolls left in a locked chest " +
+                            "and you watched them go and felt something you are not certain how to name.");
+                        _phase = PhaseEnded;
+                    }
+                    break;
+                }
+
+                case "give_s":        HandleQCGive("empire_s",  true);  break;
+                case "give_n":        HandleQCGive("empire_n",  true);  break;
+                case "give_w":        HandleQCGive("empire_w",  true);  break;
+                case "give_sturgia":  HandleQCGive("sturgia",   false); break;
+                case "give_khuzait":  HandleQCGive("khuzait",   false); break;
+                case "give_battania": HandleQCGive("battania",  false); break;
+                case "give_aserai":   HandleQCGive("aserai",    false); break;
+                case "give_vlandia":  HandleQCGive("vlandia",   false); break;
+
+                default: // "discard"
+                    _qcActive = false;
+                    _phase    = PhaseEnded;
+                    Notify(
+                        "The Burning Laboratory — the scrolls go into the fire. " +
+                        "You watch them burn. It takes longer than it should. " +
+                        "The last line is still readable when the ashes cool. " +
+                        "You do not write it down.");
+                    try { _qcQuestLog?.LogDiscarded(); _qcQuestLog?.CompleteFail(); } catch { }
+                    break;
+            }
+        }
+
+        private static void HandleQCGive(string factionId, bool isImperial)
+        {
+            Kingdom faction = Kingdom.All.FirstOrDefault(k => k.StringId == factionId && !k.IsEliminated);
+            string factionName = faction?.Name?.ToString() ?? "the recipient";
+            _qcActive = false;
+            Notify(
+                $"The Burning Laboratory — the scrolls are handed over to {factionName}. " +
+                "You held them longer than you meant to. You are not certain what you expected to feel.");
+            try { _qcQuestLog?.LogGivenAway(factionName); _qcQuestLog?.CompleteFail(); } catch { }
+            if (isImperial)
+                StartQuestlineA(factionId);
+            else
+                StartQuestlineB(factionId);
         }
 
         private static void PerformQCRite()
@@ -1208,6 +1476,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The Burning Laboratory — the fire in you goes cold. Something else answers instead.",
                     new Color(0.3f, 0.35f, 0.7f)));
+                try { _qcQuestLog?.LogBecameAshen(); _qcQuestLog?.CompleteSuccess(); } catch { }
                 _qcActive = false;
                 _phase    = PhaseEnded;
             }
@@ -1218,6 +1487,7 @@ namespace AshAndEmber
                     "You are not certain what you expected. What you received was stranger and quieter. " +
                     "The fire inside burned different for two days — hotter and without direction. " +
                     "It has settled back now. But not entirely to where it was.");
+                try { _qcQuestLog?.LogRitePerformed(); } catch { }
                 _qcWeeklyTimer = QCWeeklyDelay; // Schedule next prompt
             }
         }
@@ -1321,5 +1591,114 @@ namespace AshAndEmber
             try { return CampaignTime.Now.ToDays; }
             catch { return 0.0; }
         }
+    }
+
+    public sealed class BurningLabQALog : QuestBase
+    {
+        public BurningLabQALog()
+            : base("ldm_burninglabqa_quest", Hero.MainHero, CampaignTime.Never, 0) { }
+
+        public override TextObject Title => new TextObject("The Resurrection of Arenicos");
+        public override bool IsRemainingTimeHidden => true;
+
+        protected override void InitializeQuestOnGameLoad()
+        {
+            BurningLabQuestSystem._qaQuestLog = this;
+        }
+        protected override void RegisterEvents() { }
+        protected override void SetDialogs() { }
+
+        internal void LogStarted(string empName) =>
+            AddLog(new TextObject($"The imperial scrolls have been delivered to {empName}. Something ancient is being attempted in secret."));
+
+        internal void LogRevival(string heroName, bool isTrue) =>
+            AddLog(new TextObject(isTrue
+                ? $"The ritual succeeded. A lord named {heroName} now claims to be Emperor Arenicos — and seems to believe it. His eyes are clear."
+                : $"The ritual succeeded. Something old and cold passed through {heroName} and did not leave. He calls himself Arenicos. His eyes are wrong."));
+
+        internal void LogMerger(string arName) =>
+            AddLog(new TextObject($"{arName}'s empire has revealed its allegiance. The Ashen march under the imperial banner. The cold and the throne are one."));
+
+        internal void LogWitheringVictory() =>
+            AddLog(new TextObject("The empire holds nine in ten cities. The cold has won. The world will not recover from this."));
+
+        internal void LogWitheringDefeat() =>
+            AddLog(new TextObject("The empire holds nine in ten cities. The withering is complete. The world the fires built is over."));
+
+        internal void LogFalseEmperorDead() =>
+            AddLog(new TextObject("The false emperor is dead. The cold alliance shatters. The Ashen withdraw. What the empire does next is its own affair."));
+
+        internal void LogTrueEmperorDead() =>
+            AddLog(new TextObject("The emperor is dead. The empire he briefly held together has fractured. The resurrection failed to hold."));
+
+        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch { } }
+        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch { } }
+    }
+
+    public sealed class BurningLabQBLog : QuestBase
+    {
+        public BurningLabQBLog()
+            : base("ldm_burninglabqb_quest", Hero.MainHero, CampaignTime.Never, 0) { }
+
+        public override TextObject Title => new TextObject("The Faction's Gambit");
+        public override bool IsRemainingTimeHidden => true;
+
+        protected override void InitializeQuestOnGameLoad()
+        {
+            BurningLabQuestSystem._qbQuestLog = this;
+        }
+        protected override void RegisterEvents() { }
+        protected override void SetDialogs() { }
+
+        internal void LogStarted(string factionName) =>
+            AddLog(new TextObject($"The scrolls have been handed over to {factionName}. Whatever happens next is their decision — and their consequence."));
+
+        internal void LogOutcomeDiscard() =>
+            AddLog(new TextObject("The faction studied the scrolls and burned them. The knowledge dies with their caution."));
+
+        internal void LogOutcomeBad() =>
+            AddLog(new TextObject("Something went wrong. The grey spreads from the inside. Their cities are being consumed one by one."));
+
+        internal void LogOutcomeGood() =>
+            AddLog(new TextObject("The experiment worked — for now. Their armies ride out heavier and stranger. Temporarily. Everything is temporary."));
+
+        internal void LogBadComplete() =>
+            AddLog(new TextObject("The grey tide has consumed everything it was given. The faction is no more."));
+
+        internal void CompleteFail() { try { CompleteQuestWithFail(); } catch { } }
+    }
+
+    public sealed class BurningLabQCLog : QuestBase
+    {
+        public BurningLabQCLog()
+            : base("ldm_burninglabqc_quest", Hero.MainHero, CampaignTime.Never, 0) { }
+
+        public override TextObject Title => new TextObject("The Personal Rites");
+        public override bool IsRemainingTimeHidden => true;
+
+        protected override void InitializeQuestOnGameLoad()
+        {
+            BurningLabQuestSystem._qcQuestLog = this;
+        }
+        protected override void RegisterEvents() { }
+        protected override void SetDialogs() { }
+
+        internal void LogStarted() =>
+            AddLog(new TextObject("The scrolls are with you. You have not read them in full. They have not stopped feeling warm since you picked them up."));
+
+        internal void LogRitePerformed() =>
+            AddLog(new TextObject("The rite is completed. The fire inside burned different for two days. It has not fully returned to where it was."));
+
+        internal void LogBecameAshen() =>
+            AddLog(new TextObject("The fire in you goes cold. Something else answers instead. The rite has taken everything it was promised."));
+
+        internal void LogGivenAway(string recipient) =>
+            AddLog(new TextObject($"The scrolls were handed over to {recipient}. You held them longer than you meant to. Whatever they were promising is someone else's problem now."));
+
+        internal void LogDiscarded() =>
+            AddLog(new TextObject("The scrolls go into the fire. Whatever they were offering is gone. The last line was still readable when the ashes cooled."));
+
+        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch { } }
+        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch { } }
     }
 }

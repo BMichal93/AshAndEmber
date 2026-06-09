@@ -128,6 +128,9 @@ namespace AshAndEmber
             if (_worldFrozen) return;
             if (!MageKnowledge.IsAshen) return;
 
+            // Withering ending (Arenicos-Ashen territorial victory/defeat) already resolved the world.
+            if (BurningLabQuestSystem.WitheringFired) return;
+
             // Flush pending hunger visions
             if (_phase == PhaseHunger2Ready && MageKnowledge._deferredInquiry == null)
             {
@@ -421,7 +424,7 @@ namespace AshAndEmber
                     {
                         _phase = PhaseAllDone;
                         try { _questLog?.LogAllDone(); } catch { }
-                        if (MageKnowledge._deferredInquiry == null)
+                        if (!BurningLabQuestSystem.WitheringFired && MageKnowledge._deferredInquiry == null)
                             MageKnowledge._deferredInquiry = ShowFinalPrompt;
                     }
                 }

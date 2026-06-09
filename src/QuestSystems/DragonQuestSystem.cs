@@ -120,6 +120,12 @@ namespace AshAndEmber
 
             if (_worldRekindled) return;
 
+            // Withering ending already resolved the world via cold fire — rekindling is no longer possible.
+            if (BurningLabQuestSystem.WitheringFired) return;
+
+            // Dragon Quest is only for non-Ashen players.
+            if (MageKnowledge.IsAshen) return;
+
             // Fire old man event (deferred so the UI is clean)
             if (_phase == PhaseEventReady && MageKnowledge._deferredInquiry == null)
             {
@@ -139,14 +145,27 @@ namespace AshAndEmber
                 {
                     _phase = PhaseAllDone;
                     try { _questLog?.LogAllDone(); } catch { }
-                    if (MageKnowledge._deferredInquiry == null)
+
+                    if (BurningLabQuestSystem.FalseEmperorIsAlive)
+                    {
+                        // All conditions met, but a false emperor walks — rekindling is blocked.
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The Last Flight of the Dragons — all conditions are met. " +
+                            "But something wears the world's face. " +
+                            "The rekindling cannot be attempted while the false emperor lives.",
+                            new Color(0.75f, 0.55f, 0.3f)));
+                    }
+                    else if (MageKnowledge._deferredInquiry == null)
+                    {
                         MageKnowledge._deferredInquiry = ShowFinalPrompt;
+                    }
                 }
             }
             else if (_phase == PhaseAllDone && MageKnowledge._deferredInquiry == null)
             {
-                // Re-show final prompt if somehow missed
-                MageKnowledge._deferredInquiry = ShowFinalPrompt;
+                // Re-show final prompt if somehow missed — still blocked while false emperor lives.
+                if (!BurningLabQuestSystem.FalseEmperorIsAlive)
+                    MageKnowledge._deferredInquiry = ShowFinalPrompt;
             }
         }
 

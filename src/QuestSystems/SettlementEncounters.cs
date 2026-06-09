@@ -558,11 +558,8 @@ namespace AshAndEmber
 
         private static void TryFireRaid()
         {
-            bool mage = MageKnowledge.IsMage;
-            var pool  = new List<Action>();
-
-            pool.Add(ER3_CellarSurvivors);
-
+            var pool = new List<Action>();
+            // (no raid encounters currently active)
             FireBattle(pool);
         }
 
