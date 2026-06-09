@@ -583,26 +583,20 @@ namespace AshAndEmber
 
                 submittedNames.Add(other.Name?.ToString() ?? id);
 
-                // Make peace between this empire and Arencios's empire
-                try
+                // Move all clans (and their fiefs) into Arencios's empire
+                foreach (var clan in other.Clans.ToList())
                 {
-                    if (arenicosEmpire.IsAtWarWith(other))
-                        MakePeaceAction.Apply(arenicosEmpire, other);
-                }
-                catch { }
-
-                // Have this empire share Arencios's current wars
-                try
-                {
-                    foreach (var enemy in Kingdom.All.ToList())
+                    if (clan == null || clan.IsEliminated) continue;
+                    try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                    try
                     {
-                        if (enemy == null || enemy.IsEliminated) continue;
-                        if (enemy == arenicosEmpire || enemy == other) continue;
-                        if (arenicosEmpire.IsAtWarWith(enemy) && !other.IsAtWarWith(enemy))
-                            try { DeclareWarAction.ApplyByDefault(other, enemy); } catch { }
+                        ChangeKingdomAction.ApplyByJoinToKingdom(
+                            clan, arenicosEmpire,
+                            CampaignTime.Now + CampaignTime.Years(1000),
+                            false);
                     }
+                    catch { }
                 }
-                catch { }
             }
 
             string arenicosName = GetKingdom(_qaEmpireId)?.Name?.ToString() ?? "the Empire";
