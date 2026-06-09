@@ -28,17 +28,29 @@ namespace AshAndEmber
             return IsAshenFaction(f1) ^ IsAshenFaction(f2);
         }
 
+        private static bool IsArenicosPostMerger(IFaction f)
+        {
+            if (f == null) return false;
+            return BurningLabQuestSystem.AshenMergedWithArenicos
+                && BurningLabQuestSystem.ArenicosEmpireId != null
+                && (f as Kingdom)?.StringId == BurningLabQuestSystem.ArenicosEmpireId;
+        }
+
         // Marks Ashen-vs-faction wars as constant so the engine excludes them from
         // overcommitment checks and never generates peace proposals for them.
+        // Also locks all wars involving Arenicos's empire after the Ashen merger.
         public override bool IsAtConstantWar(IFaction faction1, IFaction faction2)
         {
             if (IsAshenVsOther(faction1, faction2)) return true;
+            if (IsArenicosPostMerger(faction1) || IsArenicosPostMerger(faction2)) return true;
             return base.IsAtConstantWar(faction1, faction2);
         }
 
         public override float GetScoreOfDeclaringPeace(IFaction factionDeclaresPeace, IFaction factionDeclaredPeace)
         {
             if (IsAshenFaction(factionDeclaresPeace) || IsAshenFaction(factionDeclaredPeace))
+                return -10000f;
+            if (IsArenicosPostMerger(factionDeclaresPeace) || IsArenicosPostMerger(factionDeclaredPeace))
                 return -10000f;
 
             // Prevent any kingdom from ending a war that started less than MinWarDays ago.

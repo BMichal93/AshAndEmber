@@ -116,6 +116,8 @@ namespace AshAndEmber
         private static bool   _arenicosIsTrue       = false;
         private static bool   _qaFalseAllianceActive = false;
         private static int    _qaFalseAllianceTimer = 0;
+        private static bool   _qaAshenMerged = false;
+        private static bool   _qaWitheringFired = false;
 
         // Quest B
         private static int    _qbSubPhase          = 0;
@@ -140,6 +142,12 @@ namespace AshAndEmber
 
         /// True if the current Arenicos is the genuine emperor spirit; false if it is an Ashen impostor.
         public static bool ArenicosIsTrue => _arenicosIsTrue;
+
+        /// True after the Ashen faction has merged into Arenicos's empire.
+        public static bool AshenMergedWithArenicos => _qaAshenMerged;
+
+        /// StringId of the empire kingdom that hosts Arenicos.
+        public static string ArenicosEmpireId => _qaEmpireId;
 
         /// Called from SettlementEncounters.TryFireSiege().
         /// Returns true if the lab discovery event should fire this siege.
@@ -277,6 +285,12 @@ namespace AshAndEmber
             store.SyncData("BLQ_QAFalseAlliance", ref falseAlliance);
             _qaFalseAllianceActive = falseAlliance != 0;
             store.SyncData("BLQ_QAFalseTimer",    ref _qaFalseAllianceTimer);
+            int ashenMerged = _qaAshenMerged ? 1 : 0;
+            store.SyncData("BLQ_AshenMerged",     ref ashenMerged);
+            _qaAshenMerged = ashenMerged != 0;
+            int witheringFired = _qaWitheringFired ? 1 : 0;
+            store.SyncData("BLQ_WitheringFired",  ref witheringFired);
+            _qaWitheringFired = witheringFired != 0;
 
             store.SyncData("BLQ_QBSubPhase",      ref _qbSubPhase);
             store.SyncData("BLQ_QBTimer",         ref _qbTimer);
@@ -305,6 +319,8 @@ namespace AshAndEmber
             _arenicosIsTrue          = false;
             _qaFalseAllianceActive   = false;
             _qaFalseAllianceTimer    = 0;
+            _qaAshenMerged           = false;
+            _qaWitheringFired        = false;
             _qbSubPhase              = 0;
             _qbTimer                 = 0;
             _qbFactionId             = null;
@@ -671,55 +687,132 @@ namespace AshAndEmber
                 // Prevents both the vanilla AgingCampaignBehavior and the mod's DailyAgeCheck
                 // from ever killing the possessed vessel.
                 try { ar.SetBirthDay(ar.BirthDay + CampaignTime.Days(1)); } catch { }
+
+                if (_qaAshenMerged && !_qaWitheringFired)
+                    CheckWitheringCondition();
             }
+        }
+
+        private static void CheckWitheringCondition()
+        {
+            Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
+            if (arenicosEmpire == null || arenicosEmpire.IsEliminated) return;
+
+            int totalTowns = Settlement.All.Count(s => s.IsTown);
+            if (totalTowns == 0) return;
+
+            int threshold = (int)Math.Ceiling(totalTowns * 0.9);
+            int arenTowns = Settlement.All.Count(s => s.IsTown && s.MapFaction == arenicosEmpire);
+
+            if (arenTowns >= threshold)
+                TriggerWitheringEnd();
+        }
+
+        private static void TriggerWitheringEnd()
+        {
+            _qaWitheringFired = true;
+            _qaSubPhase = 9;
+            _phase = PhaseEnded;
+
+            if (MageKnowledge._deferredInquiry == null)
+                MageKnowledge._deferredInquiry = ShowWitheringPrompt;
+        }
+
+        private static void ShowWitheringPrompt()
+        {
+            bool isAshen = MageKnowledge.IsAshen;
+            Hero ar = FindArenicosHero();
+            string arName = ar?.Name?.ToString() ?? "Arencios";
+
+            string title = "The Withering";
+            string body, button;
+
+            if (isAshen)
+            {
+                body =
+                    "The cold has won.\n\n" +
+                    $"{arName}'s empire holds everything worth holding. " +
+                    "The last lords who refused to kneel are dying in keeps that will not survive the season.\n\n" +
+                    "Children are born without warmth in their lungs. The rivers run slower. The land does not grow.\n\n" +
+                    "Calradia is the Ashen's now — vast, still, perfect. The world the fires built is ended. " +
+                    "You are standing in what comes after.\n\n" +
+                    "(Ashen Victory)";
+                button = "The cold has won.";
+            }
+            else
+            {
+                body =
+                    "It is over.\n\n" +
+                    $"{arName}'s empire has taken everything. " +
+                    "What few lords remain fight over walls that will not hold.\n\n" +
+                    "Children born this season will not survive the winter — not from cold or hunger, " +
+                    "but from something older and quieter than either. " +
+                    "The midwives say the newborns do not cry. They are born still, or born wrong.\n\n" +
+                    "The soil turns and nothing follows. In a generation there will be no one left " +
+                    "to remember what warmth felt like.\n\n" +
+                    "Whatever you were trying to do — it was not enough.\n\n" +
+                    "(Defeat)";
+                button = "Accept.";
+            }
+
+            try
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    title, body,
+                    true, false,
+                    button, "",
+                    null, null
+                ), true, true);
+            }
+            catch { }
         }
 
         private static void ActivateFalseEmperorAlliance()
         {
             _qaFalseAllianceActive = true;
+            _qaAshenMerged = true;
             Hero ar = FindArenicosHero();
             string arName = ar?.Name?.ToString() ?? "Arencios";
 
+            Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
             Kingdom ashen = GetKingdom(AshenKingdomId);
-            if (ashen != null && !ashen.IsEliminated)
+
+            if (arenicosEmpire != null && !arenicosEmpire.IsEliminated
+                && ashen != null && !ashen.IsEliminated)
             {
-                foreach (string empId in EmpireIds)
+                bool needsRuler = arenicosEmpire.RulingClan == null;
+                foreach (var clan in ashen.Clans.ToList())
                 {
-                    Kingdom empK = GetKingdom(empId);
-                    if (empK == null || empK.IsEliminated) continue;
-                    try
+                    if (clan == null || clan.IsEliminated) continue;
+                    try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                    if (needsRuler)
                     {
-                        if (empK.IsAtWarWith(ashen))
-                            MakePeaceAction.Apply(empK, ashen);
+                        try { ChangeKingdomAction.ApplyByCreateKingdom(clan, arenicosEmpire, false); } catch { }
+                        needsRuler = false;
                     }
-                    catch { }
+                    else
+                    {
+                        try
+                        {
+                            ChangeKingdomAction.ApplyByJoinToKingdom(
+                                clan, arenicosEmpire,
+                                CampaignTime.Now + CampaignTime.Years(1000),
+                                false);
+                        }
+                        catch { }
+                    }
                 }
             }
 
             Notify(
-                $"The Burning Laboratory — {arName}'s empire has gone silent on the question of the Ashen. " +
-                "The scouts who watched their border report no engagements — the grey tide passes their walls unmolested. " +
-                "Something was agreed in the dark, and whatever it was, the terms favour the cold.");
+                $"The Burning Laboratory — {arName}'s empire has revealed its true allegiance. " +
+                "The grey banners lower. The cold warriors of the Ashen march under the imperial eagle now. " +
+                "The Ashen and the Empire are one. Whatever stands against them stands alone.");
         }
 
         private static void MaintainFalseEmperorAlliance()
         {
-            if (!_qaFalseAllianceActive) return;
-            Kingdom ashen = GetKingdom(AshenKingdomId);
-            if (ashen == null || ashen.IsEliminated) return;
-
-            // Keep all living empire factions at peace with Ashen while the false emperor lives
-            foreach (string empId in EmpireIds)
-            {
-                Kingdom empK = GetKingdom(empId);
-                if (empK == null || empK.IsEliminated) continue;
-                try
-                {
-                    if (empK.IsAtWarWith(ashen))
-                        MakePeaceAction.Apply(empK, ashen);
-                }
-                catch { }
-            }
+            // No-op: after the Ashen merger, war-lock is enforced by AshenDiplomacyModel.
         }
 
         private static void FireArenicosDeathSplit()
@@ -727,7 +820,48 @@ namespace AshAndEmber
             Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
             if (arenicosEmpire == null || arenicosEmpire.IsEliminated) return;
 
-            // Gather surviving empire kingdoms (excluding the Arencios kingdom itself)
+            string empName = arenicosEmpire.Name?.ToString() ?? "the Empire";
+
+            if (_qaAshenMerged)
+            {
+                // Break the Ashen clans back out to the Ashen kingdom
+                Kingdom ashen = Kingdom.All.FirstOrDefault(k => k.StringId == AshenKingdomId);
+                if (ashen != null)
+                {
+                    bool needsRuler = ashen.RulingClan == null;
+                    foreach (var clan in arenicosEmpire.Clans.ToList())
+                    {
+                        if (clan == null || clan.IsEliminated) continue;
+                        if (clan.Leader == null || !ColourLordRegistry.IsAshenLord(clan.Leader)) continue;
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                        if (needsRuler)
+                        {
+                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, ashen, false); } catch { }
+                            needsRuler = false;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                ChangeKingdomAction.ApplyByJoinToKingdom(
+                                    clan, ashen,
+                                    CampaignTime.Now + CampaignTime.Years(1000),
+                                    false);
+                            }
+                            catch { }
+                        }
+                    }
+                }
+
+                Notify(
+                    $"The Burning Laboratory — with the false emperor gone, the cold alliance shatters. " +
+                    $"The Ashen withdraw from {empName} and vanish back into their own dark. " +
+                    "The empire endures — diminished, uncertain, no longer the void's instrument.");
+                return;
+            }
+
+            // Original path: true emperor died without Ashen merger.
+            // Scatter settlements to any surviving empire kingdoms.
             var targets = Kingdom.All
                 .Where(k => !k.IsEliminated
                          && EmpireIds.Contains(k.StringId)
@@ -763,7 +897,6 @@ namespace AshAndEmber
                 catch { }
             }
 
-            string empName = arenicosEmpire.Name?.ToString() ?? "the Empire";
             Notify(
                 $"The Burning Laboratory — with {empName}'s false emperor gone, the realm he assembled " +
                 $"fragments back toward the borders it came from. {moved} settlement{(moved != 1 ? "s" : "")} " +

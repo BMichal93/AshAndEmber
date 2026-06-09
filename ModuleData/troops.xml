@@ -12,7 +12,7 @@
 
   <NPCCharacter id="fire_devotee"
                 name="{=fire_devotee_name}Fire Devotee"
-                age="0"
+                age="25"
                 level="8"
                 culture="Culture.looter"
                 default_group="Infantry"
@@ -52,7 +52,7 @@
 
   <NPCCharacter id="fire_zealot"
                 name="{=fire_zealot_name}Fire Zealot"
-                age="0"
+                age="25"
                 level="16"
                 culture="Culture.looter"
                 default_group="Infantry"
@@ -91,7 +91,7 @@
 
   <NPCCharacter id="ember_caller"
                 name="{=ember_caller_name}Ember Caller"
-                age="0"
+                age="25"
                 level="16"
                 culture="Culture.looter"
                 default_group="Ranged"
@@ -131,7 +131,7 @@
 
   <NPCCharacter id="ember_shaman"
                 name="{=ember_shaman_name}Ember Sorcerer"
-                age="0"
+                age="25"
                 level="26"
                 culture="Culture.looter"
                 default_group="Ranged"
@@ -175,7 +175,7 @@
 
   <NPCCharacter id="ashen_thrall"
                 name="{=ashen_thrall_name}Ashen Thrall"
-                age="0"
+                age="25"
                 level="12"
                 culture="Culture.khuzait"
                 default_group="Infantry"
@@ -212,7 +212,7 @@
 
   <NPCCharacter id="ashen_invoker"
                 name="{=ashen_invoker_name}Ashen Invoker"
-                age="0"
+                age="25"
                 level="22"
                 culture="Culture.khuzait"
                 default_group="Infantry"
@@ -258,7 +258,7 @@
 
   <NPCCharacter id="circle_acolyte"
                 name="{=circle_acolyte_name}Acolyte"
-                age="0"
+                age="25"
                 level="9"
                 culture="Culture.battania"
                 default_group="Ranged"
@@ -296,7 +296,7 @@
 
   <NPCCharacter id="circle_druid"
                 name="{=circle_druid_name}Druid"
-                age="0"
+                age="25"
                 level="19"
                 culture="Culture.battania"
                 default_group="Ranged"
@@ -336,7 +336,7 @@
 
   <NPCCharacter id="circle_shaman"
                 name="{=circle_shaman_name}Shaman"
-                age="0"
+                age="25"
                 level="29"
                 culture="Culture.battania"
                 default_group="Ranged"
