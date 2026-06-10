@@ -65,9 +65,14 @@ namespace AshAndEmber
         Immolate    = 34,  // Enchantment — Damage: guaranteed kill at 3+ inputs
         ArmedCasting = 35, // Passive — cast without sheathing weapons
         Ashstorm     = 36, // Spell  — bombard a nearby enemy settlement
+        // ── Lost Forms ────────────────────────────────────────────────────────
+        LostBlast   = 37, // Lost Form — widens blast cone (~49° → ~60°)
+        LostMissile = 38, // Lost Form — twin bolts at 60% power each
+        LostBarrier = 39, // Lost Form — barrier expires after 60 seconds
+        LostBurst   = 40, // Lost Form — asymmetric burst (full front, 40% rear)
     }
 
-    public enum TalentCategory { Passive, Enchantment, Spell, Info }
+    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm }
 
     public class TalentDef
     {
@@ -79,6 +84,7 @@ namespace AshAndEmber
         public TalentCategory Category;
         public string        Lore;
         public string        MechanicDesc;
+        public int           FocusCost;   // 0 = use standard cost curve; >0 = fixed cost
     }
 
     public static class TalentSystem
@@ -261,6 +267,35 @@ namespace AshAndEmber
                 Lore = "The fire is gone. What remains is older, colder, and far more patient. It is not warmth you carry now — it is the memory of warmth and the hollow that followed.",
                 MechanicDesc = "You are Ashen. You do not age. Each casting costs criminal rating instead of years. After your first working each day, each further cast risks the cold stirring against you — a possession that may claim your life."
             },
+            // ── Lost Forms ─────────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.LostBlast, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Widened Blast",
+                Lore = "The fire does not ask how wide your arms can reach. It asks how wide your will can hold. You found a slightly different angle of release — not taught, not passed down, only survived. The cone opens. More earth scorched, fewer who dodge the edges.",
+                MechanicDesc = "Lost Form. Blast cone widens from ~49° to ~60°. More enemies caught at the edge; the forward reach is unchanged."
+            },
+            new TalentDef
+            {
+                Id = TalentId.LostMissile, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Twin Bolt",
+                Lore = "The first time you split the bolt it was an accident — it came apart in your hands before release, two pieces each carrying their own heat. The second time was deliberate. Neither bolt is as strong as one whole. But one bolt can miss.",
+                MechanicDesc = "Lost Form. Missile fires two bolts side by side. Each bolt carries 60% of the original damage and heal power."
+            },
+            new TalentDef
+            {
+                Id = TalentId.LostBarrier, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Fading Ward",
+                Lore = "The old barrier stood until you let it go. This one does not ask to be released — it knows when it has done its work. Sixty seconds, then the fire returns to you. Less permanent, but you carry it lighter.",
+                MechanicDesc = "Lost Form. Barrier nodes expire after 60 seconds instead of persisting indefinitely. The fire returns on its own."
+            },
+            new TalentDef
+            {
+                Id = TalentId.LostBurst, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Directed Burst",
+                Lore = "You have always stood at the center. The fire went out evenly, touching everything the same. But an even field is not always what the moment needs. Lean into the front; let the rear feel only the echo. Not a perfect circle — a pointed wave.",
+                MechanicDesc = "Lost Form. Burst is asymmetric. The forward hemisphere receives full power; the rear hemisphere receives 40%. Useful when your allies stand behind you."
+            },
         };
 
         // ── Fade spell state ───────────────────────────────────────────────────
@@ -357,7 +392,7 @@ namespace AshAndEmber
                 return false;
             }
 
-            int cost = PurchaseCost();
+            int cost = defCheck?.FocusCost > 0 ? defCheck.FocusCost : PurchaseCost();
 
             bool spent = false;
             try

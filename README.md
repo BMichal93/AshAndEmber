@@ -1,4 +1,4 @@
-# Ash and Ember — v0.14.1
+# Ash and Ember — v0.17
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -12,15 +12,15 @@ AshAndEmber/
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
 │   └── troops.xml                   (reserved)
-├── src/                             ~9 400 lines across 34 source files
+├── src/                             ~10 000 lines across 35 source files
 │   ├── MagicSystem.cs               module entry point + mission behaviour
-│   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
-│   ├── SpellBuilder.cs              two-phase input parser → SpellCast
+│   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu, Whisper system
+│   ├── SpellBuilder.cs              two-phase input parser → SpellCast (Lost Form flags)
 │   ├── SpellMinigame.cs             arcane sequence memory game for campaign map casting
-│   ├── TalentSystem.cs              21 talents (7 passive, 8 enchantment, 6 spell)
+│   ├── TalentSystem.cs              25 talents (7 passive, 8 enchantment, 6 spell, 4 lost form)
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
-│   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks
+│   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks, Whisper hooks
 │   ├── CampaignMapEvents.cs         27 world events across two independent weekly slots
 │   ├── BattleEvents.cs              per-battle battlefield events with atmospheric visuals
 │   ├── DragonQuestSystem.cs         main quest — The Last Flight of the Dragons
@@ -32,17 +32,18 @@ AshAndEmber/
 │   ├── Spells/
 │   │   ├── SpellEffects.cs          core partial: helpers, effects, targeting, death queue
 │   │   ├── AffectSpells.cs          affect form execution
-│   │   ├── BlastSpells.cs           Blast form execution
-│   │   ├── SelfSpells.cs            Missile + Ward forms
-│   │   └── CreateSpells.cs          Barrier + Burst forms
+│   │   ├── BlastSpells.cs           Blast form + Lost Blast (widened cone)
+│   │   ├── SelfSpells.cs            Missile + Ward + Twin Bolt + fire patch aftermath
+│   │   └── CreateSpells.cs          Barrier + Burst + Fading Ward + Directed Burst + holy zone
 │   ├── Visual/
-│   │   ├── AreaEffects.cs           persistent area effect engine + light management
+│   │   ├── AreaEffects.cs           area effect engine: spell_firepatch + spell_holyzone added
 │   │   ├── GlowSystem.cs            agent glow outlines + cast sound
 │   │   ├── MoveSystem.cs            smooth push/pull lerp movement
 │   │   ├── AshenSceneTone.cs        cold atmospheric fog in Ashen battles
 │   │   └── NamePrefixes.cs          title/prefix management for mage lords
 │   └── AI/
-│       ├── ColourLordRegistry.cs    marks lords as mages or Ashen lords; save/load
+│       ├── RivalShadowSystem.cs     Rival Shadow — personal Ashen antagonist system (NEW)
+│       ├── ColourLordRegistry.cs    marks lords as mages or Ashen lords; companion tracking
 │       ├── ColourLordAI.cs          priority-driven battle AI for mage lords
 │       ├── ColourUnitRegistry.cs    unit-level mage tracking (stub)
 │       ├── BanditMageAI.cs          rare bandit unit spellcasters with burnout
@@ -262,7 +263,7 @@ Casting **any** spell during a tournament kills and disqualifies you instantly.
 
 ## Talents
 
-Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 9 purchased cost 1 focus point each; 10th onward costs 2 points.
+Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 9 purchased cost 1 focus point each; 10th onward costs 2 points. **Lost Forms** always cost a fixed 3 focus points.
 
 ### Passive
 
@@ -325,6 +326,82 @@ The values in the table below are baseline (2/3 recall, 1.00×).
 | **Clairvoyance** | +25 influence, or +700 gold if not in a kingdom. |
 | **Extinguish** | 5–12 soldiers in the nearest enemy party within 60 map-units are wounded or killed; −30 morale. |
 | **Fade** | Your party is concealed from enemy scouts for 2 days. A perfect recall (3/3) extends this to 3 days. |
+
+### Lost Form (◈)
+
+Lost Forms permanently alter how a spell form behaves once purchased. Each costs a fixed **3 focus points** regardless of how many talents you own. They appear as a separate category in the talent menu.
+
+| Talent | Fixed Cost | Effect |
+|--------|-----------|--------|
+| **Widened Blast** | 3 pts | Blast cone widens from ~49° to ~60°. More units caught at the edges. |
+| **Twin Bolt** | 3 pts | Missile fires two bolts side by side, each at 60% of original damage and healing power. |
+| **Fading Ward** | 3 pts | Barrier nodes expire after 60 seconds instead of persisting indefinitely. |
+| **Directed Burst** | 3 pts | Burst is asymmetric: full power in the forward hemisphere, 40% power in the rear arc. |
+
+---
+
+## Rival Shadow
+
+At campaign start, one Ashen lord is silently designated as your **Shadow** — a personal antagonist who watches you.
+
+Every 14–21 days the Shadow acts against one of your settlements: loyalty or security drops. After **five schemes**, the Shadow rides out alone to confront you.
+
+**The Shadow Approaches** — a multi-select event:
+
+| Choice | Outcome |
+|--------|---------|
+| **Face them — through will** | Leadership test (skill × 0.4%, max 85%). Win → Shadow driven back (+5 focus, +200 renown, nearest Ashen lord converts). Lose → −5 days, the Shadow heals their wounds. |
+| **Face them — through endurance** | Athletics test (same scaling). |
+| **Withdraw** | −30 renown. Timer resets; schemes resume. |
+
+If the Shadow dies by other means the designation clears.
+
+---
+
+## Mage Companions
+
+When a companion joins your party there is a **20% chance** they carry the inner fire. Companions with the gift always enter with 1–3 battle enchantments already shaped in them.
+
+Companion mages age **25% faster** than regular mage lords after battle — the fire burns more personally in those who ride beside you.
+
+Companion mage status is tracked and saved independently from lord mages so the system survives save/load cleanly.
+
+---
+
+## Spell Aftermath
+
+Certain casts leave a mark on the ground after they fire:
+
+| Trigger | Effect | Duration |
+|---------|--------|----------|
+| **Missile + Damage** | Fire patch (3 m radius) spawns at explosion point. Damages enemies who walk through it (~8 HP/s per Damage input). | 8 seconds |
+| **Burst + Restore** (player only) | Holy zone (burst radius) lingers at cast position. Heals allies within it (~8 HP/s per Restore input). | 5 seconds |
+
+---
+
+## Whisper System
+
+The cold watches. Certain acts open a crack in the fire.
+
+**Whisper hooks (per event):**
+
+| Act | Whispers gained |
+|-----|----------------|
+| Ashen lord killed by player | +3 |
+| Any lord executed by player | +5 |
+| Dark rite completed (Ashen Altar) | +5 |
+| Sanctuary prayer failed | +2 |
+| Battle lost (player involved) | +1 |
+
+Whispers decay slowly for honourable, merciful players (Mercy + Honor ≥ 2: 1 in 7 chance each day to lose 1).
+
+At **100+ whispers** a countdown of 7 days begins. Then **The Cold Calls Your Name** fires:
+
+| Choice | Outcome |
+|--------|---------|
+| **Resist** | −10 days, −30 whispers. The event can fire again if whispers climb back to 100. |
+| **Bargain** | −30 days, −60 whispers. |
+| **Accept** | Become Ashen immediately. |
 
 ---
 

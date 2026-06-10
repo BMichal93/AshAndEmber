@@ -24,6 +24,53 @@ namespace AshAndEmber
         private static readonly HashSet<string> _giftedChildIds = new HashSet<string>();
         private static readonly Random _rng = new Random();
 
+        // ── Whisper System ────────────────────────────────────────────────────
+        // Tracks how deeply the cold has seeped into the player's fire.
+        // Incremented by dark acts; decremented slowly by virtuous ones.
+        // At 100+ the Cold Calls Your Name.
+        private static int _whisperCount        = 0;
+        private static int _coldCallCountdown   = 0;  // 0 = not pending
+
+        public static int WhisperCount => _whisperCount;
+
+        public static void AddWhispers(int n)
+        {
+            if (n <= 0 || !_isMage) return;
+            _whisperCount += n;
+            if (_whisperCount >= 100 && _coldCallCountdown == 0)
+                _coldCallCountdown = 7; // fires in 7 days
+        }
+
+        public static void RemoveWhispers(int n)
+        {
+            _whisperCount = Math.Max(0, _whisperCount - n);
+        }
+
+        public static void DailyWhisperTick()
+        {
+            if (!_isMage) return;
+
+            if (_coldCallCountdown > 0)
+            {
+                _coldCallCountdown--;
+                if (_coldCallCountdown == 0 && _deferredInquiry == null)
+                    _deferredInquiry = ShowColdCallsEvent;
+            }
+
+            // Passive decay: honourable, merciful players shed whispers slowly
+            try
+            {
+                if (_whisperCount > 0 && Hero.MainHero != null)
+                {
+                    int mercy  = Hero.MainHero.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Mercy);
+                    int honor  = Hero.MainHero.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Honor);
+                    if (mercy + honor >= 2 && _rng.Next(7) == 0)
+                        _whisperCount = Math.Max(0, _whisperCount - 1);
+                }
+            }
+            catch { }
+        }
+
         public static bool IsMage         => _isMage;
         public static bool IsAshen         => _isAshen;
         // Backward-compat shims used by old call sites
@@ -39,9 +86,11 @@ namespace AshAndEmber
 
         public static void ResetForNewGame()
         {
-            _isMage          = false;
-            _isAshen        = false;
-            _deferredInquiry = null;
+            _isMage           = false;
+            _isAshen          = false;
+            _deferredInquiry  = null;
+            _whisperCount     = 0;
+            _coldCallCountdown = 0;
             _giftedChildIds.Clear();
             TalentSystem.ResetForNewGame();
             ColourLordRegistry.ResetForNewGame();
@@ -183,6 +232,62 @@ namespace AshAndEmber
             ), false, true);
         }
 
+        // ── The Cold Calls Your Name ──────────────────────────────────────────
+        // Fires when WhisperCount reaches 100. After Resist or Bargain, whispers
+        // drop and the event can fire again once they climb back to 100.
+        private static void ShowColdCallsEvent()
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "The Cold Calls Your Name",
+                "Three pale figures stand at the crossroads. They wear no faces you recognise — but they know yours. " +
+                "The ash in your blood has been speaking to them for a long time, and tonight they have come to collect.\n\n" +
+                "You can feel the fire straining against them. It always has. But it has never strained this hard.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("resist", "I will not hear it. Not tonight. Not ever.", null, true,
+                        "Resist. −10 days. −30 whispers. They will return."),
+                    new InquiryElement("bargain", "Hear them out. Give what they ask and walk away.", null, true,
+                        "Bargain. −30 days. −60 whispers. They withdraw, satisfied — for now."),
+                    new InquiryElement("accept", "The fire in me has always been theirs.", null, true,
+                        "Accept the cold. Become Ashen."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    string choice = chosen?[0]?.Identifier as string ?? "resist";
+                    if (choice == "resist")
+                    {
+                        AgingSystem.AgeHero(Hero.MainHero, 10);
+                        RemoveWhispers(30);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The figures recede into the dark. The fire holds — barely. They will return. −10 days, −30 whispers.",
+                            new Color(0.7f, 0.6f, 0.8f)));
+                    }
+                    else if (choice == "bargain")
+                    {
+                        AgingSystem.AgeHero(Hero.MainHero, 30);
+                        RemoveWhispers(60);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "They take what they came for and step aside. The road ahead is clear — for now. −30 days, −60 whispers.",
+                            new Color(0.5f, 0.4f, 0.6f)));
+                    }
+                    else
+                    {
+                        // Become Ashen
+                        _isAshen = true;
+                        _whisperCount = 0;
+                        _coldCallCountdown = 0;
+                        ApplyAshenAppearance(Hero.MainHero);
+                        try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The fire goes out. Something older and colder fills the space where it was.",
+                            new Color(0.3f, 0.35f, 0.7f)));
+                    }
+                },
+                null, "", false
+            ), false, true);
+        }
+
         // ── Ashen appearance ─────────────────────────────────────────────────
         // Called whenever a hero becomes Ashen. Modifies StaticBodyProperties
         // bit fields to approximate ash-white hair. The exact bit layout is
@@ -284,7 +389,12 @@ namespace AshAndEmber
                 "    0/3 correct → 0.50×   Scattered.\n\n" +
                 "  The aging cost is always paid.\n" +
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +
-                $"\n  Open this page: {openBook}" +
+                "\n── LOST FORMS  (Talents → Lost Form, 3 focus pts each) ──────\n" +
+                "  ◈ Widened Blast   — blast cone opens from ~49° to ~60°\n" +
+                "  ◈ Twin Bolt       — missile fires two bolts at 60% power each\n" +
+                "  ◈ Fading Ward     — barrier expires after 60 seconds\n" +
+                "  ◈ Directed Burst  — full power forward, 40% in the rear arc\n\n" +
+                $"  Open this page: {openBook}" +
                 (_isAshen ? AshenQuestSystem.GetGrimoireSummary() : DragonQuestSystem.GetGrimoireSummary());
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
@@ -395,31 +505,37 @@ namespace AshAndEmber
                         TalentCategory.Enchantment => "─── Enchantment ───",
                         TalentCategory.Spell       => "─── Spell ───",
                         TalentCategory.Info        => "─── Ashen Status ───",
+                        TalentCategory.LostForm    => "─── Lost Form ───",
                         _                          => "───────────",
                     };
                     // Negative identifier marks non-selectable separator rows
                     elements.Add(new InquiryElement(-(int)d.Category - 1, header, null, false, ""));
                 }
 
-                bool   owned     = TalentSystem.Has(d.Id);
+                bool   owned      = TalentSystem.Has(d.Id);
                 bool   selectable = !d.IsInfo && !owned;
-                string icon  = d.IsInfo                              ? "◉"
-                             : d.Category == TalentCategory.Spell   ? "✦"
-                             : d.Category == TalentCategory.Enchantment ? "❋"
-                             :                                            "◆";
-                string tag   = d.IsInfo ? "status" : d.Category.ToString().ToLowerInvariant();
+                int    talentCost = d.FocusCost > 0 ? d.FocusCost : cost;
+                string icon  = d.IsInfo                                   ? "◉"
+                             : d.Category == TalentCategory.Spell         ? "✦"
+                             : d.Category == TalentCategory.Enchantment   ? "❋"
+                             : d.Category == TalentCategory.LostForm      ? "◈"
+                             :                                               "◆";
+                string tag   = d.IsInfo             ? "status"
+                             : d.Category == TalentCategory.LostForm ? "lost form"
+                             : d.Category.ToString().ToLowerInvariant();
                 string check = owned ? "✓ " : "   ";
                 string label = $"{check}{icon}  {d.Name}   [{tag}]";
+                string costHint = $"Cost: {talentCost} focus point{(talentCost != 1 ? "s" : "")}";
                 string hint  = $"【 {d.Name} 】  {tag}\n\n" +
                                $"{d.MechanicDesc}\n\n" +
                                $"{d.Lore}\n\n" +
-                               (d.IsInfo ? "— Status — not a talent to be learned —" : owned ? "— Already known —" : $"Cost: {costStr}");
+                               (d.IsInfo ? "— Status — not a talent to be learned —" : owned ? "— Already known —" : costHint);
                 elements.Add(new InquiryElement((int)d.Id, label, null, selectable, hint));
             }
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "Talents  —  The Inner Fire",
-                $"✦ = spell   ❋ = enchantment   ◆ = passive   Cost: {costStr} each.",
+                $"✦ = spell   ❋ = enchantment   ◆ = passive   ◈ = lost form   Cost: {costStr} (lost forms: 3 pts).",
                 elements,
                 true, 0, 1,
                 "Learn", "Close",
@@ -444,6 +560,8 @@ namespace AshAndEmber
             store.SyncData("LDM_IsMage",        ref _isMage);
             store.SyncData("LDM_IsAshen",        ref _isAshen);
             store.SyncData("LDM_GiftedChildren", ref giftedList);
+            store.SyncData("LDM_WhisperCount",   ref _whisperCount);
+            store.SyncData("LDM_ColdCallCD",     ref _coldCallCountdown);
             TalentSystem.Save(store);
 
             _giftedChildIds.Clear();

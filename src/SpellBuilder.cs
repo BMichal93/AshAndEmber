@@ -51,6 +51,12 @@ namespace AshAndEmber
 
         public bool IsFumble;
 
+        // ── Lost Form flags (set by SpellBuilder.Parse when the talent is owned) ──
+        public bool UsingLostBlast;
+        public bool UsingLostMissile;
+        public bool UsingLostBarrier;
+        public bool UsingLostBurst;
+
         public int DamageCount;    // U effects — fire damage to enemies
         public int RestoreCount;   // D effects — healing to allies (and caster on Burst)
 
@@ -173,6 +179,11 @@ namespace AshAndEmber
                     }
                 }
             }
+
+            if (cast.BlastCount   > 0) cast.UsingLostBlast   = TalentSystem.Has(TalentId.LostBlast);
+            if (cast.MissileCount > 0) cast.UsingLostMissile = TalentSystem.Has(TalentId.LostMissile);
+            if (cast.BarrierCount > 0) cast.UsingLostBarrier = TalentSystem.Has(TalentId.LostBarrier);
+            if (cast.BurstCount   > 0) cast.UsingLostBurst   = TalentSystem.Has(TalentId.LostBurst);
 
             if (MageKnowledge.IsAshen)
                 cast.OverrideVisualColor = ColorSchool.Ashen;
