@@ -392,6 +392,7 @@ namespace AshAndEmber
             _deadMarchLastFiredDay   = 0;
             _campaignStartDay        = (int)CampaignTime.Now.ToDays;
             _weeklySlotFilled        = false;
+            _warSlotFilled           = false;
             _lastEventElapsedDay     = -EventCooldownDays;
             _lastConflictSeedDay     = 0;
             _brokenKingdomIds.Clear();
@@ -1820,9 +1821,6 @@ namespace AshAndEmber
         private static void TryFireTheTemple()
         {
             if (_templeFounded) return;
-            // ChangeKingdomAction.ApplyByJoinToKingdom silently rejects tier-0 clans.
-            // Delay the entire event until the player reaches tier 1 so the join offer works.
-            if ((Hero.MainHero?.Clan?.Tier ?? 0) < 1) return;
             if (!_debugForceNextTemple)
             {
                 if (ElapsedCampaignDays() < TempleEarliestDay) return;
@@ -1832,8 +1830,8 @@ namespace AshAndEmber
                     : ChanceTheTemple;
                 if (_rng.NextDouble() >= chance) return;
             }
-            _debugForceNextTemple = false;
             if (!TryClaimWeeklySlot()) return;
+            _debugForceNextTemple = false;
             try
             {
                 // ── Pick the founding city ─────────────────────────────────────
@@ -1970,6 +1968,13 @@ namespace AshAndEmber
                     "Watch from a distance",
                     () =>
                     {
+                        // ChangeKingdomAction.ApplyByJoinToKingdom silently rejects tier-0 clans.
+                        if ((Hero.MainHero?.Clan?.Tier ?? 0) < 1)
+                        {
+                            MBInformationManager.AddQuickInformation(new TextObject(
+                                "Your clan is too small to answer the call. Prove yourselves first."));
+                            return;
+                        }
                         // Kingdom actions are not safe inside an inquiry callback.
                         // Defer to the next daily tick where campaign state is stable.
                         _pendingTempleJoin = true;
