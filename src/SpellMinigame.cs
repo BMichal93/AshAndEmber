@@ -3,8 +3,8 @@
 // Ritual memory game for campaign map spell casting.
 //
 // The player is shown a 3-step ritual description — each step is a pair of
-// sentences. Three variant phrasings exist per step; one is drawn at random
-// each cast. The player must then identify each step from its variants.
+// sentences. Ten variant phrasings exist per step; one is drawn at random
+// each cast. The player must then identify each step from 3 shown options.
 //
 //   3/3 → 1.50×  Resonance — the rite was perfect.
 //   2/3 → 1.20×  The working takes hold, amplified.

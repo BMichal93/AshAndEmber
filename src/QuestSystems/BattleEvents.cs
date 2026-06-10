@@ -6,9 +6,9 @@
 // ┌──────────────┬─────┬────────────────────────────────────────────────────────┐
 // │ Event        │     │ Effect                                                 │
 // ├──────────────┼─────┼────────────────────────────────────────────────────────┤
-// │ Cinder Rain  │ 20s │ Every non-Ashen agent takes 5 damage                  │
-// │ Ember Tithe  │ 20s │ Every Ashen agent takes 5 damage                      │
-// │ The Rising   │ 30s │ Tier-1 units spawn on the Ashen side (Ashen battle    │
+// │ Cinder Rain  │ 20s │ Every non-Ashen agent takes 15 damage                 │
+// │ Ember Tithe  │ 20s │ Every Ashen agent takes 15 damage (+10 morale)        │
+// │ The Rising   │ 20s │ Tier-1 units spawn on the Ashen side (Ashen battle    │
 // │              │     │ only — skipped if no Ashen side detected)             │
 // │ Dread        │ ×1  │ All non-Ashen agents lose 30 morale (fires once)      │
 // │ Last Light   │ ×1  │ Scene time jumps to midnight (fires once)             │

@@ -4,20 +4,20 @@
 // NPC schemes use the original RNG path — this file does not affect them.
 //
 // Each phase: a field report arrives. The operative decides HOW to push:
-//   · PUSH HARD (Aggressive): hidden roll +1 to +7 — volatile, high reward
-//   · TREAD CAREFULLY:        hidden roll −3 to +3 — balanced, unpredictable
-//   · PULL BACK (Defensive):  hidden roll −7 to −1 — always reduces exposure
+//   · PUSH HARD (Aggressive): hidden roll +4 to +10 — volatile, high reward
+//   · TREAD CAREFULLY:        hidden roll −3 to +3  — balanced, unpredictable
+//   · PULL BACK (Defensive):  hidden roll −4 to −10 — always reduces exposure
 // Or: EXTRACT to stand down, SIDESTEP (Roguery) to skip, TALK IT DOWN (Charm).
 //
-// Rounds are limited — count scales with Roguery (3–8). When rounds run out:
+// Rounds are limited — count scales with Roguery (5–10). When rounds run out:
 //   50% → Bust (blown), 50% → Fail (quiet retreat, no consequences).
 //
 // The exact roll is always hidden until after the choice is made.
 // Blown if exposure > 21. Success if extraction at or above the threshold.
 //
-//   Roguery 0   → 3 rounds, Sidestep ~20%
-//   Roguery 300 → 6 rounds, Sidestep ~56%
-//   Roguery 500 → 8 rounds (cap), Sidestep ~80%
+//   Roguery 0   → 5 rounds, Sidestep ~20%
+//   Roguery 300 → 8 rounds, Sidestep ~56%
+//   Roguery 500 → 10 rounds (cap), Sidestep ~80%
 //   Charm drives Talk It Down on the same 20–80% curve.
 // =============================================================================
 

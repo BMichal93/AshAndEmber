@@ -2911,7 +2911,7 @@ namespace AshAndEmber
         }
 
         // ── Event 23: Embers of Hope ──────────────────────────────────────────
-        // Fires once the Ashen kingdom holds at least 6 towns.
+        // Fires once the Ashen kingdom holds at least EmbersOfHopeMinTowns towns.
         // The weight of a common darkness is enough to still old hatreds —
         // up to 3 random wars between non-Ashen kingdoms are ended as rivals
         // recognise that a greater threat walks among them.
@@ -2994,7 +2994,8 @@ namespace AshAndEmber
         // ── Elapsed-days helper ───────────────────────────────────────────────
         // Returns days elapsed since the campaign started.
         // Falls back to absolute ToDays for saves loaded without the start-day record.
-        private static double ElapsedCampaignDays()
+        // Internal: also used by BurningLabQuestSystem for its day-gated trigger.
+        internal static double ElapsedCampaignDays()
             => _campaignStartDay >= 0
                ? Math.Max(0.0, CampaignTime.Now.ToDays - _campaignStartDay)
                : CampaignTime.Now.ToDays;
@@ -3024,8 +3025,10 @@ namespace AshAndEmber
 
         // Returns the spawned party so callers (e.g. settlement encounter combat
         // triggers) can pass it directly into PlayerEncounter.SetupFields.
+        // `troops` here is the EXACT number of soldiers added (no 10× scaling) —
+        // encounter battles describe small groups, not warbands.
         public static MobileParty SpawnCombatPartyAt(Vec2 pos, int troops)
-            => SpawnAshenSpawnParty(pos, troops, 0f);
+            => SpawnAshenSpawnParty(pos, troops, 0f, exactTroops: true);
 
         // ── Party spawning helper ─────────────────────────────────────────────
         // Creates a single Ashen Spawn bandit party near anchorPos, registers
@@ -3038,7 +3041,7 @@ namespace AshAndEmber
         //   • No bandit clan found in Clan.BanditFactions
         //   • BanditPartyComponent.CreateBanditParty returns null
         //   • Neither "sea_raider" nor "mountain_bandit" CharacterObject exists
-        private static MobileParty SpawnAshenSpawnParty(Vec2 anchorPos, int baseTroops, float minStrength)
+        private static MobileParty SpawnAshenSpawnParty(Vec2 anchorPos, int baseTroops, float minStrength, bool exactTroops = false)
         {
             try
             {
@@ -3088,7 +3091,7 @@ namespace AshAndEmber
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit");
                 if (troop == null) return null;
 
-                party.MemberRoster.AddToCounts(troop, baseTroops * 10);
+                party.MemberRoster.AddToCounts(troop, exactTroops ? baseTroops : baseTroops * 10);
 
                 // Top up to reach minimum strength requirement (rarely needed with 10× base)
                 if (minStrength > 0f)

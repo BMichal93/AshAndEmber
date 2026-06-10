@@ -60,7 +60,7 @@ namespace AshAndEmber
         /// Battle spell aging cost: geometric — round(1.4^(n−1)), capped at 84 days (1 Bannerlord year).
         /// Bannerlord year = 84 campaign days (4 seasons × 21 days).
         /// Examples: 1–2 inputs = 1 day | 5 = 4 | 7 = 8 | 10 = 21 | 12 = 41 | 14 = 80 | 16+ = 84 (cap).
-        /// Tempered (BattleMage) talent subtracts 1 from the total cost (minimum 1, never free),
+        /// Tempered (BattleMage) talent subtracts 1 from the total cost (minimum 0 — small spells can be free),
         /// and beyond age 40 also shaves 0.5% per year off the final cost, capped at 30%.
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)

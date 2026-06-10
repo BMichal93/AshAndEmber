@@ -271,28 +271,29 @@ namespace AshAndEmber.Tests
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_SmallCast_CostsOneDay()
         {
-            // 1-3 inputs = 1 day without BattleMage
+            // Geometric round(1.4^(n−1)): 1–2 inputs = 1 day without BattleMage
             Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, false));
             Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(2, false));
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, false));
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(3, false));
         }
 
         [Test]
-        public void AgingSystem_ComputeBattleAgingCost_LargeCast_CostsTwoDays()
+        public void AgingSystem_ComputeBattleAgingCost_LargeCast_ScalesGeometrically()
         {
-            // 4+ inputs = 2 days without BattleMage
-            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, false));
-            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(8, false));
+            // round(1.4^(n−1)): 4 inputs = 3 days, 8 inputs = 11 days, hard cap 84.
+            Assert.AreEqual(3,  AgingSystem.ComputeBattleAgingCost(4, false));
+            Assert.AreEqual(11, AgingSystem.ComputeBattleAgingCost(8, false));
+            Assert.AreEqual(84, AgingSystem.ComputeBattleAgingCost(20, false));
         }
 
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_BattleMage_ReducesByOne()
         {
-            // BattleMage subtracts 1 (minimum 0).
-            Assert.AreEqual(0, AgingSystem.ComputeBattleAgingCost(1, true));  // 1-1 = 0
-            Assert.AreEqual(0, AgingSystem.ComputeBattleAgingCost(3, true));  // 1-1 = 0
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(4, true));  // 2-1 = 1
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(8, true));  // 2-1 = 1
+            // BattleMage subtracts 1 (minimum 0 — small spells can be free).
+            Assert.AreEqual(0,  AgingSystem.ComputeBattleAgingCost(1, true));  // 1-1 = 0
+            Assert.AreEqual(1,  AgingSystem.ComputeBattleAgingCost(3, true));  // 2-1 = 1
+            Assert.AreEqual(2,  AgingSystem.ComputeBattleAgingCost(4, true));  // 3-1 = 2
+            Assert.AreEqual(10, AgingSystem.ComputeBattleAgingCost(8, true));  // 11-1 = 10
         }
 
         // ── NPC heal-burst RestoreCount satisfies Rouse threshold ─────────────
