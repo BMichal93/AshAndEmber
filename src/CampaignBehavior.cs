@@ -117,6 +117,7 @@ namespace AshAndEmber
             try
             {
                 MageKnowledge.ResetForNewGame();
+                RivalShadowSystem.ResetForNewGame();
                 CampaignMapEvents.ResetForNewGame();
                 SettlementEncounters.ResetForNewGame();
                 DragonQuestSystem.ResetForNewGame();
@@ -352,6 +353,9 @@ namespace AshAndEmber
                 try { TalentSystem.EnforceKinship(); } catch { }
                 try { TalentSystem.DailyFadeTick(); } catch { }
                 try { AgingSystem.DailyAgeCheck(); } catch { }
+                try { RivalShadowSystem.TryDesignateShadow(); } catch { }
+                try { RivalShadowSystem.DailyTick(); } catch { }
+                try { MageKnowledge.DailyWhisperTick(); } catch { }
                 try { CampaignMapEvents.DailyTick(); } catch { }
                 try { SettlementEncounters.DailyTick(); } catch { }
                 try { DragonQuestSystem.DailyTick(); } catch { }
@@ -401,6 +405,27 @@ namespace AshAndEmber
             try
             {
                 if (mapEvent == null) return;
+
+                // Whispers: player losing a battle opens a crack for the cold
+                if (MageKnowledge.IsMage)
+                {
+                    try
+                    {
+                        bool playerOnAttacker = mapEvent.AttackerSide?.Parties
+                            .Any(p => p.Party == PartyBase.MainParty) == true;
+                        bool playerOnDefender = mapEvent.DefenderSide?.Parties
+                            .Any(p => p.Party == PartyBase.MainParty) == true;
+                        if (playerOnAttacker || playerOnDefender)
+                        {
+                            BattleSideEnum playerSide = playerOnAttacker
+                                ? BattleSideEnum.Attacker : BattleSideEnum.Defender;
+                            if (mapEvent.WinningSide != playerSide)
+                                MageKnowledge.AddWhispers(1);
+                        }
+                    }
+                    catch { }
+                }
+
                 try { ApplyNpcBattleAging(mapEvent); } catch { }
                 // Flush any battle casts not consumed above (NPCs absent from this event).
                 // Must run after aging so _battleCasts still holds data during ApplyNpcBattleAging.
@@ -712,6 +737,10 @@ namespace AshAndEmber
                     int agingCost = ColourLordAI.ConsumeBattleCasts(companion);
                     if (agingCost <= 0) continue;
 
+                    // Companion mages age 25% faster — the fire burns closer, more personally.
+                    if (ColourLordRegistry.IsCompanionMage(companion))
+                        agingCost = (int)Math.Ceiling(agingCost * 1.25);
+
                     if (!ColourLordRegistry.IsAshenLord(companion))
                         AgeHeroDeferred(companion, agingCost);
                     InformationManager.DisplayMessage(new InformationMessage(
@@ -787,6 +816,13 @@ namespace AshAndEmber
                 if (ColourLordRegistry.IsColourLord(victim))
                     try { ColourLordRegistry.OnLordDied(victim); } catch { }
 
+                try { RivalShadowSystem.OnHeroKilled(victim); } catch { }
+
+                // Whispers: killing an Ashen lord by any means costs 3
+                if (killer == Hero.MainHero && MageKnowledge.IsMage
+                    && ColourLordRegistry.IsAshenLord(victim))
+                    try { MageKnowledge.AddWhispers(3); } catch { }
+
                 if (detail != KillCharacterAction.KillCharacterActionDetail.Executed) return;
                 if (killer == null) return;
                 bool victimIsLord = false;
@@ -805,6 +841,9 @@ namespace AshAndEmber
                     _executedLordIds.Add(victim.StringId);
                     try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
                 }
+                // Whispers: executing any lord costs 5
+                if (killer == Hero.MainHero && MageKnowledge.IsMage)
+                    try { MageKnowledge.AddWhispers(5); } catch { }
                 if (killer == Hero.MainHero)
                     try { AshenQuestSystem.OnHeroExecuted(victim); } catch { }
             }
@@ -859,12 +898,19 @@ namespace AshAndEmber
             {
                 if (_rng.Next(100) < 20)
                 {
-                    ColourLordRegistry.SetMage(companion, true);
+                    ColourLordRegistry.RegisterCompanionMage(companion);
                     // Companions with the gift always carry 1–3 enchantments.
                     int enchants = 1 + _rng.Next(3);
                     ColourLordRegistry.AssignCompanionEnchantments(companion, enchants);
+                    string[] joinLines =
+                    {
+                        $"{companion.Name} carries the fire. You felt it before they spoke — the same warmth, the same weight behind the eyes.",
+                        $"There is something in {companion.Name} that answers when yours calls. The gift, shaped differently, but the same current.",
+                        $"{companion.Name} already knew. They saw it in you first. The fire recognises itself.",
+                    };
+                    string joinMsg = joinLines[_rng.Next(joinLines.Length)];
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"{companion.Name} carries the inner fire — {enchants} working{(enchants != 1 ? "s" : "")} already shaped in them.",
+                        $"{joinMsg} ({enchants} working{(enchants != 1 ? "s" : "")} shaped in them.)",
                         new Color(0.75f, 0.55f, 0.95f)));
                 }
             }
@@ -908,6 +954,7 @@ namespace AshAndEmber
             }
             catch { }
             try { MageKnowledge.Save(dataStore); } catch { }
+            try { RivalShadowSystem.Save(dataStore); } catch { }
             try { ColourLordRegistry.Save(dataStore); } catch { }
             try { AshenCitySystem.Save(dataStore); } catch { }
             try { FireWorshippersSystem.Save(dataStore); } catch { }

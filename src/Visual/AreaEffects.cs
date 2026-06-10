@@ -418,9 +418,89 @@ namespace AshAndEmber
                         }
                         break;
                     }
+
+                    case "spell_firepatch":
+                    {
+                        SpawnTempFireParticle(e.Position, 1.5f);
+                        SpawnTempLight(e.Position, ColorSchool.Red, 5f, 1.5f);
+                        foreach (Agent a in Mission.Current.Agents.ToList())
+                        {
+                            if (!a.IsActive() || a.IsMount) continue;
+                            if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                            if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            if (IsWarded(a)) continue;
+                            try
+                            {
+                                DamageAgent(a, e.Power);
+                                BeginAgentGlow(a, ColorSchool.Red, 1.5f);
+                            }
+                            catch { }
+                        }
+                        break;
+                    }
+
+                    case "spell_holyzone":
+                    {
+                        SpawnTempLightWhite(e.Position, e.Radius, 1.5f);
+                        foreach (Agent a in Mission.Current.Agents.ToList())
+                        {
+                            if (!a.IsActive() || a.IsMount) continue;
+                            if (e.CasterTeam != null && a.Team != e.CasterTeam) continue;
+                            if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            try
+                            {
+                                float h = Math.Min(e.Power, a.HealthLimit - a.Health);
+                                if (h > 0f) { a.Health += h; BeginAgentGlow(a, ColorSchool.White, 1.5f); }
+                            }
+                            catch { }
+                        }
+                        break;
+                    }
                 }
                 } catch { } // guard: Mission.Agents modified during switch case
             }
+        }
+
+        // ── Spell aftermath helpers ────────────────────────────────────────────
+        // Called from ExplodeMissile (when DamageCount > 0) — a patch of fire lingers
+        // at the explosion point, damaging enemies who walk through it.
+        internal static void SpawnFirePatch(Vec3 pos, int damageCount, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id           = "spell_firepatch",
+                School       = ColorSchool.Red,
+                Position     = pos,
+                Radius       = 3f,
+                TickInterval = 1f,
+                TickTimer    = 1f,
+                Remaining    = 8f,
+                Power        = damageCount * 8f,
+                CasterTeam   = casterTeam,
+            };
+            node.LightEntity = SpawnAreaLight(pos, ColorSchool.Red, 5f);
+            _areaEffects.Add(node);
+            SpawnTempFireParticle(pos, 8f);
+        }
+
+        // Called from ExecuteBurstFromAgent (when RestoreCount > 0 and player is caster) —
+        // a consecrated zone lingers at the burst centre, slowly healing allies.
+        internal static void SpawnHolyZone(Vec3 pos, int restoreCount, float radius, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id           = "spell_holyzone",
+                School       = ColorSchool.White,
+                Position     = pos,
+                Radius       = Math.Max(3f, radius),
+                TickInterval = 1f,
+                TickTimer    = 1f,
+                Remaining    = 5f,
+                Power        = restoreCount * 8f,
+                CasterTeam   = casterTeam,
+            };
+            node.LightEntity = SpawnAreaLight(pos, ColorSchool.White, Math.Max(3f, radius));
+            _areaEffects.Add(node);
         }
 
         public static void ClearAreaEffects()

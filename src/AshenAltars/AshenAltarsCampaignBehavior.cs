@@ -401,7 +401,7 @@ namespace AshAndEmber
                 if (sacrificePtsPerRound > 0 && TotalSacrificePoints() < sacrificePtsPerRound)
                 {
                     // Forced stop
-                    if (accumulated >= target) onSuccess();
+                    if (accumulated >= target) { onSuccess(); try { MageKnowledge.AddWhispers(5); } catch { } }
                     else
                     {
                         string noMore = "The altar has emptied your offering. There is nothing more to give. " +
@@ -445,13 +445,13 @@ namespace AshAndEmber
                         () => DoRound(),
                         () =>
                         {
-                            if (accumulated >= target) onSuccess();
+                            if (accumulated >= target) { onSuccess(); try { MageKnowledge.AddWhispers(5); } catch { } }
                             else onFailure();
                         }));
                 }
                 catch
                 {
-                    if (accumulated >= target) onSuccess();
+                    if (accumulated >= target) { onSuccess(); try { MageKnowledge.AddWhispers(5); } catch { } }
                     else onFailure();
                 }
             }

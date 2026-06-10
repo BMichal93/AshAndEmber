@@ -385,14 +385,22 @@ namespace AshAndEmber
                         () =>
                         {
                             if (accumulated >= target) onSuccess();
-                            else onFailure();
+                            else
+                            {
+                                if (!MageKnowledge.IsAshen) try { MageKnowledge.AddWhispers(2); } catch { }
+                                onFailure();
+                            }
                         }));
                 }
                 catch
                 {
                     // Fallback: resolve immediately
                     if (accumulated >= target) onSuccess();
-                    else onFailure();
+                    else
+                    {
+                        if (!MageKnowledge.IsAshen) try { MageKnowledge.AddWhispers(2); } catch { }
+                        onFailure();
+                    }
                 }
             }
 

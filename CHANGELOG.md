@@ -2,6 +2,45 @@
 
 ---
 
+## v0.17
+
+### Rival Shadow system
+- One Ashen lord is designated as the player's personal antagonist at campaign start.
+- Every 14–21 days the Shadow schemes against a player-owned settlement: loyalty −10 or security −15.
+- After five schemes **The Shadow Approaches** event fires: Leadership or Athletics duel or withdraw (−30 renown).
+- Victory: +5 focus points, +200 renown, nearest Ashen lord converts to regular mage.
+- Loss: −5 days, Shadow heals before the next engagement (ConsumedShadowHealPending flag for ColourLordAI).
+- Shadow designation, scheme count, and pending events all persist through save/load.
+
+### Mage Companion System
+- Companions with the gift are now tracked as **companion mages** separately from NPC lords.
+- Companion mages age 25% faster than regular lords after battle (the fire burns more personally).
+- Improved join narrative: three variant messages drawn at random on companion recruitment.
+- `RegisterCompanionMage` wires companion mages into both `_mageIds` and `_companionMageIds`.
+
+### Persistent Spell Aftermath
+- **Missile + Damage** leaves a `spell_firepatch` area effect (3 m radius, 8 s) at the explosion point, damaging enemies who walk through it.
+- **Burst + Restore** (player only) leaves a `spell_holyzone` area effect at the burst centre, healing allies within the burst radius for 5 seconds.
+- Both effects respect team affiliation — no friendly fire from fire patches, no healing enemies from holy zones.
+
+### Whisper System
+- Hidden counter tracking how deeply the cold has entered the player's fire.
+- Hooks: Ashen lord killed by player (+3), any lord executed by player (+5), dark rite completed (+5), failed sanctuary prayer (+2), battle lost (+1).
+- Passive decay: honourable and merciful players (Mercy + Honor ≥ 2) have a 1-in-7 daily chance to shed 1 whisper.
+- At 100+ whispers a 7-day countdown fires **The Cold Calls Your Name**: Resist (−10 days, −30 whispers), Bargain (−30 days, −60 whispers), or Accept (become Ashen).
+- Whisper count and countdown persist through save/load.
+
+### Grimoire of Lost Forms
+- Four new talent-tier entries at a fixed cost of 3 focus points each (separate Lost Form category in talent menu, ◈ icon):
+  - **Widened Blast** — blast cone expands from ~49° to ~60°.
+  - **Twin Bolt** — missile fires two bolts side by side at 60% power each.
+  - **Fading Ward** — barrier nodes expire after 60 seconds rather than persisting indefinitely.
+  - **Directed Burst** — burst is asymmetric: full power forward, 40% power in the rear arc.
+- `TalentDef.FocusCost` field added; `TryPurchase` uses it when non-zero.
+- Lost Form flags (`UsingLostBlast` etc.) set by `SpellBuilder.Parse` when the talent is owned.
+
+---
+
 ## v0.16
 
 ### Spell Minigame — overhaul

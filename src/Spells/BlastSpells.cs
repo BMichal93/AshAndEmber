@@ -51,7 +51,8 @@ namespace AshAndEmber
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > range) continue;
                     if (toH.Length < 0.01f) continue;
-                    if (Vec3.DotProduct(fwdH, toH.NormalizedCopy()) < 0.65f) continue;
+                    float coneThreshold = cast.UsingLostBlast ? 0.50f : 0.65f;
+                    if (Vec3.DotProduct(fwdH, toH.NormalizedCopy()) < coneThreshold) continue;
                     targets.Add(a);
                 }
             }

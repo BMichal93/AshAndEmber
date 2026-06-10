@@ -68,7 +68,7 @@ namespace AshAndEmber
                 Radius       = 1.5f,
                 TickInterval = 0.5f,
                 TickTimer    = 0.5f,
-                Remaining    = -1f,
+                Remaining    = cast.UsingLostBarrier ? 60f : -1f,
                 Power        = token,
                 CasterTeam   = casterTeam
             };
@@ -183,6 +183,15 @@ namespace AshAndEmber
             bool wantDmg  = cast.DamageCount  > 0;
             bool wantHeal = cast.RestoreCount > 0;
 
+            // Directed Burst: compute forward vector for hemisphere split.
+            Vec3 fwdH = Vec3.Zero;
+            if (cast.UsingLostBurst)
+            {
+                Vec3 fwd = caster.LookDirection.NormalizedCopy();
+                fwdH = new Vec3(fwd.x, fwd.y, 0f);
+                if (fwdH.Length > 0.01f) fwdH = fwdH.NormalizedCopy();
+            }
+
             var targets = new List<Agent>();
             try
             {
@@ -192,7 +201,6 @@ namespace AshAndEmber
                     bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
                     bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
                     if (!(wantDmg || (wantHeal && isAlly))) continue;
-                    // Horizontal distance so mounted riders at elevation are hit correctly
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > radius) continue;
                     targets.Add(a);
@@ -205,22 +213,40 @@ namespace AshAndEmber
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
 
+            // Rear-hemisphere scaled cast (40% power) for Directed Burst.
+            SpellCast rearCast = null;
+            if (cast.UsingLostBurst)
+            {
+                rearCast = new SpellCast();
+                rearCast.BurstCount         = cast.BurstCount;
+                rearCast.Form               = cast.Form;
+                rearCast.DamageCount        = cast.DamageCount  > 0 ? Math.Max(1, (int)(cast.DamageCount  * 0.4f)) : 0;
+                rearCast.RestoreCount       = cast.RestoreCount > 0 ? Math.Max(1, (int)(cast.RestoreCount * 0.4f)) : 0;
+                rearCast.OverrideVisualColor = cast.OverrideVisualColor;
+            }
+
             int affected = 0;
             int alliesHit = 0;
             foreach (Agent a in targets)
             {
                 try
                 {
-                    if (cast.DamageCount > 0 && casterTeam != null && a.Team != null && a.Team == casterTeam)
+                    SpellCast useCast = cast;
+                    if (cast.UsingLostBurst && rearCast != null)
+                    {
+                        Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
+                        if (toH.Length > 0.01f && Vec3.DotProduct(fwdH, toH.NormalizedCopy()) < 0f)
+                            useCast = rearCast;
+                    }
+                    if (useCast.DamageCount > 0 && casterTeam != null && a.Team != null && a.Team == casterTeam)
                         alliesHit++;
-                    ApplyEffectsToAgent(a, cast, caster);
+                    ApplyEffectsToAgent(a, useCast, caster);
                     SpawnImpactBurst(a.Position, col, 4f);
                     affected++;
                 }
                 catch { }
             }
 
-            // Scatter surviving enemies outward from burst center.
             if (wantDmg) ScatterEnemies(caster.Position, radius, casterTeam);
 
             // Burst also heals the caster when Restore is active
@@ -234,6 +260,10 @@ namespace AshAndEmber
                     affected++;
                 }
                 catch { }
+
+                // Consecrated zone lingers at the burst point for 5 seconds.
+                if (caster == Agent.Main)
+                    SpawnHolyZone(caster.Position, cast.RestoreCount, radius, casterTeam);
             }
 
             if (caster == Agent.Main)
