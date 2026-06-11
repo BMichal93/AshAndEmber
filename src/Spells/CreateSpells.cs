@@ -24,15 +24,6 @@ namespace AshAndEmber
             Agent caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return false;
 
-            // Toggle off — dispelling costs no aging days
-            if (HasAreaEffect(BarrierId))
-            {
-                RemoveAreaEffect(BarrierId);
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "Barrier released.", new Color(0.7f, 0.7f, 0.7f)));
-                return false;
-            }
-
             Vec3 fwd   = caster.LookDirection.NormalizedCopy();
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();
             int  count = Math.Max(1, cast.BarrierCount > 0 ? cast.BarrierCount : cast.FormCount);
@@ -51,7 +42,7 @@ namespace AshAndEmber
             TryCastAnimation(caster);
 
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Barrier — {cast.EffectSummary()}. Cast again to release.",
+                $"Barrier — {cast.EffectSummary()}.",
                 ColorSchoolData.GetMessageColor(col)));
             return true;
         }
