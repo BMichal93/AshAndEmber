@@ -105,8 +105,8 @@ namespace AshAndEmber
                 Vec3 toH = new Vec3(a.Position.x - e.Position.x, a.Position.y - e.Position.y, 0f);
                 float dist = toH.Length;
 
-                bool isAlly  = e.CasterTeam != null && a.Team == e.CasterTeam;
-                bool isEnemy = e.CasterTeam != null && a.Team != e.CasterTeam;
+                bool isAlly  = e.CasterTeam != null && a.Team != null && a.Team == e.CasterTeam;
+                bool isEnemy = e.CasterTeam != null && a.Team != null && a.Team != e.CasterTeam;
 
                 // Warning zone: push enemies away from the barrier wall.
                 // Extended to 5 m beyond radius; heroes get a gentler nudge.
