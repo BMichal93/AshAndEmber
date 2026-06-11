@@ -296,12 +296,14 @@ Enchantments fire automatically on every qualifying cast in battle.
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
+Unlike damage enchantments — which are split across the Sear/Force/Shred natures, so one cast only feeds the natures it carries — **every Restore enchantment you own fires together on a single Restore cast**. Each one is therefore tuned weaker than its damage counterparts; the payload of a full restore build is the stack, not any single talent.
+
 | Talent | Effect |
 |--------|--------|
-| **Ashveil** | Brief magic immunity for healed allies. Duration = 4 s per Restore input. |
-| **Cinder Shell** | Reduces incoming damage (5% per input, max 50%) for 6 s + 1.5 s per input. Near-full-health allies also gain a 15 HP damage shield per input for 5 s. |
-| **Hearthlight** | Lifts allied morale. Boost = 15 per Restore input. |
-| **Reflect** | Healed allies reflect 8% of melee damage per input (max 50%) back at attackers for 3 s + 1.5 s per input. Ranged hits do not trigger the reflection. |
+| **Ashveil** | Brief magic immunity for healed allies. Duration = 2 s per Restore input, max 10 s. |
+| **Cinder Shell** | Reduces incoming damage (6% per input, max 30%) for 4 s + 1 s per input. Allies above 90% health also gain a 10 HP damage shield per input for 5 s. |
+| **Hearthlight** | Lifts allied morale. Boost = 10 per Restore input. |
+| **Reflect** | Healed allies reflect 5% of melee damage per input (max 25%) back at attackers. Ranged hits do not trigger the reflection. |
 
 ### Spell (campaign map)
 
@@ -314,13 +316,13 @@ When you cast a campaign spell, a 3-step ritual description appears — two sent
 | Correct | Multiplier | Flavour |
 |---------|-----------|---------|
 | 3 / 3 | **1.50×** | Resonance — the rite was perfect. |
-| 2 / 3 | **1.00×** | The working takes hold. *(baseline)* |
-| 1 / 3 | **0.75×** | The words blur — the fire catches unevenly. |
+| 2 / 3 | **1.20×** | The working takes hold. |
+| 1 / 3 | **0.80×** | The words blur — the fire catches unevenly. |
 | 0 / 3 | **0.50×** | The words scatter — the fire finds its own shape. |
 
-A **"Cast without the rite"** button on the sequence screen skips the minigame and fires the spell at 1.00×.
+A **"Cast without the rite"** button on the sequence screen skips the minigame and fires the spell at 1.00× — guessing blindly averages worse than skipping; genuine recall beats both.
 
-The values in the table below are baseline (2/3 recall, 1.00×).
+The values in the table below are baseline (1.00×, the no-rite value).
 
 | Talent | Effect |
 |--------|--------|
@@ -346,7 +348,7 @@ Lost Forms permanently alter how a spell form behaves once purchased. Each costs
 
 ## Rival Shadow
 
-At campaign start, one Ashen lord is silently designated as your **Shadow** — a personal antagonist who watches you.
+The cold ignores nobodies. Once your clan reaches **tier 3**, one Ashen lord is designated as your **Shadow** — a personal antagonist who watches you. A popup (*A Cold Attention*) announces that the dark forces of the north have noticed you.
 
 Every 14–21 days the Shadow acts against one of your settlements: loyalty or security drops. After **five schemes**, the Shadow rides out alone to confront you.
 
@@ -391,21 +393,26 @@ The cold watches. Certain acts open a crack in the fire.
 
 | Act | Whispers gained |
 |-----|----------------|
-| Ashen lord killed by player | +3 |
+| Ashen lord killed by player | +1 |
 | Any lord executed by player | +5 |
 | Dark rite completed (Ashen Altar) | +5 |
 | Sanctuary prayer failed | +2 |
 | Battle lost (player involved) | +1 |
 
-Whispers decay slowly for honourable, merciful players (Mercy + Honor ≥ 2: 1 in 7 chance each day to lose 1).
+Whispers reflect recent conduct, not a permanent stain. They decay two ways:
+
+- **Virtue** — honourable, merciful players (Mercy + Honor ≥ 2) have a 1-in-7 chance each day to lose 1.
+- **Quiet conduct** — after 10 consecutive days without gaining a whisper, roughly 1 whisper fades every 3 days regardless of traits.
 
 Certain settlement encounters also feed or starve the cold — burning the village in *Darkness in the Roots*, watching *The Pyre* for sport, joining the dance of the *Three Figures*, or reaching back into *Ash in the Dream* all add whispers; saving the girl, funding the priest's sanctuary, dismissing the dream, or scattering the witches' rite shed them.
+
+**NPCs and the cold.** NPC mages carry no whisper counter — invisible per-lord bookkeeping would never surface to the player. Their corruption is modelled at the granularity you can actually see: a mage lord who overexerts in battle (15+ days aged in one fight) has an 8% chance of turning Ashen, the *Whispers from the Ash* world event pulls 1–3 mage lords to the cold, and lords who die at 100 have a 5% chance to rise Ashen.
 
 **Whisper tiers.** The count itself stays hidden, but the cold expresses itself in stages (crossing a tier shows a one-time warning, and the Ledger of Years carries a vague status line):
 
 | Tier | Threshold | Effect |
 |------|-----------|--------|
-| Noticed | 25+ | Occasional ambient whispers on the campaign map. |
+| Noticed | 25+ | Occasional ambient whispers on the campaign map (rare — at most a few per season; one in three carries real intelligence: the bearing of the nearest Ashen warband). |
 | Favoured | 50+ | Ashen Altar rituals gain +1 point per round; Sanctuary meditation loses 1 point per round (never below 1). |
 | Close | 75+ | The altar bonus and sanctuary drag deepen to 2. The Temple declares you **anathema** (see The Temple). |
 

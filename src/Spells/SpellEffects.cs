@@ -725,12 +725,17 @@ namespace AshAndEmber
             }
         }
 
+        // Unlike damage enchantments — which are split across the Sear/Force/
+        // Shred natures so a cast feeds only the inputs it carries — every
+        // Restore enchantment the caster owns fires together on one Restore
+        // cast. Each is therefore tuned weaker than its damage counterpart:
+        // the real payload of a full restore build is the stack.
         private static void ApplyRestoreEnchantments(Agent target, SpellCast cast, Agent caster)
         {
             // Ashveil: brief magic immunity
             if (CasterHasEnchantment(caster, TalentId.Ashveil))
             {
-                float duration = cast.RestoreCount * 4f;  // was 3f per input
+                float duration = Math.Min(10f, cast.RestoreCount * 2f);  // was 4f per input, uncapped
                 float current  = _wardedAgents.TryGetValue(target, out float t) ? t : 0f;
                 _wardedAgents[target] = Math.Max(current, duration);
                 BeginAgentGlow(target, ColorSchool.White, duration);
@@ -739,17 +744,17 @@ namespace AshAndEmber
             // Cinder Shell: armour boost + near-full-health shield (merged Overflow)
             if (CasterHasEnchantment(caster, TalentId.CinderShell))
             {
-                float bonus = cast.RestoreCount * 10f;
-                float shellDuration = 6f + cast.RestoreCount * 1.5f;  // was fixed 8f
+                float bonus = cast.RestoreCount * 6f;                 // was 10f per input
+                float shellDuration = 4f + cast.RestoreCount * 1f;    // was 6f + 1.5f per input
                 AddStoneskin(target, bonus, shellDuration);
                 BeginAgentGlow(target, ColorSchool.Orange, 2f);
                 try
                 {
                     float hp = target.Health;
                     float hpMax = target.HealthLimit;
-                    if (hpMax > 0f && hp >= hpMax * 0.80f)
+                    if (hpMax > 0f && hp >= hpMax * 0.90f)            // was 0.80f
                     {
-                        float overBonus = cast.RestoreCount * 15f;
+                        float overBonus = cast.RestoreCount * 10f;    // was 15f
                         AddStoneskin(target, overBonus, 5f);
                     }
                 }
@@ -761,7 +766,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float delta = cast.RestoreCount * 15f;  // was 12f
+                    float delta = cast.RestoreCount * 10f;  // was 15f
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Min(cur + delta, 100f));
                 }
@@ -773,7 +778,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float pct = Math.Min(0.50f, cast.RestoreCount * 0.08f);
+                    float pct = Math.Min(0.25f, cast.RestoreCount * 0.05f);  // was 8% per input, cap 50%
                     float duration = 3f + (float)Math.Sqrt(cast.RestoreCount) * 4f;
                     if (!_reflectAgents.TryGetValue(target, out var cur))
                         _reflectAgents[target] = (pct, duration);

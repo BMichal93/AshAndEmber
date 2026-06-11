@@ -185,28 +185,28 @@ namespace AshAndEmber
                 Id = TalentId.Ashveil, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Ashveil",
                 Lore = "Ash does not burn twice. Coat something in it, and the fire cannot find purchase. For a few seconds, what you kindle becomes untouchable.",
-                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 4s per Restore input."
+                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 2s per Restore input, max 10s."
             },
             new TalentDef
             {
                 Id = TalentId.CinderShell, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Cinder Shell",
                 Lore = "Fire hardens what it doesn't consume. The skin does not become stone — it becomes something older. Whatever falls on them will not find the same flesh.",
-                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 10% per Restore input (max 50% at 5 inputs). Duration = 6s + 1.5s per Restore input. When an ally is above 80% health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
+                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 6% per Restore input (max 30% at 5 inputs). Duration = 4s + 1s per Restore input. When an ally is above 90% health, excess fire adds a damage shield of 10 HP per Restore input for 5s."
             },
             new TalentDef
             {
                 Id = TalentId.Hearthlight, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Hearthlight",
                 Lore = "The fire in them has not gone out — it has only dimmed. You reach in and remind it what it is for. They remember, for a moment, that the fire is their friend.",
-                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 15 per Restore input. Without this talent, Restore gives a weak +4-per-input lift."
+                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 10 per Restore input. Without this talent, Restore gives a weak +4-per-input lift."
             },
             new TalentDef
             {
                 Id = TalentId.Reflect, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Reflect",
                 Lore = "The fire you give is not passive. It waits in the body like an ember under ash, and when something cold strikes — it answers.",
-                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 50%. Duration scales with diminishing returns: 7s at 1 input, ~10s at 3, ~16s at 10."
+                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 5% of damage per Restore input back at the attacker, max 25%. Duration scales with diminishing returns: 7s at 1 input, ~10s at 3, ~16s at 10."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef

@@ -30,6 +30,8 @@ namespace AshAndEmber
         // At 100+ the Cold Calls Your Name.
         private static int _whisperCount        = 0;
         private static int _coldCallCountdown   = 0;  // 0 = not pending
+        private static int _daysSinceWhisperGain = 0; // quiet conduct lets the cold lose interest
+        private static int _lastAmbientIdx      = -1;
 
         public static int WhisperCount => _whisperCount;
 
@@ -44,6 +46,7 @@ namespace AshAndEmber
             if (n <= 0 || !_isMage) return;
             int tierBefore = WhisperTier;
             _whisperCount += n;
+            _daysSinceWhisperGain = 0;
             if (_whisperCount >= 100 && _coldCallCountdown == 0)
                 _coldCallCountdown = 7; // fires in 7 days
             if (WhisperTier > tierBefore)
@@ -88,13 +91,26 @@ namespace AshAndEmber
                     _deferredInquiry = ShowColdCallsEvent;
             }
 
-            // Ambient flavour: once the cold has noticed (25+), it occasionally speaks.
+            // Ambient flavour: once the cold has noticed (25+), it occasionally
+            // speaks — rarely (tier/20 per day), never the same line twice in a
+            // row, and one whisper in three carries something true: the bearing
+            // of the nearest Ashen warband.
             try
             {
-                if (!_isAshen && WhisperTier >= 1 && _rng.Next(12) < WhisperTier)
+                if (!_isAshen && WhisperTier >= 1 && _rng.Next(20) < WhisperTier)
+                {
+                    string line = null;
+                    if (_rng.Next(3) == 0) line = UsefulWhisper();
+                    if (line == null)
+                    {
+                        int idx;
+                        do { idx = _rng.Next(_ambientWhispers.Length); } while (idx == _lastAmbientIdx);
+                        _lastAmbientIdx = idx;
+                        line = _ambientWhispers[idx];
+                    }
                     InformationManager.DisplayMessage(new InformationMessage(
-                        _ambientWhispers[_rng.Next(_ambientWhispers.Length)],
-                        new Color(0.45f, 0.45f, 0.65f)));
+                        line, new Color(0.45f, 0.45f, 0.65f)));
+                }
             }
             catch { }
 
@@ -110,6 +126,40 @@ namespace AshAndEmber
                 }
             }
             catch { }
+
+            // Quiet-conduct decay: 10 clean days and the cold starts losing
+            // interest — roughly 1 whisper every 3 days regardless of traits.
+            // Whispers reflect recent conduct, not a permanent stain.
+            try
+            {
+                _daysSinceWhisperGain++;
+                if (_whisperCount > 0 && _daysSinceWhisperGain >= 10 && _rng.Next(3) == 0)
+                    _whisperCount = Math.Max(0, _whisperCount - 1);
+            }
+            catch { }
+        }
+
+        // A whisper that is also intelligence: the compass bearing of the
+        // nearest Ashen lord's warband. Returns null if none is in the field.
+        private static string UsefulWhisper()
+        {
+            try
+            {
+                if (MobileParty.MainParty == null) return null;
+                Vec2 pos = MobileParty.MainParty.GetPosition2D;
+                Hero nearest = Hero.AllAliveHeroes
+                    .Where(h => h.IsLord && h.IsAlive && ColourLordRegistry.IsAshenLord(h)
+                             && h.PartyBelongedTo != null)
+                    .OrderBy(h => (h.PartyBelongedTo.GetPosition2D - pos).Length)
+                    .FirstOrDefault();
+                if (nearest?.PartyBelongedTo == null) return null;
+                Vec2 d = nearest.PartyBelongedTo.GetPosition2D - pos;
+                string dir = Math.Abs(d.y) > Math.Abs(d.x)
+                    ? (d.y > 0 ? "north" : "south")
+                    : (d.x > 0 ? "east" : "west");
+                return $"The whisper is almost kind tonight. It says one of the cold ones rides to the {dir} of you. It does not say why it tells you.";
+            }
+            catch { return null; }
         }
 
         public static bool IsMage         => _isMage;
@@ -132,6 +182,8 @@ namespace AshAndEmber
             _deferredInquiry  = null;
             _whisperCount     = 0;
             _coldCallCountdown = 0;
+            _daysSinceWhisperGain = 0;
+            _lastAmbientIdx   = -1;
             _giftedChildIds.Clear();
             TalentSystem.ResetForNewGame();
             ColourLordRegistry.ResetForNewGame();
@@ -610,6 +662,7 @@ namespace AshAndEmber
             store.SyncData("LDM_GiftedChildren", ref giftedList);
             store.SyncData("LDM_WhisperCount",   ref _whisperCount);
             store.SyncData("LDM_ColdCallCD",     ref _coldCallCountdown);
+            store.SyncData("LDM_WhisperQuiet",   ref _daysSinceWhisperGain);
             TalentSystem.Save(store);
 
             _giftedChildIds.Clear();

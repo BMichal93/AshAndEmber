@@ -818,10 +818,12 @@ namespace AshAndEmber
 
                 try { RivalShadowSystem.OnHeroKilled(victim); } catch { }
 
-                // Whispers: killing an Ashen lord by any means costs 3
+                // Whispers: killing an Ashen lord costs 1 — the cold notices its
+                // own dying, but fighting the Ashen is the mod's core loop and
+                // must not be the fastest road to corruption.
                 if (killer == Hero.MainHero && MageKnowledge.IsMage
                     && ColourLordRegistry.IsAshenLord(victim))
-                    try { MageKnowledge.AddWhispers(3); } catch { }
+                    try { MageKnowledge.AddWhispers(1); } catch { }
 
                 if (detail != KillCharacterAction.KillCharacterActionDetail.Executed) return;
                 if (killer == null) return;

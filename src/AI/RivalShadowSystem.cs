@@ -50,10 +50,13 @@ namespace AshAndEmber
 
         // ── Designation ───────────────────────────────────────────────────────
         // Called from DailyTick once Ashen lords exist in the world.
+        // The cold ignores nobodies: no Shadow is assigned until the player's
+        // clan reaches tier 3 — by then they are worth watching.
         public static void TryDesignateShadow()
         {
             if (_shadowLordId != null || _shadowDefeated) return;
             if (!MageKnowledge.IsMage) return;
+            if (Hero.MainHero?.Clan == null || Hero.MainHero.Clan.Tier < 3) return;
 
             try
             {
@@ -68,8 +71,23 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"You sense a cold fire fixed on you — {shadow.Name} marks you as their quarry.",
                     new Color(0.38f, 0.50f, 0.75f)));
+                if (MageKnowledge._deferredInquiry == null)
+                    MageKnowledge._deferredInquiry = () => ShowDesignationEvent(shadow.Name?.ToString() ?? "an Ashen lord");
             }
             catch { }
+        }
+
+        private static void ShowDesignationEvent(string shadowName)
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "A Cold Attention",
+                $"Your name has begun to travel. Banners know it; courts repeat it.\n\n" +
+                $"Something else has heard it too. In the north, where the fire went out, " +
+                $"{shadowName} has turned their face toward you. The dark forces of the Ashen " +
+                $"have noticed you — and one of them has made you their personal concern.\n\n" +
+                $"Expect their hand in your affairs.",
+                true, false, "I am ready", "",
+                null, null), true);
         }
 
         // ── Daily tick ────────────────────────────────────────────────────────
