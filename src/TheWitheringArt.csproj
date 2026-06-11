@@ -112,6 +112,8 @@
     <Compile Include="Schemes\SchemeMinigame.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.cs"/>
+    <Compile Include="Sea\SeaMath.cs"/>
+    <Compile Include="Sea\SeaCampaignBehavior.cs"/>
     <Compile Include="Spells\SpellEffects.cs"/>
     <Compile Include="Spells\BlastSpells.cs"/>
     <Compile Include="Spells\SelfSpells.cs"/>

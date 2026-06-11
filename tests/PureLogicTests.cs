@@ -429,5 +429,168 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(AshenVisuals.AshenSkinKey(seed),
                             AshenVisuals.AshenSkinKey(AshenVisuals.AshenSkinKey(seed)));
         }
+
+        // ── SeaMath tests ─────────────────────────────────────────────────────
+
+        [Test]
+        public void SeaMath_TravelHours_ClampsToMinimum()
+        {
+            Assert.AreEqual(SeaMath.MinVoyageHours, SeaMath.TravelHours(0f, false));
+            Assert.AreEqual(SeaMath.MinVoyageHours, SeaMath.TravelHours(10f, false));
+        }
+
+        [Test]
+        public void SeaMath_TravelHours_EmberwindHalvesLongCrossings()
+        {
+            float normal = SeaMath.TravelHours(400f, false);
+            float windy  = SeaMath.TravelHours(400f, true);
+            Assert.AreEqual(normal * SeaMath.EmberwindTimeMult, windy, 0.001f);
+        }
+
+        [Test]
+        public void SeaMath_TravelHours_GrowsWithDistance()
+        {
+            Assert.Greater(SeaMath.TravelHours(600f, false), SeaMath.TravelHours(300f, false));
+        }
+
+        [Test]
+        public void SeaMath_Fare_RoundsToTenAndHasFloor()
+        {
+            Assert.AreEqual(0, SeaMath.Fare(123f, 17) % 10);
+            Assert.GreaterOrEqual(SeaMath.Fare(0f, 0), 50);
+        }
+
+        [Test]
+        public void SeaMath_Fare_GrowsWithDistanceAndPartySize()
+        {
+            Assert.Greater(SeaMath.Fare(500f, 50), SeaMath.Fare(200f, 50));
+            Assert.Greater(SeaMath.Fare(200f, 100), SeaMath.Fare(200f, 10));
+        }
+
+        [Test]
+        public void SeaMath_PirateChance_StaysWithinBounds()
+        {
+            Assert.AreEqual(SeaMath.PirateChanceFloor, SeaMath.PirateChance(0f));
+            Assert.AreEqual(SeaMath.PirateChanceCeiling, SeaMath.PirateChance(99999f));
+            float mid = SeaMath.PirateChance(300f);
+            Assert.GreaterOrEqual(mid, SeaMath.PirateChanceFloor);
+            Assert.LessOrEqual(mid, SeaMath.PirateChanceCeiling);
+        }
+
+        [Test]
+        public void SeaMath_FleetStrength_SearTheTideMultiplies()
+        {
+            float baseStr = SeaMath.FleetStrength(60, 3f, 100, false);
+            float seared  = SeaMath.FleetStrength(60, 3f, 100, true);
+            Assert.AreEqual(baseStr * SeaMath.SearTheTideStrengthMult, seared, 0.001f);
+        }
+
+        [Test]
+        public void SeaMath_FleetStrength_MoreMenIsStronger()
+        {
+            Assert.Greater(SeaMath.FleetStrength(100, 2f, 0, false),
+                           SeaMath.FleetStrength(50, 2f, 0, false));
+        }
+
+        [Test]
+        public void SeaMath_ResolveSeaBattle_OverwhelmingPlayerWinsCheaply()
+        {
+            var o = SeaMath.ResolveSeaBattle(1000f, 100f, 0.0);
+            Assert.IsTrue(o.Victory);
+            Assert.Greater(o.LootGold, 0);
+            Assert.LessOrEqual(o.CasualtyFraction, 0.05f);
+        }
+
+        [Test]
+        public void SeaMath_ResolveSeaBattle_OverwhelmingCorsairsWin()
+        {
+            var o = SeaMath.ResolveSeaBattle(100f, 1000f, 0.99);
+            Assert.IsFalse(o.Victory);
+            Assert.AreEqual(0, o.LootGold);
+        }
+
+        [Test]
+        public void SeaMath_ResolveSeaBattle_CasualtiesStayInBounds()
+        {
+            foreach (var roll in new[] { 0.0, 0.5, 0.99 })
+            {
+                var win  = SeaMath.ResolveSeaBattle(500f, 50f, roll);
+                var loss = SeaMath.ResolveSeaBattle(50f, 5000f, roll);
+                Assert.GreaterOrEqual(win.CasualtyFraction, 0.02f);
+                Assert.LessOrEqual(win.CasualtyFraction, 0.35f);
+                Assert.GreaterOrEqual(loss.CasualtyFraction, 0.02f);
+                Assert.LessOrEqual(loss.CasualtyFraction, 0.35f);
+            }
+        }
+
+        [Test]
+        public void SeaMath_ResolveSeaBattle_ZeroStrengthIsDefeatNotCrash()
+        {
+            var o = SeaMath.ResolveSeaBattle(0f, 100f, 0.5);
+            Assert.IsFalse(o.Victory);
+            Assert.AreEqual(0, o.LootGold);
+        }
+
+        [Test]
+        public void SeaMath_TributeDemand_HasFloor()
+        {
+            Assert.GreaterOrEqual(SeaMath.TributeDemand(0, 0f), 200);
+        }
+
+        [Test]
+        public void SeaMath_StormExtraHours_AtLeastTwo()
+        {
+            Assert.GreaterOrEqual(SeaMath.StormExtraHours(0f, 0.0), 2);
+            Assert.GreaterOrEqual(SeaMath.StormExtraHours(40f, 0.5), 2);
+        }
+
+        [Test]
+        public void SeaMath_VentureDays_FloorAndGrowth()
+        {
+            Assert.GreaterOrEqual(SeaMath.VentureDays(0f), 3);
+            Assert.Greater(SeaMath.VentureDays(800f), SeaMath.VentureDays(200f));
+        }
+
+        [Test]
+        public void SeaMath_VentureLossChance_BlessingHalves()
+        {
+            float bare    = SeaMath.VentureLossChance(400f, false);
+            float blessed = SeaMath.VentureLossChance(400f, true);
+            Assert.AreEqual(bare * 0.5f, blessed, 0.0001f);
+            Assert.Less(bare, 1f);
+        }
+
+        [Test]
+        public void SeaMath_ResolveVenture_LossPaysSalvage()
+        {
+            // lossRoll of 0 is always below any positive loss chance
+            var o = SeaMath.ResolveVenture(2000, 400f, false, 0.0, 0.5);
+            Assert.IsTrue(o.Lost);
+            Assert.AreEqual(500, o.Payout);
+        }
+
+        [Test]
+        public void SeaMath_ResolveVenture_SafeRunProfits()
+        {
+            // lossRoll of 1.0 is never below the loss chance
+            var o = SeaMath.ResolveVenture(2000, 400f, false, 1.0, 0.5);
+            Assert.IsFalse(o.Lost);
+            Assert.Greater(o.Payout, 2000);
+        }
+
+        [Test]
+        public void SeaMath_ResolveVenture_BlessingImprovesMargin()
+        {
+            var bare    = SeaMath.ResolveVenture(2000, 400f, false, 1.0, 0.5);
+            var blessed = SeaMath.ResolveVenture(2000, 400f, true, 1.0, 0.5);
+            Assert.Greater(blessed.Payout, bare.Payout);
+        }
+
+        [Test]
+        public void SeaMath_VentureTiers_AreAscending()
+        {
+            for (int i = 1; i < SeaMath.VentureTiers.Length; i++)
+                Assert.Greater(SeaMath.VentureTiers[i], SeaMath.VentureTiers[i - 1]);
+        }
     }
 }

@@ -54,6 +54,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new SchemeCampaignBehavior());
                 campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());
                 campaignStarter.AddBehavior(new AshenAltarsCampaignBehavior());
+                campaignStarter.AddBehavior(new SeaCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { SchemeSystem.Initialize(); } catch { }
