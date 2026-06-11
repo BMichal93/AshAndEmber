@@ -200,7 +200,7 @@ namespace AshAndEmber
             catch { }
 
             ColorSchool col = cast.VisualColor;
-            SpawnCircleLights(caster.Position, col, radius, 6f);
+            SpawnBurstExplosion(caster.Position, col, radius, 6f);
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
 

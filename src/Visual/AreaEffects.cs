@@ -193,14 +193,52 @@ namespace AshAndEmber
         }
 
         // ── Fire particle effects ──────────────────────────────────────────────
-        // Particle names are wrapped in try/catch — silently skipped if the asset
-        // does not exist in the running version of the game.
+        // Particle names are tried in order; first success wins. Unknown names
+        // return null from AddParticleSystemComponent and are silently skipped,
+        // so combat-specific siege assets are tried before environmental fallbacks.
+
+        // General ambient fire — for impact scatter, barrier columns, etc.
         private static readonly string[] _fireParticleNames =
         {
             "psys_env_fire_medium_01",
             "psys_campfire",
             "psys_env_fire_big_01",
             "psys_game_fire_torch_small",
+            "psys_campfire_small",
+        };
+
+        // Fireball head / large static fire — catapult fireball first.
+        private static readonly string[] _bigFireParticleNames =
+        {
+            "psys_game_catapult_fire_ball",      // siege catapult projectile
+            "psys_game_ballista_fire_attack",     // ballista fire bolt
+            "psys_env_fire_big_01",
+            "psys_env_fire_medium_01",
+            "psys_campfire",
+            "psys_game_fire_torch_small",
+            "psys_campfire_small",
+        };
+
+        // Explosion / detonation — catapult/arrow impact particles first.
+        private static readonly string[] _explosionParticleNames =
+        {
+            "psys_game_catapult_fire_ball_hit",  // catapult impact explosion
+            "psys_game_fire_arrow_hit",           // fire arrow impact
+            "psys_game_explosion",                // generic in-game explosion
+            "psys_game_explosion_fire",           // fire-tinted explosion variant
+            "psys_env_fire_big_01",
+            "psys_campfire",
+            "psys_env_fire_medium_01",
+        };
+
+        // Missile trail — moving fire wake, designed for projectiles.
+        private static readonly string[] _trailParticleNames =
+        {
+            "psys_game_catapult_fire_ball_trail", // catapult fireball wake
+            "psys_game_fire_arrow_trail",          // fire arrow trail
+            "psys_game_fire_torch",                // larger torch (no "_small")
+            "psys_game_fire_torch_small",
+            "psys_env_fire_medium_01",
             "psys_campfire_small",
         };
 
@@ -251,6 +289,103 @@ namespace AshAndEmber
                         });
                 }
                 return;
+            }
+        }
+
+        // Single large fire particle — catapult fireball first, campfire as last resort.
+        internal static void SpawnBigFireParticle(Vec3 position, float duration)
+            => SpawnSingleParticle(position, duration, _bigFireParticleNames);
+
+        // Detonation/impact particle — catapult hit or fire-arrow hit first.
+        internal static void SpawnExplosionParticle(Vec3 position, float duration)
+            => SpawnSingleParticle(position, duration, _explosionParticleNames);
+
+        // Projectile wake particle — catapult trail or fire-arrow trail first.
+        internal static void SpawnTrailParticle(Vec3 position, float duration)
+            => SpawnSingleParticle(position, duration, _trailParticleNames);
+
+        private static void SpawnSingleParticle(Vec3 position, float duration, string[] names)
+        {
+            foreach (string name in names)
+            {
+                GameEntity entity = SpawnParticleEntity(position, name);
+                if (entity == null) continue;
+                _areaEffects.Add(new AreaEffect
+                {
+                    Id = "temp_particle", Position = position, School = ColorSchool.Red,
+                    TickInterval = duration, TickTimer = duration, Remaining = duration,
+                    LightEntity = entity,
+                });
+                return;
+            }
+        }
+
+        // Fireball detonation: central explosion column + radial fire-jet ring.
+        // Centre uses impact/explosion particles; ring uses ambient fire as scatter.
+        internal static void SpawnExplosionEffect(Vec3 pos, ColorSchool school, float radius, float duration)
+        {
+            bool useFire = school != ColorSchool.Ashen;
+
+            // Central detonation column — explosion particles at three heights
+            if (useFire)
+            {
+                SpawnExplosionParticle(pos,                           duration);
+                SpawnExplosionParticle(pos + new Vec3(0f, 0f, 0.6f), duration * 0.75f);
+                SpawnExplosionParticle(pos + new Vec3(0f, 0f, 1.2f), duration * 0.5f);
+            }
+
+            // Brief blinding flash then sustained glow
+            SpawnTempLight(pos, school, Math.Min(radius * 3f,  22f), duration * 0.25f);
+            SpawnTempLight(pos, school, Math.Min(radius * 1.5f, 16f), duration);
+            SpawnTempLight(pos + new Vec3(0f, 0f, 1f), school, Math.Min(radius * 1.2f, 12f), duration * 0.6f);
+
+            // Radial ring of fire jets
+            int count = Math.Max(4, Math.Min(8, (int)(radius * 1.5f)));
+            float ringR = radius * 0.7f;
+            for (int i = 0; i < count; i++)
+            {
+                double angle = Math.PI * 2.0 / count * i;
+                Vec3 rp = pos + new Vec3((float)Math.Cos(angle) * ringR, (float)Math.Sin(angle) * ringR, 0f);
+                if (useFire) SpawnTempFireParticle(rp, duration * 0.5f);
+                SpawnTempLight(rp, school, 6f, duration * 0.4f);
+            }
+        }
+
+        // Burst shockwave explosion: concentric rings of fire erupting from the blast centre.
+        // Centre uses explosion particles; rings use ambient fire as scatter.
+        internal static void SpawnBurstExplosion(Vec3 origin, ColorSchool school, float aoeRadius, float duration)
+        {
+            bool useFire = school != ColorSchool.Ashen;
+
+            // Central detonation
+            if (useFire)
+            {
+                SpawnExplosionParticle(origin,                           duration);
+                SpawnExplosionParticle(origin + new Vec3(0f, 0f, 0.5f), duration * 0.8f);
+            }
+            SpawnTempLight(origin, school, Math.Min(aoeRadius * 2.5f, 20f), duration);
+            SpawnTempLight(origin + new Vec3(0f, 0f, 1.2f), school, Math.Min(aoeRadius * 1.5f, 14f), duration * 0.5f);
+
+            // Inner ring — most intense
+            int innerCount = Math.Max(4, Math.Min(8, (int)(aoeRadius * 1.2f)));
+            float innerR = aoeRadius * 0.45f;
+            for (int i = 0; i < innerCount; i++)
+            {
+                double angle = Math.PI * 2.0 / innerCount * i;
+                Vec3 p = origin + new Vec3((float)Math.Cos(angle) * innerR, (float)Math.Sin(angle) * innerR, 0f);
+                if (useFire) SpawnTempFireParticle(p, duration * 0.7f);
+                SpawnTempLight(p, school, 7f, duration * 0.6f);
+            }
+
+            // Outer ring — shockwave edge
+            int outerCount = Math.Max(5, Math.Min(10, (int)(aoeRadius * 1.6f)));
+            float outerR = aoeRadius * 0.85f;
+            for (int i = 0; i < outerCount; i++)
+            {
+                double angle = Math.PI * 2.0 / outerCount * i + Math.PI / outerCount;
+                Vec3 p = origin + new Vec3((float)Math.Cos(angle) * outerR, (float)Math.Sin(angle) * outerR, 0f);
+                if (useFire) SpawnTempFireParticle(p, duration * 0.5f);
+                SpawnTempLight(p, school, 5f, duration * 0.35f);
             }
         }
 
