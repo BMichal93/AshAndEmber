@@ -303,6 +303,37 @@ namespace AshAndEmber
                 && p.InstigatorId == instigator?.StringId);
         }
 
+        /// True when the pending scheme is aimed at the player or a player-clan fief.
+        private static bool TargetsPlayerInterests(PendingScheme p)
+        {
+            if (p.TargetHeroId == Hero.MainHero?.StringId) return true;
+            if (!string.IsNullOrEmpty(p.TargetSettlementId))
+            {
+                var s = FindSettlement(p.TargetSettlementId);
+                return s?.OwnerClan != null && s.OwnerClan == Hero.MainHero?.Clan;
+            }
+            return false;
+        }
+
+        /// Finds one pending NPC scheme aimed at the player or their fiefs
+        /// (picked at random if multiple). Used by the counter-intelligence sweep.
+        internal static PendingScheme FindSchemeAgainstPlayerInterests()
+        {
+            try
+            {
+                var list = _pending.Where(p => !p.IsPlayer && TargetsPlayerInterests(p)).ToList();
+                return list.Count == 0 ? null : list[_rng.Next(list.Count)];
+            }
+            catch { return null; }
+        }
+
+        internal static void RemovePendingScheme(PendingScheme s)
+        {
+            if (s != null) _pending.Remove(s);
+        }
+
+        internal static Hero FindHeroById(string id) => FindHero(id);
+
         // Cooldown key for a given scheme+target combination.
         private static string CooldownKey(SchemeType type, string targetId)
             => $"{(int)type}:{targetId ?? ""}";
@@ -484,15 +515,18 @@ namespace AshAndEmber
                     catch { }
                 }
 
-                // If a scheme was just queued against the player, give a vague whisper (~30% chance).
+                // If a scheme was just queued against the player or their fiefs, give a
+                // vague whisper. Base 30% chance; Roguery sharpens the ear (up to 75%).
                 if (schemeLaunchedToday)
                 {
                     try
                     {
                         bool targetsPlayer = _pending.Any(p => !p.IsPlayer
-                            && p.TargetHeroId == Hero.MainHero?.StringId
-                            && p.DaysRemaining >= 1);
-                        if (targetsPlayer && _rng.Next(100) < 30)
+                            && p.DaysRemaining >= 1
+                            && TargetsPlayerInterests(p));
+                        int hintChance = 30;
+                        try { hintChance = Math.Min(75, 30 + (Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0) / 10); } catch { }
+                        if (targetsPlayer && _rng.Next(100) < hintChance)
                         {
                             string[] whispers =
                             {
