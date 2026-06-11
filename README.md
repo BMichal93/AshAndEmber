@@ -205,22 +205,22 @@ Every spell draws on your lifespan. Cost scales **geometrically** with total inp
 
 **The Ledger of Years** — the grimoire (Alt+X) opens with a running account of the aging economy: your age, time remaining until the fire burns out at 100, total days the fire has taken, days reclaimed (Reap, Ember, rites), and how many workings you have cast in battle and on the map.
 
-| Total inputs | Cost | With BattleMage |
-|--------------|------|-----------------|
+| Total inputs | Cost | With Tempered |
+|--------------|------|---------------|
 | 1–2 | 1 day | 1 day |
-| 3 | 2 days | 1 day |
+| 3 | 2 days | 2 days |
 | 4 | 3 days | 2 days |
 | 5 | 4 days | 3 days |
 | 6 | 5 days | 4 days |
-| 7 | 8 days | 7 days |
-| 8 | 11 days | 10 days |
-| 9 | 15 days | 14 days |
-| 10 | 21 days | 20 days |
-| 12 | 41 days | 40 days |
-| 14 | 80 days | 79 days |
-| 16+ | 84 days (cap) | 83 days |
+| 7 | 8 days | 6 days |
+| 8 | 11 days | 8 days |
+| 9 | 15 days | 11 days |
+| 10 | 21 days | 16 days |
+| 12 | 41 days | 31 days |
+| 14 | 80 days | 60 days |
+| 16+ | 84 days (cap) | 63 days |
 
-**Tempered** talent reduces the cost by 1 day (minimum 1 — battle casts are never free), plus up to 30% age-based reduction after age 40.
+**Tempered** talent cuts the cost by 25% (rounded, minimum 1 — battle casts are never free), plus up to 30% age-based reduction after age 40.
 
 ### Campaign map casting cost
 
@@ -229,10 +229,10 @@ Campaign map spells escalate in cost with each use per calendar day:
 | Cast # that day | Cost |
 |-----------------|------|
 | 1st | 1 day |
-| 2nd | 7 days |
-| 3rd | 14 days |
-| 4th | 21 days |
-| … | +7 per additional cast |
+| 2nd | 4 days |
+| 3rd | 8 days |
+| 4th | 12 days |
+| … | +4 per additional cast |
 
 The counter resets at midnight — a notification appears in the message log. **Resonance** talent gives a 25% chance to skip the cost entirely on any cast. Ashen players pay criminal rating instead of days (see below).
 
@@ -254,10 +254,12 @@ Ashen mages do not age, but repeated casting each day risks the cold stirring ag
 | Choice | Outcome |
 |--------|---------|
 | **Surrender to it** | Death — the cold claims what it wants. |
-| **Focus your will** | Leadership test. Success chance = skill × 0.3% (max 90%). Fail → death. |
-| **Overwhelm it with your body** | Athletics test. Success chance = skill × 0.3% (max 90%). Fail → death. |
+| **Focus your will** | Leadership test. Success chance = skill × 0.3% (max 90%). |
+| **Overwhelm it with your body** | Athletics test. Success chance = skill × 0.3% (max 90%). |
 
-This is the balancing cost of immortality — spamming map spells as an Ashen carries real risk.
+Failure follows a **two-strike rule**: the first failed test does not kill you — you are left broken (wounded to near-death, −20 party morale) and **strained for 21 days**. Failing another test while strained is death. Surrendering is always death.
+
+This is the balancing cost of immortality — spamming map spells as an Ashen carries real risk, but one bad roll will not end a campaign on its own.
 
 ### Tournament
 
@@ -267,17 +269,17 @@ Casting **any** spell during a tournament kills and disqualifies you instantly.
 
 ## Talents
 
-Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 9 purchased cost 1 focus point each; 10th onward costs 2 points. **Lost Forms** always cost a fixed 3 focus points.
+Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 9 purchased cost 1 focus point each; 10th onward costs 2 points. **Lost Forms** always cost a fixed 2 focus points.
 
 ### Passive
 
 | Talent | Effect |
 |--------|--------|
 | **Gift** | You carry the fire. Battle casting enabled. |
-| **Tempered** | Each battle cast costs 1 fewer day (minimum 1). Beyond age 40, each year reduces cost by an additional 0.5%, up to 30% total. |
+| **Tempered** | Battle casts cost 25% fewer days (rounded, minimum 1). Beyond age 40, each year reduces cost by an additional 0.5%, up to 30% total. |
 | **Resonance** | One in four campaign map castings costs no days. |
 | **Kinship** | +10 relations with mage lords; relation cannot fall below 0 with them. |
-| **Reap** | Executing a captured lord restores 100 days. Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner: 5% chance to restore 1 day. Learning this marks you. |
+| **Reap** | Executing a captured lord restores 20 days + 10 per tier of their clan (max 80). Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner: 5% chance to restore 1 day. Learning this marks you. |
 | **Ember** | 5% chance per battle kill to restore 1 day of youth. |
 | **Flashfire** | Each battle spell has a 10% chance to echo — firing again instantly at no aging cost. |
 
@@ -292,7 +294,7 @@ Enchantments fire automatically on every qualifying cast in battle.
 | **Scatter** | Force (A) inputs | Blasts enemies backward (5 m per Force input) and slows movement 25% per input (max 75%) for 4 s + 1.5 s per input. |
 | **Smoulder** | Any damage input | Scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
 | **Sunder** | Shred (D) inputs | Increases all damage enemies receive and reduces their attack power. Damage vulnerability = 10% per Shred input (max 50%). Attack reduction = 10% per input (max 50%). Duration = 8 s + 1.5 s per input. |
-| **Immolate** | Sear (W) inputs | Sets enemies alight — bonus burn damage (10 per Sear input). Guaranteed kills scale with Sear inputs: 3 = 1 kill, 6 = 2 kills, 9 = 3 kills. |
+| **Immolate** | Sear (W) inputs | Sets enemies alight — bonus burn damage (10 per Sear input). Kill slots scale with Sear inputs (one per 3): the first kill of a cast is certain, each further slot connects at 50%. 2 Sear: 50% kill chance; 1 Sear: 33%. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
@@ -307,7 +309,7 @@ Unlike damage enchantments — which are split across the Sear/Force/Shred natur
 
 ### Spell (campaign map)
 
-Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast each day; escalates sharply for repeated use. Crime rating instead of days if Ashen. NPC mage lords also cast these on the campaign map.
+Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast each day; escalates with repeated use. Crime rating instead of days if Ashen. NPC mage lords also cast these on the campaign map.
 
 #### Arcane sequence
 
@@ -335,14 +337,14 @@ The values in the table below are baseline (1.00×, the no-rite value).
 
 ### Lost Form (◈)
 
-Lost Forms permanently alter how a spell form behaves once purchased. Each costs a fixed **3 focus points** regardless of how many talents you own. They appear as a separate category in the talent menu.
+Lost Forms permanently alter how a spell form behaves once purchased. Each costs a fixed **2 focus points** regardless of how many talents you own. They appear as a separate category in the talent menu. They are sidegrades, not upgrades — priced below the late-game talent cost so trying one is never a build mistake.
 
 | Talent | Fixed Cost | Effect |
 |--------|-----------|--------|
-| **Widened Blast** | 3 pts | Blast cone widens from ~49° to ~60°. More units caught at the edges. |
-| **Twin Bolt** | 3 pts | Missile fires two bolts side by side, each at 60% of original damage and healing power. |
-| **Fading Ward** | 3 pts | Barrier nodes expire after 60 seconds instead of persisting indefinitely. |
-| **Directed Burst** | 3 pts | Burst is asymmetric: full power in the forward hemisphere, 40% power in the rear arc. |
+| **Widened Blast** | 2 pts | Blast cone widens from ~49° to ~60°. More units caught at the edges. |
+| **Twin Bolt** | 2 pts | Missile fires two bolts side by side, each at 60% of original damage and healing power. |
+| **Fading Ward** | 2 pts | Barrier nodes expire after 60 seconds instead of persisting indefinitely. |
+| **Directed Burst** | 2 pts | Burst is asymmetric: full power in the forward hemisphere, 40% power in the rear arc. |
 
 ---
 
@@ -872,6 +874,8 @@ Cooldowns (base; reduced 40% for Temple members; longer at lower alignment):
 
 **Location depletion:** after 5 ritual starts at a single Sanctuary (any mix of rites), the flame there rests for 30 days and all options are disabled. Travel to another Sanctuary to continue. The counter and recovery timer are shown in the sub-menu header.
 
+**Altar interference:** the flame and the grey stone reject each other. Using an Ashen Altar halves Sanctuary yield for the next **30 days** (and vice versa). The remaining interference window is shown in the sub-menu header.
+
 When Protective Rites are active, any Ashen world event that would fire instead shows a notification that the ward held. The counter ticks down daily.
 
 **NPC behavior (simulated ritual):** NPC lords simulate 3–4 rounds of meditation when the chance fires. If their simulated accumulation meets the threshold, the effect applies.
@@ -957,6 +961,8 @@ Cooldowns (base; longer at lower alignment):
 | The Ashen Solstice | 14 days |
 
 **Location depletion:** after 5 ritual starts at a single altar (any mix of rites), the stone rests for 30 days and all options are disabled. Travel to another altar city. The counter and recovery timer are shown in the sub-menu header.
+
+**Sanctuary interference:** the grey stone and the flame reject each other. Praying at a Sanctuary halves altar yield for the next **30 days** (and vice versa). The remaining interference window is shown in the sub-menu header.
 
 **NPC behavior (simulated ritual):** NPC lords simulate 3 rounds of sacrifice. If their simulated accumulation meets the threshold, the effect applies.
 - Ashen lords in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears.

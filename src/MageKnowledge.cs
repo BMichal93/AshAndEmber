@@ -20,7 +20,23 @@ namespace AshAndEmber
     {
         private static bool   _isMage            = false;
         private static bool   _isAshen          = false;
-        internal static Action _deferredInquiry  = null;
+
+        // Deferred map-layer dialog queue. Historically a single Action slot:
+        // when two systems queued a popup the same day, one was silently lost —
+        // including main-quest beats. The property keeps the old field contract
+        // (read = peek, assign = enqueue, assign null = pop) so the ~90 existing
+        // call sites work unchanged, but unguarded writers now queue behind the
+        // pending dialog instead of overwriting it. The flush drains one per tick.
+        private static readonly Queue<Action> _inquiryQueue = new Queue<Action>();
+        internal static Action _deferredInquiry
+        {
+            get => _inquiryQueue.Count > 0 ? _inquiryQueue.Peek() : null;
+            set
+            {
+                if (value == null) { if (_inquiryQueue.Count > 0) _inquiryQueue.Dequeue(); }
+                else _inquiryQueue.Enqueue(value);
+            }
+        }
         private static readonly HashSet<string> _giftedChildIds = new HashSet<string>();
         private static readonly Random _rng = new Random();
 
@@ -87,8 +103,8 @@ namespace AshAndEmber
             if (_coldCallCountdown > 0)
             {
                 _coldCallCountdown--;
-                if (_coldCallCountdown == 0 && _deferredInquiry == null)
-                    _deferredInquiry = ShowColdCallsEvent;
+                if (_coldCallCountdown == 0)
+                    _deferredInquiry = ShowColdCallsEvent; // queued — never lost to a busy day
             }
 
             // Ambient flavour: once the cold has noticed (25+), it occasionally
@@ -126,6 +142,9 @@ namespace AshAndEmber
                 }
             }
             catch { }
+
+            // Possession strain heals with time.
+            if (_possessionStrainDays > 0) _possessionStrainDays--;
 
             // Quiet-conduct decay: 10 clean days and the cold starts losing
             // interest — roughly 1 whisper every 3 days regardless of traits.
@@ -179,11 +198,12 @@ namespace AshAndEmber
         {
             _isMage           = false;
             _isAshen          = false;
-            _deferredInquiry  = null;
+            _inquiryQueue.Clear();
             _whisperCount     = 0;
             _coldCallCountdown = 0;
             _daysSinceWhisperGain = 0;
             _lastAmbientIdx   = -1;
+            _possessionStrainDays = 0;
             _giftedChildIds.Clear();
             TalentSystem.ResetForNewGame();
             ColourLordRegistry.ResetForNewGame();
@@ -260,10 +280,34 @@ namespace AshAndEmber
         }
 
         // ── Possession event (Ashen 2nd+ cast per day) ───────────────────────
+        // Two-strike rule: the first failed test does not kill — the cold gains
+        // ground (wounded, morale loss, 21 days of strain). A second failure
+        // while strained is death. One bad roll should hurt, not end a campaign.
+        private static int _possessionStrainDays = 0;
+        public static bool IsPossessionStrained => _possessionStrainDays > 0;
 
         public static void QueuePossessionEvent()
         {
             _deferredInquiry = ShowPossessionEvent;
+        }
+
+        private static void OnPossessionTestFailed(string failText)
+        {
+            if (_possessionStrainDays > 0)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    failText + " There was nothing left to hold it back. The cold claims you.",
+                    new Color(0.3f, 0.35f, 0.7f)));
+                try { TaleWorlds.CampaignSystem.Actions.KillCharacterAction.ApplyByOldAge(Hero.MainHero, true); } catch { }
+                return;
+            }
+            _possessionStrainDays = 21;
+            try { Hero.MainHero.HitPoints = Math.Min(Hero.MainHero.HitPoints, 5); } catch { }
+            try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
+            InformationManager.DisplayMessage(new InformationMessage(
+                failText + " You wake face-down in the ash, body broken, the cold a half-step closer. " +
+                "If it turns on you again before your strength returns (21 days), it will not let go.",
+                new Color(0.3f, 0.35f, 0.7f)));
         }
 
         private static void ShowPossessionEvent()
@@ -284,9 +328,11 @@ namespace AshAndEmber
                     new InquiryElement("surrender", "Surrender to it.", null, true,
                         "Let the cold take what it wants. It will not need much more."),
                     new InquiryElement("leader", "Focus your will — fight it from within.", null, true,
-                        $"Leadership test. Skill: {lSkill}. Success chance: {lPct}%."),
+                        $"Leadership test. Skill: {lSkill}. Success chance: {lPct}%." +
+                        (IsPossessionStrained ? " You are still strained — failure now is death." : " Failure leaves you broken and strained, not dead.")),
                     new InquiryElement("athlete", "Drive it back — overwhelm it with your body.", null, true,
-                        $"Athletics test. Skill: {aSkill}. Success chance: {aPct}%."),
+                        $"Athletics test. Skill: {aSkill}. Success chance: {aPct}%." +
+                        (IsPossessionStrained ? " You are still strained — failure now is death." : " Failure leaves you broken and strained, not dead.")),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -304,11 +350,7 @@ namespace AshAndEmber
                             InformationManager.DisplayMessage(new InformationMessage(
                                 "Your will holds. The cold retreats — for now.", new Color(0.7f, 0.7f, 0.9f)));
                         else
-                        {
-                            InformationManager.DisplayMessage(new InformationMessage(
-                                "Your will breaks. The cold claims you.", new Color(0.3f, 0.35f, 0.7f)));
-                            try { TaleWorlds.CampaignSystem.Actions.KillCharacterAction.ApplyByOldAge(Hero.MainHero, true); } catch { }
-                        }
+                            OnPossessionTestFailed("Your will breaks.");
                     }
                     else if (choice == "athlete")
                     {
@@ -316,11 +358,7 @@ namespace AshAndEmber
                             InformationManager.DisplayMessage(new InformationMessage(
                                 "You push it back. The cold recoils.", new Color(0.7f, 0.7f, 0.9f)));
                         else
-                        {
-                            InformationManager.DisplayMessage(new InformationMessage(
-                                "Your body gives out. The cold takes you.", new Color(0.3f, 0.35f, 0.7f)));
-                            try { TaleWorlds.CampaignSystem.Actions.KillCharacterAction.ApplyByOldAge(Hero.MainHero, true); } catch { }
-                        }
+                            OnPossessionTestFailed("Your body gives out.");
                     }
                 },
                 null, "", false
@@ -476,7 +514,7 @@ namespace AshAndEmber
                 "  1–2 inputs = 1 day   3 = 2 days   4 = 3   5 = 4   6 = 5\n" +
                 "  7 = 8 days   8 = 11   9 = 15   10 = 21   12 = 41   14 = 80\n" +
                 "  Hard cap: 84 days (= 1 year). Mage lords age at the same rate.\n" +
-                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] −1 day cost (min 1) + up to 30% age reduction.\n" : "") +
+                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] −25% cost (min 1) + up to 30% age reduction.\n" : "") +
                 ashenNote +
                 "\n── CAMPAIGN SPELLS  (outside a mission → \"Cast\") ────────\n" +
                 "  A 3-step ritual description appears. Commit it to memory.\n" +
@@ -489,7 +527,7 @@ namespace AshAndEmber
                 "    0/3 correct → 0.50×   Scattered.\n\n" +
                 "  The aging cost is always paid.\n" +
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +
-                "\n── LOST FORMS  (Talents → Lost Form, 3 focus pts each) ──────\n" +
+                "\n── LOST FORMS  (Talents → Lost Form, 2 focus pts each) ──────\n" +
                 "  ◈ Widened Blast   — blast cone opens from ~49° to ~60°\n" +
                 "  ◈ Twin Bolt       — missile fires two bolts at 60% power each\n" +
                 "  ◈ Fading Ward     — barrier expires after 60 seconds\n" +
@@ -635,7 +673,7 @@ namespace AshAndEmber
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "Talents  —  The Inner Fire",
-                $"✦ = spell   ❋ = enchantment   ◆ = passive   ◈ = lost form   Cost: {costStr} (lost forms: 3 pts).",
+                $"✦ = spell   ❋ = enchantment   ◆ = passive   ◈ = lost form   Cost: {costStr} (lost forms: 2 pts).",
                 elements,
                 true, 0, 1,
                 "Learn", "Close",
@@ -663,6 +701,7 @@ namespace AshAndEmber
             store.SyncData("LDM_WhisperCount",   ref _whisperCount);
             store.SyncData("LDM_ColdCallCD",     ref _coldCallCountdown);
             store.SyncData("LDM_WhisperQuiet",   ref _daysSinceWhisperGain);
+            store.SyncData("LDM_PossessStrain",  ref _possessionStrainDays);
             TalentSystem.Save(store);
 
             _giftedChildIds.Clear();

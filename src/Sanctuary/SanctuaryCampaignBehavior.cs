@@ -484,9 +484,13 @@ namespace AshAndEmber
                         string traitNote = _traitBoostUntilDay >= today ? $"  [Flame Mark: {_traitBoostUntilDay - today + 1} day(s)]" : "";
                         string deplNote = IsLocationDepleted()
                             ? $"  [SPENT — returns in {LocationDepletedDaysLeft()} day(s)]" : "";
+                        string interNote = "";
+                        int sinceAltar = today - AshenAltarsCampaignBehavior._lastAltarUseDay;
+                        if (sinceAltar >= 0 && sinceAltar < CrossInterferenceDays)
+                            interNote = $"  [Altar interference — the flame smells the grey stone on you; yield halved for {CrossInterferenceDays - sinceAltar} day(s)]";
                         string hdr = IsTempleMember()
-                            ? $"The Sanctuary of The Temple. The flame knows you. Cooldowns reduced.{protNote}{blessNote}{steadNote}{traitNote}{deplNote}"
-                            : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{protNote}{blessNote}{steadNote}{traitNote}{deplNote}";
+                            ? $"The Sanctuary of The Temple. The flame knows you. Cooldowns reduced.{protNote}{blessNote}{steadNote}{traitNote}{interNote}{deplNote}"
+                            : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{protNote}{blessNote}{steadNote}{traitNote}{interNote}{deplNote}";
                         MBTextManager.SetTextVariable("SANCT_MENU_HEADER", hdr);
                     }
                     catch { }

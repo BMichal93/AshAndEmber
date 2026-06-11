@@ -342,7 +342,9 @@ namespace AshAndEmber
                     "The Ashen will crumble. The darkness will retreat. " +
                     "And the world will have a morning it would not have had.\n\n" +
                     "The chance exists. It will not exist forever.\n\n" +
-                    "This is what he was asking.",
+                    "This is what he was asking.\n\n" +
+                    "(Choosing to rekindle ENDS YOUR CAMPAIGN — your hero dies and the game is over. " +
+                    "Refusing closes the quest forever; the campaign continues.)",
 
                     true, true,
                     "Do it. Light everything.",

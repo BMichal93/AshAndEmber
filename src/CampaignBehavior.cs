@@ -831,7 +831,10 @@ namespace AshAndEmber
                 try { victimIsLord = victim.IsLord; } catch { }
                 if (!victimIsLord) return;
 
-                // Reap: executing a captured lord draws back 100 campaign days.
+                // Reap: executing a captured lord draws back days of life scaled by
+                // the victim's standing — 20 + 10 per clan tier (20–80). A flat 100
+                // bought ~20 large battle spells per execution and trivialised the
+                // aging economy outright.
                 // Guard with a StringId set — HeroKilledEvent can fire twice under certain
                 // Bannerlord load/save conditions, causing double rejuvenation.
                 if (killer == Hero.MainHero
@@ -841,7 +844,9 @@ namespace AshAndEmber
                     && !_executedLordIds.Contains(victim.StringId))
                 {
                     _executedLordIds.Add(victim.StringId);
-                    try { AgingSystem.RejuvenateHero(Hero.MainHero, 100); } catch { }
+                    int reapTier = 0;
+                    try { reapTier = Math.Max(0, Math.Min(6, victim.Clan?.Tier ?? 0)); } catch { }
+                    try { AgingSystem.RejuvenateHero(Hero.MainHero, 20 + 10 * reapTier); } catch { }
                 }
                 // Whispers: executing any lord costs 5
                 if (killer == Hero.MainHero && MageKnowledge.IsMage)

@@ -71,8 +71,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"You sense a cold fire fixed on you — {shadow.Name} marks you as their quarry.",
                     new Color(0.38f, 0.50f, 0.75f)));
-                if (MageKnowledge._deferredInquiry == null)
-                    MageKnowledge._deferredInquiry = () => ShowDesignationEvent(shadow.Name?.ToString() ?? "an Ashen lord");
+                MageKnowledge._deferredInquiry = () => ShowDesignationEvent(shadow.Name?.ToString() ?? "an Ashen lord");
             }
             catch { }
         }
@@ -114,9 +113,10 @@ namespace AshAndEmber
 
             if (_schemeCount >= 5)
             {
+                // Queue unconditionally: DailyTick pauses while _duelPending, so a
+                // busy dialog day here used to lose the duel forever.
                 _duelPending = true;
-                if (MageKnowledge._deferredInquiry == null)
-                    MageKnowledge._deferredInquiry = ShowDuelEvent;
+                MageKnowledge._deferredInquiry = ShowDuelEvent;
             }
         }
 
