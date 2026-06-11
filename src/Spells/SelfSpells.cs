@@ -44,6 +44,10 @@ namespace AshAndEmber
             sc.Form                 = original.Form;
             sc.DamageCount          = original.DamageCount  > 0 ? Math.Max(1, (int)(original.DamageCount  * factor)) : 0;
             sc.RestoreCount         = original.RestoreCount > 0 ? Math.Max(1, (int)(original.RestoreCount * factor)) : 0;
+            // Preserve the per-key damage natures so split-cast effects survive the scale.
+            sc.SearCount            = original.SearCount    > 0 ? Math.Max(1, (int)(original.SearCount    * factor)) : 0;
+            sc.ForceCount           = original.ForceCount   > 0 ? Math.Max(1, (int)(original.ForceCount   * factor)) : 0;
+            sc.ShredCount           = original.ShredCount   > 0 ? Math.Max(1, (int)(original.ShredCount   * factor)) : 0;
             sc.UsingLostMissile     = true;
             sc.OverrideVisualColor  = original.OverrideVisualColor;
             return sc;

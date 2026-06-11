@@ -493,6 +493,7 @@ namespace AshAndEmber
             if (cast.DamageCount > 0)
             {
                 DamageAgent(target, cast.DamageCount * 25f, owner: caster);
+                if (cast.HasSplitDamage) ApplyInnateDamageNatures(target, cast, caster);
                 ApplyDamageEnchantments(target, cast, caster);
             }
 
@@ -500,22 +501,96 @@ namespace AshAndEmber
             if (cast.RestoreCount > 0 && isAlly)
             {
                 HealAgent(target, cast.RestoreCount * 15f);
+                ApplyInnateRestoreNature(target, cast, caster);
                 ApplyRestoreEnchantments(target, cast, caster);
             }
+        }
+
+        // ── Innate damage natures ──────────────────────────────────────────────
+        // Each damage key carries a weak built-in effect for player casts:
+        //   Sear (U)  → small extra burn damage
+        //   Force (L) → short concussive push
+        //   Shred (R) → minor armour shred
+        // The matching enchantment talent (Immolate / Scatter / Sunder)
+        // supersedes its innate version with the full effect, so a talent owner
+        // does not double-dip.
+        private static void ApplyInnateDamageNatures(Agent target, SpellCast cast, Agent caster)
+        {
+            // Sear: lingering burn — a fraction of Immolate's burn damage.
+            if (cast.SearCount > 0 && !CasterHasEnchantment(caster, TalentId.Immolate))
+            {
+                try
+                {
+                    DamageAgent(target, cast.SearCount * 5f, owner: caster);
+                    BeginAgentGlow(target, ColorSchool.Red, 1.5f);
+                }
+                catch { }
+            }
+
+            // Force: short push away from the caster — a fraction of Scatter's throw.
+            if (cast.ForceCount > 0 && !CasterHasEnchantment(caster, TalentId.Scatter))
+            {
+                bool isMounted = false;
+                try { isMounted = target.MountAgent != null; } catch { }
+                if (!isMounted && !target.IsHero)
+                {
+                    try
+                    {
+                        float dist  = cast.ForceCount * 1.5f;
+                        Vec3 origin = caster?.Position ?? target.Position;
+                        Vec3 dir    = (target.Position - origin);
+                        if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
+                        dir = new Vec3(dir.x, dir.y, 0f).NormalizedCopy();
+                        Vec3 dest = target.Position + dir * dist;
+                        dest.z = target.Position.z;
+                        QueueMove(target, dest, 0.3f);
+                    }
+                    catch { }
+                }
+            }
+
+            // Shred: brief minor vulnerability — a fraction of Sunder's shred.
+            if (cast.ShredCount > 0 && !CasterHasEnchantment(caster, TalentId.Sunder))
+            {
+                try
+                {
+                    float vuln     = Math.Min(12f, cast.ShredCount * 4f); // raw value, /100 in DamageAgent
+                    float duration = 4f;
+                    if (!_sunderedAgents.TryGetValue(target, out var existing))
+                        _sunderedAgents[target] = (vuln, duration);
+                    else
+                        _sunderedAgents[target] = (Math.Max(existing.BonusVuln, vuln), Math.Max(existing.Remaining, duration));
+                }
+                catch { }
+            }
+        }
+
+        // Restore carries a weak built-in morale lift; the Hearthlight talent
+        // supersedes it with the full boost.
+        private static void ApplyInnateRestoreNature(Agent target, SpellCast cast, Agent caster)
+        {
+            if (cast.RestoreCount <= 0 || CasterHasEnchantment(caster, TalentId.Hearthlight)) return;
+            try
+            {
+                float cur = target.GetMorale();
+                target.SetMorale(Math.Min(cur + cast.RestoreCount * 4f, 100f));
+            }
+            catch { }
         }
 
         // ── Enchantment application ────────────────────────────────────────────
 
         private static void ApplyDamageEnchantments(Agent target, SpellCast cast, Agent caster)
         {
-            // Scatter: push enemies back + sear limbs to slow movement (merged Char)
-            if (CasterHasEnchantment(caster, TalentId.Scatter))
+            // Scatter: push enemies back + sear limbs to slow movement (merged Char).
+            // Triggered by Force (L) inputs; unsplit NPC casts use the full DamageCount.
+            if (cast.EffForce > 0 && CasterHasEnchantment(caster, TalentId.Scatter))
             {
                 bool isMounted = false;
                 try { isMounted = target.MountAgent != null; } catch { }
                 if (!isMounted)
                 {
-                    float dist = cast.DamageCount * 5f;  // 5m per input (was 4m)
+                    float dist = cast.EffForce * 5f;  // 5m per input (was 4m)
                     Vec3 origin = caster?.Position ?? target.Position;
                     Vec3 dir = (target.Position - origin);
                     if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
@@ -528,8 +603,8 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        float reducedSpeed = Math.Max(1f, 10f - cast.DamageCount * 2.5f);
-                        float duration = 4f + cast.DamageCount * 1.5f;  // was 1f per input
+                        float reducedSpeed = Math.Max(1f, 10f - cast.EffForce * 2.5f);
+                        float duration = 4f + cast.EffForce * 1.5f;  // was 1f per input
                         if (!_charredAgents.TryGetValue(target, out var cur))
                             _charredAgents[target] = (reducedSpeed, duration);
                         else
@@ -588,13 +663,14 @@ namespace AshAndEmber
             }
 
             // Sunder: shred target armour (more damage received) and weapon arm (less damage dealt).
-            if (CasterHasEnchantment(caster, TalentId.Sunder))
+            // Triggered by Shred (R) inputs; unsplit NPC casts use the full DamageCount.
+            if (cast.EffShred > 0 && CasterHasEnchantment(caster, TalentId.Sunder))
             {
                 try
                 {
-                    float vuln = cast.DamageCount * 10f; // raw value, capped to 50% in DamageAgent
-                    float attackWeaken = Math.Min(0.50f, cast.DamageCount * 0.10f);  // was 0.08f, cap 0.40f
-                    float duration = 8f + cast.DamageCount * 1.5f;  // was fixed 8f
+                    float vuln = cast.EffShred * 10f; // raw value, capped to 50% in DamageAgent
+                    float attackWeaken = Math.Min(0.50f, cast.EffShred * 0.10f);  // was 0.08f, cap 0.40f
+                    float duration = 8f + cast.EffShred * 1.5f;  // was fixed 8f
                     if (!_sunderedAgents.TryGetValue(target, out var existing))
                         _sunderedAgents[target] = (vuln, duration);
                     else
@@ -609,19 +685,20 @@ namespace AshAndEmber
             }
 
             // Immolate: burn damage per input; kills scale with inputs.
-            // ≥3 inputs: guaranteed kills (DamageCount / 3 per cast).
+            // Triggered by Sear (U) inputs; unsplit NPC casts use the full DamageCount.
+            // ≥3 inputs: guaranteed kills (EffSear / 3 per cast).
             // 2 inputs: 50% chance to kill. 1 input: 33% chance to kill.
-            if (CasterHasEnchantment(caster, TalentId.Immolate))
+            if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Immolate))
             {
                 try
                 {
                     if (_immolateKillsRemaining < 0)
-                        _immolateKillsRemaining = cast.DamageCount / 3;
+                        _immolateKillsRemaining = cast.EffSear / 3;
 
-                    bool doGuaranteedKill = cast.DamageCount >= 3 && _immolateKillsRemaining > 0;
+                    bool doGuaranteedKill = cast.EffSear >= 3 && _immolateKillsRemaining > 0;
                     bool doProbKill = !doGuaranteedKill && (
-                        (cast.DamageCount == 2 && _rng.NextDouble() < 0.50) ||
-                        (cast.DamageCount == 1 && _rng.NextDouble() < 0.33));
+                        (cast.EffSear == 2 && _rng.NextDouble() < 0.50) ||
+                        (cast.EffSear == 1 && _rng.NextDouble() < 0.33));
 
                     if (doGuaranteedKill)
                     {
@@ -640,7 +717,7 @@ namespace AshAndEmber
                     }
                     else
                     {
-                        DamageAgent(target, cast.DamageCount * 10f, owner: caster);
+                        DamageAgent(target, cast.EffSear * 10f, owner: caster);
                         BeginAgentGlow(target, ColorSchool.Red, 1.5f);
                     }
                 }

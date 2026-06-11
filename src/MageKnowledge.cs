@@ -352,7 +352,7 @@ namespace AshAndEmber
                 $"  1. {stepFocus}  → enter Focus\n" +
                 $"  2. {stepShape}  → shape the spell  (repeat for more power)\n" +
                 $"  3. {stepBreak}  → Break: locks shape, enter power phase\n" +
-                "  4. W / A / D  → Damage   |   S → Heal\n" +
+                "  4. W = Sear / A = Force / D = Shred  (damage)   |   S → Heal\n" +
                 $"  5. {stepRelease}  → the spell fires!\n\n" +
                 "  Watch the screen: [ U ▷ U ] shows your formula as you build it.\n" +
                 "  Your hands must be free — sheathe your weapon first.\n\n" +
@@ -363,9 +363,13 @@ namespace AshAndEmber
                 "  S / ↓  Burst    — ring around you  (+2.5 m radius per S, also heals you)\n" +
                 "  Mix freely — W then S fires a Blast and a Burst at the same time.\n\n" +
                 "── POWER  (step 4, after Break) ─────────────────────\n" +
-                "  W / A / D  →  Damage  — 25 fire damage per press, hits enemies\n" +
-                "  S          →  Restore — 15 healing per press, reaches nearby allies\n" +
-                "  Talents add enchantments automatically — no extra keys needed.\n\n" +
+                "  Every damage key deals 25 fire damage — but each carries a nature:\n" +
+                "  W / ↑  Sear   — searing burn  (+5 burn per press; Immolate amplifies)\n" +
+                "  A / ←  Force  — concussive push (1.5 m per press; Scatter amplifies)\n" +
+                "  D / →  Shred  — armour shred  (+4% damage taken; Sunder amplifies)\n" +
+                "  S / ↓  Restore — 15 healing per press + small morale lift to allies\n" +
+                "  Mix natures freely: WWA after Break = 75 damage, sear ×2 + force ×1.\n" +
+                "  Owning a key's talent replaces its weak innate effect with the full one.\n\n" +
                 "── EXAMPLES  (try these first!) ─────────────────────\n" +
                 "  W, X, W, release        →  Blast,   25 dmg,   1 day\n" +
                 "  A, X, W, release        →  Missile, 25 dmg,   1 day\n" +
