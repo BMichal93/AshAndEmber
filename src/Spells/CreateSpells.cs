@@ -68,7 +68,7 @@ namespace AshAndEmber
                 Radius       = 1.5f,
                 TickInterval = 0.5f,
                 TickTimer    = 0.5f,
-                Remaining    = cast.UsingLostBarrier ? 60f : -1f,
+                Remaining    = cast.UsingLostBarrier ? 60f : 30f,
                 Power        = token,
                 CasterTeam   = casterTeam
             };
@@ -86,7 +86,7 @@ namespace AshAndEmber
         }
 
         // Called from AreaEffects.cs tick (every 0.5 s per node)
-        // Barrier lives indefinitely (Remaining = -1) until cast again.
+        // Regular barrier expires after 30 s; Lost Barrier after 60 s.
         internal static void TickBarrierNode(AreaEffect e)
         {
             if (Mission.Current == null) return;
