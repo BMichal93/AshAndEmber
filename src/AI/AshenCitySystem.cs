@@ -609,6 +609,7 @@ namespace AshAndEmber
             }
             catch { }
             if (target == null) return;
+            if (ashenLord.Clan == null) return; // detached hero — cannot anchor a settlement
 
             try
             {

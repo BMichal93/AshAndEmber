@@ -941,6 +941,11 @@ namespace AshAndEmber
             if (list != null)
                 foreach (int v in list) _purchased.Add((TalentId)v);
 
+            // Persist the daily map-cast counter — it is static, so without this a
+            // load mid-day (or of a different campaign) inherits the previous
+            // session's counter and miscalculates the escalating cast cost.
+            store.SyncData("LDM_DailyCastCount", ref _dailyMapCastCount);
+
             // Fade is intentionally not persisted — on load the effect resets.
             // Explicitly clear IgnoreByOtherParties so a save/load while faded
             // does not leave the party permanently invisible.

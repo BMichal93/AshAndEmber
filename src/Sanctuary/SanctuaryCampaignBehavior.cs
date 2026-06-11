@@ -353,6 +353,10 @@ namespace AshAndEmber
         // target: hidden from player. accumulated/round: updated each call via closures.
         // applyRoundCost: called once per round, returns narrative.
         // onSuccess/onFailure: called when player stops.
+        // Each round the player chooses HOW to continue:
+        //   steady  — normal roll.
+        //   fervent — roll ×1.5, but one round in three the flame lashes out and
+        //             the round cost is paid a second time.
         private static void RunSanctuaryRitual(
             string riteName,
             int target,
@@ -364,10 +368,26 @@ namespace AshAndEmber
             int accumulated = 0;
             int round       = 0;
 
-            void DoRound()
+            void Finish()
+            {
+                if (accumulated >= target) onSuccess();
+                else
+                {
+                    if (!MageKnowledge.IsAshen) try { MageKnowledge.AddWhispers(2); } catch { }
+                    onFailure();
+                }
+            }
+
+            void DoRound(bool fervent)
             {
                 string costNarr = applyRoundCost();
+                if (fervent && _rng.Next(3) == 0)
+                {
+                    applyRoundCost();
+                    costNarr += "\n\nThe flame surges past what you offered — it takes a second portion, uninvited.";
+                }
                 int pts = RollRoundPoints(mult);
+                if (fervent) pts = Math.Max(1, (int)Math.Round(pts * 1.5f));
                 accumulated += pts;
                 round++;
 
@@ -377,34 +397,34 @@ namespace AshAndEmber
 
                 try
                 {
-                    InformationManager.ShowInquiry(new InquiryData(
-                        header, body, true, true,
-                        "Continue the meditation",
-                        "Step back — claim what the flame offers",
-                        () => DoRound(),
-                        () =>
+                    var options = new List<InquiryElement>
+                    {
+                        new InquiryElement("steady", "Continue — steady devotion", null, true,
+                            "Meditate as taught. A measured offering, a measured answer."),
+                        new InquiryElement("fervent", "Continue — fervent devotion", null, true,
+                            "Pour yourself into the flame. Progress builds half again as fast — but one round in three, the flame takes a second helping of your offering."),
+                        new InquiryElement("stop", "Step back — claim what the flame offers", null, true,
+                            "End the meditation. If the flame has been given enough, the prayer fires; if not, the cost is lost."),
+                    };
+                    MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                        header, body, options, false, 1, 1, "Decide", "",
+                        chosen =>
                         {
-                            if (accumulated >= target) onSuccess();
-                            else
-                            {
-                                if (!MageKnowledge.IsAshen) try { MageKnowledge.AddWhispers(2); } catch { }
-                                onFailure();
-                            }
-                        }));
+                            string pick = chosen?[0]?.Identifier as string ?? "stop";
+                            if      (pick == "steady")  DoRound(false);
+                            else if (pick == "fervent") DoRound(true);
+                            else Finish();
+                        },
+                        null, "", false), false, true);
                 }
                 catch
                 {
                     // Fallback: resolve immediately
-                    if (accumulated >= target) onSuccess();
-                    else
-                    {
-                        if (!MageKnowledge.IsAshen) try { MageKnowledge.AddWhispers(2); } catch { }
-                        onFailure();
-                    }
+                    Finish();
                 }
             }
 
-            DoRound();
+            DoRound(false);
         }
 
         private static void ShowRitualFailure(string riteName)

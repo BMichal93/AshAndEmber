@@ -48,6 +48,29 @@ namespace AshAndEmber
         {
             RegisterDialogue(starter);
             RegisterSchemeMenus(starter);
+            ResumeUnresolvedOperation();
+        }
+
+        // A committed operation whose Gambit never resolved (save/load mid-game)
+        // is re-launched — the player already paid for it.
+        private static void ResumeUnresolvedOperation()
+        {
+            try
+            {
+                if (!SchemeSystem.TryGetPendingPlayerOperation(out var def, out Hero hero, out Settlement sett))
+                    return;
+                MageKnowledge._deferredInquiry = () =>
+                {
+                    try
+                    {
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            $"Your operative is still in the field — the {def.Name} operation resumes."));
+                        SchemeMinigame.Begin(def, hero, sett);
+                    }
+                    catch { }
+                };
+            }
+            catch { }
         }
 
         // ── Tavernkeeper dialogue ─────────────────────────────────────────────
@@ -560,6 +583,11 @@ namespace AshAndEmber
                 // cannot bypass the cost and retry the same target for free. The minigame
                 // will overwrite this with the outcome-correct value on resolution.
                 try { SchemeSystem.PreStampTargetCooldown(capturedDef.Type, capturedHero, capturedSett); } catch { }
+
+                // Record the committed operation. If the player reloads before the
+                // Gambit resolves, OnSessionLaunched re-launches it so the costs
+                // already paid are not silently lost.
+                try { SchemeSystem.SetPendingPlayerOperation(capturedDef.Type, capturedHero, capturedSett); } catch { }
 
                 try { GameMenu.SwitchToMenu("town"); } catch { }
 

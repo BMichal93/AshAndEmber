@@ -295,6 +295,8 @@ namespace AshAndEmber
                     if (e.Remaining <= 0f)
                     {
                         try { e.LightEntity?.Remove(0); } catch { }
+                        try { e.LightEntity2?.Remove(0); } catch { }
+                        try { e.LightEntity3?.Remove(0); } catch { }
                         _areaEffects.RemoveAt(i);
                         continue;
                     }

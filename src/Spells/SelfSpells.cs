@@ -157,8 +157,8 @@ namespace AshAndEmber
                 foreach (Agent a in Mission.Current.Agents)
                 {
                     if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
-                    bool isEnemy = m.CasterTeam != null && a.Team != m.CasterTeam;
-                    bool isAlly  = m.CasterTeam != null && a.Team == m.CasterTeam;
+                    bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                    bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
                     if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
                     float dx = a.Position.x - mpos.x;
                     float dy = a.Position.y - mpos.y;
@@ -203,8 +203,8 @@ namespace AshAndEmber
                     float dist = new Vec3(a.Position.x - pos.x,
                                          a.Position.y - pos.y, 0f).Length;
                     if (dist > radius) continue;
-                    bool isEnemy = m.CasterTeam != null && a.Team != m.CasterTeam;
-                    bool isAlly  = m.CasterTeam != null && a.Team == m.CasterTeam;
+                    bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                    bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
                     if (!(wantDmg || (wantHeal && isAlly))) continue;
                     if (IsWarded(a)) continue;
                     try
