@@ -50,6 +50,21 @@ namespace AshAndEmber
         public const int BlessVentureAgingDays = 1;
         public static readonly int[] VentureTiers = { 500, 2000, 8000 };
 
+        // ── NPC sea lanes ────────────────────────────────────────────────────
+        // Lords and caravans leaving a harbor town may take ship instead of
+        // marching. Lords only sail toward a destination their AI already
+        // wants; caravans hop opportunistically between trade ports.
+        public const float NpcMinCrossing        = 150f;  // shorter hops aren't worth the fare
+        public const float NpcMaxCaravanCrossing = 700f;  // caravans stay on plausible trade legs
+        public const float NpcLordSailChance     = 0.35f;
+        public const float NpcCaravanSailChance  = 0.20f;
+        public const int   NpcSailCooldownDays   = 8;
+        public const float NpcPortReachUnits     = 100f;  // AI target counts as "across the sea" within this of a port
+        public const float PortProsperityPerDay  = 1f;    // sea commerce trickle for harbor towns
+
+        public static bool NpcCrossingViable(float crossing, bool caravan)
+            => crossing >= NpcMinCrossing && (!caravan || crossing <= NpcMaxCaravanCrossing);
+
         public static float TravelHours(float distance, bool emberwind)
         {
             float h = Math.Max(MinVoyageHours, distance / ShipUnitsPerHour);

@@ -80,11 +80,16 @@ namespace AshAndEmber
         }
         private static readonly List<Venture> _ventures = new List<Venture>();
 
+        // NPC sea-leg cooldowns by party id — in-memory only; a reload simply
+        // lets everyone sail again, which costs nothing.
+        private static readonly Dictionary<string, int> _npcSailCooldown = new Dictionary<string, int>();
+
         // ── CampaignBehaviorBase ───────────────────────────────────────────────
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+            CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeft);
         }
 
         public override void SyncData(IDataStore store)
@@ -148,6 +153,117 @@ namespace AshAndEmber
         private void OnDailyTick()
         {
             try { TickVentures(); } catch { }
+            try { TickNpcSea(); } catch { }
+        }
+
+        private static void TickNpcSea()
+        {
+            // Sea-leg cooldowns tick down.
+            foreach (var key in _npcSailCooldown.Keys.ToList())
+            {
+                if (--_npcSailCooldown[key] <= 0)
+                    _npcSailCooldown.Remove(key);
+            }
+
+            // Harbor towns skim a living off the traffic.
+            foreach (var p in _ports)
+            {
+                try { if (p?.Town != null) p.Town.Prosperity += SeaMath.PortProsperityPerDay; } catch { }
+            }
+        }
+
+        // ── NPC sea lanes ──────────────────────────────────────────────────────
+        // Lords and caravans leaving a harbor town may take ship: the party is
+        // moved to the destination port after weathering the same corsair odds
+        // the player faces (resolved silently against their roster).
+        private void OnSettlementLeft(MobileParty party, Settlement settlement)
+        {
+            try
+            {
+                if (party == null || settlement == null || party.IsMainParty) return;
+                bool caravan = party.IsCaravan;
+                bool lord    = !caravan && party.IsLordParty && party.LeaderHero != null;
+                if (!caravan && !lord) return;
+                if (_ports.Count < 2 || !IsPort(settlement)) return;
+                if (!party.IsActive || party.MapEvent != null || party.Army != null) return;
+
+                string id = party.StringId ?? "";
+                if (_npcSailCooldown.ContainsKey(id)) return;
+
+                Settlement dest; float crossing;
+                if (lord)
+                {
+                    // Lords sail with purpose: only when their AI is already
+                    // bound for somewhere within reach of another harbor.
+                    Settlement target = null;
+                    try { target = party.TargetSettlement; } catch { }
+                    if (target == null || target == settlement) return;
+                    dest = PortNear(target, exclude: settlement);
+                    if (dest == null) return;
+                    crossing = PortDistance(settlement, dest);
+                    if (!SeaMath.NpcCrossingViable(crossing, caravan: false)) return;
+                    if (_rng.NextDouble() >= SeaMath.NpcLordSailChance) return;
+                }
+                else
+                {
+                    if (_rng.NextDouble() >= SeaMath.NpcCaravanSailChance) return;
+                    var legs = _ports
+                        .Where(p => p != settlement)
+                        .Select(p => new { Port = p, Dist = PortDistance(settlement, p) })
+                        .Where(t => SeaMath.NpcCrossingViable(t.Dist, caravan: true))
+                        .ToList();
+                    if (legs.Count == 0) return;
+                    var pick = legs[_rng.Next(legs.Count)];
+                    dest = pick.Port; crossing = pick.Dist;
+                }
+
+                _npcSailCooldown[id] = SeaMath.NpcSailCooldownDays;
+
+                // The same sea, the same corsairs — resolved off-screen.
+                if (_rng.NextDouble() < SeaMath.PirateChance(crossing))
+                {
+                    float str = FleetStrengthOf(party, false);
+                    var fight = SeaMath.ResolveSeaBattle(str,
+                        SeaMath.CorsairStrength(Math.Max(1f, str), crossing, _rng.NextDouble()),
+                        _rng.NextDouble());
+                    ApplySeaCasualties(party, fight.CasualtyFraction);
+                }
+
+                Vec2 gate;
+                try { gate = dest.GatePosition; }
+                catch { gate = dest.GetPosition2D; }
+                try { party.Position2D = gate; } catch { return; }
+                try { party.Ai.SetMoveGoToSettlement(dest); } catch { }
+
+                // Word travels when it's your kingdom's banner or your own coin.
+                try
+                {
+                    if (lord && party.MapFaction != null && Hero.MainHero != null
+                        && party.MapFaction == Hero.MainHero.MapFaction)
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"{party.LeaderHero.Name} takes ship from {settlement.Name} and lands at {dest.Name}.",
+                            new Color(0.65f, 0.75f, 0.9f)));
+                    else if (caravan && party.Owner == Hero.MainHero)
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"Your caravan takes the sea route from {settlement.Name} to {dest.Name}.",
+                            new Color(0.65f, 0.75f, 0.9f)));
+                }
+                catch { }
+            }
+            catch { }
+        }
+
+        // Nearest port to a settlement, if any lies within reach of it.
+        private static Settlement PortNear(Settlement target, Settlement exclude)
+        {
+            Settlement best = null; float bd = float.MaxValue;
+            foreach (var p in _ports)
+            {
+                if (p == exclude) continue;
+                float d = PortDistance(p, target);
+                if (d < bd) { bd = d; best = p; }
+            }
+            return bd <= SeaMath.NpcPortReachUnits ? best : null;
         }
 
         // ── Port resolution ────────────────────────────────────────────────────
@@ -175,12 +291,12 @@ namespace AshAndEmber
         }
 
         // ── Party readings for SeaMath ─────────────────────────────────────────
-        private static float PlayerFleetStrength(bool searTheTide)
+        private static float FleetStrengthOf(MobileParty party, bool searTheTide)
         {
             int troops = 0; float tierSum = 0f;
             try
             {
-                foreach (var e in MobileParty.MainParty.MemberRoster.GetTroopRoster())
+                foreach (var e in party.MemberRoster.GetTroopRoster())
                 {
                     if (e.Character == null) continue;
                     int healthy = e.Number - e.WoundedNumber;
@@ -192,18 +308,18 @@ namespace AshAndEmber
             catch { }
             float avgTier = troops > 0 ? tierSum / troops : 0f;
             int tactics = 0;
-            try { tactics = Hero.MainHero.GetSkillValue(DefaultSkills.Tactics); } catch { }
+            try { tactics = party.LeaderHero?.GetSkillValue(DefaultSkills.Tactics) ?? 0; } catch { }
             return SeaMath.FleetStrength(troops, avgTier, tactics, searTheTide);
         }
 
         // Strikes a fraction of the party's healthy regulars: ~60% wounded,
         // the rest lost to the water. Returns the number of men affected.
-        private static int ApplySeaCasualties(float fraction)
+        private static int ApplySeaCasualties(MobileParty party, float fraction)
         {
             int affected = 0;
             try
             {
-                var roster = MobileParty.MainParty.MemberRoster;
+                var roster = party.MemberRoster;
                 int totalHealthy = 0;
                 foreach (var e in roster.GetTroopRoster().ToList())
                 {
@@ -616,7 +732,7 @@ namespace AshAndEmber
                 float remaining = Math.Max(0f, _voyageHoursTotal - _voyageHoursElapsed);
                 int extra = SeaMath.StormExtraHours(remaining, _rng.NextDouble());
                 _voyageHoursTotal += extra;
-                int hurt = ApplySeaCasualties(0.05f);
+                int hurt = ApplySeaCasualties(MobileParty.MainParty, 0.05f);
 
                 string body =
                     "The sky goes the color of wet slate and the sea stands up. The crew lash down what " +
@@ -636,7 +752,7 @@ namespace AshAndEmber
             {
                 float dist = _voyageOrigin != null && _voyageDest != null
                     ? PortDistance(_voyageOrigin, _voyageDest) : 300f;
-                float playerStr  = PlayerFleetStrength(searTheTide: false);
+                float playerStr  = FleetStrengthOf(MobileParty.MainParty, searTheTide: false);
                 float corsairStr = SeaMath.CorsairStrength(Math.Max(1f, playerStr), dist, _rng.NextDouble());
                 int fare    = SeaMath.Fare(dist, PartySize());
                 int tribute = SeaMath.TributeDemand(fare, corsairStr);
@@ -672,7 +788,7 @@ namespace AshAndEmber
                         {
                             case "sear":
                                 try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.SearTheTideAgingDays); } catch { }
-                                ResolveBoardingFight(PlayerFleetStrength(searTheTide: true), corsairStr);
+                                ResolveBoardingFight(FleetStrengthOf(MobileParty.MainParty, searTheTide: true), corsairStr);
                                 break;
                             case "tribute":
                                 try { GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, tribute, true); } catch { }
@@ -708,7 +824,7 @@ namespace AshAndEmber
             try
             {
                 var outcome = SeaMath.ResolveSeaBattle(playerStr, corsairStr, _rng.NextDouble());
-                int hurt = ApplySeaCasualties(outcome.CasualtyFraction);
+                int hurt = ApplySeaCasualties(MobileParty.MainParty, outcome.CasualtyFraction);
 
                 if (outcome.Victory)
                 {

@@ -592,5 +592,22 @@ namespace AshAndEmber.Tests
             for (int i = 1; i < SeaMath.VentureTiers.Length; i++)
                 Assert.Greater(SeaMath.VentureTiers[i], SeaMath.VentureTiers[i - 1]);
         }
+
+        [Test]
+        public void SeaMath_NpcCrossingViable_RejectsShortHops()
+        {
+            Assert.IsFalse(SeaMath.NpcCrossingViable(SeaMath.NpcMinCrossing - 1f, false));
+            Assert.IsFalse(SeaMath.NpcCrossingViable(SeaMath.NpcMinCrossing - 1f, true));
+            Assert.IsTrue(SeaMath.NpcCrossingViable(SeaMath.NpcMinCrossing, false));
+            Assert.IsTrue(SeaMath.NpcCrossingViable(SeaMath.NpcMinCrossing, true));
+        }
+
+        [Test]
+        public void SeaMath_NpcCrossingViable_CapsCaravansOnly()
+        {
+            float beyond = SeaMath.NpcMaxCaravanCrossing + 1f;
+            Assert.IsFalse(SeaMath.NpcCrossingViable(beyond, caravan: true));
+            Assert.IsTrue(SeaMath.NpcCrossingViable(beyond, caravan: false));
+        }
     }
 }
