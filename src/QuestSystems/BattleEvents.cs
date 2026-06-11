@@ -453,16 +453,18 @@ namespace AshAndEmber
         }
 
         // ── Spawn helper ──────────────────────────────────────────────────────
-        // Spawns `count` sea_raider (Ashen Spawn troop type) agents near the
-        // centroid of the Ashen team. Returns the number actually spawned so
-        // the caller can stay silent when nothing appeared.
+        // Spawns `count` Ashen Spawn agents (ashen_thrall, falling back to
+        // vanilla bandit troops) near the centroid of the Ashen team. Returns
+        // the number actually spawned so the caller can stay silent when
+        // nothing appeared.
         private static int SpawnRisingUnits(int count)
         {
             int spawned = 0;
             try
             {
                 CharacterObject troop =
-                    MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                    MBObjectManager.Instance.GetObject<CharacterObject>("ashen_thrall")
+                 ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
                 if (troop == null) return 0;
@@ -497,10 +499,15 @@ namespace AshAndEmber
                         var agentData = new AgentBuildData(origin)
                             .Team(_ashenTeam)
                             .Controller(AgentControllerType.AI)
+                            .ClothingColor1(AshenVisuals.ClothAshGrey)
+                            .ClothingColor2(AshenVisuals.ClothColdBlue)
                             .InitialPosition(in pos)
                             .InitialDirection(in dir);
 
-                        Mission.Current.SpawnAgent(agentData, false);
+                        var agent = Mission.Current.SpawnAgent(agentData, false);
+                        // Fallback bandit troops carry no Ashen marker, so the
+                        // OnAgentBuild hook won't catch them — force the look.
+                        try { AshenVisuals.ForceApply(agent); } catch { }
                         spawned++;
                     }
                     catch { }

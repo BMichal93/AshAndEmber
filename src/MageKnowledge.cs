@@ -422,33 +422,16 @@ namespace AshAndEmber
         }
 
         // ── Ashen appearance ─────────────────────────────────────────────────
-        // Called whenever a hero becomes Ashen. Modifies StaticBodyProperties
-        // bit fields to approximate ash-white hair. The exact bit layout is
-        // Bannerlord-version-dependent so the whole method is wrapped in try/catch.
+        // Called whenever a hero becomes Ashen. Persists the witchy-ashen look
+        // (ash-grey hair, cold-blue eyes, grey skin — see AshenVisuals) into
+        // the hero's BodyProperties. The bit layout is Bannerlord-version-
+        // dependent so the whole method is wrapped in try/catch.
         internal static void ApplyAshenAppearance(Hero hero)
         {
             if (hero == null) return;
             try
             {
-                var bp = hero.BodyProperties;
-                var sp = bp.StaticProperties;
-                // All colour positions below are empirical; exact bit layout varies by game version.
-                // Hair: bits 32-39 ≈ saturation, bits 40-47 ≈ hue in KeyPart4.
-                // Clearing saturation and setting near-zero hue gives ash-grey hair.
-                ulong k4 = sp.KeyPart4;
-                k4 = (k4 & ~0x00FFFF0000000000UL) | 0x0000010000000000UL;
-                // Eyes: same colour-encoding byte range in KeyPart5 (empirical).
-                // Zeroing colour data pushes iris colour toward grey.
-                ulong k5 = sp.KeyPart5;
-                k5 = k5 & ~0x00FFFF0000000000UL;
-                // Skin: colour bytes in KeyPart7 (empirical).
-                // Clearing these bits approximates a pale grey/ashen skin tone.
-                ulong k7 = sp.KeyPart7;
-                k7 = k7 & ~0x000000FFFFFF0000UL;
-                var newStatic = new StaticBodyProperties(
-                    sp.KeyPart1, sp.KeyPart2, sp.KeyPart3, k4,
-                    k5, sp.KeyPart6, k7, sp.KeyPart8);
-                var newBp = new BodyProperties(bp.DynamicProperties, newStatic);
+                var newBp = AshenVisuals.MakeAshenBodyProperties(hero.BodyProperties);
                 // Hero.BodyProperties has a non-public setter in most Bannerlord builds
                 typeof(Hero).GetProperty("BodyProperties",
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
