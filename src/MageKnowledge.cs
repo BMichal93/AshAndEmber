@@ -95,6 +95,7 @@ namespace AshAndEmber
             TalentSystem.ResetForNewGame();
             ColourLordRegistry.ResetForNewGame();
             AshenCitySystem.ResetForNewGame();
+            AgingSystem.ResetForNewGame();
         }
 
         public static bool IsChildGifted(string id) => _giftedChildIds.Contains(id);
@@ -348,6 +349,7 @@ namespace AshAndEmber
                 : "";
 
             string desc =
+                AgingSystem.BuildLedgerText() +
                 "── HOW TO CAST ──────────────────────────────────────\n" +
                 $"  1. {stepFocus}  → enter Focus\n" +
                 $"  2. {stepShape}  → shape the spell  (repeat for more power)\n" +

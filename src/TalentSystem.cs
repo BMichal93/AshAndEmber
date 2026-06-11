@@ -524,6 +524,7 @@ namespace AshAndEmber
                 }
             }
             _dailyMapCastCount++;
+            try { AgingSystem.RecordMapCast(); } catch { }
 
             switch (id)
             {
