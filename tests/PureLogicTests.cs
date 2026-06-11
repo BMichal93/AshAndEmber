@@ -287,13 +287,13 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void AgingSystem_ComputeBattleAgingCost_BattleMage_CutsThird()
+        public void AgingSystem_ComputeBattleAgingCost_BattleMage_MaxOf1DayOr25Pct()
         {
-            // Tempered cuts 33% off the cost (rounded; minimum 1 — never free).
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, true));  // 1 → 0.67 → floor 1
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, true));  // 2 → 1.34 → 1
-            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, true));  // 3 → 2.01 → 2
-            Assert.AreEqual(7, AgingSystem.ComputeBattleAgingCost(8, true));  // 11 → 7.37 → 7
+            // Tempered: reduction = max(1 flat day, 25% of cost). Minimum result 1 — never free.
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, true));  // base 1: 1-1=0 → floor 1
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, true));  // base 2: 2-1=1
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, true));  // base 3: 3-1=2
+            Assert.AreEqual(8, AgingSystem.ComputeBattleAgingCost(8, true));  // base 11: 11-3=8
         }
 
         // ── NPC heal-burst RestoreCount satisfies Rouse threshold ─────────────

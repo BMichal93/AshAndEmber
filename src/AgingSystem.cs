@@ -61,15 +61,20 @@ namespace AshAndEmber
         /// Battle spell aging cost: geometric — round(1.4^(n−1)), capped at 84 days (1 Bannerlord year).
         /// Bannerlord year = 84 campaign days (4 seasons × 21 days).
         /// Examples: 1–2 inputs = 1 day | 5 = 4 | 7 = 8 | 10 = 21 | 12 = 41 | 14 = 80 | 16+ = 84 (cap).
-        /// Tempered (BattleMage) talent cuts 33% off the total cost (minimum 1 — battle casts are
-        /// never free), and beyond age 40 also shaves 0.5% per year off the final cost, capped at 30%.
+        /// Tempered (BattleMage) talent reduces cost by whichever is larger: 25% or 1 flat day
+        /// (minimum 1 — battle casts are never free), and beyond age 40 also shaves 0.5% per year
+        /// off the final cost, capped at 30%. The flat floor means even 1-input spells feel the talent.
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
             // Geometric scaling: small spells are cheap; large spells become very expensive.
             // Base 1.4, standard rounding, hard cap at 84 campaign days (= 1 Bannerlord year).
             int cost = Math.Min(84, Math.Max(1, (int)(Math.Pow(1.4, totalInputs - 1) + 0.5)));
-            if (hasBattleMageTalent) cost = Math.Max(1, (int)Math.Round(cost * 0.67f));
+            if (hasBattleMageTalent)
+            {
+                int reduction = Math.Max(1, (int)Math.Round(cost * 0.25f));
+                cost = Math.Max(1, cost - reduction);
+            }
 
             // Tempered (merged Veteran's Ash): each year beyond 40 shaves 0.5% off cost, capped at 30%.
             // At age 50 → -5%, age 70 → -15%, age 100 → -30% (death threshold).
