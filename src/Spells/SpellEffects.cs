@@ -686,34 +686,43 @@ namespace AshAndEmber
 
             // Immolate: burn damage per input; kills scale with inputs.
             // Triggered by Sear (U) inputs; unsplit NPC casts use the full DamageCount.
-            // ≥3 inputs: guaranteed kills (EffSear / 3 per cast).
+            // ≥3 inputs: one kill slot per 3 Sear. The FIRST slot of a cast is
+            // certain; each further slot connects at 50%. Unbounded guaranteed
+            // kills (3 per cast at 9 Sear, every cast) deleted units with no
+            // counterplay — for the player and for Ashen/False Emperor AI alike.
             // 2 inputs: 50% chance to kill. 1 input: 33% chance to kill.
             if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Immolate))
             {
                 try
                 {
                     if (_immolateKillsRemaining < 0)
-                        _immolateKillsRemaining = cast.EffSear / 3;
-
-                    bool doGuaranteedKill = cast.EffSear >= 3 && _immolateKillsRemaining > 0;
-                    bool doProbKill = !doGuaranteedKill && (
-                        (cast.EffSear == 2 && _rng.NextDouble() < 0.50) ||
-                        (cast.EffSear == 1 && _rng.NextDouble() < 0.33));
-
-                    if (doGuaranteedKill)
                     {
-                        _immolateKillsRemaining--;
+                        _immolateKillsRemaining = cast.EffSear / 3;
+                        _immolateGuaranteedSpent = false;
+                    }
+
+                    bool doKill = false;
+                    if (cast.EffSear >= 3)
+                    {
+                        if (_immolateKillsRemaining > 0)
+                        {
+                            _immolateKillsRemaining--;
+                            doKill = !_immolateGuaranteedSpent || _rng.NextDouble() < 0.50;
+                            _immolateGuaranteedSpent = true;
+                        }
+                    }
+                    else
+                    {
+                        doKill = (cast.EffSear == 2 && _rng.NextDouble() < 0.50)
+                              || (cast.EffSear == 1 && _rng.NextDouble() < 0.33);
+                    }
+
+                    if (doKill)
+                    {
                         QueueKill(target, caster);
                         BeginAgentGlow(target, ColorSchool.Red, 2f);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Immolate — consumed.", new Color(1f, 0.4f, 0.1f)));
-                    }
-                    else if (doProbKill)
-                    {
-                        QueueKill(target, caster);
-                        BeginAgentGlow(target, ColorSchool.Red, 2f);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Immolate — the fire claims.", new Color(1f, 0.4f, 0.1f)));
                     }
                     else
                     {
@@ -725,12 +734,17 @@ namespace AshAndEmber
             }
         }
 
+        // Unlike damage enchantments — which are split across the Sear/Force/
+        // Shred natures so a cast feeds only the inputs it carries — every
+        // Restore enchantment the caster owns fires together on one Restore
+        // cast. Each is therefore tuned weaker than its damage counterpart:
+        // the real payload of a full restore build is the stack.
         private static void ApplyRestoreEnchantments(Agent target, SpellCast cast, Agent caster)
         {
             // Ashveil: brief magic immunity
             if (CasterHasEnchantment(caster, TalentId.Ashveil))
             {
-                float duration = cast.RestoreCount * 4f;  // was 3f per input
+                float duration = Math.Min(10f, cast.RestoreCount * 2f);  // was 4f per input, uncapped
                 float current  = _wardedAgents.TryGetValue(target, out float t) ? t : 0f;
                 _wardedAgents[target] = Math.Max(current, duration);
                 BeginAgentGlow(target, ColorSchool.White, duration);
@@ -739,17 +753,17 @@ namespace AshAndEmber
             // Cinder Shell: armour boost + near-full-health shield (merged Overflow)
             if (CasterHasEnchantment(caster, TalentId.CinderShell))
             {
-                float bonus = cast.RestoreCount * 10f;
-                float shellDuration = 6f + cast.RestoreCount * 1.5f;  // was fixed 8f
+                float bonus = cast.RestoreCount * 6f;                 // was 10f per input
+                float shellDuration = 4f + cast.RestoreCount * 1f;    // was 6f + 1.5f per input
                 AddStoneskin(target, bonus, shellDuration);
                 BeginAgentGlow(target, ColorSchool.Orange, 2f);
                 try
                 {
                     float hp = target.Health;
                     float hpMax = target.HealthLimit;
-                    if (hpMax > 0f && hp >= hpMax * 0.80f)
+                    if (hpMax > 0f && hp >= hpMax * 0.90f)            // was 0.80f
                     {
-                        float overBonus = cast.RestoreCount * 15f;
+                        float overBonus = cast.RestoreCount * 10f;    // was 15f
                         AddStoneskin(target, overBonus, 5f);
                     }
                 }
@@ -761,7 +775,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float delta = cast.RestoreCount * 15f;  // was 12f
+                    float delta = cast.RestoreCount * 10f;  // was 15f
                     float cur   = target.GetMorale();
                     target.SetMorale(Math.Min(cur + delta, 100f));
                 }
@@ -773,7 +787,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float pct = Math.Min(0.50f, cast.RestoreCount * 0.08f);
+                    float pct = Math.Min(0.25f, cast.RestoreCount * 0.05f);  // was 8% per input, cap 50%
                     float duration = 3f + (float)Math.Sqrt(cast.RestoreCount) * 4f;
                     if (!_reflectAgents.TryGetValue(target, out var cur))
                         _reflectAgents[target] = (pct, duration);
@@ -883,10 +897,16 @@ namespace AshAndEmber
         public static void ClearAttackWeaken() => _attackWeakenedAgents.Clear();
 
         // ── Immolate (per-cast kill counter) ─────────────────────────────────────
-        // Guaranteed kills allowed = DamageCount / 3 (3U=1, 6U=2, 9U=3).
+        // Kill slots allowed = EffSear / 3 (3U=1, 6U=2, 9U=3). Only the first
+        // slot of a cast is a certain kill; the rest connect at 50%.
         // -1 = sentinel meaning "not yet initialised for this cast".
-        private static int _immolateKillsRemaining = -1;
-        public static void ResetImmolateKill() => _immolateKillsRemaining = -1;
+        private static int  _immolateKillsRemaining  = -1;
+        private static bool _immolateGuaranteedSpent = false;
+        public static void ResetImmolateKill()
+        {
+            _immolateKillsRemaining  = -1;
+            _immolateGuaranteedSpent = false;
+        }
 
         // ── Char (Char enchantment state — movement slow) ──────────────────────
         // Stores (reduced speed cap, remaining duration). On expire, restores to 10f (unlimited).

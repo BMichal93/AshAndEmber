@@ -566,9 +566,13 @@ namespace AshAndEmber
                         }
                         string deplNote = IsLocationDepleted()
                             ? $"  [SPENT — returns in {LocationDepletedDaysLeft()} day(s)]" : "";
+                        string interNote = "";
+                        int sinceSanct = today - SanctuaryCampaignBehavior._lastSanctuaryUseDay;
+                        if (sinceSanct >= 0 && sinceSanct < CrossInterferenceDays)
+                            interNote = $"  [Sanctuary interference — the stone remembers the flame; yield halved for {CrossInterferenceDays - sinceSanct} day(s)]";
                         MBTextManager.SetTextVariable("ALTAR_MENU_HEADER",
                             $"The Ashen Altar. Stone worn smooth by blood that never fully dried. " +
-                            $"The flame here is grey, and it is always hungry.{ptsNote}{solNote}{frozenNote}{deplNote}");
+                            $"The flame here is grey, and it is always hungry.{ptsNote}{solNote}{frozenNote}{interNote}{deplNote}");
                     }
                     catch { }
                 });

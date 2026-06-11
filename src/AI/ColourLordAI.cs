@@ -23,7 +23,9 @@ namespace AshAndEmber
         private const float ImpulsiveCooldown   = 15f;
         private const float CalculatingCooldown = 35f;
         private const float AshenCooldown       = 6f;  // Ashen lords cast ~4× more often
-        private const float FalseEmperorCooldown = 3f; // False emperor casts ~2× more often than Ashen
+        // 6s matches the Ashen cadence. At the old 3s a single False Emperor
+        // cast ~100 times in a 5-minute battle at max recipe — unanswerable.
+        private const float FalseEmperorCooldown = 6f;
 
         private static readonly Dictionary<string, float> _cooldowns   = new Dictionary<string, float>();
         private static readonly Dictionary<string, int>   _battleCasts = new Dictionary<string, int>();

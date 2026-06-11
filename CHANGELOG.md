@@ -2,6 +2,58 @@
 
 ---
 
+## Unreleased
+
+### Rival Shadow — clan tier gate
+- The Shadow is no longer designated at campaign start. The cold ignores nobodies: designation now waits until the player's clan reaches **tier 3**, and arrives with a popup (*A Cold Attention*) announcing that the dark forces of the Ashen have taken a personal interest.
+
+### Whisper system — less noise, more signal
+- **Killing an Ashen lord now adds +1 whisper (was +3).** Fighting the Ashen is the mod's core loop; it should not be the fastest road to corruption.
+- **Quiet-conduct decay** — after 10 consecutive days without gaining a whisper, roughly 1 whisper fades every 3 days regardless of traits. Whispers now reflect recent conduct rather than a permanent stain. The existing virtue decay (Mercy + Honor ≥ 2) is unchanged.
+- **Ambient whispers tuned** — they fire less often (tier/20 per day instead of tier/12), never repeat the same line twice in a row, and one in three now carries real intelligence: the compass bearing of the nearest Ashen lord's warband.
+
+### Restore enchantments — rebalanced against damage enchantments
+Damage enchantments are split across the Sear/Force/Shred natures, so one cast only feeds the natures it carries. Restore has a single key — every restore enchantment the caster owns fires together on one Restore cast. Each is now tuned weaker individually; the stack is the build:
+- **Ashveil** — magic immunity 2 s per Restore input, capped at 10 s (was 4 s per input, uncapped — 20 s blanket immunity at 5 inputs).
+- **Cinder Shell** — protection 6% per input, max 30% (was 10%/50%); duration 4 s + 1 s per input (was 6 s + 1.5 s); overheal shield 10 HP per input and only above 90% health (was 15 HP above 80%).
+- **Hearthlight** — morale +10 per input (was +15).
+- **Reflect** — 5% per input, capped at 25% (was 8%/50%; stacked with Cinder Shell it reached ~70% effective damage reduction).
+- Grimoire talent descriptions and README updated to match.
+
+### Deferred dialog queue — story beats are no longer lost
+- The map-layer popup slot (`MageKnowledge._deferredInquiry`) was a single Action shared by nine daily systems; when two events queued the same day, one vanished silently — including main-quest beats. It is now a real queue: pending dialogs line up and fire in order instead of overwriting each other. The Rival Shadow duel and the Cold Calls event, which could previously be lost forever to a busy day, now always arrive.
+
+### Immolate — kill cap
+- One kill slot per 3 Sear inputs, as before, but only the **first** kill of a cast is certain; each further slot connects at 50%. Unbounded guaranteed kills (3 per cast at 9 Sear) deleted units with no counterplay — for the player and for Ashen / False Emperor AI alike. 1–2 Sear probabilities unchanged (33% / 50%).
+
+### False Emperor — cooldown 3 s → 6 s
+- At 3 s, a single False Emperor cast ~100 max-power spells in a five-minute battle. He now casts at the Ashen cadence — still the most dangerous caster in the mod, no longer unanswerable.
+
+### Reap — execution reward scales with the victim
+- Executing a captured lord restores **20 days + 10 per tier of their clan (20–80)** instead of a flat 100. A flat 100 bought ~20 large battle spells per execution and trivialised the aging economy.
+
+### Campaign map casting — escalation softened
+- Repeat casts per day now cost 1 → 4 → 8 → 12 (+4 each) instead of 1 → 7 → 14 → 21. The 2nd map cast used to cost more than most battle spells, which made map magic read as a punishment rather than a tool.
+
+### Tempered — flat −1 replaced with −25%
+- Battle casts cost 25% fewer days (rounded, minimum 1 — never free). The flat −1 was irrelevant on large spells and strictly worse than Kinship's −10% per allied mage; the percentage keeps Tempered competitive solo. Age-based reduction (up to 30% past 40) unchanged.
+
+### Possession — two-strike rule
+- The first failed Leadership/Athletics test no longer kills: you are left broken (wounded to near-death, −20 party morale) and **strained for 21 days**; failing again while strained is death. Surrender is still always death. One bad roll should hurt, not end a 100-hour campaign.
+
+### Lost Forms — 3 → 2 focus points
+- Lost Forms are sidegrades, not upgrades; at 3 points they were never worth taking over a core talent. At 2 they are a cheap experiment.
+
+### Quality of life
+- **Dragon Quest final prompt** now states explicitly that rekindling ends the campaign (hero dies, game over) and that refusing closes the quest but the campaign continues.
+- **Sanctuary ↔ Altar cross-interference** (using one halves the other's yield for 30 days) is now shown in both sub-menu headers with the remaining days, instead of silently eating rituals.
+
+### Documentation
+- README arcane-sequence table corrected to match the code: recall multipliers are 1.50× / 1.20× / 0.80× / 0.50× (the doc previously claimed 1.00×/0.75× for 2/3 and 1/3). "Cast without the rite" remains 1.00× — blind guessing averages worse than skipping; genuine recall beats both.
+- README battle-cost table previously claimed Tempered's minimum was 1 day while the code allowed free casts; code and docs now agree (minimum 1).
+
+---
+
 ## v0.18
 
 ### Bug fixes

@@ -287,13 +287,13 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void AgingSystem_ComputeBattleAgingCost_BattleMage_ReducesByOne()
+        public void AgingSystem_ComputeBattleAgingCost_BattleMage_CutsQuarter()
         {
-            // BattleMage subtracts 1 (minimum 0 — small spells can be free).
-            Assert.AreEqual(0,  AgingSystem.ComputeBattleAgingCost(1, true));  // 1-1 = 0
-            Assert.AreEqual(1,  AgingSystem.ComputeBattleAgingCost(3, true));  // 2-1 = 1
-            Assert.AreEqual(2,  AgingSystem.ComputeBattleAgingCost(4, true));  // 3-1 = 2
-            Assert.AreEqual(10, AgingSystem.ComputeBattleAgingCost(8, true));  // 11-1 = 10
+            // Tempered cuts 25% off the cost (rounded; minimum 1 — never free).
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, true));  // 1 → floor 1
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(3, true));  // 2 → 1.5 → 2
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, true));  // 3 → 2.25 → 2
+            Assert.AreEqual(8, AgingSystem.ComputeBattleAgingCost(8, true));  // 11 → 8.25 → 8
         }
 
         // ── NPC heal-burst RestoreCount satisfies Rouse threshold ─────────────
