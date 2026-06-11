@@ -33,6 +33,7 @@ namespace AshAndEmber
         // Tracks how many days each Ashen lord has been in captivity (StringId → days).
         // Ashen lords auto-escape after 3 days — the cold does not yield to chains.
         private readonly Dictionary<string, int> _ashenCaptiveDays = new Dictionary<string, int>();
+        private bool _pendingAppearanceRefresh = false;
 
         private static readonly string[] _premonitions =
         {
@@ -338,6 +339,19 @@ namespace AshAndEmber
         // ── Daily tick ────────────────────────────────────────────────────────
         private void OnDailyTick()
         {
+            if (_pendingAppearanceRefresh)
+            {
+                _pendingAppearanceRefresh = false;
+                try
+                {
+                    foreach (var h in Hero.AllAliveHeroes)
+                        if (ColourLordRegistry.IsAshenLord(h))
+                            try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
+                    if (MageKnowledge.IsAshen)
+                        try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch { }
+                }
+                catch { }
+            }
             try
             {
                 if (!_selectionDone)
@@ -972,6 +986,8 @@ namespace AshAndEmber
             try { BurningLabQuestSystem.Save(dataStore); } catch { }
             try { AgingSystem.Save(dataStore); } catch { }
             try { TempleCovenant.Save(dataStore); } catch { }
+            if (!dataStore.IsSaving)
+                _pendingAppearanceRefresh = true;
         }
     }
 }

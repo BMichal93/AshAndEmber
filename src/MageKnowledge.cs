@@ -433,11 +433,7 @@ namespace AshAndEmber
             try
             {
                 var newBp = AshenVisuals.MakeAshenBodyProperties(hero.BodyProperties);
-                // Hero.BodyProperties has a non-public setter in most Bannerlord builds
-                typeof(Hero).GetProperty("BodyProperties",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                    ?.GetSetMethod(nonPublic: true)
-                    ?.Invoke(hero, new object[] { newBp });
+                AshenVisuals.SetHeroBodyProperties(hero, newBp);
             }
             catch { }
         }

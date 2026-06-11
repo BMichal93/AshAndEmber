@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
@@ -50,6 +51,7 @@ namespace AshAndEmber
         {
             _capeItem = null; _capeSearched = false;
             _hoodItem = null; _hoodSearched = false;
+            _heroBpSetter = null; _heroBpField = null; _heroSpField = null; _heroBpResolved = false;
         }
 
         // ── Body-property key transforms (pure, covered by PureLogicTests) ───
@@ -75,6 +77,45 @@ namespace AshAndEmber
                 sp.KeyPart1, sp.KeyPart2, sp.KeyPart3, AshenHairKey(sp.KeyPart4),
                 AshenEyeKey(sp.KeyPart5), sp.KeyPart6, AshenSkinKey(sp.KeyPart7), sp.KeyPart8);
             return new BodyProperties(bp.DynamicProperties, newStatic);
+        }
+
+        // ── Hero body-property write ──────────────────────────────────────────
+        // Hero.BodyProperties has no public setter. We try three strategies in
+        // order so the mod degrades gracefully across Bannerlord builds:
+        //  1. Non-public property setter (exposed in some builds)
+        //  2. Backing field "_bodyProperties" (BodyProperties)
+        //  3. Backing field "_staticBodyProperties" (StaticBodyProperties only)
+        private static MethodInfo   _heroBpSetter;
+        private static FieldInfo    _heroBpField;
+        private static FieldInfo    _heroSpField;
+        private static bool         _heroBpResolved;
+
+        public static void SetHeroBodyProperties(Hero hero, BodyProperties bp)
+        {
+            if (!_heroBpResolved)
+            {
+                _heroBpResolved = true;
+                var t = typeof(Hero);
+                _heroBpSetter = t.GetProperty("BodyProperties",
+                    BindingFlags.Public | BindingFlags.Instance)
+                    ?.GetSetMethod(nonPublic: true);
+                if (_heroBpSetter == null)
+                {
+                    _heroBpField = t.GetField("_bodyProperties",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (_heroBpField?.FieldType != typeof(BodyProperties))
+                        _heroBpField = null;
+                    if (_heroBpField == null)
+                        _heroSpField = t.GetField("_staticBodyProperties",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+            }
+            if (_heroBpSetter != null)
+                _heroBpSetter.Invoke(hero, new object[] { bp });
+            else if (_heroBpField != null)
+                _heroBpField.SetValue(hero, bp);
+            else if (_heroSpField != null)
+                _heroSpField.SetValue(hero, bp.StaticProperties);
         }
 
         // ── Detection ─────────────────────────────────────────────────────────

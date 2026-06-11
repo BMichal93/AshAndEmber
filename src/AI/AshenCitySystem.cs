@@ -718,6 +718,12 @@ namespace AshAndEmber
                     if (clan == null || clan.IsEliminated) continue;
                     if (clan.Kingdom?.StringId == AshenKingdomId) continue; // already home
 
+                    // During the Arenicos merger these city clans are intentionally
+                    // inside the Arenicos empire — MaintainFalseEmperorAlliance owns them.
+                    if (BurningLabQuestSystem.AshenMergedWithArenicos
+                        && BurningLabQuestSystem.ArenicosEmpireId != null
+                        && clan.Kingdom?.StringId == BurningLabQuestSystem.ArenicosEmpireId) continue;
+
                     // Eject from whatever kingdom grabbed them
                     if (clan.Kingdom != null)
                         try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
