@@ -107,6 +107,7 @@
     <Compile Include="AI\AshenDiplomacyModel.cs"/>
     <Compile Include="AI\AshenDialogue.cs"/>
     <Compile Include="AI\FireWorshippersSystem.cs"/>
+    <Compile Include="AI\RivalShadowSystem.cs"/>
     <Compile Include="Schemes\SchemeSystem.cs"/>
     <Compile Include="Schemes\SchemeCampaignBehavior.cs"/>
     <Compile Include="Schemes\SchemeMinigame.cs"/>
