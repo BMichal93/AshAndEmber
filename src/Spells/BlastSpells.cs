@@ -62,9 +62,9 @@ namespace AshAndEmber
             SpawnConeLights(caster.Position, fwd, glowColor, 3f, range);
             if (glowColor != ColorSchool.Ashen)
             {
-                SpawnBigFireParticle(caster.Position + fwd * range * 0.35f, 2.5f);
-                SpawnBigFireParticle(caster.Position + fwd * range * 0.70f, 2.0f);
-                SpawnBigFireParticle(caster.Position + fwd * range,         1.5f);
+                SpawnBigFireParticle(caster.Position + fwd * range * 0.35f,  2.5f);
+                SpawnBigFireParticle(caster.Position + fwd * range * 0.70f,  2.0f);
+                SpawnExplosionParticle(caster.Position + fwd * range,         1.5f); // tip = impact point
             }
             TryCastSound(caster.Position, glowColor);
             TryCastAnimation(caster);

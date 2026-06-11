@@ -171,7 +171,7 @@ namespace AshAndEmber
                 m.TrailTimer = MissileState.TrailInterval;
                 SpawnTempLight(m.Position, m.Cast.VisualColor, 4f, 0.5f);
                 if (m.Cast.VisualColor != ColorSchool.Ashen)
-                    SpawnBigFireParticle(m.Position, 0.35f);
+                    SpawnTrailParticle(m.Position, 0.35f);
             }
 
             bool wantDmg  = m.Cast.DamageCount  > 0;
