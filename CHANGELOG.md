@@ -2,6 +2,52 @@
 
 ---
 
+## v0.18
+
+### Bug fixes
+- **Barrier light leak** — area effects that expired naturally only removed one of their three lights; Fading Ward barriers leaked two column lights per node for the rest of the battle. All three are now removed on expiry.
+- **Scheme costs lost on reload** — gold, influence, and trait costs are paid when an operation is committed, but the Gambit minigame state did not survive a save/load: reloading mid-operation silently ate the costs. Committed operations are now persisted and re-launched after a reload.
+- **Stale daily map-cast counter** — the escalating campaign-cast cost counter was static and unsaved; loading a save mid-day (or a different campaign in the same session) inherited the old counter and overcharged. It now persists with the save.
+- **Missile vs teamless agents** — missile detection and explosion treated agents with no team as enemies; they are now neutral (matching Blast).
+- **Ashen resurgence partial application** — if the chosen Ashen lord had no clan, the target settlement changed owner but garrison top-up and tracking were skipped. The resurgence now aborts cleanly up front.
+- **The Rising false report** — the battlefield event announced reinforcements even when none spawned (missing troop type or no valid anchor). It now reports the actual count or stays silent.
+- **New-game static leak** — `AgingSystem.ResetForNewGame` was never called, so aging milestones (and now ledger counters) carried over into a new campaign started in the same game session.
+- Removed dead `ModifiedSacrificePoints` helper; fixed a stale clan-tier formula comment in the scheme header.
+
+### Battle magic — damage natures (W/A/D differentiated)
+- Every damage key still deals 25 fire damage per press, but each now carries a nature on player casts:
+  - **W = Sear** — innate +5 burn per press; the **Immolate** talent amplifies it (kill thresholds now count Sear inputs).
+  - **A = Force** — innate 1.5 m concussive push; **Scatter** amplifies it (5 m throw + slow now keyed to Force inputs).
+  - **D = Shred** — innate +4%-per-press damage vulnerability for 4 s; **Sunder** amplifies it (full shred keyed to Shred inputs).
+  - **S = Restore** — unchanged healing, plus an innate +4-per-press morale lift; **Hearthlight** amplifies it.
+- **Smoulder** still triggers on any damage input — fear of fire is universal.
+- Owning a key's talent replaces its weak innate effect (no double-dipping). NPC lord casts keep their original all-trigger behaviour. Twin Bolt and Directed Burst preserve the nature split when scaling.
+
+### The Ledger of Years
+- The grimoire now opens with a running account of the aging economy: current age, time until the fire burns out at 100, days the fire has taken, days reclaimed, and workings cast in battle and on the map. Ashen players see a closed ledger. Persists with the save.
+
+### Whisper system — tiers
+- The whisper counter now expresses itself before 100:
+  - **25+ (noticed)** — occasional ambient whisper flavour on the daily tick.
+  - **50+ (favoured)** — Ashen Altar rituals gain +1 point per round; Sanctuary meditation loses 1 point per round (never below 1).
+  - **75+ (close)** — the bonus/drag deepens to 2.
+- Crossing a tier shows a one-time warning; the Ledger of Years carries a vague status line. The exact count stays hidden.
+- Dark settlement events now feed or starve the cold: burning the village in *Darkness in the Roots* (+4); *The Pyre* — letting her burn (+2), watching for sport (+3), saving her (−3); *The Priest at the Gate* — funding the sanctuary (−5), beating him (+3); *The Circle Closes* — scattering them with magic (+1); *Ash in the Dream* — dismissing it (−2), reaching back (+5); *Three Figures* — joining the dance (+8), scattering the rite (−3).
+
+### Schemes — counter-intelligence
+- New scheme-menu option: **Sweep the city for hostile agents** (500g). If an NPC scheme targets you or one of your fiefs, a Roguery check (40–85%) cancels it and names the instigator (+300 Roguery XP). With no plot in motion the coin buys only rumours.
+- The vague warning whisper when a plot is queued against you now also covers fief-targeted schemes, and its chance scales with Roguery (30% base → 75%).
+
+### Sanctuary & Ashen Altars — ritual stances
+- Each ritual round now offers a choice of pace: **steady/measured** (unchanged) or **fervent/heedless** — progress builds half again as fast, but one round in three the flame/stone takes the round's cost twice.
+
+### The Temple — covenant and anathema
+- Once The Temple rises, it reacts to non-member players:
+  - **Covenant** (clan tier 2+, whisper tier ≤ 1): an envoy offers a pact. While sworn, battle casts cost 1 fewer day of life (min 1), and every ~3–5 weeks the Temple calls for aid — ride with the strike (bloodies up to 2 Ashen warbands, +50 renown, +10 relation), send 800g, or stand aside (−5 relation). Declining the envoy closes the offer for good.
+  - **Anathema** (whisper tier 3): any covenant is revoked, relations with the High Templar collapse, and zealot ambushes periodically wound the player's column until the whispers fade below tier 2.
+
+---
+
 ## v0.17
 
 ### Rival Shadow system

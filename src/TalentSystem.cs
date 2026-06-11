@@ -99,7 +99,7 @@ namespace AshAndEmber
                 Id = TalentId.Gift, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Gift",
                 Lore = "The fire ran in your blood before you understood what fire was. Not warmth — something older. The kind that burns without consuming, and holds the world together at its edges.",
-                MechanicDesc = "You carry the inner fire. In battle: form keys, Break, effect keys. U = Damage (enemies). D = Restore (allies)."
+                MechanicDesc = "You carry the inner fire. In battle: form keys, Break, effect keys. W = Sear (burn), A = Force (push), D = Shred (armour) — all deal 25 damage. S = Restore (allies)."
             },
             new TalentDef
             {
@@ -156,28 +156,28 @@ namespace AshAndEmber
                 Id = TalentId.Scatter, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Scatter",
                 Lore = "The fire does not merely burn — it expels. What it touches, it unmakes and flings aside. You have learned to aim that expulsion.",
-                MechanicDesc = "Enchantment. Damage blasts enemies backward (5m per Damage input) and sears their limbs, reducing movement speed by 25% per Damage input (max 75%) for 4s + 1.5s per input."
+                MechanicDesc = "Enchantment. Amplifies Force (A) inputs: enemies are blasted backward 5m per Force input and their limbs seared, reducing movement speed by 25% per input (max 75%) for 4s + 1.5s per input. Without this talent, Force gives a weak 1.5m push."
             },
             new TalentDef
             {
                 Id = TalentId.Smoulder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Smoulder",
                 Lore = "The fire knows what frightens. It does not need to kill a man to defeat him — only to let him feel how little warmth he carries. The courage drains out with the heat.",
-                MechanicDesc = "Enchantment. Damage scorches enemy morale (−15 per Damage input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%."
+                MechanicDesc = "Enchantment. Any Damage input scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%. Fear of fire does not care what shape the fire takes."
             },
             new TalentDef
             {
                 Id = TalentId.Sunder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Sunder",
                 Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what they wear and what they carry. What holds together begins to separate. Not quickly. But enough.",
-                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm. Vulnerability to incoming damage = 10% per Damage input (max 50% at 5 inputs). Attack power reduction = 10% per Damage input (max 50%). Duration = 8s + 1.5s per Damage input."
+                MechanicDesc = "Enchantment. Amplifies Shred (D) inputs: vulnerability to incoming damage = 10% per Shred input (max 50% at 5 inputs); attack power reduction = 10% per input (max 50%); duration = 8s + 1.5s per input. Without this talent, Shred gives a weak 4%-per-input vulnerability."
             },
             new TalentDef
             {
                 Id = TalentId.Immolate, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Immolate",
                 Lore = "Three times the fire has been called. Twice it asked. The third time, it takes. Not the wound — the whole. The body, the heat that kept it standing. The fire does not return what it has already claimed.",
-                MechanicDesc = "Enchantment. Damage sets enemies alight — additional burn damage scales with inputs. At 1 Damage: 33% chance to kill. At 2 Damage: 50% chance to kill. At 3+ Damage: guaranteed kills (DamageCount / 3)."
+                MechanicDesc = "Enchantment. Amplifies Sear (W) inputs: additional burn damage scales with inputs. At 1 Sear: 33% chance to kill. At 2 Sear: 50% chance to kill. At 3+ Sear: guaranteed kills (Sear inputs / 3). Without this talent, Sear gives a weak 5-per-input burn."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -199,7 +199,7 @@ namespace AshAndEmber
                 Id = TalentId.Hearthlight, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Hearthlight",
                 Lore = "The fire in them has not gone out — it has only dimmed. You reach in and remind it what it is for. They remember, for a moment, that the fire is their friend.",
-                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 15 per Restore input."
+                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 15 per Restore input. Without this talent, Restore gives a weak +4-per-input lift."
             },
             new TalentDef
             {
@@ -524,6 +524,7 @@ namespace AshAndEmber
                 }
             }
             _dailyMapCastCount++;
+            try { AgingSystem.RecordMapCast(); } catch { }
 
             switch (id)
             {
@@ -940,6 +941,11 @@ namespace AshAndEmber
             _purchased.Clear();
             if (list != null)
                 foreach (int v in list) _purchased.Add((TalentId)v);
+
+            // Persist the daily map-cast counter — it is static, so without this a
+            // load mid-day (or of a different campaign) inherits the previous
+            // session's counter and miscalculates the escalating cast cost.
+            store.SyncData("LDM_DailyCastCount", ref _dailyMapCastCount);
 
             // Fade is intentionally not persisted — on load the effect resets.
             // Explicitly clear IgnoreByOtherParties so a save/load while faded

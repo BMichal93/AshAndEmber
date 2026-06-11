@@ -13,9 +13,12 @@
 //   R = Barrier (wall, 1 node per R)
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
-// EFFECTS (effect buffer, stackable)
-//   U/L/R = Damage  — 25 fire dmg each (Red visual), hits enemies
-//   D     = Restore — 15 heal per D (White visual), heals allies; Burst also heals caster
+// EFFECTS (effect buffer, stackable — each damage key carries its own nature)
+//   U = Sear    — 25 fire dmg + searing burn   (Immolate talent amplifies)
+//   L = Force   — 25 fire dmg + concussive push (Scatter talent amplifies)
+//   R = Shred   — 25 fire dmg + armour shred    (Sunder talent amplifies)
+//   D = Restore — 15 heal per D (White visual), heals allies; Burst also heals caster
+//                 (innate small morale lift; Restore enchantments amplify)
 // =============================================================================
 
 using System;
@@ -57,8 +60,22 @@ namespace AshAndEmber
         public bool UsingLostBarrier;
         public bool UsingLostBurst;
 
-        public int DamageCount;    // U effects — fire damage to enemies
+        public int DamageCount;    // total damage inputs — fire damage to enemies
         public int RestoreCount;   // D effects — healing to allies (and caster on Burst)
+
+        // ── Per-key damage natures (player casts; sum equals DamageCount) ─────
+        // U = Sear (burn), L = Force (push), R = Shred (armour). NPC cast
+        // constructors set DamageCount directly and leave these at zero — the
+        // Eff* accessors then fall back to DamageCount so NPC enchantments keep
+        // their original all-trigger behaviour.
+        public int SearCount;
+        public int ForceCount;
+        public int ShredCount;
+
+        public bool HasSplitDamage => SearCount + ForceCount + ShredCount > 0;
+        public int  EffSear  => HasSplitDamage ? SearCount  : DamageCount;
+        public int  EffForce => HasSplitDamage ? ForceCount : DamageCount;
+        public int  EffShred => HasSplitDamage ? ShredCount : DamageCount;
 
         public bool HasAnyEffect => DamageCount > 0 || RestoreCount > 0;
         public int  TotalInputs  => FormCount + DamageCount + RestoreCount;
@@ -88,7 +105,19 @@ namespace AshAndEmber
             if (!HasAnyEffect)  return "No effects specified.";
 
             var parts = new List<string>();
-            if (DamageCount  > 0) parts.Add($"{DamageCount * 25} damage");
+            if (DamageCount > 0)
+            {
+                string nature = "";
+                if (HasSplitDamage)
+                {
+                    var natures = new List<string>();
+                    if (SearCount  > 0) natures.Add($"sear ×{SearCount}");
+                    if (ForceCount > 0) natures.Add($"force ×{ForceCount}");
+                    if (ShredCount > 0) natures.Add($"shred ×{ShredCount}");
+                    nature = $" ({string.Join(", ", natures)})";
+                }
+                parts.Add($"{DamageCount * 25} damage{nature}");
+            }
             if (RestoreCount > 0) parts.Add($"+{RestoreCount * 15} restore");
             return string.Join(", ", parts);
         }
@@ -165,16 +194,16 @@ namespace AshAndEmber
                 else if (cast.BurstCount   > 0) cast.Form = SpellForm.Burst;
             }
 
-            // Effects: U/L/R = Damage, D = Restore.
+            // Effects: U = Sear, L = Force, R = Shred (all deal damage), D = Restore.
             if (!string.IsNullOrEmpty(effectBuffer))
             {
                 foreach (char c in effectBuffer)
                 {
                     switch (c)
                     {
-                        case 'U':
-                        case 'L':
-                        case 'R': cast.DamageCount++;  break;
+                        case 'U': cast.DamageCount++; cast.SearCount++;  break;
+                        case 'L': cast.DamageCount++; cast.ForceCount++; break;
+                        case 'R': cast.DamageCount++; cast.ShredCount++; break;
                         case 'D': cast.RestoreCount++; break;
                     }
                 }

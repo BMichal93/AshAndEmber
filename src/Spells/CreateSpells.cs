@@ -222,6 +222,10 @@ namespace AshAndEmber
                 rearCast.Form               = cast.Form;
                 rearCast.DamageCount        = cast.DamageCount  > 0 ? Math.Max(1, (int)(cast.DamageCount  * 0.4f)) : 0;
                 rearCast.RestoreCount       = cast.RestoreCount > 0 ? Math.Max(1, (int)(cast.RestoreCount * 0.4f)) : 0;
+                // Preserve the per-key damage natures so split-cast effects survive the scale.
+                rearCast.SearCount          = cast.SearCount    > 0 ? Math.Max(1, (int)(cast.SearCount    * 0.4f)) : 0;
+                rearCast.ForceCount         = cast.ForceCount   > 0 ? Math.Max(1, (int)(cast.ForceCount   * 0.4f)) : 0;
+                rearCast.ShredCount         = cast.ShredCount   > 0 ? Math.Max(1, (int)(cast.ShredCount   * 0.4f)) : 0;
                 rearCast.OverrideVisualColor = cast.OverrideVisualColor;
             }
 

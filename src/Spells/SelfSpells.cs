@@ -44,6 +44,10 @@ namespace AshAndEmber
             sc.Form                 = original.Form;
             sc.DamageCount          = original.DamageCount  > 0 ? Math.Max(1, (int)(original.DamageCount  * factor)) : 0;
             sc.RestoreCount         = original.RestoreCount > 0 ? Math.Max(1, (int)(original.RestoreCount * factor)) : 0;
+            // Preserve the per-key damage natures so split-cast effects survive the scale.
+            sc.SearCount            = original.SearCount    > 0 ? Math.Max(1, (int)(original.SearCount    * factor)) : 0;
+            sc.ForceCount           = original.ForceCount   > 0 ? Math.Max(1, (int)(original.ForceCount   * factor)) : 0;
+            sc.ShredCount           = original.ShredCount   > 0 ? Math.Max(1, (int)(original.ShredCount   * factor)) : 0;
             sc.UsingLostMissile     = true;
             sc.OverrideVisualColor  = original.OverrideVisualColor;
             return sc;
@@ -157,8 +161,8 @@ namespace AshAndEmber
                 foreach (Agent a in Mission.Current.Agents)
                 {
                     if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
-                    bool isEnemy = m.CasterTeam != null && a.Team != m.CasterTeam;
-                    bool isAlly  = m.CasterTeam != null && a.Team == m.CasterTeam;
+                    bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                    bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
                     if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
                     float dx = a.Position.x - mpos.x;
                     float dy = a.Position.y - mpos.y;
@@ -203,8 +207,8 @@ namespace AshAndEmber
                     float dist = new Vec3(a.Position.x - pos.x,
                                          a.Position.y - pos.y, 0f).Length;
                     if (dist > radius) continue;
-                    bool isEnemy = m.CasterTeam != null && a.Team != m.CasterTeam;
-                    bool isAlly  = m.CasterTeam != null && a.Team == m.CasterTeam;
+                    bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                    bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
                     if (!(wantDmg || (wantHeal && isAlly))) continue;
                     if (IsWarded(a)) continue;
                     try

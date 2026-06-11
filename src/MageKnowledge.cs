@@ -33,18 +33,49 @@ namespace AshAndEmber
 
         public static int WhisperCount => _whisperCount;
 
+        // Whisper tier: 0 = quiet, 1 = 25+ (the cold has noticed), 2 = 50+
+        // (the cold favours you), 3 = 75+ (the cold is close). Tiers pull both
+        // ways: altar rites accelerate, sanctuary rites resist you.
+        public static int WhisperTier =>
+            _whisperCount >= 75 ? 3 : _whisperCount >= 50 ? 2 : _whisperCount >= 25 ? 1 : 0;
+
         public static void AddWhispers(int n)
         {
             if (n <= 0 || !_isMage) return;
+            int tierBefore = WhisperTier;
             _whisperCount += n;
             if (_whisperCount >= 100 && _coldCallCountdown == 0)
                 _coldCallCountdown = 7; // fires in 7 days
+            if (WhisperTier > tierBefore)
+                try { AnnounceWhisperTier(WhisperTier); } catch { }
         }
 
         public static void RemoveWhispers(int n)
         {
             _whisperCount = Math.Max(0, _whisperCount - n);
         }
+
+        private static void AnnounceWhisperTier(int tier)
+        {
+            string msg = tier switch
+            {
+                1 => "Something at the edge of your fire has begun to listen. (The cold has noticed you.)",
+                2 => "The whispers no longer wait for the dark. The grey altars will open faster for you now — and the sanctuary flame leans away. (The cold favours you.)",
+                3 => "You catch yourself answering before they speak. The sanctuary flame gutters when you kneel. (The cold is very close.)",
+                _ => null,
+            };
+            if (msg != null)
+                InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.45f, 0.45f, 0.65f)));
+        }
+
+        private static readonly string[] _ambientWhispers =
+        {
+            "A voice in the wind says your name the way an old friend would. There is no one there.",
+            "The campfire bends north for a moment. No wind blows.",
+            "In the morning frost you find one set of footprints circling your tent. They end mid-stride.",
+            "You wake with ash on your fingertips. Your fire burned clean last night.",
+            "Someone in the column is humming a tune you have only heard in dreams. When you turn, the humming stops.",
+        };
 
         public static void DailyWhisperTick()
         {
@@ -56,6 +87,16 @@ namespace AshAndEmber
                 if (_coldCallCountdown == 0 && _deferredInquiry == null)
                     _deferredInquiry = ShowColdCallsEvent;
             }
+
+            // Ambient flavour: once the cold has noticed (25+), it occasionally speaks.
+            try
+            {
+                if (!_isAshen && WhisperTier >= 1 && _rng.Next(12) < WhisperTier)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        _ambientWhispers[_rng.Next(_ambientWhispers.Length)],
+                        new Color(0.45f, 0.45f, 0.65f)));
+            }
+            catch { }
 
             // Passive decay: honourable, merciful players shed whispers slowly
             try
@@ -95,6 +136,8 @@ namespace AshAndEmber
             TalentSystem.ResetForNewGame();
             ColourLordRegistry.ResetForNewGame();
             AshenCitySystem.ResetForNewGame();
+            AgingSystem.ResetForNewGame();
+            TempleCovenant.ResetForNewGame();
         }
 
         public static bool IsChildGifted(string id) => _giftedChildIds.Contains(id);
@@ -348,11 +391,12 @@ namespace AshAndEmber
                 : "";
 
             string desc =
+                AgingSystem.BuildLedgerText() +
                 "── HOW TO CAST ──────────────────────────────────────\n" +
                 $"  1. {stepFocus}  → enter Focus\n" +
                 $"  2. {stepShape}  → shape the spell  (repeat for more power)\n" +
                 $"  3. {stepBreak}  → Break: locks shape, enter power phase\n" +
-                "  4. W / A / D  → Damage   |   S → Heal\n" +
+                "  4. W = Sear / A = Force / D = Shred  (damage)   |   S → Heal\n" +
                 $"  5. {stepRelease}  → the spell fires!\n\n" +
                 "  Watch the screen: [ U ▷ U ] shows your formula as you build it.\n" +
                 "  Your hands must be free — sheathe your weapon first.\n\n" +
@@ -363,9 +407,13 @@ namespace AshAndEmber
                 "  S / ↓  Burst    — ring around you  (+2.5 m radius per S, also heals you)\n" +
                 "  Mix freely — W then S fires a Blast and a Burst at the same time.\n\n" +
                 "── POWER  (step 4, after Break) ─────────────────────\n" +
-                "  W / A / D  →  Damage  — 25 fire damage per press, hits enemies\n" +
-                "  S          →  Restore — 15 healing per press, reaches nearby allies\n" +
-                "  Talents add enchantments automatically — no extra keys needed.\n\n" +
+                "  Every damage key deals 25 fire damage — but each carries a nature:\n" +
+                "  W / ↑  Sear   — searing burn  (+5 burn per press; Immolate amplifies)\n" +
+                "  A / ←  Force  — concussive push (1.5 m per press; Scatter amplifies)\n" +
+                "  D / →  Shred  — armour shred  (+4% damage taken; Sunder amplifies)\n" +
+                "  S / ↓  Restore — 15 healing per press + small morale lift to allies\n" +
+                "  Mix natures freely: WWA after Break = 75 damage, sear ×2 + force ×1.\n" +
+                "  Owning a key's talent replaces its weak innate effect with the full one.\n\n" +
                 "── EXAMPLES  (try these first!) ─────────────────────\n" +
                 "  W, X, W, release        →  Blast,   25 dmg,   1 day\n" +
                 "  A, X, W, release        →  Missile, 25 dmg,   1 day\n" +

@@ -31,6 +31,7 @@ namespace AshAndEmber
     {
         private static SchemeDefinition _selectedDef;
         private static Kingdom          _selectedKingdom;
+        private static readonly Random  _rng = new Random();
 
         public override void RegisterEvents()
         {
@@ -48,6 +49,29 @@ namespace AshAndEmber
         {
             RegisterDialogue(starter);
             RegisterSchemeMenus(starter);
+            ResumeUnresolvedOperation();
+        }
+
+        // A committed operation whose Gambit never resolved (save/load mid-game)
+        // is re-launched — the player already paid for it.
+        private static void ResumeUnresolvedOperation()
+        {
+            try
+            {
+                if (!SchemeSystem.TryGetPendingPlayerOperation(out var def, out Hero hero, out Settlement sett))
+                    return;
+                MageKnowledge._deferredInquiry = () =>
+                {
+                    try
+                    {
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            $"Your operative is still in the field — the {def.Name} operation resumes."));
+                        SchemeMinigame.Begin(def, hero, sett);
+                    }
+                    catch { }
+                };
+            }
+            catch { }
         }
 
         // ── Tavernkeeper dialogue ─────────────────────────────────────────────
@@ -209,6 +233,37 @@ namespace AshAndEmber
             }
             catch { }
 
+            // ── Counter-intelligence sweep ──────────────────────────────────────
+            // Active defence against NPC schemes targeting the player or their
+            // fiefs. A paid probe: finds nothing if no plot exists; if one does,
+            // a Roguery check decides whether it is rooted out and its author named.
+            try
+            {
+                starter.AddGameMenuOption(
+                    "ldm_scheme_menu", "ldm_scheme_sweep",
+                    "{LDM_SCHEME_SWEEP}",
+                    args =>
+                    {
+                        try
+                        {
+                            int roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0;
+                            int pct = (int)(SweepSuccessChance(roguery) * 100f);
+                            MBTextManager.SetTextVariable("LDM_SCHEME_SWEEP",
+                                $"Sweep the city for hostile agents  —  {SweepCostGold}g  [{pct}% Roguery]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            args.IsEnabled = (Hero.MainHero?.Gold ?? 0) >= SweepCostGold;
+                            try { args.Tooltip = new TextObject(
+                                "Pay informants to comb the underworld for plots against you or your fiefs. "
+                                + "If a scheme is in motion, a successful sweep cancels it and names its author. "
+                                + "If nothing is in motion, the coin buys only rumours."); } catch { }
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args => RunCounterIntelSweep());
+            }
+            catch { }
+
             // ── Leave ──────────────────────────────────────────────────────────
             try
             {
@@ -231,6 +286,51 @@ namespace AshAndEmber
         {
             try { SchemeSystem.DailyTick();     } catch { }
             try { SchemeSystem.NpcSchemeTick(); } catch { }
+        }
+
+        // ── Counter-intelligence sweep ────────────────────────────────────────
+        private const int SweepCostGold = 500;
+
+        // 40% at Roguery 0 → 85% at Roguery 500.
+        private static float SweepSuccessChance(int roguery)
+            => Math.Max(0.40f, Math.Min(0.85f, 0.40f + roguery / 500f * 0.45f));
+
+        private static void RunCounterIntelSweep()
+        {
+            try
+            {
+                if (Hero.MainHero == null || Hero.MainHero.Gold < SweepCostGold) return;
+                try { Hero.MainHero.Gold -= SweepCostGold; } catch { }
+
+                var plot = SchemeSystem.FindSchemeAgainstPlayerInterests();
+                if (plot == null)
+                {
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "Your informants come back with tavern gossip and empty hands. "
+                        + "If someone is plotting against you, they have not started yet."));
+                    return;
+                }
+
+                int roguery = Hero.MainHero.GetSkillValue(DefaultSkills.Roguery);
+                if (_rng.NextDouble() < SweepSuccessChance(roguery))
+                {
+                    Hero schemer = SchemeSystem.FindHeroById(plot.InstigatorId);
+                    string who   = schemer?.Name?.ToString() ?? "an unknown hand";
+                    var def      = SchemeSystem.GetDefinition(plot.Type);
+                    SchemeSystem.RemovePendingScheme(plot);
+                    try { Hero.MainHero.HeroDeveloper?.AddSkillXp(DefaultSkills.Roguery, 300); } catch { }
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        $"Your informants caught the agent mid-errand. The {def?.Name ?? "scheme"} against you "
+                        + $"is unravelled before it lands — and the hand behind it belongs to {who}."));
+                }
+                else
+                {
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "Your informants found tracks — fresh ones — but the trail went cold in the lower quarter. "
+                        + "Something is in motion against you. You could not stop it."));
+                }
+            }
+            catch { }
         }
 
         // ── Faction filter ────────────────────────────────────────────────────
@@ -560,6 +660,11 @@ namespace AshAndEmber
                 // cannot bypass the cost and retry the same target for free. The minigame
                 // will overwrite this with the outcome-correct value on resolution.
                 try { SchemeSystem.PreStampTargetCooldown(capturedDef.Type, capturedHero, capturedSett); } catch { }
+
+                // Record the committed operation. If the player reloads before the
+                // Gambit resolves, OnSessionLaunched re-launches it so the costs
+                // already paid are not silently lost.
+                try { SchemeSystem.SetPendingPlayerOperation(capturedDef.Type, capturedHero, capturedSett); } catch { }
 
                 try { GameMenu.SwitchToMenu("town"); } catch { }
 

@@ -269,6 +269,7 @@ namespace AshAndEmber
             if (success)
             {
                 try { if (Agent.Main != null) SpellEffects.RecordMagicCast(Agent.Main.Position); } catch { }
+                try { AgingSystem.RecordBattleCast(); } catch { }
                 int agingDays = cast.AgingDays(hasBattleMage);
 
                 // Kinship: each allied mage lord in this battle reduces aging cost by 10% (max 50%)
@@ -281,6 +282,10 @@ namespace AshAndEmber
                         agingDays = Math.Max(0, (int)Math.Round(agingDays * (1f - reduction)));
                     }
                 }
+
+                // Temple covenant: the Temple's rites steady the fire — 1 day cheaper (min 1)
+                if (inMission && agingDays > 1 && TempleCovenant.CovenantActive)
+                    agingDays -= 1;
 
                 if (agingDays > 0)
                 {

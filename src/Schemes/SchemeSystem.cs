@@ -14,7 +14,7 @@
 //
 // Success formula (per scheme):
 //   chance = baseChance + (skillLevel / 600 × 30%) − (security / 400)
-//            − (clanTier × 4%)  [lord targets]  or  − (clanTier × 2%)  [settlement]
+//            − (clanTier × 2.5%)  [lord targets]  or  − (clanTier × 2%)  [settlement]
 //   Clamped to [0.05, 0.85].
 //   Ashen targets: additional −30% (cold fire does not yield to mortal plots).
 //
@@ -226,6 +226,46 @@ namespace AshAndEmber
         internal static bool PlayerOnGlobalCooldown    => _playerGlobalCooldown > 0;
         internal static int  PlayerGlobalCooldownDays  => _playerGlobalCooldown;
 
+        // ── Unresolved player operation ───────────────────────────────────────
+        // Costs are paid at commit, but the minigame runs through deferred
+        // inquiries that do not survive a save/load. This record persists the
+        // committed operation so a reload mid-operation re-launches the Gambit
+        // instead of silently eating the gold and influence.
+        private static int    _pendingOpType   = -1; // -1 = none
+        private static string _pendingOpHeroId = "";
+        private static string _pendingOpSettId = "";
+
+        internal static void SetPendingPlayerOperation(SchemeType type, Hero targetHero, Settlement targetSett)
+        {
+            _pendingOpType   = (int)type;
+            _pendingOpHeroId = targetHero?.StringId ?? "";
+            _pendingOpSettId = targetSett?.StringId ?? "";
+        }
+
+        internal static void ClearPendingPlayerOperation()
+        {
+            _pendingOpType   = -1;
+            _pendingOpHeroId = "";
+            _pendingOpSettId = "";
+        }
+
+        /// True when a committed player operation never reached a terminal state
+        /// (extract / bust / abort / rounds exhausted) — e.g. a reload mid-Gambit.
+        internal static bool TryGetPendingPlayerOperation(out SchemeDefinition def,
+            out Hero targetHero, out Settlement targetSett)
+        {
+            def = null; targetHero = null; targetSett = null;
+            if (_pendingOpType < 0) return false;
+            def = GetDefinition((SchemeType)_pendingOpType);
+            if (def == null) { ClearPendingPlayerOperation(); return false; }
+            targetHero = FindHero(_pendingOpHeroId);
+            targetSett = FindSettlement(_pendingOpSettId);
+            // Target gone (dead hero / removed settlement) — drop the operation.
+            if (targetHero == null && targetSett == null)
+            { ClearPendingPlayerOperation(); return false; }
+            return true;
+        }
+
         // ── Public API ────────────────────────────────────────────────────────
         internal static void Initialize()
         {
@@ -236,6 +276,7 @@ namespace AshAndEmber
             _playerCooldownKeys.Clear();
             _retaliationDays      = 0;
             _playerGlobalCooldown = 0;
+            ClearPendingPlayerOperation();
         }
 
         /// Returns true if the player already has a scheme pending execution.
@@ -261,6 +302,37 @@ namespace AshAndEmber
                 && p.TargetHeroId == Hero.MainHero?.StringId
                 && p.InstigatorId == instigator?.StringId);
         }
+
+        /// True when the pending scheme is aimed at the player or a player-clan fief.
+        private static bool TargetsPlayerInterests(PendingScheme p)
+        {
+            if (p.TargetHeroId == Hero.MainHero?.StringId) return true;
+            if (!string.IsNullOrEmpty(p.TargetSettlementId))
+            {
+                var s = FindSettlement(p.TargetSettlementId);
+                return s?.OwnerClan != null && s.OwnerClan == Hero.MainHero?.Clan;
+            }
+            return false;
+        }
+
+        /// Finds one pending NPC scheme aimed at the player or their fiefs
+        /// (picked at random if multiple). Used by the counter-intelligence sweep.
+        internal static PendingScheme FindSchemeAgainstPlayerInterests()
+        {
+            try
+            {
+                var list = _pending.Where(p => !p.IsPlayer && TargetsPlayerInterests(p)).ToList();
+                return list.Count == 0 ? null : list[_rng.Next(list.Count)];
+            }
+            catch { return null; }
+        }
+
+        internal static void RemovePendingScheme(PendingScheme s)
+        {
+            if (s != null) _pending.Remove(s);
+        }
+
+        internal static Hero FindHeroById(string id) => FindHero(id);
 
         // Cooldown key for a given scheme+target combination.
         private static string CooldownKey(SchemeType type, string targetId)
@@ -443,15 +515,18 @@ namespace AshAndEmber
                     catch { }
                 }
 
-                // If a scheme was just queued against the player, give a vague whisper (~30% chance).
+                // If a scheme was just queued against the player or their fiefs, give a
+                // vague whisper. Base 30% chance; Roguery sharpens the ear (up to 75%).
                 if (schemeLaunchedToday)
                 {
                     try
                     {
                         bool targetsPlayer = _pending.Any(p => !p.IsPlayer
-                            && p.TargetHeroId == Hero.MainHero?.StringId
-                            && p.DaysRemaining >= 1);
-                        if (targetsPlayer && _rng.Next(100) < 30)
+                            && p.DaysRemaining >= 1
+                            && TargetsPlayerInterests(p));
+                        int hintChance = 30;
+                        try { hintChance = Math.Min(75, 30 + (Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0) / 10); } catch { }
+                        if (targetsPlayer && _rng.Next(100) < hintChance)
                         {
                             string[] whispers =
                             {
@@ -1127,6 +1202,10 @@ namespace AshAndEmber
         internal static void SetPlayerCooldown(SchemeType type, Hero targetHero,
             Settlement targetSett, int days = -1)
         {
+            // Every minigame terminal path (extract, bust, abort, rounds exhausted)
+            // ends here — the committed operation is resolved.
+            ClearPendingPlayerOperation();
+
             string targetId = targetHero?.StringId ?? targetSett?.StringId ?? "";
             if (string.IsNullOrEmpty(targetId)) return;
             string cdKey = CooldownKey(type, targetId);
@@ -1438,6 +1517,10 @@ namespace AshAndEmber
 
             store.SyncData("SCH_RetDays",    ref _retaliationDays);
             store.SyncData("SCH_GlobCd",     ref _playerGlobalCooldown);
+
+            store.SyncData("SCH_PendOpType", ref _pendingOpType);
+            store.SyncData("SCH_PendOpHero", ref _pendingOpHeroId);
+            store.SyncData("SCH_PendOpSett", ref _pendingOpSettId);
         }
     }
 }

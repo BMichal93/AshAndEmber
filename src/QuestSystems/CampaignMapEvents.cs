@@ -292,6 +292,9 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+
+            // The Temple's covenant / anathema relationship with the player
+            try { TempleCovenant.DailyTick(); } catch { }
         }
 
         /// Called from CampaignBehavior.OnWeeklyTick().
@@ -915,6 +918,8 @@ namespace AshAndEmber
         private static bool _templeFounded          = false;
         private static bool _pendingTempleJoin      = false;
         private static bool _debugForceNextTemple   = false;
+
+        internal static bool TempleFounded => _templeFounded;
         private static int  _protectedDaysRemaining = 0;
         private static bool _ashenGambitFired       = false;
         private static bool _deadMarchFirstFired   = false;
