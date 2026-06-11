@@ -507,10 +507,11 @@ namespace AshAndEmber
         }
 
         // ── Innate damage natures ──────────────────────────────────────────────
-        // Each damage key carries a weak built-in effect for player casts:
-        //   Sear (U)  → small extra burn damage
-        //   Force (L) → short concussive push
-        //   Shred (R) → minor armour shred
+        // Each damage key carries a very weak built-in effect when the caster
+        // lacks the matching talent — just enough to feel present:
+        //   Sear (U)  → 2 burn damage per input (down from 5)
+        //   Force (L) → 0.75 m push per input   (down from 1.5 m)
+        //   Shred (R) → 2 vulnerability per input, max 6, 3 s  (down from 4/12/4 s)
         // The matching enchantment talent (Immolate / Scatter / Sunder)
         // supersedes its innate version with the full effect, so a talent owner
         // does not double-dip.
@@ -521,7 +522,7 @@ namespace AshAndEmber
             {
                 try
                 {
-                    DamageAgent(target, cast.SearCount * 5f, owner: caster);
+                    DamageAgent(target, cast.SearCount * 2f, owner: caster);
                     BeginAgentGlow(target, ColorSchool.Red, 1.5f);
                 }
                 catch { }
@@ -536,7 +537,7 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        float dist  = cast.ForceCount * 1.5f;
+                        float dist  = cast.ForceCount * 0.75f;
                         Vec3 origin = caster?.Position ?? target.Position;
                         Vec3 dir    = (target.Position - origin);
                         if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
@@ -554,8 +555,8 @@ namespace AshAndEmber
             {
                 try
                 {
-                    float vuln     = Math.Min(12f, cast.ShredCount * 4f); // raw value, /100 in DamageAgent
-                    float duration = 4f;
+                    float vuln     = Math.Min(6f, cast.ShredCount * 2f); // raw value, /100 in DamageAgent
+                    float duration = 3f;
                     if (!_sunderedAgents.TryGetValue(target, out var existing))
                         _sunderedAgents[target] = (vuln, duration);
                     else
