@@ -28,9 +28,10 @@ namespace AshAndEmber
             public SpellCast   Cast;
             public Team        CasterTeam;
             public GameEntity  Light;
+            public GameEntity  Light2;  // fireball cluster — upper glow for sphere appearance
             public float       TrailTimer = 0f;
             public const float Speed         = 28f;
-            public const float TrailInterval = 0.05f;
+            public const float TrailInterval = 0.035f;  // was 0.05 — denser fire trail
             public const float DetectRadius  = 1.5f;
         }
 
@@ -93,8 +94,16 @@ namespace AshAndEmber
                     TravelLeft = range, ExplosionRadius = explRadius,
                     Cast = cast2, CasterTeam = caster.Team,
                 };
-                _missile.Light  = SpawnAreaLight(_missile.Position,  col, 4f);
-                _missile2.Light = SpawnAreaLight(_missile2.Position, col, 4f);
+                Vec3 rgb = SchoolToLightColor(col);
+                _missile.Light   = SpawnAreaLight(_missile.Position,  col, 5f);
+                _missile.Light2  = SpawnAreaLightRaw(_missile.Position  + new Vec3(0f, 0f, 0.35f), rgb, 3f);
+                _missile2.Light  = SpawnAreaLight(_missile2.Position, col, 5f);
+                _missile2.Light2 = SpawnAreaLightRaw(_missile2.Position + new Vec3(0f, 0f, 0.35f), rgb, 3f);
+                if (col != ColorSchool.Ashen)
+                {
+                    SpawnBigFireParticle(startPos - right, 0.5f);
+                    SpawnBigFireParticle(startPos + right, 0.5f);
+                }
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"Twin Bolt ({range:F0}m, {explRadius:F0}m blast) ×2 — {cast1.EffectSummary()} each.",
                     ColorSchoolData.GetMessageColor(col)));
@@ -107,7 +116,10 @@ namespace AshAndEmber
                     TravelLeft = range, ExplosionRadius = explRadius,
                     Cast = cast, CasterTeam = caster.Team,
                 };
-                _missile.Light = SpawnAreaLight(startPos, col, 5f);
+                Vec3 rgb = SchoolToLightColor(col);
+                _missile.Light  = SpawnAreaLight(startPos, col, 6f);
+                _missile.Light2 = SpawnAreaLightRaw(startPos + new Vec3(0f, 0f, 0.4f), rgb, 3.5f);
+                if (col != ColorSchool.Ashen) SpawnBigFireParticle(startPos, 0.6f);
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"Missile ({range:F0}m, {explRadius:F0}m blast) — {cast.EffectSummary()}.",
                     ColorSchoolData.GetMessageColor(col)));
@@ -143,14 +155,23 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+            if (m.Light2 != null)
+            {
+                try
+                {
+                    var lf2 = new MatrixFrame(Mat3.Identity, m.Position + new Vec3(0f, 0f, 0.4f));
+                    m.Light2.SetGlobalFrame(in lf2, true);
+                }
+                catch { }
+            }
 
             m.TrailTimer -= dt;
             if (m.TrailTimer <= 0f)
             {
                 m.TrailTimer = MissileState.TrailInterval;
-                SpawnTempLight(m.Position, m.Cast.VisualColor, 3f, 0.4f);
+                SpawnTempLight(m.Position, m.Cast.VisualColor, 4f, 0.5f);
                 if (m.Cast.VisualColor != ColorSchool.Ashen)
-                    SpawnTempFireParticle(m.Position, 0.3f);
+                    SpawnBigFireParticle(m.Position, 0.35f);
             }
 
             bool wantDmg  = m.Cast.DamageCount  > 0;
@@ -182,7 +203,8 @@ namespace AshAndEmber
         {
             if (slot == null) return;
             MissileState m = slot;
-            try { m.Light?.Remove(0); } catch { }
+            try { m.Light?.Remove(0);  } catch { }
+            try { m.Light2?.Remove(0); } catch { }
             slot = null;
 
             if (Mission.Current == null) return;
@@ -190,8 +212,7 @@ namespace AshAndEmber
             float       radius = m.ExplosionRadius;
             ColorSchool col    = m.Cast.VisualColor;
 
-            SpawnCircleLights(pos, col, radius, 5f);
-            SpawnImpactBurst(pos, col, 8f);
+            SpawnExplosionEffect(pos, col, radius, 5f);
             TryCastSound(pos, col);
             if (!silent) RecordMagicCast(pos);
 
@@ -242,8 +263,18 @@ namespace AshAndEmber
 
         public static void ClearMissile()
         {
-            if (_missile != null)  { try { _missile.Light?.Remove(0);  } catch { } _missile  = null; }
-            if (_missile2 != null) { try { _missile2.Light?.Remove(0); } catch { } _missile2 = null; }
+            if (_missile != null)
+            {
+                try { _missile.Light?.Remove(0);  } catch { }
+                try { _missile.Light2?.Remove(0); } catch { }
+                _missile = null;
+            }
+            if (_missile2 != null)
+            {
+                try { _missile2.Light?.Remove(0);  } catch { }
+                try { _missile2.Light2?.Remove(0); } catch { }
+                _missile2 = null;
+            }
         }
 
         // ── Legacy stub ───────────────────────────────────────────────────────

@@ -204,6 +204,16 @@ namespace AshAndEmber
             "psys_campfire_small",
         };
 
+        // Big fire names tried first — preferred for fireball heads and explosions.
+        private static readonly string[] _bigFireParticleNames =
+        {
+            "psys_env_fire_big_01",
+            "psys_env_fire_medium_01",
+            "psys_campfire",
+            "psys_game_fire_torch_small",
+            "psys_campfire_small",
+        };
+
         private static GameEntity SpawnParticleEntity(Vec3 position, string particleName)
         {
             try
@@ -251,6 +261,93 @@ namespace AshAndEmber
                         });
                 }
                 return;
+            }
+        }
+
+        // Single large fire particle — preferred for fireball heads and explosion centres.
+        // Uses big-particle names first; spawns one entity only (no scatter companions).
+        internal static void SpawnBigFireParticle(Vec3 position, float duration)
+        {
+            foreach (string name in _bigFireParticleNames)
+            {
+                GameEntity entity = SpawnParticleEntity(position, name);
+                if (entity == null) continue;
+                _areaEffects.Add(new AreaEffect
+                {
+                    Id = "temp_particle", Position = position, School = ColorSchool.Red,
+                    TickInterval = duration, TickTimer = duration, Remaining = duration,
+                    LightEntity = entity,
+                });
+                return;
+            }
+        }
+
+        // Fireball detonation: central fire column + radial light/particle ring.
+        // Replaces SpawnCircleLights + SpawnImpactBurst for missile explosions.
+        internal static void SpawnExplosionEffect(Vec3 pos, ColorSchool school, float radius, float duration)
+        {
+            bool useFire = school != ColorSchool.Ashen;
+
+            // Central fire column at three heights
+            if (useFire)
+            {
+                SpawnBigFireParticle(pos,                           duration);
+                SpawnBigFireParticle(pos + new Vec3(0f, 0f, 0.6f), duration * 0.75f);
+                SpawnBigFireParticle(pos + new Vec3(0f, 0f, 1.2f), duration * 0.5f);
+            }
+
+            // Brief blinding flash then sustained glow
+            SpawnTempLight(pos, school, Math.Min(radius * 3f,  22f), duration * 0.25f);
+            SpawnTempLight(pos, school, Math.Min(radius * 1.5f, 16f), duration);
+            SpawnTempLight(pos + new Vec3(0f, 0f, 1f), school, Math.Min(radius * 1.2f, 12f), duration * 0.6f);
+
+            // Radial ring of fire jets
+            int count = Math.Max(4, Math.Min(8, (int)(radius * 1.5f)));
+            float ringR = radius * 0.7f;
+            for (int i = 0; i < count; i++)
+            {
+                double angle = Math.PI * 2.0 / count * i;
+                Vec3 rp = pos + new Vec3((float)Math.Cos(angle) * ringR, (float)Math.Sin(angle) * ringR, 0f);
+                if (useFire) SpawnTempFireParticle(rp, duration * 0.5f);
+                SpawnTempLight(rp, school, 6f, duration * 0.4f);
+            }
+        }
+
+        // Burst shockwave explosion: concentric rings of fire erupting from the blast centre.
+        // Replaces SpawnCircleLights for Burst spells.
+        internal static void SpawnBurstExplosion(Vec3 origin, ColorSchool school, float aoeRadius, float duration)
+        {
+            bool useFire = school != ColorSchool.Ashen;
+
+            // Massive central pillar
+            if (useFire)
+            {
+                SpawnBigFireParticle(origin,                           duration);
+                SpawnBigFireParticle(origin + new Vec3(0f, 0f, 0.5f), duration * 0.8f);
+            }
+            SpawnTempLight(origin, school, Math.Min(aoeRadius * 2.5f, 20f), duration);
+            SpawnTempLight(origin + new Vec3(0f, 0f, 1.2f), school, Math.Min(aoeRadius * 1.5f, 14f), duration * 0.5f);
+
+            // Inner ring — erupts most intensely
+            int innerCount = Math.Max(4, Math.Min(8, (int)(aoeRadius * 1.2f)));
+            float innerR = aoeRadius * 0.45f;
+            for (int i = 0; i < innerCount; i++)
+            {
+                double angle = Math.PI * 2.0 / innerCount * i;
+                Vec3 p = origin + new Vec3((float)Math.Cos(angle) * innerR, (float)Math.Sin(angle) * innerR, 0f);
+                if (useFire) SpawnTempFireParticle(p, duration * 0.7f);
+                SpawnTempLight(p, school, 7f, duration * 0.6f);
+            }
+
+            // Outer ring — the shockwave edge
+            int outerCount = Math.Max(5, Math.Min(10, (int)(aoeRadius * 1.6f)));
+            float outerR = aoeRadius * 0.85f;
+            for (int i = 0; i < outerCount; i++)
+            {
+                double angle = Math.PI * 2.0 / outerCount * i + Math.PI / outerCount;
+                Vec3 p = origin + new Vec3((float)Math.Cos(angle) * outerR, (float)Math.Sin(angle) * outerR, 0f);
+                if (useFire) SpawnTempFireParticle(p, duration * 0.5f);
+                SpawnTempLight(p, school, 5f, duration * 0.35f);
             }
         }
 
