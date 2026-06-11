@@ -1,4 +1,4 @@
-# Ash and Ember — v0.14.1
+# Ash and Ember — v0.18
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -12,15 +12,15 @@ AshAndEmber/
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
 │   └── troops.xml                   (reserved)
-├── src/                             ~9 400 lines across 34 source files
+├── src/                             ~10 000 lines across 35 source files
 │   ├── MagicSystem.cs               module entry point + mission behaviour
-│   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu
-│   ├── SpellBuilder.cs              two-phase input parser → SpellCast
+│   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu, Whisper system
+│   ├── SpellBuilder.cs              two-phase input parser → SpellCast (Lost Form flags)
 │   ├── SpellMinigame.cs             arcane sequence memory game for campaign map casting
-│   ├── TalentSystem.cs              21 talents (7 passive, 8 enchantment, 6 spell)
+│   ├── TalentSystem.cs              25 talents (7 passive, 8 enchantment, 6 spell, 4 lost form)
 │   ├── AgingSystem.cs               casting cost (days of life), Blight path
 │   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
-│   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks
+│   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks, Whisper hooks
 │   ├── CampaignMapEvents.cs         27 world events across two independent weekly slots
 │   ├── BattleEvents.cs              per-battle battlefield events with atmospheric visuals
 │   ├── DragonQuestSystem.cs         main quest — The Last Flight of the Dragons
@@ -32,17 +32,18 @@ AshAndEmber/
 │   ├── Spells/
 │   │   ├── SpellEffects.cs          core partial: helpers, effects, targeting, death queue
 │   │   ├── AffectSpells.cs          affect form execution
-│   │   ├── BlastSpells.cs           Blast form execution
-│   │   ├── SelfSpells.cs            Missile + Ward forms
-│   │   └── CreateSpells.cs          Barrier + Burst forms
+│   │   ├── BlastSpells.cs           Blast form + Lost Blast (widened cone)
+│   │   ├── SelfSpells.cs            Missile + Ward + Twin Bolt + fire patch aftermath
+│   │   └── CreateSpells.cs          Barrier + Burst + Fading Ward + Directed Burst + holy zone
 │   ├── Visual/
-│   │   ├── AreaEffects.cs           persistent area effect engine + light management
+│   │   ├── AreaEffects.cs           area effect engine: spell_firepatch + spell_holyzone added
 │   │   ├── GlowSystem.cs            agent glow outlines + cast sound
 │   │   ├── MoveSystem.cs            smooth push/pull lerp movement
 │   │   ├── AshenSceneTone.cs        cold atmospheric fog in Ashen battles
 │   │   └── NamePrefixes.cs          title/prefix management for mage lords
 │   └── AI/
-│       ├── ColourLordRegistry.cs    marks lords as mages or Ashen lords; save/load
+│       ├── RivalShadowSystem.cs     Rival Shadow — personal Ashen antagonist system (NEW)
+│       ├── ColourLordRegistry.cs    marks lords as mages or Ashen lords; companion tracking
 │       ├── ColourLordAI.cs          priority-driven battle AI for mage lords
 │       ├── ColourUnitRegistry.cs    unit-level mage tracking (stub)
 │       ├── BanditMageAI.cs          rare bandit unit spellcasters with burnout
@@ -185,14 +186,16 @@ The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Da
 
 ## Effects (after Break)
 
-| Key | Arrow | Effect | Per count | Targets |
-|-----|-------|--------|-----------|---------|
-| W | ↑ | **Damage** | 25 fire damage | All units — friendly fire included |
-| A | ← | **Damage** | 25 fire damage | All units — friendly fire included |
-| D | → | **Damage** | 25 fire damage | All units — friendly fire included |
-| S | ↓ | **Restore** | 15 healing | Allies (Burst also heals caster) |
+Every damage key deals 25 fire damage per press (friendly fire included) — but each carries its own **nature**, with a weak innate effect that the matching enchantment talent amplifies:
 
-Damage and Restore may be combined in the same cast.
+| Key | Arrow | Nature | Per count | Innate effect (no talent) | Amplified by |
+|-----|-------|--------|-----------|---------------------------|--------------|
+| W | ↑ | **Sear** | 25 fire damage | +5 searing burn | **Immolate** |
+| A | ← | **Force** | 25 fire damage | 1.5 m concussive push | **Scatter** |
+| D | → | **Shred** | 25 fire damage | +4% damage taken for 4 s (max 12%) | **Sunder** |
+| S | ↓ | **Restore** | 15 healing | +4 morale lift | **Hearthlight** |
+
+Owning a key's talent replaces its weak innate effect with the full version — no double-dipping. **Smoulder** triggers on any damage nature. Natures mix freely in one cast: `WWA` after Break = 75 damage carrying sear ×2 + force ×1.
 
 ---
 
@@ -200,22 +203,24 @@ Damage and Restore may be combined in the same cast.
 
 Every spell draws on your lifespan. Cost scales **geometrically** with total inputs — weak spells are cheap; powerful spells become very expensive. Hard cap: 84 campaign days (1 Bannerlord year = 4 seasons × 21 days).
 
-| Total inputs | Cost | With BattleMage |
-|--------------|------|-----------------|
+**The Ledger of Years** — the grimoire (Alt+X) opens with a running account of the aging economy: your age, time remaining until the fire burns out at 100, total days the fire has taken, days reclaimed (Reap, Ember, rites), and how many workings you have cast in battle and on the map.
+
+| Total inputs | Cost | With Tempered |
+|--------------|------|---------------|
 | 1–2 | 1 day | 1 day |
-| 3 | 2 days | 1 day |
+| 3 | 2 days | 2 days |
 | 4 | 3 days | 2 days |
 | 5 | 4 days | 3 days |
 | 6 | 5 days | 4 days |
-| 7 | 8 days | 7 days |
-| 8 | 11 days | 10 days |
-| 9 | 15 days | 14 days |
-| 10 | 21 days | 20 days |
-| 12 | 41 days | 40 days |
-| 14 | 80 days | 79 days |
-| 16+ | 84 days (cap) | 83 days |
+| 7 | 8 days | 6 days |
+| 8 | 11 days | 8 days |
+| 9 | 15 days | 11 days |
+| 10 | 21 days | 16 days |
+| 12 | 41 days | 31 days |
+| 14 | 80 days | 60 days |
+| 16+ | 84 days (cap) | 63 days |
 
-**Tempered** talent reduces the cost by 1 day (minimum 1 — battle casts are never free), plus up to 30% age-based reduction after age 40.
+**Tempered** talent cuts the cost by 25% (rounded, minimum 1 — battle casts are never free), plus up to 30% age-based reduction after age 40.
 
 ### Campaign map casting cost
 
@@ -224,10 +229,10 @@ Campaign map spells escalate in cost with each use per calendar day:
 | Cast # that day | Cost |
 |-----------------|------|
 | 1st | 1 day |
-| 2nd | 7 days |
-| 3rd | 14 days |
-| 4th | 21 days |
-| … | +7 per additional cast |
+| 2nd | 4 days |
+| 3rd | 8 days |
+| 4th | 12 days |
+| … | +4 per additional cast |
 
 The counter resets at midnight — a notification appears in the message log. **Resonance** talent gives a 25% chance to skip the cost entirely on any cast. Ashen players pay criminal rating instead of days (see below).
 
@@ -249,10 +254,12 @@ Ashen mages do not age, but repeated casting each day risks the cold stirring ag
 | Choice | Outcome |
 |--------|---------|
 | **Surrender to it** | Death — the cold claims what it wants. |
-| **Focus your will** | Leadership test. Success chance = skill × 0.3% (max 90%). Fail → death. |
-| **Overwhelm it with your body** | Athletics test. Success chance = skill × 0.3% (max 90%). Fail → death. |
+| **Focus your will** | Leadership test. Success chance = skill × 0.3% (max 90%). |
+| **Overwhelm it with your body** | Athletics test. Success chance = skill × 0.3% (max 90%). |
 
-This is the balancing cost of immortality — spamming map spells as an Ashen carries real risk.
+Failure follows a **two-strike rule**: the first failed test does not kill you — you are left broken (wounded to near-death, −20 party morale) and **strained for 21 days**. Failing another test while strained is death. Surrendering is always death.
+
+This is the balancing cost of immortality — spamming map spells as an Ashen carries real risk, but one bad roll will not end a campaign on its own.
 
 ### Tournament
 
@@ -262,17 +269,17 @@ Casting **any** spell during a tournament kills and disqualifies you instantly.
 
 ## Talents
 
-Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 9 purchased cost 1 focus point each; 10th onward costs 2 points.
+Talents are learned through the grimoire (Alt+X → *Talents*). The **Gift** is free. The first 9 purchased cost 1 focus point each; 10th onward costs 2 points. **Lost Forms** always cost a fixed 2 focus points.
 
 ### Passive
 
 | Talent | Effect |
 |--------|--------|
 | **Gift** | You carry the fire. Battle casting enabled. |
-| **Tempered** | Each battle cast costs 1 fewer day (minimum 1). Beyond age 40, each year reduces cost by an additional 0.5%, up to 30% total. |
+| **Tempered** | Battle casts cost 25% fewer days (rounded, minimum 1). Beyond age 40, each year reduces cost by an additional 0.5%, up to 30% total. |
 | **Resonance** | One in four campaign map castings costs no days. |
 | **Kinship** | +10 relations with mage lords; relation cannot fall below 0 with them. |
-| **Reap** | Executing a captured lord restores 100 days. Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner: 5% chance to restore 1 day. Learning this marks you. |
+| **Reap** | Executing a captured lord restores 20 days + 10 per tier of their clan (max 80). Raiding a village restores 5 days (7-day cooldown). Each discarded prisoner: 5% chance to restore 1 day. Learning this marks you. |
 | **Ember** | 5% chance per battle kill to restore 1 day of youth. |
 | **Flashfire** | Each battle spell has a 10% chance to echo — firing again instantly at no aging cost. |
 
@@ -282,25 +289,27 @@ Enchantments fire automatically on every qualifying cast in battle.
 
 **Damage enchantments** (trigger: Damage effect — applies to all hit units, allies included):
 
-| Talent | Effect |
-|--------|--------|
-| **Scatter** | Blasts enemies backward (5 m per Damage input) and slows movement 25% per input (max 75%) for 4 s + 1.5 s per input. |
-| **Smoulder** | Scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
-| **Sunder** | Increases all damage enemies receive and reduces their attack power. Damage vulnerability = 5% per Damage input (max 50%). Attack reduction = 10% per Damage input (max 50%). Duration = 8 s + 1.5 s per Damage input. |
-| **Immolate** | Sets enemies alight — bonus burn damage (10 per Damage input). Guaranteed kills scale with Damage inputs: 3 = 1 kill, 6 = 2 kills, 9 = 3 kills. |
+| Talent | Triggered by | Effect |
+|--------|--------------|--------|
+| **Scatter** | Force (A) inputs | Blasts enemies backward (5 m per Force input) and slows movement 25% per input (max 75%) for 4 s + 1.5 s per input. |
+| **Smoulder** | Any damage input | Scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
+| **Sunder** | Shred (D) inputs | Increases all damage enemies receive and reduces their attack power. Damage vulnerability = 10% per Shred input (max 50%). Attack reduction = 10% per input (max 50%). Duration = 8 s + 1.5 s per input. |
+| **Immolate** | Sear (W) inputs | Sets enemies alight — bonus burn damage (10 per Sear input). Kill slots scale with Sear inputs (one per 3): the first kill of a cast is certain, each further slot connects at 50%. 2 Sear: 50% kill chance; 1 Sear: 33%. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
+Unlike damage enchantments — which are split across the Sear/Force/Shred natures, so one cast only feeds the natures it carries — **every Restore enchantment you own fires together on a single Restore cast**. Each one is therefore tuned weaker than its damage counterparts; the payload of a full restore build is the stack, not any single talent.
+
 | Talent | Effect |
 |--------|--------|
-| **Ashveil** | Brief magic immunity for healed allies. Duration = 4 s per Restore input. |
-| **Cinder Shell** | Reduces incoming damage (5% per input, max 50%) for 6 s + 1.5 s per input. Near-full-health allies also gain a 15 HP damage shield per input for 5 s. |
-| **Hearthlight** | Lifts allied morale. Boost = 15 per Restore input. |
-| **Reflect** | Healed allies reflect 8% of melee damage per input (max 50%) back at attackers for 3 s + 1.5 s per input. Ranged hits do not trigger the reflection. |
+| **Ashveil** | Brief magic immunity for healed allies. Duration = 2 s per Restore input, max 10 s. |
+| **Cinder Shell** | Reduces incoming damage (6% per input, max 30%) for 4 s + 1 s per input. Allies above 90% health also gain a 10 HP damage shield per input for 5 s. |
+| **Hearthlight** | Lifts allied morale. Boost = 10 per Restore input. |
+| **Reflect** | Healed allies reflect 5% of melee damage per input (max 25%) back at attackers. Ranged hits do not trigger the reflection. |
 
 ### Spell (campaign map)
 
-Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast each day; escalates sharply for repeated use. Crime rating instead of days if Ashen. NPC mage lords also cast these on the campaign map.
+Cast from the grimoire on the campaign map. Costs 1 aging day for the first cast each day; escalates with repeated use. Crime rating instead of days if Ashen. NPC mage lords also cast these on the campaign map.
 
 #### Arcane sequence
 
@@ -309,13 +318,13 @@ When you cast a campaign spell, a 3-step ritual description appears — two sent
 | Correct | Multiplier | Flavour |
 |---------|-----------|---------|
 | 3 / 3 | **1.50×** | Resonance — the rite was perfect. |
-| 2 / 3 | **1.00×** | The working takes hold. *(baseline)* |
-| 1 / 3 | **0.75×** | The words blur — the fire catches unevenly. |
+| 2 / 3 | **1.20×** | The working takes hold. |
+| 1 / 3 | **0.80×** | The words blur — the fire catches unevenly. |
 | 0 / 3 | **0.50×** | The words scatter — the fire finds its own shape. |
 
-A **"Cast without the rite"** button on the sequence screen skips the minigame and fires the spell at 1.00×.
+A **"Cast without the rite"** button on the sequence screen skips the minigame and fires the spell at 1.00× — guessing blindly averages worse than skipping; genuine recall beats both.
 
-The values in the table below are baseline (2/3 recall, 1.00×).
+The values in the table below are baseline (1.00×, the no-rite value).
 
 | Talent | Effect |
 |--------|--------|
@@ -325,6 +334,97 @@ The values in the table below are baseline (2/3 recall, 1.00×).
 | **Clairvoyance** | +25 influence, or +700 gold if not in a kingdom. |
 | **Extinguish** | 5–12 soldiers in the nearest enemy party within 60 map-units are wounded or killed; −30 morale. |
 | **Fade** | Your party is concealed from enemy scouts for 2 days. A perfect recall (3/3) extends this to 3 days. |
+
+### Lost Form (◈)
+
+Lost Forms permanently alter how a spell form behaves once purchased. Each costs a fixed **2 focus points** regardless of how many talents you own. They appear as a separate category in the talent menu. They are sidegrades, not upgrades — priced below the late-game talent cost so trying one is never a build mistake.
+
+| Talent | Fixed Cost | Effect |
+|--------|-----------|--------|
+| **Widened Blast** | 2 pts | Blast cone widens from ~49° to ~60°. More units caught at the edges. |
+| **Twin Bolt** | 2 pts | Missile fires two bolts side by side, each at 60% of original damage and healing power. |
+| **Fading Ward** | 2 pts | Barrier nodes expire after 60 seconds instead of persisting indefinitely. |
+| **Directed Burst** | 2 pts | Burst is asymmetric: full power in the forward hemisphere, 40% power in the rear arc. |
+
+---
+
+## Rival Shadow
+
+The cold ignores nobodies. Once your clan reaches **tier 3**, one Ashen lord is designated as your **Shadow** — a personal antagonist who watches you. A popup (*A Cold Attention*) announces that the dark forces of the north have noticed you.
+
+Every 14–21 days the Shadow acts against one of your settlements: loyalty or security drops. After **five schemes**, the Shadow rides out alone to confront you.
+
+**The Shadow Approaches** — a multi-select event:
+
+| Choice | Outcome |
+|--------|---------|
+| **Face them — through will** | Leadership test (skill × 0.4%, max 85%). Win → Shadow driven back (+5 focus, +200 renown, nearest Ashen lord converts). Lose → −5 days, the Shadow heals their wounds. |
+| **Face them — through endurance** | Athletics test (same scaling). |
+| **Withdraw** | −30 renown. Timer resets; schemes resume. |
+
+If the Shadow dies by other means the designation clears.
+
+---
+
+## Mage Companions
+
+When a companion joins your party there is a **20% chance** they carry the inner fire. Companions with the gift always enter with 1–3 battle enchantments already shaped in them.
+
+Companion mages age **25% faster** than regular mage lords after battle — the fire burns more personally in those who ride beside you.
+
+Companion mage status is tracked and saved independently from lord mages so the system survives save/load cleanly.
+
+---
+
+## Spell Aftermath
+
+Certain casts leave a mark on the ground after they fire:
+
+| Trigger | Effect | Duration |
+|---------|--------|----------|
+| **Missile + Damage** | Fire patch (3 m radius) spawns at explosion point. Damages enemies who walk through it (~8 HP/s per Damage input). | 8 seconds |
+| **Burst + Restore** (player only) | Holy zone (burst radius) lingers at cast position. Heals allies within it (~8 HP/s per Restore input). | 5 seconds |
+
+---
+
+## Whisper System
+
+The cold watches. Certain acts open a crack in the fire.
+
+**Whisper hooks (per event):**
+
+| Act | Whispers gained |
+|-----|----------------|
+| Ashen lord killed by player | +1 |
+| Any lord executed by player | +5 |
+| Dark rite completed (Ashen Altar) | +5 |
+| Sanctuary prayer failed | +2 |
+| Battle lost (player involved) | +1 |
+
+Whispers reflect recent conduct, not a permanent stain. They decay two ways:
+
+- **Virtue** — honourable, merciful players (Mercy + Honor ≥ 2) have a 1-in-7 chance each day to lose 1.
+- **Quiet conduct** — after 10 consecutive days without gaining a whisper, roughly 1 whisper fades every 3 days regardless of traits.
+
+Certain settlement encounters also feed or starve the cold — burning the village in *Darkness in the Roots*, watching *The Pyre* for sport, joining the dance of the *Three Figures*, or reaching back into *Ash in the Dream* all add whispers; saving the girl, funding the priest's sanctuary, dismissing the dream, or scattering the witches' rite shed them.
+
+**NPCs and the cold.** NPC mages carry no whisper counter — invisible per-lord bookkeeping would never surface to the player. Their corruption is modelled at the granularity you can actually see: a mage lord who overexerts in battle (15+ days aged in one fight) has an 8% chance of turning Ashen, the *Whispers from the Ash* world event pulls 1–3 mage lords to the cold, and lords who die at 100 have a 5% chance to rise Ashen.
+
+**Whisper tiers.** The count itself stays hidden, but the cold expresses itself in stages (crossing a tier shows a one-time warning, and the Ledger of Years carries a vague status line):
+
+| Tier | Threshold | Effect |
+|------|-----------|--------|
+| Noticed | 25+ | Occasional ambient whispers on the campaign map (rare — at most a few per season; one in three carries real intelligence: the bearing of the nearest Ashen warband). |
+| Favoured | 50+ | Ashen Altar rituals gain +1 point per round; Sanctuary meditation loses 1 point per round (never below 1). |
+| Close | 75+ | The altar bonus and sanctuary drag deepen to 2. The Temple declares you **anathema** (see The Temple). |
+
+At **100+ whispers** a countdown of 7 days begins. Then **The Cold Calls Your Name** fires:
+
+| Choice | Outcome |
+|--------|---------|
+| **Resist** | −10 days, −30 whispers. The event can fire again if whispers climb back to 100. |
+| **Bargain** | −30 days, −60 whispers. |
+| **Accept** | Become Ashen immediately. |
 
 ---
 
@@ -500,9 +600,19 @@ Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. Wh
 - The UI shows exact tier-scaled cost and any active repeat penalties before committing.
 - Crash safety: eliminated kingdoms cannot receive crime rating or war declarations; dead heroes cannot receive relation changes. All checked before applying.
 
+### Counter-intelligence
+
+NPC lords can and do scheme against the player and player-owned fiefs. Two defences exist:
+
+- **Warning whispers** — when a plot is queued against you or your fiefs, there is a chance you receive a vague warning (30% base, scaling with Roguery up to 75%).
+- **Sweep the city for hostile agents** (scheme menu, 500g) — pays informants to comb the underworld. If a plot is in motion, a Roguery check (40–85%) cancels it and names its author (+300 Roguery XP); on failure the plot proceeds. If nothing is in motion, the coin buys only rumours — probing blind has a real cost.
+- The **Clairvoyance** campaign spell also reveals a pending plot and offers to sever it for 2 000g.
+
+When an NPC scheme resolves against you, a 1-day **retaliation window** opens: all your schemes cost half price.
+
 ### NPC lords
 
-A random NPC lord may initiate a scheme each day — at most one new scheme launches per day globally. Each lord has a 20–35 day personal cooldown between schemes. NPCs never target the player directly. NPC scheme results appear in the campaign message log (not as popup notifications).
+A random NPC lord may initiate a scheme each day — at most one new scheme launches per day globally. Each lord has a 20–35 day personal cooldown between schemes. NPC scheme results appear in the campaign message log (not as popup notifications) — unless the scheme targets you, in which case the result is shown as a popup.
 
 - **Standard lord and settlement schemes** can target lords from any foreign kingdom — not just current enemies. Schemes work in peacetime too (intelligence operations, sabotage, court intrigue).
 - **Ashen targets** are valid but uncommon (15% weighting when non-Ashen targets exist) and face an additional −30% success penalty.
@@ -726,7 +836,7 @@ Selecting a prayer begins a **Meditation ritual**. The game secretly rolls a hid
 
 1. **Costs the player** — troops are wounded or the hero ages (amount and type vary by rite).
 2. **Accumulates hidden progress** — points per round = `round(roll(3–10) × mult)`, where `mult = (Mercy + Honor + Generosity) / 6`. At full alignment (+6 total) you average 6.5 pts/round. At zero alignment you always earn exactly 1 pt/round — success is slow but not impossible. The reward on success is also scaled by mult, so a zero-alignment character who grinds through earns a much weaker effect.
-3. **Prompts the player** — *"Continue the meditation"* or *"Step back — claim what the flame offers."*
+3. **Prompts the player** — continue with *steady devotion* (normal roll), continue with *fervent devotion* (progress ×1.5, but one round in three the flame takes the round's cost a second time), or *step back — claim what the flame offers*.
 
 When the player stops: if accumulated progress **≥ hidden target**, the prayer fires. If not, the cost paid is lost and nothing is granted. The target number is never shown.
 
@@ -764,6 +874,8 @@ Cooldowns (base; reduced 40% for Temple members; longer at lower alignment):
 
 **Location depletion:** after 5 ritual starts at a single Sanctuary (any mix of rites), the flame there rests for 30 days and all options are disabled. Travel to another Sanctuary to continue. The counter and recovery timer are shown in the sub-menu header.
 
+**Altar interference:** the flame and the grey stone reject each other. Using an Ashen Altar halves Sanctuary yield for the next **30 days** (and vice versa). The remaining interference window is shown in the sub-menu header.
+
 When Protective Rites are active, any Ashen world event that would fire instead shows a notification that the ward held. The counter ticks down daily.
 
 **NPC behavior (simulated ritual):** NPC lords simulate 3–4 rounds of meditation when the chance fires. If their simulated accumulation meets the threshold, the effect applies.
@@ -780,6 +892,22 @@ The founding city has its loyalty and security immediately set to 100 to prevent
 
 If none of the three canonical cities are eligible (already Ashen-owned, under siege, or their owner clan is unavailable), a fallback city from the Empire, Khuzait, or Sturgian factions is used instead.
 
+#### The Covenant
+
+Once the Temple stands, it watches players who are **not** members:
+
+- **Covenant offer** — a clean-handed player (clan tier 2+, whisper tier ≤ 1) may be approached by a Temple envoy offering a pact. While sworn, **battle casts cost 1 fewer day of life** (minimum 1 — stacks after Tempered and Kinship), and every ~3–5 weeks the Temple **calls for aid** against the Ashen:
+
+| Answer | Outcome |
+|--------|---------|
+| **Ride with the strike** | Up to 2 Ashen warbands are bloodied (10–18 wounded each, −20 morale). +50 renown, +10 relation with the High Templar, +10 party morale. |
+| **Send coin (800 denars)** | +15 renown, +5 relation. |
+| **Stand aside** | −5 relation. The covenant holds — for now. |
+
+  Declining the envoy closes the offer permanently.
+
+- **Anathema** — a mage whose whispers reach tier 3 (75+) is declared anathema: any covenant is revoked, relations with the High Templar collapse (−30 to −40), and templar zealots periodically ambush the player's column (3–8 soldiers wounded every ~2 weeks) until the whispers fade below tier 2. Redemption lifts the hunt, but the covenant is not offered twice.
+
 ### The Ashen Altars
 
 In **Tyal, Sibir, Baltakhand, and Amprela**, a grey stone altar stands permanently in the town. These altars are announced at game start.
@@ -792,7 +920,7 @@ Selecting a rite begins a **Sacrifice ritual**. The game secretly rolls a hidden
 
 1. **Costs the player** — prisoners are killed first (lowest-tier first), then healthy party members if needed. A tier-N troop is worth N sacrifice points. Morale drains proportional to the blood spent. The menu header shows total available sacrifice points.
 2. **Accumulates hidden progress** — points per round = `round(roll(3–10) × mult)`, where `mult = −(Mercy + Honor + Generosity) / 6`. At maximum evil (−6 total) you average 6.5 pts/round. At zero or virtuous alignment you earn exactly 1 pt/round. The reward on success is also scaled by mult.
-3. **Prompts the player** — *"Offer more"* or *"Complete the rite — take what blood has bought."*
+3. **Prompts the player** — offer more with *a measured hand* (normal roll), offer more *heedlessly* (progress ×1.5, but one round in three the stone drinks the round's cost twice), or *complete the rite — take what blood has bought*.
 
 When the player stops: if accumulated progress **≥ hidden target**, the rite fires. If not, the sacrifice was wasted. The target number is never shown. If you run out of available sacrifice before stopping voluntarily, the ritual resolves immediately.
 
@@ -833,6 +961,8 @@ Cooldowns (base; longer at lower alignment):
 | The Ashen Solstice | 14 days |
 
 **Location depletion:** after 5 ritual starts at a single altar (any mix of rites), the stone rests for 30 days and all options are disabled. Travel to another altar city. The counter and recovery timer are shown in the sub-menu header.
+
+**Sanctuary interference:** the grey stone and the flame reject each other. Praying at a Sanctuary halves altar yield for the next **30 days** (and vice versa). The remaining interference window is shown in the sub-menu header.
 
 **NPC behavior (simulated ritual):** NPC lords simulate 3 rounds of sacrifice. If their simulated accumulation meets the threshold, the effect applies.
 - Ashen lords in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears.

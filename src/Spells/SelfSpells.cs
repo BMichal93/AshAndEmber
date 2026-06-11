@@ -28,13 +28,31 @@ namespace AshAndEmber
             public SpellCast   Cast;
             public Team        CasterTeam;
             public GameEntity  Light;
+            public GameEntity  Light2;  // fireball cluster — upper glow for sphere appearance
             public float       TrailTimer = 0f;
             public const float Speed         = 28f;
-            public const float TrailInterval = 0.05f;
+            public const float TrailInterval = 0.035f;  // was 0.05 — denser fire trail
             public const float DetectRadius  = 1.5f;
         }
 
-        private static MissileState _missile = null;
+        private static MissileState _missile  = null;
+        private static MissileState _missile2 = null;  // Twin Bolt second projectile
+
+        private static SpellCast ScaleMissileCast(SpellCast original, float factor)
+        {
+            var sc = new SpellCast();
+            sc.MissileCount         = original.MissileCount;
+            sc.Form                 = original.Form;
+            sc.DamageCount          = original.DamageCount  > 0 ? Math.Max(1, (int)(original.DamageCount  * factor)) : 0;
+            sc.RestoreCount         = original.RestoreCount > 0 ? Math.Max(1, (int)(original.RestoreCount * factor)) : 0;
+            // Preserve the per-key damage natures so split-cast effects survive the scale.
+            sc.SearCount            = original.SearCount    > 0 ? Math.Max(1, (int)(original.SearCount    * factor)) : 0;
+            sc.ForceCount           = original.ForceCount   > 0 ? Math.Max(1, (int)(original.ForceCount   * factor)) : 0;
+            sc.ShredCount           = original.ShredCount   > 0 ? Math.Max(1, (int)(original.ShredCount   * factor)) : 0;
+            sc.UsingLostMissile     = true;
+            sc.OverrideVisualColor  = original.OverrideVisualColor;
+            return sc;
+        }
 
         // ── Execute ───────────────────────────────────────────────────────────
         public static void ExecuteMissile(SpellCast cast)
@@ -42,7 +60,7 @@ namespace AshAndEmber
             Agent caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return;
 
-            if (_missile != null)
+            if (_missile != null || _missile2 != null)
             {
                 ClearMissile();
                 InformationManager.DisplayMessage(new InformationMessage(
@@ -57,102 +75,151 @@ namespace AshAndEmber
             Vec3 fwd      = caster.LookDirection.NormalizedCopy();
             Vec3 startPos = caster.Position + fwd * 1.5f + new Vec3(0f, 0f, 1.2f);
 
-            _missile = new MissileState
-            {
-                Position        = startPos,
-                Forward         = fwd,
-                TravelLeft      = range,
-                ExplosionRadius = explRadius,
-                Cast            = cast,
-                CasterTeam      = caster.Team,
-            };
-
             ColorSchool col = cast.VisualColor;
-            _missile.Light = SpawnAreaLight(startPos, col, 5f);
+
+            if (cast.UsingLostMissile)
+            {
+                SpellCast cast1 = ScaleMissileCast(cast, 0.60f);
+                SpellCast cast2 = ScaleMissileCast(cast, 0.60f);
+                Vec3 right = Vec3.CrossProduct(fwd, new Vec3(0f, 0f, 1f)).NormalizedCopy() * 0.35f;
+                _missile = new MissileState
+                {
+                    Position = startPos - right, Forward = fwd,
+                    TravelLeft = range, ExplosionRadius = explRadius,
+                    Cast = cast1, CasterTeam = caster.Team,
+                };
+                _missile2 = new MissileState
+                {
+                    Position = startPos + right, Forward = fwd,
+                    TravelLeft = range, ExplosionRadius = explRadius,
+                    Cast = cast2, CasterTeam = caster.Team,
+                };
+                Vec3 rgb = SchoolToLightColor(col);
+                _missile.Light   = SpawnAreaLight(_missile.Position,  col, 5f);
+                _missile.Light2  = SpawnAreaLightRaw(_missile.Position  + new Vec3(0f, 0f, 0.35f), rgb, 3f);
+                _missile2.Light  = SpawnAreaLight(_missile2.Position, col, 5f);
+                _missile2.Light2 = SpawnAreaLightRaw(_missile2.Position + new Vec3(0f, 0f, 0.35f), rgb, 3f);
+                if (col != ColorSchool.Ashen)
+                {
+                    SpawnBigFireParticle(startPos - right, 0.5f);
+                    SpawnBigFireParticle(startPos + right, 0.5f);
+                }
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Twin Bolt ({range:F0}m, {explRadius:F0}m blast) ×2 — {cast1.EffectSummary()} each.",
+                    ColorSchoolData.GetMessageColor(col)));
+            }
+            else
+            {
+                _missile = new MissileState
+                {
+                    Position = startPos, Forward = fwd,
+                    TravelLeft = range, ExplosionRadius = explRadius,
+                    Cast = cast, CasterTeam = caster.Team,
+                };
+                Vec3 rgb = SchoolToLightColor(col);
+                _missile.Light  = SpawnAreaLight(startPos, col, 6f);
+                _missile.Light2 = SpawnAreaLightRaw(startPos + new Vec3(0f, 0f, 0.4f), rgb, 3.5f);
+                if (col != ColorSchool.Ashen) SpawnBigFireParticle(startPos, 0.6f);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Missile ({range:F0}m, {explRadius:F0}m blast) — {cast.EffectSummary()}.",
+                    ColorSchoolData.GetMessageColor(col)));
+            }
+
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
             BeginAgentGlow(caster, col, 1f);
-
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"Missile ({range:F0}m, {explRadius:F0}m blast) — {cast.EffectSummary()}.",
-                ColorSchoolData.GetMessageColor(col)));
         }
 
         // ── Tick (called from MagicSystem every mission frame) ─────────────────
         public static void TickMissile(float dt)
         {
-            if (_missile == null || Mission.Current == null) return;
+            if (Mission.Current == null) return;
+            TickMissileState(ref _missile, dt, false);
+            TickMissileState(ref _missile2, dt, true);
+        }
 
-            float moved        = MissileState.Speed * dt;
-            _missile.Position  += _missile.Forward * moved;
-            _missile.TravelLeft -= moved;
+        private static void TickMissileState(ref MissileState m, float dt, bool isTwin)
+        {
+            if (m == null) return;
 
-            // Move head light with missile
-            if (_missile.Light != null)
+            float moved    = MissileState.Speed * dt;
+            m.Position    += m.Forward * moved;
+            m.TravelLeft  -= moved;
+
+            if (m.Light != null)
             {
                 try
                 {
-                    var lf = new MatrixFrame(Mat3.Identity, _missile.Position);
-                    _missile.Light.SetGlobalFrame(in lf, true);
+                    var lf = new MatrixFrame(Mat3.Identity, m.Position);
+                    m.Light.SetGlobalFrame(in lf, true);
+                }
+                catch { }
+            }
+            if (m.Light2 != null)
+            {
+                try
+                {
+                    var lf2 = new MatrixFrame(Mat3.Identity, m.Position + new Vec3(0f, 0f, 0.4f));
+                    m.Light2.SetGlobalFrame(in lf2, true);
                 }
                 catch { }
             }
 
-            // Particle trail — short-lived lights left behind every TrailInterval
-            _missile.TrailTimer -= dt;
-            if (_missile.TrailTimer <= 0f)
+            m.TrailTimer -= dt;
+            if (m.TrailTimer <= 0f)
             {
-                _missile.TrailTimer = MissileState.TrailInterval;
-                SpawnTempLight(_missile.Position, _missile.Cast.VisualColor, 3f, 0.4f);
-                if (_missile.Cast.VisualColor != ColorSchool.Ashen)
-                    SpawnTempFireParticle(_missile.Position, 0.3f);
+                m.TrailTimer = MissileState.TrailInterval;
+                SpawnTempLight(m.Position, m.Cast.VisualColor, 4f, 0.5f);
+                if (m.Cast.VisualColor != ColorSchool.Ashen)
+                    SpawnTrailParticle(m.Position, 0.35f);
             }
 
-            // Hit-detect: explode on close contact with a valid target.
-            // Direct iteration (no .ToList()) avoids per-frame heap allocation.
-            bool wantDmg  = _missile.Cast.DamageCount  > 0;
-            bool wantHeal = _missile.Cast.RestoreCount > 0;
-            Vec3 mpos = _missile.Position;
+            bool wantDmg  = m.Cast.DamageCount  > 0;
+            bool wantHeal = m.Cast.RestoreCount > 0;
+            Vec3 mpos = m.Position;
             try
             {
                 foreach (Agent a in Mission.Current.Agents)
                 {
-                    if (!a.IsActive() || a.IsMount) continue;
-                    bool isEnemy = _missile.CasterTeam != null && a.Team != _missile.CasterTeam;
-                    bool isAlly  = _missile.CasterTeam != null && a.Team == _missile.CasterTeam;
-                    if (!(wantDmg || (wantHeal && isAlly))) continue;
+                    if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
+                    bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                    bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
+                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
                     float dx = a.Position.x - mpos.x;
                     float dy = a.Position.y - mpos.y;
                     if (dx * dx + dy * dy > MissileState.DetectRadius * MissileState.DetectRadius) continue;
-                    ExplodeMissile(mpos);
+                    ExplodeMissileState(ref m, mpos, isTwin);
                     return;
                 }
             }
             catch { }
 
-            if (_missile.TravelLeft <= 0f)
-                ExplodeMissile(_missile.Position);
+            if (m.TravelLeft <= 0f)
+                ExplodeMissileState(ref m, m.Position, isTwin);
         }
 
         // ── Explosion ─────────────────────────────────────────────────────────
-        private static void ExplodeMissile(Vec3 pos)
+        private static void ExplodeMissileState(ref MissileState slot, Vec3 pos, bool silent)
         {
-            if (_missile == null) return;
-            MissileState m = _missile;
-            ClearMissile();
+            if (slot == null) return;
+            MissileState m = slot;
+            try { m.Light?.Remove(0);  } catch { }
+            try { m.Light2?.Remove(0); } catch { }
+            slot = null;
 
             if (Mission.Current == null) return;
 
             float       radius = m.ExplosionRadius;
             ColorSchool col    = m.Cast.VisualColor;
 
-            SpawnCircleLights(pos, col, radius, 5f);
-            SpawnImpactBurst(pos, col, 8f);
+            SpawnExplosionEffect(pos, col, radius, 5f);
             TryCastSound(pos, col);
-            RecordMagicCast(pos);
+            if (!silent) RecordMagicCast(pos);
 
-            int affected = 0;
+            int affected  = 0;
             int alliesHit = 0;
+            bool wantDmg  = m.Cast.DamageCount  > 0;
+            bool wantHeal = m.Cast.RestoreCount > 0;
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
@@ -161,10 +228,8 @@ namespace AshAndEmber
                     float dist = new Vec3(a.Position.x - pos.x,
                                          a.Position.y - pos.y, 0f).Length;
                     if (dist > radius) continue;
-                    bool isEnemy = m.CasterTeam != null && a.Team != m.CasterTeam;
-                    bool isAlly  = m.CasterTeam != null && a.Team == m.CasterTeam;
-                    bool wantDmg  = m.Cast.DamageCount  > 0;
-                    bool wantHeal = m.Cast.RestoreCount > 0;
+                    bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                    bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
                     if (!(wantDmg || (wantHeal && isAlly))) continue;
                     if (IsWarded(a)) continue;
                     try
@@ -179,23 +244,37 @@ namespace AshAndEmber
             }
             catch { }
 
-            // Scatter surviving enemies from the explosion point.
-            if (m.Cast.DamageCount > 0) ScatterEnemies(pos, radius, m.CasterTeam);
+            if (wantDmg) ScatterEnemies(pos, radius, m.CasterTeam);
 
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"Missile detonates — {m.Cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
-                ColorSchoolData.GetMessageColor(col)));
-            if (alliesHit > 0)
+            // Fire patch persists at explosion point for 8 seconds.
+            if (wantDmg) SpawnFirePatch(pos, m.Cast.DamageCount, m.CasterTeam);
+
+            if (!silent)
+            {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"Friendly fire — {alliesHit} {(alliesHit == 1 ? "ally" : "allies")} hit!",
-                    new Color(1f, 0.35f, 0.1f)));
+                    $"Missile detonates — {m.Cast.EffectSummary()} — {affected} {(affected == 1 ? "target" : "targets")}.",
+                    ColorSchoolData.GetMessageColor(col)));
+                if (alliesHit > 0)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Friendly fire — {alliesHit} {(alliesHit == 1 ? "ally" : "allies")} hit!",
+                        new Color(1f, 0.35f, 0.1f)));
+            }
         }
 
         public static void ClearMissile()
         {
-            if (_missile == null) return;
-            try { _missile.Light?.Remove(0); } catch { }
-            _missile = null;
+            if (_missile != null)
+            {
+                try { _missile.Light?.Remove(0);  } catch { }
+                try { _missile.Light2?.Remove(0); } catch { }
+                _missile = null;
+            }
+            if (_missile2 != null)
+            {
+                try { _missile2.Light?.Remove(0);  } catch { }
+                try { _missile2.Light2?.Remove(0); } catch { }
+                _missile2 = null;
+            }
         }
 
         // ── Legacy stub ───────────────────────────────────────────────────────

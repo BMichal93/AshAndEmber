@@ -31,7 +31,8 @@ namespace AshAndEmber
         private static bool   _inEffectPhase  = false;
         private static bool   _wasFocusing    = false;
         private static string _lastDisplayed  = "";
-        private const  int    MaxLen          = 10;
+        // 12 so the full debug combo (UUDDLLRRULDR) fits in the form buffer.
+        private const  int    MaxLen          = 12;
 
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
         private static bool _prevBreakPad;
@@ -268,6 +269,7 @@ namespace AshAndEmber
             if (success)
             {
                 try { if (Agent.Main != null) SpellEffects.RecordMagicCast(Agent.Main.Position); } catch { }
+                try { AgingSystem.RecordBattleCast(); } catch { }
                 int agingDays = cast.AgingDays(hasBattleMage);
 
                 // Kinship: each allied mage lord in this battle reduces aging cost by 10% (max 50%)
@@ -280,6 +282,10 @@ namespace AshAndEmber
                         agingDays = Math.Max(0, (int)Math.Round(agingDays * (1f - reduction)));
                     }
                 }
+
+                // Temple covenant: the Temple's rites steady the fire — 1 day cheaper (min 1)
+                if (inMission && agingDays > 1 && TempleCovenant.CovenantActive)
+                    agingDays -= 1;
 
                 if (agingDays > 0)
                 {

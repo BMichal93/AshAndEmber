@@ -65,9 +65,14 @@ namespace AshAndEmber
         Immolate    = 34,  // Enchantment — Damage: guaranteed kill at 3+ inputs
         ArmedCasting = 35, // Passive — cast without sheathing weapons
         Ashstorm     = 36, // Spell  — bombard a nearby enemy settlement
+        // ── Lost Forms ────────────────────────────────────────────────────────
+        LostBlast   = 37, // Lost Form — widens blast cone (~49° → ~60°)
+        LostMissile = 38, // Lost Form — twin bolts at 60% power each
+        LostBarrier = 39, // Lost Form — barrier expires after 60 seconds
+        LostBurst   = 40, // Lost Form — asymmetric burst (full front, 40% rear)
     }
 
-    public enum TalentCategory { Passive, Enchantment, Spell, Info }
+    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm }
 
     public class TalentDef
     {
@@ -79,6 +84,7 @@ namespace AshAndEmber
         public TalentCategory Category;
         public string        Lore;
         public string        MechanicDesc;
+        public int           FocusCost;   // 0 = use standard cost curve; >0 = fixed cost
     }
 
     public static class TalentSystem
@@ -93,14 +99,14 @@ namespace AshAndEmber
                 Id = TalentId.Gift, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Gift",
                 Lore = "The fire ran in your blood before you understood what fire was. Not warmth — something older. The kind that burns without consuming, and holds the world together at its edges.",
-                MechanicDesc = "You carry the inner fire. In battle: form keys, Break, effect keys. U = Damage (enemies). D = Restore (allies)."
+                MechanicDesc = "You carry the inner fire. In battle: form keys, Break, effect keys. W = Sear (burn), A = Force (push), D = Shred (armour) — all deal 25 damage. S = Restore (allies)."
             },
             new TalentDef
             {
                 Id = TalentId.BattleMage, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Tempered",
                 Lore = "The forge teaches patience. A slow hand draws more from less; a careful reach into the fire takes without burning.",
-                MechanicDesc = "Passive. Each battle cast costs 1 fewer day (minimum 0 — small spells can be free). Beyond age 40, each year further reduces cast cost by 0.5%, up to 30% total."
+                MechanicDesc = "Passive. Battle casts cost 25% fewer days (minimum 1 — never free). Beyond age 40, each year further reduces cast cost by 0.5%, up to 30% total."
             },
             new TalentDef
             {
@@ -121,7 +127,7 @@ namespace AshAndEmber
                 Id = TalentId.Reap, IsSpell = false, IsEnchantment = false,
                 Category = TalentCategory.Passive, Name = "Reap",
                 Lore = "Every life spent in your shadow leaves something behind — a warmth, a residue, the last gasp of a flame that burned for your purpose. You have learned to hold a vessel for it.",
-                MechanicDesc = "Passive. Raiding a village restores 5 days of youth (7-day cooldown). Each prisoner discarded has a 5% chance to restore 1 day. Executing a captured lord restores 100 days of youth. Learning this marks you."
+                MechanicDesc = "Passive. Raiding a village restores 5 days of youth (7-day cooldown). Each prisoner discarded has a 5% chance to restore 1 day. Executing a captured lord restores 20 days of youth plus 10 per tier of their clan (max 80). Learning this marks you."
             },
             new TalentDef
             {
@@ -150,28 +156,28 @@ namespace AshAndEmber
                 Id = TalentId.Scatter, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Scatter",
                 Lore = "The fire does not merely burn — it expels. What it touches, it unmakes and flings aside. You have learned to aim that expulsion.",
-                MechanicDesc = "Enchantment. Damage blasts enemies backward (5m per Damage input) and sears their limbs, reducing movement speed by 25% per Damage input (max 75%) for 4s + 1.5s per input."
+                MechanicDesc = "Enchantment. Amplifies Force (A) inputs: enemies are blasted backward 5m per Force input and their limbs seared, reducing movement speed by 25% per input (max 75%) for 4s + 1.5s per input. Without this talent, Force gives a weak 1.5m push."
             },
             new TalentDef
             {
                 Id = TalentId.Smoulder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Smoulder",
                 Lore = "The fire knows what frightens. It does not need to kill a man to defeat him — only to let him feel how little warmth he carries. The courage drains out with the heat.",
-                MechanicDesc = "Enchantment. Damage scorches enemy morale (−15 per Damage input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%."
+                MechanicDesc = "Enchantment. Any Damage input scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%. Fear of fire does not care what shape the fire takes."
             },
             new TalentDef
             {
                 Id = TalentId.Sunder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Sunder",
                 Lore = "Fire does not merely wound the surface — it reaches inward, finding the joins and seams of what they wear and what they carry. What holds together begins to separate. Not quickly. But enough.",
-                MechanicDesc = "Enchantment. Damage tears at enemy defences and scorches their weapon arm. Vulnerability to incoming damage = 10% per Damage input (max 50% at 5 inputs). Attack power reduction = 10% per Damage input (max 50%). Duration = 8s + 1.5s per Damage input."
+                MechanicDesc = "Enchantment. Amplifies Shred (D) inputs: vulnerability to incoming damage = 10% per Shred input (max 50% at 5 inputs); attack power reduction = 10% per input (max 50%); duration = 8s + 1.5s per input. Without this talent, Shred gives a weak 4%-per-input vulnerability."
             },
             new TalentDef
             {
                 Id = TalentId.Immolate, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Immolate",
                 Lore = "Three times the fire has been called. Twice it asked. The third time, it takes. Not the wound — the whole. The body, the heat that kept it standing. The fire does not return what it has already claimed.",
-                MechanicDesc = "Enchantment. Damage sets enemies alight — additional burn damage scales with inputs. At 1 Damage: 33% chance to kill. At 2 Damage: 50% chance to kill. At 3+ Damage: guaranteed kills (DamageCount / 3)."
+                MechanicDesc = "Enchantment. Amplifies Sear (W) inputs: additional burn damage scales with inputs. At 1 Sear: 33% chance to kill. At 2 Sear: 50% chance to kill. At 3+ Sear: guaranteed kills (Sear inputs / 3). Without this talent, Sear gives a weak 5-per-input burn."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -179,28 +185,28 @@ namespace AshAndEmber
                 Id = TalentId.Ashveil, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Ashveil",
                 Lore = "Ash does not burn twice. Coat something in it, and the fire cannot find purchase. For a few seconds, what you kindle becomes untouchable.",
-                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 4s per Restore input."
+                MechanicDesc = "Enchantment. Restore grants allies brief magic immunity. Duration = 2s per Restore input, max 10s."
             },
             new TalentDef
             {
                 Id = TalentId.CinderShell, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Cinder Shell",
                 Lore = "Fire hardens what it doesn't consume. The skin does not become stone — it becomes something older. Whatever falls on them will not find the same flesh.",
-                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 10% per Restore input (max 50% at 5 inputs). Duration = 6s + 1.5s per Restore input. When an ally is above 80% health, excess fire adds a damage shield of 15 HP per Restore input for 5s."
+                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 6% per Restore input (max 30% at 5 inputs). Duration = 4s + 1s per Restore input. When an ally is above 90% health, excess fire adds a damage shield of 10 HP per Restore input for 5s."
             },
             new TalentDef
             {
                 Id = TalentId.Hearthlight, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Hearthlight",
                 Lore = "The fire in them has not gone out — it has only dimmed. You reach in and remind it what it is for. They remember, for a moment, that the fire is their friend.",
-                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 15 per Restore input."
+                MechanicDesc = "Enchantment. Restore lifts allied morale. Morale boost = 10 per Restore input. Without this talent, Restore gives a weak +4-per-input lift."
             },
             new TalentDef
             {
                 Id = TalentId.Reflect, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Reflect",
                 Lore = "The fire you give is not passive. It waits in the body like an ember under ash, and when something cold strikes — it answers.",
-                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 8% of damage per Restore input back at the attacker, max 50%. Duration scales with diminishing returns: 7s at 1 input, ~10s at 3, ~16s at 10."
+                MechanicDesc = "Enchantment. Restore wraps allies in a retaliating flame. Melee hits against them reflect 5% of damage per Restore input back at the attacker, max 25%. Duration scales with diminishing returns: 7s at 1 input, ~10s at 3, ~16s at 10."
             },
             // ── Campaign map spells ──────────────────────────────────────────
             new TalentDef
@@ -261,6 +267,35 @@ namespace AshAndEmber
                 Lore = "The fire is gone. What remains is older, colder, and far more patient. It is not warmth you carry now — it is the memory of warmth and the hollow that followed.",
                 MechanicDesc = "You are Ashen. You do not age. Each casting costs criminal rating instead of years. After your first working each day, each further cast risks the cold stirring against you — a possession that may claim your life."
             },
+            // ── Lost Forms ─────────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.LostBlast, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Widened Blast",
+                Lore = "The fire does not ask how wide your arms can reach. It asks how wide your will can hold. You found a slightly different angle of release — not taught, not passed down, only survived. The cone opens. More earth scorched, fewer who dodge the edges.",
+                MechanicDesc = "Lost Form. Blast cone widens from ~49° to ~60°. More enemies caught at the edge; the forward reach is unchanged."
+            },
+            new TalentDef
+            {
+                Id = TalentId.LostMissile, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Twin Bolt",
+                Lore = "The first time you split the bolt it was an accident — it came apart in your hands before release, two pieces each carrying their own heat. The second time was deliberate. Neither bolt is as strong as one whole. But one bolt can miss.",
+                MechanicDesc = "Lost Form. Missile fires two bolts side by side. Each bolt carries 60% of the original damage and heal power."
+            },
+            new TalentDef
+            {
+                Id = TalentId.LostBarrier, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Fading Ward",
+                Lore = "The old barrier stood until you let it go. This one does not ask to be released — it knows when it has done its work. Sixty seconds, then the fire returns to you. Less permanent, but you carry it lighter.",
+                MechanicDesc = "Lost Form. Barrier nodes expire after 60 seconds instead of persisting indefinitely. The fire returns on its own."
+            },
+            new TalentDef
+            {
+                Id = TalentId.LostBurst, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Directed Burst",
+                Lore = "You have always stood at the center. The fire went out evenly, touching everything the same. But an even field is not always what the moment needs. Lean into the front; let the rear feel only the echo. Not a perfect circle — a pointed wave.",
+                MechanicDesc = "Lost Form. Burst is asymmetric. The forward hemisphere receives full power; the rear hemisphere receives 40%. Useful when your allies stand behind you."
+            },
         };
 
         // ── Fade spell state ───────────────────────────────────────────────────
@@ -295,7 +330,9 @@ namespace AshAndEmber
         // ── Daily map cast counter ────────────────────────────────────────────
         private static int _dailyMapCastCount = 0;
         public static int DailyCastCount => _dailyMapCastCount;
-        public static int GetDailyCastCost() => _dailyMapCastCount == 0 ? 1 : _dailyMapCastCount * 7;
+        // Escalation softened from ×7 (1 → 7 → 14 → 21): the 2nd map cast cost
+        // more than most battle spells, which made map magic read as a trap.
+        public static int GetDailyCastCost() => _dailyMapCastCount == 0 ? 1 : _dailyMapCastCount * 4;
         public static void ResetDailyCastCount()
         {
             if (_dailyMapCastCount > 0 && MageKnowledge.IsMage)
@@ -357,7 +394,7 @@ namespace AshAndEmber
                 return false;
             }
 
-            int cost = PurchaseCost();
+            int cost = defCheck?.FocusCost > 0 ? defCheck.FocusCost : PurchaseCost();
 
             bool spent = false;
             try
@@ -489,6 +526,7 @@ namespace AshAndEmber
                 }
             }
             _dailyMapCastCount++;
+            try { AgingSystem.RecordMapCast(); } catch { }
 
             switch (id)
             {
@@ -666,9 +704,9 @@ namespace AshAndEmber
             try
             {
                 if (MobileParty.MainParty == null) { Msg("Fade — no party to conceal."); return; }
-                // Perfect recall (1.25×) extends concealment by an extra day.
+                // Strong recall (≥1.20×) extends concealment by an extra day.
                 _fadeDaysRemaining = mult >= 1.20f ? 2 : 1;
-                int days = _fadeDaysRemaining + 1;
+                int days = _fadeDaysRemaining;
                 bool applied = TrySetIgnoreByOtherParties(MobileParty.MainParty, true);
                 if (applied)
                 {
@@ -905,6 +943,11 @@ namespace AshAndEmber
             _purchased.Clear();
             if (list != null)
                 foreach (int v in list) _purchased.Add((TalentId)v);
+
+            // Persist the daily map-cast counter — it is static, so without this a
+            // load mid-day (or of a different campaign) inherits the previous
+            // session's counter and miscalculates the escalating cast cost.
+            store.SyncData("LDM_DailyCastCount", ref _dailyMapCastCount);
 
             // Fade is intentionally not persisted — on load the effect resets.
             // Explicitly clear IgnoreByOtherParties so a save/load while faded

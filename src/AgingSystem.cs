@@ -38,6 +38,7 @@ namespace AshAndEmber
             if (hero != Hero.MainHero && ColourLordRegistry.IsAshenLord(hero)) return;
             try
             {
+                if (hero == Hero.MainHero) _ledgerDaysSpent += days;
                 hero.SetBirthDay(hero.BirthDay - CampaignTime.Days(days));
 
                 if (hero == Hero.MainHero)
@@ -60,15 +61,20 @@ namespace AshAndEmber
         /// Battle spell aging cost: geometric — round(1.4^(n−1)), capped at 84 days (1 Bannerlord year).
         /// Bannerlord year = 84 campaign days (4 seasons × 21 days).
         /// Examples: 1–2 inputs = 1 day | 5 = 4 | 7 = 8 | 10 = 21 | 12 = 41 | 14 = 80 | 16+ = 84 (cap).
-        /// Tempered (BattleMage) talent subtracts 1 from the total cost (minimum 1, never free),
-        /// and beyond age 40 also shaves 0.5% per year off the final cost, capped at 30%.
+        /// Tempered (BattleMage) talent reduces cost by whichever is larger: 25% or 1 flat day
+        /// (minimum 1 — battle casts are never free), and beyond age 40 also shaves 0.5% per year
+        /// off the final cost, capped at 30%. The flat floor means even 1-input spells feel the talent.
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
             // Geometric scaling: small spells are cheap; large spells become very expensive.
             // Base 1.4, standard rounding, hard cap at 84 campaign days (= 1 Bannerlord year).
             int cost = Math.Min(84, Math.Max(1, (int)(Math.Pow(1.4, totalInputs - 1) + 0.5)));
-            if (hasBattleMageTalent) cost = Math.Max(0, cost - 1);
+            if (hasBattleMageTalent)
+            {
+                int reduction = Math.Max(1, (int)Math.Round(cost * 0.25f));
+                cost = Math.Max(1, cost - reduction);
+            }
 
             // Tempered (merged Veteran's Ash): each year beyond 40 shaves 0.5% off cost, capped at 30%.
             // At age 50 → -5%, age 70 → -15%, age 100 → -30% (death threshold).
@@ -109,6 +115,7 @@ namespace AshAndEmber
                 days = Math.Min(days, maxDays);
                 if (days <= 0) return;
 
+                if (hero == Hero.MainHero) _ledgerDaysReclaimed += days;
                 hero.SetBirthDay(hero.BirthDay + CampaignTime.Days(days));
 
                 // Hard floor: float math in the clamp above can drift. Snap back if needed.
@@ -302,6 +309,62 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── The Ledger of Years ───────────────────────────────────────────────
+        // Running account of what the fire has taken from (and returned to) the
+        // player, shown in the grimoire so the aging economy is visible.
+
+        private static int _ledgerDaysSpent     = 0; // days of life the fire has taken
+        private static int _ledgerDaysReclaimed = 0; // days clawed back (Reap, Ember, rites)
+        private static int _ledgerBattleCasts   = 0;
+        private static int _ledgerMapCasts      = 0;
+
+        public static void RecordBattleCast() => _ledgerBattleCasts++;
+        public static void RecordMapCast()    => _ledgerMapCasts++;
+
+        public static string BuildLedgerText()
+        {
+            var h = Hero.MainHero;
+            if (h == null) return "";
+            try
+            {
+                int age = (int)h.Age;
+                var lines = new System.Text.StringBuilder();
+                lines.Append("── THE LEDGER OF YEARS ──────────────────────────\n");
+                if (MageKnowledge.IsAshen)
+                {
+                    lines.Append($"  Age: {age} — the cold preserves you. The ledger is closed.\n");
+                }
+                else
+                {
+                    // 1 Bannerlord year = 84 campaign days (4 seasons × 21 days).
+                    int daysLeft  = Math.Max(0, (int)((100f - (float)h.Age) * 84f));
+                    int yearsLeft = daysLeft / 84;
+                    lines.Append($"  Age: {age}   |   Until the fire burns out (100): ~{yearsLeft} year{(yearsLeft != 1 ? "s" : "")} ({daysLeft} days)\n");
+                }
+                lines.Append($"  Days the fire has taken: {_ledgerDaysSpent}");
+                lines.Append($"   |   Days reclaimed: {_ledgerDaysReclaimed}\n");
+                lines.Append($"  Workings: {_ledgerBattleCasts} in battle, {_ledgerMapCasts} on the map\n");
+                int net = _ledgerDaysSpent - _ledgerDaysReclaimed;
+                if (net > 84)
+                    lines.Append($"  The fire holds {net / 84} year{(net / 84 != 1 ? "s" : "")} of your life. It does not give receipts.\n");
+                if (!MageKnowledge.IsAshen)
+                {
+                    string coldNote = MageKnowledge.WhisperTier switch
+                    {
+                        3 => "  The cold: very close. You hear it even in daylight.\n",
+                        2 => "  The cold: it favours you. The grey altars open faster; the sanctuary flame leans away.\n",
+                        1 => "  The cold: it has noticed you. Nothing more — yet.\n",
+                        _ => "",
+                    };
+                    lines.Append(coldNote);
+                }
+                try { lines.Append(TempleCovenant.LedgerLine()); } catch { }
+                lines.Append("\n");
+                return lines.ToString();
+            }
+            catch { return ""; }
+        }
+
         // ── Persistence ───────────────────────────────────────────────────────
 
         public static void Save(IDataStore store)
@@ -313,11 +376,20 @@ namespace AshAndEmber
                 _milestonesTriggered.Clear();
                 foreach (var m in list) _milestonesTriggered.Add(m);
             }
+
+            store.SyncData("AG_LedgerSpent",     ref _ledgerDaysSpent);
+            store.SyncData("AG_LedgerReclaimed", ref _ledgerDaysReclaimed);
+            store.SyncData("AG_LedgerBattle",    ref _ledgerBattleCasts);
+            store.SyncData("AG_LedgerMap",       ref _ledgerMapCasts);
         }
 
         public static void ResetForNewGame()
         {
             _milestonesTriggered.Clear();
+            _ledgerDaysSpent     = 0;
+            _ledgerDaysReclaimed = 0;
+            _ledgerBattleCasts   = 0;
+            _ledgerMapCasts      = 0;
         }
     }
 }

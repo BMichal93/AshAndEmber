@@ -51,7 +51,8 @@ namespace AshAndEmber
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > range) continue;
                     if (toH.Length < 0.01f) continue;
-                    if (Vec3.DotProduct(fwdH, toH.NormalizedCopy()) < 0.65f) continue;
+                    float coneThreshold = cast.UsingLostBlast ? 0.50f : 0.65f;
+                    if (Vec3.DotProduct(fwdH, toH.NormalizedCopy()) < coneThreshold) continue;
                     targets.Add(a);
                 }
             }
@@ -59,6 +60,12 @@ namespace AshAndEmber
 
             ColorSchool glowColor = cast.VisualColor;
             SpawnConeLights(caster.Position, fwd, glowColor, 3f, range);
+            if (glowColor != ColorSchool.Ashen)
+            {
+                SpawnBigFireParticle(caster.Position + fwd * range * 0.35f,  2.5f);
+                SpawnBigFireParticle(caster.Position + fwd * range * 0.70f,  2.0f);
+                SpawnExplosionParticle(caster.Position + fwd * range,         1.5f); // tip = impact point
+            }
             TryCastSound(caster.Position, glowColor);
             TryCastAnimation(caster);
 

@@ -363,7 +363,7 @@ namespace AshAndEmber
             // can never stick, so the AI should not be permanently drained by it.
             try
             {
-                IFaction other = faction1 == _ashenKingdom ? faction2 : faction1;
+                IFaction other = IsAshenFaction(faction1) ? faction2 : faction1;
                 var otherKingdom = other as Kingdom;
                 var rulingClan = otherKingdom?.RulingClan;
                 if (rulingClan != null) rulingClan.Influence += 100f;
@@ -609,6 +609,7 @@ namespace AshAndEmber
             }
             catch { }
             if (target == null) return;
+            if (ashenLord.Clan == null) return; // detached hero — cannot anchor a settlement
 
             try
             {

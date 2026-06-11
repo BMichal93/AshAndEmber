@@ -268,17 +268,6 @@ namespace AshAndEmber
             catch { return false; }
         }
 
-        private static int ModifiedSacrificePoints(int basePts)
-        {
-            try
-            {
-                int gen = Hero.MainHero?.GetTraitLevel(DefaultTraits.Generosity) ?? 0;
-                float modifier = 1f + gen * 0.125f;
-                return Math.Max(1, (int)(basePts * modifier));
-            }
-            catch { return basePts; }
-        }
-
         private static int TotalSacrificePoints()
         {
             int total = 0;
@@ -366,11 +355,14 @@ namespace AshAndEmber
 
         // ── Ritual core ────────────────────────────────────────────────────────
         // Floor of 1 so any hero can succeed — but unaligned heroes sacrifice many more lives for weak rewards.
+        // Whispers feed the stone: at tier 2 (50+) +1 pt/round, at tier 3 (75+) +2.
         private static int RollRoundPoints(float mult)
         {
-            if (mult <= 0f) return 1;
+            int whisperBonus = 0;
+            try { whisperBonus = Math.Max(0, MageKnowledge.WhisperTier - 1); } catch { }
+            if (mult <= 0f) return 1 + whisperBonus;
             int raw = 3 + _rng.Next(8); // 3–10
-            return Math.Max(1, (int)Math.Round(raw * mult));
+            return Math.Max(1, (int)Math.Round(raw * mult)) + whisperBonus;
         }
 
         private static string ColdProgressHint(int accumulated, int target)
@@ -383,6 +375,10 @@ namespace AshAndEmber
             return "The grey fire is ready. One more offering and it moves.";
         }
 
+        // Each round the player chooses HOW to continue:
+        //   measured — normal roll.
+        //   heedless — roll ×1.5, but one round in three the stone drinks twice
+        //              (the round cost is taken a second time).
         private static void RunAltarRitual(
             string riteName,
             int target,
@@ -395,13 +391,19 @@ namespace AshAndEmber
             int accumulated = 0;
             int round       = 0;
 
-            void DoRound()
+            void Finish()
+            {
+                if (accumulated >= target) { onSuccess(); try { MageKnowledge.AddWhispers(5); } catch { } }
+                else onFailure();
+            }
+
+            void DoRound(bool heedless)
             {
                 // Check if enough material remains (skip check when using morale cost)
                 if (sacrificePtsPerRound > 0 && TotalSacrificePoints() < sacrificePtsPerRound)
                 {
                     // Forced stop
-                    if (accumulated >= target) onSuccess();
+                    if (accumulated >= target) { onSuccess(); try { MageKnowledge.AddWhispers(5); } catch { } }
                     else
                     {
                         string noMore = "The altar has emptied your offering. There is nothing more to give. " +
@@ -412,23 +414,34 @@ namespace AshAndEmber
                     return;
                 }
 
+                bool stoneDrinksTwice = heedless && _rng.Next(3) == 0;
+
                 string costNarr;
                 if (sacrificePtsPerRound > 0)
                 {
                     var (killed, narr) = SacrificeRound(sacrificePtsPerRound);
                     costNarr = narr;
+                    if (stoneDrinksTwice)
+                    {
+                        SacrificeRound(sacrificePtsPerRound);
+                        costNarr += "\n\nThe stone drinks twice. The grey fire does not apologise.";
+                    }
                 }
                 else
                 {
                     // Morale-only cost (used by Subjugation so prisoners are preserved)
-                    if (moralePerRound > 0f)
-                        try { MobileParty.MainParty.RecentEventsMorale -= moralePerRound; } catch { }
+                    float moraleCost = moralePerRound * (stoneDrinksTwice ? 2f : 1f);
+                    if (moraleCost > 0f)
+                        try { MobileParty.MainParty.RecentEventsMorale -= moraleCost; } catch { }
                     costNarr = moralePerRound > 0f
                         ? "The will required to hold them bends the mind. Your men sense something happening here."
                         : "The altar waits. The offering is your intent.";
+                    if (stoneDrinksTwice)
+                        costNarr += "\n\nThe stone pulls harder than you offered. The mind pays twice.";
                 }
 
                 int pts = RollRoundPoints(mult);
+                if (heedless) pts = Math.Max(1, (int)Math.Round(pts * 1.5f));
                 accumulated += pts;
                 round++;
 
@@ -438,25 +451,33 @@ namespace AshAndEmber
 
                 try
                 {
-                    InformationManager.ShowInquiry(new InquiryData(
-                        header, body, true, true,
-                        "Offer more",
-                        "Complete the rite — take what blood has bought",
-                        () => DoRound(),
-                        () =>
+                    var options = new List<InquiryElement>
+                    {
+                        new InquiryElement("measured", "Offer more — a measured hand", null, true,
+                            "Feed the stone at the pace the rite was written for."),
+                        new InquiryElement("heedless", "Offer more — heedlessly", null, true,
+                            "Give without counting. The rite advances half again as fast — but one round in three, the stone drinks twice."),
+                        new InquiryElement("stop", "Complete the rite — take what blood has bought", null, true,
+                            "End the sacrifice. If the stone has drunk enough, the rite fires; if not, everything given is wasted."),
+                    };
+                    MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                        header, body, options, false, 1, 1, "Decide", "",
+                        chosen =>
                         {
-                            if (accumulated >= target) onSuccess();
-                            else onFailure();
-                        }));
+                            string pick = chosen?[0]?.Identifier as string ?? "stop";
+                            if      (pick == "measured") DoRound(false);
+                            else if (pick == "heedless") DoRound(true);
+                            else Finish();
+                        },
+                        null, "", false), false, true);
                 }
                 catch
                 {
-                    if (accumulated >= target) onSuccess();
-                    else onFailure();
+                    Finish();
                 }
             }
 
-            DoRound();
+            DoRound(false);
         }
 
         private static void ShowRitualFailure(string riteName)
@@ -545,9 +566,13 @@ namespace AshAndEmber
                         }
                         string deplNote = IsLocationDepleted()
                             ? $"  [SPENT — returns in {LocationDepletedDaysLeft()} day(s)]" : "";
+                        string interNote = "";
+                        int sinceSanct = today - SanctuaryCampaignBehavior._lastSanctuaryUseDay;
+                        if (sinceSanct >= 0 && sinceSanct < CrossInterferenceDays)
+                            interNote = $"  [Sanctuary interference — the stone remembers the flame; yield halved for {CrossInterferenceDays - sinceSanct} day(s)]";
                         MBTextManager.SetTextVariable("ALTAR_MENU_HEADER",
                             $"The Ashen Altar. Stone worn smooth by blood that never fully dried. " +
-                            $"The flame here is grey, and it is always hungry.{ptsNote}{solNote}{frozenNote}{deplNote}");
+                            $"The flame here is grey, and it is always hungry.{ptsNote}{solNote}{frozenNote}{interNote}{deplNote}");
                     }
                     catch { }
                 });

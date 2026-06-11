@@ -44,6 +44,7 @@ namespace AshAndEmber
             try { ColourLordAI.FlushBattleCasts();      } catch { }
             try { BanditMageAI.OnMissionEnd();           } catch { }
             try { AshenSceneTone.Reset();                } catch { }
+            try { AshenVisuals.Reset();                  } catch { }
 
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
@@ -225,6 +226,14 @@ namespace AshAndEmber
             try { MagicInputHandler.ResetInputState();       } catch { }
             try { BattleEvents.OnMissionEnd();               } catch { }
             try { AshenSceneTone.Reset();                    } catch { }
+        }
+
+        public override void OnAgentBuild(Agent agent, Banner banner)
+        {
+            // Witchy-ashen look (grey skin, cold-blue eyes, ragged armour
+            // elements) for Ashen Spawn units, Ashen kingdom soldiers and
+            // Ashen heroes.
+            try { AshenVisuals.TryApply(agent); } catch { }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,

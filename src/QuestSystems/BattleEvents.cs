@@ -6,9 +6,9 @@
 // ┌──────────────┬─────┬────────────────────────────────────────────────────────┐
 // │ Event        │     │ Effect                                                 │
 // ├──────────────┼─────┼────────────────────────────────────────────────────────┤
-// │ Cinder Rain  │ 20s │ Every non-Ashen agent takes 5 damage                  │
-// │ Ember Tithe  │ 20s │ Every Ashen agent takes 5 damage                      │
-// │ The Rising   │ 30s │ Tier-1 units spawn on the Ashen side (Ashen battle    │
+// │ Cinder Rain  │ 20s │ Every non-Ashen agent takes 15 damage                 │
+// │ Ember Tithe  │ 20s │ Every Ashen agent takes 15 damage (+10 morale)        │
+// │ The Rising   │ 20s │ Tier-1 units spawn on the Ashen side (Ashen battle    │
 // │              │     │ only — skipped if no Ashen side detected)             │
 // │ Dread        │ ×1  │ All non-Ashen agents lose 30 morale (fires once)      │
 // │ Last Light   │ ×1  │ Scene time jumps to midnight (fires once)             │
@@ -289,7 +289,8 @@ namespace AshAndEmber
         {
             if (Mission.Current == null || _ashenTeam == null) return;
             Vec3 anchor = GetTeamCentroid(_ashenTeam);
-            SpawnRisingUnits(RisingSpawnCount);
+            int spawned = SpawnRisingUnits(RisingSpawnCount);
+            if (spawned <= 0) return; // troop type missing or no valid anchor — say nothing
             // Fire ring at the spawn point
             for (int i = 0; i < 4; i++)
             {
@@ -302,7 +303,7 @@ namespace AshAndEmber
             SpawnGroundFireField(anchor, 12f, 5, ColorSchool.Purple, TheRisingInterval * 0.75f);
             SpawnAerialGlow(anchor, 16f, 10f, 3, ColorSchool.Ashen, TheRisingInterval * 0.75f);
             MBInformationManager.AddQuickInformation(new TextObject(
-                $"The Rising — {RisingSpawnCount} more pour from the grey."));
+                $"The Rising — {spawned} more pour from the grey."));
         }
 
         // ── Event: Dread ──────────────────────────────────────────────────────
@@ -452,20 +453,24 @@ namespace AshAndEmber
         }
 
         // ── Spawn helper ──────────────────────────────────────────────────────
-        // Spawns `count` sea_raider (Ashen Spawn troop type) agents near the
-        // centroid of the Ashen team. Silently no-ops if troop not found.
-        private static void SpawnRisingUnits(int count)
+        // Spawns `count` Ashen Spawn agents (ashen_thrall, falling back to
+        // vanilla bandit troops) near the centroid of the Ashen team. Returns
+        // the number actually spawned so the caller can stay silent when
+        // nothing appeared.
+        private static int SpawnRisingUnits(int count)
         {
+            int spawned = 0;
             try
             {
                 CharacterObject troop =
-                    MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                    MBObjectManager.Instance.GetObject<CharacterObject>("ashen_thrall")
+                 ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
-                if (troop == null) return;
+                if (troop == null) return 0;
 
                 Vec3 anchor = GetTeamCentroid(_ashenTeam);
-                if (anchor.x == 0f && anchor.y == 0f) return; // no valid anchor
+                if (anchor.x == 0f && anchor.y == 0f) return 0; // no valid anchor
 
                 Vec2 dir = Vec2.Forward;
 
@@ -494,15 +499,22 @@ namespace AshAndEmber
                         var agentData = new AgentBuildData(origin)
                             .Team(_ashenTeam)
                             .Controller(AgentControllerType.AI)
+                            .ClothingColor1(AshenVisuals.ClothAshGrey)
+                            .ClothingColor2(AshenVisuals.ClothColdBlue)
                             .InitialPosition(in pos)
                             .InitialDirection(in dir);
 
-                        Mission.Current.SpawnAgent(agentData, false);
+                        var agent = Mission.Current.SpawnAgent(agentData, false);
+                        // Fallback bandit troops carry no Ashen marker, so the
+                        // OnAgentBuild hook won't catch them — force the look.
+                        try { AshenVisuals.ForceApply(agent); } catch { }
+                        spawned++;
                     }
                     catch { }
                 }
             }
             catch { }
+            return spawned;
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

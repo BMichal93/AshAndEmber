@@ -481,6 +481,7 @@ namespace AshAndEmber
         private static void Fire(List<Action<Settlement>> pool, Settlement s)
         {
             if (pool.Count == 0) return;
+            if (MageKnowledge._deferredInquiry != null) return; // don't clobber a queued quest popup
             _cooldown = MinDaysBetween;
             Action<Settlement> chosen = pool[_rng.Next(pool.Count)];
             MageKnowledge._deferredInquiry = () => { try { chosen(s); } catch { } };
@@ -489,6 +490,7 @@ namespace AshAndEmber
         private static void FireBattle(List<Action> pool)
         {
             if (pool.Count == 0) return;
+            if (MageKnowledge._deferredInquiry != null) return; // don't clobber a queued quest popup
             _cooldown = MinDaysBetween;
             Action chosen = pool[_rng.Next(pool.Count)];
             MageKnowledge._deferredInquiry = () => { try { chosen(); } catch { } };
@@ -2471,6 +2473,7 @@ namespace AshAndEmber
                             // Simulate a village raid
                             try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.30f); } catch { }
                             ChangeCrime(50f);
+                            try { MageKnowledge.AddWhispers(4); } catch { }
                             if (_rng.NextDouble() < 0.5)
                             {
                                 ChangeRelWithOwner(s, -60);
@@ -2532,16 +2535,19 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Calculating, 1);
+                            try { MageKnowledge.AddWhispers(2); } catch { }
                             Msg("You say nothing. The fire is lit. She does not scream — or she does, and you have already turned away. " +
                                 "The village elder nods at your back as you leave.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, -1);
+                            try { MageKnowledge.AddWhispers(3); } catch { }
                             Msg("You watch. The crowd watches you watching. " +
                                 "Something in you marks this moment and files it under things you have become.", BadColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Mercy, 1);
+                            try { MageKnowledge.RemoveWhispers(3); } catch { }
                             if (_rng.NextDouble() < 0.5)
                             {
                                 // She was Ashen — casts Curse before dying
@@ -2605,6 +2611,7 @@ namespace AshAndEmber
                         case "a":
                             if (!ChangeGold(-10000)) break;
                             SanctuaryCampaignBehavior.AddPermanentSanctuary(s.StringId);
+                            try { MageKnowledge.RemoveWhispers(5); } catch { }
                             Msg($"You give him the coin without ceremony. He bows once and says nothing further. " +
                                 $"Within a week, the sanctuary of {cName} is open. " +
                                 $"The flame burns clean inside it.", GoodColor);
@@ -2643,6 +2650,7 @@ namespace AshAndEmber
                             break;
                         case "e":
                             ShiftTrait(DefaultTraits.Mercy, -1);
+                            try { MageKnowledge.AddWhispers(3); } catch { }
                             Msg("Your soldiers scatter him from the gate. He does not return. " +
                                 "The city remembers you were there.", BadColor);
                             break;
@@ -2707,6 +2715,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             AgePlayer(3);
+                            try { MageKnowledge.AddWhispers(1); } catch { }
                             Msg("The fire comes from somewhere older than your hands. " +
                                 "They scatter before it — cold things do not like what burns. " +
                                 "They are gone in seconds. You are three days older. " +
@@ -2747,6 +2756,7 @@ namespace AshAndEmber
                                 "Your reflection in the horse trough shows grey at the edges of your eyes.", BadColor);
                             break;
                         case "b":
+                            try { MageKnowledge.RemoveWhispers(2); } catch { }
                             Msg("You get up, drink cold water, and decide it was only a dream. " +
                                 "You are probably right. The world looks normal in daylight. " +
                                 "It usually does.", DimColor);
@@ -2771,6 +2781,7 @@ namespace AshAndEmber
                             else
                             {
                                 try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                                try { MageKnowledge.AddWhispers(5); } catch { }
                                 Msg("You reach toward it carefully, like touching something hot from the side. " +
                                     "You pull back before it pulls you in — but you bring something with you: " +
                                     "a clarity, a sense of how things connect. One focus point, " +
@@ -2810,6 +2821,7 @@ namespace AshAndEmber
                             try { AgingSystem.RejuvenateHero(Hero.MainHero, 730); } catch { } // ~2 years
                             ShiftTrait(DefaultTraits.Honor, -2);
                             ShiftTrait(DefaultTraits.Mercy, -2);
+                            try { MageKnowledge.AddWhispers(8); } catch { }
                             Msg("You ride down and dismount at the fire. They make space for you without speaking. " +
                                 "The dance is not something you will remember clearly in daylight. " +
                                 "You feel two years lighter when you leave. You feel heavier in other ways.", DimColor);
@@ -2821,6 +2833,7 @@ namespace AshAndEmber
                             break;
                         case "c":
                             try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            try { MageKnowledge.RemoveWhispers(3); } catch { }
                             if (_rng.NextDouble() < 0.5)
                             {
                                 AgePlayer(365); // 1 year

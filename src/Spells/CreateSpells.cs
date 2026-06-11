@@ -24,15 +24,6 @@ namespace AshAndEmber
             Agent caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return false;
 
-            // Toggle off — dispelling costs no aging days
-            if (HasAreaEffect(BarrierId))
-            {
-                RemoveAreaEffect(BarrierId);
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "Barrier released.", new Color(0.7f, 0.7f, 0.7f)));
-                return false;
-            }
-
             Vec3 fwd   = caster.LookDirection.NormalizedCopy();
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();
             int  count = Math.Max(1, cast.BarrierCount > 0 ? cast.BarrierCount : cast.FormCount);
@@ -51,7 +42,7 @@ namespace AshAndEmber
             TryCastAnimation(caster);
 
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Barrier — {cast.EffectSummary()}. Cast again to release.",
+                $"Barrier — {cast.EffectSummary()}.",
                 ColorSchoolData.GetMessageColor(col)));
             return true;
         }
@@ -68,7 +59,7 @@ namespace AshAndEmber
                 Radius       = 1.5f,
                 TickInterval = 0.5f,
                 TickTimer    = 0.5f,
-                Remaining    = -1f,
+                Remaining    = cast.UsingLostBarrier ? 60f : 50f,
                 Power        = token,
                 CasterTeam   = casterTeam
             };
@@ -86,7 +77,7 @@ namespace AshAndEmber
         }
 
         // Called from AreaEffects.cs tick (every 0.5 s per node)
-        // Barrier lives indefinitely (Remaining = -1) until cast again.
+        // Regular barrier expires after 50 s; Lost Barrier after 60 s.
         internal static void TickBarrierNode(AreaEffect e)
         {
             if (Mission.Current == null) return;
@@ -114,8 +105,8 @@ namespace AshAndEmber
                 Vec3 toH = new Vec3(a.Position.x - e.Position.x, a.Position.y - e.Position.y, 0f);
                 float dist = toH.Length;
 
-                bool isAlly  = e.CasterTeam != null && a.Team == e.CasterTeam;
-                bool isEnemy = e.CasterTeam != null && a.Team != e.CasterTeam;
+                bool isAlly  = e.CasterTeam != null && a.Team != null && a.Team == e.CasterTeam;
+                bool isEnemy = e.CasterTeam != null && a.Team != null && a.Team != e.CasterTeam;
 
                 // Warning zone: push enemies away from the barrier wall.
                 // Extended to 5 m beyond radius; heroes get a gentler nudge.
@@ -183,6 +174,15 @@ namespace AshAndEmber
             bool wantDmg  = cast.DamageCount  > 0;
             bool wantHeal = cast.RestoreCount > 0;
 
+            // Directed Burst: compute forward vector for hemisphere split.
+            Vec3 fwdH = Vec3.Zero;
+            if (cast.UsingLostBurst)
+            {
+                Vec3 fwd = caster.LookDirection.NormalizedCopy();
+                fwdH = new Vec3(fwd.x, fwd.y, 0f);
+                if (fwdH.Length > 0.01f) fwdH = fwdH.NormalizedCopy();
+            }
+
             var targets = new List<Agent>();
             try
             {
@@ -192,7 +192,6 @@ namespace AshAndEmber
                     bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
                     bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
                     if (!(wantDmg || (wantHeal && isAlly))) continue;
-                    // Horizontal distance so mounted riders at elevation are hit correctly
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > radius) continue;
                     targets.Add(a);
@@ -201,9 +200,25 @@ namespace AshAndEmber
             catch { }
 
             ColorSchool col = cast.VisualColor;
-            SpawnCircleLights(caster.Position, col, radius, 6f);
+            SpawnBurstExplosion(caster.Position, col, radius, 6f);
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
+
+            // Rear-hemisphere scaled cast (40% power) for Directed Burst.
+            SpellCast rearCast = null;
+            if (cast.UsingLostBurst)
+            {
+                rearCast = new SpellCast();
+                rearCast.BurstCount         = cast.BurstCount;
+                rearCast.Form               = cast.Form;
+                rearCast.DamageCount        = cast.DamageCount  > 0 ? Math.Max(1, (int)(cast.DamageCount  * 0.4f)) : 0;
+                rearCast.RestoreCount       = cast.RestoreCount > 0 ? Math.Max(1, (int)(cast.RestoreCount * 0.4f)) : 0;
+                // Preserve the per-key damage natures so split-cast effects survive the scale.
+                rearCast.SearCount          = cast.SearCount    > 0 ? Math.Max(1, (int)(cast.SearCount    * 0.4f)) : 0;
+                rearCast.ForceCount         = cast.ForceCount   > 0 ? Math.Max(1, (int)(cast.ForceCount   * 0.4f)) : 0;
+                rearCast.ShredCount         = cast.ShredCount   > 0 ? Math.Max(1, (int)(cast.ShredCount   * 0.4f)) : 0;
+                rearCast.OverrideVisualColor = cast.OverrideVisualColor;
+            }
 
             int affected = 0;
             int alliesHit = 0;
@@ -211,16 +226,22 @@ namespace AshAndEmber
             {
                 try
                 {
-                    if (cast.DamageCount > 0 && casterTeam != null && a.Team != null && a.Team == casterTeam)
+                    SpellCast useCast = cast;
+                    if (cast.UsingLostBurst && rearCast != null)
+                    {
+                        Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
+                        if (toH.Length > 0.01f && Vec3.DotProduct(fwdH, toH.NormalizedCopy()) < 0f)
+                            useCast = rearCast;
+                    }
+                    if (useCast.DamageCount > 0 && casterTeam != null && a.Team != null && a.Team == casterTeam)
                         alliesHit++;
-                    ApplyEffectsToAgent(a, cast, caster);
+                    ApplyEffectsToAgent(a, useCast, caster);
                     SpawnImpactBurst(a.Position, col, 4f);
                     affected++;
                 }
                 catch { }
             }
 
-            // Scatter surviving enemies outward from burst center.
             if (wantDmg) ScatterEnemies(caster.Position, radius, casterTeam);
 
             // Burst also heals the caster when Restore is active
@@ -234,6 +255,10 @@ namespace AshAndEmber
                     affected++;
                 }
                 catch { }
+
+                // Consecrated zone lingers at the burst point for 5 seconds.
+                if (caster == Agent.Main)
+                    SpawnHolyZone(caster.Position, cast.RestoreCount, radius, casterTeam);
             }
 
             if (caster == Agent.Main)

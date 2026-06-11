@@ -271,28 +271,29 @@ namespace AshAndEmber.Tests
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_SmallCast_CostsOneDay()
         {
-            // 1-3 inputs = 1 day without BattleMage
+            // Geometric round(1.4^(n−1)): 1–2 inputs = 1 day without BattleMage
             Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, false));
             Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(2, false));
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, false));
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(3, false));
         }
 
         [Test]
-        public void AgingSystem_ComputeBattleAgingCost_LargeCast_CostsTwoDays()
+        public void AgingSystem_ComputeBattleAgingCost_LargeCast_ScalesGeometrically()
         {
-            // 4+ inputs = 2 days without BattleMage
-            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, false));
-            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(8, false));
+            // round(1.4^(n−1)): 4 inputs = 3 days, 8 inputs = 11 days, hard cap 84.
+            Assert.AreEqual(3,  AgingSystem.ComputeBattleAgingCost(4, false));
+            Assert.AreEqual(11, AgingSystem.ComputeBattleAgingCost(8, false));
+            Assert.AreEqual(84, AgingSystem.ComputeBattleAgingCost(20, false));
         }
 
         [Test]
-        public void AgingSystem_ComputeBattleAgingCost_BattleMage_ReducesByOne()
+        public void AgingSystem_ComputeBattleAgingCost_BattleMage_MaxOf1DayOr25Pct()
         {
-            // BattleMage subtracts 1 (minimum 0).
-            Assert.AreEqual(0, AgingSystem.ComputeBattleAgingCost(1, true));  // 1-1 = 0
-            Assert.AreEqual(0, AgingSystem.ComputeBattleAgingCost(3, true));  // 1-1 = 0
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(4, true));  // 2-1 = 1
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(8, true));  // 2-1 = 1
+            // Tempered: reduction = max(1 flat day, 25% of cost). Minimum result 1 — never free.
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, true));  // base 1: 1-1=0 → floor 1
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, true));  // base 2: 2-1=1
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, true));  // base 3: 3-1=2
+            Assert.AreEqual(8, AgingSystem.ComputeBattleAgingCost(8, true));  // base 11: 11-3=8
         }
 
         // ── NPC heal-burst RestoreCount satisfies Rouse threshold ─────────────
@@ -342,6 +343,91 @@ namespace AshAndEmber.Tests
         public void BattleEvents_RisingSpawnCount_IsPositive()
         {
             Assert.Greater(BattleEvents.RisingSpawnCount, 0);
+        }
+
+        // ── CampaignMapEvents — Temple faction constants ──────────────────────
+
+        [Test]
+        public void CampaignMapEvents_TempleChances_AreInValidRange()
+        {
+            Assert.IsTrue(CampaignMapEvents.ChanceTheTemple is > 0f and <= 1f,
+                "ChanceTheTemple must be a positive probability.");
+            Assert.IsTrue(CampaignMapEvents.ChanceTempleLatent is > 0f and <= 1f,
+                "ChanceTempleLatent must be a positive probability.");
+        }
+
+        [Test]
+        public void CampaignMapEvents_TempleLatentChance_GreaterThanBaseChance()
+        {
+            Assert.Greater(CampaignMapEvents.ChanceTempleLatent, CampaignMapEvents.ChanceTheTemple,
+                "Latent (post-day-250) Temple chance must exceed the base chance.");
+        }
+
+        [Test]
+        public void CampaignMapEvents_TempleNearCertainDay_GreaterThanEarliestDay()
+        {
+            Assert.Greater(CampaignMapEvents.TempleNearCertainDay, CampaignMapEvents.TempleEarliestDay,
+                "TempleNearCertainDay must be later than TempleEarliestDay.");
+        }
+
+        [Test]
+        public void CampaignMapEvents_TempleEarliestDay_IsPositive()
+        {
+            Assert.Greater(CampaignMapEvents.TempleEarliestDay, 0,
+                "Temple must not be able to fire on day 0.");
+        }
+
+        // ── AshenVisuals body-key transforms ──────────────────────────────────
+
+        [Test]
+        public void AshenVisuals_HairKey_PreservesNonColourBits()
+        {
+            ulong input  = 0xFFFFFFFFFFFFFFFFUL;
+            ulong result = AshenVisuals.AshenHairKey(input);
+            Assert.AreEqual((input & ~0x00FFFF0000000000UL) | 0x0000010000000000UL, result);
+            Assert.AreEqual(input  & ~0x00FFFF0000000000UL,
+                            result & ~0x00FFFF0000000000UL,
+                "Bits outside the hair colour byte range must be preserved.");
+        }
+
+        [Test]
+        public void AshenVisuals_EyeKey_SetsColdBlueBytes()
+        {
+            ulong result = AshenVisuals.AshenEyeKey(0UL);
+            Assert.AreEqual(0x00E0AA0000000000UL, result,
+                "Eye transform must encode a cold-blue iris into the colour bytes.");
+        }
+
+        [Test]
+        public void AshenVisuals_EyeKey_PreservesNonColourBits()
+        {
+            ulong input  = 0xAB00000000C0FFEEUL;
+            ulong result = AshenVisuals.AshenEyeKey(input);
+            Assert.AreEqual(input  & ~0x00FFFF0000000000UL,
+                            result & ~0x00FFFF0000000000UL);
+        }
+
+        [Test]
+        public void AshenVisuals_SkinKey_ClearsColourBytesOnly()
+        {
+            ulong input  = 0xFFFFFFFFFFFFFFFFUL;
+            ulong result = AshenVisuals.AshenSkinKey(input);
+            Assert.AreEqual(0UL, result & 0x000000FFFFFF0000UL,
+                "Skin colour bytes must be cleared (grey/ashen tone).");
+            Assert.AreEqual(input & ~0x000000FFFFFF0000UL, result,
+                "All other bits must be preserved.");
+        }
+
+        [Test]
+        public void AshenVisuals_Transforms_AreIdempotent()
+        {
+            ulong seed = 0x123456789ABCDEF0UL;
+            Assert.AreEqual(AshenVisuals.AshenHairKey(seed),
+                            AshenVisuals.AshenHairKey(AshenVisuals.AshenHairKey(seed)));
+            Assert.AreEqual(AshenVisuals.AshenEyeKey(seed),
+                            AshenVisuals.AshenEyeKey(AshenVisuals.AshenEyeKey(seed)));
+            Assert.AreEqual(AshenVisuals.AshenSkinKey(seed),
+                            AshenVisuals.AshenSkinKey(AshenVisuals.AshenSkinKey(seed)));
         }
     }
 }

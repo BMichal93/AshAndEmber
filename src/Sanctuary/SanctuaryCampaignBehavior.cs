@@ -300,11 +300,15 @@ namespace AshAndEmber
 
         // ── Ritual core ────────────────────────────────────────────────────────
         // Points gained per meditation round. Floor of 1 so unaligned heroes can still succeed — slowly.
+        // The flame recoils from whisper-heavy souls: at tier 2 (50+) −1 pt/round,
+        // at tier 3 (75+) −2 — but never below the floor of 1.
         private static int RollRoundPoints(float mult)
         {
+            int whisperDrag = 0;
+            try { whisperDrag = Math.Max(0, MageKnowledge.WhisperTier - 1); } catch { }
             if (mult <= 0f) return 1; // 1 pt/round regardless; alignment accelerates yield
             int raw = 3 + _rng.Next(8); // 3–10
-            return Math.Max(1, (int)Math.Round(raw * mult));
+            return Math.Max(1, (int)Math.Round(raw * mult) - whisperDrag);
         }
 
         // Hint text to show after each round. Deliberately vague to hide the target.
@@ -353,6 +357,10 @@ namespace AshAndEmber
         // target: hidden from player. accumulated/round: updated each call via closures.
         // applyRoundCost: called once per round, returns narrative.
         // onSuccess/onFailure: called when player stops.
+        // Each round the player chooses HOW to continue:
+        //   steady  — normal roll.
+        //   fervent — roll ×1.5, but one round in three the flame lashes out and
+        //             the round cost is paid a second time.
         private static void RunSanctuaryRitual(
             string riteName,
             int target,
@@ -364,10 +372,26 @@ namespace AshAndEmber
             int accumulated = 0;
             int round       = 0;
 
-            void DoRound()
+            void Finish()
+            {
+                if (accumulated >= target) onSuccess();
+                else
+                {
+                    if (!MageKnowledge.IsAshen) try { MageKnowledge.AddWhispers(2); } catch { }
+                    onFailure();
+                }
+            }
+
+            void DoRound(bool fervent)
             {
                 string costNarr = applyRoundCost();
+                if (fervent && _rng.Next(3) == 0)
+                {
+                    applyRoundCost();
+                    costNarr += "\n\nThe flame surges past what you offered — it takes a second portion, uninvited.";
+                }
                 int pts = RollRoundPoints(mult);
+                if (fervent) pts = Math.Max(1, (int)Math.Round(pts * 1.5f));
                 accumulated += pts;
                 round++;
 
@@ -377,26 +401,34 @@ namespace AshAndEmber
 
                 try
                 {
-                    InformationManager.ShowInquiry(new InquiryData(
-                        header, body, true, true,
-                        "Continue the meditation",
-                        "Step back — claim what the flame offers",
-                        () => DoRound(),
-                        () =>
+                    var options = new List<InquiryElement>
+                    {
+                        new InquiryElement("steady", "Continue — steady devotion", null, true,
+                            "Meditate as taught. A measured offering, a measured answer."),
+                        new InquiryElement("fervent", "Continue — fervent devotion", null, true,
+                            "Pour yourself into the flame. Progress builds half again as fast — but one round in three, the flame takes a second helping of your offering."),
+                        new InquiryElement("stop", "Step back — claim what the flame offers", null, true,
+                            "End the meditation. If the flame has been given enough, the prayer fires; if not, the cost is lost."),
+                    };
+                    MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                        header, body, options, false, 1, 1, "Decide", "",
+                        chosen =>
                         {
-                            if (accumulated >= target) onSuccess();
-                            else onFailure();
-                        }));
+                            string pick = chosen?[0]?.Identifier as string ?? "stop";
+                            if      (pick == "steady")  DoRound(false);
+                            else if (pick == "fervent") DoRound(true);
+                            else Finish();
+                        },
+                        null, "", false), false, true);
                 }
                 catch
                 {
                     // Fallback: resolve immediately
-                    if (accumulated >= target) onSuccess();
-                    else onFailure();
+                    Finish();
                 }
             }
 
-            DoRound();
+            DoRound(false);
         }
 
         private static void ShowRitualFailure(string riteName)
@@ -452,9 +484,13 @@ namespace AshAndEmber
                         string traitNote = _traitBoostUntilDay >= today ? $"  [Flame Mark: {_traitBoostUntilDay - today + 1} day(s)]" : "";
                         string deplNote = IsLocationDepleted()
                             ? $"  [SPENT — returns in {LocationDepletedDaysLeft()} day(s)]" : "";
+                        string interNote = "";
+                        int sinceAltar = today - AshenAltarsCampaignBehavior._lastAltarUseDay;
+                        if (sinceAltar >= 0 && sinceAltar < CrossInterferenceDays)
+                            interNote = $"  [Altar interference — the flame smells the grey stone on you; yield halved for {CrossInterferenceDays - sinceAltar} day(s)]";
                         string hdr = IsTempleMember()
-                            ? $"The Sanctuary of The Temple. The flame knows you. Cooldowns reduced.{protNote}{blessNote}{steadNote}{traitNote}{deplNote}"
-                            : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{protNote}{blessNote}{steadNote}{traitNote}{deplNote}";
+                            ? $"The Sanctuary of The Temple. The flame knows you. Cooldowns reduced.{protNote}{blessNote}{steadNote}{traitNote}{interNote}{deplNote}"
+                            : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{protNote}{blessNote}{steadNote}{traitNote}{interNote}{deplNote}";
                         MBTextManager.SetTextVariable("SANCT_MENU_HEADER", hdr);
                     }
                     catch { }
@@ -718,7 +754,7 @@ namespace AshAndEmber
                             if (w >= toWound) break;
                         }
                         totalWounded += w;
-                        try { p.RecentEventsMorale -= 35f * mult; } catch { }
+                        try { p.RecentEventsMorale -= 35f * Math.Max(0.1f, mult); } catch { }
                     }
                     string msg = targets.Count == 0
                         ? "The rite is spoken. The flame surges and settles. No grey things are close enough to feel it."

@@ -457,6 +457,10 @@ namespace AshAndEmber
                 // Active monitoring phase
                 MonitorArenicos();
 
+                // MonitorArenicos may have detected Arenicos's death and moved to
+                // sub-phase 5 — don't tick the alliance countdown for a dead emperor.
+                if (_qaSubPhase != 4) return;
+
                 // False-emperor 30-day countdown
                 if (!_arenicosIsTrue && !_qaFalseAllianceActive && _qaFalseAllianceTimer > 0)
                 {
@@ -1588,7 +1592,7 @@ namespace AshAndEmber
 
         private static double ElapsedCampaignDays()
         {
-            try { return CampaignTime.Now.ToDays; }
+            try { return CampaignMapEvents.ElapsedCampaignDays(); }
             catch { return 0.0; }
         }
     }

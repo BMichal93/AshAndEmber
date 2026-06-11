@@ -142,9 +142,27 @@ namespace AshAndEmber
             InjectCustomTroops(party, "ashen_invoker", 1 + _rng.Next(3));
         }
 
+        // Drops ids of parties that no longer exist so the sets (and the save
+        // file) don't grow without bound over a long campaign.
+        private static void PruneDeadParties()
+        {
+            try
+            {
+                var alive = new HashSet<string>();
+                foreach (MobileParty p in MobileParty.All)
+                    alive.Add(p.StringId);
+                if (alive.Count == 0) return;
+                _fireWorshipperIds.RemoveWhere(id => !alive.Contains(id));
+                _ashenSpawnIds.RemoveWhere(id => !alive.Contains(id));
+                _wanderingCircleIds.RemoveWhere(id => !alive.Contains(id));
+            }
+            catch { }
+        }
+
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(TaleWorlds.CampaignSystem.IDataStore store)
         {
+            PruneDeadParties();
             var fw  = _fireWorshipperIds.ToList();
             var as_ = _ashenSpawnIds.ToList();
             var wc  = _wanderingCircleIds.ToList();
@@ -158,6 +176,7 @@ namespace AshAndEmber
             if (as_ != null) foreach (var id in as_) _ashenSpawnIds.Add(id);
             _wanderingCircleIds.Clear();
             if (wc  != null) foreach (var id in wc)  _wanderingCircleIds.Add(id);
+            PruneDeadParties();
         }
     }
 }

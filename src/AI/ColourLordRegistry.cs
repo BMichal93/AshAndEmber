@@ -20,8 +20,9 @@ namespace AshAndEmber
 {
     public static class ColourLordRegistry
     {
-        private static readonly HashSet<string> _mageIds  = new HashSet<string>();
-        private static readonly HashSet<string> _ashenIds  = new HashSet<string>();
+        private static readonly HashSet<string> _mageIds        = new HashSet<string>();
+        private static readonly HashSet<string> _ashenIds        = new HashSet<string>();
+        private static readonly HashSet<string> _companionMageIds = new HashSet<string>();
         // Subset of spell talents each mage lord knows (1-2 random)
         private static readonly Dictionary<string, List<int>> _lordTalents
             = new Dictionary<string, List<int>>();
@@ -132,11 +133,24 @@ namespace AshAndEmber
             };
         }
 
+        // Registers a companion hero as a mage AND flags them as a companion mage
+        // so aging is tracked at 1.25× the normal rate.
+        public static void RegisterCompanionMage(Hero hero)
+        {
+            if (hero == null) return;
+            SetMage(hero, true);
+            _companionMageIds.Add(hero.StringId);
+        }
+
+        public static bool IsCompanionMage(Hero hero) =>
+            hero != null && _companionMageIds.Contains(hero.StringId);
+
         public static void ResetForNewGame()
         {
             _seeded = false;
             _mageIds.Clear();
             _ashenIds.Clear();
+            _companionMageIds.Clear();
             _lordTalents.Clear();
             _campaignCooldowns.Clear();
         }
@@ -353,6 +367,7 @@ namespace AshAndEmber
             if (hero == null) return;
             _mageIds.Remove(hero.StringId);
             _ashenIds.Remove(hero.StringId);
+            _companionMageIds.Remove(hero.StringId);
             _lordTalents.Remove(hero.StringId);
             _campaignCooldowns.Remove(hero.StringId);
         }
@@ -366,8 +381,9 @@ namespace AshAndEmber
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
         {
-            var ids      = _mageIds.ToList();
-            var ashenIds = _ashenIds.ToList();
+            var ids           = _mageIds.ToList();
+            var ashenIds      = _ashenIds.ToList();
+            var companionIds  = _companionMageIds.ToList();
             bool seeded  = _seeded;
             var cdKeys = _campaignCooldowns.Keys.ToList();
             var cdVals = _campaignCooldowns.Values.ToList();
@@ -377,9 +393,10 @@ namespace AshAndEmber
             var talentCnts  = _lordTalents.Values.Select(v => v.Count).ToList();
             var talentFlat  = _lordTalents.Values.SelectMany(v => v).ToList();
 
-            store.SyncData("LDM_MageIds",     ref ids);
-            store.SyncData("LDM_AshenIds",    ref ashenIds);
-            store.SyncData("LDM_MageSeeded",  ref seeded);
+            store.SyncData("LDM_MageIds",       ref ids);
+            store.SyncData("LDM_AshenIds",      ref ashenIds);
+            store.SyncData("LDM_CompanionIds",  ref companionIds);
+            store.SyncData("LDM_MageSeeded",    ref seeded);
             store.SyncData("LDM_CdKeys",      ref cdKeys);
             store.SyncData("LDM_CdVals",      ref cdVals);
             store.SyncData("LDM_TalentIds",   ref talentIds);
@@ -390,6 +407,8 @@ namespace AshAndEmber
             if (ids != null) foreach (var id in ids) _mageIds.Add(id);
             _ashenIds.Clear();
             if (ashenIds != null) foreach (var id in ashenIds) _ashenIds.Add(id);
+            _companionMageIds.Clear();
+            if (companionIds != null) foreach (var id in companionIds) _companionMageIds.Add(id);
             _seeded = seeded;
 
             _campaignCooldowns.Clear();

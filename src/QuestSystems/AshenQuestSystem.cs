@@ -132,6 +132,11 @@ namespace AshAndEmber
             if (BurningLabQuestSystem.WitheringFired) return;
 
             // Flush pending hunger visions
+            if (_phase == PhaseHungerReady && MageKnowledge._deferredInquiry == null)
+            {
+                MageKnowledge._deferredInquiry = ShowHungerVision1;
+                return;
+            }
             if (_phase == PhaseHunger2Ready && MageKnowledge._deferredInquiry == null)
             {
                 MageKnowledge._deferredInquiry = ShowHungerVision2;
@@ -386,7 +391,7 @@ namespace AshAndEmber
             if (settlement == null) return;
             try
             {
-                _wastelandCities.Add(settlement.StringId);
+                if (!_wastelandCities.Add(settlement.StringId)) return;
 
                 // Permanently loot all bound villages
                 try
