@@ -95,6 +95,7 @@
     <Compile Include="MagicInputHandler.cs"/>
     <Compile Include="CampaignBehavior.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.cs"/>
+    <Compile Include="QuestSystems\TempleCovenant.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.cs"/>
     <Compile Include="QuestSystems\BattleEvents.cs"/>
     <Compile Include="AI\BanditMageAI.cs"/>

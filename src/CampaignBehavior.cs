@@ -964,6 +964,7 @@ namespace AshAndEmber
             try { AshenQuestSystem.Save(dataStore); } catch { }
             try { BurningLabQuestSystem.Save(dataStore); } catch { }
             try { AgingSystem.Save(dataStore); } catch { }
+            try { TempleCovenant.Save(dataStore); } catch { }
         }
     }
 }

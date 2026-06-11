@@ -353,6 +353,7 @@ namespace AshAndEmber
                     };
                     lines.Append(coldNote);
                 }
+                try { lines.Append(TempleCovenant.LedgerLine()); } catch { }
                 lines.Append("\n");
                 return lines.ToString();
             }

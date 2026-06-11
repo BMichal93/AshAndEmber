@@ -283,6 +283,10 @@ namespace AshAndEmber
                     }
                 }
 
+                // Temple covenant: the Temple's rites steady the fire — 1 day cheaper (min 1)
+                if (inMission && agingDays > 1 && TempleCovenant.CovenantActive)
+                    agingDays -= 1;
+
                 if (agingDays > 0)
                 {
                     if (MageKnowledge.IsAshen)
