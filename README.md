@@ -1,4 +1,4 @@
-# Ash and Ember — v0.17
+# Ash and Ember — v0.18
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -186,20 +186,24 @@ The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Da
 
 ## Effects (after Break)
 
-| Key | Arrow | Effect | Per count | Targets |
-|-----|-------|--------|-----------|---------|
-| W | ↑ | **Damage** | 25 fire damage | All units — friendly fire included |
-| A | ← | **Damage** | 25 fire damage | All units — friendly fire included |
-| D | → | **Damage** | 25 fire damage | All units — friendly fire included |
-| S | ↓ | **Restore** | 15 healing | Allies (Burst also heals caster) |
+Every damage key deals 25 fire damage per press (friendly fire included) — but each carries its own **nature**, with a weak innate effect that the matching enchantment talent amplifies:
 
-Damage and Restore may be combined in the same cast.
+| Key | Arrow | Nature | Per count | Innate effect (no talent) | Amplified by |
+|-----|-------|--------|-----------|---------------------------|--------------|
+| W | ↑ | **Sear** | 25 fire damage | +5 searing burn | **Immolate** |
+| A | ← | **Force** | 25 fire damage | 1.5 m concussive push | **Scatter** |
+| D | → | **Shred** | 25 fire damage | +4% damage taken for 4 s (max 12%) | **Sunder** |
+| S | ↓ | **Restore** | 15 healing | +4 morale lift | **Hearthlight** |
+
+Owning a key's talent replaces its weak innate effect with the full version — no double-dipping. **Smoulder** triggers on any damage nature. Natures mix freely in one cast: `WWA` after Break = 75 damage carrying sear ×2 + force ×1.
 
 ---
 
 ## Aging Cost
 
 Every spell draws on your lifespan. Cost scales **geometrically** with total inputs — weak spells are cheap; powerful spells become very expensive. Hard cap: 84 campaign days (1 Bannerlord year = 4 seasons × 21 days).
+
+**The Ledger of Years** — the grimoire (Alt+X) opens with a running account of the aging economy: your age, time remaining until the fire burns out at 100, total days the fire has taken, days reclaimed (Reap, Ember, rites), and how many workings you have cast in battle and on the map.
 
 | Total inputs | Cost | With BattleMage |
 |--------------|------|-----------------|
@@ -283,12 +287,12 @@ Enchantments fire automatically on every qualifying cast in battle.
 
 **Damage enchantments** (trigger: Damage effect — applies to all hit units, allies included):
 
-| Talent | Effect |
-|--------|--------|
-| **Scatter** | Blasts enemies backward (5 m per Damage input) and slows movement 25% per input (max 75%) for 4 s + 1.5 s per input. |
-| **Smoulder** | Scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
-| **Sunder** | Increases all damage enemies receive and reduces their attack power. Damage vulnerability = 5% per Damage input (max 50%). Attack reduction = 10% per Damage input (max 50%). Duration = 8 s + 1.5 s per Damage input. |
-| **Immolate** | Sets enemies alight — bonus burn damage (10 per Damage input). Guaranteed kills scale with Damage inputs: 3 = 1 kill, 6 = 2 kills, 9 = 3 kills. |
+| Talent | Triggered by | Effect |
+|--------|--------------|--------|
+| **Scatter** | Force (A) inputs | Blasts enemies backward (5 m per Force input) and slows movement 25% per input (max 75%) for 4 s + 1.5 s per input. |
+| **Smoulder** | Any damage input | Scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect: rout, charge, dismount, or morale fracture. |
+| **Sunder** | Shred (D) inputs | Increases all damage enemies receive and reduces their attack power. Damage vulnerability = 10% per Shred input (max 50%). Attack reduction = 10% per input (max 50%). Duration = 8 s + 1.5 s per input. |
+| **Immolate** | Sear (W) inputs | Sets enemies alight — bonus burn damage (10 per Sear input). Guaranteed kills scale with Sear inputs: 3 = 1 kill, 6 = 2 kills, 9 = 3 kills. |
 
 **Restore enchantments** (trigger: Restore effect on allies):
 
@@ -394,6 +398,16 @@ The cold watches. Certain acts open a crack in the fire.
 | Battle lost (player involved) | +1 |
 
 Whispers decay slowly for honourable, merciful players (Mercy + Honor ≥ 2: 1 in 7 chance each day to lose 1).
+
+Certain settlement encounters also feed or starve the cold — burning the village in *Darkness in the Roots*, watching *The Pyre* for sport, joining the dance of the *Three Figures*, or reaching back into *Ash in the Dream* all add whispers; saving the girl, funding the priest's sanctuary, dismissing the dream, or scattering the witches' rite shed them.
+
+**Whisper tiers.** The count itself stays hidden, but the cold expresses itself in stages (crossing a tier shows a one-time warning, and the Ledger of Years carries a vague status line):
+
+| Tier | Threshold | Effect |
+|------|-----------|--------|
+| Noticed | 25+ | Occasional ambient whispers on the campaign map. |
+| Favoured | 50+ | Ashen Altar rituals gain +1 point per round; Sanctuary meditation loses 1 point per round (never below 1). |
+| Close | 75+ | The altar bonus and sanctuary drag deepen to 2. The Temple declares you **anathema** (see The Temple). |
 
 At **100+ whispers** a countdown of 7 days begins. Then **The Cold Calls Your Name** fires:
 
@@ -577,9 +591,19 @@ Press **Ctrl + Shift + F10** on the campaign map to toggle scheme debug mode. Wh
 - The UI shows exact tier-scaled cost and any active repeat penalties before committing.
 - Crash safety: eliminated kingdoms cannot receive crime rating or war declarations; dead heroes cannot receive relation changes. All checked before applying.
 
+### Counter-intelligence
+
+NPC lords can and do scheme against the player and player-owned fiefs. Two defences exist:
+
+- **Warning whispers** — when a plot is queued against you or your fiefs, there is a chance you receive a vague warning (30% base, scaling with Roguery up to 75%).
+- **Sweep the city for hostile agents** (scheme menu, 500g) — pays informants to comb the underworld. If a plot is in motion, a Roguery check (40–85%) cancels it and names its author (+300 Roguery XP); on failure the plot proceeds. If nothing is in motion, the coin buys only rumours — probing blind has a real cost.
+- The **Clairvoyance** campaign spell also reveals a pending plot and offers to sever it for 2 000g.
+
+When an NPC scheme resolves against you, a 1-day **retaliation window** opens: all your schemes cost half price.
+
 ### NPC lords
 
-A random NPC lord may initiate a scheme each day — at most one new scheme launches per day globally. Each lord has a 20–35 day personal cooldown between schemes. NPCs never target the player directly. NPC scheme results appear in the campaign message log (not as popup notifications).
+A random NPC lord may initiate a scheme each day — at most one new scheme launches per day globally. Each lord has a 20–35 day personal cooldown between schemes. NPC scheme results appear in the campaign message log (not as popup notifications) — unless the scheme targets you, in which case the result is shown as a popup.
 
 - **Standard lord and settlement schemes** can target lords from any foreign kingdom — not just current enemies. Schemes work in peacetime too (intelligence operations, sabotage, court intrigue).
 - **Ashen targets** are valid but uncommon (15% weighting when non-Ashen targets exist) and face an additional −30% success penalty.
@@ -803,7 +827,7 @@ Selecting a prayer begins a **Meditation ritual**. The game secretly rolls a hid
 
 1. **Costs the player** — troops are wounded or the hero ages (amount and type vary by rite).
 2. **Accumulates hidden progress** — points per round = `round(roll(3–10) × mult)`, where `mult = (Mercy + Honor + Generosity) / 6`. At full alignment (+6 total) you average 6.5 pts/round. At zero alignment you always earn exactly 1 pt/round — success is slow but not impossible. The reward on success is also scaled by mult, so a zero-alignment character who grinds through earns a much weaker effect.
-3. **Prompts the player** — *"Continue the meditation"* or *"Step back — claim what the flame offers."*
+3. **Prompts the player** — continue with *steady devotion* (normal roll), continue with *fervent devotion* (progress ×1.5, but one round in three the flame takes the round's cost a second time), or *step back — claim what the flame offers*.
 
 When the player stops: if accumulated progress **≥ hidden target**, the prayer fires. If not, the cost paid is lost and nothing is granted. The target number is never shown.
 
@@ -857,6 +881,22 @@ The founding city has its loyalty and security immediately set to 100 to prevent
 
 If none of the three canonical cities are eligible (already Ashen-owned, under siege, or their owner clan is unavailable), a fallback city from the Empire, Khuzait, or Sturgian factions is used instead.
 
+#### The Covenant
+
+Once the Temple stands, it watches players who are **not** members:
+
+- **Covenant offer** — a clean-handed player (clan tier 2+, whisper tier ≤ 1) may be approached by a Temple envoy offering a pact. While sworn, **battle casts cost 1 fewer day of life** (minimum 1 — stacks after Tempered and Kinship), and every ~3–5 weeks the Temple **calls for aid** against the Ashen:
+
+| Answer | Outcome |
+|--------|---------|
+| **Ride with the strike** | Up to 2 Ashen warbands are bloodied (10–18 wounded each, −20 morale). +50 renown, +10 relation with the High Templar, +10 party morale. |
+| **Send coin (800 denars)** | +15 renown, +5 relation. |
+| **Stand aside** | −5 relation. The covenant holds — for now. |
+
+  Declining the envoy closes the offer permanently.
+
+- **Anathema** — a mage whose whispers reach tier 3 (75+) is declared anathema: any covenant is revoked, relations with the High Templar collapse (−30 to −40), and templar zealots periodically ambush the player's column (3–8 soldiers wounded every ~2 weeks) until the whispers fade below tier 2. Redemption lifts the hunt, but the covenant is not offered twice.
+
 ### The Ashen Altars
 
 In **Tyal, Sibir, Baltakhand, and Amprela**, a grey stone altar stands permanently in the town. These altars are announced at game start.
@@ -869,7 +909,7 @@ Selecting a rite begins a **Sacrifice ritual**. The game secretly rolls a hidden
 
 1. **Costs the player** — prisoners are killed first (lowest-tier first), then healthy party members if needed. A tier-N troop is worth N sacrifice points. Morale drains proportional to the blood spent. The menu header shows total available sacrifice points.
 2. **Accumulates hidden progress** — points per round = `round(roll(3–10) × mult)`, where `mult = −(Mercy + Honor + Generosity) / 6`. At maximum evil (−6 total) you average 6.5 pts/round. At zero or virtuous alignment you earn exactly 1 pt/round. The reward on success is also scaled by mult.
-3. **Prompts the player** — *"Offer more"* or *"Complete the rite — take what blood has bought."*
+3. **Prompts the player** — offer more with *a measured hand* (normal roll), offer more *heedlessly* (progress ×1.5, but one round in three the stone drinks the round's cost twice), or *complete the rite — take what blood has bought*.
 
 When the player stops: if accumulated progress **≥ hidden target**, the rite fires. If not, the sacrifice was wasted. The target number is never shown. If you run out of available sacrifice before stopping voluntarily, the ritual resolves immediately.
 
