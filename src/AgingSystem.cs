@@ -342,6 +342,17 @@ namespace AshAndEmber
                 int net = _ledgerDaysSpent - _ledgerDaysReclaimed;
                 if (net > 84)
                     lines.Append($"  The fire holds {net / 84} year{(net / 84 != 1 ? "s" : "")} of your life. It does not give receipts.\n");
+                if (!MageKnowledge.IsAshen)
+                {
+                    string coldNote = MageKnowledge.WhisperTier switch
+                    {
+                        3 => "  The cold: very close. You hear it even in daylight.\n",
+                        2 => "  The cold: it favours you. The grey altars open faster; the sanctuary flame leans away.\n",
+                        1 => "  The cold: it has noticed you. Nothing more — yet.\n",
+                        _ => "",
+                    };
+                    lines.Append(coldNote);
+                }
                 lines.Append("\n");
                 return lines.ToString();
             }

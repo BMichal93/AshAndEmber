@@ -33,18 +33,49 @@ namespace AshAndEmber
 
         public static int WhisperCount => _whisperCount;
 
+        // Whisper tier: 0 = quiet, 1 = 25+ (the cold has noticed), 2 = 50+
+        // (the cold favours you), 3 = 75+ (the cold is close). Tiers pull both
+        // ways: altar rites accelerate, sanctuary rites resist you.
+        public static int WhisperTier =>
+            _whisperCount >= 75 ? 3 : _whisperCount >= 50 ? 2 : _whisperCount >= 25 ? 1 : 0;
+
         public static void AddWhispers(int n)
         {
             if (n <= 0 || !_isMage) return;
+            int tierBefore = WhisperTier;
             _whisperCount += n;
             if (_whisperCount >= 100 && _coldCallCountdown == 0)
                 _coldCallCountdown = 7; // fires in 7 days
+            if (WhisperTier > tierBefore)
+                try { AnnounceWhisperTier(WhisperTier); } catch { }
         }
 
         public static void RemoveWhispers(int n)
         {
             _whisperCount = Math.Max(0, _whisperCount - n);
         }
+
+        private static void AnnounceWhisperTier(int tier)
+        {
+            string msg = tier switch
+            {
+                1 => "Something at the edge of your fire has begun to listen. (The cold has noticed you.)",
+                2 => "The whispers no longer wait for the dark. The grey altars will open faster for you now — and the sanctuary flame leans away. (The cold favours you.)",
+                3 => "You catch yourself answering before they speak. The sanctuary flame gutters when you kneel. (The cold is very close.)",
+                _ => null,
+            };
+            if (msg != null)
+                InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.45f, 0.45f, 0.65f)));
+        }
+
+        private static readonly string[] _ambientWhispers =
+        {
+            "A voice in the wind says your name the way an old friend would. There is no one there.",
+            "The campfire bends north for a moment. No wind blows.",
+            "In the morning frost you find one set of footprints circling your tent. They end mid-stride.",
+            "You wake with ash on your fingertips. Your fire burned clean last night.",
+            "Someone in the column is humming a tune you have only heard in dreams. When you turn, the humming stops.",
+        };
 
         public static void DailyWhisperTick()
         {
@@ -56,6 +87,16 @@ namespace AshAndEmber
                 if (_coldCallCountdown == 0 && _deferredInquiry == null)
                     _deferredInquiry = ShowColdCallsEvent;
             }
+
+            // Ambient flavour: once the cold has noticed (25+), it occasionally speaks.
+            try
+            {
+                if (!_isAshen && WhisperTier >= 1 && _rng.Next(12) < WhisperTier)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        _ambientWhispers[_rng.Next(_ambientWhispers.Length)],
+                        new Color(0.45f, 0.45f, 0.65f)));
+            }
+            catch { }
 
             // Passive decay: honourable, merciful players shed whispers slowly
             try

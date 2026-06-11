@@ -300,11 +300,15 @@ namespace AshAndEmber
 
         // ── Ritual core ────────────────────────────────────────────────────────
         // Points gained per meditation round. Floor of 1 so unaligned heroes can still succeed — slowly.
+        // The flame recoils from whisper-heavy souls: at tier 2 (50+) −1 pt/round,
+        // at tier 3 (75+) −2 — but never below the floor of 1.
         private static int RollRoundPoints(float mult)
         {
+            int whisperDrag = 0;
+            try { whisperDrag = Math.Max(0, MageKnowledge.WhisperTier - 1); } catch { }
             if (mult <= 0f) return 1; // 1 pt/round regardless; alignment accelerates yield
             int raw = 3 + _rng.Next(8); // 3–10
-            return Math.Max(1, (int)Math.Round(raw * mult));
+            return Math.Max(1, (int)Math.Round(raw * mult) - whisperDrag);
         }
 
         // Hint text to show after each round. Deliberately vague to hide the target.

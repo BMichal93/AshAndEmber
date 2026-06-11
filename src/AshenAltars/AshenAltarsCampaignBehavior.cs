@@ -355,11 +355,14 @@ namespace AshAndEmber
 
         // ── Ritual core ────────────────────────────────────────────────────────
         // Floor of 1 so any hero can succeed — but unaligned heroes sacrifice many more lives for weak rewards.
+        // Whispers feed the stone: at tier 2 (50+) +1 pt/round, at tier 3 (75+) +2.
         private static int RollRoundPoints(float mult)
         {
-            if (mult <= 0f) return 1;
+            int whisperBonus = 0;
+            try { whisperBonus = Math.Max(0, MageKnowledge.WhisperTier - 1); } catch { }
+            if (mult <= 0f) return 1 + whisperBonus;
             int raw = 3 + _rng.Next(8); // 3–10
-            return Math.Max(1, (int)Math.Round(raw * mult));
+            return Math.Max(1, (int)Math.Round(raw * mult)) + whisperBonus;
         }
 
         private static string ColdProgressHint(int accumulated, int target)
