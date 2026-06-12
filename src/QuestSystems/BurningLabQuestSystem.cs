@@ -646,6 +646,7 @@ namespace AshAndEmber
                 foreach (var clan in other.Clans.ToList())
                 {
                     if (clan == null || clan.IsEliminated) continue;
+                    if (clan == Clan.PlayerClan) continue; // never forcibly move the player
                     try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
                     try
                     {
@@ -880,27 +881,23 @@ namespace AshAndEmber
             if (arenicosEmpire != null && !arenicosEmpire.IsEliminated
                 && ashen != null && !ashen.IsEliminated)
             {
-                bool needsRuler = arenicosEmpire.RulingClan == null;
+                // Abort if the empire has no ruling clan — an Ashen clan becoming ruler
+                // would change the empire's visual identity and can trigger cascade ejections.
+                if (arenicosEmpire.RulingClan == null) return;
+
                 foreach (var clan in ashen.Clans.ToList())
                 {
                     if (clan == null || clan.IsEliminated) continue;
+                    if (clan == Clan.PlayerClan) continue; // never forcibly move the player
                     try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                    if (needsRuler)
+                    try
                     {
-                        try { ChangeKingdomAction.ApplyByCreateKingdom(clan, arenicosEmpire, false); } catch { }
-                        needsRuler = false;
+                        ChangeKingdomAction.ApplyByJoinToKingdom(
+                            clan, arenicosEmpire,
+                            CampaignTime.Now + CampaignTime.Years(1000),
+                            false);
                     }
-                    else
-                    {
-                        try
-                        {
-                            ChangeKingdomAction.ApplyByJoinToKingdom(
-                                clan, arenicosEmpire,
-                                CampaignTime.Now + CampaignTime.Years(1000),
-                                false);
-                        }
-                        catch { }
-                    }
+                    catch { }
                 }
             }
 
@@ -929,6 +926,7 @@ namespace AshAndEmber
             {
                 if (anchored >= 2) break;
                 if (clan == null || clan.IsEliminated) continue;
+                if (clan == Clan.PlayerClan) continue; // never forcibly move the player
                 if (clan.Leader == null || !ColourLordRegistry.IsAshenLord(clan.Leader)) continue;
                 if (clan.Kingdom == arenicosEmpire) continue;
 
@@ -962,6 +960,7 @@ namespace AshAndEmber
                     foreach (var clan in arenicosEmpire.Clans.ToList())
                     {
                         if (clan == null || clan.IsEliminated) continue;
+                        if (clan == Clan.PlayerClan) continue; // never eject the player
                         if (clan.Leader == null || !ColourLordRegistry.IsAshenLord(clan.Leader)) continue;
                         try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
                         if (needsRuler)
