@@ -149,6 +149,31 @@ namespace AshAndEmber
             RegisterSanctuaryMenus(starter);
         }
 
+        // Clears all per-campaign static state. Must be called when a new game is
+        // created, otherwise sanctuary picks and the "announced" flag carry over
+        // from a previous game played in the same Bannerlord session — which makes
+        // EnsurePermanentSanctuaries early-return (list already full) and suppresses
+        // the establishment toast on the new campaign.
+        public static void ResetForNewGame()
+        {
+            _permanentSanctuaryIds.Clear();
+            _sanctuariesAnnounced       = false;
+            _needsAnnouncementAfterSync = false;
+            _lastSanctuaryUseDay        = -999;
+            _sanctuaryUseCount          = 0;
+            _blessedUntilDay            = -1;
+            _steadyLineUntilDay         = -1;
+            _traitBoostUntilDay         = -1;
+            _traitBoostAmount           = 0f;
+            _lastPrayerDay              = -999;
+            _lastProtectiveDay          = -999;
+            _lastTurnAshenDay           = -999;
+            _lastHealingDay             = -999;
+            _lastBlessingDay            = -999;
+            _locationUses.Clear();
+            _locationDepletedUntil.Clear();
+        }
+
         // ── Permanent sanctuary selection ──────────────────────────────────────
         private static void EnsurePermanentSanctuaries()
         {

@@ -642,21 +642,10 @@ namespace AshAndEmber
 
                 submittedNames.Add(other.Name?.ToString() ?? id);
 
-                // Move all clans (and their fiefs) into Arencios's empire
+                // Move all clans (and their fiefs) into Arencios's empire, atomically
+                // so the conquered cities change banners cleanly rather than rebelling.
                 foreach (var clan in other.Clans.ToList())
-                {
-                    if (clan == null || clan.IsEliminated) continue;
-                    if (clan == Clan.PlayerClan) continue; // never forcibly move the player
-                    try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                    try
-                    {
-                        ChangeKingdomAction.ApplyByJoinToKingdom(
-                            clan, arenicosEmpire,
-                            CampaignTime.Now + CampaignTime.Years(1000),
-                            false);
-                    }
-                    catch { }
-                }
+                    MoveClanInto(clan, arenicosEmpire);
             }
 
             string arenicosName = GetKingdom(_qaEmpireId)?.Name?.ToString() ?? "the Empire";
@@ -886,19 +875,7 @@ namespace AshAndEmber
                 if (arenicosEmpire.RulingClan == null) return;
 
                 foreach (var clan in ashen.Clans.ToList())
-                {
-                    if (clan == null || clan.IsEliminated) continue;
-                    if (clan == Clan.PlayerClan) continue; // never forcibly move the player
-                    try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                    try
-                    {
-                        ChangeKingdomAction.ApplyByJoinToKingdom(
-                            clan, arenicosEmpire,
-                            CampaignTime.Now + CampaignTime.Years(1000),
-                            false);
-                    }
-                    catch { }
-                }
+                    MoveClanInto(clan, arenicosEmpire);
             }
 
             Notify(
@@ -930,15 +907,7 @@ namespace AshAndEmber
                 if (clan.Leader == null || !ColourLordRegistry.IsAshenLord(clan.Leader)) continue;
                 if (clan.Kingdom == arenicosEmpire) continue;
 
-                try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                try
-                {
-                    ChangeKingdomAction.ApplyByJoinToKingdom(
-                        clan, arenicosEmpire,
-                        CampaignTime.Now + CampaignTime.Years(1000),
-                        false);
-                }
-                catch { }
+                MoveClanInto(clan, arenicosEmpire);
                 anchored++;
             }
         }
@@ -956,29 +925,15 @@ namespace AshAndEmber
                 Kingdom ashen = Kingdom.All.FirstOrDefault(k => k.StringId == AshenKingdomId);
                 if (ashen != null)
                 {
-                    bool needsRuler = ashen.RulingClan == null;
                     foreach (var clan in arenicosEmpire.Clans.ToList())
                     {
                         if (clan == null || clan.IsEliminated) continue;
-                        if (clan == Clan.PlayerClan) continue; // never eject the player
+                        if (clan == Clan.PlayerClan) continue;            // never eject the player
+                        if (clan == arenicosEmpire.RulingClan) continue;  // keep the empire's ruler so it endures
                         if (clan.Leader == null || !ColourLordRegistry.IsAshenLord(clan.Leader)) continue;
-                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                        if (needsRuler)
-                        {
-                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, ashen, false); } catch { }
-                            needsRuler = false;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                ChangeKingdomAction.ApplyByJoinToKingdom(
-                                    clan, ashen,
-                                    CampaignTime.Now + CampaignTime.Years(1000),
-                                    false);
-                            }
-                            catch { }
-                        }
+                        // Atomic withdrawal back to the Ashen kingdom, fiefs intact
+                        // (MoveClanInto seeds the Ashen kingdom if it currently has no ruler).
+                        MoveClanInto(clan, ashen);
                     }
                 }
 
@@ -1542,6 +1497,58 @@ namespace AshAndEmber
             if (s?.Town == null) return;
             try { s.Town.Loyalty  = 100f; } catch { }
             try { s.Town.Security = 100f; } catch { }
+        }
+
+        // Moves a clan into targetKingdom carrying its fiefs intact. Prefers the
+        // atomic defection action when the clan already belongs to a kingdom, so
+        // settlements change banners cleanly instead of passing through an
+        // ownerless "independent" state that can strand them as rebel/free cities.
+        // The player is NEVER moved automatically — serving Arencios (or refusing)
+        // is the player's own choice. Newly held fiefs are stabilised so the
+        // reshuffle cannot tip them straight into rebellion.
+        private static void MoveClanInto(Clan clan, Kingdom targetKingdom)
+        {
+            if (clan == null || clan.IsEliminated) return;
+            if (targetKingdom == null || targetKingdom.IsEliminated) return;
+            if (clan == Clan.PlayerClan) return;        // the player is never moved automatically
+            if (clan.Kingdom == targetKingdom) return;  // already there
+
+            var stay    = CampaignTime.Now + CampaignTime.Years(1000);
+            Kingdom old = clan.Kingdom;
+            try
+            {
+                if (targetKingdom.RulingClan == null)
+                {
+                    // No ruler to defect to — seed the kingdom with this clan instead.
+                    if (old != null && !old.IsEliminated)
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                    ChangeKingdomAction.ApplyByCreateKingdom(clan, targetKingdom, false);
+                }
+                else if (old != null && !old.IsEliminated)
+                {
+                    ChangeKingdomAction.ApplyByJoinToKingdomByDefection(clan, old, targetKingdom, stay, false);
+                }
+                else
+                {
+                    ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, stay, false);
+                }
+            }
+            catch
+            {
+                // Last-resort fallback to the legacy two-step path.
+                try { if (clan.Kingdom != null) ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, stay, false); } catch { }
+            }
+            StabiliseClanFiefs(clan);
+        }
+
+        // Resets loyalty/security on every town a clan holds so a wave of kingdom
+        // changes does not push its fiefs into rebellion.
+        private static void StabiliseClanFiefs(Clan clan)
+        {
+            if (clan == null) return;
+            try { foreach (var s in clan.Settlements.ToList()) StabiliseSettlement(s); }
+            catch { }
         }
 
         private static void Notify(string text)

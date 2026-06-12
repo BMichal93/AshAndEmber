@@ -141,6 +141,28 @@ namespace AshAndEmber
             RegisterAltarMenus(starter);
         }
 
+        // Clears per-campaign static state so a new game started in the same
+        // Bannerlord session does not inherit the previous game's "announced" flag
+        // (which would suppress the altar establishment toast) or stale cooldowns.
+        public static void ResetForNewGame()
+        {
+            _altarsAnnounced     = false;
+            _lastAltarUseDay     = -999;
+            _altarUseCount       = 0;
+            _solsticeUntilDay    = -1;
+            _solsticeType        = "";
+            _frozenPartyId       = "";
+            _frozenUntilDay      = -1;
+            _lastBloodTributeDay = -999;
+            _lastSolsticeDay     = -999;
+            _lastCarrionDay      = -999;
+            _lastBreakWillsDay   = -999;
+            _lastColdFireDay     = -999;
+            _lastSubjugateDay    = -999;
+            _locationUses.Clear();
+            _locationDepletedUntil.Clear();
+        }
+
         private static void AnnounceAltars()
         {
             if (_altarsAnnounced) return;

@@ -124,6 +124,8 @@ namespace AshAndEmber
                 DragonQuestSystem.ResetForNewGame();
                 AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
+                SanctuaryCampaignBehavior.ResetForNewGame();
+                AshenAltarsCampaignBehavior.ResetForNewGame();
                 ShowLoreIntro();
             }
             catch { }
