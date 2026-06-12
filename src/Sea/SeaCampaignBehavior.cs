@@ -60,8 +60,10 @@ namespace AshAndEmber
         private static Settlement _voyageDest;
         private static float _voyageHoursTotal;
         private static float _voyageHoursElapsed;
-        private static float _pirateAtHour = -1f;   // -1 → no corsairs this crossing
-        private static float _stormAtHour  = -1f;
+        private static float _pirateAtHour   = -1f;   // -1 → no corsairs this crossing
+        private static float _stormAtHour   = -1f;
+        private static float _fogAtHour     = -1f;
+        private static float _floatsamAtHour = -1f;
         private static bool  _voyageEmberwind;
         private static bool  _voyageDone;
         private static int   _fareEscrow;           // persisted; refunded if a reload strands the voyage
@@ -772,6 +774,14 @@ namespace AshAndEmber
                 _stormAtHour = !_voyageEmberwind && _rng.NextDouble() < SeaMath.StormChancePerVoyage
                     ? _voyageHoursTotal * (0.25f + 0.5f * (float)_rng.NextDouble()) : -1f;
 
+                // Fog settles in the early-to-middle stretch; Emberwind burns it clear.
+                _fogAtHour = !_voyageEmberwind && _rng.NextDouble() < SeaMath.FogChancePerVoyage
+                    ? _voyageHoursTotal * (0.15f + 0.35f * (float)_rng.NextDouble()) : -1f;
+
+                // A wrecked vessel drifts into view in the middle of the crossing.
+                _floatsamAtHour = _rng.NextDouble() < SeaMath.FloatsamChancePerVoyage
+                    ? _voyageHoursTotal * (0.30f + 0.40f * (float)_rng.NextDouble()) : -1f;
+
                 // Check for a blockade at the destination. The encounter fires
                 // near the end of the crossing — the party is committed by then.
                 _blockadeAtHour = -1f; _blockadeFaction = null; _blockadeStrength = 0f;
@@ -803,6 +813,8 @@ namespace AshAndEmber
             _voyageHoursElapsed = 0f;
             _pirateAtHour       = -1f;
             _stormAtHour        = -1f;
+            _fogAtHour          = -1f;
+            _floatsamAtHour     = -1f;
             _blockadeAtHour     = -1f;
             _blockadeFaction    = null;
             _blockadeStrength   = 0f;
@@ -852,6 +864,16 @@ namespace AshAndEmber
                 {
                     _stormAtHour = -1f;
                     FireStorm();
+                }
+                if (_fogAtHour >= 0f && _voyageHoursElapsed >= _fogAtHour)
+                {
+                    _fogAtHour = -1f;
+                    FireFog();
+                }
+                if (_floatsamAtHour >= 0f && _voyageHoursElapsed >= _floatsamAtHour)
+                {
+                    _floatsamAtHour = -1f;
+                    FireFlotsam();
                 }
                 if (_pirateAtHour >= 0f && _voyageHoursElapsed >= _pirateAtHour)
                 {
@@ -943,6 +965,140 @@ namespace AshAndEmber
                     (hurt > 0 ? $" and leaves {hurt} of your soldiers battered below decks." : ".");
                 InformationManager.ShowInquiry(new InquiryData(
                     "⛈  Storm", body, true, false, "Ride it out.", "", null, null), true);
+            }
+            catch { }
+        }
+
+        // ── Sea Fog ────────────────────────────────────────────────────────────
+        private static void FireFog()
+        {
+            try
+            {
+                int extra = 3 + _rng.Next(3); // 3–5 hours lost if slowing down or unlucky push
+
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("slow", "Heave to and sound the lead", null, true,
+                        $"Take it careful. The coast finds you eventually — adds {extra} hours."),
+                };
+                if (MageKnowledge.IsMage)
+                    options.Add(new InquiryElement("burn",
+                        $"Burn it away ({SeaMath.FogBurnAgingDays} days aging)", null, true,
+                        "Push a thread of the Inner Fire through the air. The fog boils off clean — no delay, no danger."));
+                options.Add(new InquiryElement("push",
+                    "Push through — the captain swears he knows these waters", null, true,
+                    "Even odds. Either you thread the channel cleanly, or something hard finds the hull."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "🌫  Sea Fog",
+                    "The fog comes down like a curtain — twenty feet of visibility, no horizon, no stars. " +
+                    "The helmsman is steering by feel and prayer.",
+                    options, false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        string pick = chosen?[0]?.Identifier as string ?? "slow";
+                        switch (pick)
+                        {
+                            case "burn":
+                                try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.FogBurnAgingDays); } catch { }
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    "A breath of the Inner Fire and the fog tears apart like cloth. " +
+                                    "The crew stares. The crossing continues."));
+                                break;
+                            case "push":
+                                if (_rng.NextDouble() < 0.5)
+                                {
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        "The captain threads it. The fog lifts after a tense hour and open water spreads ahead."));
+                                }
+                                else
+                                {
+                                    int hurt = ApplySeaCasualties(MobileParty.MainParty, 0.04f);
+                                    _voyageHoursTotal += extra;
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "🌫  Sea Fog — Hard Landing",
+                                        "Something solid materializes out of the grey — a reef, or the shoulder of a headland. " +
+                                        "The hull scrapes and holds, but " +
+                                        (hurt > 0 ? $"{hurt} men are thrown about and hurt" : "the crew is badly shaken") +
+                                        $". It takes {extra} hours to find open water again.",
+                                        true, false, "Limp on.", "", null, null), true);
+                                }
+                                break;
+                            default: // slow
+                                _voyageHoursTotal += extra;
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    $"The captain shortens sail and takes it slow. The fog burns off eventually — {extra} hours behind schedule."));
+                                break;
+                        }
+                    },
+                    null, "", false), true, true);
+            }
+            catch { }
+        }
+
+        // ── Flotsam ────────────────────────────────────────────────────────────
+        private static void FireFlotsam()
+        {
+            try
+            {
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("salvage",
+                        "Heave to and put men on the wreck", null, true,
+                        "Board the hulk and strip what the sea left behind. Adds 2 hours."),
+                    new InquiryElement("pass",
+                        "Leave it. Dead ships keep their own time.", null, true,
+                        "Sail past and stay on schedule."),
+                };
+                if (MageKnowledge.IsMage)
+                    options.Add(new InquiryElement("sense",
+                        $"Read the wreck ({SeaMath.SenseWreckAgingDays} days aging)", null, true,
+                        "Let the Inner Fire taste the hull — feel where coin and cargo lay heaviest. Finds more than blind hands would."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "⚓  Flotsam",
+                    "A dark shape rolls in the swell ahead — a trading cog, or what's left of one. No sail, no crew visible. " +
+                    "The flag she flew has been torn away. She could be days dead, or hours.",
+                    options, false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        string pick = chosen?[0]?.Identifier as string ?? "pass";
+                        switch (pick)
+                        {
+                            case "salvage":
+                            {
+                                _voyageHoursTotal += 2f;
+                                int gold = SeaMath.FloatsamGold(_rng.NextDouble());
+                                if (gold > 0)
+                                    try { GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, gold, true); } catch { }
+                                InformationManager.ShowInquiry(new InquiryData(
+                                    "⚓  Flotsam — Salvaged",
+                                    "Your men go over the side with ropes. The hold has been ransacked — corsairs, most likely — " +
+                                    $"but the bilges still yielded {gold} denars of overlooked coin and goods. Two hours behind schedule.",
+                                    true, false, "Back on course.", "", null, null), true);
+                                break;
+                            }
+                            case "sense":
+                            {
+                                try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.SenseWreckAgingDays); } catch { }
+                                _voyageHoursTotal += 1f;
+                                int gold = SeaMath.FloatsamGold(_rng.NextDouble()) * 2;
+                                if (gold > 0)
+                                    try { GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, gold, true); } catch { }
+                                InformationManager.ShowInquiry(new InquiryData(
+                                    "⚓  Flotsam — Sensed",
+                                    "The Inner Fire finds the warm spots — where hands last gripped, where coin lay heaviest. " +
+                                    $"Your men follow the warmth and pull {gold} denars from the wreck before it rolls and sinks.",
+                                    true, false, "Back on course.", "", null, null), true);
+                                break;
+                            }
+                            default: // pass
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    "You sail past. The wreck slowly turns in the current, keeping its secrets."));
+                                break;
+                        }
+                    },
+                    null, "", false), true, true);
             }
             catch { }
         }
