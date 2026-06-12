@@ -56,14 +56,28 @@ namespace AshAndEmber
         // wants; caravans hop opportunistically between trade ports.
         public const float NpcMinCrossing        = 150f;  // shorter hops aren't worth the fare
         public const float NpcMaxCaravanCrossing = 700f;  // caravans stay on plausible trade legs
-        public const float NpcLordSailChance     = 0.35f;
-        public const float NpcCaravanSailChance  = 0.20f;
-        public const int   NpcSailCooldownDays   = 8;
-        public const float NpcPortReachUnits     = 100f;  // AI target counts as "across the sea" within this of a port
-        public const float PortProsperityPerDay  = 1f;    // sea commerce trickle for harbor towns
+        public const float NpcLordSailChance       = 0.35f;
+        public const float NpcCaravanSailChance   = 0.20f;
+        public const float NpcInvasionSailChance  = 0.15f; // lord at war targeting enemy coastal port
+        public const int   NpcSailCooldownDays    = 8;
+        public const float NpcPortReachUnits      = 100f;  // AI target counts as "across the sea" within this of a port
+        public const float PortProsperityPerDay   = 1f;    // sea commerce trickle for harbor towns
+
+        // ── Blockades ────────────────────────────────────────────────────────
+        // A lord party within this radius of a port contributes to its blockade.
+        public const float BlockadeReachUnits     = 80f;
 
         public static bool NpcCrossingViable(float crossing, bool caravan)
             => crossing >= NpcMinCrossing && (!caravan || crossing <= NpcMaxCaravanCrossing);
+
+        // Chance that a blockade fleet intercepts a crossing party.
+        // Scales with the strength advantage of the blockader; clamped to [0.20, 0.90].
+        public static float BlockadeInterceptChance(float blockadeStrength, float crosserStrength)
+        {
+            if (blockadeStrength <= 0f) return 0f;
+            float ratio = blockadeStrength / Math.Max(1f, crosserStrength);
+            return Clamp(0.60f * ratio, 0.20f, 0.90f);
+        }
 
         public static float TravelHours(float distance, bool emberwind)
         {
