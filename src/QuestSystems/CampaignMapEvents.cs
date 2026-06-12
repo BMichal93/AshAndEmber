@@ -56,6 +56,11 @@
 // │ The Dead March       │ (Day 50, then ~every 110 days) A necromantic rite   │
 // │                      │ raises the Ashen fallen. Every Ashen garrison and   │
 // │                      │ lord party is reinforced with 40–80 tier-4 troops.  │
+// ├──────────────────────┼─────────────────────────────────────────────────────┤
+// │ The Undying Host     │ (Once per campaign, day 80+, growing chance after   │
+// │                      │ day 200) The Ashen's greatest lord is chosen. 5 000 │
+// │                      │ troops are forged into their party. Their clan      │
+// │                      │ receives crushing influence. The host marches.      │
 // └──────────────────────┴─────────────────────────────────────────────────────┘
 //
 // DEBUGGING GUIDE:
@@ -137,6 +142,15 @@ namespace AshAndEmber
         public const int   DeadMarchRecurrenceGap = 95;    // minimum days between subsequent fires
         public const int   DeadMarchMinTroops     = 40;    // tier-4 troops added per garrison / army
         public const int   DeadMarchMaxTroops     = 80;    // (random in [min, max])
+
+        // The Undying Host: once-per-campaign conquest event (day 80+, scales after day 200)
+        public const float ChanceUndyingHostBase     = 0.04f;  // ~4% per week after day 200 ramp (~25 weeks to near-certain)
+        public const int   UndyingHostEarliestDay    = 80;     // cannot fire before this day
+        public const int   UndyingHostRampEndDay     = 200;    // ramp reaches full ChanceUndyingHostBase by this day
+        public const int   UndyingHostNearCertainDay = 400;    // chance spikes to ChanceUndyingHostLatent after this day
+        public const float ChanceUndyingHostLatent   = 0.60f;  // ~60% per week — fires within 1–2 weeks past day 400
+        public const int   UndyingHostTroopCount     = 5000;   // troops added to the chosen Ashen lord's party
+        public const float UndyingHostInfluenceGrant = 50000f; // influence floored to this for the Ashen ruling clan
 
         // Ashen Plague: parties spawned near the afflicted settlement
         public const int AshenPlagueSpawnCount  = 3;
@@ -343,6 +357,7 @@ namespace AshAndEmber
             TryFireEmbersOfHope();
             TryFireAshenGambit();
             TryFireDeadMarch();
+            TryFireTheUndyingHost();
 
             if (_weeklySlotFilled || _warSlotFilled)
                 _lastEventElapsedDay = (int)ElapsedCampaignDays();
@@ -394,6 +409,7 @@ namespace AshAndEmber
             _ashenGambitFired        = false;
             _deadMarchFirstFired     = false;
             _deadMarchLastFiredDay   = 0;
+            _undyingHostFired        = false;
             _campaignStartDay        = (int)CampaignTime.Now.ToDays;
             _weeklySlotFilled        = false;
             _warSlotFilled           = false;
@@ -925,6 +941,7 @@ namespace AshAndEmber
         private static bool _ashenGambitFired       = false;
         private static bool _deadMarchFirstFired   = false;
         private static int  _deadMarchLastFiredDay = 0;
+        private static bool _undyingHostFired      = false;
         private static int  _campaignStartDay       = -1;
         // Event throttle: at most one event fires per weekly tick, and no event fires
         // until EventCooldownDays have passed since the last one.
@@ -2557,6 +2574,180 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Event: The Undying Host ───────────────────────────────────────────
+        // Once per campaign, the Ashen forge a conquest army of UndyingHostTroopCount
+        // elite troops. The strongest active Ashen lord is chosen as its vanguard;
+        // their party roster is packed with high-tier troops and their clan receives
+        // crushing influence so army cohesion is never a limiting factor. A massive
+        // morale surge keeps the oversized party from bleeding troops to desertion.
+        // The Ashen kingdom is guaranteed to be at war when the host marches.
+        //
+        // Probability curve:
+        //   Day < 80   : impossible
+        //   Day 80–200 : linear ramp 0 → ChanceUndyingHostBase (4%)
+        //   Day 200–400: flat ChanceUndyingHostBase (expected fire ~day 375)
+        //   Day 400+   : ChanceUndyingHostLatent (60%) — fires within 1–2 weeks
+        //
+        // Safety constraints:
+        //   • Fires at most once per campaign (_undyingHostFired, saved/loaded).
+        //   • Sanctuary protection shows a warning message and aborts.
+        //   • All lord / roster / influence mutations individually try/caught.
+        //   • Falls back to a flavour-only announcement if no suitable lord is found.
+        private static void TryFireTheUndyingHost()
+        {
+            if (_undyingHostFired) return;
+
+            double days = ElapsedCampaignDays();
+            if (days < UndyingHostEarliestDay) return;
+
+            float chance;
+            if (days >= UndyingHostNearCertainDay)
+                chance = ChanceUndyingHostLatent;
+            else if (days >= UndyingHostRampEndDay)
+                chance = ChanceUndyingHostBase;
+            else
+                chance = ChanceUndyingHostBase * (float)((days - UndyingHostEarliestDay) / (UndyingHostRampEndDay - UndyingHostEarliestDay));
+
+            if (_rng.NextDouble() >= chance) return;
+            if (!TryClaimWeeklySlot()) return;
+
+            if (_protectedDaysRemaining > 0)
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    "The Undying Host — Something vast stirs in the mountain passes. " +
+                    "The sanctuary's ward blazes white and holds. Tonight the wall stands. " +
+                    "But the cold does not tire. It will wait."));
+                return;
+            }
+
+            _undyingHostFired = true;
+
+            try
+            {
+                var ashenKingdom = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == AshenKingdomId && !k.IsEliminated);
+
+                // ── Choose the vanguard lord ──────────────────────────────────
+                // Prefer the highest-tier active Ashen lord with their own mobile party.
+                var vanguard = Hero.AllAliveHeroes
+                    .Where(h => h.IsLord && !h.IsChild && !h.IsPrisoner && !h.IsDisabled
+                             && ColourLordRegistry.IsAshenLord(h)
+                             && h.PartyBelongedTo != null
+                             && h.PartyBelongedTo.IsActive
+                             && !h.PartyBelongedTo.IsGarrison)
+                    .OrderByDescending(h => h.Clan?.Tier ?? 0)
+                    .ThenByDescending(h => h.Renown)
+                    .FirstOrDefault();
+
+                string vanguardName = "an unnamed warlord of ash";
+                bool troopsAdded = false;
+
+                if (vanguard != null)
+                {
+                    vanguardName = vanguard.Name?.ToString() ?? vanguardName;
+                    var party = vanguard.PartyBelongedTo;
+
+                    // ── Pack the party roster with UndyingHostTroopCount elite troops ──
+                    try
+                    {
+                        var culture = vanguard.Culture ?? vanguard.Clan?.Culture;
+                        // Prefer tier 5; fall back to tier 4 if the culture's chain is shorter.
+                        var troop = GetTroopAtTier(culture, 5) ?? GetTroopAtTier(culture, 4);
+                        if (troop == null)
+                        {
+                            troop = MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                                 ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit");
+                        }
+                        if (troop != null)
+                        {
+                            party.MemberRoster.AddToCounts(troop, UndyingHostTroopCount);
+                            troopsAdded = true;
+                        }
+                    }
+                    catch { }
+
+                    // ── Morale surge — oversized parties bleed morale; drown it out ──
+                    try { party.RecentEventsMorale += 100f; } catch { }
+                }
+
+                // ── Flood the ruling clan with influence ──────────────────────
+                // This prevents cohesion from ever becoming a bottleneck if the
+                // engine decides to form an army around the vanguard.
+                try
+                {
+                    if (ashenKingdom?.RulingClan != null)
+                        ashenKingdom.RulingClan.Influence =
+                            Math.Max(ashenKingdom.RulingClan.Influence, UndyingHostInfluenceGrant);
+                }
+                catch { }
+
+                // Also flood every other Ashen lord clan with generous influence so
+                // they can sustain secondary armies and reinforce the vanguard freely.
+                try
+                {
+                    foreach (var hero in Hero.AllAliveHeroes)
+                    {
+                        if (!hero.IsLord || !ColourLordRegistry.IsAshenLord(hero)) continue;
+                        if (hero.Clan == null || hero.Clan == ashenKingdom?.RulingClan) continue;
+                        try { hero.Clan.Influence = Math.Max(hero.Clan.Influence, 2000f); } catch { }
+                    }
+                }
+                catch { }
+
+                // ── Guarantee the Ashen are at war ────────────────────────────
+                // If the Ashen somehow have no active wars, declare on the strongest
+                // non-player, non-Ashen kingdom so the host immediately has a march target.
+                try
+                {
+                    if (ashenKingdom != null)
+                    {
+                        bool atWar = Kingdom.All.Any(k =>
+                            !k.IsEliminated && k != ashenKingdom && ashenKingdom.IsAtWarWith(k));
+
+                        if (!atWar)
+                        {
+                            var target = Kingdom.All
+                                .Where(k => !k.IsEliminated
+                                         && k.StringId != AshenKingdomId
+                                         && !ashenKingdom.IsAtWarWith(k)
+                                         && k != Hero.MainHero?.Clan?.Kingdom)
+                                .OrderByDescending(k => k.TotalStrength)
+                                .FirstOrDefault();
+                            if (target != null)
+                                DeclareWarAction.ApplyByDefault(ashenKingdom, target);
+                        }
+                    }
+                }
+                catch { }
+
+                // ── Morale surge across all Ashen lord parties ────────────────
+                try
+                {
+                    foreach (var party in MobileParty.All)
+                    {
+                        if (!party.IsActive) continue;
+                        var leader = party.LeaderHero;
+                        if (leader != null && ColourLordRegistry.IsAshenLord(leader))
+                            try { party.RecentEventsMorale += 60f; } catch { }
+                    }
+                }
+                catch { }
+
+                string troopStr = troopsAdded
+                    ? $"{UndyingHostTroopCount:N0} dead-eyed soldiers, each worth ten living men, "
+                    : "a host of shapes too numerous to count, ";
+
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"The Undying Host — The cold has been patient. No more. " +
+                    $"From the grey passes and the burned valleys they came: {troopStr}" +
+                    $"silent as falling ash, marching without order yet without break. " +
+                    $"At their head: {vanguardName}. " +
+                    $"No levy will hold them. No castle wall was built high enough. " +
+                    $"The Undying Host has begun its march to conquest."));
+            }
+            catch { }
+        }
+
         // Walks a culture's elite troop upgrade chain and returns the first troop
         // that reaches targetTier. Falls back to the highest reachable troop if the
         // chain is shorter than targetTier.
@@ -3162,6 +3353,10 @@ namespace AshAndEmber
             store.SyncData("LDM_DeadMarchFirst",   ref deadMarchFirst);
             _deadMarchFirstFired = deadMarchFirst != 0;
             store.SyncData("LDM_DeadMarchLastDay", ref _deadMarchLastFiredDay);
+
+            int undyingHostFired = _undyingHostFired ? 1 : 0;
+            store.SyncData("LDM_UndyingHostFired", ref undyingHostFired);
+            _undyingHostFired = undyingHostFired != 0;
 
             store.SyncData("LDM_CampaignStartDay",    ref _campaignStartDay);
             store.SyncData("LDM_LastEventDay",       ref _lastEventElapsedDay);
