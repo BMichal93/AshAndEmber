@@ -35,9 +35,14 @@ namespace AshAndEmber
         public const int   EmberwindAgingDays = 2;
 
         // ── Hazards ──────────────────────────────────────────────────────────
-        public const float StormChancePerVoyage = 0.15f;
-        public const float PirateChanceFloor    = 0.12f;
-        public const float PirateChanceCeiling  = 0.40f;
+        public const float StormChancePerVoyage    = 0.15f;
+        public const float FogChancePerVoyage      = 0.20f;
+        public const float FloatsamChancePerVoyage = 0.25f;
+        public const float PirateChanceFloor       = 0.12f;
+        public const float PirateChanceCeiling     = 0.40f;
+
+        public const int FogBurnAgingDays   = 1;
+        public const int SenseWreckAgingDays = 1;
 
         // ── Boarding battle ──────────────────────────────────────────────────
         public const int   SearTheTideAgingDays    = 3;
@@ -173,6 +178,9 @@ namespace AshAndEmber
             o.Payout = invested + (int)(invested * margin);
             return o;
         }
+
+        // Flotsam gold: 80–400 denars scaled by roll.
+        public static int FloatsamGold(double roll) => 80 + (int)(320 * roll);
 
         private static float Clamp(float v, float lo, float hi) => v < lo ? lo : (v > hi ? hi : v);
     }
