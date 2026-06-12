@@ -4,6 +4,16 @@
 
 ## Unreleased
 
+### Sea travel, sea trade, and sea battles (new system)
+- **Harbors** — 16 coastal towns (Sturgian, Vlandian, Imperial, and Aserai coasts) gain a *Visit the harbor* entry in the town menu.
+- **Charter passage** — pay a distance-scaled fare and cross open water in a fraction of the marching time. The crossing plays out as a wait-menu voyage with real hours passing; arrival drops the party at the destination's gate.
+- **Sea battles** — corsairs prowl every route (12–40% by distance). Boardings are resolved as abstracted battles weighing party size, troop quality, and Tactics: repel them for loot and renown, pay tribute, run, or — for mages — **Sear the Tide** (3 days aging) to swing the odds hard.
+- **Storms** — cost hours and leave soldiers battered; a mage who has called the wind sails through untouched.
+- **Sea trade ventures** — stake 500 / 2,000 / 8,000 denars on a route; a factor returns after the round trip with distance-scaled margins, Trade XP — or salvage money, if the sea took the cargo. Up to 3 ventures at once.
+- **Mage hooks** — *Call the Emberwind* (2 days aging) halves the next crossing and wards it against storms; *Bless the Cargo* (1 day aging) halves a venture's loss chance and sweetens its margin. The sea, like everything else, burns days.
+- **NPCs sail too** — lords leaving a harbor whose AI destination lies across the water take ship 35% of the time (you're notified when it's your kingdom's banner); caravans — including the player's — hop between trade ports opportunistically (20%, legs of 150–700 map units). NPC crossings face the same corsair odds, resolved off-screen against their rosters, and harbor towns gain a small daily prosperity trickle from the traffic.
+- A save made mid-crossing reloads safely at the origin port with the fare refunded.
+
 ### Rival Shadow — clan tier gate
 - The Shadow is no longer designated at campaign start. The cold ignores nobodies: designation now waits until the player's clan reaches **tier 3**, and arrives with a popup (*A Cold Attention*) announcing that the dark forces of the Ashen have taken a personal interest.
 

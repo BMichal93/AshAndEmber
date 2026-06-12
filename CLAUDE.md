@@ -37,7 +37,7 @@ dotnet test tests/AshAndEmber.Tests.csproj --filter "PureLogicTests.<TestMethodN
 
 `SubModule.xml` registers `AshAndEmber.MainSubModule` as the mod entry point. `MagicSystem.cs` contains `MainSubModule`, which on `OnGameStart()`:
 - Registers `AshenDiplomacyModel` (permanent war override)
-- Registers four `CampaignBehaviorBase` subclasses: `MagicCampaignBehavior`, `SchemeCampaignBehavior`, `SanctuaryCampaignBehavior`, `AshenAltarsCampaignBehavior`
+- Registers five `CampaignBehaviorBase` subclasses: `MagicCampaignBehavior`, `SchemeCampaignBehavior`, `SanctuaryCampaignBehavior`, `AshenAltarsCampaignBehavior`, `SeaCampaignBehavior`
 - Injects `MagicMissionBehavior` per battle
 
 Each registration is wrapped in its own try/catch for mod-conflict safety.
@@ -80,6 +80,10 @@ Both `SanctuaryCampaignBehavior` and `AshenAltarsCampaignBehavior` share the sam
 - A hidden target is rolled; player decides to continue or stop
 - Alignment multiplier scales yield (flipped sign between the two systems)
 - NPC lords simulate 3–4 rounds automatically
+
+### Sea Systems (Harbors / Voyages / Ventures)
+
+`SeaCampaignBehavior` (in `src/Sea/`) adds harbor menus to 16 coastal towns, matched **by town name** at session launch (a failed match silently drops the port). Voyages run inside a wait game menu (`sea_voyage`): hazards (one storm roll, one corsair roll) are scheduled at voyage start and fire mid-crossing as inquiries; arrival teleports the party to the destination gate. Trade ventures persist in the save (`SEA_*` keys, parallel lists) and resolve on daily tick. NPC lords and caravans also use the sea lanes: on `OnSettlementLeftEvent` from a port they may be teleported to another port (lords only toward their existing AI target; caravans opportunistically), after an off-screen corsair resolution against their roster. All formulas — fares, travel hours, hazard odds, abstract boarding-battle resolution, venture margins, NPC sail gates — live in `SeaMath.cs`, which is pure (no TaleWorlds types) and covered by `PureLogicTests`. Voyage state is intentionally not serialized: a reload mid-crossing refunds the escrowed fare.
 
 ### Talent and Focus Point Costs
 
