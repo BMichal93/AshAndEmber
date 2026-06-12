@@ -236,17 +236,20 @@ namespace AshAndEmber
                 SpellEffects.DamageAgent(agent, PeriodicDamage);
                 victims.Add(agent);
             }
-            // Scatter fire particles at victim positions
-            for (int i = 0; i < Math.Min(5, victims.Count); i++)
+            // Impact: big fire strike + explosion burst at up to 8 victim positions
+            for (int i = 0; i < Math.Min(8, victims.Count); i++)
             {
                 var a = victims[_rng.Next(victims.Count)];
                 Vec3 pos = a.Position + new Vec3((float)(_rng.NextDouble() - 0.5) * 2f,
                                                  (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
-                try { SpellEffects.SpawnTempFireParticle(pos, CinderRainInterval * 0.8f); } catch { }
+                try { SpellEffects.SpawnBigFireParticle(pos, CinderRainInterval * 0.55f); } catch { }
+                try { SpellEffects.SpawnExplosionParticle(pos, CinderRainInterval * 0.35f); } catch { }
             }
+            // Sky layer: stacked fire columns at multiple heights simulate fire streaks descending
+            Vec3 centre = GetFieldCentre();
+            SpawnFireRainLayer(centre, 32f, 14);
             // Atmospheric: burning-sky fog + wide ground fire field + aerial glow
             ApplyFog(new Vec3(0.90f, 0.28f, 0.04f), 0.004f);
-            Vec3 centre = GetFieldCentre();
             SpawnGroundFireField(centre, 35f, 6, ColorSchool.Red, CinderRainInterval * 0.80f);
             SpawnAerialGlow(centre, 30f, 14f, 3, ColorSchool.Orange, CinderRainInterval * 0.80f);
         }
@@ -267,17 +270,14 @@ namespace AshAndEmber
                 try { agent.SetMorale(Math.Min(100f, agent.GetMorale() + 10f)); } catch { }
                 victims.Add(agent);
             }
-            for (int i = 0; i < Math.Min(3, victims.Count); i++)
-            {
-                var a = victims[_rng.Next(victims.Count)];
-                Vec3 pos = a.Position + new Vec3((float)(_rng.NextDouble() - 0.5) * 2f,
-                                                 (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
-                try { SpellEffects.SpawnTempFireParticle(pos, EmberTitheInterval * 0.8f); } catch { }
-            }
-            // Atmospheric: amber pulse above the Ashen position — they burn and hold
+            // Inner-fire glow on each burning Ashen agent: bodies lit with amber resolve
+            foreach (var a in victims.Take(6))
+                try { GlowSystem.BeginAgentGlow(a, ColorSchool.Yellow, EmberTitheInterval * 0.65f); } catch { }
+            // Atmospheric: ritual circle lights + amber pulse above the Ashen position
             if (_ashenTeam != null)
             {
                 Vec3 ashenCentre = GetTeamCentroid(_ashenTeam);
+                try { SpellEffects.SpawnCircleLights(ashenCentre, ColorSchool.Yellow, 10f, EmberTitheInterval * 0.80f); } catch { }
                 SpawnAerialGlow(ashenCentre, 20f, 10f, 3, ColorSchool.Yellow, EmberTitheInterval * 0.80f);
                 SpawnGroundFireField(ashenCentre, 12f, 4, ColorSchool.Orange, EmberTitheInterval * 0.80f);
             }
@@ -291,7 +291,10 @@ namespace AshAndEmber
             Vec3 anchor = GetTeamCentroid(_ashenTeam);
             int spawned = SpawnRisingUnits(RisingSpawnCount);
             if (spawned <= 0) return; // troop type missing or no valid anchor — say nothing
-            // Fire ring at the spawn point
+            // Ground eruption: explosion burst at the spawn point, as if torn from below
+            try { SpellEffects.SpawnExplosionEffect(anchor, ColorSchool.Purple, 8f, TheRisingInterval * 0.60f); } catch { }
+            try { SpellEffects.SpawnBurstExplosion(anchor, ColorSchool.Ashen, 12f, TheRisingInterval * 0.65f); } catch { }
+            // Fire ring surrounding the breach
             for (int i = 0; i < 4; i++)
             {
                 double angle = Math.PI * 2.0 / 4 * i;
@@ -299,7 +302,7 @@ namespace AshAndEmber
                                              (float)Math.Sin(angle) * 3f, 0f);
                 try { SpellEffects.SpawnTempFireParticle(pos, TheRisingInterval * 0.7f); } catch { }
             }
-            // Atmospheric: eruption burst at the spawn point + dim ghostly lights above
+            // Atmospheric: dim ghostly lights above the tear
             SpawnGroundFireField(anchor, 12f, 5, ColorSchool.Purple, TheRisingInterval * 0.75f);
             SpawnAerialGlow(anchor, 16f, 10f, 3, ColorSchool.Ashen, TheRisingInterval * 0.75f);
             MBInformationManager.AddQuickInformation(new TextObject(
@@ -318,15 +321,17 @@ namespace AshAndEmber
                 if (IsAshenAgent(agent)) continue;
                 try { agent.SetMorale(Math.Max(0f, agent.GetMorale() - DreadMoralePenalty)); }
                 catch { }
+                // Haunted grey aura on every affected fighter — visible fear made manifest
+                try { GlowSystem.BeginAgentGlow(agent, ColorSchool.Ashen, 30f); } catch { }
                 count++;
             }
-            // Three ominous fires spread across the field centre
+            // Impact bursts radiate outward across the field like a shockwave of terror
             Vec3 centre = GetFieldCentre();
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
-                Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 20f,
-                                             (float)(_rng.NextDouble() - 0.5) * 20f, 0f);
-                try { SpellEffects.SpawnTempFireParticle(pos, 30f); } catch { }
+                Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 22f,
+                                             (float)(_rng.NextDouble() - 0.5) * 22f, 0f);
+                try { SpellEffects.SpawnImpactBurst(pos, ColorSchool.Ashen, 30f); } catch { }
             }
             // Atmospheric: deep-dusk sky, cold dark fog, wide field of grey flames
             TintSky(22f); // deep dusk / near-night
@@ -373,13 +378,22 @@ namespace AshAndEmber
                 }
             }
 
-            // A cluster of fires lights up the sudden darkness
+            // Ashen agents glow with fire-light in the sudden darkness — beacons in the black
+            if (Mission.Current != null)
+            {
+                foreach (var agent in Mission.Current.Agents.ToList())
+                {
+                    if (!agent.IsActive() || agent.IsMount || !IsAshenAgent(agent)) continue;
+                    try { GlowSystem.BeginAgentGlow(agent, ColorSchool.Orange, 60f); } catch { }
+                }
+            }
+            // Large fires scattered across the field — the only light sources left standing
             Vec3 centre = GetFieldCentre();
             for (int i = 0; i < 6; i++)
             {
                 Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 30f,
                                              (float)(_rng.NextDouble() - 0.5) * 30f, 0f);
-                try { SpellEffects.SpawnTempFireParticle(pos, 60f); } catch { }
+                try { SpellEffects.SpawnBigFireParticle(pos, 60f); } catch { }
             }
             // Atmospheric: fire-lit midnight fog, wide ground fire, burning-sky aerial glow
             ApplyFog(new Vec3(0.80f, 0.22f, 0.05f), 0.005f); // fire-lit night
@@ -405,12 +419,17 @@ namespace AshAndEmber
                 SpellEffects.ForceDismount(agent);
                 count++;
             }
-            // Fire at the positions where mounts fell
+            // Ground eruption at each dismount position — the earth itself tears the mount down
+            Vec3 centre = GetFieldCentre();
             foreach (var pos in dismounted.Take(4))
-                try { SpellEffects.SpawnTempFireParticle(pos, AshenGroundInterval * 0.9f); } catch { }
+            {
+                try { SpellEffects.SpawnExplosionEffect(pos, ColorSchool.Ashen, 5f, AshenGroundInterval * 0.70f); } catch { }
+                try { SpellEffects.SpawnExplosionParticle(pos, AshenGroundInterval * 0.50f); } catch { }
+            }
+            // Central shockwave as the ashen ground cracks open across the whole field
+            try { SpellEffects.SpawnBurstExplosion(centre, ColorSchool.Ashen, 25f, AshenGroundInterval * 0.65f); } catch { }
             // Atmospheric: ash fog + grey ground effect across the field
             ApplyFog(new Vec3(0.48f, 0.47f, 0.50f), 0.005f); // grey ash fog
-            Vec3 centre = GetFieldCentre();
             SpawnGroundFireField(centre, 30f, 5, ColorSchool.Ashen, AshenGroundInterval * 0.80f);
             if (count > 0)
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -436,8 +455,24 @@ namespace AshAndEmber
                 }
                 catch { }
             }
-            // Scattered fires mark the lines breaking into chaos
+            // Red bloodlust glow on every agent — discipline shattered, only killing remains
+            if (Mission.Current != null)
+            {
+                foreach (var agent in Mission.Current.Agents.ToList())
+                {
+                    if (!agent.IsActive() || agent.IsMount) continue;
+                    try { GlowSystem.BeginAgentGlow(agent, ColorSchool.Red, FrenzyInterval * 0.55f); } catch { }
+                }
+            }
+            // Impact bursts erupt across the field as lines break and chaos spreads
             Vec3 centre = GetFieldCentre();
+            for (int i = 0; i < 4; i++)
+            {
+                Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 25f,
+                                             (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
+                try { SpellEffects.SpawnImpactBurst(pos, ColorSchool.Red, FrenzyInterval * 0.55f); } catch { }
+            }
+            // Scattered fires mark the lines breaking into chaos
             for (int i = 0; i < 5; i++)
             {
                 Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 25f,
@@ -642,6 +677,29 @@ namespace AshAndEmber
                                             centre.y + (float)Math.Sin(angle) * dist,
                                             centre.z + h);
                     SpellEffects.SpawnTempLight(pos, school, 28f, duration);
+                }
+                catch { }
+            }
+        }
+
+        // Spawns fire particles at three stacked heights above each column position.
+        // The vertical layers (5 m, 12 m, 22 m) read as fire streaks descending from the sky.
+        private static void SpawnFireRainLayer(Vec3 centre, float radius, int columns)
+        {
+            float[] heights = { 5f, 12f, 22f };
+            for (int i = 0; i < columns; i++)
+            {
+                try
+                {
+                    double angle = _rng.NextDouble() * Math.PI * 2;
+                    float  dist  = (float)(_rng.NextDouble() * radius);
+                    float  bx    = centre.x + (float)Math.Cos(angle) * dist;
+                    float  by    = centre.y + (float)Math.Sin(angle) * dist;
+                    foreach (float h in heights)
+                    {
+                        Vec3 pos = new Vec3(bx, by, centre.z + h);
+                        try { SpellEffects.SpawnTempFireParticle(pos, CinderRainInterval * 0.45f); } catch { }
+                    }
                 }
                 catch { }
             }
