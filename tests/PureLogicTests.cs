@@ -362,6 +362,19 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
+        public void SeaMath_AshenAdjusted_RaisesHazardForAshenPorts()
+        {
+            float baseChance = 0.20f;
+            // Non-Ashen destination: chance is unchanged.
+            Assert.AreEqual(baseChance, SeaMath.AshenAdjusted(baseChance, false), 0.0001f);
+            // Ashen destination: chance is lifted by the multiplier.
+            Assert.AreEqual(baseChance * SeaMath.AshenPortHazardMult,
+                            SeaMath.AshenAdjusted(baseChance, true), 0.0001f);
+            // …but never reaches certainty, even from an already-high base.
+            Assert.LessOrEqual(SeaMath.AshenAdjusted(0.9f, true), 0.95f);
+        }
+
+        [Test]
         public void SeaMath_FleetStrength_SearTheTideMultiplies()
         {
             float baseStr = SeaMath.FleetStrength(60, 3f, 100, false);

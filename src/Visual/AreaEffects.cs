@@ -193,53 +193,46 @@ namespace AshAndEmber
         }
 
         // ── Fire particle effects ──────────────────────────────────────────────
-        // Particle names are tried in order; first success wins. Unknown names
-        // return null from AddParticleSystemComponent and are silently skipped,
-        // so combat-specific siege assets are tried before environmental fallbacks.
+        // Particle names are tried in order; the first that attaches wins. NOTE:
+        // AddParticleSystemComponent does NOT fail on an unknown name — it attaches
+        // a component that renders nothing — so the first name in each list MUST be
+        // one that actually exists, or the effect shows only its light and no flame.
+        // Every name below is verified present in this game build's particle data.
 
         // General ambient fire — for impact scatter, barrier columns, etc.
         private static readonly string[] _fireParticleNames =
         {
-            "psys_env_fire_medium_01",
+            "psys_fire_vertical",
             "psys_campfire",
-            "psys_env_fire_big_01",
-            "psys_game_fire_torch_small",
-            "psys_campfire_small",
+            "psys_torch_fire",
+            "psys_battleground_env_fire",
         };
 
-        // Fireball head / large static fire — catapult fireball first.
+        // Fireball head / large static fire.
         private static readonly string[] _bigFireParticleNames =
         {
-            "psys_game_catapult_fire_ball",      // siege catapult projectile
-            "psys_game_ballista_fire_attack",     // ballista fire bolt
-            "psys_env_fire_big_01",
-            "psys_env_fire_medium_01",
+            "psys_battleground_env_fire",
+            "psys_fire_vertical",
             "psys_campfire",
-            "psys_game_fire_torch_small",
-            "psys_campfire_small",
+            "psys_torch_fire",
         };
 
-        // Explosion / detonation — catapult/arrow impact particles first.
+        // Explosion / detonation — a burst of flame and sparks.
         private static readonly string[] _explosionParticleNames =
         {
-            "psys_game_catapult_fire_ball_hit",  // catapult impact explosion
-            "psys_game_fire_arrow_hit",           // fire arrow impact
-            "psys_game_explosion",                // generic in-game explosion
-            "psys_game_explosion_fire",           // fire-tinted explosion variant
-            "psys_env_fire_big_01",
+            "psys_campfire_sparks",
+            "psys_burning_woods_parts",
+            "psys_fire_vertical",
             "psys_campfire",
-            "psys_env_fire_medium_01",
         };
 
         // Missile trail — moving fire wake, designed for projectiles.
         private static readonly string[] _trailParticleNames =
         {
-            "psys_game_catapult_fire_ball_trail", // catapult fireball wake
-            "psys_game_fire_arrow_trail",          // fire arrow trail
-            "psys_game_fire_torch",                // larger torch (no "_small")
-            "psys_game_fire_torch_small",
-            "psys_env_fire_medium_01",
-            "psys_campfire_small",
+            "psys_torch_fire_moving",
+            "psys_fire_vertical",
+            "psys_campfire",
+            "psys_torch_fire",
         };
 
         private static GameEntity SpawnParticleEntity(Vec3 position, string particleName)

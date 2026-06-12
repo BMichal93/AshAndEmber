@@ -72,6 +72,16 @@ namespace AshAndEmber
         // A lord party within this radius of a port contributes to its blockade.
         public const float BlockadeReachUnits     = 80f;
 
+        // ── Ashen waters ─────────────────────────────────────────────────────
+        // Crossing to a port held by the Ashen is markedly more perilous: the grey
+        // waters off the cold coast do not forgive. Every hazard chance for such a
+        // crossing is lifted by this factor (then re-clamped below 1).
+        public const float AshenPortHazardMult = 1.6f;
+
+        // Lifts a hazard probability when the destination port is Ashen-held.
+        public static float AshenAdjusted(float baseChance, bool ashenDestination)
+            => ashenDestination ? Clamp(baseChance * AshenPortHazardMult, 0f, 0.95f) : baseChance;
+
         public static bool NpcCrossingViable(float crossing, bool caravan)
             => crossing >= NpcMinCrossing && (!caravan || crossing <= NpcMaxCaravanCrossing);
 

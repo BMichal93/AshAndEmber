@@ -44,11 +44,10 @@ namespace AshAndEmber
         private static readonly string[] PortTownNames =
         {
             "Balgard", "Varcheg", "Revyl",                 // Sturgia — the cold coast
-            "Sargot", "Ostican", "Pravend",                // Vlandia — the western sea
-            "Ortysia", "Zeonica",                          // Western Empire
-            "Epicrotea", "Diathma", "Saneopa", "Myzea",    // Northern Empire — the Perassic
-            "Vostrum",                                     // Southern Empire
-            "Quyaz", "Razih", "Iyakis",                    // Aserai — the southern waters
+            "Sargot", "Ostican",                           // Vlandia — the western sea
+            "Ortysia",                                     // Western Empire
+            "Epicrotea", "Saneopa", "Myzea",               // Northern Empire — the Perassic
+            "Quyaz", "Iyakis",                             // Aserai — the southern waters
         };
 
         private static readonly List<Settlement> _ports = new List<Settlement>();
@@ -389,6 +388,13 @@ namespace AshAndEmber
 
         private static bool IsPort(Settlement s) => s != null && _ports.Contains(s);
 
+        // A port whose holding faction is the Ashen — the cold coast, dreaded by sailors.
+        private static bool IsAshenPort(Settlement s)
+        {
+            try { return s != null && AshenCitySystem.IsAshenFaction(s.MapFaction); }
+            catch { return false; }
+        }
+
         private static float PortDistance(Settlement a, Settlement b)
         {
             try { return (a.GetPosition2D - b.GetPosition2D).Length; }
@@ -660,12 +666,14 @@ namespace AshAndEmber
                     {
                         int fare  = SeaMath.Fare(dist, PartySize());
                         int hours = (int)SeaMath.TravelHours(dist, _emberwindCalled);
-                        int risk  = (int)(SeaMath.PirateChance(dist) * 100f);
-                        hover = $"Fare {fare} denars. About {hours} hours at sea. Corsair risk roughly {risk}%.";
+                        int risk  = (int)(SeaMath.AshenAdjusted(SeaMath.PirateChance(dist), IsAshenPort(p)) * 100f);
+                        hover = $"Fare {fare} denars. About {hours} hours at sea. Corsair risk roughly {risk}%."
+                              + (IsAshenPort(p) ? " The grey waters off this cold coast take far more ships than they give back." : "");
                     }
                     string faction = "";
                     try { faction = p.MapFaction?.Name?.ToString() ?? ""; } catch { }
-                    options.Add(new InquiryElement(p, $"{p.Name} ({faction})", null, true, hover));
+                    string ashenMark = IsAshenPort(p) ? "  ❄" : "";
+                    options.Add(new InquiryElement(p, $"{p.Name} ({faction}){ashenMark}", null, true, hover));
                 }
                 if (options.Count == 0) return;
 
@@ -764,18 +772,20 @@ namespace AshAndEmber
                 _voyageDone         = false;
 
                 // Roll the crossing's hazards up front and schedule them at a
-                // random point in the middle stretch of the voyage.
-                _pirateAtHour = _rng.NextDouble() < SeaMath.PirateChance(dist)
+                // random point in the middle stretch of the voyage. Crossings bound
+                // for an Ashen-held port run a far greater risk of every hazard.
+                bool ashenDest = IsAshenPort(dest);
+                _pirateAtHour = _rng.NextDouble() < SeaMath.AshenAdjusted(SeaMath.PirateChance(dist), ashenDest)
                     ? _voyageHoursTotal * (0.25f + 0.5f * (float)_rng.NextDouble()) : -1f;
-                _stormAtHour = !_voyageEmberwind && _rng.NextDouble() < SeaMath.StormChancePerVoyage
+                _stormAtHour = !_voyageEmberwind && _rng.NextDouble() < SeaMath.AshenAdjusted(SeaMath.StormChancePerVoyage, ashenDest)
                     ? _voyageHoursTotal * (0.25f + 0.5f * (float)_rng.NextDouble()) : -1f;
 
                 // Fog settles in the early-to-middle stretch; Emberwind burns it clear.
-                _fogAtHour = !_voyageEmberwind && _rng.NextDouble() < SeaMath.FogChancePerVoyage
+                _fogAtHour = !_voyageEmberwind && _rng.NextDouble() < SeaMath.AshenAdjusted(SeaMath.FogChancePerVoyage, ashenDest)
                     ? _voyageHoursTotal * (0.15f + 0.35f * (float)_rng.NextDouble()) : -1f;
 
                 // A wrecked vessel drifts into view in the middle of the crossing.
-                _floatsamAtHour = _rng.NextDouble() < SeaMath.FloatsamChancePerVoyage
+                _floatsamAtHour = _rng.NextDouble() < SeaMath.AshenAdjusted(SeaMath.FloatsamChancePerVoyage, ashenDest)
                     ? _voyageHoursTotal * (0.30f + 0.40f * (float)_rng.NextDouble()) : -1f;
 
                 // Check for a blockade at the destination. The encounter fires

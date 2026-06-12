@@ -70,13 +70,23 @@ namespace AshAndEmber
         public static ulong AshenSkinKey(ulong keyPart7) =>
             keyPart7 & ~0x000000FFFFFF0000UL;
 
+        // An adult age floor for ashen agents. Some bandit/troop templates resolve
+        // to a near-zero ("child") age at spawn; clamping here stops the ashen look
+        // from ever producing a child-sized body.
+        private const float AshenAdultAgeFloor = 30f;
+
         public static BodyProperties MakeAshenBodyProperties(BodyProperties bp)
         {
             var sp = bp.StaticProperties;
             var newStatic = new StaticBodyProperties(
                 sp.KeyPart1, sp.KeyPart2, sp.KeyPart3, AshenHairKey(sp.KeyPart4),
                 AshenEyeKey(sp.KeyPart5), sp.KeyPart6, AshenSkinKey(sp.KeyPart7), sp.KeyPart8);
-            return new BodyProperties(bp.DynamicProperties, newStatic);
+
+            var dp = bp.DynamicProperties;
+            float adultAge = Math.Max(dp.Age, AshenAdultAgeFloor);
+            var newDynamic = new DynamicBodyProperties(adultAge, dp.Weight, dp.Build);
+
+            return new BodyProperties(newDynamic, newStatic);
         }
 
         // ── Hero body-property write ──────────────────────────────────────────
@@ -174,6 +184,19 @@ namespace AshAndEmber
                     ?.Invoke(agent, new object[] { MakeAshenBodyProperties(agent.BodyPropertiesValue) });
             }
             catch { }
+
+            // Cold ash-grey / frost-blue clothing tint. Unlike the face-key transform
+            // above — whose exact colour-bit layout drifts between game builds and may
+            // not register — SetClothingColor is a stable API, so this is the reliable
+            // visual cue that the agent belongs to the cold.
+            try
+            {
+                agent.SetRandomizeColors(false);
+                agent.SetClothingColor1(ClothAshGrey);
+                agent.SetClothingColor2(ClothColdBlue);
+            }
+            catch { }
+
             if (includeArmour)
                 TryApplyAshenArmour(agent);
         }

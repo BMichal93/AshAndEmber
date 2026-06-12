@@ -63,6 +63,7 @@ namespace AshAndEmber
 
         public override void RegisterEvents()
         {
+            CampaignEvents.OnNewGameCreatedEvent.AddNonSerializedListener(this, OnNewGameCreatedEarly);
             CampaignEvents.OnCharacterCreationIsOverEvent.AddNonSerializedListener(this, OnNewGameCreated);
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
             CampaignEvents.WeeklyTickEvent.AddNonSerializedListener(this, OnWeeklyTick);
@@ -112,6 +113,18 @@ namespace AshAndEmber
             try { SettlementEncounters.OnPartyLeftSettlement(party, settlement); } catch { }
         }
 
+        // Fires BEFORE OnSessionLaunched on a brand-new campaign. The Sanctuary and
+        // Ashen Altar behaviors pick their sites and announce them at session launch,
+        // so any static state carried over from a previous game in the same Bannerlord
+        // session must be cleared HERE — clearing it in OnNewGameCreated (which runs on
+        // OnCharacterCreationIsOver, i.e. AFTER session launch) would wipe the freshly
+        // made picks and suppress the establishment toasts.
+        private void OnNewGameCreatedEarly(CampaignGameStarter starter)
+        {
+            try { SanctuaryCampaignBehavior.ResetForNewGame(); } catch { }
+            try { AshenAltarsCampaignBehavior.ResetForNewGame(); } catch { }
+        }
+
         // ── New game prompt ───────────────────────────────────────────────────
         private void OnNewGameCreated()
         {
@@ -124,8 +137,6 @@ namespace AshAndEmber
                 DragonQuestSystem.ResetForNewGame();
                 AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
-                SanctuaryCampaignBehavior.ResetForNewGame();
-                AshenAltarsCampaignBehavior.ResetForNewGame();
                 ShowLoreIntro();
             }
             catch { }
