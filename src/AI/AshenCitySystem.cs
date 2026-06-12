@@ -390,6 +390,11 @@ namespace AshAndEmber
                 foreach (Kingdom k in Kingdom.All.ToList())
                 {
                     if (k == _ashenKingdom || k.IsEliminated) continue;
+                    // While Ashen clans are merged into Arenicos's empire, the two factions
+                    // are allied — declaring war on the empire would expel the Ashen clans from it.
+                    if (BurningLabQuestSystem.AshenMergedWithArenicos
+                        && BurningLabQuestSystem.ArenicosEmpireId != null
+                        && k.StringId == BurningLabQuestSystem.ArenicosEmpireId) continue;
                     if (!_ashenKingdom.IsAtWarWith(k))
                         try { DeclareWarAction.ApplyByDefault(_ashenKingdom, k); } catch { }
                 }
@@ -518,7 +523,13 @@ namespace AshAndEmber
                 return;
             }
             if (_ashenKingdom.IsEliminated)
+            {
+                // While all Ashen clans are merged into Arenicos's empire the kingdom is
+                // intentionally empty. Reactivating it would trigger war re-declarations
+                // against the empire and cause Bannerlord to expel the Ashen clans from it.
+                if (BurningLabQuestSystem.AshenMergedWithArenicos) return;
                 try { _ashenKingdom.ReactivateKingdom(); } catch { }
+            }
         }
 
         // ── Settlement ownership recovery ──────────────────────────────────────

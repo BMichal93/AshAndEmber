@@ -197,6 +197,7 @@ namespace AshAndEmber
         {
             if (kingdom == null || kingdom.IsEliminated) return;
             if (kingdom.StringId == AshenKingdomId) return;         // Ashen never fracture
+            if (Hero.MainHero?.Clan?.Kingdom == kingdom) return;    // never fracture the player's faction
             if (DragonQuestSystem.WorldRekindled) return;
             if (kingdom.Clans.Count(c => c != null && !c.IsEliminated) < GoTMinClans) return;
             if (_rng.NextDouble() >= ChanceGameOfThrones) return;
