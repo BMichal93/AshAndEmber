@@ -3,17 +3,21 @@
 // The Goods Exchange: a push-your-luck commodity speculation window in towns.
 // Deliberately mundane — no magic, no schemes. Coin in, coin out.
 //
-// UI flow (game menu approach, matching Scheme/Sanctuary pattern):
+// UI flow:
 //   Town menu → "Visit the goods exchange"
-//     → "ldm_exchange_menu" game menu (one position per volatility class)
-//       → MultiSelectionInquiry for the stake (500 / 2000 / 5000)
-//         → ShowInquiry confirmation
-//           → CommitVenture() → round loop: SELL / HOLD STEADY / SPECULATE HARD
+//     → "ldm_exchange_menu" game menu (one board per volatility class)
+//       → MultiSelectionInquiry for stake (500 / 2000 / 5000)  [Buy In / Back]
+//           → Round loop popup (repeating)
+//               · Round 1 body: brief rules reminder (no prior history yet)
+//               · Round 2+ body: history of every completed round
+//               · Options: SELL / HOLD STEADY / SPECULATE HARD
+//               · Cancel ("Close position"): same as SELL
 //
-// The stake is paid at commit. The round loop runs in inquiries that do not
-// survive a save/load, so the open venture is persisted; on session launch an
-// interrupted venture is force-liquidated at 90% of book ("your broker closed
-// the position") — strictly worse than selling, so reloading is never a win.
+// The confirmation screen that existed before the round loop has been removed —
+// the first-round rules summary replaces it without adding an extra screen.
+//
+// The stake is paid at commit. Interrupted ventures (save/load mid-position)
+// are force-liquidated at 90% of book on next session launch.
 // All numeric rules live in SpeculationMath (pure, covered by PureLogicTests).
 // =============================================================================
 
@@ -37,8 +41,8 @@ namespace AshAndEmber
         // ── Per-town cooldown after a venture ends (days) ─────────────────────
         private static readonly Dictionary<string, int> _townCooldowns = new Dictionary<string, int>();
 
-        // ── Open venture (persisted) ──────────────────────────────────────────
-        private static int    _ventureActive;          // 0/1 — int for SyncData
+        // ── Open venture (persisted across save/load) ─────────────────────────
+        private static int    _ventureActive;
         private static int    _ventureStake;
         private static int    _ventureMultiplier;
         private static int    _ventureRoundsLeft;
@@ -48,16 +52,28 @@ namespace AshAndEmber
         private static string _ventureTownId    = "";
         private static string _ventureCommodity = "";
 
+        // In-memory round history — not persisted (interrupted ventures are
+        // auto-liquidated, so history never needs to survive a reload).
+        private static readonly List<string> _roundHistory = new List<string>();
+
         // Today's boards — one concrete good per volatility class, rolled on entry.
         private static readonly string[] _offer = { "Grain", "Wine", "Velvet" };
 
-        private static readonly string[] StapleGoods  = { "Grain", "Wool", "Clay", "Hides", "Fish", "Hardwood" };
-        private static readonly string[] CraftedGoods = { "Wine", "Beer", "Oil", "Iron", "Leather", "Pottery", "Linen" };
-        private static readonly string[] LuxuryGoods  = { "Velvet", "Spice", "Jewelry", "Furs", "Warhorses" };
-        private static readonly string[] ClassNames   = { "staple goods", "crafted goods", "luxury goods" };
-        private static readonly string[] ClassOptionIds = { "staple", "crafted", "luxury" };
+        // Corrected to actual Bannerlord trade goods.
+        private static readonly string[] StapleGoods  = { "Grain", "Butter", "Cheese", "Fish", "Salt", "Clay" };
+        private static readonly string[] CraftedGoods = { "Beer", "Wine", "Oil", "Tools", "Leather", "Pottery", "Linen" };
+        private static readonly string[] LuxuryGoods  = { "Velvet", "Jewelry", "Fur", "Silver", "Date Fruit" };
 
-        // Flavour lines shown each round — pure colour, no mechanical meaning.
+        private static readonly string[] ClassNames      = { "staple goods", "crafted goods", "luxury goods" };
+        private static readonly string[] ClassOptionIds  = { "staple", "crafted", "luxury" };
+        private static readonly string[] ClassRiskDescs  =
+        {
+            "safe — modest swings, low crash risk",
+            "moderate — follows supply routes and war",
+            "volatile — wide swings, high risk and reward",
+        };
+
+        // Market murmurs — flavour only, no mechanical meaning. Shown once per round.
         private static readonly string[] Murmurs =
         {
             "A caravan from the east arrived early — its master is selling in a hurry.",
@@ -70,6 +86,21 @@ namespace AshAndEmber
             "A rival exchange posted prices nobody here believes.",
             "The toll on the north road doubled overnight.",
             "An old factor shakes his head: 'I've seen this before.'",
+            "Two merchants argued over a load of goods until one of them left. Nobody is sure who won.",
+            "A lord's steward has been buying quietly all morning. He won't say for whom.",
+            "The river crossing is flooded — the northern shipment is two weeks late.",
+            "Smoke on the horizon. The factors won't say which road.",
+            "A ship put in last night with half its cargo missing. The captain is not answering questions.",
+            "The miller's guild is meeting in a back room. That usually means prices go up.",
+            "Three caravans passed through in the last hour. Something is moving fast.",
+            "A courier from the capital came through with sealed letters. Prices twitched immediately.",
+            "The garrison doubled the road levy this morning. The traders are furious.",
+            "Someone bought every last sack of the stuff an hour ago. Now everyone wants it.",
+            "The factors are meeting in the back — the chalk tallies don't match the ledgers.",
+            "A veteran merchant taps the board twice with one finger. Old sign. It means wait.",
+            "The eastern road is clear, but nobody is using it. That's its own kind of warning.",
+            "Rumour has a new mine opening three kingdoms east. Or it closed. Nobody is certain.",
+            "The day's first sale went badly. The floor is still deciding what that means.",
         };
 
         public override void RegisterEvents()
@@ -94,20 +125,18 @@ namespace AshAndEmber
                 }
 
                 store.SyncData("LDX_Active",      ref _ventureActive);
-                store.SyncData("LDX_Stake",       ref _ventureStake);
-                store.SyncData("LDX_Mult",        ref _ventureMultiplier);
-                store.SyncData("LDX_RoundsLeft",  ref _ventureRoundsLeft);
-                store.SyncData("LDX_RoundsLimit", ref _ventureRoundsLimit);
-                store.SyncData("LDX_Mood",        ref _ventureMood);
-                store.SyncData("LDX_Vol",         ref _ventureVolatility);
-                store.SyncData("LDX_TownId",      ref _ventureTownId);
-                store.SyncData("LDX_Commodity",   ref _ventureCommodity);
+                store.SyncData("LDX_Stake",        ref _ventureStake);
+                store.SyncData("LDX_Mult",         ref _ventureMultiplier);
+                store.SyncData("LDX_RoundsLeft",   ref _ventureRoundsLeft);
+                store.SyncData("LDX_RoundsLimit",  ref _ventureRoundsLimit);
+                store.SyncData("LDX_Mood",         ref _ventureMood);
+                store.SyncData("LDX_Vol",          ref _ventureVolatility);
+                store.SyncData("LDX_TownId",       ref _ventureTownId);
+                store.SyncData("LDX_Commodity",    ref _ventureCommodity);
             }
             catch { }
         }
 
-        /// Clears all static state. Called from MainSubModule.OnGameStart so a
-        /// save loaded without restarting the process never inherits stale state.
         internal static void ResetState()
         {
             _townCooldowns.Clear();
@@ -125,6 +154,7 @@ namespace AshAndEmber
             _ventureVolatility  = 0;
             _ventureTownId      = "";
             _ventureCommodity   = "";
+            _roundHistory.Clear();
         }
 
         // ── Session launched ──────────────────────────────────────────────────
@@ -134,14 +164,12 @@ namespace AshAndEmber
             ResolveInterruptedVenture();
         }
 
-        // A venture left open across a save/load is force-liquidated at 90% of
-        // book — the stake was already paid, so the coin must come back.
         private static void ResolveInterruptedVenture()
         {
             try
             {
                 if (_ventureActive == 0) return;
-                int payout    = SpeculationMath.ForcedSalePayout(_ventureStake, _ventureMultiplier);
+                int    payout = SpeculationMath.ForcedSalePayout(_ventureStake, _ventureMultiplier);
                 string name   = string.IsNullOrEmpty(_ventureCommodity) ? "goods" : _ventureCommodity;
                 GiveGold(payout);
                 AddTradeXp(SpeculationMath.TradeXp(_ventureStake, payout));
@@ -150,8 +178,9 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        MBInformationManager.AddQuickInformation(new TextObject(
-                            $"While you were away, your broker closed the {name} position at 90% of book — {payout} denars returned."));
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"While you were away your broker closed the {name} position at 90% of book — {payout} denars returned.",
+                            new Color(0.65f, 0.60f, 0.40f)));
                     }
                     catch { }
                 };
@@ -225,22 +254,23 @@ namespace AshAndEmber
                             int rounds = SpeculationMath.RoundsLimit(trade);
                             int salv   = SpeculationMath.SalvagePercent(trade);
                             MBTextManager.SetTextVariable("LDM_EXCH_HDR",
-                                "The factors' hall hums with rumour and chalk dust. Boards list what's moving on the roads."
-                                + $"\nYour purse: {gold}g  |  Market mood: {MoodLabel(CurrentMood())}"
-                                + $"  |  Trade {trade}: {rounds} rounds, crash salvage {salv}%");
+                                "The factors' hall hums with rumour and chalk dust.\n"
+                                + $"Your purse: {gold}g  |  Market: {MoodLabel(CurrentMood())}"
+                                + $"  |  Trade {trade} — {rounds} rounds per venture, salvage {salv}% on crash\n\n"
+                                + "Pick a board to open a position. Each round: SELL to close, HOLD STEADY, or SPECULATE HARD.\n"
+                                + "Crash risk grows the longer you stay in. Running out of rounds forces a sale at 90%.");
                         }
                         catch { }
                     });
             }
             catch { }
 
-            // ── One position per volatility class ─────────────────────────────
-            // Option IDs use letters only (no digits) — digits in IDs fail in this BL version.
+            // ── One option per volatility class ───────────────────────────────
             try
             {
                 for (int v = 0; v < 3; v++)
                 {
-                    int vol = v;
+                    int    vol      = v;
                     string optionId = "ldm_exch_" + ClassOptionIds[vol];
                     string textKey  = "LDM_EXCH_" + ClassOptionIds[vol].ToUpperInvariant();
                     try
@@ -256,21 +286,22 @@ namespace AshAndEmber
                                     int  minStake  = SpeculationMath.StakeTiers[0];
                                     bool canAfford = (Hero.MainHero?.Gold ?? 0) >= minStake;
                                     MBTextManager.SetTextVariable(textKey,
-                                        $"Take a position in {_offer[vol]}  —  {ClassNames[vol]}"
-                                        + (canAfford ? "" : "  [Insufficient funds]"));
+                                        $"{_offer[vol]}  —  {ClassRiskDescs[vol]}"
+                                        + (canAfford ? "" : "  [not enough coin]"));
                                     try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                                     args.IsEnabled = canAfford;
 
-                                    int mood = CurrentMood();
-                                    int sMin = SpeculationMath.DeltaMin(vol, false, mood);
-                                    int sMax = SpeculationMath.DeltaMax(vol, false, mood);
-                                    int hMin = SpeculationMath.DeltaMin(vol, true,  mood);
-                                    int hMax = SpeculationMath.DeltaMax(vol, true,  mood);
-                                    int crashPct = (int)(SpeculationMath.CrashChance(vol, 0, TradeSkill(), false) * 100f);
+                                    int mood  = CurrentMood();
+                                    int sMin  = SpeculationMath.DeltaMin(vol, false, mood);
+                                    int sMax  = SpeculationMath.DeltaMax(vol, false, mood);
+                                    int hMin  = SpeculationMath.DeltaMin(vol, true,  mood);
+                                    int hMax  = SpeculationMath.DeltaMax(vol, true,  mood);
+                                    int cPct  = (int)(SpeculationMath.CrashChance(vol, 0, TradeSkill(), false) * 100f);
                                     try { args.Tooltip = new TextObject(
-                                        $"Steady round: {Pct(sMin)} to {Pct(sMax)}. Hard round: {Pct(hMin)} to {Pct(hMax)}. "
-                                        + $"Crash risk starts near {crashPct}% and climbs every round you stay in."
-                                        + (canAfford ? "" : $"\nYou need at least {minStake}g to open a position.")); } catch { }
+                                        $"Hold Steady: {Pct(sMin)} to {Pct(sMax)} per round.\n"
+                                        + $"Speculate Hard: {Pct(hMin)} to {Pct(hMax)} per round.\n"
+                                        + $"Starting crash risk: ~{cPct}% (climbs each round)."
+                                        + (canAfford ? "" : $"\nMinimum stake: {minStake}g.")); } catch { }
                                 }
                                 catch { }
                                 return true;
@@ -311,6 +342,7 @@ namespace AshAndEmber
         }
 
         // ── Stake selection ───────────────────────────────────────────────────
+        // Pressing Buy In goes straight to CommitVenture — no confirmation screen.
         private static void OpenStakeUI(int vol)
         {
             try
@@ -323,7 +355,7 @@ namespace AshAndEmber
                         $"{tier} denars",
                         null, affordable,
                         affordable
-                            ? $"Open the {_offer[vol]} position with a {tier}-denar stake. Sell at any round for stake × position."
+                            ? $"Open the {_offer[vol]} position with a {tier}g stake. Sell at any round for stake × position."
                             : $"You carry {gold}g — not enough for this stake.");
                 }).ToList();
 
@@ -332,53 +364,17 @@ namespace AshAndEmber
                         $"The Exchange — {_offer[vol]}",
                         $"How much coin goes on the {_offer[vol]} board?",
                         elements, true, 1, 1,
-                        "Select", "Back",
+                        "Buy In", "Back",
                         chosen =>
                         {
                             try
                             {
                                 if (chosen == null || chosen.Count == 0) return;
                                 if (!(chosen[0].Identifier is int stake)) return;
-                                ShowVentureConfirmation(vol, stake);
+                                CommitVenture(vol, stake);
                             }
                             catch { }
                         }, null),
-                    true);
-            }
-            catch { }
-        }
-
-        // ── Confirmation ──────────────────────────────────────────────────────
-        private static void ShowVentureConfirmation(int vol, int stake)
-        {
-            try
-            {
-                int trade  = TradeSkill();
-                int rounds = SpeculationMath.RoundsLimit(trade);
-                int salv   = SpeculationMath.SalvagePercent(trade);
-                int mood   = CurrentMood();
-                int sMin = SpeculationMath.DeltaMin(vol, false, mood), sMax = SpeculationMath.DeltaMax(vol, false, mood);
-                int hMin = SpeculationMath.DeltaMin(vol, true,  mood), hMax = SpeculationMath.DeltaMax(vol, true,  mood);
-                int steadyCrash = (int)(SpeculationMath.CrashChance(vol, 0, trade, false) * 100f);
-                int hardCrash   = (int)(SpeculationMath.CrashChance(vol, 0, trade, true)  * 100f);
-
-                string body =
-                      $"Commodity: {_offer[vol]}  ({ClassNames[vol]})\n"
-                    + $"Stake: {stake}g  |  Market mood: {MoodLabel(mood)}\n"
-                    + $"Position opens at 100%. Sell at any round for stake × position.\n"
-                    + $"Rounds available (Trade {trade}): {rounds} — run out and the brokers force the sale at 90% of book.\n\n"
-                    + $"Each round (exact move hidden — revealed only after you commit):\n"
-                    + $"  · HOLD STEADY      {Pct(sMin)} to {Pct(sMax)}  —  crash risk from {steadyCrash}%\n"
-                    + $"  · SPECULATE HARD   {Pct(hMin)} to {Pct(hMax)}  —  crash risk from {hardCrash}%\n"
-                    + $"  · SELL             take the coin and walk\n\n"
-                    + $"Crash risk climbs every round you stay in. A crash forfeits the position — "
-                    + $"salvage {salv}% of stake (Trade).\n\n"
-                    + $"Profitable ventures pay Trade experience.";
-
-                InformationManager.ShowInquiry(
-                    new InquiryData($"The Exchange — {_offer[vol]}", body, true, true,
-                        "Buy In", "Walk Away",
-                        () => CommitVenture(vol, stake), null),
                     true);
             }
             catch { }
@@ -409,14 +405,11 @@ namespace AshAndEmber
                 _ventureVolatility  = vol;
                 _ventureTownId      = sett.StringId ?? "";
                 _ventureCommodity   = _offer[vol];
+                _roundHistory.Clear();
 
-                // Stamp the cooldown NOW so a save-reload mid-venture cannot
-                // re-enter the exchange for a fresh roll.
                 try { _townCooldowns[_ventureTownId] = SpeculationMath.CooldownDays; } catch { }
 
                 try { GameMenu.SwitchToMenu("town"); } catch { }
-
-                // Defer so the menu transition completes before the first round opens.
                 MageKnowledge._deferredInquiry = () => { try { ShowRound(); } catch { } };
             }
             catch { }
@@ -427,60 +420,79 @@ namespace AshAndEmber
         {
             if (_ventureActive == 0) return;
 
-            int trade     = TradeSkill();
-            int completed = _ventureRoundsLimit - _ventureRoundsLeft;
-            int value     = SpeculationMath.Payout(_ventureStake, _ventureMultiplier);
-            int sMin = SpeculationMath.DeltaMin(_ventureVolatility, false, _ventureMood);
-            int sMax = SpeculationMath.DeltaMax(_ventureVolatility, false, _ventureMood);
-            int hMin = SpeculationMath.DeltaMin(_ventureVolatility, true,  _ventureMood);
-            int hMax = SpeculationMath.DeltaMax(_ventureVolatility, true,  _ventureMood);
-            int steadyCrash = (int)(SpeculationMath.CrashChance(_ventureVolatility, completed, trade, false) * 100f);
-            int hardCrash   = (int)(SpeculationMath.CrashChance(_ventureVolatility, completed, trade, true)  * 100f);
-            bool finalRound = _ventureRoundsLeft == 1;
+            int    trade     = TradeSkill();
+            int    completed = _ventureRoundsLimit - _ventureRoundsLeft;
+            int    value     = SpeculationMath.Payout(_ventureStake, _ventureMultiplier);
+            int    profit    = value - _ventureStake;
+            int    sMin      = SpeculationMath.DeltaMin(_ventureVolatility, false, _ventureMood);
+            int    sMax      = SpeculationMath.DeltaMax(_ventureVolatility, false, _ventureMood);
+            int    hMin      = SpeculationMath.DeltaMin(_ventureVolatility, true,  _ventureMood);
+            int    hMax      = SpeculationMath.DeltaMax(_ventureVolatility, true,  _ventureMood);
+            int    sCrash    = (int)(SpeculationMath.CrashChance(_ventureVolatility, completed, trade, false) * 100f);
+            int    hCrash    = (int)(SpeculationMath.CrashChance(_ventureVolatility, completed, trade, true)  * 100f);
+            bool   lastRound = _ventureRoundsLeft == 1;
+            string murmur    = Murmurs[_rng.Next(Murmurs.Length)];
 
-            string murmur = Murmurs[_rng.Next(Murmurs.Length)];
-            string finalWarning = finalRound
-                ? "\n\n⚠  FINAL ROUND — after this, the brokers force the sale at 90% of book."
+            // Middle section: rules hint on round 1, running history on subsequent rounds.
+            string midSection;
+            if (_roundHistory.Count == 0)
+            {
+                int salv = SpeculationMath.SalvagePercent(trade);
+                midSection =
+                      $"Position opens at 100% — sell any time to close at position × stake.\n"
+                    + $"A crash wipes the position (Trade salvages {salv}% of stake).\n"
+                    + $"Crash risk climbs every round you stay in.\n"
+                    + $"Run out of rounds and brokers force a sale at 90% of book.\n";
+            }
+            else
+            {
+                midSection = "History:\n  " + string.Join("\n  ", _roundHistory) + "\n";
+            }
+
+            string finalWarning = lastRound
+                ? "\n⚠  FINAL ROUND — brokers force a sale at 90% of book after this.\n"
                 : "";
 
+            string profitLabel = profit >= 0 ? $"+{profit}g" : $"{profit}g";
             string body =
-                  $"{_ventureCommodity} position  —  stake {_ventureStake}g"
-                + $"\nPosition: {_ventureMultiplier}%  ({value}g if sold now)  |  Round {completed + 1}/{_ventureRoundsLimit}"
-                + $"\nMood: {MoodLabel(_ventureMood)}  |  Crash salvage: {SpeculationMath.SalvagePercent(trade)}% of stake"
-                + $"\n\nFrom the floor:\n\"{murmur}\""
+                  $"Stake: {_ventureStake}g  |  Position: {_ventureMultiplier}%  =  {value}g  ({profitLabel} vs stake)"
+                + $"  |  Market: {MoodLabel(_ventureMood)}\n\n"
+                + midSection
+                + $"\n\"{murmur}\"\n"
                 + finalWarning;
+
+            string sellLabel = profit >= 0
+                ? $"SELL — take {value}g  (profit +{profit}g)"
+                : $"SELL — cut losses, take {value}g  (loss {profit}g)";
 
             var options = new List<InquiryElement>
             {
                 new InquiryElement("sell",
-                    $"SELL — Take {value}g now",
-                    null, true,
-                    $"Close the position at {_ventureMultiplier}%. "
-                    + (value >= _ventureStake
-                        ? $"Profit: {value - _ventureStake}g."
-                        : $"Loss: {_ventureStake - value}g.")),
+                    sellLabel, null, true,
+                    $"Close the position now at {_ventureMultiplier}%. "
+                    + (profit >= 0 ? $"You made {profit}g." : $"You lost {-profit}g.")),
 
                 new InquiryElement("steady",
-                    $"HOLD STEADY — {Pct(sMin)} to {Pct(sMax)}  [crash {steadyCrash}%]",
+                    $"HOLD STEADY  [{Pct(sMin)} to {Pct(sMax)}, crash {sCrash}%]",
                     null, true,
-                    "Let the position ride on the ordinary flow of trade. "
-                    + "Small swing either way — the exact move is hidden until you commit."),
+                    $"Let the position ride. Modest swing either way — the exact move is hidden until you commit. "
+                    + $"Crash risk this round: {sCrash}%."),
 
                 new InquiryElement("hard",
-                    $"SPECULATE HARD — {Pct(hMin)} to {Pct(hMax)}  [crash {hardCrash}%]",
+                    $"SPECULATE HARD  [{Pct(hMin)} to {Pct(hMax)}, crash {hCrash}%]",
                     null, true,
-                    "Lean on the position: buy rumours, bid up scarcity. "
-                    + "Big swing either way, and the extra noise raises the crash risk."),
+                    $"Push the position aggressively. Wide swing either way — and the extra noise raises the crash risk. "
+                    + $"Crash risk this round: {hCrash}%."),
             };
 
             try
             {
                 MBInformationManager.ShowMultiSelectionInquiry(
                     new MultiSelectionInquiryData(
-                        $"The Exchange — {_ventureCommodity}",
+                        $"The Exchange — {_ventureCommodity}  |  Round {completed + 1} of {_ventureRoundsLimit}",
                         body,
                         options, false, 1, 1,
-                        "Confirm", "Sell Out",
+                        "Confirm", "Close position",
                         chosen => { try { ProcessRoundChoice(chosen?[0]?.Identifier as string ?? "sell"); } catch { } },
                         _      => { try { SellVenture(forced: false); } catch { } }),
                     true);
@@ -498,13 +510,13 @@ namespace AshAndEmber
                 return;
             }
 
-            bool aggressive = choiceId == "hard";
-            int  trade      = TradeSkill();
-            int  completed  = _ventureRoundsLimit - _ventureRoundsLeft;
+            bool   aggressive = choiceId == "hard";
+            int    trade      = TradeSkill();
+            int    completed  = _ventureRoundsLimit - _ventureRoundsLeft;
 
             if (_rng.NextDouble() < SpeculationMath.CrashChance(_ventureVolatility, completed, trade, aggressive))
             {
-                CrashVenture();
+                CrashVenture(completed + 1, aggressive);
                 return;
             }
 
@@ -513,8 +525,9 @@ namespace AshAndEmber
             int delta = min + _rng.Next(max - min + 1);
             _ventureMultiplier = SpeculationMath.ApplyDelta(_ventureMultiplier, delta);
 
-            try { MBInformationManager.AddQuickInformation(new TextObject(
-                $"The market moved — position {Pct(delta)}, now {_ventureMultiplier}%.")); } catch { }
+            // Record to history — shown in the next round's body instead of a transient toast.
+            string action = aggressive ? "HARD" : "STEADY";
+            _roundHistory.Add($"R{completed + 1}  {action}  {Pct(delta)}  →  {_ventureMultiplier}%");
 
             _ventureRoundsLeft--;
             if (_ventureRoundsLeft <= 0) { SellVenture(forced: true); return; }
@@ -525,38 +538,52 @@ namespace AshAndEmber
         {
             try
             {
-                int payout = forced
+                int    payout = forced
                     ? SpeculationMath.ForcedSalePayout(_ventureStake, _ventureMultiplier)
                     : SpeculationMath.Payout(_ventureStake, _ventureMultiplier);
-                int profit = payout - _ventureStake;
-                string name = _ventureCommodity;
-
+                int    profit = payout - _ventureStake;
+                string name   = _ventureCommodity;
                 GiveGold(payout);
                 AddTradeXp(SpeculationMath.TradeXp(_ventureStake, payout));
                 ClearVenture();
 
-                string profitLine = profit >= 0 ? $"profit {profit}g" : $"loss {-profit}g";
-                MBInformationManager.AddQuickInformation(new TextObject(forced
-                    ? $"The brokers called time on {name} — forced sale at 90% of book: {payout} denars ({profitLine})."
-                    : $"Sold the {name} position — {payout} denars ({profitLine})."));
+                string line;
+                Color  col;
+                if (forced)
+                {
+                    line = $"Brokers closed the {name} position at 90% of book — {payout}g "
+                         + (profit >= 0 ? $"(profit +{profit}g)." : $"(loss {profit}g).");
+                    col  = new Color(0.65f, 0.60f, 0.40f);
+                }
+                else if (profit >= 0)
+                {
+                    line = $"Sold the {name} position — {payout}g  (profit +{profit}g).";
+                    col  = new Color(0.45f, 0.75f, 0.45f);
+                }
+                else
+                {
+                    line = $"Sold the {name} position — {payout}g  (loss {-profit}g).";
+                    col  = new Color(0.75f, 0.55f, 0.35f);
+                }
+                InformationManager.DisplayMessage(new InformationMessage(line, col));
             }
             catch { }
         }
 
-        private static void CrashVenture()
+        private static void CrashVenture(int roundNumber, bool wasAggressive)
         {
             try
             {
-                int salvage = SpeculationMath.CrashSalvage(_ventureStake, TradeSkill());
-                string name = _ventureCommodity;
-
+                int    salvage = SpeculationMath.CrashSalvage(_ventureStake, TradeSkill());
+                string name    = _ventureCommodity;
+                string push    = wasAggressive ? "pushing hard" : "holding";
                 GiveGold(salvage);
                 AddTradeXp(50);
                 ClearVenture();
 
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"CRASH — the bottom fell out of {name}. Your broker cannot find a buyer at any price. "
-                    + (salvage > 0 ? $"Salvage: {salvage} denars." : "Nothing is recovered.")));
+                string line = $"CRASH (R{roundNumber}, {push}) — {name} found no buyers. "
+                            + (salvage > 0 ? $"Salvage: {salvage}g." : "Nothing recovered.");
+                InformationManager.DisplayMessage(new InformationMessage(line, new Color(0.80f, 0.30f, 0.25f)));
             }
             catch { }
         }
