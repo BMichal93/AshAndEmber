@@ -174,16 +174,16 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= 50;
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= 100;
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("TAVERN_DECENT_TEXT",
-                                canAfford ? "Order a decent ale (50 denars)" : "Order a decent ale (50 denars)  [not enough coin]");
+                                canAfford ? "Order a decent ale (100 denars)" : "Order a decent ale (100 denars)  [not enough coin]");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
                         return true;
                     },
-                    args => { try { DrinkRound(50, 2); } catch { } },
+                    args => { try { DrinkRound(100, 2); } catch { } },
                     false, -1, false);
             }
             catch { }
@@ -197,16 +197,16 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= 100;
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= 500;
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("TAVERN_FINE_TEXT",
-                                canAfford ? "Order the finest wine in the house (100 denars)" : "Order the finest wine in the house (100 denars)  [not enough coin]");
+                                canAfford ? "Order the finest wine in the house (500 denars)" : "Order the finest wine in the house (500 denars)  [not enough coin]");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
                         return true;
                     },
-                    args => { try { DrinkRound(100, 3); } catch { } },
+                    args => { try { DrinkRound(500, 3); } catch { } },
                     false, -1, false);
             }
             catch { }
@@ -464,14 +464,14 @@ namespace AshAndEmber
             if (roll < 48)
                 return OutcomeRelationGain();
             if (roll < 62)
-                return OutcomeRecruit();
+                return OutcomeRecruit(tier);
             if (roll < 74)
-                return OutcomeGossip();
+                return OutcomeGossip(tier);
             if (roll < 84)
                 return OutcomeMerchantTip(tier);
             if (roll < 93)
-                return OutcomeLordEncounterGood();
-            return OutcomeFoundPurse();
+                return OutcomeLordEncounterGood(tier);
+            return OutcomeFoundPurse(tier);
         }
 
         // ── Bad outcomes ──────────────────────────────────────────────────────
@@ -532,11 +532,14 @@ namespace AshAndEmber
             }
         }
 
-        private static string OutcomeRecruit()
+        private static string OutcomeRecruit(int drinkTier)
         {
             try
             {
-                int tier = 1 + _rng.Next(3); // 1-3
+                // Better drink → chance of a higher-tier soldier
+                int tier = drinkTier == 1 ? 1 + _rng.Next(2)   // tier 1-2
+                         : drinkTier == 2 ? 1 + _rng.Next(3)   // tier 1-3
+                                          : 2 + _rng.Next(3);  // tier 2-4
                 CharacterObject troop = GetRecruitOfTier(tier);
                 if (troop != null)
                 {
@@ -555,7 +558,7 @@ namespace AshAndEmber
             }
         }
 
-        private static string OutcomeGossip()
+        private static string OutcomeGossip(int tier)
         {
             string[] gossips =
             {
@@ -569,46 +572,51 @@ namespace AshAndEmber
                 "A courier fresh off the road talks too freely. A lord nearby is changing sides — or thinking about it.",
             };
 
+            float influence = tier == 1 ? 5f : tier == 2 ? 15f : 35f;
             try
             {
                 if (Hero.MainHero?.Clan != null)
-                    Hero.MainHero.Clan.Influence += 5f;
+                    Hero.MainHero.Clan.Influence += influence;
             }
             catch { }
 
-            return gossips[_rng.Next(gossips.Length)] + " (+5 influence)";
+            return gossips[_rng.Next(gossips.Length)] + $" (+{(int)influence} influence)";
         }
 
         private static string OutcomeMerchantTip(int tier)
         {
-            int gold = tier == 1 ? 30 + _rng.Next(21)
-                     : tier == 2 ? 60 + _rng.Next(41)
-                                 : 120 + _rng.Next(81);
+            // Tier 1 (20g): modest windfall; Tier 2 (100g): worth the risk; Tier 3 (500g): potentially profitable
+            int gold = tier == 1 ?  50 + _rng.Next(76)    //  50-125g
+                     : tier == 2 ? 200 + _rng.Next(201)   // 200-400g
+                                 : 600 + _rng.Next(601);  // 600-1200g
             try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
             return $"A merchant is grateful for your company — or perhaps just drunk enough to be generous. " +
                    $"He presses a purse into your hand before his friends drag him off. (+{gold} denars)";
         }
 
-        private static string OutcomeLordEncounterGood()
+        private static string OutcomeLordEncounterGood(int tier)
         {
+            int bonus = tier == 1 ? 1 : tier == 2 ? 2 : 4;
             try
             {
                 var lord = GetLordInSettlement();
                 if (lord != null)
                 {
-                    ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 2, false);
+                    ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, bonus, false);
                     return $"{lord.Name} enters the common room, sees you at the bar, and sits. " +
                            $"Two people without their retinues, sharing something honest. " +
-                           $"You part better than you arrived. (Relation with {lord.Name}: +2)";
+                           $"You part better than you arrived. (Relation with {lord.Name}: +{bonus})";
                 }
             }
             catch { }
             return "A lord's steward buys you a cup — which means the lord noticed you, and found it worth noting. The gesture costs nothing and means something.";
         }
 
-        private static string OutcomeFoundPurse()
+        private static string OutcomeFoundPurse(int tier)
         {
-            int gold = 15 + _rng.Next(36);
+            int gold = tier == 1 ?  20 + _rng.Next(41)   //  20-60g
+                     : tier == 2 ?  80 + _rng.Next(121)  //  80-200g
+                                 : 250 + _rng.Next(251); // 250-500g
             try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
             return $"You find a fat little purse wedged between the bench and the wall. " +
                    $"You wait. Nobody comes back for it. You reason that whoever lost it has had worse nights than you. (+{gold} denars)";
