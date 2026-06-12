@@ -117,6 +117,7 @@
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.cs"/>
     <Compile Include="Sea\SeaMath.cs"/>
     <Compile Include="Sea\SeaCampaignBehavior.cs"/>
+    <Compile Include="Tavern\TavernCampaignBehavior.cs"/>
     <Compile Include="Spells\SpellEffects.cs"/>
     <Compile Include="Spells\BlastSpells.cs"/>
     <Compile Include="Spells\SelfSpells.cs"/>
