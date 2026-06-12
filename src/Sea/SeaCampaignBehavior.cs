@@ -289,6 +289,7 @@ namespace AshAndEmber
                     }
 
                     if (dest == null) return;
+                }
                 else
                 {
                     if (_rng.NextDouble() >= SeaMath.NpcCaravanSailChance) return;
