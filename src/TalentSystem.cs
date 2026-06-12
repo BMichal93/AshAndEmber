@@ -300,19 +300,14 @@ namespace AshAndEmber
 
         // ── Fade spell state ───────────────────────────────────────────────────
         private static int _fadeDaysRemaining = 0;
-        private static PropertyInfo _ignoreByOtherPartiesProp = null;
-        private static bool _ignoreByOtherPartiesResolved = false;
 
-        private static bool TrySetIgnoreByOtherParties(MobileParty party, bool value)
+        // Conceal/reveal the party. MobileParty.IsVisible is the live API for map
+        // stealth (the older IgnoreByOtherParties property no longer exists); hidden
+        // parties are not detected or engaged by enemy AI. `conceal == true` hides.
+        private static bool TrySetPartyConcealed(MobileParty party, bool conceal)
         {
-            if (!_ignoreByOtherPartiesResolved)
-            {
-                _ignoreByOtherPartiesResolved = true;
-                _ignoreByOtherPartiesProp = typeof(MobileParty).GetProperty("IgnoreByOtherParties",
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            }
-            if (_ignoreByOtherPartiesProp == null) return false;
-            try { _ignoreByOtherPartiesProp.SetValue(party, value); return true; } catch { return false; }
+            try { if (party == null) return false; party.IsVisible = !conceal; return true; }
+            catch { return false; }
         }
 
         /// <summary>Call from the daily tick to count down and clear the Fade effect.</summary>
@@ -322,7 +317,7 @@ namespace AshAndEmber
             _fadeDaysRemaining--;
             if (_fadeDaysRemaining <= 0)
             {
-                try { if (MobileParty.MainParty != null) TrySetIgnoreByOtherParties(MobileParty.MainParty, false); } catch { }
+                try { if (MobileParty.MainParty != null) TrySetPartyConcealed(MobileParty.MainParty, false); } catch { }
                 Msg("Fade — the ash settles. Your party is visible once more.");
             }
         }
@@ -707,7 +702,7 @@ namespace AshAndEmber
                 // Strong recall (≥1.20×) extends concealment by an extra day.
                 _fadeDaysRemaining = mult >= 1.20f ? 2 : 1;
                 int days = _fadeDaysRemaining;
-                bool applied = TrySetIgnoreByOtherParties(MobileParty.MainParty, true);
+                bool applied = TrySetPartyConcealed(MobileParty.MainParty, true);
                 if (applied)
                 {
                     Msg($"Fade — ash wraps your party. For {days} days, enemy scouts will not find you.");
@@ -953,7 +948,7 @@ namespace AshAndEmber
             // Explicitly clear IgnoreByOtherParties so a save/load while faded
             // does not leave the party permanently invisible.
             _fadeDaysRemaining = 0;
-            try { if (MobileParty.MainParty != null) TrySetIgnoreByOtherParties(MobileParty.MainParty, false); } catch { }
+            try { if (MobileParty.MainParty != null) TrySetPartyConcealed(MobileParty.MainParty, false); } catch { }
         }
     }
 

@@ -123,6 +123,7 @@ namespace AshAndEmber
         {
             try { SanctuaryCampaignBehavior.ResetForNewGame(); } catch { }
             try { AshenAltarsCampaignBehavior.ResetForNewGame(); } catch { }
+            try { SeaCampaignBehavior.ResetForNewGame(); } catch { }
         }
 
         // ── New game prompt ───────────────────────────────────────────────────

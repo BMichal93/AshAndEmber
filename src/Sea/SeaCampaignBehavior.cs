@@ -141,6 +141,21 @@ namespace AshAndEmber
             catch { }
         }
 
+        // Clears per-campaign static state so a new game started in the same
+        // Bannerlord session does not inherit the previous game's trade ventures,
+        // escrowed fare, Emberwind charge, or NPC sail cooldowns. (On a new game the
+        // SyncData rebuild below is fed by these same statics, so without an explicit
+        // reset the previous campaign's ventures would carry straight over.)
+        public static void ResetForNewGame()
+        {
+            _ventures.Clear();
+            _npcSailCooldown.Clear();
+            _blockades.Clear();
+            _fareEscrow      = 0;
+            _emberwindCalled = false;
+            ResetVoyageState();
+        }
+
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             try { ResolvePorts(); } catch { }
