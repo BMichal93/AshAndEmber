@@ -338,6 +338,7 @@ namespace AshAndEmber
                 }
 
                 try { party.Position = dest.GatePosition; } catch { return; }
+                try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
 
                 // Word travels when it's your kingdom's banner or your own coin.
                 try
@@ -929,6 +930,7 @@ namespace AshAndEmber
                 {
                     var main = MobileParty.MainParty;
                     try { main.Position = dest.GatePosition; } catch { }
+                    try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
 
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"The ship noses into {dest.Name}. Land legs come back slowly.",
@@ -1302,6 +1304,7 @@ namespace AshAndEmber
                 {
                     var main = MobileParty.MainParty;
                     try { main.Position = origin.GatePosition; } catch { }
+                    try { main.SetMoveGoToSettlement(origin, MobileParty.NavigationType.Default, false); } catch { }
                 }
                 try { GameMenu.SwitchToMenu("town"); } catch { }
             }

@@ -174,16 +174,12 @@ namespace AshAndEmber
                 GiveGold(payout);
                 AddTradeXp(SpeculationMath.TradeXp(_ventureStake, payout));
                 ClearVenture();
-                MageKnowledge._deferredInquiry = () =>
-                {
-                    try
-                    {
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"While you were away your broker closed the {name} position at 90% of book — {payout} denars returned.",
-                            new Color(0.65f, 0.60f, 0.40f)));
-                    }
-                    catch { }
-                };
+                // A log line is safe to post directly at session launch — routing it
+                // through _deferredInquiry would needlessly risk clobbering a quest popup
+                // queued by another behavior on the same launch.
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"While you were away your broker closed the {name} position at 90% of book — {payout} denars returned.",
+                    new Color(0.65f, 0.60f, 0.40f)));
             }
             catch { }
         }
