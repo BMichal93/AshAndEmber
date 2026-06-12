@@ -38,16 +38,17 @@ namespace AshAndEmber
     public class SeaCampaignBehavior : CampaignBehaviorBase
     {
         // ── Harbor towns ───────────────────────────────────────────────────────
-        // Coastal towns of Calradia, matched by name at session launch. A name
-        // that fails to resolve (renamed by another mod, localized client) just
-        // drops that port from the network.
+        // Curated harbour towns, matched by name at session launch. A name that
+        // fails to resolve (renamed by another mod, localized client) just drops
+        // that port from the network.
         private static readonly string[] PortTownNames =
         {
-            "Balgard", "Varcheg", "Revyl",                 // Sturgia — the cold coast
-            "Sargot", "Ostican",                           // Vlandia — the western sea
-            "Ortysia",                                     // Western Empire
-            "Epicrotea", "Saneopa", "Myzea",               // Northern Empire — the Perassic
-            "Quyaz", "Iyakis",                             // Aserai — the southern waters
+            "Revyl", "Varcheg", "Balgard", "Sibir",        // Sturgia — the cold coast
+            "Galend", "Pravend", "Jaculan", "Ostican", "Charas", // Vlandia — the western sea
+            "Ortysia", "Zeonica",                          // Western Empire
+            "Poros", "Vostrum",                            // Southern Empire
+            "Sanala", "Razih", "Quyaz",                    // Aserai — the southern waters
+            "Argoron", "Jalmarys",                         // outlying
         };
 
         private static readonly List<Settlement> _ports = new List<Settlement>();
@@ -390,6 +391,9 @@ namespace AshAndEmber
         {
             _ports.Clear();
             if (Campaign.Current == null) return;
+
+            // Primary: the curated harbour list above. This is intentionally a
+            // designed set (not every literal coastal town), so it takes precedence.
             foreach (var s in Settlement.All)
             {
                 if (s == null || !s.IsTown) continue;
@@ -398,6 +402,16 @@ namespace AshAndEmber
                 if (string.IsNullOrEmpty(name)) continue;
                 if (PortTownNames.Any(p => string.Equals(p, name.Trim(), StringComparison.OrdinalIgnoreCase)))
                     _ports.Add(s);
+            }
+            if (_ports.Count >= 2) return;
+
+            // Fallback: if too few names resolve (localized client, renamed towns),
+            // fall back to the game's own coastal flag so a network still forms.
+            _ports.Clear();
+            foreach (var s in Settlement.All)
+            {
+                if (s == null || !s.IsTown) continue;
+                try { if (s.HasPort) _ports.Add(s); } catch { }
             }
         }
 

@@ -118,9 +118,34 @@ namespace AshAndEmber
         // ── Game menus ────────────────────────────────────────────────────────
         private static void RegisterMenus(CampaignGameStarter starter)
         {
+            RegisterTownEntry(starter);
             RegisterOrderMenu(starter);
             RegisterResultMenu(starter);
             RegisterSoberUpMenu(starter);
+        }
+
+        // Reliable access from the town menu — the tavernkeeper dialogue line is a
+        // bonus path, but this entry guarantees the game is reachable in any town.
+        private static void RegisterTownEntry(CampaignGameStarter starter)
+        {
+            try
+            {
+                starter.AddGameMenuOption("town", "ldm_tavern_enter",
+                    "Drink with the locals at the tavern",
+                    args =>
+                    {
+                        try
+                        {
+                            if (Settlement.CurrentSettlement?.IsTown != true) return false;
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            return true;
+                        }
+                        catch { return false; }
+                    },
+                    args => { try { ResetSessionState(); GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
         }
 
         // ── Order screen ──────────────────────────────────────────────────────
