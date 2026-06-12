@@ -55,9 +55,11 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());
                 campaignStarter.AddBehavior(new AshenAltarsCampaignBehavior());
                 campaignStarter.AddBehavior(new SeaCampaignBehavior());
+                campaignStarter.AddBehavior(new ExchangeCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
-                try { SchemeSystem.Initialize(); } catch { }
+                try { SchemeSystem.Initialize();              } catch { }
+                try { ExchangeCampaignBehavior.ResetState();  } catch { }
             }
         }
 
