@@ -109,3 +109,10 @@ Talents 1–9 cost 1 focus point each; talent 10+ cost 2 points each. Lost Forms
 - **Static utility classes** (`AgingSystem`, `SchoolData`, `SpellDatabase`) have no instance state — keep them that way.
 - **Null-guard pattern:** always check `Campaign.Current == null` / `Mission.Current == null` before accessing singletons in behavior methods.
 - **Tests live in `tests/PureLogicTests.cs`** and cover only pure (no-TaleWorlds-runtime) logic. Keep new tests pure — do not reference game engine types.
+
+## Working behaviour
+
+Process and working-style guidance (how to build, verify the TaleWorlds API, bump
+the version, and avoid mod-conflict crashes) lives in a separate file:
+
+@behaviour.md
