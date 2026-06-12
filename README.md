@@ -350,7 +350,13 @@ Lost Forms permanently alter how a spell form behaves once purchased. Each costs
 
 ## Rival Shadow
 
-The cold ignores nobodies. Once your clan reaches **tier 3**, one Ashen lord is designated as your **Shadow** — a personal antagonist who watches you. A popup (*A Cold Attention*) announces that the dark forces of the north have noticed you.
+The cold ignores nobodies. Three criteria must all be met before one Ashen lord is designated as your **Shadow**:
+
+- **Clan tier 3+** — you have become worth watching.
+- **3+ talents purchased** — you have fanned your fire into something real; spark-holders draw no cold attention.
+- **Whisper tier 1+** — the cold must already have a foothold in you (25+ whispers accumulated).
+
+Once all three are met, a popup (*A Cold Attention*) announces that the dark forces of the north have made you their personal concern.
 
 Every 14–21 days the Shadow acts against one of your settlements: loyalty or security drops. After **five schemes**, the Shadow rides out alone to confront you.
 

@@ -51,13 +51,19 @@ namespace AshAndEmber
 
         // ── Designation ───────────────────────────────────────────────────────
         // Called from DailyTick once Ashen lords exist in the world.
-        // The cold ignores nobodies: no Shadow is assigned until the player's
-        // clan reaches tier 3 — by then they are worth watching.
+        // Three gates must all pass before a Shadow is assigned:
+        //   1. Clan tier 3+ — the cold ignores nobodies.
+        //   2. At least 3 talents purchased — the player has genuinely fanned
+        //      their fire; mere spark-holders draw no attention.
+        //   3. Whisper tier 1+ — the cold has already begun to seep in; a
+        //      player whose fire burns purely clean is beneath its notice.
         public static void TryDesignateShadow()
         {
             if (_shadowLordId != null || _shadowDefeated) return;
             if (!MageKnowledge.IsMage) return;
             if (Hero.MainHero?.Clan == null || Hero.MainHero.Clan.Tier < 3) return;
+            if (TalentSystem.PurchasedCount < 3) return;
+            if (MageKnowledge.WhisperTier < 1) return;
 
             try
             {
