@@ -67,6 +67,21 @@ namespace AshAndEmber
         /// </summary>
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent)
         {
+            // Game-facing wrapper: read the hero's age, then defer to the pure overload.
+            // Keeping the math in a TaleWorlds-free overload preserves testability
+            // (PureLogicTests cannot load Hero) and the AgingSystem purity convention.
+            float age = 0f;
+            try { if (Hero.MainHero != null) age = (float)Hero.MainHero.Age; }
+            catch { }
+            return ComputeBattleAgingCost(totalInputs, hasBattleMageTalent, age);
+        }
+
+        /// <summary>
+        /// Pure form of <see cref="ComputeBattleAgingCost(int,bool)"/> taking the hero's
+        /// age explicitly so it can be exercised without the TaleWorlds runtime.
+        /// </summary>
+        public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent, float heroAge)
+        {
             // Geometric scaling: small spells are cheap; large spells become very expensive.
             // Base 1.4, standard rounding, hard cap at 84 campaign days (= 1 Bannerlord year).
             int cost = Math.Min(84, Math.Max(1, (int)(Math.Pow(1.4, totalInputs - 1) + 0.5)));
@@ -78,19 +93,11 @@ namespace AshAndEmber
 
             // Tempered (merged Veteran's Ash): each year beyond 40 shaves 0.5% off cost, capped at 30%.
             // At age 50 → -5%, age 70 → -15%, age 100 → -30% (death threshold).
-            try
+            if (hasBattleMageTalent && heroAge > 40f)
             {
-                if (hasBattleMageTalent && Hero.MainHero != null)
-                {
-                    float age = (float)Hero.MainHero.Age;
-                    if (age > 40f)
-                    {
-                        float reduction = Math.Min(0.30f, (age - 40f) * 0.005f);
-                        cost = Math.Max(1, (int)Math.Round(cost * (1f - reduction)));
-                    }
-                }
+                float reduction = Math.Min(0.30f, (heroAge - 40f) * 0.005f);
+                cost = Math.Max(1, (int)Math.Round(cost * (1f - reduction)));
             }
-            catch { }
 
             return cost;
         }

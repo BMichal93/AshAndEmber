@@ -56,14 +56,14 @@
           "build/net462/NUnit3TestAdapter.props": {}
         }
       },
-      "ColoursOfCalradia/1.0.0": {
+      "AshAndEmber/0.18.0": {
         "type": "project",
         "framework": ".NETFramework,Version=v4.7.2",
         "compile": {
-          "bin/placeholder/ColoursOfCalradia.dll": {}
+          "bin/placeholder/AshAndEmber.dll": {}
         },
         "runtime": {
-          "bin/placeholder/ColoursOfCalradia.dll": {}
+          "bin/placeholder/AshAndEmber.dll": {}
         }
       }
     }
@@ -210,7 +210,7 @@
         "nunit_256.png"
       ]
     },
-    "ColoursOfCalradia/1.0.0": {
+    "AshAndEmber/0.18.0": {
       "type": "project",
       "path": "../src/TheWitheringArt.csproj",
       "msbuildProject": "../src/TheWitheringArt.csproj"
@@ -218,7 +218,7 @@
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.7.2": [
-      "ColoursOfCalradia >= 1.0.0",
+      "AshAndEmber >= 0.18.0",
       "Microsoft.NET.Test.Sdk >= 17.8.0",
       "NUnit >= 3.14.0",
       "NUnit3TestAdapter >= 4.5.0"
@@ -231,11 +231,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\tests\\ColoursOfCalradia.Tests.csproj",
-      "projectName": "ColoursOfCalradia.Tests",
-      "projectPath": "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\tests\\ColoursOfCalradia.Tests.csproj",
+      "projectUniqueName": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj",
+      "projectName": "AshAndEmber.Tests",
+      "projectPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj",
       "packagesPath": "C:\\Users\\mbudz\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\tests\\obj\\",
+      "outputPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -257,8 +257,8 @@
         "net472": {
           "targetAlias": "net472",
           "projectReferences": {
-            "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\src\\TheWitheringArt.csproj": {
-              "projectPath": "C:\\Users\\mbudz\\source\\repos\\ColoursOfCalradia\\src\\TheWitheringArt.csproj"
+            "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj": {
+              "projectPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj"
             }
           }
         }

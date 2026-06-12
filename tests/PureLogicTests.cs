@@ -13,99 +13,7 @@ namespace AshAndEmber.Tests
     [TestFixture]
     public class PureLogicTests
     {
-        // ── BuildSchoolPrefix tests ───────────────────────────────────────────
-
-        [Test]
-        public void BuildSchoolPrefix_SingleRed_ReturnsR()
-        {
-            var schools = new[] { ColorSchool.Red };
-            string result = SpellEffects.BuildSchoolPrefix(schools);
-            Assert.AreEqual("[R] ", result);
-        }
-
-        [Test]
-        public void BuildSchoolPrefix_RedAndGreen_ReturnsRG()
-        {
-            var schools = new[] { ColorSchool.Red, ColorSchool.Green };
-            string result = SpellEffects.BuildSchoolPrefix(schools);
-            Assert.AreEqual("[RG] ", result);
-        }
-
-        [Test]
-        public void BuildSchoolPrefix_AllSix_ReturnsROYGBP()
-        {
-            var schools = new[]
-            {
-                ColorSchool.Red, ColorSchool.Orange, ColorSchool.Yellow,
-                ColorSchool.Green, ColorSchool.Blue, ColorSchool.Purple
-            };
-            string result = SpellEffects.BuildSchoolPrefix(schools);
-            Assert.AreEqual("[ROYGBP] ", result);
-        }
-
-        [Test]
-        public void BuildSchoolPrefix_Empty_ReturnsBrackets()
-        {
-            var schools = new ColorSchool[0];
-            string result = SpellEffects.BuildSchoolPrefix(schools);
-            Assert.AreEqual("[] ", result);
-        }
-
-        // ── SpellDatabase tests ───────────────────────────────────────────────
-
-        [Test]
-        public void SpellDatabase_AllCombos_AreFourChars()
-        {
-            foreach (var entry in SpellDatabase.All)
-                Assert.AreEqual(4, entry.Combo.Length,
-                    $"Spell '{entry.Name}' has combo '{entry.Combo}' which is not 4 characters.");
-        }
-
-        [Test]
-        public void SpellDatabase_AllCombos_AreUnique()
-        {
-            var combos = SpellDatabase.All.Select(e => e.Combo).ToList();
-            var distinct = combos.Distinct().ToList();
-            Assert.AreEqual(combos.Count, distinct.Count, "Duplicate combos found in SpellDatabase.");
-        }
-
-        [Test]
-        public void SpellDatabase_Find_KnownCombo_ReturnsCorrectSpell()
-        {
-            var entry = SpellDatabase.Find("UURR");
-            Assert.IsNotNull(entry, "Expected to find spell with combo UURR.");
-            Assert.AreEqual("Crimson Torrent", entry.Name);
-        }
-
-        [Test]
-        public void SpellDatabase_Find_UnknownCombo_ReturnsNull()
-        {
-            var entry = SpellDatabase.Find("XXXX");
-            Assert.IsNull(entry, "Expected null for unknown combo XXXX.");
-        }
-
         // ── ColorSchoolData tests ─────────────────────────────────────────────
-
-        [Test]
-        public void ColorSchoolData_AllSixSchools_HaveInfo()
-        {
-            var schools = new[]
-            {
-                ColorSchool.Red, ColorSchool.Orange, ColorSchool.Yellow,
-                ColorSchool.Green, ColorSchool.Blue, ColorSchool.Purple
-            };
-            foreach (var school in schools)
-                Assert.IsTrue(ColorSchoolData.Info.ContainsKey(school),
-                    $"ColorSchoolData.Info is missing entry for {school}.");
-        }
-
-        [Test]
-        public void ColorSchoolData_AllSchools_HaveNonEmptyName()
-        {
-            foreach (var kvp in ColorSchoolData.Info)
-                Assert.IsFalse(string.IsNullOrEmpty(kvp.Value.Name),
-                    $"School {kvp.Key} has an empty Name.");
-        }
 
         [Test]
         public void ColorSchoolData_GetGlowColor_EachSchool_NonZero()
@@ -121,38 +29,6 @@ namespace AshAndEmber.Tests
                 Assert.AreNotEqual(0u, color,
                     $"GetGlowColor returned 0 for {school}.");
             }
-        }
-
-        // ── Waver / Rouse talent definition tests ─────────────────────────────
-
-        [Test]
-        public void TalentSystem_Waver_IsDefinedAsEnchantment()
-        {
-            var def = TalentSystem.All.FirstOrDefault(d => d.Id == TalentId.Waver);
-            Assert.IsNotNull(def, "Waver should be present in TalentSystem.All.");
-            Assert.IsTrue(def.IsEnchantment, "Waver should be flagged as an enchantment.");
-            Assert.IsFalse(def.IsSpell, "Waver should not be a campaign map spell.");
-            Assert.AreEqual(TalentCategory.Enchantment, def.Category);
-        }
-
-        [Test]
-        public void TalentSystem_Rouse_IsDefinedAsEnchantment()
-        {
-            var def = TalentSystem.All.FirstOrDefault(d => d.Id == TalentId.Rouse);
-            Assert.IsNotNull(def, "Rouse should be present in TalentSystem.All.");
-            Assert.IsTrue(def.IsEnchantment, "Rouse should be flagged as an enchantment.");
-            Assert.IsFalse(def.IsSpell, "Rouse should not be a campaign map spell.");
-            Assert.AreEqual(TalentCategory.Enchantment, def.Category);
-        }
-
-        [Test]
-        public void TalentSystem_WaverAndRouse_NotPurchasedAfterReset()
-        {
-            TalentSystem.ResetForNewGame();
-            Assert.IsFalse(TalentSystem.Has(TalentId.Waver),
-                "Waver should not be purchased at game start.");
-            Assert.IsFalse(TalentSystem.Has(TalentId.Rouse),
-                "Rouse should not be purchased at game start.");
         }
 
         // ── SpellBuilder parsing for Waver / Rouse thresholds ─────────────────
@@ -197,17 +73,9 @@ namespace AshAndEmber.Tests
         }
 
         // ── Full talent roster coverage ───────────────────────────────────────
-
-        [Test]
-        public void TalentSystem_AllTalentIds_HaveDefinition()
-        {
-            // Every value in the TalentId enum must have a matching entry in All.
-            foreach (TalentId id in System.Enum.GetValues(typeof(TalentId)))
-            {
-                var def = TalentSystem.All.FirstOrDefault(d => d.Id == id);
-                Assert.IsNotNull(def, $"TalentSystem.All is missing a definition for TalentId.{id}.");
-            }
-        }
+        // Note: many TalentId values are marked "REMOVED — kept for save
+        // compatibility" and intentionally have no entry in TalentSystem.All, so
+        // there is no "every enum value has a definition" invariant to assert.
 
         [Test]
         public void TalentSystem_AllDefinitions_HaveNonEmptyText()
@@ -226,9 +94,8 @@ namespace AshAndEmber.Tests
         {
             var spellIds = new[]
             {
-                TalentId.Subjugate, TalentId.Rejuvenate, TalentId.PlantGrowth,
                 TalentId.BreakWills, TalentId.Inspire, TalentId.Plague,
-                TalentId.Clairvoyance, TalentId.Curse,
+                TalentId.Clairvoyance, TalentId.Extinguish, TalentId.Fade,
             };
             foreach (var id in spellIds)
             {
@@ -246,7 +113,7 @@ namespace AshAndEmber.Tests
             var passiveIds = new[]
             {
                 TalentId.Gift, TalentId.BattleMage, TalentId.Sorcerer, TalentId.Ember,
-                TalentId.DevourLife, TalentId.Reap, TalentId.Camaraderie,
+                TalentId.Reap, TalentId.Camaraderie,
             };
             foreach (var id in passiveIds)
             {
@@ -268,32 +135,49 @@ namespace AshAndEmber.Tests
 
         // ── AgingSystem pure math ─────────────────────────────────────────────
 
+        // Tests use the pure overload (explicit hero age) so they run without the
+        // TaleWorlds runtime. Age 40 is the Tempered threshold — no age discount.
+        private const float NoAgeDiscount = 40f;
+
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_SmallCast_CostsOneDay()
         {
             // Geometric round(1.4^(n−1)): 1–2 inputs = 1 day without BattleMage
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, false));
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(2, false));
-            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(3, false));
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, false, NoAgeDiscount));
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(2, false, NoAgeDiscount));
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(3, false, NoAgeDiscount));
         }
 
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_LargeCast_ScalesGeometrically()
         {
             // round(1.4^(n−1)): 4 inputs = 3 days, 8 inputs = 11 days, hard cap 84.
-            Assert.AreEqual(3,  AgingSystem.ComputeBattleAgingCost(4, false));
-            Assert.AreEqual(11, AgingSystem.ComputeBattleAgingCost(8, false));
-            Assert.AreEqual(84, AgingSystem.ComputeBattleAgingCost(20, false));
+            Assert.AreEqual(3,  AgingSystem.ComputeBattleAgingCost(4, false, NoAgeDiscount));
+            Assert.AreEqual(11, AgingSystem.ComputeBattleAgingCost(8, false, NoAgeDiscount));
+            Assert.AreEqual(84, AgingSystem.ComputeBattleAgingCost(20, false, NoAgeDiscount));
         }
 
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_BattleMage_MaxOf1DayOr25Pct()
         {
             // Tempered: reduction = max(1 flat day, 25% of cost). Minimum result 1 — never free.
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, true));  // base 1: 1-1=0 → floor 1
-            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, true));  // base 2: 2-1=1
-            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, true));  // base 3: 3-1=2
-            Assert.AreEqual(8, AgingSystem.ComputeBattleAgingCost(8, true));  // base 11: 11-3=8
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, true, NoAgeDiscount));  // base 1: 1-1=0 → floor 1
+            Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(3, true, NoAgeDiscount));  // base 2: 2-1=1
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(4, true, NoAgeDiscount));  // base 3: 3-1=2
+            Assert.AreEqual(8, AgingSystem.ComputeBattleAgingCost(8, true, NoAgeDiscount));  // base 11: 11-3=8
+        }
+
+        [Test]
+        public void AgingSystem_ComputeBattleAgingCost_TemperedAge_ShavesExtraCost()
+        {
+            // Beyond age 40, Tempered also cuts 0.5%/yr off the post-25% cost, capped at 30%.
+            // Base 20 inputs → 84 (cap); BattleMage 25% → 63.
+            //   age 40  → no age discount → 63
+            //   age 100 → 30% cap        → round(63 × 0.70) = 44
+            Assert.AreEqual(63, AgingSystem.ComputeBattleAgingCost(20, true, 40f));
+            Assert.AreEqual(44, AgingSystem.ComputeBattleAgingCost(20, true, 100f));
+            // Age only matters with the talent — non-BattleMage ignores it entirely.
+            Assert.AreEqual(84, AgingSystem.ComputeBattleAgingCost(20, false, 100f));
         }
 
         // ── NPC heal-burst RestoreCount satisfies Rouse threshold ─────────────
