@@ -272,7 +272,7 @@ namespace AshAndEmber
             }
             // Inner-fire glow on each burning Ashen agent: bodies lit with amber resolve
             foreach (var a in victims.Take(6))
-                try { GlowSystem.BeginAgentGlow(a, ColorSchool.Yellow, EmberTitheInterval * 0.65f); } catch { }
+                try { SpellEffects.BeginAgentGlow(a, ColorSchool.Yellow, EmberTitheInterval * 0.65f); } catch { }
             // Atmospheric: ritual circle lights + amber pulse above the Ashen position
             if (_ashenTeam != null)
             {
@@ -322,7 +322,7 @@ namespace AshAndEmber
                 try { agent.SetMorale(Math.Max(0f, agent.GetMorale() - DreadMoralePenalty)); }
                 catch { }
                 // Haunted grey aura on every affected fighter — visible fear made manifest
-                try { GlowSystem.BeginAgentGlow(agent, ColorSchool.Ashen, 30f); } catch { }
+                try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Ashen, 30f); } catch { }
                 count++;
             }
             // Impact bursts radiate outward across the field like a shockwave of terror
@@ -384,7 +384,7 @@ namespace AshAndEmber
                 foreach (var agent in Mission.Current.Agents.ToList())
                 {
                     if (!agent.IsActive() || agent.IsMount || !IsAshenAgent(agent)) continue;
-                    try { GlowSystem.BeginAgentGlow(agent, ColorSchool.Orange, 60f); } catch { }
+                    try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Orange, 60f); } catch { }
                 }
             }
             // Large fires scattered across the field — the only light sources left standing
@@ -461,7 +461,7 @@ namespace AshAndEmber
                 foreach (var agent in Mission.Current.Agents.ToList())
                 {
                     if (!agent.IsActive() || agent.IsMount) continue;
-                    try { GlowSystem.BeginAgentGlow(agent, ColorSchool.Red, FrenzyInterval * 0.55f); } catch { }
+                    try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Red, FrenzyInterval * 0.55f); } catch { }
                 }
             }
             // Impact bursts erupt across the field as lines break and chaos spreads

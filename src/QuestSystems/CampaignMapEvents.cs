@@ -2636,7 +2636,7 @@ namespace AshAndEmber
                              && h.PartyBelongedTo.IsActive
                              && !h.PartyBelongedTo.IsGarrison)
                     .OrderByDescending(h => h.Clan?.Tier ?? 0)
-                    .ThenByDescending(h => h.Renown)
+                    .ThenByDescending(h => h.Clan?.Renown ?? 0f)
                     .FirstOrDefault();
 
                 string vanguardName = "an unnamed warlord of ash";
@@ -2711,7 +2711,7 @@ namespace AshAndEmber
                                          && k.StringId != AshenKingdomId
                                          && !ashenKingdom.IsAtWarWith(k)
                                          && k != Hero.MainHero?.Clan?.Kingdom)
-                                .OrderByDescending(k => k.TotalStrength)
+                                .OrderByDescending(k => k.CurrentTotalStrength)
                                 .FirstOrDefault();
                             if (target != null)
                                 DeclareWarAction.ApplyByDefault(ashenKingdom, target);

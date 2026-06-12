@@ -206,7 +206,7 @@ namespace AshAndEmber
                         {
                             if (party == null || party.IsMainParty || !party.IsLordParty
                                 || party.MapFaction == null || party.LeaderHero == null) continue;
-                            float d = (party.Position2D - port.GetPosition2D).Length;
+                            float d = (party.GetPosition2D - port.GetPosition2D).Length;
                             if (d > SeaMath.BlockadeReachUnits) continue;
                             float s = FleetStrengthOf(party, false);
                             if (s > bestStr) { bestStr = s; best = party.MapFaction; }
@@ -337,11 +337,7 @@ namespace AshAndEmber
                     ApplySeaCasualties(party, fight.CasualtyFraction);
                 }
 
-                Vec2 gate;
-                try { gate = dest.GatePosition; }
-                catch { gate = dest.GetPosition2D; }
-                try { party.Position2D = gate; } catch { return; }
-                try { party.Ai.SetMoveGoToSettlement(dest); } catch { }
+                try { party.Position = dest.GatePosition; } catch { return; }
 
                 // Word travels when it's your kingdom's banner or your own coin.
                 try
@@ -634,7 +630,7 @@ namespace AshAndEmber
                     new OnConsequenceDelegate(VoyageOnConsequence),
                     new OnTickDelegate(VoyageOnTick),
                     GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
-                    GameOverlays.MenuOverlayType.None, 0f, GameMenu.MenuFlags.None, null);
+                    GameMenu.MenuOverlayType.None, 0f, GameMenu.MenuFlags.None, null);
             }
             catch { }
         }
@@ -932,11 +928,7 @@ namespace AshAndEmber
                 if (dest != null)
                 {
                     var main = MobileParty.MainParty;
-                    Vec2 gate;
-                    try { gate = dest.GatePosition; }
-                    catch { gate = dest.GetPosition2D; }
-                    try { main.Position2D = gate; } catch { }
-                    try { main.Ai.SetMoveGoToSettlement(dest); } catch { }
+                    try { main.Position = dest.GatePosition; } catch { }
 
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"The ship noses into {dest.Name}. Land legs come back slowly.",
@@ -1309,10 +1301,7 @@ namespace AshAndEmber
                 if (origin != null)
                 {
                     var main = MobileParty.MainParty;
-                    Vec2 gate;
-                    try { gate = origin.GatePosition; } catch { gate = origin.GetPosition2D; }
-                    try { main.Position2D = gate; } catch { }
-                    try { main.Ai.SetMoveGoToSettlement(origin); } catch { }
+                    try { main.Position = origin.GatePosition; } catch { }
                 }
                 try { GameMenu.SwitchToMenu("town"); } catch { }
             }
