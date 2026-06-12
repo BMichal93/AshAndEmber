@@ -141,6 +141,15 @@ namespace AshAndEmber
             RegisterAltarMenus(starter);
         }
 
+        // Authoritative new-game setup, fired once from OnCharacterCreationIsOver
+        // (after the world is built, never on a load). Clears carry-over from a prior
+        // game in the same session, then announces the altars fresh.
+        public static void EstablishForNewCampaign()
+        {
+            ResetForNewGame();
+            AnnounceAltars();
+        }
+
         // Clears per-campaign static state so a new game started in the same
         // Bannerlord session does not inherit the previous game's "announced" flag
         // (which would suppress the altar establishment toast) or stale cooldowns.

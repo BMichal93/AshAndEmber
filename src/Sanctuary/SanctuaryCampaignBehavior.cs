@@ -174,6 +174,46 @@ namespace AshAndEmber
             _locationDepletedUntil.Clear();
         }
 
+        // Authoritative new-game setup. Fired once from OnCharacterCreationIsOver —
+        // a point that is unambiguously after the world is fully built and never
+        // fires on a load — so it sidesteps the fragile ordering between
+        // OnNewGameCreated and OnSessionLaunched. Clears any carry-over from a prior
+        // game in the same session, picks fresh sanctuaries, and announces them.
+        public static void EstablishForNewCampaign()
+        {
+            ResetForNewGame();
+            EnsurePermanentSanctuaries();
+            AnnounceSanctuaries();
+        }
+
+        // Announces the established sanctuaries once. Safe to call repeatedly — it
+        // self-guards on the announced flag and an empty list.
+        private static void AnnounceSanctuaries()
+        {
+            _needsAnnouncementAfterSync = false;
+            if (_sanctuariesAnnounced || _permanentSanctuaryIds.Count == 0) return;
+            _sanctuariesAnnounced = true;
+            try
+            {
+                var names = _permanentSanctuaryIds
+                    .Select(id => Settlement.All.FirstOrDefault(s => s.StringId == id)?.Name?.ToString())
+                    .Where(n => !string.IsNullOrEmpty(n)).ToList();
+                if (names.Count > 0)
+                {
+                    string joined = names.Count == 1 ? names[0]
+                        : string.Join(", ", names.Take(names.Count - 1)) + ", and " + names.Last();
+                    string line = $"Sanctuaries of the Flame have been established in {joined}. "
+                                + "Honourable and Merciful travellers may seek their rites there.";
+                    MBInformationManager.AddQuickInformation(new TextObject(line));
+                    // Also post to the message log so the list survives the new-game
+                    // lore popup and stays retrievable in the scrollback.
+                    try { InformationManager.DisplayMessage(new InformationMessage(line, new Color(0.95f, 0.75f, 0.35f))); }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
         // ── Permanent sanctuary selection ──────────────────────────────────────
         private static void EnsurePermanentSanctuaries()
         {
@@ -182,15 +222,22 @@ namespace AshAndEmber
             {
                 var empireIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     { "empire_w", "empire", "empire_s", "empire_n" };
-                var picks = Settlement.All
-                    .Where(s => s.IsTown && s.OwnerClan?.Kingdom != null
+                var towns = Settlement.All.Where(s => s.IsTown).ToList();
+                var picks = towns
+                    .Where(s => s.OwnerClan?.Kingdom != null
                              && empireIds.Contains(s.OwnerClan.Kingdom.StringId))
                     .OrderBy(_ => _rng.Next()).Take(PermanentSanctuaryCount).ToList();
+
+                // Fallback: if the empire filter comes up short (e.g. ownership not
+                // yet settled, or a heavily-modded map), top up with any towns so the
+                // sanctuary network is never empty.
+                if (picks.Count < PermanentSanctuaryCount)
+                    picks.AddRange(towns.Where(s => !picks.Contains(s))
+                                        .OrderBy(_ => _rng.Next())
+                                        .Take(PermanentSanctuaryCount - picks.Count));
+
                 _permanentSanctuaryIds.Clear();
                 foreach (var s in picks) _permanentSanctuaryIds.Add(s.StringId);
-                // Don't announce here — SyncData hasn't run yet, so _permanentSanctuaryIds
-                // still holds freshly-randomised (wrong) picks. Set a flag instead and
-                // let OnDailyTick fire the toast after SyncData has corrected the list.
                 if (picks.Count > 0 && !_sanctuariesAnnounced)
                     _needsAnnouncementAfterSync = true;
             }
@@ -940,28 +987,10 @@ namespace AshAndEmber
         {
             int today = CurrentCampaignDay();
 
-            // First tick after session start: SyncData has now run with correct IDs,
-            // so announce the real sanctuary names (not the random pre-sync picks).
-            if (_needsAnnouncementAfterSync && !_sanctuariesAnnounced && _permanentSanctuaryIds.Count > 0)
-            {
-                _needsAnnouncementAfterSync = false;
-                _sanctuariesAnnounced = true;
-                try
-                {
-                    var names = _permanentSanctuaryIds
-                        .Select(id => Settlement.All.FirstOrDefault(s => s.StringId == id)?.Name?.ToString())
-                        .Where(n => !string.IsNullOrEmpty(n)).ToList();
-                    if (names.Count > 0)
-                    {
-                        string joined = names.Count == 1 ? names[0]
-                            : string.Join(", ", names.Take(names.Count - 1)) + ", and " + names.Last();
-                        MBInformationManager.AddQuickInformation(new TextObject(
-                            $"Sanctuaries of the Flame have been established in {joined}. " +
-                            "Honourable and Merciful travellers may seek their rites there."));
-                    }
-                }
-                catch { }
-            }
+            // Loaded saves that predate the sanctuary system (no announce flag yet)
+            // get the establishment toast on their first tick once IDs are settled.
+            if (_needsAnnouncementAfterSync)
+                AnnounceSanctuaries();
 
             // Blessed status: 10% healing per day
             if (_blessedUntilDay >= today && MobileParty.MainParty?.MemberRoster != null)

@@ -61,6 +61,7 @@ namespace AshAndEmber
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { SchemeSystem.Initialize();              } catch { }
                 try { ExchangeCampaignBehavior.ResetState();  } catch { }
+                try { SeaCampaignBehavior.ResetForNewGame();  } catch { }
             }
         }
 
