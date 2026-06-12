@@ -609,5 +609,34 @@ namespace AshAndEmber.Tests
             Assert.IsFalse(SeaMath.NpcCrossingViable(beyond, caravan: true));
             Assert.IsTrue(SeaMath.NpcCrossingViable(beyond, caravan: false));
         }
+
+        [Test]
+        public void SeaMath_BlockadeInterceptChance_ZeroStrengthIsZero()
+        {
+            Assert.AreEqual(0f, SeaMath.BlockadeInterceptChance(0f, 100f));
+        }
+
+        [Test]
+        public void SeaMath_BlockadeInterceptChance_StrongerBlockadeRaisesChance()
+        {
+            float weak   = SeaMath.BlockadeInterceptChance(50f,  200f);
+            float strong = SeaMath.BlockadeInterceptChance(200f, 200f);
+            Assert.Greater(strong, weak);
+        }
+
+        [Test]
+        public void SeaMath_BlockadeInterceptChance_ClampedToValidRange()
+        {
+            // Overwhelming blockade should not exceed 0.90
+            Assert.LessOrEqual(SeaMath.BlockadeInterceptChance(99999f, 1f), 0.90f);
+            // Tiny blockade vs massive fleet should be at least 0.20
+            Assert.GreaterOrEqual(SeaMath.BlockadeInterceptChance(1f, 99999f), 0.20f);
+        }
+
+        [Test]
+        public void SeaMath_NpcInvasionSailChance_LowerThanNormalSailChance()
+        {
+            Assert.Less(SeaMath.NpcInvasionSailChance, SeaMath.NpcLordSailChance);
+        }
     }
 }

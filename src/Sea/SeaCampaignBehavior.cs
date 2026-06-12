@@ -69,6 +69,19 @@ namespace AshAndEmber
         // Emberwind bought in the harbor, consumed by the next voyage this session.
         private static bool _emberwindCalled;
 
+        // ── Blockade state (in-memory, recomputed on daily tick) ──────────────
+        // Maps port StringId → (blockading faction, combined fleet strength).
+        // A port is blockaded by whoever has the strongest lord party within
+        // SeaMath.BlockadeReachUnits. Only hostile-to-crosser blockades matter.
+        private struct BlockadeEntry { public IFaction Faction; public float Strength; }
+        private static readonly Dictionary<string, BlockadeEntry> _blockades
+            = new Dictionary<string, BlockadeEntry>();
+
+        // Blockade encounter state for the current player voyage (transient).
+        private static float    _blockadeAtHour   = -1f;
+        private static IFaction _blockadeFaction  = null;
+        private static float    _blockadeStrength = 0f;
+
         // ── Trade ventures (persisted) ─────────────────────────────────────────
         private class Venture
         {
@@ -154,6 +167,7 @@ namespace AshAndEmber
         {
             try { TickVentures(); } catch { }
             try { TickNpcSea(); } catch { }
+            try { TickBlockades(); } catch { }
         }
 
         private static void TickNpcSea()
@@ -170,6 +184,55 @@ namespace AshAndEmber
             {
                 try { if (p?.Town != null) p.Town.Prosperity += SeaMath.PortProsperityPerDay; } catch { }
             }
+        }
+
+        // ── Blockade tracking ─────────────────────────────────────────────────
+        // Rebuilds which ports are contested each day. A port is blockaded by
+        // the faction with the strongest lord party within BlockadeReachUnits.
+        private static void TickBlockades()
+        {
+            _blockades.Clear();
+            if (Campaign.Current == null || _ports.Count == 0) return;
+            foreach (var port in _ports)
+            {
+                if (port == null) continue;
+                IFaction best = null; float bestStr = 0f;
+                try
+                {
+                    foreach (var party in MobileParty.All)
+                    {
+                        try
+                        {
+                            if (party == null || party.IsMainParty || !party.IsLordParty
+                                || party.MapFaction == null || party.LeaderHero == null) continue;
+                            float d = (party.Position2D - port.GetPosition2D).Length;
+                            if (d > SeaMath.BlockadeReachUnits) continue;
+                            float s = FleetStrengthOf(party, false);
+                            if (s > bestStr) { bestStr = s; best = party.MapFaction; }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+                if (best != null)
+                {
+                    string key = port.StringId ?? port.Name?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(key))
+                        _blockades[key] = new BlockadeEntry { Faction = best, Strength = bestStr };
+                }
+            }
+        }
+
+        // Returns the blockade entry for a port if it is blockaded by a faction
+        // hostile to the given crosser faction, otherwise returns null.
+        private static BlockadeEntry? HostileBlockade(Settlement port, IFaction crosser)
+        {
+            if (port == null || crosser == null) return null;
+            string key = port.StringId ?? port.Name?.ToString() ?? "";
+            if (!string.IsNullOrEmpty(key) && _blockades.TryGetValue(key, out var b)
+                && b.Faction != null && b.Faction.IsAtWarWith(crosser))
+                return b;
+            return null;
         }
 
         // ── NPC sea lanes ──────────────────────────────────────────────────────
@@ -190,20 +253,42 @@ namespace AshAndEmber
                 string id = party.StringId ?? "";
                 if (_npcSailCooldown.ContainsKey(id)) return;
 
-                Settlement dest; float crossing;
+                Settlement dest = null; float crossing = 0f;
                 if (lord)
                 {
-                    // Lords sail with purpose: only when their AI is already
-                    // bound for somewhere within reach of another harbor.
+                    // Primary path: lord's AI already wants a settlement reachable from another port.
                     Settlement target = null;
                     try { target = party.TargetSettlement; } catch { }
-                    if (target == null || target == settlement) return;
-                    dest = PortNear(target, exclude: settlement);
+                    if (target != null && target != settlement)
+                    {
+                        var portNear = PortNear(target, exclude: settlement);
+                        if (portNear != null)
+                        {
+                            float d = PortDistance(settlement, portNear);
+                            if (SeaMath.NpcCrossingViable(d, caravan: false)
+                                && _rng.NextDouble() < SeaMath.NpcLordSailChance)
+                            { dest = portNear; crossing = d; }
+                        }
+                    }
+
+                    // Invasion path: lord at war may strike directly at an enemy coastal port.
+                    if (dest == null && party.MapFaction != null)
+                    {
+                        var enemyPorts = _ports
+                            .Where(p => p != settlement && p.MapFaction != null
+                                        && party.MapFaction.IsAtWarWith(p.MapFaction))
+                            .ToList();
+                        if (enemyPorts.Count > 0)
+                        {
+                            var ep = enemyPorts[_rng.Next(enemyPorts.Count)];
+                            float d = PortDistance(settlement, ep);
+                            if (SeaMath.NpcCrossingViable(d, caravan: false)
+                                && _rng.NextDouble() < SeaMath.NpcInvasionSailChance)
+                            { dest = ep; crossing = d; }
+                        }
+                    }
+
                     if (dest == null) return;
-                    crossing = PortDistance(settlement, dest);
-                    if (!SeaMath.NpcCrossingViable(crossing, caravan: false)) return;
-                    if (_rng.NextDouble() >= SeaMath.NpcLordSailChance) return;
-                }
                 else
                 {
                     if (_rng.NextDouble() >= SeaMath.NpcCaravanSailChance) return;
@@ -218,6 +303,27 @@ namespace AshAndEmber
                 }
 
                 _npcSailCooldown[id] = SeaMath.NpcSailCooldownDays;
+
+                // Blockade interception: if the destination is held by a hostile
+                // faction, there is a chance the crossing is turned back or bloodied.
+                if (party.MapFaction != null)
+                {
+                    var blk = HostileBlockade(dest, party.MapFaction);
+                    if (blk.HasValue)
+                    {
+                        float crosserStr = FleetStrengthOf(party, false);
+                        if (_rng.NextDouble() < SeaMath.BlockadeInterceptChance(blk.Value.Strength, crosserStr))
+                        {
+                            var fight = SeaMath.ResolveSeaBattle(crosserStr, blk.Value.Strength, _rng.NextDouble());
+                            ApplySeaCasualties(party, fight.CasualtyFraction);
+                            if (!fight.Victory)
+                            {
+                                // Turned back — abort this sea leg entirely.
+                                return;
+                            }
+                        }
+                    }
+                }
 
                 // The same sea, the same corsairs — resolved off-screen.
                 if (_rng.NextDouble() < SeaMath.PirateChance(crossing))
@@ -475,6 +581,34 @@ namespace AshAndEmber
             }
             catch { }
 
+            // ── Raid the coast ──────────────────────────────────────────────
+            try
+            {
+                starter.AddGameMenuOption("sea_harbor", "sea_raid", "{SEA_RAID_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            if (Hero.MainHero?.MapFaction == null) return false;
+                            bool anyEnemyPort = false;
+                            var here = Settlement.CurrentSettlement;
+                            foreach (var p in _ports)
+                            {
+                                if (p == here || p.MapFaction == null) continue;
+                                if (Hero.MainHero.MapFaction.IsAtWarWith(p.MapFaction))
+                                { anyEnemyPort = true; break; }
+                            }
+                            if (!anyEnemyPort) return false;
+                            MBTextManager.SetTextVariable("SEA_RAID_TEXT", "Raid an enemy coast");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            return true;
+                        }
+                        catch { return false; }
+                    },
+                    args => ShowRaidDestinationPicker());
+            }
+            catch { }
+
             // ── Leave ───────────────────────────────────────────────────────
             try
             {
@@ -554,6 +688,47 @@ namespace AshAndEmber
             catch { }
         }
 
+        private static void ShowRaidDestinationPicker()
+        {
+            try
+            {
+                var here = Settlement.CurrentSettlement;
+                if (!IsPort(here) || Hero.MainHero?.MapFaction == null) return;
+
+                var options = new List<InquiryElement>();
+                foreach (var p in _ports)
+                {
+                    if (p == here || p.MapFaction == null) continue;
+                    if (!Hero.MainHero.MapFaction.IsAtWarWith(p.MapFaction)) continue;
+                    float dist  = PortDistance(here, p);
+                    int   fare  = SeaMath.Fare(dist, PartySize());
+                    int   hours = (int)SeaMath.TravelHours(dist, _emberwindCalled);
+                    int   risk  = (int)(SeaMath.PirateChance(dist) * 100f);
+                    bool  blkd  = HostileBlockade(p, Hero.MainHero.MapFaction).HasValue;
+                    string blkNote = blkd ? "  [BLOCKADED — expect a fight at the harbor mouth]" : "";
+                    string hover = $"Fare {fare} denars. About {hours} hours. Corsair risk {risk}%.{blkNote} " +
+                                   "You will land at the gate — take what you can hold.";
+                    options.Add(new InquiryElement(p,
+                        $"{p.Name} ({p.MapFaction?.Name}){(blkd ? "  ⚓" : "")}",
+                        null, true, hover));
+                }
+                if (options.Count == 0) return;
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "Raid an Enemy Coast",
+                    "Choose your target. You will land at their harbor gate — from there it is steel and nerve. " +
+                    "Blockaded ports will contest your approach.",
+                    options, true, 1, 1, "Sail for it", "Never mind",
+                    chosen =>
+                    {
+                        var dest = chosen?[0]?.Identifier as Settlement;
+                        if (dest != null) StartVoyage(dest);
+                    },
+                    null, "", false), false, true);
+            }
+            catch { }
+        }
+
         private static int PartySize()
         {
             try { return MobileParty.MainParty.MemberRoster.TotalManCount; } catch { return 1; }
@@ -596,6 +771,24 @@ namespace AshAndEmber
                 _stormAtHour = !_voyageEmberwind && _rng.NextDouble() < SeaMath.StormChancePerVoyage
                     ? _voyageHoursTotal * (0.25f + 0.5f * (float)_rng.NextDouble()) : -1f;
 
+                // Check for a blockade at the destination. The encounter fires
+                // near the end of the crossing — the party is committed by then.
+                _blockadeAtHour = -1f; _blockadeFaction = null; _blockadeStrength = 0f;
+                try
+                {
+                    if (Hero.MainHero?.MapFaction != null)
+                    {
+                        var blk = HostileBlockade(dest, Hero.MainHero.MapFaction);
+                        if (blk.HasValue)
+                        {
+                            _blockadeAtHour   = _voyageHoursTotal * 0.80f;
+                            _blockadeFaction  = blk.Value.Faction;
+                            _blockadeStrength = blk.Value.Strength;
+                        }
+                    }
+                }
+                catch { }
+
                 GameMenu.SwitchToMenu("sea_voyage");
             }
             catch { }
@@ -603,14 +796,17 @@ namespace AshAndEmber
 
         private static void ResetVoyageState()
         {
-            _voyageOrigin = null;
-            _voyageDest = null;
-            _voyageHoursTotal = 0f;
+            _voyageOrigin       = null;
+            _voyageDest         = null;
+            _voyageHoursTotal   = 0f;
             _voyageHoursElapsed = 0f;
-            _pirateAtHour = -1f;
-            _stormAtHour = -1f;
-            _voyageEmberwind = false;
-            _voyageDone = false;
+            _pirateAtHour       = -1f;
+            _stormAtHour        = -1f;
+            _blockadeAtHour     = -1f;
+            _blockadeFaction    = null;
+            _blockadeStrength   = 0f;
+            _voyageEmberwind    = false;
+            _voyageDone         = false;
         }
 
         private static void VoyageOnInit(MenuCallbackArgs args)
@@ -660,6 +856,11 @@ namespace AshAndEmber
                 {
                     _pirateAtHour = -1f;
                     FireCorsairs();
+                }
+                if (_blockadeAtHour >= 0f && _voyageHoursElapsed >= _blockadeAtHour)
+                {
+                    _blockadeAtHour = -1f;
+                    FireBlockade();
                 }
 
                 UpdateVoyageText();
@@ -850,6 +1051,114 @@ namespace AshAndEmber
                         "with the corsairs. They let the ship limp on — a stripped hull is tomorrow's customer.",
                         true, false, "Endure it.", "", null, null), true);
                 }
+            }
+            catch { }
+        }
+
+        // ── Blockade encounter ─────────────────────────────────────────────────
+        private static void FireBlockade()
+        {
+            try
+            {
+                float playerStr = FleetStrengthOf(MobileParty.MainParty, searTheTide: false);
+                float blkStr    = _blockadeStrength;
+                string fName    = _blockadeFaction?.Name?.ToString() ?? "hostile ships";
+
+                string odds = blkStr > playerStr * 1.1f ? "Their fleet outguns yours."
+                            : blkStr < playerStr * 0.8f ? "Your fleet should carry it."
+                            : "It will be a bloody approach.";
+
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("fight", "Force the harbor — break through the line", null, true,
+                        $"An assault on the blockade fleet. {odds}"),
+                };
+                if (MageKnowledge.IsMage)
+                    options.Add(new InquiryElement("sear",
+                        $"Sear the Tide ({SeaMath.SearTheTideAgingDays} days aging)", null, true,
+                        "Open the Inner Fire over the blockade line. Burning rigging, broken formation, and much better odds."));
+                options.Add(new InquiryElement("turn", "Turn back — the harbor is denied today", null, true,
+                    "Abort the crossing and return to your port of origin. Your fare will be refunded."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "⚓  Blockade",
+                    $"War galleys flying {fName} colors hold the harbor mouth. They have formed a line " +
+                    "and they are not moving. You are still a good hour out, but there is no other way in.",
+                    options, false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        string pick = chosen?[0]?.Identifier as string ?? "fight";
+                        float effectiveStr = playerStr;
+                        if (pick == "sear")
+                        {
+                            try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.SearTheTideAgingDays); } catch { }
+                            effectiveStr = FleetStrengthOf(MobileParty.MainParty, searTheTide: true);
+                        }
+                        if (pick == "turn")
+                            TurnBackFromBlockade();
+                        else
+                            ResolveBlockadeBattle(effectiveStr, blkStr);
+                    },
+                    null, "", false), true, true);
+            }
+            catch { }
+        }
+
+        private static void ResolveBlockadeBattle(float playerStr, float blkStr)
+        {
+            try
+            {
+                var outcome = SeaMath.ResolveSeaBattle(playerStr, blkStr, _rng.NextDouble());
+                int hurt = ApplySeaCasualties(MobileParty.MainParty, outcome.CasualtyFraction);
+
+                if (outcome.Victory)
+                {
+                    if (outcome.LootGold > 0)
+                        try { GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, outcome.LootGold, true); } catch { }
+                    try { GainRenownAction.Apply(Hero.MainHero, 5f); } catch { }
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "⚓  Blockade Broken",
+                        "You force the line at bloody cost. Burning hulks drift aside and the harbor mouth opens." +
+                        (hurt > 0 ? $" {hurt} of your soldiers paid for the approach." : ""),
+                        true, false, "Press on.", "", null, null), true);
+                    // Voyage continues — VoyageOnTick will call Arrive() normally.
+                }
+                else
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "⚓  Blockade — Repulsed",
+                        "The line holds. Your ships are beaten back with heavy loss." +
+                        (hurt > 0 ? $" {hurt} soldiers are gone." : "") +
+                        " You limp back to your port of origin.",
+                        true, false, "Withdraw.", "", () => TurnBackFromBlockade(), null), true);
+                }
+            }
+            catch { }
+        }
+
+        private static void TurnBackFromBlockade()
+        {
+            try
+            {
+                if (_fareEscrow > 0)
+                {
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, _fareEscrow, true);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The harbormaster refunds your fare — the harbor was denied.",
+                        new Color(0.65f, 0.75f, 0.9f)));
+                    _fareEscrow = 0;
+                }
+                var origin = _voyageOrigin;
+                ResetVoyageState();
+                if (origin != null)
+                {
+                    var main = MobileParty.MainParty;
+                    Vec2 gate;
+                    try { gate = origin.GatePosition; } catch { gate = origin.GetPosition2D; }
+                    try { main.Position2D = gate; } catch { }
+                    try { main.Ai.SetMoveGoToSettlement(origin); } catch { }
+                }
+                try { GameMenu.SwitchToMenu("town"); } catch { }
             }
             catch { }
         }
