@@ -2,7 +2,7 @@
 
 ---
 
-## Unreleased
+## v0.19
 
 ### Sea travel, sea trade, and sea battles (new system)
 - **Harbors** — 16 coastal towns (Sturgian, Vlandian, Imperial, and Aserai coasts) gain a *Visit the harbor* entry in the town menu.
