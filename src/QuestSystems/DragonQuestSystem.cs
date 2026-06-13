@@ -83,11 +83,19 @@ namespace AshAndEmber
             if (MageKnowledge.IsAshen) return;
             try
             {
-                // Only fires if player won
+                // MapEventEnded fires for EVERY battle in the world, so first confirm the
+                // player's own party actually fought here. Without this guard a "!playerAttacker"
+                // defender-win on any off-screen battle (e.g. an Ashen lord losing a raid the
+                // player never joined) would count as a player victory and trigger the quest.
                 bool playerAttacker = mapEvent.AttackerSide?.Parties
                     .Any(p => p.Party == PartyBase.MainParty) == true;
+                bool playerDefender = mapEvent.DefenderSide?.Parties
+                    .Any(p => p.Party == PartyBase.MainParty) == true;
+                if (!playerAttacker && !playerDefender) return;
+
+                // Only fires if player won
                 bool playerWon = (playerAttacker && mapEvent.WinningSide == BattleSideEnum.Attacker)
-                              || (!playerAttacker && mapEvent.WinningSide == BattleSideEnum.Defender);
+                              || (playerDefender && mapEvent.WinningSide == BattleSideEnum.Defender);
                 if (!playerWon) return;
 
                 // Check if any enemy hero is an Ashen lord
@@ -141,6 +149,7 @@ namespace AshAndEmber
             {
                 if (_questLog == null) try { EnsureQuestLog(); } catch { }
                 CheckGoals();
+                try { _questLog?.UpdateProgress(Hero.MainHero?.Clan?.Tier ?? 0, _goal2Done, Hero.MainHero?.Level ?? 0); } catch { }
                 if (_goal1Done && _goal2Done && _goal3Done && _phase == PhaseActive)
                 {
                     _phase = PhaseAllDone;
@@ -594,6 +603,7 @@ namespace AshAndEmber
             if (_goal2Done) _questLog.LogGoal2();
             if (_goal3Done) _questLog.LogGoal3();
             if (_goal1Done && _goal2Done && _goal3Done) _questLog.LogAllDone();
+            _questLog.UpdateProgress(Hero.MainHero?.Clan?.Tier ?? 0, _goal2Done, Hero.MainHero?.Level ?? 0);
         }
 
         public static void ResetForNewGame()
@@ -630,9 +640,53 @@ namespace AshAndEmber
         protected override void RegisterEvents() { }
         protected override void SetDialogs() { }
 
-        internal void LogStarted() =>
+        // Tracked Journal objectives. The JournalLog objects themselves are persisted
+        // by QuestBase, but these field handles are not — UpdateProgress/EnsureObjectives
+        // re-link them from JournalEntries after a save/load.
+        private JournalLog _objClan;
+        private JournalLog _objTyal;
+        private JournalLog _objLevel;
+
+        internal void LogStarted()
+        {
             AddLog(new TextObject(
                 "The old mage's last words: gain a grasp on the world, enter the cold heart, gain the power — then rekindle everything. Three conditions, and a sacrifice at the end."));
+            EnsureObjectives();
+        }
+
+        // Creates the three tracked Journal goals, or recovers the references after a
+        // load. They are added in a fixed order right after the intro log, so on a
+        // reloaded quest they sit at JournalEntries[1..3].
+        private void EnsureObjectives()
+        {
+            if (_objClan != null && _objTyal != null && _objLevel != null) return;
+            if (JournalEntries != null && JournalEntries.Count >= 4)
+            {
+                _objClan  = JournalEntries[1];
+                _objTyal  = JournalEntries[2];
+                _objLevel = JournalEntries[3];
+                return;
+            }
+            _objClan = AddDiscreteLog(
+                new TextObject("Establish your dominion — grow your clan into a power the world must answer to."),
+                new TextObject("Clan Tier"), 0, DragonQuestSystem.TargetClanTier, null, false);
+            _objTyal = AddDiscreteLog(
+                new TextObject("Enter the cold heart — take the Ashen stronghold of Tyal for your clan."),
+                new TextObject("Capture Tyal"), 0, 1, null, false);
+            _objLevel = AddDiscreteLog(
+                new TextObject("Gain the power — temper your inner fire through trial until it burns at full height."),
+                new TextObject("Hero Level"), 0, DragonQuestSystem.TargetHeroLevel, null, false);
+        }
+
+        // Refreshes the tracked objective bars from live campaign state. Safe to call
+        // daily and after load — EnsureObjectives self-heals the references first.
+        internal void UpdateProgress(int clanTier, bool tyalTaken, int heroLevel)
+        {
+            EnsureObjectives();
+            try { _objClan?.UpdateCurrentProgress(Math.Min(clanTier, DragonQuestSystem.TargetClanTier)); } catch { }
+            try { _objTyal?.UpdateCurrentProgress(tyalTaken ? 1 : 0); } catch { }
+            try { _objLevel?.UpdateCurrentProgress(Math.Min(heroLevel, DragonQuestSystem.TargetHeroLevel)); } catch { }
+        }
 
         internal void LogGoal1() =>
             AddLog(new TextObject(
