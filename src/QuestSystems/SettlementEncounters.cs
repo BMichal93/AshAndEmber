@@ -121,6 +121,7 @@ namespace AshAndEmber
         private static int    _ashenMachineryCooldown  = 0;       // days between crystal-machine finds
         private static int    _ashenMachineryCountdown = 0;       // days until black-market weapon fires (option D)
         private static string _ashenMachineryKingdomId = null;    // kingdom targeted by deferred option D
+        private static int    _weaponInventorFound     = 0;       // 1 after the Toxic Fog encounter fires (one-time)
         private static readonly Random _rng          = new Random();
 
         // ── Colours ───────────────────────────────────────────────────────────
@@ -164,6 +165,7 @@ namespace AshAndEmber
             _ashenMachineryCooldown       = 0;
             _ashenMachineryCountdown      = 0;
             _ashenMachineryKingdomId      = null;
+            _weaponInventorFound          = 0;
         }
 
         public static void Save(IDataStore store)
@@ -196,6 +198,7 @@ namespace AshAndEmber
             store.SyncData("SE_AshenMachineCD",     ref _ashenMachineryCooldown);
             store.SyncData("SE_AshenMachineTimer",  ref _ashenMachineryCountdown);
             store.SyncData("SE_AshenMachineKing",   ref _ashenMachineryKingdomId);
+            store.SyncData("SE_WeaponInventor",     ref _weaponInventorFound);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -434,6 +437,8 @@ namespace AshAndEmber
                 if (!ashen && _poorKnightCooldown == 0) pool.Add(EC_PoorKnight);
                 // Tavern harassment — clan tier < 5, not Ashen
                 if (!ashen && clanTier < 5) pool.Add(EC_TavernHarassment);
+                // One-time Aserai alchemist with a dangerous idea
+                if (_weaponInventorFound == 0 && _cult == "aserai") pool.Add(E_WeaponInventor);
             }
 
             Fire(pool, s);
@@ -4960,6 +4965,125 @@ namespace AshAndEmber
             catch { }
 
             return target.Name?.ToString();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // E_WeaponInventor — town / Aserai / one-time
+        // An alchemist in the bazaar solicits funding for a devastating weapon.
+        // ═══════════════════════════════════════════════════════════════════════
+
+        private static void E_WeaponInventor(Settlement s)
+        {
+            _weaponInventorFound = 1;
+            string sName = s.Name?.ToString() ?? "the city";
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "☁  The Alchemist's Promise",
+                "In the shadow of a market stall, a gaunt man with yellowed fingers and soot-streaked robes steps into your path. He speaks quickly, eyes bright with that particular fever of a man too close to his own ideas.\n\n" +
+                "A formula, he says — ground bone, black sand, refined sulphur. One breath of it and armies collapse. Cities empty. The world has never seen its equal. He needs only coin to gather the materials. A dozen failed attempts, he admits freely. This time he is certain.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Fund his work fully.  (10,000 gold)",
+                        null, (Hero.MainHero?.Gold ?? 0) >= 10000,
+                        "Generous. With proper resources, there is an 80% chance this produces something real."),
+                    new InquiryElement("b", "Offer him what you can spare.  (5,000 gold)",
+                        null, (Hero.MainHero?.Gold ?? 0) >= 5000,
+                        "A reasonable investment. Even odds — 50% chance of a working formula."),
+                    new InquiryElement("c", "Press a few coins into his hand.  (2,000 gold)",
+                        null, (Hero.MainHero?.Gold ?? 0) >= 2000,
+                        "Meagre. Desperation does not make up the difference. One chance in five."),
+                    new InquiryElement("d", "Walk away. His problems are not yours.",
+                        null, true,
+                        "[Calculating] Leave him to it. The watch may find him first — or his powder may find the city."),
+                    new InquiryElement("e", "Point him out to the city watch.",
+                        null, true,
+                        "[Calculating] A reward is likely. Though if he has already started mixing, the outcome may not wait for the authorities."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (!ChangeGold(-10000)) return;
+                            if (_rng.NextDouble() < 0.80) InventorResult1(); else InventorResult2();
+                            break;
+                        case "b":
+                            if (!ChangeGold(-5000)) return;
+                            if (_rng.NextDouble() < 0.50) InventorResult1(); else InventorResult2();
+                            break;
+                        case "c":
+                            if (!ChangeGold(-2000)) return;
+                            if (_rng.NextDouble() < 0.20) InventorResult1(); else InventorResult2();
+                            break;
+                        case "d":
+                            if (_rng.NextDouble() < 0.50) InventorResult2(); else InventorResult3(s, sName);
+                            break;
+                        case "e":
+                            if (_rng.NextDouble() < 0.33) InventorResult3(s, sName); else InventorResult4();
+                            break;
+                    }
+                },
+                null, "", false), false, true);
+        }
+
+        private static void InventorResult1()
+        {
+            try { TalentSystem.GrantFree(TalentId.ToxicFog, Hero.MainHero); } catch { }
+            Msg("He returns three days later clutching a clay vessel sealed with black wax. His hands are steady; his voice is not. " +
+                "\"Burn it,\" he says. \"In still air. Then walk away. Do not wait to see it work.\" " +
+                "You do not ask where the others who funded him went.",
+                FireColor);
+        }
+
+        private static void InventorResult2()
+        {
+            Msg("He does not return. A week passes, then a fortnight. You make enquiries — no one has seen him since the second day. " +
+                "Perhaps he spent the coin on something else. Perhaps he simply failed again, and had the sense to disappear before you found out.",
+                DimColor);
+        }
+
+        private static void InventorResult3(Settlement s, string sName)
+        {
+            try
+            {
+                if (s.IsTown && s.Town != null)
+                {
+                    try { s.Town.Militia = Math.Max(0f, s.Town.Militia * 0.10f); } catch { }
+
+                    var garrison = s.Town?.GarrisonParty?.MemberRoster;
+                    if (garrison != null)
+                    {
+                        foreach (var e in garrison.GetTroopRoster()
+                            .Where(e => !e.Character.IsHero).ToList())
+                        {
+                            int healthy = e.Number - e.WoundedNumber;
+                            int toWound = Math.Min(healthy,
+                                (int)(healthy * (0.50f + (float)_rng.NextDouble() * 0.30f)));
+                            if (toWound > 0)
+                                try { garrison.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                        }
+                    }
+
+                    try { s.Town.Prosperity = Math.Max(100f, s.Town.Prosperity - 300f); } catch { }
+                    try { s.Town.Security   = Math.Max(0f,   s.Town.Security   -  30f); } catch { }
+                }
+            }
+            catch { }
+
+            Msg($"Something goes wrong before anyone can stop it. A thick yellow-green reek rolls out of a district near the market, " +
+                $"driving animals mad before it reaches the men. By the time anyone understands what has happened, that quarter of {sName} is empty of the living. " +
+                "They say the alchemist was the first to breathe it. He left no note.",
+                BadColor);
+        }
+
+        private static void InventorResult4()
+        {
+            ChangeGold(1000);
+            Msg("You point him out to a passing watchman without breaking your stride. You are half a district away when the shouting begins. " +
+                "Three days later a city official finds you at your lodgings — a sealed pouch, no explanation, no name on the note. " +
+                "The alchemist is not spoken of again.",
+                GoldColor);
         }
 
         // ── Deferred: FireAshenMachineryConsequence — 14 days after option D ──

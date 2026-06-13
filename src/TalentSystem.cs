@@ -65,6 +65,7 @@ namespace AshAndEmber
         Immolate    = 34,  // Enchantment — Damage: guaranteed kill at 3+ inputs
         ArmedCasting = 35, // Passive — cast without sheathing weapons
         Ashstorm     = 36, // Spell  — bombard a nearby enemy settlement
+        ToxicFog     = 41, // Spell  — one-time powder: chokes nearby settlements and armies
         // ── Lost Forms ────────────────────────────────────────────────────────
         LostBlast   = 37, // Lost Form — widens blast cone (~49° → ~60°)
         LostMissile = 38, // Lost Form — twin bolts at 60% power each
@@ -81,6 +82,7 @@ namespace AshAndEmber
         public bool          IsSpell;        // true = campaign map spell
         public bool          IsEnchantment;  // true = battle enchantment
         public bool          IsInfo;         // true = display-only, not purchasable
+        public bool          IsConsumable;   // true = found in world, not purchasable with focus points
         public TalentCategory Category;
         public string        Lore;
         public string        MechanicDesc;
@@ -259,6 +261,14 @@ namespace AshAndEmber
                 Lore = "The fire knows no walls. Stone does not argue with it. You raise your hands toward a distant tower and the flame answers — not as warmth, but as judgment.",
                 MechanicDesc = "A storm of fire falls on the nearest enemy town or castle within 50 map units. 10–30 garrison soldiers are killed, food stores are burnt, security drops, and prosperity is scorched. Costs 1 day (standard map spell cost)."
             },
+            new TalentDef
+            {
+                Id = TalentId.ToxicFog, IsSpell = true, IsEnchantment = false, IsConsumable = true,
+                Category = TalentCategory.Spell, Name = "Toxic Fog",
+                Lore = "A clay vessel stoppered with black wax. The powder inside smells of rot and old smoke. \"Burn it in still air,\" the maker said, \"then walk away.\" He was not wrong about that part.",
+                MechanicDesc = "One use only — the vessel is spent on casting. A choking yellow-green cloud rolls across ALL nearby settlements and armies regardless of faction: militia are killed outright, soldiers choke and fall. Even odds the wind turns on your own men too. Every lord whose holdings the fog touches will know.",
+                FocusCost = 0
+            },
             // ── Ashen status (info-only, not purchasable) ─────────────────────
             new TalentDef
             {
@@ -388,6 +398,12 @@ namespace AshAndEmber
                     "This cannot be learned.", Color.FromUint(0xFFAAAAAA)));
                 return false;
             }
+            if (defCheck?.IsConsumable == true)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "This cannot be learned — it must be found.", Color.FromUint(0xFFAAAAAA)));
+                return false;
+            }
 
             int cost = defCheck?.FocusCost > 0 ? defCheck.FocusCost : PurchaseCost();
 
@@ -490,38 +506,42 @@ namespace AshAndEmber
             var def = GetDef(id);
             if (!def.IsSpell) return;
 
-            if (MageKnowledge.IsAshen)
+            bool isConsumable = GetDef(id)?.IsConsumable == true;
+            if (!isConsumable)
             {
-                if (_dailyMapCastCount > 0 && _rng.Next(3) == 0)
-                    MageKnowledge.QueuePossessionEvent();
-                try
+                if (MageKnowledge.IsAshen)
                 {
-                    if (Hero.MainHero?.MapFaction is Kingdom ashenK)
+                    if (_dailyMapCastCount > 0 && _rng.Next(3) == 0)
+                        MageKnowledge.QueuePossessionEvent();
+                    try
                     {
-                        ChangeCrimeRatingAction.Apply(ashenK, GetBlightCrimeCost(id), false);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "The ash spreads.", new Color(0.3f, 0.35f, 0.7f)));
+                        if (Hero.MainHero?.MapFaction is Kingdom ashenK)
+                        {
+                            ChangeCrimeRatingAction.Apply(ashenK, GetBlightCrimeCost(id), false);
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                "The ash spreads.", new Color(0.3f, 0.35f, 0.7f)));
+                        }
                     }
+                    catch { }
                 }
-                catch { }
-            }
-            else
-            {
-                int cost = GetDailyCastCost();
-                bool skipAging = Has(TalentId.Sorcerer) && (_dailyMapCastCount == 0 || _rng.Next(4) == 0);
-                if (skipAging)
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "The fire gives back.", new Color(0.9f, 0.6f, 0.3f)));
                 else
                 {
-                    AgingSystem.AgeHero(Hero.MainHero, cost);
-                    if (cost > 1)
+                    int cost = GetDailyCastCost();
+                    bool skipAging = Has(TalentId.Sorcerer) && (_dailyMapCastCount == 0 || _rng.Next(4) == 0);
+                    if (skipAging)
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"The fire demands more — {cost} days.", new Color(0.9f, 0.5f, 0.2f)));
+                            "The fire gives back.", new Color(0.9f, 0.6f, 0.3f)));
+                    else
+                    {
+                        AgingSystem.AgeHero(Hero.MainHero, cost);
+                        if (cost > 1)
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"The fire demands more — {cost} days.", new Color(0.9f, 0.5f, 0.2f)));
+                    }
                 }
+                _dailyMapCastCount++;
+                try { AgingSystem.RecordMapCast(); } catch { }
             }
-            _dailyMapCastCount++;
-            try { AgingSystem.RecordMapCast(); } catch { }
 
             switch (id)
             {
@@ -532,6 +552,7 @@ namespace AshAndEmber
                 case TalentId.Extinguish:   CastExtinguish(powerMult);   break;
                 case TalentId.Fade:         CastFade(powerMult);         break;
                 case TalentId.Ashstorm:     CastAshstorm(powerMult);     break;
+                case TalentId.ToxicFog:     CastToxicFog(powerMult);     break;
             }
         }
 
@@ -783,6 +804,133 @@ namespace AshAndEmber
 
                 string killLine = killed > 0 ? $" {killed} garrison soldier{(killed != 1 ? "s" : "")} consumed." : "";
                 Msg($"Ashstorm — fire rains over {target.Name}.{killLine} Food burns. The walls remember it.");
+            }
+            catch { }
+        }
+
+        private static void CastToxicFog(float mult)
+        {
+            // Consume the one-time powder before resolving effects.
+            _purchased.Remove(TalentId.ToxicFog);
+
+            try
+            {
+                if (MobileParty.MainParty == null) return;
+                Vec2 playerPos    = MobileParty.MainParty.GetPosition2D;
+                const float range = 60f;
+
+                var affectedLords    = new HashSet<Hero>();
+                var affectedKingdoms = new HashSet<Kingdom>();
+                int totalWounded     = 0;
+                var settlementsHit   = new List<string>();
+
+                // ── Settlements in range ──────────────────────────────────────────
+                foreach (var s in Settlement.All
+                    .Where(s => (s.IsTown || s.IsCastle) && s.Town != null
+                             && (s.GetPosition2D - playerPos).Length < range).ToList())
+                {
+                    settlementsHit.Add(s.Name?.ToString() ?? "?");
+
+                    // Kill all militia
+                    try { s.Town.Militia = 0f; } catch { }
+
+                    // Wound 40–70 % of garrison
+                    var garrison = s.Town?.GarrisonParty?.MemberRoster;
+                    if (garrison != null)
+                    {
+                        foreach (var e in garrison.GetTroopRoster()
+                            .Where(e => !e.Character.IsHero).ToList())
+                        {
+                            int healthy = e.Number - e.WoundedNumber;
+                            int toWound = Math.Min(healthy,
+                                (int)(healthy * (0.40f + (float)_rng.NextDouble() * 0.30f) * mult));
+                            if (toWound > 0)
+                                try { garrison.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch { }
+                        }
+                    }
+
+                    var owner = s.OwnerClan?.Leader;
+                    if (owner != null && owner != Hero.MainHero)
+                    {
+                        affectedLords.Add(owner);
+                        if (s.OwnerClan?.Kingdom != null) affectedKingdoms.Add(s.OwnerClan.Kingdom);
+                    }
+                }
+
+                // ── Mobile parties in range (all factions — fog does not discriminate) ───
+                foreach (var party in MobileParty.All
+                    .Where(p => p.IsActive && p != MobileParty.MainParty
+                             && (p.GetPosition2D - playerPos).Length < range).ToList())
+                {
+                    foreach (var e in party.MemberRoster.GetTroopRoster()
+                        .Where(e => !e.Character.IsHero).ToList())
+                    {
+                        int healthy = e.Number - e.WoundedNumber;
+                        int toWound = Math.Min(healthy,
+                            (int)(healthy * (0.20f + (float)_rng.NextDouble() * 0.30f) * mult));
+                        if (toWound > 0)
+                            try { party.MemberRoster.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch { }
+                    }
+                    // Track lords and kingdoms for relations/war — only where they exist
+                    if (party.LeaderHero != null)
+                    {
+                        affectedLords.Add(party.LeaderHero);
+                        if (party.MapFaction is Kingdom k) affectedKingdoms.Add(k);
+                    }
+                }
+
+                // ── 50 / 50: own party ────────────────────────────────────────────
+                bool hitsOwn   = _rng.Next(2) == 0;
+                int  ownWounded = 0;
+                if (hitsOwn)
+                {
+                    foreach (var e in MobileParty.MainParty.MemberRoster.GetTroopRoster()
+                        .Where(e => !e.Character.IsHero).ToList())
+                    {
+                        int healthy = e.Number - e.WoundedNumber;
+                        int toWound = Math.Min(healthy, (int)(healthy * (0.15f + (float)_rng.NextDouble() * 0.15f)));
+                        if (toWound > 0)
+                            try { MobileParty.MainParty.MemberRoster.AddToCounts(e.Character, 0, false, toWound); ownWounded += toWound; } catch { }
+                    }
+                }
+
+                // ── Relation penalties (-20 per affected lord) ────────────────────
+                foreach (var lord in affectedLords)
+                {
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -20, false); } catch { }
+                }
+
+                // ── Criminal rating (+50 in every affected kingdom) ──────────────
+                foreach (var targetK in affectedKingdoms)
+                {
+                    try { ChangeCrimeRatingAction.Apply(targetK, 50f, false); } catch { }
+                }
+
+                // ── War risk (30 % per affected non-allied kingdom) ───────────────
+                var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
+                foreach (var targetK in affectedKingdoms)
+                {
+                    if (targetK == playerKingdom) continue;
+                    if (_rng.NextDouble() < 0.30)
+                    {
+                        try
+                        {
+                            if (playerKingdom != null
+                                && !FactionManager.IsAtWarAgainstFaction(targetK, playerKingdom))
+                                DeclareWarAction.ApplyByDefault(targetK, playerKingdom);
+                        }
+                        catch { }
+                    }
+                }
+
+                // ── Outcome message ───────────────────────────────────────────────
+                string hitLine = settlementsHit.Count > 0
+                    ? $" The cloud drifts across {string.Join(", ", settlementsHit.Take(3))}{(settlementsHit.Count > 3 ? " and more" : "")}."
+                    : "";
+                string ownLine = hitsOwn && ownWounded > 0
+                    ? $" The wind turned — {ownWounded} of your own men are choking."
+                    : " Your men were far enough upwind.";
+                Msg($"The vessel shatters. A yellow-green cloud rolls across the land.{hitLine} Militia dead. {totalWounded} soldiers felled.{ownLine}");
             }
             catch { }
         }
