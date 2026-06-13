@@ -510,8 +510,6 @@ namespace AshAndEmber
             int   clanTier   = Hero.MainHero?.Clan?.Tier ?? 0;
             var pool  = new List<Action>();
 
-            pool.Add(EB8_FieldTriage);
-
             if (ashen && ashenCasts >= 3)
             {
                 // More casts = higher weight: 1 copy at 3 casts, up to 3 copies at 5+
@@ -2149,63 +2147,6 @@ namespace AshAndEmber
                             Msg("You open the door. Something passes through you in both directions — you feel the loss clearly, two things, maybe more. " +
                                 "What returns is not the same shape as what left. It is colder. It is useful. " +
                                 "Your men look at you strangely over the fire that evening. You do not ask them why.", AshenColor);
-                            break;
-                    }
-                }, null, "", false), false, true);
-        }
-
-        // ── AFTER BATTLE: Field Triage [Medicine] ──────────────────────────
-        private static void EB8_FieldTriage()
-        {
-            float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
-            string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Apply your own knowledge alongside the surgeon");
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "✚  The Surgeon's Question",
-                "Your surgeon has done what he can with what he has. He comes to you with a specific problem: two men with abdominal wounds, one set of gut-surgery supplies, and a clinical decision he says is above his certainty. He is asking you — not because he thinks you're a surgeon, but because he has seen enough of you to know whether you are the kind of person who has relevant information and the honesty to say when you don't.",
-                new List<InquiryElement>
-                {
-                    new InquiryElement("a", "Work alongside him — apply whatever you know.", null, true, hint),
-                    new InquiryElement("b", "Give him the decision completely — this is his skill, not yours.", null, true,
-                        "This is his skill. Your men will see you trust him completely."),
-                    new InquiryElement("c", "Ask him to explain the clinical picture fully before you say anything.", null, true,
-                        "Your question may reshape his thinking. He may reach a better answer."),
-                    new InquiryElement("d", "Spend gold on an urgent courier for a specialist while the surgeon holds the situation.", null, true,
-                        "The specialist is coming. The surgeon holds the situation until then."),
-                },
-                false, 1, 1, "Decide", "",
-                chosen =>
-                {
-                    switch (chosen?[0]?.Identifier as string)
-                    {
-                        case "a":
-                            if (SkillRoll(DefaultSkills.Medicine, 0.25f))
-                            {
-                                ShiftTrait(DefaultTraits.Mercy, 1);
-                                AddMorale(6f);
-                                Msg("You have seen enough battlefield surgery to recognise what he is weighing — the wound sites are different in a way that changes the priority. You tell him what you see. He checks it against his own read and adjusts. Both men receive treatment in the right order. Both survive. Your surgeon looks at you differently afterward — not with deference, just professional respect.", GoodColor);
-                            }
-                            else
-                            {
-                                ShiftTrait(DefaultTraits.Mercy, 1);
-                                AddMorale(2f);
-                                Msg("You share what you know. Some of it is useful and he incorporates it. Some of it is below his knowledge level and he sets it aside without comment. The combined knowledge is better than his alone. One man survives who might not have. The other was beyond the combined knowledge of both of you. Your surgeon closes that file with the quiet efficiency of someone who has written those reports before and will write them again.", DimColor);
-                            }
-                            break;
-                        case "b":
-                            ShiftTrait(DefaultTraits.Honor, 1);
-                            AddMorale(4f);
-                            Msg("You give him the decision entirely and tell him so directly. He makes it cleanly, without the hesitation of someone who is second-guessing a superior's preferences. One man survives. The other does not — this was the likely outcome either way, and the surgeon's choice was correct given what was knowable. Your men watch you trust your own people completely. That travels through a column faster than orders.", GoodColor);
-                            break;
-                        case "c":
-                            ShiftTrait(DefaultTraits.Calculating, 1);
-                            AddMorale(4f);
-                            Msg("You ask him to describe the clinical picture fully before you say anything. In describing it, he hears something he had not heard while thinking it. He stops and redirects. Both men receive treatment. Both survive. He thanks you for the question.", GoodColor);
-                            break;
-                        case "d":
-                            ChangeGold(-500);
-                            ShiftTrait(DefaultTraits.Mercy, 1);
-                            AddMorale(3f);
-                            Msg("The courier rides hard. The specialist arrives six hours later with better supplies and a different technique. He saves one of the two men with confidence and works on the second for three hours before confirming what your surgeon already knew. One man lives who would not have. The 500 coin bought a life and a specific hour's professional certainty. Your surgeon watches the specialist work with the full attention of a man taking notes.", GoodColor);
                             break;
                     }
                 }, null, "", false), false, true);
