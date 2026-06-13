@@ -610,6 +610,8 @@ namespace AshAndEmber
             TalentCategory? lastCategory = null;
             foreach (var d in all)
             {
+                // Consumables are granted through encounters, not purchased here
+                if (d.IsConsumable) continue;
                 // Info cards are only shown when the condition is met
                 if (d.IsInfo && d.Id == TalentId.AshenGift && !_isAshen) continue;
 
