@@ -82,15 +82,19 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
 
-            // Column of fire at three heights every tick; 3.5 s duration gives solid overlap beyond the 0.5 s tick.
-            SpawnTempLight(e.Position,                          e.School, 10f, 3.5f);
-            SpawnTempLight(e.Position + new Vec3(0f, 0f, 1f),  e.School, 10f, 3.5f);
-            SpawnTempLight(e.Position + new Vec3(0f, 0f, 2f),  e.School, 10f, 3.5f);
-            if (e.School != ColorSchool.Ashen)
+            // Visuals: the column lights (LightEntity/2/3) and the initial fire particles are
+            // already persistent for the barrier's whole lifetime, so we do NOT re-spawn lights
+            // every 0.5 s tick — that flooded the scene with short-lived point lights and was the
+            // main performance drain of long / multi-node walls. Fire is refreshed only on a slow
+            // ~3 s cadence (DirTimer is otherwise unused by barriers) so the flames keep burning
+            // continuously without churning particle entities ten times a second.
+            e.DirTimer -= 0.5f;
+            if (e.School != ColorSchool.Ashen && e.DirTimer <= 0f)
             {
-                SpawnTempFireParticle(e.Position,                          3f);
-                SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 1f),  3f);
-                SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 2f),  3f);
+                e.DirTimer = 3f;
+                SpawnTempFireParticle(e.Position,                          3.5f);
+                SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 1f),  3.5f);
+                SpawnTempFireParticle(e.Position + new Vec3(0f, 0f, 2f),  3.5f);
             }
 
             int token   = (int)e.Power;
