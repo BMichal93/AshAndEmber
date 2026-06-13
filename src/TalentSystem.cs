@@ -900,6 +900,12 @@ namespace AshAndEmber
                     try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -20, false); } catch { }
                 }
 
+                // ── Criminal rating (+50 in every affected kingdom) ──────────────
+                foreach (var targetK in affectedKingdoms)
+                {
+                    try { ChangeCrimeRatingAction.Apply(targetK, 50f, false); } catch { }
+                }
+
                 // ── War risk (30 % per affected non-allied kingdom) ───────────────
                 var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
                 foreach (var targetK in affectedKingdoms)
