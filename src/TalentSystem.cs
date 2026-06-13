@@ -832,7 +832,7 @@ namespace AshAndEmber
                     settlementsHit.Add(s.Name?.ToString() ?? "?");
 
                     // Kill all militia
-                    try { s.Town.Militia = 0f; } catch { }
+                    try { s.Militia = 0f; } catch { }
 
                     // Wound 40–70 % of garrison
                     var garrison = s.Town?.GarrisonParty?.MemberRoster;

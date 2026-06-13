@@ -5049,7 +5049,7 @@ namespace AshAndEmber
             {
                 if (s.IsTown && s.Town != null)
                 {
-                    try { s.Town.Militia = Math.Max(0f, s.Town.Militia * 0.10f); } catch { }
+                    try { s.Militia = Math.Max(0f, s.Militia * 0.10f); } catch { }
 
                     var garrison = s.Town?.GarrisonParty?.MemberRoster;
                     if (garrison != null)
