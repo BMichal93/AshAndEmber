@@ -266,7 +266,7 @@ namespace AshAndEmber
                 Id = TalentId.ToxicFog, IsSpell = true, IsEnchantment = false, IsConsumable = true,
                 Category = TalentCategory.Spell, Name = "Toxic Fog",
                 Lore = "A clay vessel stoppered with black wax. The powder inside smells of rot and old smoke. \"Burn it in still air,\" the maker said, \"then walk away.\" He was not wrong about that part.",
-                MechanicDesc = "One use only — the vessel is spent on casting. A choking yellow-green cloud rolls across all nearby settlements and armies: militia are killed outright, soldiers choke and fall. Even odds the wind turns on your own men. Expect consequences from every lord whose holdings the fog touches.",
+                MechanicDesc = "One use only — the vessel is spent on casting. A choking yellow-green cloud rolls across ALL nearby settlements and armies regardless of faction: militia are killed outright, soldiers choke and fall. Even odds the wind turns on your own men too. Every lord whose holdings the fog touches will know.",
                 FocusCost = 0
             },
             // ── Ashen status (info-only, not purchasable) ─────────────────────
@@ -857,9 +857,9 @@ namespace AshAndEmber
                     }
                 }
 
-                // ── Mobile parties in range ───────────────────────────────────────
+                // ── Mobile parties in range (all factions — fog does not discriminate) ───
                 foreach (var party in MobileParty.All
-                    .Where(p => p.IsActive && p != MobileParty.MainParty && p.LeaderHero != null
+                    .Where(p => p.IsActive && p != MobileParty.MainParty
                              && (p.GetPosition2D - playerPos).Length < range).ToList())
                 {
                     foreach (var e in party.MemberRoster.GetTroopRoster()
@@ -871,8 +871,12 @@ namespace AshAndEmber
                         if (toWound > 0)
                             try { party.MemberRoster.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch { }
                     }
-                    affectedLords.Add(party.LeaderHero);
-                    if (party.MapFaction is Kingdom k) affectedKingdoms.Add(k);
+                    // Track lords and kingdoms for relations/war — only where they exist
+                    if (party.LeaderHero != null)
+                    {
+                        affectedLords.Add(party.LeaderHero);
+                        if (party.MapFaction is Kingdom k) affectedKingdoms.Add(k);
+                    }
                 }
 
                 // ── 50 / 50: own party ────────────────────────────────────────────
