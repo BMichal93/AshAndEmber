@@ -40,6 +40,9 @@ namespace AshAndEmber
             try { SpellEffects.ClearAttackWeaken();  } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { MagicInputHandler.ResetInputState();  } catch { }
+            try { AlchemyEffects.ClearBattleState();     } catch { }
+            try { AlchemyBattleAI.Reset();               } catch { }
+            try { AlchemyInputHandler.ResetInputState(); } catch { }
             try { ColourLordAI.ClearCooldowns();        } catch { }
             try { ColourLordAI.FlushBattleCasts();      } catch { }
             try { BanditMageAI.OnMissionEnd();           } catch { }
@@ -55,6 +58,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());
                 campaignStarter.AddBehavior(new AshenAltarsCampaignBehavior());
                 campaignStarter.AddBehavior(new SeaCampaignBehavior());
+                campaignStarter.AddBehavior(new AlchemyCampaignBehavior());
                 campaignStarter.AddBehavior(new ExchangeCampaignBehavior());
                 campaignStarter.AddBehavior(new TavernCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
@@ -76,6 +80,7 @@ namespace AshAndEmber
             {
                 if (Campaign.Current == null || Mission.Current != null) return;
                 try { MagicInputHandler.Tick(inMission: false); } catch { }
+                try { AlchemyInputHandler.Tick(inMission: false); } catch { }
                 try { ActiveEffectManager.MapTick(dt); } catch { }
 
                 // Ctrl+Shift+F10 — toggle scheme debug mode; also force-fires The Temple event
@@ -183,6 +188,9 @@ namespace AshAndEmber
             if (mission == null || mission.CurrentState != Mission.State.Continuing) return;
 
             MagicInputHandler.Tick(inMission: true);
+            AlchemyInputHandler.Tick(inMission: true);
+            AlchemyEffects.MissionTick(dt);
+            AlchemyBattleAI.MissionTick(dt);
             ActiveEffectManager.MissionTick(dt);
             ColourLordAI.MissionTick(dt);
             SpellEffects.TickGlows(dt);
@@ -229,6 +237,9 @@ namespace AshAndEmber
             try { AgingSystem.ClearKnockdowns();           } catch { }
             try { ActiveEffectManager.ClearMissionEffects(); } catch { }
             try { MagicInputHandler.ResetInputState();       } catch { }
+            try { AlchemyEffects.ClearBattleState();          } catch { }
+            try { AlchemyBattleAI.Reset();                    } catch { }
+            try { AlchemyInputHandler.ResetInputState();      } catch { }
             try { BattleEvents.OnMissionEnd();               } catch { }
             try { AshenSceneTone.Reset();                    } catch { }
         }
@@ -251,6 +262,8 @@ namespace AshAndEmber
                 try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             // Sunder enchantment: applies to all hits (attacker is globally weakened).
             try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            // Alchemy combat buffs/afflictions (berserk bonus, stone-skin, enfeeblement).
+            try { AlchemyEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent,

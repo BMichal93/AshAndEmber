@@ -129,6 +129,7 @@ namespace AshAndEmber
                 BurningLabQuestSystem.ResetForNewGame();
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
+                AlchemyCampaignBehavior.EstablishForNewCampaign();
                 ShowLoreIntro();
             }
             catch { }

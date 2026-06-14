@@ -693,5 +693,75 @@ namespace AshAndEmber.Tests
         {
             Assert.AreEqual(1000, SpeculationMath.TradeXp(1000, 10000));
         }
+
+        // ── AlchemyMath pure logic ────────────────────────────────────────────
+
+        [Test]
+        public void AlchemyMath_CarryCapacity_EqualsIntelligence_MinOne()
+        {
+            Assert.AreEqual(5, AlchemyMath.CarryCapacity(5));
+            Assert.AreEqual(1, AlchemyMath.CarryCapacity(0));
+            Assert.AreEqual(1, AlchemyMath.CarryCapacity(-3), "Capacity never drops below one.");
+        }
+
+        [Test]
+        public void AlchemyMath_BrewSuccessChance_RisesWithSkill_AndClamps()
+        {
+            float novice = AlchemyMath.BrewSuccessChance(0);
+            float master = AlchemyMath.BrewSuccessChance(300);
+            Assert.Greater(master, novice, "More Medicine should brew cleaner.");
+            Assert.GreaterOrEqual(novice, AlchemyMath.BrewChanceFloor);
+            Assert.LessOrEqual(master, AlchemyMath.BrewChanceCeil);
+        }
+
+        [Test]
+        public void AlchemyMath_IsBrewSuccess_RespectsChanceThreshold()
+        {
+            // A roll just under the chance succeeds; just over fails.
+            float c = AlchemyMath.BrewSuccessChance(100);
+            Assert.IsTrue(AlchemyMath.IsBrewSuccess(100, c - 0.01));
+            Assert.IsFalse(AlchemyMath.IsBrewSuccess(100, c + 0.01));
+        }
+
+        [Test]
+        public void AlchemyMath_PickBackfire_CoversAllFive_AndStaysInRange()
+        {
+            Assert.AreEqual(AlchemyBackfire.SelfWound,      AlchemyMath.PickBackfire(0.0));
+            Assert.AreEqual(AlchemyBackfire.TroopBlast,     AlchemyMath.PickBackfire(0.25));
+            Assert.AreEqual(AlchemyBackfire.MoraleCollapse, AlchemyMath.PickBackfire(0.45));
+            Assert.AreEqual(AlchemyBackfire.CreepingBlight, AlchemyMath.PickBackfire(0.65));
+            Assert.AreEqual(AlchemyBackfire.Enfeeblement,   AlchemyMath.PickBackfire(0.85));
+            // Boundary: a roll of exactly 1.0 must not overflow past the last value.
+            Assert.AreEqual(AlchemyBackfire.Enfeeblement,   AlchemyMath.PickBackfire(1.0));
+        }
+
+        [Test]
+        public void AlchemyMath_NpcChances_FavourAserai_AndStayBounded()
+        {
+            Assert.Greater(AlchemyMath.NpcDailyBrewChance(50, true),
+                           AlchemyMath.NpcDailyBrewChance(50, false),
+                           "Aserai heroes brew more readily.");
+            Assert.LessOrEqual(AlchemyMath.NpcDailyBrewChance(10000, true),
+                               AlchemyMath.NpcBrewChanceCeil);
+            Assert.LessOrEqual(AlchemyMath.NpcBattleUseChance(10000, true),
+                               AlchemyMath.NpcBattleChanceCeil);
+        }
+
+        // ── AlchemyCatalog integrity ──────────────────────────────────────────
+
+        [Test]
+        public void AlchemyCatalog_HasEightDistinctElixirs_EachUsableSomewhere()
+        {
+            Assert.AreEqual(AlchemyMath.ElixirTypeCount, AlchemyCatalog.All.Count);
+            Assert.AreEqual(AlchemyCatalog.All.Count,
+                AlchemyCatalog.All.Select(d => d.Type).Distinct().Count(),
+                "Every elixir type should appear exactly once.");
+            foreach (var d in AlchemyCatalog.All)
+            {
+                Assert.IsFalse(string.IsNullOrEmpty(d.Name), $"{d.Type} needs a name.");
+                Assert.IsTrue(d.UsableInBattle || d.UsableOnMap,
+                    $"{d.Type} must be usable somewhere.");
+            }
+        }
     }
 }

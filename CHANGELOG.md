@@ -2,6 +2,19 @@
 
 ---
 
+## v0.20
+
+### Alchemy (new system)
+- **Alchemical Labs** — every Aserai town plus a few Imperial towns gain a *Visit the Alchemical Lab* entry in the town menu. The network is announced when it is established (new campaign or first load on an existing save).
+- **Brewing** — pick a formula and make a Medicine test for 200 denars of ingredients. The elixir is added to your satchel **whatever the result** — but a failed test taints it, and a tainted brew backfires when drunk. Brewing trains Medicine.
+- **The satchel** — you carry elixirs equal to your **Intelligence**. Open it any time — in the field or mid-battle — with **Ctrl+X** (independent of the spell controls), or from the lab menu. It lists each elixir, how many you hold, and your fill against capacity.
+- **Eight elixirs** — *Healing Draught* (restore 25% HP, anywhere), *Ember Brew* (battle berserk — heavier blows, fury that dulls pain), *Oath-Wine* (party morale), *Hearthsmoke Censer* (swells the nearest village's hearth), *Caustic Vial* (a searing burst around you in battle), *Stoneblood Tonic* (battle damage resistance), *Field Surgeon's Philtre* (mends your wounded column), and *Veil of Ash* (a brief untouchable ward in battle).
+- **Backfires** — a tainted brew turns on the drinker: self-wound, a burst that scalds your own troops, a morale collapse, a creeping poison (damage over time), or enfeeblement (leaden limbs and a soft guard).
+- **NPCs brew too** — lords and companions (the **Aserai** especially, scaled by Medicine and personality) brew and use elixirs both off-screen on the map and **in battle**, bound by the same taint rules. Enemy battle uses are posted to the combat log exactly like enemy spell casts.
+- Fully backward-compatible: pre-Alchemy saves load with an empty satchel and freshly-picked labs.
+
+---
+
 ## v0.19
 
 ### Sea travel, sea trade, and sea battles (new system)
