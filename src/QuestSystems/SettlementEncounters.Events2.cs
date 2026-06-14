@@ -474,7 +474,7 @@ namespace AshAndEmber
                                         {
                                             case "x1":
                                                 ChangeCrime(5f);
-                                                try { s.Village.Hearth = Math.Min(s.Village.MaxHearth, s.Village.Hearth + 50f); } catch { }
+                                                try { s.Village.Hearth = s.Village.Hearth + 50f; } catch { }
                                                 ChangeRelWithOwner(s, 5);
                                                 Msg("You hold a brief public reckoning. The tanner does not deny it. The village watches. The elder thanks you. The settlement lord, receiving word of how you handled it, revises his opinion of you upward — you found the problem, judged it, and left the village intact.", GoodColor);
                                                 break;
