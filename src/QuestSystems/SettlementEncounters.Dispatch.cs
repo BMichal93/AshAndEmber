@@ -72,6 +72,14 @@ namespace AshAndEmber
                 float _qvDays = (float)CampaignTime.Now.ToDays;
                 if (mage && _quietVCooldown == 0 && _quietVPhase == 0 && _qvDays >= 80f)
                     pool.Add(E_QuietVillage);
+                // Cartographer — day 50+, idle phase
+                float _cartDays = (float)CampaignTime.Now.ToDays;
+                if (_cartCooldown == 0 && _cartPhase == 0 && _cartDays >= 50f)
+                    pool.Add(E_Cartographer);
+                // The God That Didn't Burn — non-Ashen, day 70+, idle phase
+                float _godDays = (float)CampaignTime.Now.ToDays;
+                if (!ashen && _godCooldown == 0 && _godPhase == 0 && _godDays >= 70f)
+                    pool.Add(E_GodThatDidntBurn);
             }
             if (town)
             {
@@ -115,6 +123,12 @@ namespace AshAndEmber
                 float _titheDays = (float)CampaignTime.Now.ToDays;
                 if (_titheCultCooldown == 0 && _titheCultPhase == 0 && _titheDays >= 50f)
                     pool.Add(EC_TitheCollector);
+                // Widow's Commission — castle only, clan tier ≥ 1, renown ≥ 300, day 60+
+                if (s.IsCastle && clanTier >= 1 && ren >= 300f && _widowCooldown == 0 && _widowPhase == 0)
+                {
+                    float _widowDays = (float)CampaignTime.Now.ToDays;
+                    if (_widowDays >= 60f) pool.Add(E_WidowCommission);
+                }
             }
 
             Fire(pool, s);
@@ -158,6 +172,13 @@ namespace AshAndEmber
                 float _pilDays = (float)CampaignTime.Now.ToDays;
                 if (mage && _pilgrimCooldown == 0 && _pilgrimPhase == 0 && _pilDays >= 60f)
                     pool.Add(E_AshenPilgrim);
+                // Heir Apparent — clan tier ≥ 4, day 120+, idle phase
+                int leaveClanTier = Hero.MainHero?.Clan?.Tier ?? 0;
+                if (leaveClanTier >= 4 && _heirCooldown == 0 && _heirPhase == 0)
+                {
+                    float _heirDays = (float)CampaignTime.Now.ToDays;
+                    if (_heirDays >= 120f) pool.Add(E_HeirApparent);
+                }
             }
 
             Fire(pool, s);
@@ -240,6 +261,8 @@ namespace AshAndEmber
                 if (mage) pool.Add(ES4_AshenCrystal);
                 if (mage) pool.Add(ES7_FallenLaboratory);
                 if (mage && _ancientBookFound == 0) pool.Add(ES_AncientGrimoire);
+                // The Child in the Keep — clan tier ≥ 2, one-time
+                if (_ardrathFound == 0 && clanTier >= 2) pool.Add(ES_Ardrath);
             }
             else
             {
