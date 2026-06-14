@@ -484,19 +484,25 @@ namespace AshAndEmber
             // Higher tier shifts weight toward better outcomes
             int roll = _rng.Next(100) + (tier - 1) * 15;
 
-            if (roll < 30)
+            if (roll < 28)
                 return OutcomeNothing();
-            if (roll < 48)
+            if (roll < 45)
                 return OutcomeRelationGain();
-            if (roll < 62)
+            if (roll < 58)
                 return OutcomeRecruit(tier);
-            if (roll < 74)
+            if (roll < 70)
                 return OutcomeGossip(tier);
-            if (roll < 84)
+            if (roll < 80)
                 return OutcomeMerchantTip(tier);
-            if (roll < 93)
+            if (roll < 89)
                 return OutcomeLordEncounterGood(tier);
-            return OutcomeFoundPurse(tier);
+            if (roll < 97)
+                return OutcomeFoundPurse(tier);
+            if (roll < 108)
+                return OutcomeDiceGame(tier);
+            if (roll < 119)
+                return OutcomeOldVeteran();
+            return OutcomeSecretMap(tier);
         }
 
         // ── Bad outcomes ──────────────────────────────────────────────────────
@@ -515,7 +521,11 @@ namespace AshAndEmber
                 return OutcomePuking();
             if (roll < 82)
                 return OutcomeJail();
-            return OutcomeOffend(); // fallback
+            if (roll < 91)
+                return OutcomeCheated(tier);
+            if (roll < 99)
+                return OutcomeSpilledSecret();
+            return OutcomeOffend();
         }
 
         // ── Outcome implementations ───────────────────────────────────────────
@@ -647,7 +657,97 @@ namespace AshAndEmber
                    $"You wait. Nobody comes back for it. You reason that whoever lost it has had worse nights than you. (+{gold} denars)";
         }
 
+        private static string OutcomeDiceGame(int tier)
+        {
+            int gold = tier == 1 ?  30 + _rng.Next(51)    //  30-80g
+                     : tier == 2 ? 100 + _rng.Next(151)   // 100-250g
+                                 : 300 + _rng.Next(401);  // 300-700g
+            try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
+            string[] lines =
+            {
+                $"A circle of dice-rollers scoots over to make room. The bones roll true all night. (+{gold} denars)",
+                $"Three clean passes and the table pays. The other players have the grace to look impressed. (+{gold} denars)",
+                $"A leather cup slaps the table. Your toss. The cup lifts. The room groans. You collect. (+{gold} denars)",
+            };
+            return lines[_rng.Next(lines.Length)];
+        }
+
+        private static string OutcomeOldVeteran()
+        {
+            int xp = 60 + _rng.Next(41); // 60-100
+            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Tactics, xp); } catch { }
+            string[] lines =
+            {
+                $"A veteran with a scar across his chin and nothing left to prove talks to you for an hour. " +
+                $"He names formations the academy does not teach anymore. You listen carefully. (+{xp} Tactics xp)",
+                $"An old soldier holds court at the end of the bar — wars, lords, mistakes made and survived. " +
+                $"By closing time you understand something about ground that no book ever put clearly. (+{xp} Tactics xp)",
+                $"He served three lords, outlived two of them, and has opinions about all of it. " +
+                $"The things he says about positioning will stay with you longer than the drink. (+{xp} Tactics xp)",
+            };
+            return lines[_rng.Next(lines.Length)];
+        }
+
+        private static string OutcomeSecretMap(int tier)
+        {
+            int gold = tier == 1 ?  50 + _rng.Next(51)    //  50-100g
+                     : tier == 2 ? 150 + _rng.Next(201)   // 150-350g
+                                 : 400 + _rng.Next(501);  // 400-900g
+            try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
+            string[] lines =
+            {
+                $"A drunk merchant produces a rolled paper and calls it a treasure map. You buy it for almost nothing. " +
+                $"In daylight it turns out to be a real merchant route — with margin notes about where to buy low. (+{gold} denars)",
+                $"He says he found it in a dead man's boot, then says he won it at cards, then falls asleep. " +
+                $"The paper he left behind describes a courier cache three streets away. You find it. (+{gold} denars)",
+                $"The merchant is more drunk than map, but the figures scrawled at the margin add up to something real. " +
+                $"A waymarker you recognize, a buried cache, and coin enough to make the night worthwhile. (+{gold} denars)",
+            };
+            return lines[_rng.Next(lines.Length)];
+        }
+
         // ── Bad outcome implementations ───────────────────────────────────────
+
+        private static string OutcomeCheated(int tier)
+        {
+            int gold = tier == 1 ?  10 + _rng.Next(31)    //  10-40g
+                     : tier == 2 ?  30 + _rng.Next(91)    //  30-120g
+                                 : 100 + _rng.Next(201);  // 100-300g
+            gold = Math.Min(gold, Hero.MainHero?.Gold ?? 0);
+            if (gold > 0) try { Hero.MainHero?.ChangeHeroGold(-gold); } catch { }
+            AddMorale(-2f);
+            string[] lines =
+            {
+                $"The cards were marked. You only figure it out when the pot is gone and the man who smiled most is leaving. " +
+                $"(-{gold} denars, -2 morale)",
+                $"A card game, apparently social. You lose steadily enough to suspect skill — until you notice the same crease on every ten. " +
+                $"The cheat is three streets away by the time you check. (-{gold} denars, -2 morale)",
+                $"The dice felt wrong, the count felt off, and by the time you trust your gut it is too late. " +
+                $"Someone at this table has a profession. (-{gold} denars, -2 morale)",
+            };
+            return lines[_rng.Next(lines.Length)];
+        }
+
+        private static string OutcomeSpilledSecret()
+        {
+            int influence = 8 + _rng.Next(13); // 8-20
+            try
+            {
+                if (Hero.MainHero?.Clan != null && Hero.MainHero.Clan.Influence >= influence)
+                    Hero.MainHero.Clan.Influence -= influence;
+            }
+            catch { }
+            string[] lines =
+            {
+                $"The drink loosens your tongue and you say something about a lord that should have stayed in your head. " +
+                $"The room is quieter than you thought. (-{influence} influence)",
+                $"You did not mean to share your plans aloud. You are reasonably sure most of them did not understand. " +
+                $"Reasonably. (-{influence} influence)",
+                $"A word about your clan's next move. A pause. A look. The kind of quiet that follows a mistake. " +
+                $"By morning someone will have passed it on. (-{influence} influence)",
+            };
+            return lines[_rng.Next(lines.Length)];
+        }
 
         private static string OutcomeOffend()
         {
