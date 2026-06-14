@@ -125,6 +125,20 @@ namespace AshAndEmber
                     if (announce) Log(a, "breaks a Veil of Ash — grey ash closes around them.", false);
                     break;
 
+                case ElixirType.HoarfrostDraught:
+                {
+                    int chilled = HoarfrostBurst(a);
+                    if (announce) Log(a, $"drinks a Hoarfrost Draught — the cold takes {chilled} of the enemy.", false);
+                    break;
+                }
+
+                case ElixirType.PyrebloodPhiltre:
+                    Heal(a, AlchemyMath.PyrebloodHealFraction);
+                    _resist[a] = AlchemyMath.ResistDurationSec;
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.White, AlchemyMath.ResistDurationSec); } catch { }
+                    if (announce) Log(a, "drinks a Pyreblood Philtre — wounds close and the skin sets hard.", false);
+                    break;
+
                 default:
                     // Field-only elixir somehow reached battle: harmless no-op heal.
                     Heal(a, AlchemyMath.HealFraction);
@@ -207,6 +221,18 @@ namespace AshAndEmber
                         ? $"The Field Surgeon's Philtre does its work — {healed} of your wounded rise."
                         : "The Field Surgeon's Philtre is spent, but none were wounded to mend.";
                 }
+
+                case ElixirType.MarrowmendTincture:
+                {
+                    HealHero(hero, AlchemyMath.MarrowmendHealFraction);
+                    int mended = HealWoundedTroops(party, AlchemyMath.SurgeonHealFraction);
+                    return mended > 0
+                        ? $"The Marrowmend Tincture works deep — you wake whole, and {mended} of your wounded rise with you."
+                        : "The Marrowmend Tincture works deep — your wounds close and you wake whole.";
+                }
+
+                case ElixirType.KindlingCenser:
+                    return BurnKindling(party);
 
                 default:
                     return null;
@@ -337,6 +363,41 @@ namespace AshAndEmber
             return hit;
         }
 
+        // Chills every nearby ENEMY of the drinker: slows them and leaves them
+        // open (the enfeeble debuff turned outward). Reuses the _enfeeble timer
+        // so MissionTick/OnAgentHit resolve it exactly like the brew's backfire.
+        // Returns how many were caught in the cold.
+        private static int HoarfrostBurst(Agent center)
+        {
+            if (center == null || Mission.Current == null) return 0;
+            int hit = 0;
+            Vec3 pos;
+            try { pos = center.Position; } catch { return 0; }
+            float r2 = AlchemyMath.HoarfrostRadius * AlchemyMath.HoarfrostRadius;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == center || !a.IsActive() || a.IsMount) continue;
+                    // Enemies only: anyone not on the drinker's team (matches the
+                    // ally test used throughout the spell code).
+                    if (center.Team == null || a.Team == null || a.Team == center.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    if (SpellEffects.IsWarded(a)) continue;
+                    _enfeeble[a] = AlchemyMath.HoarfrostDurationSec;
+                    try { a.SetMaximumSpeedLimit(AlchemyMath.BackfireEnfeebleSpeedMult, true); } catch { }
+                    // Ashen is the one cold-blue glow in the palette — the right look
+                    // for a hoarfrost chill (every other school renders a warm tone).
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.Ashen, AlchemyMath.HoarfrostDurationSec); } catch { }
+                    hit++;
+                }
+            }
+            catch { }
+            try { SpellEffects.RecordMagicCast(pos); } catch { }
+            return hit;
+        }
+
         private static void Log(Agent a, string blurb, bool bad)
         {
             try
@@ -434,6 +495,30 @@ namespace AshAndEmber
                     return "The censer burns to ash, but no village lies near enough to feel it.";
                 nearest.Village.Hearth += AlchemyMath.HearthsmokeBoost;
                 return $"Hearthsmoke drifts over {nearest.Name} — the village prospers (+{(int)AlchemyMath.HearthsmokeBoost} hearth).";
+            }
+            catch { return "The censer burns to ash."; }
+        }
+
+        private static string BurnKindling(MobileParty party)
+        {
+            if (party == null) return "There is no smoke without a fire to light it.";
+            try
+            {
+                Settlement nearest = null;
+                float best = AlchemyMath.KindlingRange * AlchemyMath.KindlingRange;
+                Vec2 p = party.GetPosition2D;
+                foreach (var s in Settlement.All)
+                {
+                    if (!s.IsTown || s.Town == null) continue;
+                    float dx = s.GetPosition2D.x - p.x, dy = s.GetPosition2D.y - p.y;
+                    float d2 = dx * dx + dy * dy;
+                    if (d2 < best) { best = d2; nearest = s; }
+                }
+                if (nearest == null)
+                    return "The censer burns to ash, but no town lies near enough to feel it.";
+                try { nearest.Town.Loyalty  = Math.Min(100f, nearest.Town.Loyalty  + AlchemyMath.KindlingLoyalty);  } catch { }
+                try { nearest.Town.Security = Math.Min(100f, nearest.Town.Security + AlchemyMath.KindlingSecurity); } catch { }
+                return $"Kindling-smoke drifts through {nearest.Name} — the people steady (+{(int)AlchemyMath.KindlingLoyalty} loyalty, +{(int)AlchemyMath.KindlingSecurity} security).";
             }
             catch { return "The censer burns to ash."; }
         }

@@ -7,6 +7,11 @@
 // shadows a movement key or interrupts spell-casting. No input is suppressed; it
 // merely raises a selection popup, exactly like the grimoire does.
 //
+// On a controller the same screen opens on RB + R3 (Right Bumper held, Right
+// Stick clicked). The spell handler only reads the right bumper WHILE the left
+// bumper is held for its cast loop, so we additionally require the left bumper
+// NOT be held — the two chords can never fire on the same frame.
+//
 // The same ShowSatchel() screen is reachable from the Alchemical Lab menu. It
 // lists every elixir carried, the count of each, and the satchel's fill against
 // capacity (= Intelligence). Picking one drinks it: clean elixirs fire their
@@ -24,6 +29,7 @@ namespace AshAndEmber
     public static class AlchemyInputHandler
     {
         private static bool _prevCombo;
+        private static bool _prevPad;
 
         public static void Tick(bool inMission)
         {
@@ -36,9 +42,24 @@ namespace AshAndEmber
                 ShowSatchel(inMission);
 
             _prevCombo = combo;
+
+            // Controller: RB + R3. Require LB NOT held so this can never overlap
+            // the spell handler's left-bumper cast loop.
+            bool padHeld = !Input.IsKeyDown(InputKey.ControllerLBumper)
+                           && Input.IsKeyDown(InputKey.ControllerRBumper);
+            bool pad = padHeld && Input.IsKeyPressed(InputKey.ControllerRThumb);
+
+            if (pad && !_prevPad)
+                ShowSatchel(inMission);
+
+            _prevPad = pad;
         }
 
-        public static void ResetInputState() => _prevCombo = false;
+        public static void ResetInputState()
+        {
+            _prevCombo = false;
+            _prevPad = false;
+        }
 
         // Lists the satchel and lets the player drink one vial. Shared by the
         // Ctrl+X chord and the Alchemical Lab menu option.

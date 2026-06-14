@@ -304,11 +304,34 @@ namespace AshAndEmber
             AlchemyInventory.Add(type, tainted: !clean);
             try { hero.HeroDeveloper?.AddSkillXp(DefaultSkills.Medicine, BrewMedicineXp); } catch { }
 
+            // The brew is sealed — but whether you can tell good from bad is a
+            // separate test against your Intelligence. On a true read you know
+            // its quality; on a poor read you are left guessing; on a bad read
+            // you walk away believing the opposite of the truth.
+            int wit = SafeIntelligence(hero);
+            BrewAppraisal read = AlchemyMath.ReadBrew(wit, _rng.NextDouble());
+
             string name = AlchemyCatalog.Name(type);
-            string msg = clean
-                ? $"The {name} runs clean and bright. You stopper it and stow it away."
-                : $"The {name} clouds and spits as it sets. Something is off — but you bottle it anyway.";
-            ShowResult(msg);
+            ShowResult(BrewResultLine(name, clean, read));
+        }
+
+        // Builds the after-brew message from the true quality and how well it was
+        // read. A misleading read deliberately reports the opposite of the truth.
+        private static string BrewResultLine(string name, bool clean, BrewAppraisal read)
+        {
+            string cleanLine  = $"The {name} runs clean and bright. You are certain it is sound.";
+            string taintLine  = $"The {name} clouds and spits as it sets — you are certain it has spoiled. You bottle it anyway.";
+            switch (read)
+            {
+                case BrewAppraisal.Correct:
+                    return clean ? cleanLine : taintLine;
+                case BrewAppraisal.Misleading:
+                    // Confident, and wrong.
+                    return clean ? taintLine : cleanLine;
+                case BrewAppraisal.Unknown:
+                default:
+                    return $"The {name} settles into the glass. You stopper it, but you cannot say whether it set true — only drinking it will tell.";
+            }
         }
 
         private static void ShowResult(string msg)
@@ -391,12 +414,14 @@ namespace AshAndEmber
                     && party.MemberRoster.GetTroopRoster().Any(e => !e.Character.IsHero && e.WoundedNumber > 0);
             }
             catch { }
-            if (hasWounded && _rng.Next(2) == 0) return ElixirType.FieldSurgeonPhiltre;
+            if (hasWounded && _rng.Next(2) == 0)
+                return _rng.Next(2) == 0 ? ElixirType.MarrowmendTincture : ElixirType.FieldSurgeonPhiltre;
 
-            // Aserai near a village may tend the land; otherwise rally the column.
-            return aserai && _rng.Next(3) == 0
-                ? ElixirType.HearthsmokeCenser
-                : ElixirType.OathWine;
+            // Aserai near a settlement may tend the land or steady a town; otherwise
+            // rally the column.
+            if (aserai && _rng.Next(3) == 0)
+                return _rng.Next(2) == 0 ? ElixirType.HearthsmokeCenser : ElixirType.KindlingCenser;
+            return ElixirType.OathWine;
         }
 
         // NPC notice — posted to the message log like the Sanctuary's NPC miracles.
@@ -414,6 +439,12 @@ namespace AshAndEmber
         private static int SafeMedicine(Hero hero)
         {
             try { return hero?.GetSkillValue(DefaultSkills.Medicine) ?? 0; }
+            catch { return 0; }
+        }
+
+        private static int SafeIntelligence(Hero hero)
+        {
+            try { return hero?.GetAttributeValue(DefaultCharacterAttributes.Intelligence) ?? 0; }
             catch { return 0; }
         }
 

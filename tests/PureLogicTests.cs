@@ -747,6 +747,33 @@ namespace AshAndEmber.Tests
                                AlchemyMath.NpcBattleChanceCeil);
         }
 
+        [Test]
+        public void AlchemyMath_ReadBrew_LowRollKnows_HighRollMisleads_MiddleUnknown()
+        {
+            // A roll inside the "know" band reads true.
+            Assert.AreEqual(BrewAppraisal.Correct, AlchemyMath.ReadBrew(5, 0.0));
+            // A roll at the very top of the range reads the opposite of the truth.
+            Assert.AreEqual(BrewAppraisal.Misleading, AlchemyMath.ReadBrew(5, 0.999));
+            // A roll between the two bands leaves the brewer guessing.
+            float know    = AlchemyMath.ReadTrueChance(5);
+            float mislead = AlchemyMath.MisreadChance(5);
+            double mid    = (know + (1.0 - mislead)) / 2.0;
+            Assert.AreEqual(BrewAppraisal.Unknown, AlchemyMath.ReadBrew(5, mid));
+        }
+
+        [Test]
+        public void AlchemyMath_ReadBrew_SharpMind_KnowsMore_AndMisleadsLess()
+        {
+            Assert.Greater(AlchemyMath.ReadTrueChance(10), AlchemyMath.ReadTrueChance(0),
+                "More Intelligence reads true more often.");
+            Assert.Less(AlchemyMath.MisreadChance(10), AlchemyMath.MisreadChance(0),
+                "More Intelligence is misled less often.");
+            // The two bands must never overlap, at any attribute level.
+            for (int wit = 0; wit <= 12; wit++)
+                Assert.LessOrEqual(AlchemyMath.ReadTrueChance(wit) + AlchemyMath.MisreadChance(wit), 1.0f,
+                    $"Know and mislead bands overlap at Intelligence {wit}.");
+        }
+
         // ── AlchemyCatalog integrity ──────────────────────────────────────────
 
         [Test]

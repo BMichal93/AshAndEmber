@@ -78,8 +78,14 @@ namespace AshAndEmber
         // triggers) can pass it directly into PlayerEncounter.SetupFields.
         // `troops` here is the EXACT number of soldiers added (no 10× scaling) —
         // encounter battles describe small groups, not warbands.
-        public static MobileParty SpawnCombatPartyAt(Vec2 pos, int troops)
-            => SpawnAshenSpawnParty(pos, troops, 0f, exactTroops: true);
+        //
+        // `ashen` selects the flavour of the foe: true → a renamed Ashen Spawn
+        // party of thralls and invokers (the Cold Embrace circle); false → an
+        // ordinary bandit band (the drunk retainer at the gate), never marked as
+        // Ashen. Either way the roster is wiped to exactly `troops` so the looter
+        // bandit-clan's default template can't pad it with stray looters.
+        public static MobileParty SpawnCombatPartyAt(Vec2 pos, int troops, bool ashen = false)
+            => SpawnAshenSpawnParty(pos, troops, 0f, exactTroops: true, ashen: ashen);
 
         // ── Party spawning helper ─────────────────────────────────────────────
         // Creates a single Ashen Spawn bandit party near anchorPos, registers
@@ -92,7 +98,7 @@ namespace AshAndEmber
         //   • No bandit clan found in Clan.BanditFactions
         //   • BanditPartyComponent.CreateBanditParty returns null
         //   • Neither "sea_raider" nor "mountain_bandit" CharacterObject exists
-        private static MobileParty SpawnAshenSpawnParty(Vec2 anchorPos, int baseTroops, float minStrength, bool exactTroops = false)
+        private static MobileParty SpawnAshenSpawnParty(Vec2 anchorPos, int baseTroops, float minStrength, bool exactTroops = false, bool ashen = true)
         {
             try
             {
@@ -135,11 +141,21 @@ namespace AshAndEmber
                 MobileParty party = BanditPartyComponent.CreateBanditParty(partyId, banditClan, hideout, false, pt, spawnCVec);
                 if (party == null) return null;
 
-                // Prefer sea_raider (matches the Ashen Spawn troop-type check in
-                // FireWorshippersSystem._ashenSpawnTroops); fall back to mountain_bandit
-                CharacterObject troop =
-                    MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
-                 ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit");
+                // An exact-count combat party must read as precisely what the event
+                // describes, so wipe the bandit-clan template fill first — otherwise
+                // the looter faction's default roster pads it with stray looters.
+                if (exactTroops)
+                    try { party.MemberRoster.Clear(); } catch { }
+
+                // Ashen parties march as their own thralls; ordinary bandit bands use
+                // looters. Each falls back through the vanilla bandit troops so the
+                // spawn still succeeds if a custom troop is missing.
+                CharacterObject troop = ashen
+                    ? (MBObjectManager.Instance.GetObject<CharacterObject>("ashen_thrall")
+                    ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider")
+                    ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit"))
+                    : (MBObjectManager.Instance.GetObject<CharacterObject>("looter")
+                    ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit"));
                 if (troop == null) return null;
 
                 party.MemberRoster.AddToCounts(troop, exactTroops ? baseTroops : baseTroops * 10);
@@ -153,7 +169,10 @@ namespace AshAndEmber
                 }
 
                 // Register with FireWorshippersSystem so IsAshenSpawn() returns true
-                FireWorshippersSystem.ForceMarkAsAshenSpawn(party);
+                // and the party is renamed "Ashen Spawn" with invokers mixed in.
+                // Ordinary bandit bands are left as the looter clan's own party.
+                if (ashen)
+                    FireWorshippersSystem.ForceMarkAsAshenSpawn(party);
 
                 return party;
             }

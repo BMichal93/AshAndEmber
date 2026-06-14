@@ -7,8 +7,8 @@
 ### Alchemy (new system)
 - **Alchemical Labs** — every Aserai town plus a few Imperial towns gain a *Visit the Alchemical Lab* entry in the town menu. The network is announced when it is established (new campaign or first load on an existing save).
 - **Brewing** — pick a formula and make a Medicine test for 200 denars of ingredients. The elixir is added to your satchel **whatever the result** — but a failed test taints it, and a tainted brew backfires when drunk. Brewing trains Medicine.
-- **The satchel** — you carry elixirs equal to your **Intelligence**. Open it any time — in the field or mid-battle — with **Ctrl+X** (independent of the spell controls), or from the lab menu. It lists each elixir, how many you hold, and your fill against capacity.
-- **Eight elixirs** — *Healing Draught* (restore 25% HP, anywhere), *Ember Brew* (battle berserk — heavier blows, fury that dulls pain), *Oath-Wine* (party morale), *Hearthsmoke Censer* (swells the nearest village's hearth), *Caustic Vial* (a searing burst around you in battle), *Stoneblood Tonic* (battle damage resistance), *Field Surgeon's Philtre* (mends your wounded column), and *Veil of Ash* (a brief untouchable ward in battle).
+- **The satchel** — you carry elixirs equal to your **Intelligence**. Open it any time — in the field or mid-battle — with **Ctrl+X** (or **RB + R3** on a controller, independent of the spell controls), or from the lab menu. It lists each elixir, how many you hold, and your fill against capacity.
+- **Twelve elixirs** — *Healing Draught* (restore 25% HP, anywhere), *Ember Brew* (battle berserk — heavier blows, fury that dulls pain), *Oath-Wine* (party morale), *Hearthsmoke Censer* (swells the nearest village's hearth), *Caustic Vial* (a searing burst around you in battle), *Stoneblood Tonic* (battle damage resistance), *Field Surgeon's Philtre* (mends your wounded column), *Veil of Ash* (a brief untouchable ward in battle), *Hoarfrost Draught* (a cold burst that slows and softens nearby foes in battle), *Pyreblood Philtre* (a battle second wind — heals and hardens the skin), *Marrowmend Tincture* (full self-heal and mends your wounded on the map), and *Kindling Censer* (steadies the nearest town's loyalty and security).
 - **Backfires** — a tainted brew turns on the drinker: self-wound, a burst that scalds your own troops, a morale collapse, a creeping poison (damage over time), or enfeeblement (leaden limbs and a soft guard).
 - **NPCs brew too** — lords and companions (the **Aserai** especially, scaled by Medicine and personality) brew and use elixirs both off-screen on the map and **in battle**, bound by the same taint rules. Enemy battle uses are posted to the combat log exactly like enemy spell casts.
 - Fully backward-compatible: pre-Alchemy saves load with an empty satchel and freshly-picked labs.
@@ -19,6 +19,12 @@
 - **Speculating trains Trade** — funding and selling stock-exchange ventures grants Trade XP scaled to the profit.
 - **Rites train Leadership** — performing a Sanctuary or Ashen Altar rite grants a little Leadership XP.
 - **Casting trains the body and will** — each successful spell (battle or campaign map) grants a little Athletics *or* Leadership XP, chosen at random.
+
+### Fixes & tweaks
+- **Brewing keeps its secrets** — the lab no longer tells you outright whether a brew came out clean. After bottling, a separate test against your **Intelligence** decides what you believe: read it true and you know if it is sound; read it poorly and you are left guessing until you drink it; read it badly and you walk away *certain* of the opposite. A sharper mind reads true more often and is misled less.
+- **The Exchange — bigger stakes** — speculation now offers **10,000** and **50,000** denar positions alongside the smaller tiers, for those with the coin and the nerve.
+- **The Circle Closes** — choosing to fight the Ashen circle now draws actual **Ashen Spawn** (thralls and invokers), not a band of looters.
+- **Controllers** — the satchel now opens on **RB + R3** as well as Ctrl+X.
 
 ---
 

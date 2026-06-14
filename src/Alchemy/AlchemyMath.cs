@@ -18,17 +18,31 @@ using System;
 
 namespace AshAndEmber
 {
-    // The eight elixirs the alchemists of the deep south have committed to glass.
+    // The elixirs the alchemists of the deep south have committed to glass.
     public enum ElixirType
     {
-        HealingDraught      = 0, // restore a quarter of lifeblood (battle + map)
-        EmberBrew           = 1, // berserk: speed + striking power (battle)
-        OathWine            = 2, // lifts party morale (map)
-        HearthsmokeCenser   = 3, // burned by a village, swells its hearth (map)
-        CausticVial         = 4, // bursts in a caustic cloud around you (battle)
-        StonebloodTonic     = 5, // flesh turns to slag-stone, blunting blows (battle)
-        FieldSurgeonPhiltre = 6, // mends the wounded of your column (map)
-        VeilOfAsh           = 7, // a shroud nothing can touch, briefly (battle)
+        HealingDraught      = 0,  // restore a quarter of lifeblood (battle + map)
+        EmberBrew           = 1,  // berserk: speed + striking power (battle)
+        OathWine            = 2,  // lifts party morale (map)
+        HearthsmokeCenser   = 3,  // burned by a village, swells its hearth (map)
+        CausticVial         = 4,  // bursts in a caustic cloud around you (battle)
+        StonebloodTonic     = 5,  // flesh turns to slag-stone, blunting blows (battle)
+        FieldSurgeonPhiltre = 6,  // mends the wounded of your column (map)
+        VeilOfAsh           = 7,  // a shroud nothing can touch, briefly (battle)
+        HoarfrostDraught    = 8,  // a chilling burst — nearby foes slow and soften (battle)
+        PyrebloodPhiltre    = 9,  // a second wind: closes wounds and hardens the skin (battle)
+        MarrowmendTincture  = 10, // deep rest in a bottle: heals you and your wounded (map)
+        KindlingCenser      = 11, // burned by a town, steadies its people (map)
+    }
+
+    // How well the brewer reads their own work after bottling it. Brewing no
+    // longer announces clean-vs-tainted outright; a second test against the
+    // brewer's Intelligence decides what they believe about the vial in hand.
+    public enum BrewAppraisal
+    {
+        Correct,    // you read it true — you know whether it is sound
+        Unknown,    // you cannot tell — the result is left in doubt
+        Misleading, // you read it wrong — you are told the opposite of the truth
     }
 
     // What a tainted elixir does instead of its promise.
@@ -43,7 +57,7 @@ namespace AshAndEmber
 
     public static class AlchemyMath
     {
-        public const int ElixirTypeCount = 8;
+        public const int ElixirTypeCount = 12;
 
         // ── Satchel capacity ─────────────────────────────────────────────────
         // One vial per point of Intelligence; never less than one so any hero
@@ -68,6 +82,37 @@ namespace AshAndEmber
         // True = clean elixir; false = tainted (will backfire on use).
         public static bool IsBrewSuccess(int medicineSkill, double roll)
             => roll < BrewSuccessChance(medicineSkill);
+
+        // ── Reading the brew (Intelligence) ──────────────────────────────────
+        // After bottling, a separate test against Intelligence decides what the
+        // brewer learns:
+        //   • roll lands in the low band → Correct  (you know the truth)
+        //   • roll lands in the high band → Misleading (you believe the opposite)
+        //   • anything between → Unknown (you cannot tell)
+        // A sharp mind widens the "know" band and shrinks the "misled" band, but
+        // never to certainty either way — alchemy keeps a little of its mystery.
+        // Scaled for the attribute range (Intelligence is roughly 0–10, not 0–300).
+        public const float ReadBaseChance     = 0.30f; // know-the-truth chance at 0 Intelligence
+        public const float ReadPerPoint       = 0.060f;
+        public const float ReadChanceFloor    = 0.20f;
+        public const float ReadChanceCeil     = 0.90f;
+        public const float MisreadBaseChance  = 0.22f; // believe-a-lie chance at 0 Intelligence
+        public const float MisreadPerPoint    = 0.015f;
+        public const float MisreadChanceFloor = 0.03f;
+
+        public static float ReadTrueChance(int intelligence)
+            => Clamp(ReadBaseChance + intelligence * ReadPerPoint, ReadChanceFloor, ReadChanceCeil);
+
+        public static float MisreadChance(int intelligence)
+            => Clamp(MisreadBaseChance - intelligence * MisreadPerPoint, MisreadChanceFloor, 1f);
+
+        public static BrewAppraisal ReadBrew(int intelligence, double roll)
+        {
+            double r = Clamp01(roll);
+            if (r < ReadTrueChance(intelligence)) return BrewAppraisal.Correct;
+            if (r >= 1.0 - MisreadChance(intelligence)) return BrewAppraisal.Misleading;
+            return BrewAppraisal.Unknown;
+        }
 
         // Maps a [0,1) roll onto one of the five backfires (equal weight).
         public static AlchemyBackfire PickBackfire(double roll)
@@ -139,6 +184,23 @@ namespace AshAndEmber
 
         // Veil of Ash (ward)
         public const float VeilDurationSec = 10f;
+
+        // Hoarfrost Draught (battle AoE debuff — slows and softens nearby foes;
+        // reuses the enfeeble machinery so its speed/vulnerability match the brew's
+        // own backfire, only turned outward onto the enemy).
+        public const float HoarfrostRadius      = 6f;
+        public const float HoarfrostDurationSec = 12f;
+
+        // Pyreblood Philtre (battle second wind — heal + stone-skin resist)
+        public const float PyrebloodHealFraction = 0.20f;
+
+        // Marrowmend Tincture (map — full self-heal + mend wounded column)
+        public const float MarrowmendHealFraction = 1.0f;
+
+        // Kindling Censer (map — steadies the nearest town's people)
+        public const float KindlingLoyalty  = 15f;
+        public const float KindlingSecurity = 15f;
+        public const float KindlingRange    = 14f; // map units to find a town
 
         // ── Backfire magnitudes ──────────────────────────────────────────────
         public const float BackfireSelfWoundFraction = 0.25f; // of max HP

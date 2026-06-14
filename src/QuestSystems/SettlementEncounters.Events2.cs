@@ -591,7 +591,7 @@ namespace AshAndEmber
                             }
                             break;
                         case "c":
-                            TriggerEncounterBattle(s, 8);
+                            TriggerEncounterBattle(s, 8, ashen: true);
                             Msg("You draw. They do not flinch — they never do. " +
                                 "The ring tightens. Whatever happens next happens in the open, " +
                                 "blade against cold, until one side stops moving.", BadColor);

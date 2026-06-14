@@ -343,14 +343,14 @@ namespace AshAndEmber
         // Uses PlayerEncounter.Start/SetupFields/StartBattle for a direct transition;
         // if that API path fails the party is still placed adjacent to the player
         // so Bannerlord's own encounter detection fires on the next campaign tick.
-        private static void TriggerEncounterBattle(Settlement s, int troops)
+        private static void TriggerEncounterBattle(Settlement s, int troops, bool ashen = false)
         {
             try
             {
                 var main = MobileParty.MainParty;
                 if (main == null) return;
 
-                var enemy = CampaignMapEvents.SpawnCombatPartyAt(s.GetPosition2D, troops);
+                var enemy = CampaignMapEvents.SpawnCombatPartyAt(s.GetPosition2D, troops, ashen);
                 if (enemy == null) return;
 
             }

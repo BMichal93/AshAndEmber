@@ -1,7 +1,7 @@
 // =============================================================================
 // ASH AND EMBER — Alchemy/AlchemyCatalog.cs
 //
-// Static, lore-friendly definitions for the eight elixirs. Pure data (strings
+// Static, lore-friendly definitions for the elixirs. Pure data (strings
 // and enums only — no TaleWorlds types) so it is safe for the test runner and
 // shared by both the menu UI and the effect code. Where an elixir may be drunk
 // is captured by the UsableInBattle / UsableOnMap flags; the satchel screen and
@@ -87,6 +87,34 @@ namespace AshAndEmber
                 Effect = "A shroud nothing can touch — briefly untouchable in battle.",
                 Flavour = "Grey ash rises around you and will not be parted. Neither will you.",
                 UsableInBattle = true, UsableOnMap = false },
+
+            new ElixirDef {
+                Type = ElixirType.HoarfrostDraught,
+                Name = "Hoarfrost Draught",
+                Effect = "A breath of deep-winter cold — nearby foes slow and soften.",
+                Flavour = "It tastes of the long night. The air around you frosts, and the cold goes looking for others.",
+                UsableInBattle = true, UsableOnMap = false },
+
+            new ElixirDef {
+                Type = ElixirType.PyrebloodPhiltre,
+                Name = "Pyreblood Philtre",
+                Effect = "A second wind — wounds close and the skin sets hard for a time.",
+                Flavour = "The fire goes inward instead of out. You feel it banking under your ribs, holding the line.",
+                UsableInBattle = true, UsableOnMap = false },
+
+            new ElixirDef {
+                Type = ElixirType.MarrowmendTincture,
+                Name = "Marrowmend Tincture",
+                Effect = "Deep rest in a bottle — heals you in full and mends your wounded.",
+                Flavour = "Sleep distilled. You wake whole, and so do the men who could not walk this morning.",
+                UsableInBattle = false, UsableOnMap = true },
+
+            new ElixirDef {
+                Type = ElixirType.KindlingCenser,
+                Name = "Kindling Censer",
+                Effect = "Burned beside a town, it steadies the people — loyalty and order.",
+                Flavour = "A warm resin-smoke that drifts through the streets. Quarrels cool; the watch stands a little straighter.",
+                UsableInBattle = false, UsableOnMap = true },
         };
 
         public static IReadOnlyList<ElixirDef> All => _defs;

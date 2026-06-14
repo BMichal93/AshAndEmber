@@ -116,6 +116,7 @@ namespace AshAndEmber
             {
                 ElixirType.EmberBrew, ElixirType.CausticVial,
                 ElixirType.StonebloodTonic, ElixirType.VeilOfAsh,
+                ElixirType.HoarfrostDraught, ElixirType.PyrebloodPhiltre,
             };
             return battleSet[_rng.Next(battleSet.Length)];
         }

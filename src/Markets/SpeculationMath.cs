@@ -32,7 +32,7 @@ namespace AshAndEmber
         public const int ForcedSalePct   = 90;
         public const int CooldownDays    = 4;
 
-        public static readonly int[] StakeTiers = { 500, 2000, 5000 };
+        public static readonly int[] StakeTiers = { 500, 2000, 5000, 10000, 50000 };
 
         /// Rounds before the brokers force the sale: 4 base, +1 per 75 Trade, cap 8.
         public static int RoundsLimit(int tradeSkill)
