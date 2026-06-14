@@ -123,6 +123,9 @@ namespace AshAndEmber
         private static string _ashenMachineryKingdomId = null;    // kingdom targeted by deferred option D
         private static int    _weaponInventorFound     = 0;       // 1 after the Toxic Fog encounter fires (one-time)
         private static readonly Random _rng          = new Random();
+        // Prevents the same encounter from repeating within a short run of sessions
+        private static readonly List<string> _recentEncounters = new List<string>();
+        private const int RecentEncounterMemory = 4;
 
         // ── Colours ───────────────────────────────────────────────────────────
         private static readonly Color FireColor  = new Color(0.90f, 0.60f, 0.20f);
@@ -166,6 +169,7 @@ namespace AshAndEmber
             _ashenMachineryCountdown      = 0;
             _ashenMachineryKingdomId      = null;
             _weaponInventorFound          = 0;
+            _recentEncounters.Clear();
         }
 
         public static void Save(IDataStore store)
@@ -488,7 +492,15 @@ namespace AshAndEmber
             if (pool.Count == 0) return;
             if (MageKnowledge._deferredInquiry != null) return; // don't clobber a queued quest popup
             _cooldown = MinDaysBetween;
-            Action<Settlement> chosen = pool[_rng.Next(pool.Count)];
+
+            var filtered = pool.Where(a => !_recentEncounters.Contains(a.Method.Name)).ToList();
+            if (filtered.Count == 0) filtered = pool;
+
+            Action<Settlement> chosen = filtered[_rng.Next(filtered.Count)];
+            _recentEncounters.Add(chosen.Method.Name);
+            if (_recentEncounters.Count > RecentEncounterMemory)
+                _recentEncounters.RemoveAt(0);
+
             MageKnowledge._deferredInquiry = () => { try { chosen(s); } catch { } };
         }
 
