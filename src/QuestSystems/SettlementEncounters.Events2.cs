@@ -1125,5 +1125,99 @@ namespace AshAndEmber
                 }, null, "", false), false, true);
         }
 
+        // ── AFTER BATTLE: The Surgeon's Question [Medicine] ──────────────────
+        private static void EB8_FieldTriage()
+        {
+            float chance = SkillChance(DefaultSkills.Medicine, 0.25f);
+            string hint  = SkillHint(DefaultSkills.Medicine, 0.25f, "Apply your own knowledge alongside the surgeon");
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "✚  The Surgeon's Question",
+                "Your surgeon has done what he can with what he has. He comes to you with a specific problem: two men with abdominal wounds, one set of gut-surgery supplies, and a clinical decision he says is above his certainty. He is asking you — not because he thinks you're a surgeon, but because he has seen enough of you to know whether you are the kind of person who has relevant information and the honesty to say when you don't.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Work alongside him — apply whatever you know.", null, true, hint),
+                    new InquiryElement("b", "Give him the decision completely — this is his skill, not yours.", null, true,
+                        "This is his skill. Your men will see you trust him completely."),
+                    new InquiryElement("c", "Ask him to explain the clinical picture fully before you say anything.", null, true,
+                        "Your question may reshape his thinking. He may reach a better answer."),
+                    new InquiryElement("d", "Spend gold on an urgent courier for a specialist while the surgeon holds the situation.", null, true,
+                        "The specialist is coming. The surgeon holds the situation until then."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            if (SkillRoll(DefaultSkills.Medicine, 0.25f))
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                AddMorale(6f);
+                                Msg("You have seen enough battlefield surgery to recognise what he is weighing — the wound sites are different in a way that changes the priority. You tell him what you see. He checks it against his own read and adjusts. Both men receive treatment in the right order. Both survive. Your surgeon looks at you differently afterward — not with deference, just professional respect.", GoodColor);
+                            }
+                            else
+                            {
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                AddMorale(2f);
+                                Msg("You share what you know. Some of it is useful and he incorporates it. Some of it is below his knowledge level and he sets it aside without comment. The combined knowledge is better than his alone. One man survives who might not have. The other was beyond the combined knowledge of both of you. Your surgeon closes that file with the quiet efficiency of someone who has written those reports before and will write them again.", DimColor);
+                            }
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Honor, 1);
+                            AddMorale(4f);
+                            Msg("You give him the decision entirely and tell him so directly. He makes it cleanly, without the hesitation of someone who is second-guessing a superior's preferences. One man survives. The other does not — this was the likely outcome either way, and the surgeon's choice was correct given what was knowable. Your men watch you trust your own people completely. That travels through a column faster than orders.", GoodColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Calculating, 1);
+                            AddMorale(4f);
+                            Msg("You ask him to describe the clinical picture fully before you say anything. In describing it, he hears something he had not heard while thinking it. He stops and redirects. Both men receive treatment. Both survive. He thanks you for the question.", GoodColor);
+                            break;
+                        case "d":
+                            ChangeGold(-500);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            AddMorale(3f);
+                            Msg("The courier rides hard. The specialist arrives six hours later with better supplies and a different technique. He saves one of the two men with confidence and works on the second for three hours before confirming what your surgeon already knew. One man lives who would not have. The 500 coin bought a life and a specific hour's professional certainty. Your surgeon watches the specialist work with the full attention of a man taking notes.", GoodColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
+        // ── AFTER RAID: Under the Floor ───────────────────────────────────────
+        private static void ER3_CellarSurvivors()
+        {
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                "☠  Under the Floor",
+                "As your party prepares to leave, one of your men kicks through a root cellar door in a burned cottage. A family is in the dark below — grandparents, two young children — who have been in there since the raid began. They emerge slowly, covered in dust, squinting at the light. They do not speak. They are waiting to see what you do next.",
+                new List<InquiryElement>
+                {
+                    new InquiryElement("a", "Ensure they have food, water, and coin before you leave.", null, true,
+                        "You leave something behind. The weight shifts, slightly."),
+                    new InquiryElement("b", "Point them toward the nearest intact village and ride on.", null, true,
+                        "A direction. Practical."),
+                    new InquiryElement("c", "Say nothing and leave.", null, true,
+                        "You leave. They watch you go."),
+                },
+                false, 1, 1, "Decide", "",
+                chosen =>
+                {
+                    switch (chosen?[0]?.Identifier as string)
+                    {
+                        case "a":
+                            ChangeGold(-300);
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You have food and water left at the cellar entrance, coin pressed into the grandfather's hands. He holds it and looks at you. You rode in this morning and took what was here. You rode out this afternoon and left what was needed.", DimColor);
+                            break;
+                        case "b":
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("You point east and tell them the village name. The grandfather nods. The children stare at you the whole time you are giving the directions, not blinking, and you find you cannot meet their eyes while you speak.", DimColor);
+                            break;
+                        case "c":
+                            ShiftTrait(DefaultTraits.Honor, -1);
+                            Msg("Your party moves out. The four of them stand in the light of the burned cottage and watch you go. The youngest child does not know to be afraid yet. She is still at the age where she assumes the adults around her know what is happening.", BadColor);
+                            break;
+                    }
+                }, null, "", false), false, true);
+        }
+
     }
 }

@@ -175,6 +175,8 @@ namespace AshAndEmber
             int   clanTier   = Hero.MainHero?.Clan?.Tier ?? 0;
             var pool  = new List<Action>();
 
+            pool.Add(EB8_FieldTriage);
+
             if (ashen && ashenCasts >= 3)
             {
                 // More casts = higher weight: 1 copy at 3 casts, up to 3 copies at 5+
@@ -229,7 +231,7 @@ namespace AshAndEmber
         private static void TryFireRaid()
         {
             var pool = new List<Action>();
-            // (no raid encounters currently active)
+            pool.Add(ER3_CellarSurvivors);
             FireBattle(pool);
         }
 
