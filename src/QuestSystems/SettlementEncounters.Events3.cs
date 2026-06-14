@@ -45,14 +45,14 @@ namespace AshAndEmber
                     {
                         case "a":
                             try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
-                            AgePlayer(30);
+                            AgePlayer(7);
                             Msg("He stands in it for a long moment, eyes closed. Then he begins to speak — not quickly, not with ceremony, but as a man unburdening something he has carried for decades. He talks for two hours. When he leaves, you sit with the shape of what he gave you for a long time. One focus point, paid in warmth and thirty days. You call it even.", FireColor);
                             break;
                         case "b":
                             Msg("He nods once when you refuse, as though he expected it. He folds his coat around himself and walks away from the road — not toward any village you can see, just away from the direction you are heading. You do not see where he goes.", DimColor);
+                            _emberTitheRefusedCountdown = 14;
                             break;
                         case "c":
-                            ChangeRenown(10f);
                             ChangeGold(500);
                             if (_rng.NextDouble() < 0.5)
                             {
@@ -66,6 +66,25 @@ namespace AshAndEmber
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireEmberTitheRefusedConsequence — 14 days after refusing the old man ──
+        private static void FireEmberTitheRefusedConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _emberTitheRefusedCountdown = 1; return; }
+            MageKnowledge._deferredInquiry = () =>
+            {
+                if (_rng.NextDouble() < 0.50)
+                {
+                    try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                    AgePlayer(14);
+                    Msg("A soldier in your company found a body on the road outside the settlement — an old man, coat pulled around him, dead of cold or age or some combination of the two. His notes were scattered in the wind. The soldier recovered a single page before they blew, and brought it because he did not know what else to do with it. You read it in ten minutes. It took the old man forty years to write. The page teaches you something. One focus point, purchased at a price that was not yours to pay.", FireColor);
+                }
+                else
+                {
+                    Msg("Word comes back from the village: a body was found on the road, old man, no identifying marks. His notes were scattered before anyone thought to collect them. Whatever he carried for forty years is gone with him. You refused him and he died on the road and the knowledge died with him. That is the complete record of this.", DimColor);
+                }
+            };
         }
 
         // ── ES7_FallenLaboratory — siege attacker won, mage ───────────────────
@@ -369,30 +388,86 @@ namespace AshAndEmber
         private static void FireBloodTitheConsequence()
         {
             if (MageKnowledge._deferredInquiry != null) { _bloodTitheCountdown = 1; return; }
-            if (_rng.NextDouble() < 0.5)
+
+            double roll = _rng.NextDouble();
+
+            if (roll < 0.35)
             {
+                // Tracking both ways — player gets a choice
                 MageKnowledge._deferredInquiry = () =>
                 {
-                    WoundPlayer();
-                    AgePlayer(365);
+                    MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                        "★  The Thread Pulls Both Ways",
+                        "Three days since the alchemist took a drop of your blood. It arrives as a sensation, not a wound — a pull, specific and directional, as though someone has attached a thread to the fire you carry and is testing whether it holds. He used the blood to create a working that reaches back through the sample. The fire inside you feels it. You can feel where it is coming from.",
+                        new List<InquiryElement>
+                        {
+                            new InquiryElement("a", "Follow the thread. Find out where he is.", null, true,
+                                "The direction is clear. The distance is walkable."),
+                            new InquiryElement("b", "Sever it. The fire can burn a thread.", null, true,
+                                "One day's aging. The connection ends. You learn nothing further."),
+                            new InquiryElement("c", "Let it run — see what he does with the connection.", null, true,
+                                "He may learn something. So may you."),
+                        },
+                        false, 1, 1, "Decide", "",
+                        chosen =>
+                        {
+                            switch (chosen?[0]?.Identifier as string)
+                            {
+                                case "a":
+                                    ShiftTrait(DefaultTraits.Calculating, 1);
+                                    ChangeRenown(10f);
+                                    _bloodTitheRevealCountdown = 3;
+                                    Msg("You follow the pull through two streets and a market and find him — a back room above a tannery, equipment he was not carrying when you met. He has been expecting something like you to come. He is not surprised. He has questions and so do you.", AshenColor);
+                                    break;
+                                case "b":
+                                    AgePlayer(1);
+                                    Msg("You push the fire through the thread deliberately until it burns. The pull stops. You are one day older. You know someone was reaching through your blood toward you, and that you ended the reach before it became anything more.", DimColor);
+                                    break;
+                                case "c":
+                                    _bloodTitheRevealCountdown = 7;
+                                    Msg("You let it run. The connection sits in you like a splinter — present, not painful, oriented. He is doing something with what he can feel through it. Whether that is useful or dangerous is not yet apparent. You note the direction and ride on.", DimColor);
+                                    break;
+                            }
+                        }, null, "", false), false, true);
+                };
+            }
+            else if (roll < 0.70)
+            {
+                // Spectral agony — wound + age, with at least the dignity of a choice to endure
+                MageKnowledge._deferredInquiry = () =>
+                {
                     MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                         "★  Spectral Pain",
-                        "Three days since the alchemist took a drop of your blood. It arrives in the night — not a wound but something working through the fire you carry, using the drop as a thread to reach back through. Your body registers it as pain before your mind can name it. You come awake on the floor of whatever inn you are in, the fire inside doing something involuntary, and the sensation is exactly what it feels like when something reaches into the core of you and pulls.",
+                        "Three days since the alchemist took a drop of your blood. It arrives in the night — not a wound but something working through the fire you carry, using the drop as a thread to reach back through. Your body registers it as pain before your mind can name it. You come awake on the floor of whatever inn you are in, the fire inside doing something involuntary.",
                         new List<InquiryElement>
                         {
                             new InquiryElement("ok", "Endure it.", null, true,
                                 "Whatever he did with the drop, he did it with intent."),
                         },
                         false, 1, 1, "Endure", "",
-                        _ => Msg("Whatever he did with the drop, he did it with intent. You carry the wound and the year and the knowledge that the blood meant something to someone who knew what to do with it.", BadColor),
+                        _ =>
+                        {
+                            WoundPlayer();
+                            AgePlayer(365);
+                            Msg("Whatever he did with the drop, he did it with intent. You carry the wound and the year and the knowledge that the blood meant something to someone who knew what to do with it.", BadColor);
+                        },
                         null, "", false), false, true);
                 };
             }
             else
             {
+                // Quiet tracker — something now knows where you are
                 MageKnowledge._deferredInquiry = () =>
-                    Msg("Three days since the alchemist took a drop of your blood. Whatever he intended, it has not arrived — or has not arrived yet, or was not intended for you. The fire you carry feels the same. You note it and ride on.", DimColor);
+                    Msg("Three days since the alchemist took a drop of your blood. Whatever he intended, it has not arrived in any form you can feel. The fire you carry is unchanged. But you notice, over the following days, that certain things find you more easily than they should — a message through an intermediary you did not know had your route, a face in a market you have seen before in a different city. Something knows your location. It has not yet decided what to do with that information.", DimColor);
             }
+        }
+
+        // ── Deferred: FireBloodTitheReveal — follow-up after "follow the thread" or "let it run" ──
+        private static void FireBloodTitheReveal()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _bloodTitheRevealCountdown = 1; return; }
+            MageKnowledge._deferredInquiry = () =>
+                Msg("The alchemist's location is no longer what it was. The trail ends at the tannery room — cleared, methodically, without haste. He knew you were coming with enough time to move properly. What he left behind is a single sealed vial on the windowsill. Inside: your blood sample, returned whole. There is a note folded under it. It says only: 'Adequate precautions. Come back when you are ready for the conversation.' You are not certain what that means. You are certain he means it.", AshenColor);
         }
 
         // ── EC_TavernStranger — enter city, general ───────────────────────────
@@ -438,9 +513,45 @@ namespace AshAndEmber
                                     break;
 
                                 case 2:
-                                    // Robbed in the night
                                     ChangeGold(-100);
-                                    Msg("You wake in the early morning to the sound of the door closing carefully. Your purse is 100 coins lighter. They were good at it — no mess, no drama, just a professional taking advantage of a distraction. You dress without hurrying and decide not to mention it.", BadColor);
+                                    Msg("You wake in the early morning to the sound of the door closing carefully. Your purse is 100 coins lighter. They were good at it — no mess, no drama, just a professional taking advantage of a distraction.", BadColor);
+                                    MageKnowledge._deferredInquiry = () =>
+                                    {
+                                        float rogChance = SkillChance(DefaultSkills.Roguery, 0.40f);
+                                        MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                                            "◆  The Empty Purse",
+                                            "They left less than ten minutes ago. The city is large but the night gates are not open yet — whoever they are, they are still inside the walls.",
+                                            new List<InquiryElement>
+                                            {
+                                                new InquiryElement("a", $"Hunt them down before the city wakes. ({(int)(rogChance*100)}% Roguery)", null, true,
+                                                    "Recover the coin and learn who sent them."),
+                                                new InquiryElement("b", "Let them go. A hundred coin is not worth the morning.", null, true,
+                                                    "The coin is gone. So are they."),
+                                            },
+                                            false, 1, 1, "Decide", "",
+                                            sub =>
+                                            {
+                                                switch (sub?[0]?.Identifier as string)
+                                                {
+                                                    case "a":
+                                                        if (SkillRoll(DefaultSkills.Roguery, 0.40f))
+                                                        {
+                                                            ChangeGold(100);
+                                                            ShiftTrait(DefaultTraits.Calculating, 1);
+                                                            _tavernRobberyCountdown = 7;
+                                                            Msg("You find them two streets over — not hiding, not running, operating with the confidence of people who believe the window between action and consequence is safe. It is not. You recover the coin and, from the kit they were carrying, a sealed letter with an address in the city. The letter describes you. Someone commissioned this. You have their address and seven days before they notice the commission failed.", AshenColor);
+                                                        }
+                                                        else
+                                                        {
+                                                            Msg("You move through the pre-dawn city and arrive at each likely location one step behind them. By the time the morning gates open they are outside the walls. The coin is gone. You know they were professional. You do not know who hired them.", DimColor);
+                                                        }
+                                                        break;
+                                                    case "b":
+                                                        Msg("You let them go. A hundred coin and a revision of your judgment of certain kinds of evenings. You dress without hurrying and decide not to mention it.", DimColor);
+                                                        break;
+                                                }
+                                            }, null, "", false), false, true);
+                                    };
                                     break;
 
                                 case 3:
@@ -476,6 +587,17 @@ namespace AshAndEmber
                         }
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireTavernRobberyConsequence — 7 days after successful robbery pursuit ──
+        private static void FireTavernRobberyConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _tavernRobberyCountdown = 1; return; }
+            MageKnowledge._deferredInquiry = () =>
+            {
+                ChangeRelWithRandomLord(-5);
+                Msg("Seven days. The address you found led to a counting house — legitimate front, illegitimate side contracts. The handler who commissioned the robbery has noticed the commission failed and the couriers have not returned. He does not know your name. He has narrowed the field, and you are one of the three possibilities. A lord who had business with that counting house receives the concern through proper channels and is now slightly less inclined toward you, for reasons neither of you can state cleanly.", BadColor);
+            };
         }
 
         // ── Deferred: FireBabyConsequence — 365 days after EC_TavernStranger outcome 4 ──
