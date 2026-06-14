@@ -91,14 +91,20 @@ namespace AshAndEmber
                             AgePlayer(1);
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You press your palm to the child's brow. The fever breaks. The mother cannot speak for weeping.", GoodColor);
+                            _mothersPleaPhase = 1;
+                            _mothersPleaCountdown = 7;
                             break;
                         case "b":
                             Msg("You cannot be the answer to every prayer on every road. You ride on.", DimColor);
+                            _mothersPleaPhase = 3;
+                            _mothersPleaCountdown = 7;
                             break;
                         case "c":
                             ChangeGold(-200);
                             ShiftTrait(DefaultTraits.Generosity, 1);
                             Msg("The coins may save the child if a healer is near. You do not look back.", GoldColor);
+                            _mothersPleaPhase = 2;
+                            _mothersPleaCountdown = 7;
                             break;
                     }
                 }, null, "", false), false, true);
