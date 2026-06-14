@@ -35,6 +35,240 @@ namespace AshAndEmber
         }
 
         // ═══════════════════════════════════════════════════════════════════
+        // DEFERRED — Mother's Plea consequences (phases 1–5)
+        // ═══════════════════════════════════════════════════════════════════
+
+        private static void FireMothersPleaConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _mothersPleaCountdown = 1; return; }
+
+            int phase = _mothersPleaPhase;
+            _mothersPleaPhase = 0;
+
+            switch (phase)
+            {
+                case 1: FireMothersPlea_Healed7Day();  break;
+                case 2: FireMothersPlea_Money7Day();   break;
+                case 3: FireMothersPlea_Refused7Day(); break;
+                case 4: FireMothersPlea_ChildGrown();  break;
+                case 5: FireMothersPlea_Assassin();    break;
+            }
+        }
+
+        // Phase 1 — healed with fire, 7 days later (3 possible branches)
+        private static void FireMothersPlea_Healed7Day()
+        {
+            int roll = _rng.Next(3);
+
+            if (roll == 0)
+            {
+                // a) Daughter kidnapped by the Ashen — mother blames you, then comes for you
+                ShiftTrait(DefaultTraits.Mercy, -1);
+                _mothersPleaPhase = 5;
+                _mothersPleaCountdown = 5;
+                MageKnowledge._deferredInquiry = () =>
+                    MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                        "★  Ash's Debt",
+                        "A messenger reaches you on the road — rough-spoken, half-panicked, sent by the same village. The girl you healed is gone. Taken in the night by figures in grey cloaks. The mother sent word not as a plea but as an accusation: she knows your kind now, and she knows the Ashen follow the fire. She says you painted a target on her daughter's forehead the moment you touched her.",
+                        new List<InquiryElement>
+                        {
+                            new InquiryElement("ok", "There is nothing to say.", null, true,
+                                "She may not be wrong."),
+                        },
+                        false, 1, 1, "Endure", "",
+                        _ => Msg("She may not be wrong. The fire draws the cold. You have known this for some time. Knowing it and living with it are different skills.", BadColor),
+                        null, "", false), false, true);
+            }
+            else if (roll == 1)
+            {
+                // b) Mother gives old family trinket — teaches random talent
+                MageKnowledge._deferredInquiry = () =>
+                {
+                    var available = TalentSystem.All
+                        .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id))
+                        .ToList();
+
+                    string talentLine = available.Count > 0
+                        ? $"Something shifts in you as you handle it — the shape of {available[_rng.Next(available.Count)].Name}, given without ceremony."
+                        : "Something shifts in you as you handle it. The fire turns back once and finds its own edge.";
+
+                    if (available.Count > 0)
+                    {
+                        var pick = available[_rng.Next(available.Count)];
+                        TalentSystem.GrantFree(pick.Id, Hero.MainHero);
+                        talentLine = $"Something shifts in you as you handle it — the shape of {pick.Name}, given without ceremony.";
+                    }
+                    else
+                    {
+                        ChangeRenown(12f);
+                    }
+
+                    MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                        "✦  The Ember-Mother's Gift",
+                        "A week later a boy finds you at the roadside and presses a cloth-wrapped bundle into your hands without a word. Inside: an old bronze pendant, worn smooth, warm against your palm in a way that has nothing to do with the sun. A note in rough letters says only: 'She lived. This was my grandmother's. She said it was meant for someone like you.'",
+                        new List<InquiryElement>
+                        {
+                            new InquiryElement("ok", "Take it.", null, true, ""),
+                        },
+                        false, 1, 1, "Accept", "",
+                        _ => Msg(talentLine, FireColor),
+                        null, "", false), false, true);
+                };
+            }
+            else
+            {
+                // c) Child survives, will return in 10 years
+                _mothersPleaPhase = 4;
+                _mothersPleaCountdown = 3650;
+                MageKnowledge._deferredInquiry = () =>
+                    Msg("Word drifts back to you from the village: the child is well. Quieter than before the fever, the mother says. Watches fire differently. You note it and ride on.", GoodColor);
+            }
+        }
+
+        // Phase 2 — gave money, 7 days later
+        private static void FireMothersPlea_Money7Day()
+        {
+            if (_rng.NextDouble() < 0.5)
+            {
+                MageKnowledge._deferredInquiry = () =>
+                    Msg("Word reaches you from the village: the child did not make it. The healer came, but came too late. The coins were returned to your saddlebag without a note. You keep them. There is nothing else to do with them.", DimColor);
+            }
+            else
+            {
+                MageKnowledge._deferredInquiry = () =>
+                    Msg("Word reaches you from the village: the fever broke on its own — or the healer arrived in time, depending on who is telling the story. The child is alive. The mother asked the messenger to say thank you. She did not say it herself.", GoodColor);
+            }
+        }
+
+        // Phase 3 — refused, 7 days later
+        private static void FireMothersPlea_Refused7Day()
+        {
+            if (_rng.NextDouble() < 0.5)
+            {
+                // a) Child dies, nothing happens
+                MageKnowledge._deferredInquiry = () =>
+                    Msg("Word travels slowly from that village: the child died three days after you rode on. The fever took her before a healer arrived. Nobody blames you by name. Nobody needed to.", DimColor);
+            }
+            else
+            {
+                // b) Child dies, bitter mother — assassination in 3 days
+                _mothersPleaPhase = 5;
+                _mothersPleaCountdown = 3;
+                MageKnowledge._deferredInquiry = () =>
+                    Msg("Word travels slowly from that village: the child died three days after you rode on. The fever took her before a healer arrived. The mother has not been seen since.", BadColor);
+            }
+        }
+
+        // Phase 4 — child grown, 10 years later — joins the player clan as a mage
+        private static void FireMothersPlea_ChildGrown()
+        {
+            MageKnowledge._deferredInquiry = () =>
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "✦  The Fire She Was Born From",
+                    "A young woman presents herself at your camp with the unhurried certainty of someone who has been walking a long time and has rehearsed the last sentence of the journey. She was a child with a fever, ten years ago, on a road you have long since forgotten. She has not. She knows what you did. She knows what she has been ever since. She has learned the shape of the fire in her own way, in her own years. She wants to learn the rest from you.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "Take her in. She has earned the right to ask.", null, true,
+                            "She is a mage. She found you. That is already more than most manage."),
+                        new InquiryElement("b", "Turn her away. The fire is not a family business.", null, true,
+                            "She will learn without you. She is clearly going to."),
+                    },
+                    false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        switch (chosen?[0]?.Identifier as string)
+                        {
+                            case "a":
+                                TryAddMothersPleaChild();
+                                break;
+                            case "b":
+                                ShiftTrait(DefaultTraits.Mercy, -1);
+                                Msg("She listens to your refusal without argument. She nods once, as if filing it away. She walks back the way she came with the same unhurried pace. You watch her go and notice the fire in you turns back once — the way it does when it recognises its own, and knows better than you do that you made the wrong call.", DimColor);
+                                break;
+                        }
+                    }, null, "", false), false, true);
+            };
+        }
+
+        private static void TryAddMothersPleaChild()
+        {
+            try
+            {
+                CharacterObject template = CharacterObject.All
+                    .FirstOrDefault(c => c != null && !c.IsHero && c.IsFemale
+                                     && c.Culture == Hero.MainHero?.Culture)
+                    ?? CharacterObject.All.FirstOrDefault(c => c != null && !c.IsHero && c.IsFemale)
+                    ?? CharacterObject.All.FirstOrDefault(c => c != null && !c.IsHero);
+
+                Settlement birthPlace = Hero.MainHero?.HomeSettlement
+                    ?? Settlement.All.FirstOrDefault(se => se != null && se.IsTown);
+
+                if (template != null && birthPlace != null)
+                {
+                    Hero child = HeroCreator.CreateChild(template, birthPlace, Clan.PlayerClan, 18);
+                    if (child != null)
+                    {
+                        try { ColourLordRegistry.SetMage(child, true); } catch { }
+                        ChangeRenown(15f);
+                        Msg($"{child.Name} joins your clan. She carries the fire with a steadiness that took her ten years to learn on her own. It shows.", FireColor);
+                        return;
+                    }
+                }
+                // Fallback — narrative only
+                ChangeRenown(15f);
+                Msg("She joins your clan. She carries the fire with a steadiness that took her ten years to learn on her own. It shows.", FireColor);
+            }
+            catch
+            {
+                ChangeRenown(15f);
+                Msg("She joins your clan. She carries the fire with a steadiness that took her ten years to learn on her own. It shows.", FireColor);
+            }
+        }
+
+        // Phase 5 — bitter mother's blade, 3 days after refused-dead
+        private static void FireMothersPlea_Assassin()
+        {
+            MageKnowledge._deferredInquiry = () =>
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "★  The Bitter Edge",
+                    "She comes in the night — rough-spun wool, hollow eyes, a kitchen dagger held with the grip of someone who has never held a weapon but is entirely committed to the outcome. She found you across three days of walking and asking questions. She does not say anything. She does not need to. You know her face. You know why she is here.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "Step aside and let the moment pass.", null, true,
+                            "She is not a soldier. She knows it too."),
+                        new InquiryElement("b", "Disarm her. Carefully.", null, true,
+                            "She came to die doing this if she had to."),
+                    },
+                    false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        bool dodged = _rng.NextDouble() < 0.60;
+                        switch (chosen?[0]?.Identifier as string)
+                        {
+                            case "a":
+                                if (dodged)
+                                {
+                                    ShiftTrait(DefaultTraits.Mercy, 1);
+                                    Msg("The dagger catches your sleeve and nothing else. She stumbles past. You do not move against her. She stands there for a long moment and then sits down on the ground and cries. You leave her there. You do not report her to anyone. She is not wrong, and you both know it.", DimColor);
+                                }
+                                else
+                                {
+                                    WoundPlayer();
+                                    Msg("The dagger finds something — not deep, but real. You bleed. She sees what she did and the grief on her face does not change to satisfaction. She runs. You let her go. The wound is not the worst thing you are carrying from this village.", BadColor);
+                                }
+                                break;
+                            case "b":
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                Msg("You take the dagger from her with the minimum of force required. She fights you for it until she can't. You hold the blade and say her daughter's name — the one you heard on the road, from the messenger. She stops moving. She does not speak. You give her coin enough to eat for a month and tell her to go home. She goes.", GoodColor);
+                                break;
+                        }
+                    }, null, "", false), false, true);
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
         // NEW ENCOUNTERS — LEAVE CITY (mage, non-Ashen, clan tier ≥ 2)
         // ═══════════════════════════════════════════════════════════════════
 

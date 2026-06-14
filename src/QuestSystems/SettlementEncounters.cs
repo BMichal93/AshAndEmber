@@ -122,6 +122,8 @@ namespace AshAndEmber
         private static int    _ashenMachineryCountdown = 0;       // days until black-market weapon fires (option D)
         private static string _ashenMachineryKingdomId = null;    // kingdom targeted by deferred option D
         private static int    _weaponInventorFound     = 0;       // 1 after the Toxic Fog encounter fires (one-time)
+        private static int    _mothersPleaCountdown   = 0;       // days until next Mother's Plea follow-up fires
+        private static int    _mothersPleaPhase       = 0;       // 0=none 1=healed_7d 2=money_7d 3=refused_7d 4=child_10yr 5=assassin
         private static readonly Random _rng          = new Random();
         // Prevents the same encounter from repeating within a short run of sessions
         private static readonly List<string> _recentEncounters = new List<string>();
@@ -169,6 +171,8 @@ namespace AshAndEmber
             _ashenMachineryCountdown      = 0;
             _ashenMachineryKingdomId      = null;
             _weaponInventorFound          = 0;
+            _mothersPleaCountdown         = 0;
+            _mothersPleaPhase             = 0;
             _recentEncounters.Clear();
         }
 
@@ -203,6 +207,8 @@ namespace AshAndEmber
             store.SyncData("SE_AshenMachineTimer",  ref _ashenMachineryCountdown);
             store.SyncData("SE_AshenMachineKing",   ref _ashenMachineryKingdomId);
             store.SyncData("SE_WeaponInventor",     ref _weaponInventorFound);
+            store.SyncData("SE_MothersPleaCD",      ref _mothersPleaCountdown);
+            store.SyncData("SE_MothersPleaPhase",   ref _mothersPleaPhase);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -323,6 +329,13 @@ namespace AshAndEmber
                 _ashenMachineryCountdown--;
                 if (_ashenMachineryCountdown == 0)
                     FireAshenMachineryConsequence();
+            }
+
+            if (_mothersPleaCountdown > 0)
+            {
+                _mothersPleaCountdown--;
+                if (_mothersPleaCountdown == 0)
+                    FireMothersPleaConsequence();
             }
         }
 
