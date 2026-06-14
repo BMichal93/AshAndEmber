@@ -153,6 +153,48 @@ namespace AshAndEmber
         private static int  _titheCultPhase     = 0;   // 0=idle,1=dream 7d,2=network 7d,3=buyer 30d
         private static bool _titheCultAgent     = false;
 
+        // ── Five questline encounters (Events7.cs) ────────────────────────
+        // The Child in the Keep (Ardrath) — siege, one-time
+        private static int    _ardrathFound     = 0;   // 1 after first fire
+        private static int    _ardrathCountdown = 0;
+        private static int    _ardrathPhase     = 0;   // 0=idle,1=7d contents,2=14d response,3=21d network
+        private static string _ardrathLordId    = null;
+        private static bool   _ardrathLordSold  = false;
+        // The Cartographer — village enter
+        private static int    _cartCooldown        = 0;
+        private static int    _cartCountdown       = 0;
+        private static int    _cartPhase           = 0;   // 0=idle,1=7d blank,2=14d scholar,3=21d resolution
+        private static string _cartMapSettlementId = null;
+        private static bool   _cartMapGranted      = false;
+        private static bool   _cartMapKept         = false;
+        private static bool   _cartMapTwoVersions  = false;
+        // The Widow's Commission — castle enter
+        private static int    _widowCooldown        = 0;
+        private static int    _widowCountdown       = 0;
+        private static int    _widowPhase           = 0;   // 0=idle,1=7d docs,2=21d response,3=14d settle
+        private static string _widowLordId          = null;
+        private static bool   _widowLordHostile     = false;
+        private static bool   _widowBuyerKnown      = false;
+        private static bool   _widowThirdPartyFlag  = false;
+        // The God That Didn't Burn — village enter, non-Ashen
+        private static int    _godCooldown     = 0;
+        private static int    _godCountdown    = 0;
+        private static int    _godPhase        = 0;   // 0=idle,1=14d investigate,2=14d date,3=7d resolution
+        private static string _godLordId       = null;
+        private static bool   _godListAcquired = false;
+        private static bool   _godContactMade  = false;
+        private static bool   _godLordSaved    = false;
+        // The Heir Apparent — leave city/castle
+        private static int  _heirCooldown       = 0;
+        private static int  _heirCountdown      = 0;
+        private static int  _heirPhase          = 0;   // 0=idle,1=14d,2=21d,3=14d,4=21d,5=14d
+        private static bool _heirOfficerAllied  = false;
+        private static bool _heirSuppressed     = false;
+        private static bool _heirSpymasterKnows = false;
+        private static bool _heirDocumentHeld   = false;
+        private static bool _heirConcession     = false;
+        private static bool _heirHistorianSafe  = false;
+
         private static readonly Random _rng          = new Random();
         // Prevents the same encounter from repeating within a short run of sessions
         private static readonly List<string> _recentEncounters = new List<string>();
@@ -223,6 +265,41 @@ namespace AshAndEmber
             _titheCultCountdown = 0;
             _titheCultPhase     = 0;
             _titheCultAgent     = false;
+            _ardrathFound     = 0;
+            _ardrathCountdown = 0;
+            _ardrathPhase     = 0;
+            _ardrathLordId    = null;
+            _ardrathLordSold  = false;
+            _cartCooldown        = 0;
+            _cartCountdown       = 0;
+            _cartPhase           = 0;
+            _cartMapSettlementId = null;
+            _cartMapGranted      = false;
+            _cartMapKept         = false;
+            _cartMapTwoVersions  = false;
+            _widowCooldown        = 0;
+            _widowCountdown       = 0;
+            _widowPhase           = 0;
+            _widowLordId          = null;
+            _widowLordHostile     = false;
+            _widowBuyerKnown      = false;
+            _widowThirdPartyFlag  = false;
+            _godCooldown     = 0;
+            _godCountdown    = 0;
+            _godPhase        = 0;
+            _godLordId       = null;
+            _godListAcquired = false;
+            _godContactMade  = false;
+            _godLordSaved    = false;
+            _heirCooldown       = 0;
+            _heirCountdown      = 0;
+            _heirPhase          = 0;
+            _heirOfficerAllied  = false;
+            _heirSuppressed     = false;
+            _heirSpymasterKnows = false;
+            _heirDocumentHeld   = false;
+            _heirConcession     = false;
+            _heirHistorianSafe  = false;
             _recentEncounters.Clear();
         }
 
@@ -281,6 +358,42 @@ namespace AshAndEmber
             store.SyncData("SE_TitheCultTimer",     ref _titheCultCountdown);
             store.SyncData("SE_TitheCultPhase",     ref _titheCultPhase);
             store.SyncData("SE_TitheCultAgent",     ref _titheCultAgent);
+            // Five questlines (Events7)
+            store.SyncData("SE_ArdrathFound",       ref _ardrathFound);
+            store.SyncData("SE_ArdrathTimer",       ref _ardrathCountdown);
+            store.SyncData("SE_ArdrathPhase",       ref _ardrathPhase);
+            store.SyncData("SE_ArdrathLord",        ref _ardrathLordId);
+            store.SyncData("SE_ArdrathLordSold",    ref _ardrathLordSold);
+            store.SyncData("SE_CartCD",             ref _cartCooldown);
+            store.SyncData("SE_CartTimer",          ref _cartCountdown);
+            store.SyncData("SE_CartPhase",          ref _cartPhase);
+            store.SyncData("SE_CartSettlement",     ref _cartMapSettlementId);
+            store.SyncData("SE_CartGranted",        ref _cartMapGranted);
+            store.SyncData("SE_CartKept",           ref _cartMapKept);
+            store.SyncData("SE_CartTwoVersions",    ref _cartMapTwoVersions);
+            store.SyncData("SE_WidowCD",            ref _widowCooldown);
+            store.SyncData("SE_WidowTimer",         ref _widowCountdown);
+            store.SyncData("SE_WidowPhase",         ref _widowPhase);
+            store.SyncData("SE_WidowLord",          ref _widowLordId);
+            store.SyncData("SE_WidowHostile",       ref _widowLordHostile);
+            store.SyncData("SE_WidowBuyerKnown",    ref _widowBuyerKnown);
+            store.SyncData("SE_WidowThirdParty",    ref _widowThirdPartyFlag);
+            store.SyncData("SE_GodCD",              ref _godCooldown);
+            store.SyncData("SE_GodTimer",           ref _godCountdown);
+            store.SyncData("SE_GodPhase",           ref _godPhase);
+            store.SyncData("SE_GodLord",            ref _godLordId);
+            store.SyncData("SE_GodListAcquired",    ref _godListAcquired);
+            store.SyncData("SE_GodContactMade",     ref _godContactMade);
+            store.SyncData("SE_GodLordSaved",       ref _godLordSaved);
+            store.SyncData("SE_HeirCD",             ref _heirCooldown);
+            store.SyncData("SE_HeirTimer",          ref _heirCountdown);
+            store.SyncData("SE_HeirPhase",          ref _heirPhase);
+            store.SyncData("SE_HeirOfficerAllied",  ref _heirOfficerAllied);
+            store.SyncData("SE_HeirSuppressed",     ref _heirSuppressed);
+            store.SyncData("SE_HeirSpymasterKnows", ref _heirSpymasterKnows);
+            store.SyncData("SE_HeirDocumentHeld",   ref _heirDocumentHeld);
+            store.SyncData("SE_HeirConcession",     ref _heirConcession);
+            store.SyncData("SE_HeirHistorianSafe",  ref _heirHistorianSafe);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -477,6 +590,82 @@ namespace AshAndEmber
                         case 1: FireTitheCultPhase1(); break;
                         case 2: FireTitheCultPhase2(); break;
                         case 3: FireTitheCultPhase3(); break;
+                    }
+                }
+            }
+
+            // ── Five questline cooldowns & countdowns (Events7) ──────────
+            if (_ardrathPhase > 0 && _ardrathCountdown > 0)
+            {
+                _ardrathCountdown--;
+                if (_ardrathCountdown == 0)
+                {
+                    switch (_ardrathPhase)
+                    {
+                        case 1: FireArdrathPhase1(); break;
+                        case 2: FireArdrathPhase2(); break;
+                        case 3: FireArdrathPhase3(); break;
+                    }
+                }
+            }
+
+            if (_cartCooldown > 0) _cartCooldown--;
+            if (_cartPhase > 0 && _cartCountdown > 0)
+            {
+                _cartCountdown--;
+                if (_cartCountdown == 0)
+                {
+                    switch (_cartPhase)
+                    {
+                        case 1: FireCartographerPhase1(); break;
+                        case 2: FireCartographerPhase2(); break;
+                        case 3: FireCartographerPhase3(); break;
+                    }
+                }
+            }
+
+            if (_widowCooldown > 0) _widowCooldown--;
+            if (_widowPhase > 0 && _widowCountdown > 0)
+            {
+                _widowCountdown--;
+                if (_widowCountdown == 0)
+                {
+                    switch (_widowPhase)
+                    {
+                        case 1: FireWidowPhase1(); break;
+                        case 2: FireWidowPhase2(); break;
+                    }
+                }
+            }
+
+            if (_godCooldown > 0) _godCooldown--;
+            if (_godPhase > 0 && _godCountdown > 0)
+            {
+                _godCountdown--;
+                if (_godCountdown == 0)
+                {
+                    switch (_godPhase)
+                    {
+                        case 1: FireGodPhase1(); break;
+                        case 2: FireGodPhase2(); break;
+                        case 3: FireGodPhase3(); break;
+                    }
+                }
+            }
+
+            if (_heirCooldown > 0) _heirCooldown--;
+            if (_heirPhase > 0 && _heirCountdown > 0)
+            {
+                _heirCountdown--;
+                if (_heirCountdown == 0)
+                {
+                    switch (_heirPhase)
+                    {
+                        case 1: FireHeirPhase1(); break;
+                        case 2: FireHeirPhase2(); break;
+                        case 3: FireHeirPhase3(); break;
+                        case 4: FireHeirPhase4(); break;
+                        case 5: FireHeirPhase5(); break;
                     }
                 }
             }
