@@ -211,9 +211,9 @@ namespace AshAndEmber
                     new InquiryElement("a", "Raise your hand in return. Wars end.", null, true,
                         "The gesture contains the whole of it. Wars end."),
                     new InquiryElement("b", "Walk past as if you have not seen him.", null, true,
-                        "He watches you pass. The moment passes."),
+                        "He watches you pass. The moment passes — but it may not stay passed."),
                     new InquiryElement("c", "Report his presence to the city guard as a potential threat.", null, true,
-                        "He is a veteran with a cup. The city guard will remember this."),
+                        "He is a veteran with a cup. The city guard will remember this. So will his lord."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -224,17 +224,79 @@ namespace AshAndEmber
                             ShiftTrait(DefaultTraits.Honor, 1);
                             ChangeRelWithRandomLord(5);
                             Msg("You raise your hand. He nods. The gesture contains the whole of it — we both survived, we are both still here, that is something. You do not speak. You do not need to.", GoodColor);
+                            _oldEnemyOutcome   = 1;
+                            _oldEnemyCountdown = 30 + _rng.Next(30);
                             break;
                         case "b":
                             Msg("He watches you pass. He does not follow. He will be here tomorrow, with his cup, waiting for nothing in particular.", DimColor);
+                            _oldEnemyOutcome   = 2;
+                            _oldEnemyCountdown = 30 + _rng.Next(30);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Honor, -1);
                             ChangeCrime(5f);
                             Msg("He is taken in for questioning and released inside the hour — there is no cause. He looks at you differently when he comes out. So do you, at yourself.", BadColor);
+                            _oldEnemyOutcome   = 3;
+                            _oldEnemyCountdown = 7;
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireOldEnemyConsequence ─────────────────────────────────
+        private static void FireOldEnemyConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _oldEnemyCountdown = 1; return; }
+            int outcome = _oldEnemyOutcome;
+            _oldEnemyOutcome = 0;
+
+            switch (outcome)
+            {
+                case 1: // raised hand
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        ChangeRelWithRandomLord(5);
+                        Msg("A gift arrives by messenger — modest, deliberate, unsigned except for a crest you recognise. The veteran mentioned your name to someone with the right ears. The gesture says: that moment at the city square was noted, and noted correctly.", GoodColor);
+                    };
+                    break;
+
+                case 2: // walked past
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                            "⚔  The Road Meets the Road",
+                            "Your outriders report a figure blocking the narrow pass ahead — alone, unhurried, sword drawn and resting point-down in the road. You recognise him. He is not here by accident. He had weeks to find you, and he did. He does not look angry. He looks like a man who made a decision and followed it to its conclusion.",
+                            new List<InquiryElement>
+                            {
+                                new InquiryElement("a", "Hear him out. He found you — give him that much.", null, true, ""),
+                                new InquiryElement("b", "Ride around him. Nothing happened then; nothing happens now.", null, true, ""),
+                            },
+                            false, 1, 1, "Decide", "",
+                            sub =>
+                            {
+                                switch (sub?[0]?.Identifier as string)
+                                {
+                                    case "a":
+                                        ShiftTrait(DefaultTraits.Honor, 1);
+                                        ChangeRelWithRandomLord(8);
+                                        Msg("He sheathes the blade without ceremony and tells you what he came to say: you were right not to speak at the city square. He was not ready to hear it. He is now. Whatever he needed to settle with you, this was it. He steps aside. His lord receives your name differently after this.", GoodColor);
+                                        break;
+                                    case "b":
+                                        Msg("You ride around him. He watches you go. He made his choice weeks ago, and you've made yours today. There is no wound here, and no resolution. Both of you carry the weight of that junction farther down your separate roads.", DimColor);
+                                        break;
+                                }
+                            }, null, "", false), false, true);
+                    };
+                    break;
+
+                case 3: // reported
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        ChangeRelWithRandomLord(-10);
+                        Msg("Word reaches you through a third party: the lord that veteran serves heard what you did at the city gate. He has not forgotten it, and his dislike of you now has a specific shape. A commander who reported a harmless old man drinking in a square is a man whose judgment cannot be trusted — or trusted too precisely, which is worse.", BadColor);
+                    };
+                    break;
+            }
         }
 
         // ── Helper: wound the player hero and a few party members ─────────────
@@ -327,12 +389,13 @@ namespace AshAndEmber
         // DARK / ASHEN SETTLEMENT EVENTS
         // ════════════════════════════════════════════════════════════════════
 
-        // ── EV_DarknessSpreads — village enter ────────────────────────────────
-        // Your scouts report cold blue flames in the fields at night and livestock
-        // found bloodless at dawn. Ashen cultists may be hiding in the village.
+        // ── EV_DarknessSpreads — village enter ────────────────────────────────────
         private static void EV_DarknessSpreads(Settlement s)
         {
             string vName = s.Name?.ToString() ?? "the village";
+            float scoutChance = SkillChance(DefaultSkills.Scouting, 0.30f);
+            string scoutHint  = SkillHint(DefaultSkills.Scouting, 0.30f, "Read the signs for what they are");
+
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "★ Darkness in the Roots",
                 $"Your scouts found livestock dead in the fields near {vName} — bloodless, cold, " +
@@ -346,6 +409,8 @@ namespace AshAndEmber
                         "Fire answers certainty. What it finds is another matter."),
                     new InquiryElement("b", "Spare them. There is no solid proof.", null, true,
                         "Mercy without proof. The outcome will tell you if you were right."),
+                    new InquiryElement("c", $"Question the villagers quietly — read the signs for what they are. ({(int)(scoutChance*100)}% Scouting)", null, true,
+                        scoutHint),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -353,10 +418,11 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            // Simulate a village raid
                             try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.30f); } catch { }
                             ChangeCrime(50f);
                             try { MageKnowledge.AddWhispers(4); } catch { }
+                            _burningVillageSettlementId = s.StringId;
+                            _burningVillageCountdown    = 14;
                             if (_rng.NextDouble() < 0.5)
                             {
                                 ChangeRelWithOwner(s, -60);
@@ -367,7 +433,8 @@ namespace AshAndEmber
                             else
                             {
                                 Msg($"You gave the order. {vName} burned by morning. " +
-                                    $"The owner's people came to assess the damage and said nothing in your presence.", BadColor);
+                                    $"The owner's people came to assess the damage and said nothing in your presence. " +
+                                    "They will have something to say in their own time.", BadColor);
                             }
                             break;
                         case "b":
@@ -379,15 +446,121 @@ namespace AshAndEmber
                             }
                             else
                             {
-                                // Spawn 200 Ashen near the village
                                 try { CampaignMapEvents.SpawnAshenAmbushNear(s.GetPosition2D, 20, 180f); } catch { }
                                 Msg($"You showed mercy and rode on. That evening, {vName} caught fire from three sides at once. " +
                                     $"Ashen Spawn poured from the shadows — the cultists had already called for them. " +
                                     $"The village burned regardless of your choice.", BadColor);
                             }
                             break;
+                        case "c":
+                            if (SkillRoll(DefaultSkills.Scouting, 0.30f))
+                            {
+                                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                                    "★  The Hidden Root",
+                                    $"Your questioning finds a thread. A tanner at the edge of {vName} — not frightened, not defiant, just quietly wrong. The wrong kind of calm for someone who has seen what he has seen. You put the pieces together: one man, acting alone, laying markings in the fields at the Ashen's instruction. He does not know what they mean. He knows what he was paid and what he was threatened with.",
+                                    new List<InquiryElement>
+                                    {
+                                        new InquiryElement("x1", "Execute him publicly — make an example.", null, true,
+                                            "Crime +5. Village preserved. Relation with settlement lord +5."),
+                                        new InquiryElement("x2", "Exile him. Tell the village what was found.", null, true,
+                                            "He escapes. The Ashen lose this agent here, for now."),
+                                        new InquiryElement("x3", "Use him — feed false information through the channel.", null, true,
+                                            "Calculating +1. Difficult to sustain, but the intelligence value is real."),
+                                    },
+                                    false, 1, 1, "Decide", "",
+                                    sub =>
+                                    {
+                                        switch (sub?[0]?.Identifier as string)
+                                        {
+                                            case "x1":
+                                                ChangeCrime(5f);
+                                                try { s.Village.Hearth = Math.Min(s.Village.MaxHearth, s.Village.Hearth + 50f); } catch { }
+                                                ChangeRelWithOwner(s, 5);
+                                                Msg("You hold a brief public reckoning. The tanner does not deny it. The village watches. The elder thanks you. The settlement lord, receiving word of how you handled it, revises his opinion of you upward — you found the problem, judged it, and left the village intact.", GoodColor);
+                                                break;
+                                            case "x2":
+                                                Msg("You escort him to the village boundary and tell him what exile means in your jurisdiction: never return, never make contact, and be grateful the alternative was available. He goes. The Ashen network loses this thread — but threads can be replaced.", DimColor);
+                                                break;
+                                            case "x3":
+                                                ShiftTrait(DefaultTraits.Calculating, 1);
+                                                Msg("You explain his situation to him precisely. He understands. Whether he cooperates fully or plays both sides is a question you cannot answer without infrastructure you do not have. What you have is a frightened man with divided loyalties and a specific contact in the Ashen's local network. That is worth something.", AshenColor);
+                                                break;
+                                        }
+                                    }, null, "", false), false, true);
+                            }
+                            else
+                            {
+                                ChangeRelWithOwner(s, 3);
+                                Msg($"You question carefully and find nothing that closes the question. The signs are real. The villagers are hiding something — but whether from fear or loyalty or simply the instinct to protect their own, you cannot determine. You leave them with a warning and a description of what to watch for. The headman writes it down.", DimColor);
+                            }
+                            break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireBurningVillageConsequence — 14 days after burning ──
+        private static void FireBurningVillageConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _burningVillageCountdown = 1; return; }
+            string sId = _burningVillageSettlementId;
+            _burningVillageSettlementId = null;
+
+            var s = sId != null ? Settlement.All.FirstOrDefault(se => se.StringId == sId) : null;
+            string sName = s?.Name?.ToString() ?? "the village";
+
+            MageKnowledge._deferredInquiry = () =>
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "★  Ashes and Reckoning",
+                    $"The settlement lord finds you — or sends a representative who has been riding hard. {sName} is ash. He wants an accounting: who gave the order, what evidence was found, what law was cited. He is not unreasonable. He is also not going to let this pass without a response.",
+                    new List<InquiryElement>
+                    {
+                        new InquiryElement("a", "Justify it — the signs were clear and the threat was real.", null, true,
+                            "Leadership roll to persuade him the action was necessary."),
+                        new InquiryElement("b", "Pay blood-money. A village has a price.", null, true,
+                            "3,000 gold. The lord accepts the payment. He does not accept you."),
+                        new InquiryElement("c", "Refuse to account for yourself.", null, true,
+                            "He will remember this exactly as long as he lives."),
+                    },
+                    false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        switch (chosen?[0]?.Identifier as string)
+                        {
+                            case "a":
+                                if (SkillRoll(DefaultSkills.Leadership, 0.35f))
+                                {
+                                    ChangeRelWithOwner(s, -15);
+                                    Msg("He listens with the focused attention of a man deciding whether your judgment can be trusted. He concludes, eventually, that the action was defensible — not right, necessarily, but defensible given the information available. His opinion of you has not recovered. It has stabilised at a specific level of displeasure that will not worsen unless you give it cause.", DimColor);
+                                }
+                                else
+                                {
+                                    ChangeRelWithOwner(s, -30);
+                                    ChangeRelWithRandomLord(-5);
+                                    Msg($"Your justification does not reach him. The signs you described could have been investigated, contained, addressed without fire. He knows this. He tells you he knows this. His displeasure is now formal and documented. Other lords in the region will hear his account of it.", BadColor);
+                                }
+                                break;
+                            case "b":
+                                if (!ChangeGold(-3000))
+                                {
+                                    ChangeRelWithOwner(s, -25);
+                                    Msg("You do not have the coin. The lord receives this with the expression of a man who has learned something useful and unpleasant about who he is dealing with.", BadColor);
+                                }
+                                else
+                                {
+                                    ChangeRelWithOwner(s, -20);
+                                    Msg("The coin changes hands. The lord accepts it formally and says nothing further. He will spend the money and remember the burning. Both things are true simultaneously.", DimColor);
+                                }
+                                break;
+                            case "c":
+                                ChangeRelWithOwner(s, -40);
+                                ChangeRelWithRandomLord(-10);
+                                ChangeCrime(15f);
+                                Msg("He records the refusal. He will tell this story for the rest of his life — not loudly, not repeatedly, but accurately and to the right people at the right moments. You have made an enemy of the kind that is patient enough to wait for the moment when it matters.", BadColor);
+                                break;
+                        }
+                    }, null, "", false), false, true);
+            };
         }
 
         // ── EV_BurningWitch — village enter ───────────────────────────────────
@@ -427,6 +600,8 @@ namespace AshAndEmber
                             try { MageKnowledge.AddWhispers(3); } catch { }
                             Msg("You watch. The crowd watches you watching. " +
                                 "Something in you marks this moment and files it under things you have become.", BadColor);
+                            _burningWitchOutcome   = 1;
+                            _burningWitchCountdown = 20;
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Mercy, 1);
@@ -449,14 +624,83 @@ namespace AshAndEmber
                                     "The elder says nothing. The villagers say nothing. " +
                                     "You ride out with a girl who was not a witch, and the knowledge " +
                                     "of what would have happened if you had kept riding.", GoodColor);
+                                _burningWitchOutcome   = 3;
+                                _burningWitchCountdown = 90;
                             }
                             break;
                         case "d":
                             Msg("You ride on. Behind you, the fire takes hold. " +
                                 "There was nothing you could have done. You choose not to decide whether that is true.", DimColor);
+                            _burningWitchOutcome   = 2;
+                            _burningWitchCountdown = 7;
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireBurningWitchConsequence ─────────────────────────────
+        private static void FireBurningWitchConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _burningWitchCountdown = 1; return; }
+            int outcome = _burningWitchOutcome;
+            _burningWitchOutcome = 0;
+
+            switch (outcome)
+            {
+                case 1: // watched — lord's gossip reaches a lord
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        ChangeRelWithRandomLord(-8);
+                        Msg("A lord who heard the story from a travelling merchant — who heard it from a drover who was passing through — has a specific opinion of you now. He is not outraged. He simply knows you were there, and watched, and moved on. In his circle, that is the kind of thing that travels. He has mentioned it twice.", BadColor);
+                    };
+                    break;
+
+                case 2: // rode past — messenger arrives with the ending
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        if (_rng.NextDouble() < 0.5)
+                        {
+                            ShiftTrait(DefaultTraits.Mercy, 1);
+                            Msg("A messenger finds you — sent by the village elder. The girl escaped. Nobody is clear on how: the rope was cut cleanly, the guards found asleep standing, the gate open. The elder's message says only that she is gone and that no one is looking for her. He seems to want you to know. You are not sure why.", GoodColor);
+                        }
+                        else
+                        {
+                            Msg("Word reaches you eventually, the way bad news reaches people who have chosen not to stay for it: the village burned what it intended to burn. The elder sent no messenger. You receive no letter. You simply know, from the particular silence that follows certain kinds of decisions, that you rode past something that ended.", DimColor);
+                        }
+                    };
+                    break;
+
+                case 3: // saved, she was human — she finds you
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                            "✦  Three Months Later",
+                            "She finds you at a market two settlements from where you last saw her — cleaner, steadier, wearing the particular composure of someone who spent three months deciding what they owe. She says she has learned a trade. She says she has been looking for you. She would like to be useful, if you will let her.",
+                            new List<InquiryElement>
+                            {
+                                new InquiryElement("a", "Take her on. She has earned the asking.", null, true, ""),
+                                new InquiryElement("b", "Decline. The road is not a safe place for gratitude.", null, true, ""),
+                            },
+                            false, 1, 1, "Decide", "",
+                            sub =>
+                            {
+                                switch (sub?[0]?.Identifier as string)
+                                {
+                                    case "a":
+                                        ShiftTrait(DefaultTraits.Mercy, 1);
+                                        ChangeRenown(10f);
+                                        AddMorale(5f);
+                                        Msg("She joins your party with the practical efficiency of someone who has already decided this is where she is going and simply needed your agreement. Your men receive her without ceremony. She earns her place inside a week.", GoodColor);
+                                        break;
+                                    case "b":
+                                        ShiftTrait(DefaultTraits.Honor, 1);
+                                        Msg("You tell her the road is what it is and gratitude has a short life in it. She listens without argument. She shakes your hand, as though completing a transaction, and finds another path. You see her once more, years later, across a market square — doing well enough that no explanation is needed.", GoodColor);
+                                        break;
+                                }
+                            }, null, "", false), false, true);
+                    };
+                    break;
+            }
         }
 
         // ── EC_LocalPriest — town enter ───────────────────────────────────────
@@ -536,9 +780,28 @@ namespace AshAndEmber
                             try { MageKnowledge.AddWhispers(3); } catch { }
                             Msg("Your soldiers scatter him from the gate. He does not return. " +
                                 "The city remembers you were there.", BadColor);
+                            _priestBeatCountdown = 14;
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FirePriestBeatConsequence — 14 days after beating the priest ──
+        private static void FirePriestBeatConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _priestBeatCountdown = 1; return; }
+            MageKnowledge._deferredInquiry = () =>
+            {
+                var templeLords = Hero.AllAliveHeroes
+                    .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && h != Hero.MainHero
+                             && h.MapFaction?.StringId == "the_temple")
+                    .ToList();
+                foreach (var lord in templeLords)
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -10, false); } catch { }
+                if (templeLords.Count > 0)
+                    Msg("(All Temple lords: −10 relation)", BadColor);
+                Msg("The temple received a formal complaint: a lord drove off a priest at the city gate and had him beaten. The complaint includes the city, the gate, the hour, and three witnesses. The temple does not issue threats. It issues records. Your name is in the record, and the record is in the archive, and everyone who needs to know what is in the archive already knows.", BadColor);
+            };
         }
 
         // ── LV_ColdEmbrace — village leave ────────────────────────────────────

@@ -536,7 +536,7 @@ namespace AshAndEmber
                     new InquiryElement("a", "Destroy it completely.", null, true,
                         "An hour's careful work. The cost is in your hands and your years. The thing is gone."),
                     new InquiryElement("b", "Keep it. Knowing it exists is an advantage.", null, true,
-                        "You carry a gap in their network. They will eventually notice the silence."),
+                        "You carry a gap in their network. They will eventually notice the silence — and come looking."),
                     new InquiryElement("c", "Leave it in place — let them think nothing was found.", null, true,
                         "They will find the marker undisturbed. The deception is yours to manage."),
                 },
@@ -547,17 +547,101 @@ namespace AshAndEmber
                     {
                         case "a":
                             AgePlayer(1);
+                            _ashenCrystalOutcome  = 1;
+                            _ashenCrystalCountdown = 7;
                             Msg("You work at it for an hour. The fire does not like what it touches — there is a resistance that is not physical, the cold pushing back against the warmth. Eventually it yields. The stone cracks and the cold in it is gone. The room is just a room. The cost is in your hands and in your years.", FireColor);
                             break;
                         case "b":
+                            _ashenCrystalOutcome  = 2;
+                            _ashenCrystalCountdown = 30;
                             Msg("You wrap it in cloth and keep it separate from everything else. It will be cold to the touch for as long as you carry it. The Ashen use these to locate each other across distances. You now own a gap in their network. How long before the gap is noticed is a question without an answer yet.", AshenColor);
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Calculating, 1);
+                            _ashenCrystalOutcome      = 3;
+                            _ashenCrystalSettlementId = null; // resolved in consequence via nearby settlement
+                            _ashenCrystalCountdown    = 14;
                             Msg("You leave it exactly where it is, touching nothing. When the Ashen return — and they will return — they will find the keep changed but the marker undisturbed. They will conclude their absence was unnoticed. You will know they concluded that. That is a small and specific advantage.", DarkColor);
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireAshenCrystalConsequence ─────────────────────────────
+        private static void FireAshenCrystalConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _ashenCrystalCountdown = 1; return; }
+            int outcome = _ashenCrystalOutcome;
+            _ashenCrystalOutcome      = 0;
+            _ashenCrystalSettlementId = null;
+
+            switch (outcome)
+            {
+                case 1: // destroyed — fire-mage finds you
+                    MageKnowledge._deferredInquiry = () =>
+                        Msg("A fire-mage finds you on the road — young, precise, clearly following a thread she picked up some time ago. She was tracking an Ashen marker that has gone silent. She knew what it was. She knows you destroyed it. She does not thank you with words. She tells you something about where she found the thread's other end: a direction, a name, a piece of the network you did not have before.", FireColor);
+                    break;
+
+                case 2: // kept — Ashen collector arrives
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                            "◆  The Collector Arrives",
+                            "A figure presents herself at your camp — grey travelling coat, careful eyes, the specific composure of someone who was told to retrieve something and would prefer not to discuss why. She asks for the item you found at the keep, by a description so precise it could only have come from someone who put it there. She has no visible weapon. She has five companions waiting at the treeline.",
+                            new List<InquiryElement>
+                            {
+                                new InquiryElement("a", "Return it. You've learned what you can from having it.", null, true,
+                                    "She takes it and leaves. The gap in their network closes."),
+                                new InquiryElement("b", "Detain her and question her.", null, true,
+                                    "A dangerous gamble. The five at the treeline are the real problem."),
+                                new InquiryElement("c", "Destroy it now — in front of her.", null, true,
+                                    "The marker is gone. They will know it was deliberate."),
+                            },
+                            false, 1, 1, "Decide", "",
+                            sub =>
+                            {
+                                switch (sub?[0]?.Identifier as string)
+                                {
+                                    case "a":
+                                        ShiftTrait(DefaultTraits.Calculating, 1);
+                                        Msg("She takes it with both hands, wraps it without looking at it, and leaves. The five at the treeline dissolve into the dark before you finish watching her go. You have closed the gap in their network. You know they know. That is the only advantage that remains.", DimColor);
+                                        break;
+                                    case "b":
+                                        if (SkillRoll(DefaultSkills.Leadership, 0.35f))
+                                        {
+                                            ShiftTrait(DefaultTraits.Calculating, 1);
+                                            ChangeRenown(10f);
+                                            Msg("You signal your soldiers before she finishes the question. The five at the treeline move — and your outriders, already positioned, meet them. It is brief. She cooperates under questioning with the specific willingness of someone calculating what information is worth her freedom. You learn three things: a route, a name in the city's administration, and the marker's purpose — it was a wake-signal, not a tracker. Someone was to retrieve it only if a specific event had occurred.", AshenColor);
+                                        }
+                                        else
+                                        {
+                                            WoundPlayer();
+                                            Msg("You move too slowly. She has a signal — a sound — and the five are already running before your soldiers reach the treeline. She walks out with them without hurrying. You are left with a wound from a thrown blade and the knowledge that they retrieved the marker by force and were gone before you finished reacting.", BadColor);
+                                        }
+                                        break;
+                                    case "c":
+                                        AgePlayer(1);
+                                        ShiftTrait(DefaultTraits.Calculating, 1);
+                                        Msg("You bring out the marker and destroy it in front of her — methodically, with fire. She watches without expression. When it is done she says nothing, turns, and walks back toward the treeline. The five do not follow you. They are already reporting: the marker is gone, the destruction was witnessed, the silence in the network is now conspicuous and deliberate. You have told them something important about you.", FireColor);
+                                        break;
+                                }
+                            }, null, "", false), false, true);
+                    };
+                    break;
+
+                case 3: // left in place — deception holds, garrison trusts you
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        var nearbySettlement = Settlement.All
+                            .Where(se => se.IsCastle || se.IsTown)
+                            .OrderBy(_ => _rng.Next())
+                            .FirstOrDefault();
+                        if (nearbySettlement != null) ChangeRelWithOwner(nearbySettlement, 5);
+                        string sName = nearbySettlement?.Name?.ToString() ?? "the keep";
+                        Msg($"Word reaches you: Ashen scouts entered {sName} two nights ago and departed before dawn. The garrison commander reports they went directly to one room and left without searching further — they found the marker undisturbed and concluded their absence went unnoticed. Your deception holds. The garrison commander, who trusted you with this intelligence, is now more inclined to trust you with others.", DimColor);
+                    };
+                    break;
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -670,21 +754,56 @@ namespace AshAndEmber
                         case "a":
                             AgePlayer(1);
                             Msg("You set something on the table between you — not a trick, not a demonstration, just the fire being what it is without the performance layer. He watches it for a long time. His own fire responds to it in a way that surprises him. He doesn't revise his opinion out loud. He revises it where opinions actually live. You ride out with a day of your life spent on a genuine exchange.", FireColor);
+                            _selfTaughtMageOutcome = 1; _selfTaughtMageCountdown = 60 + _rng.Next(60);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("You give him a problem: heat a specific point without warming what surrounds it. He solves it differently than you would — more slowly, with more control over the margins. You solve it faster and with less precision. You both sit with this for a moment. He is not lesser. He is different. The difference matters in specific contexts. Neither of you had clearly understood that before.", FireColor);
+                            _selfTaughtMageOutcome = 2; _selfTaughtMageCountdown = 60 + _rng.Next(60);
                             break;
                         case "c":
                             AddMorale(3f);
                             Msg("He shows you a technique for sustaining a working with a fraction of the attention cost — he found it by accident in the third year and refined it over the following five. You have never seen it. It works. It solves a problem you didn't know you had. He looks at your face when you recognise its value and his certainty quietly reorganises itself around this new data point.", FireColor);
+                            _selfTaughtMageOutcome = 3; _selfTaughtMageCountdown = 60 + _rng.Next(60);
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You agree with him — the fire is the fire, wherever it lands. He expected a contest. Your agreement disarms the whole conversation. He sits with it for a moment and then buys you a drink, which is the self-taught mage's version of a concession. You ride out with nothing changed and one person in the world who will speak well of you, specifically, for the rest of his life.", GoodColor);
+                            _selfTaughtMageOutcome = 4; _selfTaughtMageCountdown = 60 + _rng.Next(60);
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireSelfTaughtMageConsequence ───────────────────────────
+        private static void FireSelfTaughtMageConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _selfTaughtMageCountdown = 1; return; }
+            int outcome = _selfTaughtMageOutcome;
+            _selfTaughtMageOutcome = 0;
+
+            MageKnowledge._deferredInquiry = () =>
+            {
+                switch (outcome)
+                {
+                    case 1: // showed him the fire
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                        Msg("A letter finds you — careful, unpracticed handwriting. He went back to his eight years and found something he had been attributing to the wrong cause. He thanks you without explaining exactly what for. He has solved something that was yours to solve too, and enclosed the solution. One focus point, arrived by post.", FireColor);
+                        break;
+                    case 2: // challenged him
+                        AddMorale(5f);
+                        Msg("The self-taught mage has been seen leading a small circle of young practitioners in the region — not teaching exactly, but working problems alongside them, the way he worked alongside you. Someone who attended wrote to tell you the technique he developed for the margin-control problem has spread. Your name came up in the telling.", GoodColor);
+                        break;
+                    case 3: // listened to him
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                        Msg("He found you. The technique for sustaining a working at reduced attention cost has a variant he discovered after your meeting — a refinement that would not have happened without the hour you spent comparing notes. He wants you to have it. One focus point, sent in a letter that smells of woodsmoke from a village you have never visited.", FireColor);
+                        break;
+                    case 4: // agreed with him
+                        ChangeRelWithRandomLord(5);
+                        Msg("Word reaches you through a tavern keeper two settlements west: a self-taught mage has been telling anyone who will listen that you are the only lord of rank he has met who understood the gift does not care about rank. Three lords who heard him secondhand have filed that detail away.", GoodColor);
+                        break;
+                }
+            };
         }
 
         // ── ENTER VILLAGE: The Old Master's Student (mage, renown ≥ 600) ───
@@ -712,21 +831,55 @@ namespace AshAndEmber
                         case "a":
                             AgePlayer(1);
                             Msg("The question was: can the fire grieve. You answer it honestly, which costs more than you expected — the honest answer requires showing her the moment yours did. She takes it in quietly. She thanks you simply. She will teach what you gave her. It will carry your name, eventually, without anyone meaning it to.", FireColor);
+                            _oldMastersStudentOutcome = 1; _oldMastersStudentCountdown = 180;
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             Msg("You tell her the question she asked is a narrower version of a better question. She sits with this and produces the better question in about four minutes, which tells you everything about the quality of her training. The better question neither of you can answer fully. You spend an hour working at its edges. The master taught her well. What she does next with it will be hers.", FireColor);
+                            _oldMastersStudentOutcome = 2; _oldMastersStudentCountdown = 120;
                             break;
                         case "c":
                             AgePlayer(1);
                             Msg("You give her a working to complete — not a display, a test of understanding. She completes it three-quarters correctly and then does something you didn't expect: corrects herself mid-working without stopping, which is harder than getting it right the first time and significantly rarer. Her gift is real and her control is better than yours was at her age. The answer you give her afterward is the best version you have. She is ready for it.", FireColor);
+                            _oldMastersStudentOutcome = 3; _oldMastersStudentCountdown = 120;
                             break;
                         case "d":
                             ShiftTrait(DefaultTraits.Honor, 1);
                             Msg("You tell her to find it herself. She is frustrated. She asks why. You tell her: because the answer you find is yours; the answer I give you is mine, and mine won't fit where yours needs to go. She does not thank you. She will find the answer.", GoodColor);
+                            _oldMastersStudentOutcome = 4; _oldMastersStudentCountdown = 90;
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireOldMastersStudentConsequence ────────────────────────
+        private static void FireOldMastersStudentConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _oldMastersStudentCountdown = 1; return; }
+            int outcome = _oldMastersStudentOutcome;
+            _oldMastersStudentOutcome = 0;
+
+            MageKnowledge._deferredInquiry = () =>
+            {
+                switch (outcome)
+                {
+                    case 1: // answered honestly — she seeks you out
+                        ChangeRenown(15f);
+                        Msg("A young woman presents herself at your camp: the old master's student, six months older and carrying the answer she came to you without. She found it. She wants to work alongside someone who answered honestly when it cost something to do so. The old master would have approved, she says. You believe her.", FireColor);
+                        break;
+                    case 2: // challenged her framing
+                        ShiftTrait(DefaultTraits.Calculating, 1);
+                        Msg("A letter from the old master's student: she found the better question's answer, or the first third of it. She has written it out in full and sent a copy to you — not out of generosity but because the answer is incomplete without a second perspective, and you are the only person she has met who asked the right question alongside her.", FireColor);
+                        break;
+                    case 3: // tested her
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                        Msg("She sent word: the working you gave her as a test has a fourth step she did not complete in your presence. She has completed it now, refined it, and returned the knowledge with the refinement included. What she sent back is better than what you gave. One focus point, improved in transit.", FireColor);
+                        break;
+                    case 4: // told her to find it herself
+                        Msg("A short letter, two sentences: 'I found it. You were right.' There is no return address. You will not hear from her again in this way, but her answer is moving through the circles where these things move. Your name is in the preamble, which you did not ask for and cannot remove.", GoodColor);
+                        break;
+                }
+            };
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -908,6 +1061,9 @@ namespace AshAndEmber
                                 ShiftTrait(DefaultTraits.Calculating, 1);
                                 ChangeRenown(5f);
                                 Msg("The irregularity is on page seven: an import weight listed in two different units across two entries — a conversion that only works if the second shipment was a third smaller than recorded. Someone is skimming the margin between what arrives and what is declared, using the unit difference as cover. It has been done the same way four times. The merchant goes pale. The auditor takes notes. You hand the ledger back and leave both of them to what follows.", GoodColor);
+                                _merchantLedgerOutcome      = 1;
+                                _merchantLedgerSettlementId = s.StringId;
+                                _merchantLedgerCountdown    = 20;
                             }
                             else
                                 Msg("You work through it. The numbers are internally consistent in most places, which is actually the harder pattern to read — someone who knows accounting well enough to hide something in the averaging rather than a single line. You identify three possible locations for the irregularity but cannot determine which is the source. You tell them both this. The auditor takes it as confirmation. The merchant takes it as uncertainty. Both of them are right.", DimColor);
@@ -916,16 +1072,67 @@ namespace AshAndEmber
                             ChangeRelWithOwner(s, -3);
                             ChangeRelWithRandomLord(5);
                             Msg("You support the auditor. The merchant guild will remember this. The auditor thanks you and continues the review. The truth of the ledger remains open, but the process continues without obstruction.", DimColor);
+                            _merchantLedgerOutcome      = 2;
+                            _merchantLedgerSettlementId = s.StringId;
+                            _merchantLedgerCountdown    = 14;
                             break;
                         case "c":
                             ChangeRelWithOwner(s, 5);
                             Msg("You support the merchant. He thanks you warmly. Whether he is guilty is a question you have declined to answer. The auditor closes his notes without a word and leaves. The ledger goes unresolved.", DimColor);
+                            _merchantLedgerOutcome      = 3;
+                            _merchantLedgerSettlementId = s.StringId;
+                            _merchantLedgerCountdown    = 14;
                             break;
                         case "d":
                             Msg("You decline. They argue for another forty minutes and reach no conclusion. The merchant eventually agrees to a third-party review that will take six weeks. The auditor leaves unsatisfied. The ledger goes back into the hall. The truth is still in it.", DimColor);
                             break;
                     }
                 }, null, "", false), false, true);
+        }
+
+        // ── Deferred: FireMerchantLedgerConsequence ───────────────────────────
+        private static void FireMerchantLedgerConsequence()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _merchantLedgerCountdown = 1; return; }
+            int outcome = _merchantLedgerOutcome;
+            string sId  = _merchantLedgerSettlementId;
+            _merchantLedgerOutcome      = 0;
+            _merchantLedgerSettlementId = null;
+
+            var s = sId != null ? Settlement.All.FirstOrDefault(se => se.StringId == sId) : null;
+
+            switch (outcome)
+            {
+                case 1: // exposed fraud
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        if (_rng.NextDouble() < 0.60)
+                        {
+                            int gold = 300 + _rng.Next(700);
+                            ChangeGold(gold);
+                            Msg($"A city official finds you on the road with a sealed document: a share of the recovered margin from the fraud you identified. The merchant's ledger had four entries. The fourth was the largest. You receive {gold} coin and a formal letter of acknowledgement.", GoldColor);
+                        }
+                        else
+                        {
+                            ChangeRelWithRandomLord(-8);
+                            Msg("A message arrives through an intermediary: the merchant's business partner — who was not in the guild hall that day — has heard your name. He has not filed a complaint. He has done something quieter: a word in the right ear about your reliability in commercial disputes. A lord who does business with that guild is now less inclined toward you.", BadColor);
+                        }
+                    };
+                    break;
+
+                case 2: // sided with auditor — merchant guild retaliates
+                    MageKnowledge._deferredInquiry = () =>
+                        Msg("The merchant guild has formally noted your intervention in the audit dispute. Their note, distributed to guild members across three settlements, does not accuse you of anything. It simply names you, and names which side you took. Merchants in the region will remember this when you next need to buy or sell at scale.", BadColor);
+                    break;
+
+                case 3: // sided with merchant — auditor's report names you
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        ChangeRelWithOwner(s, -5);
+                        Msg("The auditor filed a full report. The ledger, reviewed by a second inspector six weeks later, was found to contain systematic irregularities — the same ones the auditor originally identified. Your name appears in the report as having intervened in favour of the merchant. The city lord, who commissioned the second review, received the report. Your standing in that city has taken a quiet, specific, and permanent hit.", BadColor);
+                    };
+                    break;
+            }
         }
 
         // ── ENTER CITY: The Shadow [Scouting] ──────────────────────────────
