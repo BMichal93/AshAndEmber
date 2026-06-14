@@ -79,6 +79,8 @@ namespace AshAndEmber
                 case TalentId.Ashstorm:     CastAshstorm(powerMult);     break;
                 case TalentId.ToxicFog:     CastToxicFog(powerMult);     break;
             }
+
+            try { MageKnowledge.RewardCastSkill(); } catch { }
         }
 
         private static void CastBreakWills(float mult)

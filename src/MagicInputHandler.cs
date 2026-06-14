@@ -270,6 +270,7 @@ namespace AshAndEmber
             {
                 try { if (Agent.Main != null) SpellEffects.RecordMagicCast(Agent.Main.Position); } catch { }
                 try { AgingSystem.RecordBattleCast(); } catch { }
+                try { MageKnowledge.RewardCastSkill(); } catch { }
                 int agingDays = cast.AgingDays(hasBattleMage);
 
                 // Kinship: each allied mage lord in this battle reduces aging cost by 10% (max 50%)

@@ -17,6 +17,8 @@
 - **Brewing trains Medicine** — every elixir brewed at an Alchemical Lab grants Medicine XP.
 - **Drinking trains Athletics** — holding your drink is slow conditioning: a small trickle of Athletics XP per round (a touch more for stronger fare).
 - **Speculating trains Trade** — funding and selling stock-exchange ventures grants Trade XP scaled to the profit.
+- **Rites train Leadership** — performing a Sanctuary or Ashen Altar rite grants a little Leadership XP.
+- **Casting trains the body and will** — each successful spell (battle or campaign map) grants a little Athletics *or* Leadership XP, chosen at random.
 
 ---
 

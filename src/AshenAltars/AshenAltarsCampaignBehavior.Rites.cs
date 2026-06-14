@@ -67,8 +67,12 @@ namespace AshAndEmber
             return Math.Max(0, until - CurrentCampaignDay());
         }
 
+        // XP for performing a rite — bending the altar to your will is command of a darker kind.
+        private const float RiteLeadershipXp = 20f;
+
         private static void RecordLocationUse()
         {
+            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Leadership, RiteLeadershipXp); } catch { }
             string id = Settlement.CurrentSettlement?.StringId ?? "";
             if (string.IsNullOrEmpty(id)) return;
             if (!_locationUses.TryGetValue(id, out int count)) count = 0;

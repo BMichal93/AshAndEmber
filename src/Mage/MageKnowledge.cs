@@ -231,6 +231,20 @@ namespace AshAndEmber
         public static void ClearAllSchools() { }
         public static void RecordCast(ColorSchool s) { }
 
+        // Working the fire is exertion of body and will alike — each successful
+        // player cast grants a little Athletics or Leadership XP (chosen at random).
+        private const float CastSkillXp = 10f;
+        public static void RewardCastSkill()
+        {
+            try
+            {
+                var h = Hero.MainHero;
+                if (h?.HeroDeveloper == null) return;
+                var skill = _rng.Next(2) == 0 ? DefaultSkills.Athletics : DefaultSkills.Leadership;
+                h.HeroDeveloper.AddSkillXp(skill, CastSkillXp);
+            }
+            catch { }
+        }
     }
 
     // Legacy alias — keeps old call-sites compiling without breaking changes
