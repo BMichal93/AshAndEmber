@@ -101,6 +101,16 @@ namespace AshAndEmber
             "The eastern road is clear, but nobody is using it. That's its own kind of warning.",
             "Rumour has a new mine opening three kingdoms east. Or it closed. Nobody is certain.",
             "The day's first sale went badly. The floor is still deciding what that means.",
+            "A lord's factor is in the hall today. He hasn't bought anything yet.",
+            "Someone just sold a very large position very quietly. The board barely twitched.",
+            "The south road has been closed for three days. Nobody will say why.",
+            "A guild embargo is rumoured somewhere along the supply chain. Nobody has seen the writ.",
+            "The scales in the corner are wrong and everyone on the floor knows it.",
+            "Three sellers left the hall together an hour ago. Either coincidence, or a signal.",
+            "Word from the north: the garrison doubled its ration order this month.",
+            "A factor known for steady hands just went red. That does not happen often.",
+            "A courier passed through before dawn. The factors who saw him have been quiet ever since.",
+            "Two lords are marching toward each other. The roads between them carry something valuable.",
         };
 
         public override void RegisterEvents()
@@ -594,10 +604,15 @@ namespace AshAndEmber
             if (completed < 1) return false;
             if (_rng.NextDouble() >= 0.30) return false;
 
-            if (_rng.NextDouble() < 0.5)
+            double r = _rng.NextDouble();
+            if (r < 0.25)
                 FireInsiderTipEvent();
-            else
+            else if (r < 0.50)
                 FireMarketPanicEvent();
+            else if (r < 0.75)
+                FireEmbargoScareEvent();
+            else
+                FireKingsFactorEvent();
             return true;
         }
 
@@ -752,6 +767,194 @@ namespace AshAndEmber
                                         "You watch the floor scramble and stay put. The chalk settles. The round plays normally."));
                                     ShowRound();
                                     break;
+                            }
+                        }
+                        catch { }
+                    },
+                    null, "", false), true);
+            }
+            catch { }
+        }
+
+        private static void FireEmbargoScareEvent()
+        {
+            try
+            {
+                string name       = _ventureCommodity;
+                int    value      = SpeculationMath.Payout(_ventureStake, _ventureMultiplier);
+                int    dumpPayout = value * 85 / 100;
+                int    dumpProfit = dumpPayout - _ventureStake;
+
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("dump",
+                        $"Liquidate quietly at 85% of book ({dumpPayout}g)", null, true,
+                        "Take what the board will give before the word spreads further."),
+                    new InquiryElement("ride",
+                        "Ride it out — rumours are cheap", null, true,
+                        "Embargoes seldom stick. Uncertainty shaves a few points, but the round plays on."),
+                };
+                if (MageKnowledge.IsMage)
+                    options.Add(new InquiryElement("read",
+                        "Read the factor spreading the news", null, true,
+                        "Let the Inner Fire taste his intent. Manufactured fear means the board may recover; a real embargo means cut and run."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    $"⚠  Embargo Scare — {name}",
+                    $"A guild crier nails a writ to the exchange door. It speaks of an embargo on {name} — " +
+                    "insufficient quality, undeclared origin, or a lord's grudge dressed as regulation. " +
+                    "The hall erupts in low voices. Your broker catches your eye across the floor and lifts his hands.",
+                    options, false, 1, 1, "Decide", "Decide",
+                    chosen =>
+                    {
+                        try
+                        {
+                            string pick = chosen?[0]?.Identifier as string ?? "ride";
+                            switch (pick)
+                            {
+                                case "dump":
+                                {
+                                    GiveGold(dumpPayout);
+                                    AddTradeXp(SpeculationMath.TradeXp(_ventureStake, dumpPayout));
+                                    string dLine = dumpProfit >= 0
+                                        ? $"Slipped the {name} position out at 85% of book — {dumpPayout}g  (profit +{dumpProfit}g)."
+                                        : $"Slipped the {name} position out at 85% of book — {dumpPayout}g  (loss {-dumpProfit}g).";
+                                    ClearVenture();
+                                    InformationManager.DisplayMessage(new InformationMessage(dLine,
+                                        dumpProfit >= 0 ? new Color(0.45f, 0.75f, 0.45f) : new Color(0.75f, 0.55f, 0.35f)));
+                                    break;
+                                }
+                                case "read":
+                                {
+                                    if (_rng.NextDouble() < 0.55)
+                                    {
+                                        int bonus = 8;
+                                        _ventureMultiplier = SpeculationMath.ApplyDelta(_ventureMultiplier, bonus);
+                                        _roundHistory.Add($"Embargo (false)  +{bonus}%  →  {_ventureMultiplier}%");
+                                        MBInformationManager.AddQuickInformation(new TextObject(
+                                            $"The Inner Fire finds theatre in him, not conviction. The embargo writ is leverage, not law. " +
+                                            $"The {name} board ticks upward as the short sellers close. +{bonus}%"));
+                                        ShowRound();
+                                    }
+                                    else
+                                    {
+                                        int exitPayout = value * 90 / 100;
+                                        int exitProfit = exitPayout - _ventureStake;
+                                        GiveGold(exitPayout);
+                                        AddTradeXp(SpeculationMath.TradeXp(_ventureStake, exitPayout));
+                                        string eLine = exitProfit >= 0
+                                            ? $"The embargo is real. Cut the {name} position at 90% — {exitPayout}g  (+{exitProfit}g)."
+                                            : $"The embargo is real. Cut the {name} position at 90% — {exitPayout}g  ({exitProfit}g).";
+                                        ClearVenture();
+                                        InformationManager.DisplayMessage(new InformationMessage(eLine,
+                                            exitProfit >= 0 ? new Color(0.45f, 0.75f, 0.45f) : new Color(0.75f, 0.55f, 0.35f)));
+                                    }
+                                    break;
+                                }
+                                default: // ride
+                                {
+                                    int discount = 5;
+                                    _ventureMultiplier = SpeculationMath.ApplyDelta(_ventureMultiplier, -discount);
+                                    _roundHistory.Add($"Embargo scare  -{discount}%  →  {_ventureMultiplier}%");
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"The scare shaves {discount}% off the position — uncertainty has a price. " +
+                                        "The writ disappears by midday. The round plays on."));
+                                    ShowRound();
+                                    break;
+                                }
+                            }
+                        }
+                        catch { }
+                    },
+                    null, "", false), true);
+            }
+            catch { }
+        }
+
+        private static void FireKingsFactorEvent()
+        {
+            try
+            {
+                string name  = _ventureCommodity;
+                int    value = SpeculationMath.Payout(_ventureStake, _ventureMultiplier);
+                int    bonus = 8 + _rng.Next(8); // +8 to +15%
+
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("sell",
+                        $"Sell directly to the royal factor at full book ({value}g)", null, true,
+                        "The crown pays full price and asks nothing. A clean exit with no crash risk."),
+                    new InquiryElement("hold",
+                        $"Hold and ride the royal lift  (+{bonus}% to position before the next round)", null, true,
+                        $"The factor is buying steadily, propping the floor. Your position gains {bonus}% before normal price action resumes."),
+                };
+                if (MageKnowledge.IsMage)
+                    options.Add(new InquiryElement("read",
+                        "Read the factor's royal commission", null, true,
+                        "Taste the scope of the brief. A broad commission means the crown buys all day — a narrow one means they stop at noon."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    $"⚜  The King's Factor — {name}",
+                    $"A man in a sober coat and a royal seal at his belt takes up position at the {name} board. " +
+                    "He begins buying, steadily and without drama, and the chalk moves with him. " +
+                    "The floor watches him the way the floor watches weather.",
+                    options, false, 1, 1, "Decide", "Decide",
+                    chosen =>
+                    {
+                        try
+                        {
+                            string pick = chosen?[0]?.Identifier as string ?? "hold";
+                            switch (pick)
+                            {
+                                case "sell":
+                                {
+                                    GiveGold(value);
+                                    AddTradeXp(SpeculationMath.TradeXp(_ventureStake, value));
+                                    int profit = value - _ventureStake;
+                                    string sLine = profit >= 0
+                                        ? $"Sold the {name} position to the royal factor at full book — {value}g  (+{profit}g)."
+                                        : $"Sold the {name} position to the royal factor at full book — {value}g  ({profit}g).";
+                                    ClearVenture();
+                                    InformationManager.DisplayMessage(new InformationMessage(sLine,
+                                        profit >= 0 ? new Color(0.45f, 0.75f, 0.45f) : new Color(0.75f, 0.55f, 0.35f)));
+                                    break;
+                                }
+                                case "read":
+                                {
+                                    if (_rng.NextDouble() < 0.60)
+                                    {
+                                        int broadBonus = 18;
+                                        _ventureMultiplier = SpeculationMath.ApplyDelta(_ventureMultiplier, broadBonus);
+                                        _roundHistory.Add($"Royal factor (broad brief)  +{broadBonus}%  →  {_ventureMultiplier}%");
+                                        MBInformationManager.AddQuickInformation(new TextObject(
+                                            $"The commission has no ceiling — the crown is filling a war chest and {name} is on the list. " +
+                                            $"The board climbs steadily. +{broadBonus}%"));
+                                        ShowRound();
+                                    }
+                                    else
+                                    {
+                                        int premiumPayout = value * 105 / 100;
+                                        int premiumProfit = premiumPayout - _ventureStake;
+                                        GiveGold(premiumPayout);
+                                        AddTradeXp(SpeculationMath.TradeXp(_ventureStake, premiumPayout));
+                                        string pLine = premiumProfit >= 0
+                                            ? $"Sold into the narrow royal window at a small premium — {premiumPayout}g  (+{premiumProfit}g)."
+                                            : $"Sold into the narrow royal window at a small premium — {premiumPayout}g  ({premiumProfit}g).";
+                                        ClearVenture();
+                                        InformationManager.DisplayMessage(new InformationMessage(pLine,
+                                            premiumProfit >= 0 ? new Color(0.45f, 0.75f, 0.45f) : new Color(0.75f, 0.55f, 0.35f)));
+                                    }
+                                    break;
+                                }
+                                default: // hold
+                                {
+                                    _ventureMultiplier = SpeculationMath.ApplyDelta(_ventureMultiplier, bonus);
+                                    _roundHistory.Add($"Royal factor  +{bonus}%  →  {_ventureMultiplier}%");
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        $"The royal factor buys steadily and the board rises with him. Position climbs {bonus}% before the next round."));
+                                    ShowRound();
+                                    break;
+                                }
                             }
                         }
                         catch { }

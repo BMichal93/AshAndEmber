@@ -62,7 +62,9 @@ namespace AshAndEmber
         private static float _pirateAtHour   = -1f;   // -1 → no corsairs this crossing
         private static float _stormAtHour   = -1f;
         private static float _fogAtHour     = -1f;
-        private static float _floatsamAtHour = -1f;
+        private static float _floatsamAtHour   = -1f;
+        private static float _survivorsAtHour  = -1f;
+        private static float _serpentAtHour    = -1f;
         private static bool  _voyageEmberwind;
         private static bool  _voyageDone;
         private static int   _fareEscrow;           // persisted; refunded if a reload strands the voyage
@@ -817,6 +819,14 @@ namespace AshAndEmber
                 _floatsamAtHour = _rng.NextDouble() < SeaMath.AshenAdjusted(SeaMath.FloatsamChancePerVoyage, ashenDest)
                     ? _voyageHoursTotal * (0.30f + 0.40f * (float)_rng.NextDouble()) : -1f;
 
+                // Shipwreck survivors in a boat — a moral decision mid-crossing.
+                _survivorsAtHour = _rng.NextDouble() < SeaMath.AshenAdjusted(SeaMath.SurvivorChancePerVoyage, ashenDest)
+                    ? _voyageHoursTotal * (0.20f + 0.50f * (float)_rng.NextDouble()) : -1f;
+
+                // A sea serpent surfaces — rare even in lawless waters.
+                _serpentAtHour = _rng.NextDouble() < SeaMath.SerpentChancePerVoyage
+                    ? _voyageHoursTotal * (0.35f + 0.35f * (float)_rng.NextDouble()) : -1f;
+
                 // Check for a blockade at the destination. The encounter fires
                 // near the end of the crossing — the party is committed by then.
                 _blockadeAtHour = -1f; _blockadeFaction = null; _blockadeStrength = 0f;
@@ -850,6 +860,8 @@ namespace AshAndEmber
             _stormAtHour        = -1f;
             _fogAtHour          = -1f;
             _floatsamAtHour     = -1f;
+            _survivorsAtHour    = -1f;
+            _serpentAtHour      = -1f;
             _blockadeAtHour     = -1f;
             _blockadeFaction    = null;
             _blockadeStrength   = 0f;
@@ -909,6 +921,16 @@ namespace AshAndEmber
                 {
                     _floatsamAtHour = -1f;
                     FireFlotsam();
+                }
+                if (_survivorsAtHour >= 0f && _voyageHoursElapsed >= _survivorsAtHour)
+                {
+                    _survivorsAtHour = -1f;
+                    FireSurvivors();
+                }
+                if (_serpentAtHour >= 0f && _voyageHoursElapsed >= _serpentAtHour)
+                {
+                    _serpentAtHour = -1f;
+                    FireSeaSerpent();
                 }
                 if (_pirateAtHour >= 0f && _voyageHoursElapsed >= _pirateAtHour)
                 {
@@ -1348,6 +1370,212 @@ namespace AshAndEmber
                 try { GameMenu.SwitchToMenu("town"); } catch { }
             }
             catch { }
+        }
+
+        // ── Survivors ─────────────────────────────────────────────────────────
+        private static void FireSurvivors()
+        {
+            try
+            {
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("take",
+                        "Heave to and bring them aboard", null, true,
+                        "Slow down and take the survivors on. Costs 2 hours — but it is the decent thing."),
+                    new InquiryElement("pass",
+                        "Row past. The sea's arithmetic is harsh but honest.", null, true,
+                        "Hold course. The crossing does not slow."),
+                };
+                if (MageKnowledge.IsMage)
+                    options.Add(new InquiryElement("read",
+                        $"Read the boat before you close ({SeaMath.SenseWreckAgingDays} day aging)", null, true,
+                        "The Inner Fire can taste the boat from here — learn who they are before you decide whether to close."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "🚣  Survivors",
+                    "A ship's boat, low in the water and rowing hard. Ragged figures, a broken mast lashed across the gunwales — " +
+                    "what was a merchant cog, or a naval escort, or something worse. " +
+                    "They have seen your sail and are pulling toward you. You are their only hope.",
+                    options, false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        string pick = chosen?[0]?.Identifier as string ?? "pass";
+                        switch (pick)
+                        {
+                            case "take":
+                            {
+                                _voyageHoursTotal += 2f;
+                                var lord = FindRandomLord();
+                                if (lord != null)
+                                {
+                                    string lName = lord.Name?.ToString() ?? "a lord";
+                                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 1, false); } catch { }
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "🚣  Survivors — Rescued",
+                                        $"You pull them in — a half-dozen men, one of whom claims service to {lName}. " +
+                                        $"He is quiet now, but he will remember this. " +
+                                        $"Two hours lost. (Relation with {lName}: +1)",
+                                        true, false, "Sail on.", "", null, null), true);
+                                }
+                                else
+                                {
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "🚣  Survivors — Rescued",
+                                        "You pull them in. Ordinary men, far from home, with nothing left to offer but their gratitude. " +
+                                        "Two hours lost. The crossing continues.",
+                                        true, false, "Sail on.", "", null, null), true);
+                                }
+                                break;
+                            }
+                            case "read":
+                            {
+                                try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.SenseWreckAgingDays); } catch { }
+                                if (_rng.NextDouble() < 0.60)
+                                {
+                                    var lord = FindRandomLord();
+                                    _voyageHoursTotal += 2f;
+                                    if (lord != null)
+                                    {
+                                        string lName = lord.Name?.ToString() ?? "a lord";
+                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 2, false); } catch { }
+                                        InformationManager.ShowInquiry(new InquiryData(
+                                            "🚣  Survivors — Sensed",
+                                            $"The Inner Fire tastes the boat: men sworn to {lName}, worth saving. " +
+                                            $"You take them on. {lName} will hear of this. " +
+                                            $"Two hours lost. (Relation with {lName}: +2)",
+                                            true, false, "Sail on.", "", null, null), true);
+                                    }
+                                    else
+                                    {
+                                        InformationManager.ShowInquiry(new InquiryData(
+                                            "🚣  Survivors — Sensed",
+                                            "The Inner Fire finds honest men in misfortune — no threat, no trick. You take them on. " +
+                                            "Two hours lost.",
+                                            true, false, "Sail on.", "", null, null), true);
+                                    }
+                                }
+                                else
+                                {
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        "The Inner Fire finds fever and delirium in the boat — disease, not misfortune. " +
+                                        "You pass them a waterskin on a rope and sail on. Grim arithmetic."));
+                                }
+                                break;
+                            }
+                            default: // pass
+                            {
+                                AddSeaMorale(-1f);
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    "You sail past. The figures in the boat stop rowing as you go by. The crossing does not slow."));
+                                break;
+                            }
+                        }
+                    },
+                    null, "", false), true, true);
+            }
+            catch { }
+        }
+
+        // ── Sea Serpent ───────────────────────────────────────────────────────
+        private static void FireSeaSerpent()
+        {
+            try
+            {
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("flee",
+                        "Crowd sail and run — no good comes from this", null, true,
+                        "Push the ship hard and put distance between it and you. Costs hours and shakes the crew."),
+                    new InquiryElement("hold",
+                        "Hold course. The captain swears it is just a whale.", null, true,
+                        "Even odds it passes without incident. If it does not, the hull will know it."),
+                };
+                if (MageKnowledge.IsMage)
+                    options.Add(new InquiryElement("speak",
+                        $"Speak to it through the Inner Fire ({SeaMath.SerpentAgingDays} days aging)", null, true,
+                        "Ancient things in the deep listen to the Fire. It costs years — but they do not always mean harm."));
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "🐉  Something in the Deep",
+                    "The water changes color beneath the hull — dark green to grey to black, and something is in the black. " +
+                    "A shape longer than the ship, slow and purposeful, circling. One of the sailors has stopped working. " +
+                    "The captain says nothing. He is gripping the rail very hard.",
+                    options, false, 1, 1, "Decide", "",
+                    chosen =>
+                    {
+                        string pick = chosen?[0]?.Identifier as string ?? "hold";
+                        switch (pick)
+                        {
+                            case "flee":
+                            {
+                                int extra = 3 + _rng.Next(3);
+                                _voyageHoursTotal += extra;
+                                AddSeaMorale(-2f);
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    $"You crack on every scrap of sail and run. The shape does not follow — " +
+                                    $"or if it does, it is content to let you go. {extra} hours lost. " +
+                                    "The crew does not speak for the rest of the crossing."));
+                                break;
+                            }
+                            case "speak":
+                            {
+                                try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.SerpentAgingDays); } catch { }
+                                AddSeaMorale(2f);
+                                InformationManager.ShowInquiry(new InquiryData(
+                                    "🐉  The Deep Listens",
+                                    "You let the Fire out — just a thread, just enough. The shape slows. Stills. " +
+                                    "For a long moment there is nothing but the water and something enormous beneath it, paying attention. " +
+                                    "Then it turns, smooth and deliberate, and is gone into the dark. " +
+                                    "The crew does not ask what you did. They do not want to know.",
+                                    true, false, "Sail on.", "", null, null), true);
+                                break;
+                            }
+                            default: // hold
+                            {
+                                if (_rng.NextDouble() < 0.50)
+                                {
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        "It circles twice and goes down. The captain exhales. The crew pretends they were not afraid. " +
+                                        "The crossing continues."));
+                                }
+                                else
+                                {
+                                    int extra = 2 + _rng.Next(3);
+                                    _voyageHoursTotal += extra;
+                                    int hurt = ApplySeaCasualties(MobileParty.MainParty, 0.03f);
+                                    AddSeaMorale(-3f);
+                                    InformationManager.ShowInquiry(new InquiryData(
+                                        "🐉  It Surfaces",
+                                        "The shape comes up. Not the whole of it — just enough, for just a moment. " +
+                                        "The hull shudders, ropes part, a man goes into the water and does not come back. " +
+                                        (hurt > 0 ? $"{hurt} of your soldiers are shaken and hurt. " : "") +
+                                        $"It takes {extra} hours to sort the damage and convince the crew to row.",
+                                        true, false, "Press on.", "", null, null), true);
+                                }
+                                break;
+                            }
+                        }
+                    },
+                    null, "", false), true, true);
+            }
+            catch { }
+        }
+
+        private static Hero FindRandomLord()
+        {
+            try
+            {
+                return Hero.AllAliveHeroes
+                    .Where(h => h.IsLord && h.IsAlive && h != Hero.MainHero && !h.IsPrisoner)
+                    .OrderBy(_ => _rng.Next())
+                    .FirstOrDefault();
+            }
+            catch { return null; }
+        }
+
+        private static void AddSeaMorale(float delta)
+        {
+            try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += delta; } catch { }
         }
 
         // =====================================================================
