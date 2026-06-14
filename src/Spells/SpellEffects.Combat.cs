@@ -1,0 +1,278 @@
+// =============================================================================
+// ASH AND EMBER — SpellEffects.Combat.cs
+// Agent target lookups, damage/heal/kill primitives, cone geometry.
+// Partial of SpellEffects (shared state lives in SpellEffects.cs).
+// =============================================================================
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Roster;
+using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.Core;
+using TaleWorlds.InputSystem;
+using TaleWorlds.Library;
+using TaleWorlds.Engine;
+using TaleWorlds.Localization;
+using TaleWorlds.MountAndBlade;
+using TaleWorlds.ObjectSystem;
+using TaleWorlds.CampaignSystem.MapEvents;
+
+namespace AshAndEmber
+{
+    public static partial class SpellEffects
+    {
+        // ── Agent helpers ──────────────────────────────────────────────────────
+        private static Agent Player => Agent.Main;
+
+        private static List<Agent> Enemies()
+        {
+            if (Mission.Current == null || Player == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != Player && !a.IsMount && a.IsActive() &&
+                                a.Team != null && a.Team != Player.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
+        }
+
+        private static List<Agent> Allies()
+        {
+            if (Mission.Current == null || Player == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != Player && !a.IsMount && a.IsActive() &&
+                                a.Team != null && a.Team == Player.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
+        }
+
+        internal static List<Agent> EnemiesOf(Agent source)
+        {
+            if (Mission.Current == null || source?.Team == null) return new List<Agent>();
+            var result = new List<Agent>();
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == source || a.IsMount || !a.IsActive() || a.Team == null) continue;
+                    bool isEnemy = false;
+                    try { isEnemy = source.Team.IsEnemyOf(a.Team); } catch { continue; }
+                    if (isEnemy) result.Add(a);
+                }
+            }
+            catch { }
+            return result;
+        }
+
+        internal static List<Agent> AlliesOf(Agent source)
+        {
+            if (Mission.Current == null || source?.Team == null) return new List<Agent>();
+            try
+            {
+                return Mission.Current.Agents
+                    .Where(a => a != source && !a.IsMount && a.IsActive() && a.Team == source.Team)
+                    .ToList();
+            }
+            catch { return new List<Agent>(); }
+        }
+
+        // ── Deferred death queue ───────────────────────────────────────────────
+        private static readonly List<(Agent Target, Agent Owner)> _pendingDeaths
+            = new List<(Agent, Agent)>();
+
+        public static void QueueKill(Agent target, Agent owner = null)
+        {
+            if (target == null || target.IsHero) return;
+            bool usingEquip = false;
+            try { usingEquip = target.IsUsingGameObject; } catch { }
+            if (usingEquip) { try { target.Health = 1f; } catch { } return; }
+            if (target.IsActive() && !_pendingDeaths.Exists(e => e.Target == target))
+                _pendingDeaths.Add((target, owner));
+        }
+
+        public static void FlushPendingDeaths()
+        {
+            if (_pendingDeaths.Count == 0) return;
+            var mission = Mission.Current;
+            if (mission == null || mission.CurrentState != Mission.State.Continuing)
+            { _pendingDeaths.Clear(); return; }
+            if (Agent.Main == null || !Agent.Main.IsActive())
+            { _pendingDeaths.Clear(); return; }
+            var snapshot = _pendingDeaths.ToList();
+            _pendingDeaths.Clear();
+            foreach (var (target, owner) in snapshot)
+            {
+                if (mission.CurrentState != Mission.State.Continuing) return;
+                if (Agent.Main == null || !Agent.Main.IsActive()) return;
+                if (target?.IsActive() == true) KillAgent(target, owner);
+            }
+        }
+
+        public static void ClearPendingDeaths() => _pendingDeaths.Clear();
+
+        public static void KillAgent(Agent target, Agent owner = null)
+        {
+            if (target == null || !target.IsActive()) return;
+            if (target.IsHero)
+            { try { target.Health = Math.Max(1f, target.Health - 2f); } catch { } return; }
+            bool usingEquip = false;
+            try { usingEquip = target.IsUsingGameObject; } catch { }
+            if (usingEquip) { try { target.Health = 1f; } catch { } return; }
+            try
+            {
+                Blow blow = BuildBlow(target, DamageTypes.Cut, 2000f, owner);
+                target.Die(blow, (Agent.KillInfo)0);
+                return;
+            }
+            catch { }
+            if (!target.IsActive()) return;
+            try { target.MakeDead(true, ActionIndexCache.Create("act_strike_walk_right_stance"), 0); } catch { }
+        }
+
+        public static void DamageAgent(Agent target, float damage, ColorSchool? school = null, Agent owner = null)
+        {
+            if (target == null || !target.IsActive()) return;
+
+            // Cinder Shell enchantment: reduce incoming damage
+            if (_stoneskinAgents.TryGetValue(target, out var skin) && skin.Remaining > 0f)
+            {
+                float reduction = Math.Min(0.5f, skin.BonusArmor / 100f);
+                damage *= (1f - reduction);
+            }
+
+            // Sunder enchantment: increase incoming damage (armour shred, max +50%)
+            if (_sunderedAgents.TryGetValue(target, out var sunder) && sunder.Remaining > 0f)
+            {
+                float amplification = Math.Min(0.50f, sunder.BonusVuln / 100f);
+                damage *= (1f + amplification);
+            }
+
+            float newHealth = target.Health - damage;
+            if (newHealth <= 0f)
+            {
+                if (!target.IsHero) QueueKill(target, owner);
+                else try { target.Health = 1f; } catch { }
+            }
+            else try { target.Health = newHealth; } catch { }
+        }
+
+        public static void HealAgent(Agent target, float amount)
+        {
+            if (target == null || !target.IsActive()) return;
+            try { target.Health = Math.Min(target.HealthLimit, target.Health + amount); } catch { }
+        }
+
+        private static Blow BuildBlow(Agent target, DamageTypes type, float magnitude, Agent owner = null)
+        {
+            Blow blow = new Blow();
+            blow.OwnerId          = (owner ?? Agent.Main)?.Index ?? 0;
+            blow.DamageType       = type;
+            blow.BaseMagnitude    = magnitude;
+            blow.InflictedDamage  = (int)magnitude;
+            blow.GlobalPosition   = target.Position;
+            blow.Direction        = new Vec3(0f, 0f, 1f);
+            blow.WeaponRecord     = new BlowWeaponRecord();
+            blow.DamageCalculated = true;
+            blow.NoIgnore         = true;
+            blow.StrikeType       = StrikeType.Invalid;
+            blow.VictimBodyPart   = BoneBodyPartType.Chest;
+            blow.AttackType       = AgentAttackType.Standard;
+            blow.BlowFlag         = BlowFlags.NoSound;
+            return blow;
+        }
+
+        // ── Cone geometry ─────────────────────────────────────────────────────
+        internal static List<Agent> ConeAgents(Vec3 origin, Vec3 fwd, float range, float dot)
+        {
+            if (Mission.Current == null) return new List<Agent>();
+            var result = new List<Agent>();
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == Player) continue;
+                    Vec3 to = a.Position - origin;
+                    if (to.Length > range) continue;
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
+                    result.Add(a);
+                }
+            }
+            catch { }
+            return result;
+        }
+
+        internal static List<Agent> ConeAgentsFrom(Agent source, float range, float dot)
+        {
+            if (Mission.Current == null || source == null) return new List<Agent>();
+            Vec3 fwd = source.LookDirection.NormalizedCopy();
+            var result = new List<Agent>();
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == source) continue;
+                    if (source.Team != null && a.Team == source.Team) continue;
+                    Vec3 to = a.Position - source.Position;
+                    if (to.Length > range) continue;
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
+                    result.Add(a);
+                }
+            }
+            catch { }
+            return result;
+        }
+
+        internal static int CountEnemiesInCone(Agent source, float range, float dot)
+            => ConeAgentsFrom(source, range, dot).Count;
+
+        internal static int CountAlliesInCone(Agent source, float range, float dot)
+        {
+            if (Mission.Current == null || source == null || source.Team == null) return 0;
+            Vec3 fwd = source.LookDirection.NormalizedCopy();
+            int count = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == source || a.Team == null) continue;
+                    if (a.Team != source.Team) continue;
+                    Vec3 to = a.Position - source.Position;
+                    if (to.Length > range) continue;
+                    if (Vec3.DotProduct(fwd, to.NormalizedCopy()) < dot) continue;
+                    count++;
+                }
+            }
+            catch { }
+            return count;
+        }
+
+        internal static int CountAlliesInRadius(Agent source, float range)
+        {
+            if (Mission.Current == null || source == null || source.Team == null) return 0;
+            int count = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == source || a.Team == null) continue;
+                    if (a.Team != source.Team) continue;
+                    if (a.Position.Distance(source.Position) > range) continue;
+                    count++;
+                }
+            }
+            catch { }
+            return count;
+        }
+
+    }
+}

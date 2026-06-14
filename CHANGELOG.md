@@ -13,6 +13,11 @@
 - **NPCs brew too** — lords and companions (the **Aserai** especially, scaled by Medicine and personality) brew and use elixirs both off-screen on the map and **in battle**, bound by the same taint rules. Enemy battle uses are posted to the combat log exactly like enemy spell casts.
 - Fully backward-compatible: pre-Alchemy saves load with an empty satchel and freshly-picked labs.
 
+### Skill progression
+- **Brewing trains Medicine** — every elixir brewed at an Alchemical Lab grants Medicine XP.
+- **Drinking trains Athletics** — holding your drink is slow conditioning: a small trickle of Athletics XP per round (a touch more for stronger fare).
+- **Speculating trains Trade** — funding and selling stock-exchange ventures grants Trade XP scaled to the profit.
+
 ---
 
 ## v0.19
