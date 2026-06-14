@@ -66,6 +66,13 @@ namespace AshAndEmber
                 if (ashen) pool.Add(EV_MemoryHunger);
                 if (_cinderEligible) pool.Add(EC_CinderVigil);
             }
+            if (village)
+            {
+                // Quiet Village — mage, day 80+, idle phase
+                float _qvDays = (float)CampaignTime.Now.ToDays;
+                if (mage && _quietVCooldown == 0 && _quietVPhase == 0 && _qvDays >= 80f)
+                    pool.Add(E_QuietVillage);
+            }
             if (town)
             {
                 pool.Add(E_OldEnemy);
@@ -96,6 +103,18 @@ namespace AshAndEmber
                 if (!ashen && clanTier < 5) pool.Add(EC_TavernHarassment);
                 // One-time Aserai alchemist with a dangerous idea
                 if (_weaponInventorFound == 0 && _cult == "aserai") pool.Add(E_WeaponInventor);
+                // Burned Archive — day 40+, idle phase
+                float _archDays = (float)CampaignTime.Now.ToDays;
+                if (_archiveCooldown == 0 && _archivePhase == 0 && _archDays >= 40f)
+                    pool.Add(E_BurnedArchive);
+                // Gallows Mage — day 30+, idle phase
+                float _gallDays = (float)CampaignTime.Now.ToDays;
+                if (_gallowsCooldown == 0 && _gallowsPhase == 0 && _gallDays >= 30f)
+                    pool.Add(E_GallowsMage);
+                // Ember Tithe Collector — day 50+, idle phase
+                float _titheDays = (float)CampaignTime.Now.ToDays;
+                if (_titheCultCooldown == 0 && _titheCultPhase == 0 && _titheDays >= 50f)
+                    pool.Add(EC_TitheCollector);
             }
 
             Fire(pool, s);
@@ -135,6 +154,10 @@ namespace AshAndEmber
                 int clanTier = Hero.MainHero?.Clan?.Tier ?? 0;
                 if (mage && !ashen && clanTier >= 2) pool.Add(LC_YoungMageHope);
                 pool.Add(EL_InsultAtGate);
+                // Ashen Pilgrim — mage, day 60+, idle phase
+                float _pilDays = (float)CampaignTime.Now.ToDays;
+                if (mage && _pilgrimCooldown == 0 && _pilgrimPhase == 0 && _pilDays >= 60f)
+                    pool.Add(E_AshenPilgrim);
             }
 
             Fire(pool, s);

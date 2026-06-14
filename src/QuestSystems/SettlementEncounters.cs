@@ -122,6 +122,37 @@ namespace AshAndEmber
         private static int    _ashenMachineryCountdown = 0;       // days until black-market weapon fires (option D)
         private static string _ashenMachineryKingdomId = null;    // kingdom targeted by deferred option D
         private static int    _weaponInventorFound     = 0;       // 1 after the Toxic Fog encounter fires (one-time)
+
+        // ── Five questline encounters (Events6.cs) ────────────────────────
+        // Ashen Pilgrim
+        private static int    _pilgrimCooldown     = 0;
+        private static int    _pilgrimCountdown    = 0;
+        private static int    _pilgrimPhase        = 0;   // 0=idle,1=14d reveal,2=30d return,3=14d letter,10=21d debt
+        private static string _pilgrimLordId       = null;
+        private static bool   _pilgrimLetterOpened = false;
+        // Burned Archive
+        private static int    _archiveCooldown  = 0;
+        private static int    _archiveCountdown = 0;
+        private static int    _archivePhase     = 0;   // 0=idle,1=map 7d,2=coverup 2d,3=author 21d
+        private static string _archiveLordId    = null;
+        // Quiet Village
+        private static int  _quietVCooldown  = 0;
+        private static int  _quietVCountdown = 0;
+        private static int  _quietVPhase     = 0;   // 0=idle,1=destroyed 7d,2=figurine 7d,3=scholar 14d,4=repeat 14d
+        private static bool _quietVFigurine  = false;
+        private static int  _quietVFigKeep   = 0;
+        // Gallows Mage
+        private static int    _gallowsCooldown  = 0;
+        private static int    _gallowsCountdown = 0;
+        private static int    _gallowsPhase     = 0;   // 0=idle,1=child 14d,2=freed 3d,3=cell 7d
+        private static string _gallowsIntelId   = null;
+        private static bool   _gallowsAllied    = false;
+        // Ember Tithe Collector
+        private static int  _titheCultCooldown  = 0;
+        private static int  _titheCultCountdown = 0;
+        private static int  _titheCultPhase     = 0;   // 0=idle,1=dream 7d,2=network 7d,3=buyer 30d
+        private static bool _titheCultAgent     = false;
+
         private static readonly Random _rng          = new Random();
         // Prevents the same encounter from repeating within a short run of sessions
         private static readonly List<string> _recentEncounters = new List<string>();
@@ -169,6 +200,29 @@ namespace AshAndEmber
             _ashenMachineryCountdown      = 0;
             _ashenMachineryKingdomId      = null;
             _weaponInventorFound          = 0;
+            _pilgrimCooldown     = 0;
+            _pilgrimCountdown    = 0;
+            _pilgrimPhase        = 0;
+            _pilgrimLordId       = null;
+            _pilgrimLetterOpened = false;
+            _archiveCooldown  = 0;
+            _archiveCountdown = 0;
+            _archivePhase     = 0;
+            _archiveLordId    = null;
+            _quietVCooldown  = 0;
+            _quietVCountdown = 0;
+            _quietVPhase     = 0;
+            _quietVFigurine  = false;
+            _quietVFigKeep   = 0;
+            _gallowsCooldown  = 0;
+            _gallowsCountdown = 0;
+            _gallowsPhase     = 0;
+            _gallowsIntelId   = null;
+            _gallowsAllied    = false;
+            _titheCultCooldown  = 0;
+            _titheCultCountdown = 0;
+            _titheCultPhase     = 0;
+            _titheCultAgent     = false;
             _recentEncounters.Clear();
         }
 
@@ -203,6 +257,30 @@ namespace AshAndEmber
             store.SyncData("SE_AshenMachineTimer",  ref _ashenMachineryCountdown);
             store.SyncData("SE_AshenMachineKing",   ref _ashenMachineryKingdomId);
             store.SyncData("SE_WeaponInventor",     ref _weaponInventorFound);
+            // Five questlines (Events6)
+            store.SyncData("SE_PilgrimCD",          ref _pilgrimCooldown);
+            store.SyncData("SE_PilgrimTimer",       ref _pilgrimCountdown);
+            store.SyncData("SE_PilgrimPhase",       ref _pilgrimPhase);
+            store.SyncData("SE_PilgrimLord",        ref _pilgrimLordId);
+            store.SyncData("SE_PilgrimLetterOpen",  ref _pilgrimLetterOpened);
+            store.SyncData("SE_ArchiveCD",          ref _archiveCooldown);
+            store.SyncData("SE_ArchiveTimer",       ref _archiveCountdown);
+            store.SyncData("SE_ArchivePhase",       ref _archivePhase);
+            store.SyncData("SE_ArchiveLord",        ref _archiveLordId);
+            store.SyncData("SE_QuietVCD",           ref _quietVCooldown);
+            store.SyncData("SE_QuietVTimer",        ref _quietVCountdown);
+            store.SyncData("SE_QuietVPhase",        ref _quietVPhase);
+            store.SyncData("SE_QuietVFigurine",     ref _quietVFigurine);
+            store.SyncData("SE_QuietVFigKeep",      ref _quietVFigKeep);
+            store.SyncData("SE_GallowsCD",          ref _gallowsCooldown);
+            store.SyncData("SE_GallowsTimer",       ref _gallowsCountdown);
+            store.SyncData("SE_GallowsPhase",       ref _gallowsPhase);
+            store.SyncData("SE_GallowsIntel",       ref _gallowsIntelId);
+            store.SyncData("SE_GallowsAllied",      ref _gallowsAllied);
+            store.SyncData("SE_TitheCultCD",        ref _titheCultCooldown);
+            store.SyncData("SE_TitheCultTimer",     ref _titheCultCountdown);
+            store.SyncData("SE_TitheCultPhase",     ref _titheCultPhase);
+            store.SyncData("SE_TitheCultAgent",     ref _titheCultAgent);
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
@@ -323,6 +401,84 @@ namespace AshAndEmber
                 _ashenMachineryCountdown--;
                 if (_ashenMachineryCountdown == 0)
                     FireAshenMachineryConsequence();
+            }
+
+            // ── Five questline cooldowns & countdowns (Events6) ──────────
+            if (_pilgrimCooldown > 0) _pilgrimCooldown--;
+            if (_pilgrimPhase > 0 && _pilgrimCountdown > 0)
+            {
+                _pilgrimCountdown--;
+                if (_pilgrimCountdown == 0)
+                {
+                    switch (_pilgrimPhase)
+                    {
+                        case 1:  FirePilgrimPhase1(); break;
+                        case 2:  FirePilgrimPhase2(); break;
+                        case 3:  FirePilgrimPhase3(); break;
+                        case 10: FirePilgrimDebt();   break;
+                    }
+                }
+            }
+
+            if (_archiveCooldown > 0) _archiveCooldown--;
+            if (_archivePhase > 0 && _archiveCountdown > 0)
+            {
+                _archiveCountdown--;
+                if (_archiveCountdown == 0)
+                {
+                    switch (_archivePhase)
+                    {
+                        case 1: FireArchivePhase1(); break;
+                        case 2: FireArchivePhase2(); break;
+                        case 3: FireArchivePhase3(); break;
+                    }
+                }
+            }
+
+            if (_quietVCooldown > 0) _quietVCooldown--;
+            if (_quietVPhase > 0 && _quietVCountdown > 0)
+            {
+                _quietVCountdown--;
+                if (_quietVCountdown == 0)
+                {
+                    switch (_quietVPhase)
+                    {
+                        case 1: FireQuietVillagePhase1(); break;
+                        case 2: FireQuietVillagePhase2(); break;
+                        case 3: FireQuietVillagePhase3(); break;
+                        case 4: FireQuietVillagePhase4(); break;
+                    }
+                }
+            }
+
+            if (_gallowsCooldown > 0) _gallowsCooldown--;
+            if (_gallowsPhase > 0 && _gallowsCountdown > 0)
+            {
+                _gallowsCountdown--;
+                if (_gallowsCountdown == 0)
+                {
+                    switch (_gallowsPhase)
+                    {
+                        case 1: FireGallowsPhase1(); break;
+                        case 2: FireGallowsPhase2(); break;
+                        case 3: FireGallowsPhase3(); break;
+                    }
+                }
+            }
+
+            if (_titheCultCooldown > 0) _titheCultCooldown--;
+            if (_titheCultPhase > 0 && _titheCultCountdown > 0)
+            {
+                _titheCultCountdown--;
+                if (_titheCultCountdown == 0)
+                {
+                    switch (_titheCultPhase)
+                    {
+                        case 1: FireTitheCultPhase1(); break;
+                        case 2: FireTitheCultPhase2(); break;
+                        case 3: FireTitheCultPhase3(); break;
+                    }
+                }
             }
         }
 
