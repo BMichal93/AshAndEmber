@@ -41,8 +41,14 @@ namespace AshAndEmber
         public const float PirateChanceFloor       = 0.12f;
         public const float PirateChanceCeiling     = 0.40f;
 
-        public const int FogBurnAgingDays   = 1;
-        public const int SenseWreckAgingDays = 1;
+        public const int FogBurnAgingDays      = 1;
+        public const int SenseWreckAgingDays   = 1;
+        // Chance of spotting ship survivors mid-crossing.
+        public const float SurvivorChancePerVoyage = 0.20f;
+        // Sea serpent sighting — rare, unsettling.
+        public const float SerpentChancePerVoyage  = 0.10f;
+        // Aging cost for a mage to commune with the serpent.
+        public const int   SerpentAgingDays        = 2;
 
         // ── Boarding battle ──────────────────────────────────────────────────
         public const int   SearTheTideAgingDays    = 3;
