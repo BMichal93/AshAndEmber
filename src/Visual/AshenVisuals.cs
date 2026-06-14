@@ -51,7 +51,7 @@ namespace AshAndEmber
         {
             _capeItem = null; _capeSearched = false;
             _hoodItem = null; _hoodSearched = false;
-            _heroBpSetter = null; _heroBpField = null; _heroSpField = null; _heroBpResolved = false;
+            _heroBpSetter = null; _heroSpSetter = null; _heroBpField = null; _heroSpField = null; _heroBpResolved = false;
         }
 
         // ── Body-property key transforms (pure, covered by PureLogicTests) ───
@@ -90,12 +90,15 @@ namespace AshAndEmber
         }
 
         // ── Hero body-property write ──────────────────────────────────────────
-        // Hero.BodyProperties has no public setter. We try three strategies in
+        // Hero.BodyProperties has no public setter. We try four strategies in
         // order so the mod degrades gracefully across Bannerlord builds:
-        //  1. Non-public property setter (exposed in some builds)
-        //  2. Backing field "_bodyProperties" (BodyProperties)
-        //  3. Backing field "_staticBodyProperties" (StaticBodyProperties only)
+        //  1. Non-public BodyProperties property setter (some builds)
+        //  2. Public StaticBodyProperties property setter (current build) — the
+        //     ashen face lives entirely in the static keys, so this covers it.
+        //  3. Backing field "_bodyProperties" (BodyProperties)
+        //  4. Backing field "_staticBodyProperties" / auto-property backing field
         private static MethodInfo   _heroBpSetter;
+        private static MethodInfo   _heroSpSetter;
         private static FieldInfo    _heroBpField;
         private static FieldInfo    _heroSpField;
         private static bool         _heroBpResolved;
@@ -109,7 +112,10 @@ namespace AshAndEmber
                 _heroBpSetter = t.GetProperty("BodyProperties",
                     BindingFlags.Public | BindingFlags.Instance)
                     ?.GetSetMethod(nonPublic: true);
-                if (_heroBpSetter == null)
+                _heroSpSetter = t.GetProperty("StaticBodyProperties",
+                    BindingFlags.Public | BindingFlags.Instance)
+                    ?.GetSetMethod(nonPublic: true);
+                if (_heroBpSetter == null && _heroSpSetter == null)
                 {
                     _heroBpField = t.GetField("_bodyProperties",
                         BindingFlags.NonPublic | BindingFlags.Instance);
@@ -117,11 +123,15 @@ namespace AshAndEmber
                         _heroBpField = null;
                     if (_heroBpField == null)
                         _heroSpField = t.GetField("_staticBodyProperties",
+                            BindingFlags.NonPublic | BindingFlags.Instance)
+                            ?? t.GetField("<StaticBodyProperties>k__BackingField",
                             BindingFlags.NonPublic | BindingFlags.Instance);
                 }
             }
             if (_heroBpSetter != null)
                 _heroBpSetter.Invoke(hero, new object[] { bp });
+            else if (_heroSpSetter != null)
+                _heroSpSetter.Invoke(hero, new object[] { bp.StaticProperties });
             else if (_heroBpField != null)
                 _heroBpField.SetValue(hero, bp);
             else if (_heroSpField != null)
