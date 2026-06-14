@@ -62,8 +62,10 @@ namespace AshAndEmber
 
             if (roll == 0)
             {
-                // a) Daughter kidnapped by the Ashen — mother blames you
+                // a) Daughter kidnapped by the Ashen — mother blames you, then comes for you
                 ShiftTrait(DefaultTraits.Mercy, -1);
+                _mothersPleaPhase = 5;
+                _mothersPleaCountdown = 5;
                 MageKnowledge._deferredInquiry = () =>
                     MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                         "★  Ash's Debt",
