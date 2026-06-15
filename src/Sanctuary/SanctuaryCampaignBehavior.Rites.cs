@@ -119,12 +119,29 @@ namespace AshAndEmber
             return "  [HEAVY PENALTY — every round will bleed you; reward barely flickers]";
         }
 
+        // Vlandian and Northern Imperial lords are the natural keepers of sanctuary rites.
+        // They qualify with a single virtue; outsiders need both Honor and Mercy.
         private static bool NpcCanUseSanctuary(Hero h)
         {
             try
             {
+                if (IsPreferredSanctuaryFaction(h))
+                    return h.GetTraitLevel(DefaultTraits.Honor) >= 1
+                        || h.GetTraitLevel(DefaultTraits.Mercy)  >= 1;
                 return h.GetTraitLevel(DefaultTraits.Honor) >= 1
                     && h.GetTraitLevel(DefaultTraits.Mercy)  >= 1;
+            }
+            catch { return false; }
+        }
+
+        internal static bool IsPreferredSanctuaryFaction(Hero h)
+        {
+            try
+            {
+                string culture = h.Clan?.Culture?.StringId ?? "";
+                if (culture == "vlandia") return true;
+                string kingdom = h.Clan?.Kingdom?.StringId ?? "";
+                return kingdom == "empire_n" || kingdom == "vlandia";
             }
             catch { return false; }
         }

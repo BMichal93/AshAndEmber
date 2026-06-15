@@ -127,14 +127,25 @@ namespace AshAndEmber
             return "  [HEAVY PENALTY — every round costs you greatly; reward barely moves]";
         }
 
+        // Ashen lords and Aserai lords are the natural practitioners of the dark altars.
+        // Aserai qualify with a single vice; others need both Mercy and Honor corrupted.
         private static bool NpcCanUseAltar(Hero h)
         {
             try
             {
                 if (h.Clan?.Kingdom?.StringId == AshenKingdomId) return true;
+                if (IsAseraiHero(h))
+                    return h.GetTraitLevel(DefaultTraits.Mercy) <= -1
+                        || h.GetTraitLevel(DefaultTraits.Honor) <= -1;
                 return h.GetTraitLevel(DefaultTraits.Mercy) <= -1
                     && h.GetTraitLevel(DefaultTraits.Honor) <= -1;
             }
+            catch { return false; }
+        }
+
+        private static bool IsAseraiHero(Hero h)
+        {
+            try { return h.Clan?.Culture?.StringId == "aserai"; }
             catch { return false; }
         }
 
