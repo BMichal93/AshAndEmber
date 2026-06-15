@@ -1,3 +1,386 @@
 <?xml version="1.0" encoding="utf-8"?>
 <NPCCharacters>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       FIRE WORSHIPPERS — a cult of bandits who carry a stolen fragment
+       of the Inner Fire. Tier 1–3 melee/caster tree.
+
+       fire_devotee (T1) → fire_zealot (T2, melee)
+                         → ember_caller (T2, throwing/caster)
+                               → ember_shaman (T3, elite caster)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <NPCCharacter id="fire_devotee"
+                name="{=fire_devotee_name}Fire Devotee"
+                age="25"
+                level="8"
+                culture="Culture.looter"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.hand_axe"/>
+        <equipment slot="Item1" id="Item.wicker_shield"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.wrapped_stick"/>
+        <equipment slot="Item2" id="Item.stone"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="30"/>
+      <skill id="OneHanded"  value="40"/>
+      <skill id="TwoHanded"  value="15"/>
+      <skill id="Throwing"   value="20"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.fire_zealot"/>
+      <upgrade_target id="NPCCharacter.ember_caller"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="fire_zealot"
+                name="{=fire_zealot_name}Fire Zealot"
+                age="25"
+                level="16"
+                culture="Culture.looter"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.fighting_axe"/>
+        <equipment slot="Item1" id="Item.round_shield"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.short_sword"/>
+        <equipment slot="Item1" id="Item.wooden_round_shield"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="60"/>
+      <skill id="OneHanded"  value="80"/>
+      <skill id="TwoHanded"  value="40"/>
+      <skill id="Throwing"   value="30"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.ember_shaman"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="ember_caller"
+                name="{=ember_caller_name}Ember Caller"
+                age="25"
+                level="16"
+                culture="Culture.looter"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.short_sword"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.wrapped_stick"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="50"/>
+      <skill id="OneHanded"  value="40"/>
+      <skill id="Throwing"   value="80"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.ember_shaman"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="ember_shaman"
+                name="{=ember_shaman_name}Ember Sorcerer"
+                age="25"
+                level="26"
+                culture="Culture.looter"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Item3" id="Item.fighting_axe"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Item3" id="Item.short_sword"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="80"/>
+      <skill id="OneHanded"  value="70"/>
+      <skill id="Throwing"   value="120"/>
+    </skills>
+  </NPCCharacter>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       ASHEN SPAWN — cold-fire warriors born of the Ashen tide.
+       ashen_thrall (T1) → ashen_invoker (T2, elite)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <NPCCharacter id="ashen_thrall"
+                name="{=ashen_thrall_name}Ashen Thrall"
+                age="25"
+                level="12"
+                culture="Culture.khuzait"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.fighting_axe"/>
+        <equipment slot="Item1" id="Item.wicker_shield"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.hand_axe"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="50"/>
+      <skill id="OneHanded"  value="60"/>
+      <skill id="TwoHanded"  value="30"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.ashen_invoker"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="ashen_invoker"
+                name="{=ashen_invoker_name}Ashen Invoker"
+                age="25"
+                level="22"
+                culture="Culture.khuzait"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.fighting_axe"/>
+        <equipment slot="Item1" id="Item.round_shield"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.short_sword"/>
+        <equipment slot="Item1" id="Item.round_shield"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="70"/>
+      <skill id="OneHanded"  value="90"/>
+      <skill id="TwoHanded"  value="50"/>
+      <skill id="Throwing"   value="40"/>
+    </skills>
+  </NPCCharacter>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       WANDERING CIRCLE — nomadic seers who carry the Inner Fire as
+       ritual wisdom rather than weapon.  Found among steppe and desert
+       bandit parties renamed to "Wandering Circle".
+       acolyte (T1) → druid (T2) → shaman (T3, elite)
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <NPCCharacter id="circle_acolyte"
+                name="{=circle_acolyte_name}Acolyte"
+                age="25"
+                level="9"
+                culture="Culture.battania"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.wrapped_stick"/>
+        <equipment slot="Item2" id="Item.stone"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.hand_axe"/>
+        <equipment slot="Item2" id="Item.stone"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="35"/>
+      <skill id="OneHanded"  value="30"/>
+      <skill id="Throwing"   value="40"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.circle_druid"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="circle_druid"
+                name="{=circle_druid_name}Druid"
+                age="25"
+                level="19"
+                culture="Culture.battania"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.short_sword"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.hand_axe"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="55"/>
+      <skill id="OneHanded"  value="50"/>
+      <skill id="Throwing"   value="90"/>
+    </skills>
+    <upgrade_targets>
+      <upgrade_target id="NPCCharacter.circle_shaman"/>
+    </upgrade_targets>
+  </NPCCharacter>
+
+  <NPCCharacter id="circle_shaman"
+                name="{=circle_shaman_name}Shaman"
+                age="25"
+                level="29"
+                culture="Culture.battania"
+                default_group="Ranged"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Item3" id="Item.fighting_axe"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.javelin"/>
+        <equipment slot="Item1" id="Item.javelin"/>
+        <equipment slot="Item2" id="Item.javelin"/>
+        <equipment slot="Item3" id="Item.short_sword"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="75"/>
+      <skill id="OneHanded"  value="65"/>
+      <skill id="Throwing"   value="130"/>
+    </skills>
+  </NPCCharacter>
+
 </NPCCharacters>
+

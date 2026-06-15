@@ -51,6 +51,7 @@ namespace AshAndEmber
         {
             _capeItem = null; _capeSearched = false;
             _hoodItem = null; _hoodSearched = false;
+            _agentBpMethod = null; _agentBpResolved = false;
             _heroBpSetter = null; _heroSpSetter = null; _heroBpField = null; _heroSpField = null; _heroBpResolved = false;
         }
 
@@ -87,6 +88,52 @@ namespace AshAndEmber
             var newDynamic = new DynamicBodyProperties(adultAge, dp.Weight, dp.Build);
 
             return new BodyProperties(newDynamic, newStatic);
+        }
+
+        // ── Agent body-property write ─────────────────────────────────────────
+        // UpdateBodyProperties may have been renamed or its parameter type changed
+        // to BodyPropertiesMin in newer Bannerlord builds.  We search by name
+        // (ignoring parameter type) so we degrade to "no face change" rather than
+        // silently crashing.
+        private static MethodInfo   _agentBpMethod;
+        private static bool         _agentBpResolved;
+
+        private static void TryUpdateAgentBodyProperties(Agent agent, BodyProperties bp)
+        {
+            if (!_agentBpResolved)
+            {
+                _agentBpResolved = true;
+                // Prefer the exact BodyProperties overload; fall back to any single-param
+                // overload named UpdateBodyProperties.
+                _agentBpMethod =
+                    typeof(Agent).GetMethod("UpdateBodyProperties",
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                        null, new[] { typeof(BodyProperties) }, null)
+                    ?? typeof(Agent)
+                        .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                        .FirstOrDefault(m => m.Name == "UpdateBodyProperties"
+                                             && m.GetParameters().Length == 1);
+            }
+            if (_agentBpMethod == null) return;
+
+            var paramType = _agentBpMethod.GetParameters()[0].ParameterType;
+            object arg;
+            if (paramType == typeof(BodyProperties))
+            {
+                arg = bp;
+            }
+            else
+            {
+                // Newer builds may use BodyPropertiesMin — try to construct it from
+                // BodyProperties, or fall back to static-only construction.
+                try { arg = Activator.CreateInstance(paramType, bp); }
+                catch
+                {
+                    try { arg = Activator.CreateInstance(paramType, bp.StaticProperties); }
+                    catch { return; }
+                }
+            }
+            _agentBpMethod.Invoke(agent, new[] { arg });
         }
 
         // ── Hero body-property write ──────────────────────────────────────────
@@ -187,11 +234,7 @@ namespace AshAndEmber
             if (agent == null || agent.IsMount) return;
             try
             {
-                // Agent.UpdateBodyProperties is resolved by reflection so a
-                // renamed/removed method degrades to "no face change" instead
-                // of breaking the mod on other game versions.
-                typeof(Agent).GetMethod("UpdateBodyProperties", new[] { typeof(BodyProperties) })
-                    ?.Invoke(agent, new object[] { MakeAshenBodyProperties(agent.BodyPropertiesValue) });
+                TryUpdateAgentBodyProperties(agent, MakeAshenBodyProperties(agent.BodyPropertiesValue));
             }
             catch { }
 
