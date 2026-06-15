@@ -29,7 +29,8 @@ namespace AshAndEmber
                 string name = s.Name?.ToString() ?? "";
                 return AshenAltarCities.Any(city =>
                     name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0)
-                    || AshenQuestSystem.IsWastelandCity(s.StringId);
+                    || AshenQuestSystem.IsWastelandCity(s.StringId)
+                    || _dynamicAltarIds.Contains(s.StringId);
             }
             catch { return false; }
         }
