@@ -169,6 +169,55 @@ namespace AshAndEmber
             }
             catch { }
 
+            // ── Commission a reagent cargo (mages only) ─────────────────────
+            try
+            {
+                starter.AddGameMenuOption("sea_harbor", "sea_reagent", "{SEA_REAGENT_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            if (!MageKnowledge.IsMage) return false;
+                            if (_ventures.Count >= SeaMath.MaxActiveVentures)
+                            { args.IsEnabled = false; }
+                            MBTextManager.SetTextVariable("SEA_REAGENT_TEXT",
+                                "Commission a reagent cargo (500 denars)");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            args.IsEnabled = Hero.MainHero.Gold >= 500 && _ventures.Count < SeaMath.MaxActiveVentures;
+                            return true;
+                        }
+                        catch { return false; }
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            var here = Settlement.CurrentSettlement;
+                            if (here == null) return;
+                            string reagentType = ReagentSystem.RandomReagentForPort(here);
+                            // Reuse the venture system: IsReagent=true, low investment
+                            GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, 500, true);
+                            float dist = _ports.Count > 1 ? PortDistance(here, _ports.First(p => p != here)) : 10f;
+                            _ventures.Add(new Venture
+                            {
+                                DestName   = here.Name?.ToString() ?? "this port",
+                                DaysLeft   = 4 + _rng.Next(4), // 4–7 days
+                                Invested   = 500,
+                                Blessed    = false,
+                                Distance   = dist,
+                                IsReagent  = true,
+                                ReagentType = reagentType,
+                            });
+                            MBInformationManager.AddQuickInformation(new TextObject(
+                                $"A factor departs to source {ReagentSystem.FriendlyName(reagentType)}. Expected back in a few days."));
+                            try { GameMenu.SwitchToMenu("sea_harbor"); } catch { }
+                        }
+                        catch { }
+                    },
+                    false, -1, false);
+            }
+            catch { }
+
             // ── Leave ───────────────────────────────────────────────────────
             try
             {

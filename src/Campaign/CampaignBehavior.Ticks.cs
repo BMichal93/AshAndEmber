@@ -65,6 +65,8 @@ namespace AshAndEmber
                 try { CheckAshenPrisonerEscape(); } catch { }
                 try { CheckMageOverexertion(); } catch { }
                 try { TickLordAnnouncement(); } catch { }
+                try { AshenRuinSystem.DailyTick(); } catch { }
+                try { ApprenticeSystem.DailyTick(); } catch { }
                 _dayCounter++;
                 if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
             }
@@ -80,6 +82,7 @@ namespace AshAndEmber
                 try { ColourLordRegistry.CheckAgeLimit(); } catch { }
                 try { CampaignMapEvents.WeeklyTick(); } catch { }
                 try { BurningLabQuestSystem.WeeklyTick(); } catch { }
+                try { AshenRuinMenus.WeeklySpawnGuards(); } catch { }
             }
             catch { }
         }

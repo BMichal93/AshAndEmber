@@ -280,6 +280,19 @@ namespace AshAndEmber
             try
             {
                 _lastSettlementId = settlement.StringId;
+
+                // Apprentice discovery: independent 1% roll, not gated by shared cooldown
+                if (settlement.IsVillage && MageKnowledge.IsMage && ApprenticeSystem.CanSearch
+                    && MageKnowledge._deferredInquiry == null
+                    && _rng.NextDouble() < ApprenticeSystem.TriggerChance)
+                {
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        try { ApprenticeSystem.ShowDiscovery(settlement); } catch { }
+                    };
+                    return; // skip normal encounter this entry
+                }
+
                 if (_cooldown > 0) return;
                 if (_rng.NextDouble() < EncounterChance)
                     TryFireEnter(settlement);

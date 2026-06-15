@@ -325,6 +325,7 @@ namespace AshAndEmber
         private static int _ledgerBattleCasts   = 0;
         private static int _ledgerMapCasts      = 0;
 
+        public static int  LedgerDaysSpent    => _ledgerDaysSpent;
         public static void RecordBattleCast() => _ledgerBattleCasts++;
         public static void RecordMapCast()    => _ledgerMapCasts++;
 

@@ -70,6 +70,9 @@ namespace AshAndEmber
                 DragonQuestSystem.ResetForNewGame();
                 AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
+                ReagentSystem.ResetForNewGame();
+                AshenRuinSystem.ResetForNewGame();
+                ApprenticeSystem.ResetForNewGame();
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
                 AlchemyCampaignBehavior.EstablishForNewCampaign();
