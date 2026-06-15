@@ -124,12 +124,17 @@ namespace AshAndEmber
                 // Every Aserai-cultured town.
                 var aserai = towns.Where(IsAseraiTown).ToList();
 
-                // A few Imperial towns at random.
-                var imperial = towns
-                    .Where(s => !aserai.Contains(s)
+                // Southern Imperial towns are the preferred trading partners of the Aserai.
+                // Fill up to ImperialLabCount from them first, then other imperial towns.
+                var southImperial = towns
+                    .Where(s => !aserai.Contains(s) && s.OwnerClan?.Kingdom?.StringId == "empire_s")
+                    .OrderBy(_ => _rng.Next()).ToList();
+                var otherImperial = towns
+                    .Where(s => !aserai.Contains(s) && !southImperial.Contains(s)
                              && s.OwnerClan?.Kingdom != null
                              && EmpireKingdomIds.Contains(s.OwnerClan.Kingdom.StringId))
-                    .OrderBy(_ => _rng.Next()).Take(ImperialLabCount).ToList();
+                    .OrderBy(_ => _rng.Next()).ToList();
+                var imperial = southImperial.Concat(otherImperial).Take(ImperialLabCount).ToList();
 
                 var picks = aserai.Concat(imperial).ToList();
 
@@ -365,10 +370,11 @@ namespace AshAndEmber
                              && h != Hero.MainHero && h.PartyBelongedTo?.IsActive == true)
                     .OrderBy(_ => _rng.Next()).Take(12))
                 {
-                    bool aserai = IsAseraiHero(hero);
-                    int  med    = SafeMedicine(hero);
-                    if (!aserai && med < 25) continue;
-                    if (_rng.NextDouble() >= AlchemyMath.NpcDailyBrewChance(med, aserai)) continue;
+                    bool aserai    = IsAseraiHero(hero);
+                    bool preferred = aserai || IsSouthImperialHero(hero);
+                    int  med       = SafeMedicine(hero);
+                    if (!preferred && med < 25) continue;
+                    if (_rng.NextDouble() >= AlchemyMath.NpcDailyBrewChance(med, preferred)) continue;
 
                     NpcBrewAndUse(hero, med, aserai);
                 }
@@ -451,6 +457,12 @@ namespace AshAndEmber
         private static bool IsAseraiHero(Hero hero)
         {
             try { return hero.Clan?.Culture?.StringId == AseraiCultureId; }
+            catch { return false; }
+        }
+
+        private static bool IsSouthImperialHero(Hero hero)
+        {
+            try { return hero.Clan?.Kingdom?.StringId == "empire_s"; }
             catch { return false; }
         }
     }

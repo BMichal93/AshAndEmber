@@ -89,7 +89,8 @@ namespace AshAndEmber
                              && HasSanctuary(h.CurrentSettlement) && NpcCanUseSanctuary(h))
                     .OrderBy(_ => _rng.Next()).Take(8))
                 {
-                    if (_rng.NextDouble() > 0.003) continue;
+                    // Vlandian and Northern Imperial lords seek sanctuaries far more readily.
+                    if (_rng.NextDouble() > (IsPreferredSanctuaryFaction(hero) ? 0.009 : 0.003)) continue;
 
                     float mult = NpcSanctuaryMult(hero);
                     // Simulate ritual: 3 rounds, check if succeeds

@@ -89,7 +89,8 @@ namespace AshAndEmber
                              && HasAshenAltar(h.CurrentSettlement) && NpcCanUseAltar(h))
                     .OrderBy(_ => _rng.Next()).Take(6))
                 {
-                    if (_rng.NextDouble() > 0.005) continue;
+                    // Aserai lords are drawn to the altars as readily as the Ashen themselves.
+                    if (_rng.NextDouble() > (IsAseraiHero(hero) ? 0.010 : 0.005)) continue;
 
                     float mult = NpcAltarMult(hero);
                     // Simulate ritual (3 rounds), only apply if success
