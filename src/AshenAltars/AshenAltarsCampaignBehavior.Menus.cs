@@ -246,6 +246,8 @@ namespace AshAndEmber
 
             int gained = MiracleInventory.AddCold(baseGain);
 
+            try { MageKnowledge.AddWhispers(3); } catch { }
+
             _lastAltarUseDay = today - cooldownReduction;
             _altarUseCount++;
 
