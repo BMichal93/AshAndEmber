@@ -132,8 +132,19 @@ namespace AshAndEmber
                             else if (onCooldown)
                             { args.IsEnabled = false; suffix = $"  [On cooldown: {MiracleMath.AltarCooldownDays - (today - _lastAltarUseDay)} day(s)]"; }
 
+                            string reagentNote = "";
+                            if (!blockedByGrace && !atCap && !onCooldown)
+                            {
+                                int reduc = ReagentSystem.AltarCooldownReduction();
+                                if (reduc > 0)
+                                {
+                                    string rn = ReagentSystem.FriendlyName(ReagentSystem.BestForContext(isSanctuary: false));
+                                    reagentNote = $"  [{rn} available: −{reduc} day cooldown]";
+                                }
+                            }
+
                             MBTextManager.SetTextVariable("ALTAR_COLD_TEXT",
-                                $"Embrace the Cold  (costs {cost}) — [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]{suffix}");
+                                $"Embrace the Cold  (costs {cost}) — [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]{suffix}{reagentNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -225,16 +236,28 @@ namespace AshAndEmber
             if (!usedPrisoner)
                 try { hero.HitPoints = Math.Max(1, hero.HitPoints - 10); } catch { }
 
+            int cooldownReduction = 0;
+            try
+            {
+                cooldownReduction = ReagentSystem.AltarCooldownReduction();
+                ReagentSystem.ConsumeForAltar();
+            }
+            catch { }
+
             int gained = MiracleInventory.AddCold(baseGain);
 
-            _lastAltarUseDay = today;
+            _lastAltarUseDay = today - cooldownReduction;
             _altarUseCount++;
+
+            string reagentLine = cooldownReduction > 0
+                ? $"\n\nA reagent was consumed, reducing the next cooldown by {cooldownReduction} day(s)."
+                : "";
 
             string msg;
             if (gained > 0)
                 msg = $"The stone takes what you offer. It does not thank you. It does not need to. " +
                       $"{gained} Cold received (cost: {costDesc}). [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]\n\n" +
-                      "Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.";
+                      $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}";
             else if (MiracleInventory.Grace > 0)
                 msg = "The light within you repels the stone. Spend your Grace first.";
             else

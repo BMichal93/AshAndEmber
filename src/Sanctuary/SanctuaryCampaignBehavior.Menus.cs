@@ -100,8 +100,19 @@ namespace AshAndEmber
                             else if (onCooldown)
                             { args.IsEnabled = false; suffix = $"  [On cooldown: {MiracleMath.PrayerCooldownDays - (today - _lastPrayerDay)} day(s)]"; }
 
+                            string reagentNote = "";
+                            if (!blockedByCold && !atCap && !onCooldown)
+                            {
+                                int reduc = ReagentSystem.SanctuaryCooldownReduction();
+                                if (reduc > 0)
+                                {
+                                    string rn = ReagentSystem.FriendlyName(ReagentSystem.BestForContext(isSanctuary: true));
+                                    reagentNote = $"  [{rn} available: −{reduc} day cooldown]";
+                                }
+                            }
+
                             MBTextManager.SetTextVariable("SANCT_GRACE_TEXT",
-                                $"Pray for Grace  (costs 12 HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}");
+                                $"Pray for Grace  (costs 12 HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{reagentNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -171,15 +182,27 @@ namespace AshAndEmber
 
             int gained = MiracleInventory.AddGrace(MiracleMath.GraceGain(honor, mercy, generosity));
 
-            _lastPrayerDay       = CurrentCampaignDay();
+            int cooldownReduction = 0;
+            try
+            {
+                cooldownReduction = ReagentSystem.SanctuaryCooldownReduction();
+                ReagentSystem.ConsumeForSanctuary();
+            }
+            catch { }
+
+            _lastPrayerDay       = CurrentCampaignDay() - cooldownReduction;
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
+
+            string reagentLine = cooldownReduction > 0
+                ? $"\n\nA reagent was consumed, reducing the next cooldown by {cooldownReduction} day(s)."
+                : "";
 
             string msg;
             if (gained > 0)
                 msg = $"The flame answers. You kneel until your knees ache and the candles burn lower. " +
                       $"{gained} Grace received. [{MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]\n\n" +
-                      "Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.";
+                      $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}";
             else if (MiracleInventory.Cold > 0)
                 msg = "The cold within you snuffs the flame before it answers. Spend your Cold first.";
             else
