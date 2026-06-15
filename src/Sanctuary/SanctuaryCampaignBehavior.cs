@@ -47,7 +47,8 @@ namespace AshAndEmber
         private const int TraitBoostDays       = 60;
         private const int TraitDriftThreshold  = 10;
         private const int CrossInterferenceDays= 30;
-        private const int PermanentSanctuaryCount = 4;
+        private const int PermanentSanctuaryCount = 5;
+        private const int EmpireSanctuaryCount    = 4;
 
         // Cooldowns (base days; Temple reduces by 40%)
         private const int PrayerCooldownBase    =  7;
@@ -223,22 +224,28 @@ namespace AshAndEmber
                 var empireIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     { "empire_w", "empire", "empire_s", "empire_n" };
                 var towns = Settlement.All.Where(s => s.IsTown).ToList();
-                var picks = towns
+                var empirePicks = towns
                     .Where(s => s.OwnerClan?.Kingdom != null
                              && empireIds.Contains(s.OwnerClan.Kingdom.StringId))
-                    .OrderBy(_ => _rng.Next()).Take(PermanentSanctuaryCount).ToList();
+                    .OrderBy(_ => _rng.Next()).Take(EmpireSanctuaryCount).ToList();
 
-                // Fallback: if the empire filter comes up short (e.g. ownership not
-                // yet settled, or a heavily-modded map), top up with any towns so the
-                // sanctuary network is never empty.
-                if (picks.Count < PermanentSanctuaryCount)
-                    picks.AddRange(towns.Where(s => !picks.Contains(s))
-                                        .OrderBy(_ => _rng.Next())
-                                        .Take(PermanentSanctuaryCount - picks.Count));
+                // Fallback: if the empire filter comes up short top up with any towns.
+                if (empirePicks.Count < EmpireSanctuaryCount)
+                    empirePicks.AddRange(towns.Where(s => !empirePicks.Contains(s))
+                                              .OrderBy(_ => _rng.Next())
+                                              .Take(EmpireSanctuaryCount - empirePicks.Count));
+
+                // One Vlandia sanctuary — the Flame reaches even the western knights.
+                var vlandiaPick = towns
+                    .Where(s => s.OwnerClan?.Kingdom?.StringId == "vlandia"
+                             && !empirePicks.Contains(s))
+                    .OrderBy(_ => _rng.Next()).FirstOrDefault();
 
                 _permanentSanctuaryIds.Clear();
-                foreach (var s in picks) _permanentSanctuaryIds.Add(s.StringId);
-                if (picks.Count > 0 && !_sanctuariesAnnounced)
+                foreach (var s in empirePicks) _permanentSanctuaryIds.Add(s.StringId);
+                if (vlandiaPick != null) _permanentSanctuaryIds.Add(vlandiaPick.StringId);
+
+                if (_permanentSanctuaryIds.Count > 0 && !_sanctuariesAnnounced)
                     _needsAnnouncementAfterSync = true;
             }
             catch { }

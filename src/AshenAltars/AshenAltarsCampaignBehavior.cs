@@ -66,8 +66,10 @@ namespace AshAndEmber
         private const int DepletionThreshold    =  5;
         private const int DepletionCooldown     = 30;
 
-        private const string AshenKingdomId = "ashen_kingdom";
+        private const string AshenKingdomId  = "ashen_kingdom";
+        private const string AseraiKingdomId = "aserai";
         private static readonly string[] AshenAltarCities = { "Tyal", "Sibir", "Baltakhand", "Amprela" };
+        private static readonly List<string> _dynamicAltarIds = new List<string>();
         private static readonly Random _rng = new Random();
 
         private static bool _altarsAnnounced = false;
@@ -136,10 +138,17 @@ namespace AshAndEmber
                 if (ldKeys != null && ldVals != null)
                 { _locationDepletedUntil.Clear(); for (int i = 0; i < Math.Min(ldKeys.Count, ldVals.Count); i++) _locationDepletedUntil[ldKeys[i]] = ldVals[i]; }
             } catch { }
+            try
+            {
+                var dynIds = _dynamicAltarIds.ToList();
+                store.SyncData("ALTAR_DynamicIds", ref dynIds);
+                if (dynIds != null) { _dynamicAltarIds.Clear(); foreach (var id in dynIds) _dynamicAltarIds.Add(id); }
+            } catch { }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
+            EnsureDynamicAltars();
             AnnounceAltars();
             RegisterAltarMenus(starter);
         }
@@ -150,6 +159,7 @@ namespace AshAndEmber
         public static void EstablishForNewCampaign()
         {
             ResetForNewGame();
+            EnsureDynamicAltars();
             AnnounceAltars();
         }
 
@@ -174,6 +184,22 @@ namespace AshAndEmber
             _lastInvokeDay       = -999;
             _locationUses.Clear();
             _locationDepletedUntil.Clear();
+            _dynamicAltarIds.Clear();
+        }
+
+        // Selects one random Aserai town as a dynamic altar if not already set.
+        // Called on session launch (existing saves) and on new campaign creation.
+        private static void EnsureDynamicAltars()
+        {
+            if (_dynamicAltarIds.Count > 0) return;
+            try
+            {
+                var pick = Settlement.All
+                    .Where(s => s.IsTown && s.OwnerClan?.Kingdom?.StringId == AseraiKingdomId)
+                    .OrderBy(_ => _rng.Next()).FirstOrDefault();
+                if (pick != null) _dynamicAltarIds.Add(pick.StringId);
+            }
+            catch { }
         }
 
         private static void AnnounceAltars()
@@ -182,8 +208,14 @@ namespace AshAndEmber
             _altarsAnnounced = true;
             try
             {
+                var names = AshenAltarCities.ToList();
+                foreach (var id in _dynamicAltarIds)
+                {
+                    var s = Settlement.All.FirstOrDefault(x => x.StringId == id);
+                    if (s != null) names.Add(s.Name?.ToString() ?? id);
+                }
                 MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Ashen Altars stand in {string.Join(", ", AshenAltarCities)}. " +
+                    $"Ashen Altars stand in {string.Join(", ", names)}. " +
                     "Only the Merciless and Devious may kneel before them."));
             }
             catch { }
