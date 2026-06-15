@@ -146,6 +146,35 @@ namespace AshAndEmber
         private static int    _mothersPleaPhase       = 0;       // 0=none 1=healed_7d 2=money_7d 3=refused_7d 4=child_10yr 5=assassin
         private static readonly Random _rng          = new Random();
 
+        // ── Events6 state ──────────────────────────────────────────────────
+        // Cartographer of Silences (city enter, mage/Ashen, 3-phase escalation)
+        private static int    _cartographerPhase                = 0;  // 0=fresh 1,2=in progress 3=done
+        private static int    _cartographerCooldown             = 0;  // 60d between sightings
+        private static int    _cartographerConsequenceCountdown = 0;  // 14d until Ashen raid fires
+
+        // The Child Who Does Not Sleep (village enter, global arc)
+        private static int    _ashChildPhase    = 0;  // 0=initial 1=camp 2=long-camp 10=echo 11=done
+        private static int    _ashChildCountdown = 0; // days until next phase fires
+
+        // The Vow Undischarged (city leave, clan tier ≥ 2)
+        private static int    _vowCooldown          = 0; // 90d before can fire again
+        private static int    _vowPhase             = 0; // 0=not triggered 1=name-taken 2=blackmail 3=done
+        private static int    _vowCountdown         = 0; // 14d until named-man fires
+        private static int    _vowAssassinCountdown = 0; // 30d until assassins arrive
+
+        // The Fever Road (village leave, recurring hazard)
+        private static bool   _feverRoadActive          = false; // window is open
+        private static int    _feverRoadWindow           = 0;    // days left in window
+        private static int    _feverRoadTriggerCount     = 0;    // times fired this window (max 3)
+        private static int    _feverRoadCooldown         = 0;    // 180d between windows
+        private static int    _feverRoadSpreadCountdown  = 0;    // 7d until camp fever fires
+
+        // Ashes in the Bread (village enter, moral trap)
+        private static int    _ashBreadCooldown     = 0;    // 45d between triggers
+        private static int    _ashBreadCountdown    = 0;    // 14d until deferred consequence
+        private static int    _ashBreadOutcome      = 0;    // 1=exposed 2=mob 3=defended 4=paid
+        private static string _ashBreadSettlementId = null; // settlement where it happened
+
         // Recent-encounter history to prevent the same event repeating too soon.
         private static readonly List<string> _recentEncounters = new List<string>();
         private const int RecentEncounterMemory = 6;
@@ -214,6 +243,24 @@ namespace AshAndEmber
             _weaponInventorFound        = 0;
             _mothersPleaCountdown       = 0;
             _mothersPleaPhase           = 0;
+            _cartographerPhase                = 0;
+            _cartographerCooldown             = 0;
+            _cartographerConsequenceCountdown = 0;
+            _ashChildPhase    = 0;
+            _ashChildCountdown = 0;
+            _vowCooldown          = 0;
+            _vowPhase             = 0;
+            _vowCountdown         = 0;
+            _vowAssassinCountdown = 0;
+            _feverRoadActive         = false;
+            _feverRoadWindow         = 0;
+            _feverRoadTriggerCount   = 0;
+            _feverRoadCooldown       = 0;
+            _feverRoadSpreadCountdown = 0;
+            _ashBreadCooldown     = 0;
+            _ashBreadCountdown    = 0;
+            _ashBreadOutcome      = 0;
+            _ashBreadSettlementId = null;
             _recentEncounters.Clear();
         }
 
@@ -270,6 +317,24 @@ namespace AshAndEmber
             store.SyncData("SE_WeaponInventor",    ref _weaponInventorFound);
             store.SyncData("SE_MothersPleaCD",     ref _mothersPleaCountdown);
             store.SyncData("SE_MothersPleaPhase",  ref _mothersPleaPhase);
+            store.SyncData("SE_CartographerPhase",  ref _cartographerPhase);
+            store.SyncData("SE_CartographerCD",     ref _cartographerCooldown);
+            store.SyncData("SE_CartographerConseq", ref _cartographerConsequenceCountdown);
+            store.SyncData("SE_AshChildPhase",      ref _ashChildPhase);
+            store.SyncData("SE_AshChildCD",         ref _ashChildCountdown);
+            store.SyncData("SE_VowCooldown",        ref _vowCooldown);
+            store.SyncData("SE_VowPhase",           ref _vowPhase);
+            store.SyncData("SE_VowCD",              ref _vowCountdown);
+            store.SyncData("SE_VowAssassinCD",      ref _vowAssassinCountdown);
+            store.SyncData("SE_FeverRoadActive",    ref _feverRoadActive);
+            store.SyncData("SE_FeverRoadWindow",    ref _feverRoadWindow);
+            store.SyncData("SE_FeverRoadCount",     ref _feverRoadTriggerCount);
+            store.SyncData("SE_FeverRoadCD",        ref _feverRoadCooldown);
+            store.SyncData("SE_FeverRoadSpreadCD",  ref _feverRoadSpreadCountdown);
+            store.SyncData("SE_AshBreadCD",         ref _ashBreadCooldown);
+            store.SyncData("SE_AshBreadCountdown",  ref _ashBreadCountdown);
+            store.SyncData("SE_AshBreadOutcome",    ref _ashBreadOutcome);
+            store.SyncData("SE_AshBreadS",          ref _ashBreadSettlementId);
             string recentStr = string.Join(",", _recentEncounters);
             store.SyncData("SE_RecentEncounters",  ref recentStr);
             _recentEncounters.Clear();
@@ -492,6 +557,67 @@ namespace AshAndEmber
                 _mothersPleaCountdown--;
                 if (_mothersPleaCountdown == 0)
                     FireMothersPleaConsequence();
+            }
+
+            // ── Events6 ticks ─────────────────────────────────────────────
+            if (_cartographerCooldown > 0) _cartographerCooldown--;
+
+            if (_cartographerConsequenceCountdown > 0)
+            {
+                _cartographerConsequenceCountdown--;
+                if (_cartographerConsequenceCountdown == 0)
+                    FireCartographerConsequence();
+            }
+
+            if ((_ashChildPhase == 1 || _ashChildPhase == 2) && _ashChildCountdown > 0)
+            {
+                _ashChildCountdown--;
+                if (_ashChildCountdown == 0)
+                    FireAshChildConsequence();
+            }
+
+            if (_vowCooldown > 0) _vowCooldown--;
+
+            if (_vowPhase == 1 && _vowCountdown > 0)
+            {
+                _vowCountdown--;
+                if (_vowCountdown == 0)
+                    FireVowConsequence();
+            }
+
+            if (_vowPhase == 2 && _vowAssassinCountdown > 0)
+            {
+                _vowAssassinCountdown--;
+                if (_vowAssassinCountdown == 0)
+                    FireVowAssassins();
+            }
+
+            if (_feverRoadActive && _feverRoadWindow > 0)
+            {
+                _feverRoadWindow--;
+                if (_feverRoadWindow == 0)
+                {
+                    _feverRoadActive       = false;
+                    _feverRoadTriggerCount = 0;
+                    _feverRoadCooldown     = 180;
+                }
+            }
+            if (_feverRoadCooldown > 0) _feverRoadCooldown--;
+
+            if (_feverRoadSpreadCountdown > 0)
+            {
+                _feverRoadSpreadCountdown--;
+                if (_feverRoadSpreadCountdown == 0)
+                    FireFeverRoadSpread();
+            }
+
+            if (_ashBreadCooldown > 0) _ashBreadCooldown--;
+
+            if (_ashBreadCountdown > 0)
+            {
+                _ashBreadCountdown--;
+                if (_ashBreadCountdown == 0)
+                    FireAshBreadConsequence();
             }
         }
 

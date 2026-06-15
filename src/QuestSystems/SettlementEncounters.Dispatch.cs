@@ -65,6 +65,10 @@ namespace AshAndEmber
                 if (ashen) pool.Add(EV2_DogWontStop);
                 if (ashen) pool.Add(EV_MemoryHunger);
                 if (_cinderEligible) pool.Add(EC_CinderVigil);
+                // Child Who Does Not Sleep — one global arc; phase 0=initial, 10=echo
+                if (_ashChildPhase == 0 || _ashChildPhase == 10) pool.Add(EV_ChildWhoDoesNotSleep);
+                // Ashes in the Bread — general, 45-day cooldown, no deferred pending
+                if (_ashBreadCooldown == 0 && _ashBreadCountdown == 0) pool.Add(EV_AshesInTheBread);
             }
             if (town)
             {
@@ -97,6 +101,9 @@ namespace AshAndEmber
                 if (!ashen && clanTier < 5) pool.Add(EC_TavernHarassment);
                 // One-time Aserai alchemist with a dangerous idea
                 if (_weaponInventorFound == 0 && _cult == "aserai") pool.Add(E_WeaponInventor);
+                // Cartographer of Silences — mage or Ashen, city enter, 3-phase, 60-day cooldown
+                if ((mage || ashen) && _cartographerCooldown == 0 && _cartographerPhase < 3)
+                    pool.Add(EV_CartographerOfSilences);
             }
 
             Fire(pool, s);
@@ -123,6 +130,9 @@ namespace AshAndEmber
                 {
                     pool.Add(E_MothersPlea);
                 }
+                // Fever Road — general, recurring hazard; open window OR fresh start
+                if (_feverRoadCooldown == 0 && (!_feverRoadActive || _feverRoadTriggerCount < 3))
+                    pool.Add(LV_FeverRoad);
             }
             if (town)
             {
@@ -136,6 +146,9 @@ namespace AshAndEmber
                 int clanTier = Hero.MainHero?.Clan?.Tier ?? 0;
                 if (mage && !ashen && clanTier >= 2) pool.Add(LC_YoungMageHope);
                 pool.Add(EL_InsultAtGate);
+                // Vow Undischarged — general, city leave, clan tier ≥ 2, 90-day cooldown
+                if (_vowCooldown == 0 && _vowPhase == 0 && clanTier >= 2)
+                    pool.Add(EL_VowUndischarged);
             }
 
             Fire(pool, s);
