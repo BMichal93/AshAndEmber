@@ -83,8 +83,7 @@ namespace AshAndEmber
                 new Color(1f, 0.8f, 0.2f)));
         }
 
-        // Cost curve: 1 pt until you hold 10 or more talents, 2 pts from that point on.
-        public static int PurchaseCost() => _purchased.Count < 10 ? 1 : 2;
+        public static int PurchaseCost() => 1;
 
         // Grant a talent for free (no focus-point cost). Returns false if already owned.
         public static bool GrantFree(TalentId id, Hero hero)
