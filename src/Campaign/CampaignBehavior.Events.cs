@@ -144,18 +144,12 @@ namespace AshAndEmber
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The cold settled in you long ago. The world will see it before you speak.",
                             new Color(0.3f, 0.35f, 0.7f)));
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Casting costs criminal standing. After your first working each day, further casts risk possession. Alt+X = Grimoire.",
-                            new Color(0.3f, 0.35f, 0.7f)));
                     }
                     else if (isMage)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The fire stirs. Hold Alt, type form keys (WASD), press X to Break, type effect keys, release Alt to cast.",
+                            "The fire stirs in you. Its gestures are written in your Codex of Hand and Voice.",
                             new Color(0.7f, 0.5f, 1.0f)));
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "Forms: W=Blast  A=Missile  D=Barrier  S=Burst  |  Effects: W/A/D=Damage (+25 ea)  S=Restore (+15 heal ea)  |  Alt+X = Grimoire",
-                            new Color(0.6f, 0.6f, 0.8f)));
                     }
                     else
                     {
@@ -183,6 +177,9 @@ namespace AshAndEmber
                         try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
                     }
                     try { ReassignImperialSettlements(); } catch { }
+                    // Greet every new ruler — mage or not — with the controls codex.
+                    // Spells, miracles and the alchemy satchel all share this one manual.
+                    MageKnowledge._deferredInquiry = MageKnowledge.ShowControlsCodex;
                 },
                 _ =>
                 {

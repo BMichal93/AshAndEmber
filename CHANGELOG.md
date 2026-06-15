@@ -12,6 +12,9 @@
 - **Priest troops.** *Priest of the Flame* (Grace) and *Ashen Priest* (Cold) now walk the world, garrisoning Sanctuary and Ashen towns and invoking their miracles in battle.
 - **NPC miracle use is unified.** Lords and priests use miracles through one system — in battle and off-screen on the map — choosing miracles that fit their virtue. The old per-building NPC rite simulation has been removed; no more parallel systems.
 
+### Onboarding
+- **The Disciplines of Hand and Voice** — a new campaign now opens with a single, tidy controls codex covering every key combo at a glance: working spells (Alt + W/A/D/S), invoking miracles (Shift + X on the field, Ctrl + sequence in battle), and opening the alchemy satchel (Ctrl + X) — each with its controller chord. The grimoire keeps the deeper spell craft and points to the codex for the gestures.
+
 ### Fixes & tweaks
 - **Grace/Cold reset on a new game** — starting a fresh campaign in the same session no longer inherits the previous campaign's Grace or Cold.
 - Removed the superseded multi-rite engine and its dead state for a leaner, clearer Sanctuary/Altar codebase. Fully backward-compatible: obsolete save keys are silently ignored on load.

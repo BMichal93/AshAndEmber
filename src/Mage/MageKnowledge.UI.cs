@@ -46,33 +46,27 @@ namespace AshAndEmber
                 return;
             }
 
-            string stepFocus   = usingController ? "Hold LB"              : "Hold Left Alt";
-            string stepShape   = usingController ? "Left stick ↑ ← → ↓"  : "W  A  D  S";
-            string stepBreak   = usingController ? "Press L3"             : "Press X";
-            string stepRelease = usingController ? "Release LB"           : "Release Left Alt";
-            string openBook    = usingController ? "LB + RB"              : "Left Alt + X  (before any key is pressed)";
-
             string ashenNote = _isAshen
                 ? "\n[Ashen] Each cast raises criminal rating instead of aging you. After your first working each day, further casts risk possession.\n"
                 : "";
 
+            // The casting gestures (which keys to hold, break, release) live in the
+            // Codex of Hand and Voice. This book keeps the deeper craft — what each
+            // mark shapes and what power it carries.
             string desc =
                 AgingSystem.BuildLedgerText() +
-                "── HOW TO CAST ──────────────────────────────────────\n" +
-                $"  1. {stepFocus}  → enter Focus\n" +
-                $"  2. {stepShape}  → shape the spell  (repeat for more power)\n" +
-                $"  3. {stepBreak}  → Break: locks shape, enter power phase\n" +
-                "  4. W = Sear / A = Force / D = Shred  (damage)   |   S → Heal\n" +
-                $"  5. {stepRelease}  → the spell fires!\n\n" +
-                "  Watch the screen: [ U ▷ U ] shows your formula as you build it.\n" +
-                "  Your hands must be free — sheathe your weapon first.\n\n" +
-                "── SHAPES  (step 2, before Break) ───────────────────\n" +
+                "── THE CASTING, IN BRIEF ────────────────────────────\n" +
+                "  Hold Left Alt → shape with W A D S → press X to Break →\n" +
+                "  give power with W A D S → release Alt to loose it.\n" +
+                "  Watch [ U ▷ U ] build your formula; keep your hands free.\n" +
+                "  (Full gestures, miracles and satchel: your Codex of Hand and Voice.)\n\n" +
+                "── SHAPES  (before Break) ───────────────────────────\n" +
                 "  W / ↑  Blast    — cone of fire forward  (+2.5 m per W)\n" +
                 "  A / ←  Missile  — fire bolt that explodes  (+3 m range, +1 m blast per A)\n" +
                 "  D / →  Barrier  — summoned wall of nodes  (press again to release)\n" +
                 "  S / ↓  Burst    — ring around you  (+2.5 m radius per S, also heals you)\n" +
                 "  Mix freely — W then S fires a Blast and a Burst at the same time.\n\n" +
-                "── POWER  (step 4, after Break) ─────────────────────\n" +
+                "── POWER  (after Break) ─────────────────────────────\n" +
                 "  Every damage key deals 25 fire damage — but each carries a nature:\n" +
                 "  W / ↑  Sear   — searing burn  (+5 burn per press; Immolate amplifies)\n" +
                 "  A / ←  Force  — concussive push (1.5 m per press; Scatter amplifies)\n" +
@@ -108,7 +102,7 @@ namespace AshAndEmber
                 "  ◈ Twin Bolt       — missile fires two bolts at 60% power each\n" +
                 "  ◈ Fading Ward     — barrier expires after 60 seconds\n" +
                 "  ◈ Directed Burst  — full power forward, 40% in the rear arc\n\n" +
-                $"  Open this page: {openBook}" +
+                "  Open this book any time: Left Alt + X  (LB + RB on a controller)." +
                 (_isAshen ? AshenQuestSystem.GetGrimoireSummary() : DragonQuestSystem.GetGrimoireSummary());
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
@@ -135,6 +129,42 @@ namespace AshAndEmber
                     () => { _deferredInquiry = () => ShowTalentMenu(); }
                 ), true, true);
             }
+        }
+
+        // ── Controls codex ────────────────────────────────────────────────────
+        // The one general manual for every key combo across the mod's three
+        // disciplines. Shown once at campaign start; the grimoire points here for
+        // the casting gestures, and the Sanctuary / Altar / Lab menus echo the
+        // miracle and satchel chords. Climatic, terse, device-agnostic (keyboard
+        // primary, the controller chord beside it).
+        public static void ShowControlsCodex()
+        {
+            string body =
+                "Three disciplines answer a prepared hand. Learn their gestures here, "
+                + "while the candle is steady — the field gives no time to remember.\n\n"
+                + "Keys are for keyboard; the (controller) chord stands beside each.\n\n"
+                + "── THE INNER FIRE — spells (for the gifted) ─────────\n"
+                + "  Open the grimoire    Left Alt + X        (LB + RB)\n"
+                + "  Work a spell         Hold Left Alt …      (hold LB)\n"
+                + "    • shape it         W  A  D  S           (left stick)\n"
+                + "    • Break to power   X                    (L3)\n"
+                + "    • give it power    W  A  D  S           (left stick)\n"
+                + "    • loose it         release Left Alt     (release LB)\n"
+                + "  Sheathe your weapon first — the working needs free hands.\n\n"
+                + "── MIRACLES — Grace & Cold ──────────────────────────\n"
+                + "  First charge at a Sanctuary (Grace) or Ashen Altar (Cold).\n"
+                + "  On the field         Shift + X            (L3 + R3)\n"
+                + "  In battle            Hold Left Ctrl …     (hold RB)\n"
+                + "    then type the six-mark sequence shown for the miracle, and release.\n\n"
+                + "── ALCHEMY — the satchel ────────────────────────────\n"
+                + "  Open it anywhere, even mid-battle, to drink an elixir:\n"
+                + "  Open the satchel     Left Ctrl + X        (RB + R3)\n\n"
+                + "The grimoire holds the deeper craft of the Fire. "
+                + "The rest, you will learn by surviving.";
+
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Disciplines of Hand and Voice",
+                body, true, false, "I will remember.", "", null, null), true, true);
         }
 
         // ── Campaign cast menu ────────────────────────────────────────────────
