@@ -83,6 +83,7 @@ namespace AshAndEmber
                 try { CampaignMapEvents.WeeklyTick(); } catch { }
                 try { BurningLabQuestSystem.WeeklyTick(); } catch { }
                 try { AshenRuinMenus.WeeklySpawnGuards(); } catch { }
+                try { PriestTroops.WeeklySeed(); } catch { }
             }
             catch { }
         }

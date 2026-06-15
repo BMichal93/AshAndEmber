@@ -136,7 +136,9 @@ namespace AshAndEmber
             try
             {
                 string name = a.Character?.Name?.ToString() ?? "";
-                return name.StartsWith("Priest", StringComparison.OrdinalIgnoreCase);
+                // "Priest" anywhere in the name — covers "Priest of the Flame"
+                // and "Ashen Priest" alike.
+                return name.IndexOf("Priest", StringComparison.OrdinalIgnoreCase) >= 0;
             }
             catch { return false; }
         }
@@ -147,9 +149,9 @@ namespace AshAndEmber
             {
                 string name = a.Character?.Name?.ToString() ?? "";
                 // Grace priests: Priest of the Flame, Sanctuary Priest, etc.
-                return !name.Contains("Ashen", StringComparison.OrdinalIgnoreCase)
-                    && !name.Contains("Cold",  StringComparison.OrdinalIgnoreCase)
-                    && !name.Contains("Dark",  StringComparison.OrdinalIgnoreCase);
+                return name.IndexOf("Ashen", StringComparison.OrdinalIgnoreCase) < 0
+                    && name.IndexOf("Cold",  StringComparison.OrdinalIgnoreCase) < 0
+                    && name.IndexOf("Dark",  StringComparison.OrdinalIgnoreCase) < 0;
             }
             catch { return true; }
         }
@@ -159,9 +161,9 @@ namespace AshAndEmber
             try
             {
                 string name = a.Character?.Name?.ToString() ?? "";
-                return name.Contains("Ashen", StringComparison.OrdinalIgnoreCase)
-                    || name.Contains("Cold",  StringComparison.OrdinalIgnoreCase)
-                    || name.Contains("Dark",  StringComparison.OrdinalIgnoreCase);
+                return name.IndexOf("Ashen", StringComparison.OrdinalIgnoreCase) >= 0
+                    || name.IndexOf("Cold",  StringComparison.OrdinalIgnoreCase) >= 0
+                    || name.IndexOf("Dark",  StringComparison.OrdinalIgnoreCase) >= 0;
             }
             catch { return false; }
         }

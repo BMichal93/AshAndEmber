@@ -382,5 +382,72 @@
     </skills>
   </NPCCharacter>
 
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PRIESTS — dedicated miracle-casters. Detected by the Miracle battle
+       AI through the word "Priest" in the name (see MiracleBattleAI).
+         • Priest of the Flame — Grace miracles (golden light).
+         • Ashen Priest        — Cold miracles (blue cold).
+       Garrisoned into Sanctuary / Ashen towns by PriestTroops.WeeklySeed.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <NPCCharacter id="flame_priest"
+                name="{=flame_priest_name}Priest of the Flame"
+                age="35"
+                level="20"
+                culture="Culture.empire"
+                default_group="Infantry"
+                occupation="Soldier"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.3" build="0.3" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="55.0" weight="0.7" build="0.7" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.short_sword"/>
+        <equipment slot="Item1" id="Item.wooden_round_shield"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.leather_coat"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="60"/>
+      <skill id="OneHanded"  value="80"/>
+      <skill id="Polearm"    value="40"/>
+    </skills>
+  </NPCCharacter>
+
+  <NPCCharacter id="ashen_priest"
+                name="{=ashen_priest_name}Ashen Priest"
+                age="35"
+                level="20"
+                culture="Culture.khuzait"
+                default_group="Infantry"
+                occupation="Soldier"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="false">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.3" build="0.3" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="55.0" weight="0.7" build="0.7" key="001FFFFFFFFFFFFF"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Item0" id="Item.short_sword"/>
+        <equipment slot="Item1" id="Item.wicker_shield"/>
+        <equipment slot="Head"  id="Item.leather_cap"/>
+        <equipment slot="Body"  id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="60"/>
+      <skill id="OneHanded"  value="80"/>
+      <skill id="Polearm"    value="40"/>
+    </skills>
+  </NPCCharacter>
+
 </NPCCharacters>
 

@@ -78,7 +78,7 @@ namespace AshAndEmber
             {
                 // Look for a young noble not already a mage and not the player
                 return Hero.AllAliveHeroes
-                    .Where(h => h != Hero.MainHero && h.IsAlive && !h.IsMainHero
+                    .Where(h => h != Hero.MainHero && h.IsAlive
                              && !ColourLordRegistry.IsColourLord(h)
                              && h.Age is > 16 and < 30
                              && h.Clan != null)

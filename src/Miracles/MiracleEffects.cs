@@ -36,11 +36,13 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, float> _frostBrand    = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _shadowShroud  = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _dreadPresence = new Dictionary<Agent, float>();
-        private static readonly Dictionary<Agent, bool>  _aegis         = new Dictionary<Agent, bool>();
+        // Aegis of Faith: remaining absorption pool (HP "over the limit") per agent.
+        private static readonly Dictionary<Agent, float> _aegis         = new Dictionary<Agent, float>();
 
         public static bool HasSacredFlame(Agent a)  => a != null && _sacredFlame.TryGetValue(a, out float t)  && t > 0f;
         public static bool HasFrostBrand(Agent a)   => a != null && _frostBrand.TryGetValue(a, out float t)   && t > 0f;
         public static bool HasShadowShroud(Agent a) => a != null && _shadowShroud.TryGetValue(a, out float t) && t > 0f;
+        public static bool HasAegis(Agent a)        => a != null && _aegis.TryGetValue(a, out float t)        && t > 0f;
 
         public static void ClearBattleState()
         {
@@ -220,6 +222,17 @@ namespace AshAndEmber
             // Shadow Shroud: defender absorbs a fraction of incoming damage.
             if (HasShadowShroud(affected))
                 try { SpellEffects.HealAgent(affected, inflicted * MiracleMath.ShadowShroudResistFrac); } catch { }
+
+            // Aegis of Faith: the ward soaks damage from its pool — bonus life
+            // over the body's limit. Heal back what the pool absorbs, then drain it.
+            if (_aegis.TryGetValue(affected, out float shield) && shield > 0f)
+            {
+                float absorb = Math.Min(shield, inflicted);
+                try { SpellEffects.HealAgent(affected, absorb); } catch { }
+                shield -= absorb;
+                if (shield <= 0f) _aegis.Remove(affected);
+                else _aegis[affected] = shield;
+            }
         }
 
         // ── Grace battle implementations ──────────────────────────────────────
@@ -299,11 +312,12 @@ namespace AshAndEmber
 
         private static void BattleAegis(Agent caster, bool announce)
         {
-            try { SpellEffects.HealAgent(caster, MiracleMath.AegisBonusHP); } catch { }
-            _aegis[caster] = true;
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.White, 30f); } catch { }
+            // A ward of bonus life "over the limit": the pool absorbs incoming
+            // damage (resolved in OnAgentHit) until spent or the battle ends.
+            _aegis[caster] = MiracleMath.AegisBonusHP;
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 30f); } catch { }
             if (announce)
-                Log(caster, $"is wrapped in the Aegis of Faith — more life than the body should hold (+{(int)MiracleMath.AegisBonusHP} HP).", false, true);
+                Log(caster, $"is wrapped in the Aegis of Faith — a golden ward will turn aside the next {(int)MiracleMath.AegisBonusHP} damage.", false, true);
         }
 
         // ── Cold battle implementations ───────────────────────────────────────

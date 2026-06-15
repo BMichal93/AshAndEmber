@@ -1,75 +1,36 @@
 // =============================================================================
 // ASH AND EMBER — Sanctuary/SanctuaryCampaignBehavior.cs
 //
-// Ritual-based prayer system. When a player selects a prayer/spell, a hidden
-// target number is rolled. Each round of Meditation inflicts a cost on the
-// party (troops wounded or days aging). A hidden number of points — scaled
-// by alignment traits — is added to the player's accumulated pool. The player
-// chooses to stop or continue each round. If they stop once accumulated points
-// meet or exceed the target, the prayer fires. Stopping short wastes the cost.
+// Sanctuaries are the player's Grace charging stations. Each offers two rites:
+//   • Pray for Grace      — gain Grace (scales with Honor/Mercy/Generosity).
+//   • Take the Warding Seal — ward the world against Ashen events for a time.
+// Grace is spent on miracles (see the Miracle system). NPC miracle use lives
+// entirely in MiracleBattleAI / MiracleCampaignBehavior — not here.
 //
-// Sanctuaries: Temple-owned towns + 4 random Empire towns.
-// Any hero may approach. Alignment (Mercy+Honor+Generosity)/6 determines yield per
-// round and effect strength. Zero alignment gives 1 pt/round — success is possible
-// but requires many painful rounds for little reward.
-// Temple members reduce all rite cooldowns by 40%.
-//
-// NPC effects (daily tick):
-//   Honourable + Merciful lords in a sanctuary city: 0.3% chance/day.
-//   Temple faction lords: 3% chance/day to heal; 2% to Turn nearby Ashen.
+// Sanctuaries: Temple-owned towns + 4 random Empire towns + 1 random Vlandia
+// town, picked once per campaign. Temple members get shorter rite cooldowns.
 // =============================================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using TaleWorlds.ObjectSystem;
 
 namespace AshAndEmber
 {
     public partial class SanctuaryCampaignBehavior : CampaignBehaviorBase
     {
         // ── Tuning ─────────────────────────────────────────────────────────────
-        private const int MoralePrayerBoost    = 40;
-        private const int ProtectiveDays       = 14;
-        private const int BlessingRejuvDays    = 365;
-        private const int BlessingMinAge       = 20;
-        private const int BlessedDays          = 3;
-        private const int SteadyLineDays       = 5;
-        private const int TraitBoostDays       = 60;
-        private const int TraitDriftThreshold  = 10;
-        private const int CrossInterferenceDays= 30;
-        private const int PermanentSanctuaryCount = 5;
-        private const int EmpireSanctuaryCount    = 4;
-
-        // Cooldowns (base days; Temple reduces by 40%)
-        private const int PrayerCooldownBase    =  7;
-        private const int ProtectiveCooldownBase= 10;
-        private const int TurnAshenCooldownBase = 10;
-        private const int HealingCooldownBase   =  7;
-        private const int BlessingCooldownBase  = 30;
-
-        // Location depletion: after DepletionThreshold ritual starts the flame rests
-        private const int DepletionThreshold    =  5;
-        private const int DepletionCooldown     = 30;
-
-        // Ritual target ranges (hidden from player — lo inclusive, hi inclusive)
-        private const int PrayerTargetLo   = 10; private const int PrayerTargetHi   = 18;
-        private const int HealTargetLo     = 18; private const int HealTargetHi     = 30;
-        private const int ProtectTargetLo  = 22; private const int ProtectTargetHi  = 35;
-        private const int TurnTargetLo     = 26; private const int TurnTargetHi     = 40;
-        private const int BlessTargetLo    = 35; private const int BlessTargetHi    = 55;
+        private const int TraitDriftThreshold     = 10; // uses between virtue nudges
+        private const int CrossInterferenceDays    = 30; // altar use saps Grace yield
+        private const int PermanentSanctuaryCount  = 5;
+        private const int EmpireSanctuaryCount     = 4;
 
         private const string TempleKingdomId = "the_temple";
-        private const string AshenKingdomId  = "ashen_kingdom";
 
         private static readonly List<string> _permanentSanctuaryIds = new List<string>();
         private static bool _sanctuariesAnnounced       = false;
@@ -79,20 +40,9 @@ namespace AshAndEmber
         internal static int _lastSanctuaryUseDay = -999;
         private static int  _sanctuaryUseCount   = 0;
 
-        private static int  _blessedUntilDay    = -1;
-        private static int  _steadyLineUntilDay = -1;
-        private static int  _traitBoostUntilDay = -1;
-        private static float _traitBoostAmount  = 0f;
-
         // Per-rite cooldown tracking
         private static int  _lastPrayerDay     = -999;
         private static int  _lastProtectiveDay = -999;
-        private static int  _lastTurnAshenDay  = -999;
-        private static int  _lastHealingDay    = -999;
-        private static int  _lastBlessingDay   = -999;
-
-        private static readonly Dictionary<string, int> _locationUses          = new Dictionary<string, int>();
-        private static readonly Dictionary<string, int> _locationDepletedUntil = new Dictionary<string, int>();
 
         private static readonly Random _rng = new Random();
 
@@ -115,33 +65,8 @@ namespace AshAndEmber
             try { store.SyncData("SANCT_Announced", ref _sanctuariesAnnounced); } catch { }
             try { store.SyncData("SANCT_LastUseDay", ref _lastSanctuaryUseDay); } catch { }
             try { store.SyncData("SANCT_UseCount", ref _sanctuaryUseCount); } catch { }
-            try { store.SyncData("SANCT_BlessedUntilDay", ref _blessedUntilDay); } catch { }
-            try { store.SyncData("SANCT_SteadyLineUntilDay", ref _steadyLineUntilDay); } catch { }
-            try { store.SyncData("SANCT_TraitBoostUntilDay", ref _traitBoostUntilDay); } catch { }
-            try { store.SyncData("SANCT_TraitBoostAmount", ref _traitBoostAmount); } catch { }
             try { store.SyncData("SANCT_LastPrayerDay", ref _lastPrayerDay); } catch { }
             try { store.SyncData("SANCT_LastProtectiveDay", ref _lastProtectiveDay); } catch { }
-            try { store.SyncData("SANCT_LastTurnAshenDay", ref _lastTurnAshenDay); } catch { }
-            try { store.SyncData("SANCT_LastHealingDay", ref _lastHealingDay); } catch { }
-            try { store.SyncData("SANCT_LastBlessingDay", ref _lastBlessingDay); } catch { }
-            try
-            {
-                var luKeys = _locationUses.Keys.ToList();
-                var luVals = _locationUses.Values.ToList();
-                store.SyncData("SANCT_LocUseKeys", ref luKeys);
-                store.SyncData("SANCT_LocUseVals", ref luVals);
-                if (luKeys != null && luVals != null)
-                { _locationUses.Clear(); for (int i = 0; i < Math.Min(luKeys.Count, luVals.Count); i++) _locationUses[luKeys[i]] = luVals[i]; }
-            } catch { }
-            try
-            {
-                var ldKeys = _locationDepletedUntil.Keys.ToList();
-                var ldVals = _locationDepletedUntil.Values.ToList();
-                store.SyncData("SANCT_LocDepKeys", ref ldKeys);
-                store.SyncData("SANCT_LocDepVals", ref ldVals);
-                if (ldKeys != null && ldVals != null)
-                { _locationDepletedUntil.Clear(); for (int i = 0; i < Math.Min(ldKeys.Count, ldVals.Count); i++) _locationDepletedUntil[ldKeys[i]] = ldVals[i]; }
-            } catch { }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -162,17 +87,8 @@ namespace AshAndEmber
             _needsAnnouncementAfterSync = false;
             _lastSanctuaryUseDay        = -999;
             _sanctuaryUseCount          = 0;
-            _blessedUntilDay            = -1;
-            _steadyLineUntilDay         = -1;
-            _traitBoostUntilDay         = -1;
-            _traitBoostAmount           = 0f;
             _lastPrayerDay              = -999;
             _lastProtectiveDay          = -999;
-            _lastTurnAshenDay           = -999;
-            _lastHealingDay             = -999;
-            _lastBlessingDay            = -999;
-            _locationUses.Clear();
-            _locationDepletedUntil.Clear();
         }
 
         // Authoritative new-game setup. Fired once from OnCharacterCreationIsOver —
@@ -264,5 +180,14 @@ namespace AshAndEmber
             if (s.OwnerClan?.Kingdom?.StringId == TempleKingdomId) return true;
             return _permanentSanctuaryIds.Contains(s.StringId);
         }
+
+        // ── Shared helpers (previously in the now-removed Rites partial) ────────
+        private static int CurrentCampaignDay()
+        {
+            try { return (int)CampaignTime.Now.ToDays; } catch { return 0; }
+        }
+
+        internal static bool IsTempleMember()
+            => Hero.MainHero?.Clan?.Kingdom?.StringId == TempleKingdomId;
     }
 }

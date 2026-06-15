@@ -90,9 +90,6 @@ namespace AshAndEmber
                         else
                             coldNote = $"  [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]";
 
-                        string solNote = _solsticeUntilDay >= today
-                            ? $"  [Solstice ({_solsticeType}): {_solsticeUntilDay - today + 1} day(s) remaining]" : "";
-
                         string interNote = "";
                         int sinceSanct = today - SanctuaryCampaignBehavior._lastSanctuaryUseDay;
                         if (sinceSanct >= 0 && sinceSanct < CrossInterferenceDays)
@@ -100,7 +97,7 @@ namespace AshAndEmber
 
                         MBTextManager.SetTextVariable("ALTAR_MENU_HEADER",
                             $"The Ashen Altar. Stone worn smooth by blood that never fully dried. " +
-                            $"The flame here is grey, and it is always hungry.{coldNote}{solNote}{interNote}");
+                            $"The flame here is grey, and it is always hungry.{coldNote}{interNote}");
                     }
                     catch { }
                 });

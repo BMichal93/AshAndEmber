@@ -73,6 +73,7 @@ namespace AshAndEmber
                 ReagentSystem.ResetForNewGame();
                 AshenRuinSystem.ResetForNewGame();
                 ApprenticeSystem.ResetForNewGame();
+                MiracleCampaignBehavior.ResetForNewGame();
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
                 AlchemyCampaignBehavior.EstablishForNewCampaign();

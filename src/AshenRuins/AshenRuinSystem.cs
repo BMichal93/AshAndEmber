@@ -563,7 +563,7 @@ namespace AshAndEmber
                             () => OnRetreat(def, ri)), true);
                     }
                 },
-                () => OnRetreat(def, ri),
+                _ => OnRetreat(def, ri),
                 "", false), false, true);
         }
 
@@ -693,7 +693,7 @@ namespace AshAndEmber
                             () => { AgePlayer(10); NextRoom(def, isSolo, ri, sr); }, null), true);
                     }
                 },
-                () => OnRetreat(def, ri),
+                _ => OnRetreat(def, ri),
                 "", false), false, true);
         }
 

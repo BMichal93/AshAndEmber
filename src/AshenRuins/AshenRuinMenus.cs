@@ -197,7 +197,7 @@ namespace AshAndEmber
         private static void ShowSlipPastDialog(RuinDef def, bool isSolo)
         {
             int roguery = 0;
-            try { roguery = Hero.MainHero?.GetSkillValue(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultSkills.Roguery) ?? 0; } catch { }
+            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
             int proficiency = TalentSystem.PurchasedCount;
             bool autoPass = roguery > 150 || proficiency >= 10;
 

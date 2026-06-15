@@ -4,9 +4,9 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>AshAndEmber</AssemblyName>
     <RootNamespace>AshAndEmber</RootNamespace>
-    <Version>0.20.0.0</Version>
-    <AssemblyVersion>0.20.0.0</AssemblyVersion>
-    <FileVersion>0.20.0.0</FileVersion>
+    <Version>0.21.0.0</Version>
+    <AssemblyVersion>0.21.0.0</AssemblyVersion>
+    <FileVersion>0.21.0.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <Optimize>true</Optimize>
@@ -132,6 +132,7 @@
     <Compile Include="QuestSystems\SettlementEncounters.Events3.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Events4.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Events5.cs"/>
+    <Compile Include="QuestSystems\SettlementEncounters.Events6.cs"/>
     <Compile Include="QuestSystems\BattleEvents.cs"/>
     <Compile Include="QuestSystems\BattleEvents.Events.cs"/>
     <Compile Include="QuestSystems\BattleEvents.Helpers.cs"/>
@@ -169,11 +170,9 @@
     <Compile Include="Schemes\SchemeCampaignBehavior.Targeting.cs"/>
     <Compile Include="Schemes\SchemeMinigame.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.cs"/>
-    <Compile Include="Sanctuary\SanctuaryCampaignBehavior.Rites.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.Menus.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.Npc.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.cs"/>
-    <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Rites.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Menus.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Npc.cs"/>
     <Compile Include="Sea\SeaMath.cs"/>
@@ -197,6 +196,7 @@
     <Compile Include="Miracles\MiracleBattleAI.cs"/>
     <Compile Include="Miracles\MiracleCampaignBehavior.cs"/>
     <Compile Include="Miracles\MiracleInputHandler.cs"/>
+    <Compile Include="Miracles\PriestTroops.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Menus.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Outcomes.cs"/>

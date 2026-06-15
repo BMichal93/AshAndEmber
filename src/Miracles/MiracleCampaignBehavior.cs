@@ -112,7 +112,7 @@ namespace AshAndEmber
             try
             {
                 string name = hero.CharacterObject?.Name?.ToString() ?? hero.Name?.ToString() ?? "";
-                return name.StartsWith("Priest", StringComparison.OrdinalIgnoreCase);
+                return name.IndexOf("Priest", StringComparison.OrdinalIgnoreCase) >= 0;
             }
             catch { return false; }
         }

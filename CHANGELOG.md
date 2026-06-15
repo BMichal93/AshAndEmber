@@ -2,6 +2,22 @@
 
 ---
 
+## v0.21
+
+### Miracles (Grace & Cold)
+- **Sanctuaries and Ashen Altars are now charging stations.** Each building offers just two rites. At a **Sanctuary**: *Pray for Grace* (gain Grace, scaled by Honour/Mercy/Generosity) and *Take the Warding Seal* (ward the world against Ashen events). At an **Ashen Altar**: *Embrace the Cold* (gain Cold, scaled inversely) and *Invoke the Dark Tide* (unleash Ashen influence on the world). Grace and Cold are mutually exclusive — a vessel holds one or the other, capped at 10.
+- **Ten miracles.** Five of **Grace** (golden light) — *Repel the Ashen*, *Radiant Mending*, *Light of Guidance*, *Sacred Flame*, *Aegis of Faith* — and five of **Cold** (blue) — *Ashen Curse*, *Dreadmending*, *Dread Presence*, *Frost Brand*, *Shadow Shroud*. Each costs 1 point and is gated behind virtue (the strongest need all three virtues; lesser ones need one). Some work in battle, some on the map, some both.
+- **Casting.** On the campaign map, open the miracle window with **Shift+X** (or both thumbsticks clicked). In battle, hold **Ctrl** and type the six-direction sequence shown for each miracle.
+- **Aegis of Faith** now grants true bonus life *over the limit* — a golden ward that absorbs the next 40 damage taken, lasting until spent or the battle ends.
+- **Priest troops.** *Priest of the Flame* (Grace) and *Ashen Priest* (Cold) now walk the world, garrisoning Sanctuary and Ashen towns and invoking their miracles in battle.
+- **NPC miracle use is unified.** Lords and priests use miracles through one system — in battle and off-screen on the map — choosing miracles that fit their virtue. The old per-building NPC rite simulation has been removed; no more parallel systems.
+
+### Fixes & tweaks
+- **Grace/Cold reset on a new game** — starting a fresh campaign in the same session no longer inherits the previous campaign's Grace or Cold.
+- Removed the superseded multi-rite engine and its dead state for a leaner, clearer Sanctuary/Altar codebase. Fully backward-compatible: obsolete save keys are silently ignored on load.
+
+---
+
 ## v0.20
 
 ### Alchemy (new system)
