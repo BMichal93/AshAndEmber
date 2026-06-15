@@ -93,6 +93,8 @@ namespace AshAndEmber
             public int    Invested;
             public bool   Blessed;
             public float  Distance;
+            public bool   IsReagent;
+            public string ReagentType;
         }
         private static readonly List<Venture> _ventures = new List<Venture>();
 
@@ -119,11 +121,15 @@ namespace AshAndEmber
                 var invested = _ventures.Select(v => v.Invested).ToList();
                 var blessed  = _ventures.Select(v => v.Blessed ? 1 : 0).ToList();
                 var dist     = _ventures.Select(v => v.Distance).ToList();
+                var reagent  = _ventures.Select(v => v.IsReagent ? 1 : 0).ToList();
+                var reagtype = _ventures.Select(v => v.ReagentType ?? "").ToList();
                 store.SyncData("SEA_VentureDests",    ref dests);
                 store.SyncData("SEA_VentureDays",     ref days);
                 store.SyncData("SEA_VentureInvested", ref invested);
                 store.SyncData("SEA_VentureBlessed",  ref blessed);
                 store.SyncData("SEA_VentureDist",     ref dist);
+                store.SyncData("SEA_VentureReagent",  ref reagent);
+                store.SyncData("SEA_VentureReagType", ref reagtype);
 
                 if (dests != null && days != null && invested != null && blessed != null && dist != null
                     && dests.Count == days.Count && dests.Count == invested.Count
@@ -133,11 +139,13 @@ namespace AshAndEmber
                     for (int i = 0; i < dests.Count; i++)
                         _ventures.Add(new Venture
                         {
-                            DestName = dests[i],
-                            DaysLeft = days[i],
-                            Invested = invested[i],
-                            Blessed  = blessed[i] != 0,
-                            Distance = dist[i],
+                            DestName   = dests[i],
+                            DaysLeft   = days[i],
+                            Invested   = invested[i],
+                            Blessed    = blessed[i] != 0,
+                            Distance   = dist[i],
+                            IsReagent  = reagent  != null && i < reagent.Count  && reagent[i]  != 0,
+                            ReagentType = reagtype != null && i < reagtype.Count ? reagtype[i] : null,
                         });
                 }
             }

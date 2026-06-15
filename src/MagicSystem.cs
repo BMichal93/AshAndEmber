@@ -61,6 +61,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new AlchemyCampaignBehavior());
                 campaignStarter.AddBehavior(new ExchangeCampaignBehavior());
                 campaignStarter.AddBehavior(new TavernCampaignBehavior());
+                campaignStarter.AddBehavior(new AshenRuinCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { SchemeSystem.Initialize();              } catch { }

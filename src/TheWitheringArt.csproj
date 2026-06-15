@@ -194,6 +194,12 @@
     <Compile Include="Tavern\TavernCampaignBehavior.Menus.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Outcomes.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Helpers.cs"/>
+    <Compile Include="Reagents\ReagentSystem.cs"/>
+    <Compile Include="AshenRuins\AshenRuinDefs.cs"/>
+    <Compile Include="AshenRuins\AshenRuinSystem.cs"/>
+    <Compile Include="AshenRuins\AshenRuinMenus.cs"/>
+    <Compile Include="AshenRuins\AshenRuinCampaignBehavior.cs"/>
+    <Compile Include="Apprentice\ApprenticeSystem.cs"/>
     <Compile Include="Spells\SpellEffects.cs"/>
     <Compile Include="Spells\SpellEffects.Combat.cs"/>
     <Compile Include="Spells\SpellEffects.Application.cs"/>
