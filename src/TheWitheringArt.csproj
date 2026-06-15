@@ -190,6 +190,13 @@
     <Compile Include="Alchemy\AlchemyBattleAI.cs"/>
     <Compile Include="Alchemy\AlchemyCampaignBehavior.cs"/>
     <Compile Include="Alchemy\AlchemyInputHandler.cs"/>
+    <Compile Include="Miracles\MiracleMath.cs"/>
+    <Compile Include="Miracles\MiracleCatalog.cs"/>
+    <Compile Include="Miracles\MiracleInventory.cs"/>
+    <Compile Include="Miracles\MiracleEffects.cs"/>
+    <Compile Include="Miracles\MiracleBattleAI.cs"/>
+    <Compile Include="Miracles\MiracleCampaignBehavior.cs"/>
+    <Compile Include="Miracles\MiracleInputHandler.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Menus.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Outcomes.cs"/>

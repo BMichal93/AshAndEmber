@@ -82,13 +82,15 @@ namespace AshAndEmber
         private static string _frozenPartyId  = "";
         private static int    _frozenUntilDay = -1;
 
-        // Per-rite cooldown tracking
+        // Per-rite cooldown tracking (old rites preserved for save compat)
         private static int _lastBloodTributeDay = -999;
         private static int _lastSolsticeDay     = -999;
         private static int _lastCarrionDay      = -999;
         private static int _lastBreakWillsDay   = -999;
         private static int _lastColdFireDay     = -999;
         private static int _lastSubjugateDay    = -999;
+        // New simplified options
+        internal static int _lastInvokeDay = -999;
 
         private static readonly Dictionary<string, int> _locationUses          = new Dictionary<string, int>();
         private static readonly Dictionary<string, int> _locationDepletedUntil = new Dictionary<string, int>();
@@ -115,6 +117,7 @@ namespace AshAndEmber
             try { store.SyncData("ALTAR_LastBreakWillsDay", ref _lastBreakWillsDay); } catch { }
             try { store.SyncData("ALTAR_LastColdFireDay", ref _lastColdFireDay); } catch { }
             try { store.SyncData("ALTAR_LastSubjugateDay", ref _lastSubjugateDay); } catch { }
+            try { store.SyncData("ALTAR_LastInvokeDay", ref _lastInvokeDay); } catch { }
             try
             {
                 var luKeys = _locationUses.Keys.ToList();
@@ -168,6 +171,7 @@ namespace AshAndEmber
             _lastBreakWillsDay   = -999;
             _lastColdFireDay     = -999;
             _lastSubjugateDay    = -999;
+            _lastInvokeDay       = -999;
             _locationUses.Clear();
             _locationDepletedUntil.Clear();
         }

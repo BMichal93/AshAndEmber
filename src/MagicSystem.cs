@@ -43,6 +43,9 @@ namespace AshAndEmber
             try { AlchemyEffects.ClearBattleState();     } catch { }
             try { AlchemyBattleAI.Reset();               } catch { }
             try { AlchemyInputHandler.ResetInputState(); } catch { }
+            try { MiracleEffects.ClearBattleState();     } catch { }
+            try { MiracleBattleAI.Reset();               } catch { }
+            try { MiracleInputHandler.ResetInputState(); } catch { }
             try { ColourLordAI.ClearCooldowns();        } catch { }
             try { ColourLordAI.FlushBattleCasts();      } catch { }
             try { BanditMageAI.OnMissionEnd();           } catch { }
@@ -62,6 +65,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new ExchangeCampaignBehavior());
                 campaignStarter.AddBehavior(new TavernCampaignBehavior());
                 campaignStarter.AddBehavior(new AshenRuinCampaignBehavior());
+                campaignStarter.AddBehavior(new MiracleCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { SchemeSystem.Initialize();              } catch { }
@@ -82,6 +86,7 @@ namespace AshAndEmber
                 if (Campaign.Current == null || Mission.Current != null) return;
                 try { MagicInputHandler.Tick(inMission: false); } catch { }
                 try { AlchemyInputHandler.Tick(inMission: false); } catch { }
+                try { MiracleInputHandler.Tick(inMission: false); } catch { }
                 try { ActiveEffectManager.MapTick(dt); } catch { }
 
                 // Ctrl+Shift+F10 — toggle scheme debug mode; also force-fires The Temple event
@@ -190,8 +195,11 @@ namespace AshAndEmber
 
             MagicInputHandler.Tick(inMission: true);
             AlchemyInputHandler.Tick(inMission: true);
+            MiracleInputHandler.Tick(inMission: true);
             AlchemyEffects.MissionTick(dt);
             AlchemyBattleAI.MissionTick(dt);
+            MiracleEffects.MissionTick(dt);
+            MiracleBattleAI.MissionTick(dt);
             ActiveEffectManager.MissionTick(dt);
             ColourLordAI.MissionTick(dt);
             SpellEffects.TickGlows(dt);
@@ -265,6 +273,7 @@ namespace AshAndEmber
             try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             // Alchemy combat buffs/afflictions (berserk bonus, stone-skin, enfeeblement).
             try { AlchemyEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            try { MiracleEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent,
