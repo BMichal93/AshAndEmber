@@ -82,20 +82,21 @@ namespace AshAndEmber
         }
 
         // ── Point gains ────────────────────────────────────────────────────────
-        // Grace scales positively with virtue. Baseline 1 ensures any hero can pray.
+        // Grace scales with virtue; a hero with no virtue gains nothing.
         public static int GraceGain(int honor, int mercy, int generosity)
         {
             float avg = (honor + mercy + generosity) / 3f;
-            int gain  = (int)Math.Round(1f + Math.Max(0f, avg) * 3f);
-            return Math.Max(1, Math.Min(4, gain));
+            int gain  = (int)Math.Round(Math.Max(0f, avg) * 4f);
+            return Math.Min(4, gain);
         }
 
         // Cold scales inversely — dishonour and cruelty feed the stone.
+        // A hero with no dark traits gains nothing.
         public static int ColdGain(int honor, int mercy, int generosity)
         {
             float avg = (honor + mercy + generosity) / 3f;
-            int gain  = (int)Math.Round(1f + Math.Max(0f, -avg) * 3f);
-            return Math.Max(1, Math.Min(4, gain));
+            int gain  = (int)Math.Round(Math.Max(0f, -avg) * 4f);
+            return Math.Min(4, gain);
         }
 
         // ── NPC use chances ────────────────────────────────────────────────────

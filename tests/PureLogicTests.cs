@@ -774,6 +774,44 @@ namespace AshAndEmber.Tests
                     $"Know and mislead bands overlap at Intelligence {wit}.");
         }
 
+        // ── MiracleMath gain scaling ──────────────────────────────────────────
+
+        [Test]
+        public void MiracleMath_GraceGain_NoVirtue_ReturnsZero()
+        {
+            Assert.AreEqual(0, MiracleMath.GraceGain(0, 0, 0));
+        }
+
+        [Test]
+        public void MiracleMath_GraceGain_AllVirtuesMaxed_ReturnsFour()
+        {
+            Assert.AreEqual(4, MiracleMath.GraceGain(2, 2, 2));
+        }
+
+        [Test]
+        public void MiracleMath_GraceGain_NegativeTraits_ReturnsZero()
+        {
+            Assert.AreEqual(0, MiracleMath.GraceGain(-2, -2, -2));
+        }
+
+        [Test]
+        public void MiracleMath_ColdGain_NoTraits_ReturnsZero()
+        {
+            Assert.AreEqual(0, MiracleMath.ColdGain(0, 0, 0));
+        }
+
+        [Test]
+        public void MiracleMath_ColdGain_AllTraitsFullyNegative_ReturnsFour()
+        {
+            Assert.AreEqual(4, MiracleMath.ColdGain(-2, -2, -2));
+        }
+
+        [Test]
+        public void MiracleMath_ColdGain_PositiveTraits_ReturnsZero()
+        {
+            Assert.AreEqual(0, MiracleMath.ColdGain(2, 2, 2));
+        }
+
         // ── AlchemyCatalog integrity ──────────────────────────────────────────
 
         [Test]
