@@ -44,8 +44,8 @@ namespace AshAndEmber
                 if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
                 if (_hedgeWitchCooldown == 0 && HasHedgeWitchCondition()) pool.Add(E_NightVisitor);
                 pool.Add(EV8_ColdTrail);
-                pool.Add(EV_DarknessSpreads);
-                pool.Add(EV_BurningWitch);
+                if (_burningVillageCountdown == 0) pool.Add(EV_DarknessSpreads);
+                if (_burningWitchCountdown == 0)   pool.Add(EV_BurningWitch);
                 if (_trinketPhase == 0)
                 {
                     pool.Add(EB_TrinketEmberShard);
@@ -56,10 +56,10 @@ namespace AshAndEmber
                 {
                     pool.Add(E_OldFlameSeer);
                     if (!ashen) pool.Add(EV4_GiftedChild);
-                    if (!ashen) pool.Add(EV7_SelfTaughtMage);
+                    if (!ashen && _selfTaughtMageCountdown == 0) pool.Add(EV7_SelfTaughtMage);
                     pool.Add(EV8_TheLie);
-                    if (!ashen && ren >= 600f) pool.Add(EV7_OldMastersStudent);
-                    if (!ashen) pool.Add(E_EmberTithe);
+                    if (!ashen && ren >= 600f && _oldMastersStudentCountdown == 0) pool.Add(EV7_OldMastersStudent);
+                    if (!ashen && _emberTitheRefusedCountdown == 0) pool.Add(E_EmberTithe);
                     if (_childEventCooldown == 0 && HasEligibleChild()) pool.Add(E_DarkeningInheritance);
                 }
                 if (ashen) pool.Add(EV2_DogWontStop);
@@ -68,13 +68,14 @@ namespace AshAndEmber
             }
             if (town)
             {
-                pool.Add(E_OldEnemy);
+                if (_oldEnemyCountdown == 0) pool.Add(E_OldEnemy);
                 if (_familyFeverCooldown == 0 && HasSpouseAndChild()) pool.Add(E_TheWasting);
                 if (_hedgeWitchCooldown == 0 && HasHedgeWitchCondition()) pool.Add(E_NightVisitor);
-                if (ren >= 250f) pool.Add(EC8_MerchantLedger);
+                if (ren >= 250f && _merchantLedgerCountdown == 0) pool.Add(EC8_MerchantLedger);
                 if (ren >= 300f) pool.Add(EC8_ReluctantOfficial);
-                if (!ashen) pool.Add(EC_LocalPriest);
-                pool.Add(EC_TavernStranger);
+                if (!ashen && _priestBeatCountdown == 0) pool.Add(EC_LocalPriest);
+                if (_babyEventCountdown == 0 && _pregnancyCountdown == 0 && _tavernRobberyCountdown == 0)
+                    pool.Add(EC_TavernStranger);
                 if (_brokenSealCountdown == 0 && _brokenSealPlotType == 0) pool.Add(EC_BrokenSeal);
                 if (_trinketPhase == 0)
                 {
@@ -84,7 +85,7 @@ namespace AshAndEmber
                 }
                 if (mage)
                 {
-                    if (!ashen) pool.Add(E_EmberTithe);
+                    if (!ashen && _emberTitheRefusedCountdown == 0) pool.Add(E_EmberTithe);
                     if (_childEventCooldown == 0 && HasEligibleChild()) pool.Add(E_DarkeningInheritance);
                 }
                 pool.Add(EC9_AshenElixir);
@@ -126,7 +127,7 @@ namespace AshAndEmber
             if (town)
             {
                 if (!ashen && ren >= 300f) pool.Add(E_BardsRequest);
-                if (mage)
+                if (mage && _bloodTitheCountdown == 0 && _bloodTitheRevealCountdown == 0)
                 {
                     pool.Add(LC_BloodCollector);
                 }

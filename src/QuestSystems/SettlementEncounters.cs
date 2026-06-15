@@ -146,9 +146,9 @@ namespace AshAndEmber
         private static int    _mothersPleaPhase       = 0;       // 0=none 1=healed_7d 2=money_7d 3=refused_7d 4=child_10yr 5=assassin
         private static readonly Random _rng          = new Random();
 
-        // Recent-encounter history to prevent the same event repeating too soon (transient, not persisted).
+        // Recent-encounter history to prevent the same event repeating too soon.
         private static readonly List<string> _recentEncounters = new List<string>();
-        private const int RecentEncounterMemory = 4;
+        private const int RecentEncounterMemory = 6;
 
         // ── Colours ───────────────────────────────────────────────────────────
         private static readonly Color FireColor  = new Color(0.90f, 0.60f, 0.20f);
@@ -270,6 +270,11 @@ namespace AshAndEmber
             store.SyncData("SE_WeaponInventor",    ref _weaponInventorFound);
             store.SyncData("SE_MothersPleaCD",     ref _mothersPleaCountdown);
             store.SyncData("SE_MothersPleaPhase",  ref _mothersPleaPhase);
+            string recentStr = string.Join(",", _recentEncounters);
+            store.SyncData("SE_RecentEncounters",  ref recentStr);
+            _recentEncounters.Clear();
+            if (!string.IsNullOrEmpty(recentStr))
+                _recentEncounters.AddRange(recentStr.Split(','));
         }
 
         /// Called from CampaignEvents.SettlementEntered — fires immediately when the
