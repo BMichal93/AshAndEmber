@@ -20,7 +20,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -60,7 +61,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -99,7 +101,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -139,7 +142,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -183,7 +187,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -220,7 +225,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -266,7 +272,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -304,7 +311,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -344,7 +352,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <face_key_template value="BodyProperty.fighter_mid"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
