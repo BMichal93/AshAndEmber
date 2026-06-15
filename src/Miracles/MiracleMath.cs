@@ -33,6 +33,8 @@ namespace AshAndEmber
         public const string SeqDreadPresence   = "DLDLDR";
         public const string SeqFrostBrand      = "LLDRUU";
         public const string SeqShadowShroud    = "RRDDLL";
+        public const string SeqCleansingRite   = "RULRUU";
+        public const string SeqPaleRigor       = "DDDLLL";
 
         public const int SequenceLength = 6;
 
@@ -53,6 +55,8 @@ namespace AshAndEmber
                 case SeqDreadPresence:   type = MiracleType.DreadPresence;   return true;
                 case SeqFrostBrand:      type = MiracleType.FrostBrand;      return true;
                 case SeqShadowShroud:    type = MiracleType.ShadowShroud;    return true;
+                case SeqCleansingRite:   type = MiracleType.CleansingRite;   return true;
+                case SeqPaleRigor:       type = MiracleType.PaleRigor;       return true;
                 default:                                                      return false;
             }
         }
@@ -136,5 +140,10 @@ namespace AshAndEmber
 
         public const float ShadowShroudDurationSec = 20f;
         public const float ShadowShroudResistFrac  = 0.40f;
+
+        public const float CleansingRiteRadius = 8f;
+
+        public const float PaleRigorRadius      = 12f;
+        public const float PaleRigorDurationSec =  4f;
     }
 }

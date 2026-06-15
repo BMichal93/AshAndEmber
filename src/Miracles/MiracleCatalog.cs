@@ -20,12 +20,14 @@ namespace AshAndEmber
         LightOfGuidance = 2,
         SacredFlame     = 3,
         AegisOfFaith    = 4,
+        CleansingRite   = 5,
         // Cold miracles
         AshenCurse      = 10,
         Dreadmending    = 11,
         DreadPresence   = 12,
         FrostBrand      = 13,
         ShadowShroud    = 14,
+        PaleRigor       = 15,
     }
 
     public struct MiracleDef
@@ -96,6 +98,14 @@ namespace AshAndEmber
                 UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
                 Sequence = MiracleMath.SeqAegisOfFaith },
 
+            new MiracleDef {
+                Type = MiracleType.CleansingRite, IsGrace = true,
+                Name = "Cleansing Rite",
+                Effect = "Sacred fire sweeps cold and dread from those near you — fear and frost both yield to the flame.",
+                Flavour = "You say nothing. The light does not require words. What the cold laid upon them simply lifts.",
+                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.OneVirtue,
+                Sequence = MiracleMath.SeqCleansingRite },
+
             // ── Cold Miracles ──────────────────────────────────────────────────
             new MiracleDef {
                 Type = MiracleType.AshenCurse, IsGrace = false,
@@ -136,6 +146,14 @@ namespace AshAndEmber
                 Flavour = "The cold wraps around you like a coat. What passes through it is less than what entered.",
                 UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
                 Sequence = MiracleMath.SeqShadowShroud },
+
+            new MiracleDef {
+                Type = MiracleType.PaleRigor, IsGrace = false,
+                Name = "Pale Rigor",
+                Effect = "Absolute cold seizes every enemy within reach — they cannot move or act for a few dreadful seconds.",
+                Flavour = "The cold does not negotiate. It does not ask for surrender. It simply seizes, all at once, completely.",
+                UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
+                Sequence = MiracleMath.SeqPaleRigor },
         };
 
         public static IReadOnlyList<MiracleDef> All   => _defs;

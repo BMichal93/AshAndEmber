@@ -38,6 +38,8 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, float> _dreadPresence = new Dictionary<Agent, float>();
         // Aegis of Faith: remaining absorption pool (HP "over the limit") per agent.
         private static readonly Dictionary<Agent, float> _aegis         = new Dictionary<Agent, float>();
+        // Pale Rigor: seconds until the freeze lifts, keyed by affected enemy.
+        private static readonly Dictionary<Agent, float> _paleRigor     = new Dictionary<Agent, float>();
 
         public static bool HasSacredFlame(Agent a)  => a != null && _sacredFlame.TryGetValue(a, out float t)  && t > 0f;
         public static bool HasFrostBrand(Agent a)   => a != null && _frostBrand.TryGetValue(a, out float t)   && t > 0f;
@@ -51,6 +53,15 @@ namespace AshAndEmber
             _shadowShroud.Clear();
             _dreadPresence.Clear();
             _aegis.Clear();
+            _paleRigor.Clear();
+        }
+
+        // Removes all hostile movement/morale effects from an agent (for Cleansing Rite).
+        public static void PurgeHostileEffects(Agent a)
+        {
+            if (a == null) return;
+            if (_dreadPresence.Remove(a) || _paleRigor.Remove(a))
+                try { a.SetMaximumSpeedLimit(1f, true); } catch { }
         }
 
         // ── Player entry point ────────────────────────────────────────────────
@@ -158,11 +169,13 @@ namespace AshAndEmber
                 case MiracleType.LightOfGuidance: BattleGuidance(a, announce);        break;
                 case MiracleType.SacredFlame:     BattleSacredFlame(a, announce);     break;
                 case MiracleType.AegisOfFaith:    BattleAegis(a, announce);           break;
+                case MiracleType.CleansingRite:   BattleCleansingRite(a, announce);   break;
                 case MiracleType.AshenCurse:      BattleAshenCurse(a, announce);      break;
                 case MiracleType.Dreadmending:    BattleDreadmending(a, announce);    break;
                 case MiracleType.DreadPresence:   BattleDreadPresence(a, announce);   break;
                 case MiracleType.FrostBrand:      BattleFrostBrand(a, announce);      break;
                 case MiracleType.ShadowShroud:    BattleShadowShroud(a, announce);    break;
+                case MiracleType.PaleRigor:       BattlePaleRigor(a, announce);       break;
             }
         }
 
@@ -176,12 +189,14 @@ namespace AshAndEmber
                 case MiracleType.RadiantMending:  return CampaignRadiantMending(hero, party);
                 case MiracleType.LightOfGuidance: return CampaignGuidance(party);
                 case MiracleType.AegisOfFaith:    return "The Aegis of Faith calls for a battlefield.";
+                case MiracleType.CleansingRite:   return CampaignCleansingRite(hero, party);
                 case MiracleType.AshenCurse:      return CampaignAshenCurse(party);
                 case MiracleType.Dreadmending:    return CampaignDreadmending(hero, party);
                 case MiracleType.DreadPresence:   return CampaignDreadPresence(party);
                 case MiracleType.SacredFlame:     return "Sacred Flame calls for a battlefield.";
                 case MiracleType.FrostBrand:      return "Frost Brand calls for a battlefield.";
                 case MiracleType.ShadowShroud:    return "Shadow Shroud calls for a battlefield.";
+                case MiracleType.PaleRigor:       return "Pale Rigor calls for a battlefield.";
                 default:                          return null;
             }
         }
@@ -194,6 +209,10 @@ namespace AshAndEmber
             DecayAndExpire(_frostBrand,    dt, null);
             DecayAndExpire(_shadowShroud,  dt, null);
             DecayAndExpire(_dreadPresence, dt, a =>
+            {
+                try { a.SetMaximumSpeedLimit(1f, true); } catch { }
+            });
+            DecayAndExpire(_paleRigor, dt, a =>
             {
                 try { a.SetMaximumSpeedLimit(1f, true); } catch { }
             });
@@ -422,6 +441,61 @@ namespace AshAndEmber
                 Log(caster, "draws the Shadow Shroud — blows that reach them find less than they expected.", false, false);
         }
 
+        private static void BattleCleansingRite(Agent caster, bool announce)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+            float r2 = MiracleMath.CleansingRiteRadius * MiracleMath.CleansingRiteRadius;
+            int cleansed = 0;
+            PurgeHostileEffects(caster);
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == caster || !a.IsActive() || a.IsMount) continue;
+                    if (caster.Team == null || a.Team != caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    PurgeHostileEffects(a);
+                    cleansed++;
+                }
+            }
+            catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 3f); } catch { }
+            if (announce)
+                Log(caster, cleansed > 0
+                    ? $"performs the Cleansing Rite — cold and dread lifted from {cleansed} allies."
+                    : "performs the Cleansing Rite — the flame burns away the shadow's mark.", false, true);
+        }
+
+        private static void BattlePaleRigor(Agent caster, bool announce)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+            float r2 = MiracleMath.PaleRigorRadius * MiracleMath.PaleRigorRadius;
+            int frozen = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount) continue;
+                    if (caster.Team != null && a.Team == caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    _paleRigor[a] = MiracleMath.PaleRigorDurationSec;
+                    try { a.SetMaximumSpeedLimit(0f, true); } catch { }
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.Ashen, MiracleMath.PaleRigorDurationSec); } catch { }
+                    frozen++;
+                }
+            }
+            catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Ashen, 3f); } catch { }
+            if (announce)
+                Log(caster, frozen > 0
+                    ? $"invokes Pale Rigor — {frozen} enemies seized by absolute cold."
+                    : "invokes Pale Rigor — but no enemies are close enough to freeze.", false, false);
+        }
+
         // ── Grace campaign implementations ────────────────────────────────────
 
         private static string CampaignRepelAshen(MobileParty party)
@@ -481,6 +555,30 @@ namespace AshAndEmber
         {
             try { if (party != null) party.RecentEventsMorale += MiracleMath.GuidanceCampaignMorale; } catch { }
             return $"A pillar of calm settles over the column. The men walk straighter (+{(int)MiracleMath.GuidanceCampaignMorale} morale).";
+        }
+
+        private static string CampaignCleansingRite(Hero hero, MobileParty party)
+        {
+            // Burns away accumulated morale debt and recovers a portion of wounded.
+            try
+            {
+                if (party != null)
+                    party.RecentEventsMorale = Math.Max(party.RecentEventsMorale, -10f);
+            }
+            catch { }
+
+            int healed = 0;
+            if (party?.MemberRoster != null)
+                foreach (var e in party.MemberRoster.GetTroopRoster().ToList())
+                {
+                    if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
+                    int recover = Math.Max(1, (int)(e.WoundedNumber * 0.30f));
+                    try { party.MemberRoster.AddToCounts(e.Character, 0, false, -recover); healed += recover; } catch { }
+                }
+
+            if (healed > 0)
+                return $"The flame burns away the shadow's mark. The men breathe easier. {healed} soldiers shake off their wounds; the weight of dark omens lifts.";
+            return "The flame burns away the shadow's mark. The men breathe easier. Whatever the cold had left behind — it is gone now.";
         }
 
         private static string CampaignAshenCurse(MobileParty party)
