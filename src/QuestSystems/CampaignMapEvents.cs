@@ -112,17 +112,18 @@ namespace AshAndEmber
         public const float ChancePeasantUnrest   = 0.06f;  // ~every 17 weeks  (medium — like Great Withering)
         public const float ChanceWolfSheepCloth = 0.03f;  // ~every 33 weeks  (rare but not very)
         public const float ChanceMageFatwa      = 0.025f; // ~every 40 weeks  (rare)
-        public const float ChanceTheTemple      = 0.04f;  // once per campaign after day 100 (~25 weeks to fire)
-        public const int   TempleEarliestDay   = 100;
-        // After this day the Temple's founding becomes nearly inevitable (~85%/week).
-        public const int   TempleNearCertainDay = 250;
-        public const float ChanceTempleLatent   = 0.85f; // ~fires within 1–2 weeks past day 250
+        public const int   TempleEarliestDay    = 120;   // first possible trigger day
+        public const float ChanceTheTemple      = 0.33f; // day 120–239: ~33% per eligible tick
+        public const int   TempleSecondTierDay  = 240;   // second escalation
+        public const float ChanceTempleSecond   = 0.67f; // day 240–399: ~67% per eligible tick
+        public const int   TempleNearCertainDay = 400;   // final escalation
+        public const float ChanceTempleLatent   = 0.90f; // day 400+: ~90% per eligible tick
         public const float ChanceIronWinter      = 0.04f;  // ~every 25 weeks  (rare, winter only)
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
         public const float ChanceFirstGreen      = 0.04f;  // ~every 25 weeks  (rare, spring only)
         public const float ChanceAmberHarvest    = 0.04f;  // ~every 25 weeks  (rare, autumn only)
         public const float ChanceEmbersOfHope    = 0.06f;  // ~every 17 weeks  (once Ashen hold 8+ towns)
-        public const int   EmbersOfHopeMinTowns  = 8;      // Ashen must hold this many towns to trigger
+        public const int   EmbersOfHopeMinTowns  = 13;     // Ashen must hold this many towns to trigger
         public const int   EmbersOfHopePeaceCount = 3;     // max wars ended per firing
         public const float ChanceASlightAtCourt   = 0.05f;  // ~every 20 weeks  (diplomatic incident → war or cold shoulder)
         public const float ChanceBorderTorches   = 0.05f;  // ~every 20 weeks  (border raid → war or tense standoff)
