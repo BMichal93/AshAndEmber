@@ -667,17 +667,14 @@ namespace AshAndEmber
             }
             catch { }
 
-            if (!allyPath)
+            foreach (var id in _memberIds.ToList())
             {
-                foreach (var id in _memberIds.ToList())
+                try
                 {
-                    try
-                    {
-                        var h = Hero.AllAliveHeroes.FirstOrDefault(x => x.StringId == id && x.IsAlive);
-                        if (h != null) ColourLordRegistry.SetAshen(h, true);
-                    }
-                    catch { }
+                    var h = Hero.AllAliveHeroes.FirstOrDefault(x => x.StringId == id && x.IsAlive);
+                    if (h != null) ColourLordRegistry.SetAshen(h, true);
                 }
+                catch { }
             }
 
             _memberIds.Clear();
