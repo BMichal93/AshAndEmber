@@ -120,6 +120,7 @@ namespace AshAndEmber
 
         private void ShowGiftPrompt()
         {
+            int heroHonor = Hero.MainHero?.GetTraitLevel(DefaultTraits.Honor) ?? 0;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "The Gift",
                 "As a child, you sometimes sensed things others could not — warmth ebbing from the wounded, the weight behind dying eyes. Do you feel it still?",
@@ -127,6 +128,16 @@ namespace AshAndEmber
                 {
                     new InquiryElement("yes", "I feel it still.", null, true,
                         "The fire stirs in you. Press Alt+X/LB+RB to open your grimoire."),
+                    new InquiryElement("faith", "I devoted myself to faith. The fire became a prayer.", null,
+                        heroHonor >= 1,
+                        heroHonor >= 1
+                            ? "Your piety consecrated the gift. You begin as a mage with 5 Grace."
+                            : "Only those who walk an honourable path may speak of sacred devotion. [Requires: Honourable]"),
+                    new InquiryElement("dark_rites", "I suppressed it through dark rites. The cost was steep.", null,
+                        heroHonor <= -1,
+                        heroHonor <= -1
+                            ? "The rites hollowed the warmth from you, and the cold rushed in to fill the void. You begin as a mage with 5 Cold."
+                            : "Only those who have walked crooked paths know such rites. [Requires: Dishonorable]"),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
                     new InquiryElement("ashen", "The fire in me died long ago.", null, true,
@@ -137,8 +148,11 @@ namespace AshAndEmber
                 "",
                 chosen =>
                 {
-                    bool isMage  = chosen?.Any(e => e.Identifier is string s && s == "yes")   == true;
-                    bool isAshen = chosen?.Any(e => e.Identifier is string s && s == "ashen") == true;
+                    bool isFaith     = chosen?.Any(e => e.Identifier is string s && s == "faith")      == true;
+                    bool isDarkRites = chosen?.Any(e => e.Identifier is string s && s == "dark_rites") == true;
+                    bool isMage      = chosen?.Any(e => e.Identifier is string s && s == "yes")        == true
+                                       || isFaith || isDarkRites;
+                    bool isAshen     = chosen?.Any(e => e.Identifier is string s && s == "ashen")      == true;
                     if (isAshen) isMage = true;
                     MageKnowledge.SetMage(isMage);
                     if (isAshen)
@@ -148,6 +162,20 @@ namespace AshAndEmber
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The cold settled in you long ago. The world will see it before you speak.",
                             new Color(0.3f, 0.35f, 0.7f)));
+                    }
+                    else if (isFaith)
+                    {
+                        MiracleInventory.AddGrace(5);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The fire in you became a sacred flame. Five measures of Grace kindle within you.",
+                            new Color(0.9f, 0.8f, 0.4f)));
+                    }
+                    else if (isDarkRites)
+                    {
+                        MiracleInventory.AddCold(5);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The rites scoured you of warmth. The cold rushed in to fill what was hollowed. Five measures of Cold settle within you.",
+                            new Color(0.3f, 0.55f, 0.8f)));
                     }
                     else if (isMage)
                     {
