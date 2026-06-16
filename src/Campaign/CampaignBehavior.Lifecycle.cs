@@ -41,6 +41,7 @@ namespace AshAndEmber
                     try { ColourLordRegistry.OnLordDied(victim); } catch { }
 
                 try { RivalShadowSystem.OnHeroKilled(victim); } catch { }
+                try { EmberConclaveSystem.OnHeroKilled(victim, killer); } catch { }
 
                 // Whispers: killing an Ashen lord costs 1 — the cold notices its
                 // own dying, but fighting the Ashen is the mod's core loop and
@@ -77,6 +78,8 @@ namespace AshAndEmber
                     try { MageKnowledge.AddWhispers(5); } catch { }
                 if (killer == Hero.MainHero)
                     try { AshenQuestSystem.OnHeroExecuted(victim); } catch { }
+                if (victim.IsLord)
+                    try { EmberConclaveSystem.OnLordExecuted(); } catch { }
             }
             catch { }
         }
@@ -194,6 +197,7 @@ namespace AshAndEmber
             try { DragonQuestSystem.Save(dataStore); } catch { }
             try { AshenQuestSystem.Save(dataStore); } catch { }
             try { BurningLabQuestSystem.Save(dataStore); } catch { }
+            try { EmberConclaveSystem.Save(dataStore); } catch { }
             try { AgingSystem.Save(dataStore); } catch { }
             try { TempleCovenant.Save(dataStore); } catch { }
             try { ReagentSystem.Save(dataStore); } catch { }

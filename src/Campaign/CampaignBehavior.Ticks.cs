@@ -60,6 +60,7 @@ namespace AshAndEmber
                 try { DragonQuestSystem.DailyTick(); } catch { }
                 try { AshenQuestSystem.DailyTick(); } catch { }
                 try { BurningLabQuestSystem.DailyTick(); } catch { }
+                try { EmberConclaveSystem.DailyTick(); } catch { }
                 try { CheckReapPrisonerYield(); } catch { }
                 if (_reapRaidCooldown > 0) _reapRaidCooldown--;
                 try { CheckAshenPrisonerEscape(); } catch { }
@@ -82,6 +83,7 @@ namespace AshAndEmber
                 try { ColourLordRegistry.CheckAgeLimit(); } catch { }
                 try { CampaignMapEvents.WeeklyTick(); } catch { }
                 try { BurningLabQuestSystem.WeeklyTick(); } catch { }
+                try { EmberConclaveSystem.WeeklyTick(); } catch { }
                 try { AshenRuinMenus.WeeklySpawnGuards(); } catch { }
                 try { PriestTroops.WeeklySeed(); } catch { }
             }
@@ -146,6 +148,7 @@ namespace AshAndEmber
         // ── Monthly atmospheric events ────────────────────────────────────────
         private void OnMonthlyTick()
         {
+            try { EmberConclaveSystem.OnMonthlyTick(); } catch { }
             if (!MageKnowledge.IsMage) return;
             // Random premonition message
             if (_rng.Next(3) == 0) // ~33% chance each month
