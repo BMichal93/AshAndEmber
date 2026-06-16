@@ -47,7 +47,10 @@ namespace AshAndEmber
         {
             try { SettlementEncounters.OnPartyEnteredSettlement(party, settlement); } catch { }
             if (party == MobileParty.MainParty)
+            {
                 try { AshenCitySystem.ApplyAshenAppearanceToSettlement(settlement); } catch { }
+                try { EmberConclaveSystem.OnSettlementEntered(settlement); } catch { }
+            }
         }
 
         private void OnSettlementLeft(MobileParty party, Settlement settlement)
@@ -70,6 +73,7 @@ namespace AshAndEmber
                 DragonQuestSystem.ResetForNewGame();
                 AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
+                EmberConclaveSystem.ResetForNewGame();
                 ReagentSystem.ResetForNewGame();
                 AshenRuinSystem.ResetForNewGame();
                 ApprenticeSystem.ResetForNewGame();
