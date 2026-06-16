@@ -98,6 +98,9 @@ namespace AshAndEmber
         private static int    _corruptionWarningTimer = 0;
         private static int    _corruptionWarningIndex = 0;
 
+        private static int  _enemyFollowUpTimer  = 0;
+        private static bool _counterContactFired = false;
+
         // ── Runtime (not persisted) ────────────────────────────────────────────
         private static readonly Random _rng = new Random();
 
@@ -198,6 +201,27 @@ namespace AshAndEmber
 
             if (_missionCooldown > 0) _missionCooldown--;
 
+            if (_playerIsEnemy && !_counterContactFired && _enemyFollowUpTimer > 0)
+            {
+                _enemyFollowUpTimer--;
+                if (_enemyFollowUpTimer <= 0)
+                {
+                    try
+                    {
+                        if (MageKnowledge._deferredInquiry == null)
+                        {
+                            _counterContactFired = true;
+                            MageKnowledge._deferredInquiry = ShowCounterContactInquiry;
+                        }
+                        else
+                        {
+                            _enemyFollowUpTimer = 1;
+                        }
+                    }
+                    catch { }
+                }
+            }
+
             if (_activeMission != MissionNone)
             {
                 _missionDaysRemaining--;
@@ -243,7 +267,21 @@ namespace AshAndEmber
             {
                 _tier2Fired = true;
                 _phase = PhaseRising;
-                try { _mainLog?.LogRisingPhase(); } catch { }
+                if (_playerIsEnemy)
+                {
+                    try { _mainLog?.LogEnemyRisingWarning(); } catch { }
+                    try
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The fires at the Ashen ruins burn differently now. Something is being coaxed, not extinguished.",
+                            new Color(0.6f, 0.35f, 0.35f)));
+                    }
+                    catch { }
+                }
+                else
+                {
+                    try { _mainLog?.LogRisingPhase(); } catch { }
+                }
             }
 
             if (!_tier3Fired && _power >= PowerTier3)
@@ -252,6 +290,17 @@ namespace AshAndEmber
                 _phase = PhaseAscendant;
                 try { ChoosePuppetCandidate(); } catch { }
                 _corruptionWarningTimer = CorruptionWarningInterval;
+                if (_playerIsEnemy)
+                {
+                    try { _mainLog?.LogEnemyAscendantWarning(); } catch { }
+                    try
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "A mage lord has been seen at three different Ashen sites in a month. The Conclave has chosen its vessel.",
+                            new Color(0.6f, 0.35f, 0.35f)));
+                    }
+                    catch { }
+                }
             }
 
             if (!_tier4Fired && _power >= PowerTier4)
@@ -720,6 +769,7 @@ namespace AshAndEmber
 
                 case "enemy":
                     _playerIsEnemy = true;
+                    _enemyFollowUpTimer = 7;
                     try { _mainLog?.LogPlayerOpposed(); } catch { }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The Ember Conclave now knows you are watching. Their plans will not stop.",
@@ -733,6 +783,35 @@ namespace AshAndEmber
                         new Color(0.5f, 0.5f, 0.5f)));
                     break;
             }
+        }
+
+        // ── Counter-contact inquiry ────────────────────────────────────────────
+
+        private static void ShowCounterContactInquiry()
+        {
+            const string body =
+                "You were not the only one who refused them.\n\n" +
+                "The messenger who waited while the ember seal cooled — he did not return to the Conclave. " +
+                "You are being told this so that you understand: there are others in Calradia who know what " +
+                "the Ember Conclave is building, and who believe it will end badly for everyone in the hall.\n\n" +
+                "What are they building?\n\n" +
+                "A binding. A vessel. They intend to pour fire and cold into the same cup and hold it steady. " +
+                "They will find out they are wrong only when the cup breaks — and when it does, it will not " +
+                "break quietly.\n\n" +
+                "The circle requires its members. Fewer embers make for a colder fire. " +
+                "The candidate is not yet chosen — when he is, you will know it, because the Conclave's " +
+                "confidence will begin to outpace its judgment.\n\n" +
+                "No signature. The fewer names attached to this, the better.";
+
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Other Letter",
+                body,
+                true, false,
+                "Burn this one too.",
+                "",
+                () => { try { _mainLog?.LogCounterContact(); } catch { } },
+                () => { try { _mainLog?.LogCounterContact(); } catch { } }
+            ), true, true);
         }
 
         // ── Mission offer inquiry ──────────────────────────────────────────────
@@ -856,13 +935,15 @@ namespace AshAndEmber
             store.SyncData("EC_Members", ref memberList);
             if (memberList != null) { _memberIds.Clear(); foreach (var id in memberList) _memberIds.Add(id); }
 
-            int seeded  = _seeded        ? 1 : 0; store.SyncData("EC_Seeded", ref seeded);  _seeded        = seeded  != 0;
-            int ally    = _playerIsAlly  ? 1 : 0; store.SyncData("EC_Ally",   ref ally);    _playerIsAlly  = ally    != 0;
-            int enemy   = _playerIsEnemy ? 1 : 0; store.SyncData("EC_Enemy",  ref enemy);   _playerIsEnemy = enemy   != 0;
-            int t1      = _tier1Fired    ? 1 : 0; store.SyncData("EC_T1",     ref t1);      _tier1Fired    = t1      != 0;
-            int t2      = _tier2Fired    ? 1 : 0; store.SyncData("EC_T2",     ref t2);      _tier2Fired    = t2      != 0;
-            int t3      = _tier3Fired    ? 1 : 0; store.SyncData("EC_T3",     ref t3);      _tier3Fired    = t3      != 0;
-            int t4      = _tier4Fired    ? 1 : 0; store.SyncData("EC_T4",     ref t4);      _tier4Fired    = t4      != 0;
+            int seeded  = _seeded              ? 1 : 0; store.SyncData("EC_Seeded",  ref seeded);  _seeded              = seeded  != 0;
+            int ally    = _playerIsAlly        ? 1 : 0; store.SyncData("EC_Ally",    ref ally);    _playerIsAlly        = ally    != 0;
+            int enemy   = _playerIsEnemy       ? 1 : 0; store.SyncData("EC_Enemy",   ref enemy);   _playerIsEnemy       = enemy   != 0;
+            int t1      = _tier1Fired          ? 1 : 0; store.SyncData("EC_T1",      ref t1);      _tier1Fired          = t1      != 0;
+            int t2      = _tier2Fired          ? 1 : 0; store.SyncData("EC_T2",      ref t2);      _tier2Fired          = t2      != 0;
+            int t3      = _tier3Fired          ? 1 : 0; store.SyncData("EC_T3",      ref t3);      _tier3Fired          = t3      != 0;
+            int t4      = _tier4Fired          ? 1 : 0; store.SyncData("EC_T4",      ref t4);      _tier4Fired          = t4      != 0;
+            int ccf     = _counterContactFired ? 1 : 0; store.SyncData("EC_CCFired", ref ccf);     _counterContactFired = ccf     != 0;
+            store.SyncData("EC_EnemyTimer", ref _enemyFollowUpTimer);
         }
 
         public static void ResetForNewGame()
@@ -884,6 +965,8 @@ namespace AshAndEmber
             _missionDaysRemaining   = 0;
             _corruptionWarningTimer = 0;
             _corruptionWarningIndex = 0;
+            _enemyFollowUpTimer     = 0;
+            _counterContactFired    = false;
             _mainLog                = null;
             _eliminateLog           = null;
             _visitLog               = null;
