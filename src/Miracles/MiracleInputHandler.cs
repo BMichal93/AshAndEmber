@@ -3,20 +3,21 @@
 //
 // TWO input modes for miracles:
 //
-// BATTLE — sequence-based (mirrors the spell system, not the satchel):
-//   Hold Left Ctrl (keyboard) or Right Trigger (controller).
-//   W/A/S/D = U/L/R/D. Build a 6-character sequence. Release to cast.
-//   The buffer is shown in the combat log as typing progresses.
-//   A wrong or incomplete sequence still spends 1 Grace or Cold — the power
-//   slips through your fingers when you lose the form.
+// BATTLE — two paths:
+//   Keyboard: hold Left Ctrl, press W/A/S/D (= U/L/R/D) to build a 6-character
+//   sequence, release Ctrl to cast. The buffer shows in the combat log.
+//   A wrong or incomplete sequence still spends 1 Grace or Cold.
 //
-// CAMPAIGN MAP — menu-based (mirrors the satchel):
-//   Shift+X on keyboard, or L-Thumb + R-Thumb on controller (both sticks
-//   clicked simultaneously, no bumpers held). Opens a selection list of all
-//   miracles appropriate to the current Grace/Cold state.
+//   Controller: RB + L3 (Right Bumper held, Left Stick clicked) → opens the
+//   miracle selection menu. Or hold RB and flick the left stick 6 times for the
+//   sequence if you know it — but the menu is easier in the heat of battle.
+//
+// CAMPAIGN MAP — menu-based:
+//   Keyboard: Shift+X. Controller: RB + L3 (same as battle — consistent).
 //
 // Left Ctrl does not conflict with spell input (which uses Left Alt / LB).
 // Ctrl+X triggers Alchemy — but only when X is pressed, not W/A/S/D.
+// RB + R3 is Alchemy; RB + L3 is Miracles — distinct thumbstick clicks.
 // =============================================================================
 
 using System.Collections.Generic;
@@ -41,6 +42,7 @@ namespace AshAndEmber
 
         // ── Controller stick edge-detect (battle) ──────────────────────────────
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
+        private static bool _prevPadMenu;
 
         public static void ResetInputState()
         {
@@ -49,6 +51,7 @@ namespace AshAndEmber
             _lastDisplay = "";
             _prevShiftX  = false;
             _prevPadBoth = false;
+            _prevPadMenu = false;
             _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
         }
 
@@ -63,10 +66,23 @@ namespace AshAndEmber
         // ── Battle: Ctrl + WASD 6-sequence ───────────────────────────────────
         private static void TickBattle()
         {
+            // Controller shortcut: RB + L3 → menu (no sequence needed).
+            bool rbHeld  = !Input.IsKeyDown(InputKey.ControllerLBumper)
+                        &&  Input.IsKeyDown(InputKey.ControllerRBumper);
+            bool padMenu = rbHeld && Input.IsKeyPressed(InputKey.ControllerLThumb);
+            if (padMenu && !_prevPadMenu)
+            {
+                _seqBuffer   = "";
+                _wasHolding  = false;
+                _lastDisplay = "";
+                _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
+                ShowMiracleMenu();
+            }
+            _prevPadMenu = padMenu;
+
             bool holdKb  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
             // Controller: hold RBumper alone (not with LBumper which is spells).
-            bool holdPad = !Input.IsKeyDown(InputKey.ControllerLBumper)
-                        && Input.IsKeyDown(InputKey.ControllerRBumper);
+            bool holdPad = rbHeld;
             bool holding = holdKb || holdPad;
 
             if (holding)
@@ -156,7 +172,7 @@ namespace AshAndEmber
         private static void Fizzle(string msg) =>
             InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.6f, 0.6f, 0.6f)));
 
-        // ── Campaign: Shift+X or L3+R3 → menu ────────────────────────────────
+        // ── Campaign: Shift+X (keyboard) or RB+L3 (controller) → menu ──────────
         private static void TickCampaign()
         {
             bool shiftHeld = Input.IsKeyDown(InputKey.LeftShift) || Input.IsKeyDown(InputKey.RightShift);
@@ -167,16 +183,14 @@ namespace AshAndEmber
                 ShowMiracleMenu();
             _prevShiftX = shiftX;
 
-            // Controller: both thumbsticks clicked, no bumpers (avoid spell/alchemy conflicts).
-            bool noBumpers = !Input.IsKeyDown(InputKey.ControllerLBumper)
-                          && !Input.IsKeyDown(InputKey.ControllerRBumper);
-            bool bothSticks = noBumpers
-                           && Input.IsKeyDown(InputKey.ControllerLThumb)
-                           && Input.IsKeyPressed(InputKey.ControllerRThumb);
+            // Controller: RB + L3 (consistent with the battle shortcut; RB+R3 is Alchemy).
+            bool padCamp = !Input.IsKeyDown(InputKey.ControllerLBumper)
+                        &&  Input.IsKeyDown(InputKey.ControllerRBumper)
+                        &&  Input.IsKeyPressed(InputKey.ControllerLThumb);
 
-            if (bothSticks && !_prevPadBoth)
+            if (padCamp && !_prevPadBoth)
                 ShowMiracleMenu();
-            _prevPadBoth = bothSticks;
+            _prevPadBoth = padCamp;
         }
 
         public static void ShowMiracleMenu()
