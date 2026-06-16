@@ -116,7 +116,7 @@ namespace AshAndEmber
         //
         // Safety constraints:
         //   • Fires at most once (_templeFounded flag, saved/loaded).
-        //   • Not before TempleEarliestDay (100).
+        //   • Not before TempleEarliestDay (120).
         //   • Never takes a ruling clan (faction stays viable).
         //   • Never targets a besieged city.
         //   • Never targets a city whose owner clan is the player's.
@@ -129,11 +129,11 @@ namespace AshAndEmber
             if (_templeFounded) return;
             if (!_debugForceNextTemple)
             {
-                if (ElapsedCampaignDays() < TempleEarliestDay) return;
-                // After day 250 the Temple becomes nearly inevitable — high chance each week.
-                float chance = ElapsedCampaignDays() >= TempleNearCertainDay
-                    ? ChanceTempleLatent
-                    : ChanceTheTemple;
+                double days = ElapsedCampaignDays();
+                if (days < TempleEarliestDay) return;
+                float chance = days >= TempleNearCertainDay ? ChanceTempleLatent
+                             : days >= TempleSecondTierDay  ? ChanceTempleSecond
+                             :                                ChanceTheTemple;
                 if (_rng.NextDouble() >= chance) return;
             }
             if (!TryClaimWeeklySlot()) return;
