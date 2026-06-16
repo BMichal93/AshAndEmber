@@ -192,6 +192,19 @@ namespace AshAndEmber
         private static int _brokenWillFired        = 0;
         private static readonly HashSet<string> _brokenKingdomIds = new HashSet<string>();
 
+        // Battlefield echo: pending spawn from a spell-heavy battle
+        private static bool  _battleEchoPending = false;
+        private static float _battleEchoPosX    = 0f;
+        private static float _battleEchoPosY    = 0f;
+
+        /// Called from BattleEvents.OnMissionEnd() when the player cast 3+ battle spells.
+        public static void SetBattleEcho(float x, float y)
+        {
+            _battleEchoPending = true;
+            _battleEchoPosX    = x;
+            _battleEchoPosY    = y;
+        }
+
         // Game of Thrones: kingdom IDs queued for delayed clan-ejection
         private static readonly List<string> _gotKingdoms = new List<string>();
         private static readonly List<int>    _gotDays     = new List<int>();
@@ -225,6 +238,21 @@ namespace AshAndEmber
         /// Decrements ongoing timed effects (Long Night).
         public static void DailyTick()
         {
+            // Battlefield echo: spawn small Ashen presence near a spell-heavy battle site
+            if (_battleEchoPending)
+            {
+                _battleEchoPending = false;
+                try
+                {
+                    var ePos = new Vec2(_battleEchoPosX, _battleEchoPosY);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The rite left marks on the field. The fire remembers where it burned — and calls to what was watching.",
+                        new Color(0.38f, 0.50f, 0.75f)));
+                    SpawnAshenSpawnParty(ePos, 2, 30f);
+                }
+                catch { }
+            }
+
             // Tick down pending Game of Thrones events
             for (int i = _gotDays.Count - 1; i >= 0; i--)
             {
@@ -324,6 +352,10 @@ namespace AshAndEmber
             // conflict if the world has been at peace for too long.
             try { TryEnsureInterFactionConflict(); } catch { }
 
+            // Portents and whisper intel run independently (no slot needed)
+            try { TryFirePortents(); } catch { }
+            try { TryFireWhisperIntel(); } catch { }
+
             // ── Cooldown gate ─────────────────────────────────────────────────
             if (ElapsedCampaignDays() - _lastEventElapsedDay < EventCooldownDays) return;
             _weeklySlotFilled = false;
@@ -416,9 +448,13 @@ namespace AshAndEmber
             _warSlotFilled           = false;
             _lastEventElapsedDay     = -EventCooldownDays;
             _lastConflictSeedDay     = 0;
+            _battleEchoPending       = false;
+            _battleEchoPosX          = 0f;
+            _battleEchoPosY          = 0f;
             _brokenKingdomIds.Clear();
             _gotKingdoms.Clear();
             _gotDays.Clear();
+            ResetPortents();
         }
 
     }

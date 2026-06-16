@@ -137,15 +137,31 @@ namespace AshAndEmber
                     _prevBreakPad = l3;
                 }
 
-                // Buffer display
+                // Buffer display with live aging cost preview
                 string display = _inEffectPhase
                     ? $"{_formBuffer} ▷ {_effectBuffer}"
                     : _formBuffer;
-                if (display.Length > 0 && display != _lastDisplayed)
+                if (display.Length > 0)
                 {
-                    _lastDisplayed = display;
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "[ " + display + " ]", new Color(0.7f, 0.7f, 0.7f)));
+                    string costHint = "";
+                    if (_inEffectPhase && inMission)
+                    {
+                        int totalInputs = _formBuffer.Length + _effectBuffer.Length;
+                        if (totalInputs > 0)
+                        {
+                            bool hasBattleMage = TalentSystem.Has(TalentId.BattleMage);
+                            int projCost = AgingSystem.ComputeBattleAgingCost(totalInputs, hasBattleMage);
+                            costHint = MageKnowledge.IsAshen
+                                ? $" (~{projCost * 5}cr)"
+                                : $" (~{projCost}d)";
+                        }
+                    }
+                    string full = "[ " + display + " ]" + costHint;
+                    if (full != _lastDisplayed)
+                    {
+                        _lastDisplayed = full;
+                        InformationManager.DisplayMessage(new InformationMessage(full, new Color(0.7f, 0.7f, 0.7f)));
+                    }
                 }
             }
             else if (_wasFocusing)
@@ -206,13 +222,13 @@ namespace AshAndEmber
 
             if (!_inEffectPhase)
             {
-                Fizzle("No Break — focus dropped.");
+                Fizzle("No Break — focus dropped.", _fizzleLoss);
                 return;
             }
 
             if (_effectBuffer.Length == 0)
             {
-                Fizzle("Nothing shaped after the Break.");
+                Fizzle("Nothing shaped after the Break.", _fizzleLoss);
                 return;
             }
 
@@ -227,7 +243,7 @@ namespace AshAndEmber
             {
                 if (Hero.MainHero != null && Hero.MainHero.IsPrisoner)
                 {
-                    Fizzle("You are bound. The fire cannot kindle.");
+                    Fizzle("You are bound. The fire cannot kindle.", _fizzleBound);
                     return;
                 }
             }
@@ -246,20 +262,20 @@ namespace AshAndEmber
 
             if (cast.IsFumble)
             {
-                Fizzle("Fumble — the form slipped.");
+                Fizzle("Fumble — the form slipped.", _fizzleFail);
                 return;
             }
 
             if (!cast.HasAnyEffect)
             {
-                Fizzle("Nothing resolved.");
+                Fizzle("Nothing resolved.", _fizzleLoss);
                 return;
             }
 
             if (Agent.Main != null && !SpellEffects.HasFreeHand(Agent.Main)
                 && !TalentSystem.Has(TalentId.ArmedCasting))
             {
-                Fizzle("Both hands are full. Free a hand to shape the fire.");
+                Fizzle("Both hands are full. Free a hand to shape the fire.", _fizzleConstraint);
                 return;
             }
 
@@ -350,8 +366,12 @@ namespace AshAndEmber
             return count;
         }
 
-        private static void Fizzle(string msg) =>
-            InformationManager.DisplayMessage(new InformationMessage(
-                msg, Color.FromUint(0xFF997755)));
+        private static readonly Color _fizzleLoss       = new Color(0.55f, 0.50f, 0.42f); // lost focus / form
+        private static readonly Color _fizzleFail       = new Color(0.85f, 0.42f, 0.18f); // fumble / slip
+        private static readonly Color _fizzleConstraint = new Color(0.78f, 0.72f, 0.20f); // practical block
+        private static readonly Color _fizzleBound      = new Color(0.30f, 0.35f, 0.70f); // captivity / binding
+
+        private static void Fizzle(string msg, Color color) =>
+            InformationManager.DisplayMessage(new InformationMessage(msg, color));
     }
 }

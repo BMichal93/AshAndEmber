@@ -68,6 +68,47 @@ namespace AshAndEmber
             try { s.Town.Security = 100f; } catch { }
         }
 
+        // ── Whisper network intel ─────────────────────────────────────────────
+        // At Whisper Tier 3, the player's cold-touched network occasionally surfaces
+        // early warnings about conditions that precede major world events.
+        // Fires at ~30% chance per weekly tick; does not claim the weekly event slot.
+        private static void TryFireWhisperIntel()
+        {
+            if (!MageKnowledge.IsMage) return;
+            if (MageKnowledge.WhisperTier < 3) return;
+            if (_rng.NextDouble() >= 0.30) return;
+
+            int day = (int)ElapsedCampaignDays();
+            var candidates = new System.Collections.Generic.List<string>();
+
+            if (!_ashenGambitFired && day >= AshenGambitEarliestDay - 28)
+                candidates.Add(
+                    "The whispers are clearest on this: something moves in the Empire's shadow — something that was waiting there.");
+            if (!_undyingHostFired && day >= UndyingHostEarliestDay)
+                candidates.Add(
+                    "Your informants describe a great stillness in the north. Armies that have stopped moving. Not retreating — gathering.");
+            if (_longNightDaysRemaining > 0)
+                candidates.Add(
+                    "The cold feeds the night. Your whispers say it is not weather — it has intention.");
+            if (_brokenWillFired < BrokenWillMaxFires && day >= BrokenWillEarliestDay)
+                candidates.Add(
+                    "A court gone strange — your network sends that much. Lords who stare at maps without sleeping. Something turns them.");
+
+            if (candidates.Count == 0)
+            {
+                string[] generic = {
+                    "The whispers return with nothing new — only a shape you can't name, moving through your contacts.",
+                    "Your informants are afraid. They won't say of what, which tells you more than words would.",
+                    "Something passed through the grey roads last night. No tracks. Your outriders found warm ash where a fire had been.",
+                };
+                candidates.Add(generic[_rng.Next(generic.Length)]);
+            }
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                candidates[_rng.Next(candidates.Count)],
+                new Color(0.50f, 0.70f, 0.90f)));
+        }
+
         // ── Public spawn entry point ──────────────────────────────────────────
         // Allows SettlementEncounters to spawn a gate-ambush Ashen party near a
         // settlement without duplicating the spawn logic.

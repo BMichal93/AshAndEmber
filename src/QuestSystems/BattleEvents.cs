@@ -33,6 +33,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
@@ -118,10 +119,26 @@ namespace AshAndEmber
         /// Called from MagicMissionBehavior.OnEndMission().
         public static void OnMissionEnd()
         {
+            // Capture cast count before clearing — spell-heavy battles leave an echo
+            int castCount = AgingSystem.MissionCastCount;
+            AgingSystem.ClearMissionCasts();
+
             _active.Clear();
             _initialized = false;
             _ashenTeam   = null;
             _skySet      = false;
+
+            // Battlefield echo: 3+ casts marks the ground — Ashen are drawn to it
+            if (castCount >= 3 && MageKnowledge.IsMage)
+            {
+                try
+                {
+                    Vec2 pos = MobileParty.MainParty?.GetPosition2D ?? default(Vec2);
+                    if (pos.x != 0f || pos.y != 0f)
+                        CampaignMapEvents.SetBattleEcho(pos.x, pos.y);
+                }
+                catch { }
+            }
         }
 
         // ── Initialization ────────────────────────────────────────────────────

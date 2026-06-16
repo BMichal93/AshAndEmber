@@ -122,6 +122,7 @@
     <Compile Include="QuestSystems\CampaignMapEvents.Diplomatic.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.Helpers.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.Persistence.cs"/>
+    <Compile Include="QuestSystems\CampaignMapEvents.Portents.cs"/>
     <Compile Include="QuestSystems\TempleCovenant.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Dispatch.cs"/>
@@ -133,6 +134,7 @@
     <Compile Include="QuestSystems\SettlementEncounters.Events4.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Events5.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Events6.cs"/>
+    <Compile Include="QuestSystems\SettlementEncounters.Ambient.cs"/>
     <Compile Include="QuestSystems\BattleEvents.cs"/>
     <Compile Include="QuestSystems\BattleEvents.Events.cs"/>
     <Compile Include="QuestSystems\BattleEvents.Helpers.cs"/>
