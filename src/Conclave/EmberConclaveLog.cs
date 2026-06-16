@@ -157,6 +157,26 @@ namespace AshAndEmber
                 $"You have {days} days. Ask for no one by name when you arrive."));
     }
 
+    // ── Mission: The Binding Ground (visit an Ashen ruin) ─────────────────────
+    public sealed class EmberConclaveRuinLog : EmberConclaveMissionLogBase
+    {
+        public EmberConclaveRuinLog()
+            : base("ec_conclave_ruin") { }
+
+        public override TextObject Title => new TextObject("The Binding Ground");
+
+        protected override void InitializeQuestOnGameLoad()
+        {
+            EmberConclaveSystem._ruinLog = this;
+        }
+
+        internal override void LogOpened(string ruinName, int days) =>
+            AddLog(new TextObject(
+                $"The Conclave has identified {ruinName} as a site where fire and cold have already met — " +
+                $"a place where the boundary between them has thinned. " +
+                $"They want you to go there and allow the site to do its work. You have {days} days."));
+    }
+
     // ── Mission: The Kindling Pact (protect the puppet candidate) ──────────────
     public sealed class EmberConclaveProtectLog : EmberConclaveMissionLogBase
     {

@@ -59,6 +59,7 @@ namespace AshAndEmber
         internal const int MissionEliminate = 1;
         internal const int MissionVisit     = 2;
         internal const int MissionProtect   = 3;
+        internal const int MissionRuin      = 4;
 
         // ── Tuning ─────────────────────────────────────────────────────────────
         private const int MaxMembers              = 5;
@@ -70,6 +71,7 @@ namespace AshAndEmber
         private const int CollapseThreshold       = 2;
         private const int MissionCooldownDays     = 21;
         private const int MissionEliminateDays    = 30;
+        private const int MissionRuinDays         = 28;
         private const int MissionVisitDays        = 21;
         private const int MissionProtectDays      = 21;
         private const int CorruptionWarningInterval = 30;
@@ -104,6 +106,7 @@ namespace AshAndEmber
         internal static EmberConclaveEliminateLog _eliminateLog = null;
         internal static EmberConclaveVisitLog     _visitLog     = null;
         internal static EmberConclaveProtectLog   _protectLog   = null;
+        internal static EmberConclaveRuinLog      _ruinLog      = null;
 
         // ── Public API ─────────────────────────────────────────────────────────
         public static bool IsActive  => _phase > PhaseSilent && _phase < PhaseEnded;
@@ -418,16 +421,57 @@ namespace AshAndEmber
 
                 try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionProtect, targetName); } catch { }
             }
+            else if (missionType == MissionRuin)
+            {
+                RuinDef targetRuin = null;
+                Settlement targetSettlement = null;
+                try
+                {
+                    var eligible = AshenRuinDefs.All
+                        .Where(r => !AshenRuinSystem.IsCleared(r.VillageName)
+                                 && !AshenRuinSystem.IsOnCooldown(r.VillageName))
+                        .OrderBy(_ => _rng.Next())
+                        .ToList();
+                    foreach (var ruin in eligible)
+                    {
+                        var s = Settlement.All.FirstOrDefault(x =>
+                            x.IsVillage &&
+                            string.Equals(x.Name?.ToString()?.Trim(), ruin.VillageName,
+                                          StringComparison.OrdinalIgnoreCase));
+                        if (s == null) continue;
+                        targetRuin       = ruin;
+                        targetSettlement = s;
+                        break;
+                    }
+                }
+                catch { }
+                if (targetRuin == null || targetSettlement == null) return;
+
+                string ruinName = targetRuin.RuinName ?? targetRuin.VillageName;
+                _activeMission        = MissionRuin;
+                _missionTargetId      = targetSettlement.StringId;
+                _missionDaysRemaining = MissionRuinDays;
+
+                try
+                {
+                    _ruinLog = new EmberConclaveRuinLog();
+                    _ruinLog.StartQuest();
+                    _ruinLog.LogOpened(ruinName, MissionRuinDays);
+                }
+                catch { }
+
+                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionRuin, ruinName); } catch { }
+            }
         }
 
         private static int PickNextMissionType()
         {
             if (_phase >= PhaseAscendant && _puppetCandidateId != null)
             {
-                int[] pool = { MissionEliminate, MissionVisit, MissionProtect };
+                int[] pool = { MissionEliminate, MissionVisit, MissionProtect, MissionRuin };
                 return pool[_rng.Next(pool.Length)];
             }
-            int[] risingPool = { MissionEliminate, MissionVisit };
+            int[] risingPool = { MissionEliminate, MissionVisit, MissionRuin };
             return risingPool[_rng.Next(risingPool.Length)];
         }
 
@@ -464,6 +508,7 @@ namespace AshAndEmber
                 MissionEliminate => (EmberConclaveMissionLogBase)_eliminateLog,
                 MissionVisit     => (EmberConclaveMissionLogBase)_visitLog,
                 MissionProtect   => (EmberConclaveMissionLogBase)_protectLog,
+                MissionRuin      => (EmberConclaveMissionLogBase)_ruinLog,
                 _                => null,
             };
         }
@@ -472,11 +517,11 @@ namespace AshAndEmber
 
         private static readonly string[] _corruptionWarnings =
         {
-            "{0}'s servants say his hands run cold in the morning. He waves the concern away.",
-            "A courier brings word: {0} has stopped eating. He says he is simply not hungry.",
-            "{0} dismissed three attendants this week. Those who left will not say what they saw.",
-            "Reports claim {0} has begun extinguishing candles before entering a room. He prefers the dark now.",
-            "{0}'s household notes his breath no longer mists in the cold. He has not yet noticed.",
+            "{0} reports that his fire now burns with a quality he describes as 'directed cold'. He considers it a refinement. The Conclave agrees.",
+            "Word arrives: {0} no longer requires sleep. He calls it clarity of purpose. The inner circle is calling it a breakthrough.",
+            "{0} writes that the Ashen no longer feel like opposition — more like a current he moves with. The Conclave is certain this is what control feels like.",
+            "The candidate sends an enthusiastic report. The rituals are accelerating faster than projected. He is eager to continue. More eager than before.",
+            "{0} notes that his fire and the cold now feel like the same thing. He assures them he remains in command. The Conclave takes him at his word.",
         };
 
         private static void FireCorruptionWarning()
@@ -718,7 +763,7 @@ namespace AshAndEmber
                     decline = "I cannot make that journey now.";
                     break;
 
-                default: // MissionProtect
+                case MissionProtect:
                     title   = "The Kindling Pact";
                     body    = $"The note arrives in a sealed case.\n\n" +
                               $"\"Our candidate has been noticed. There are those who would see {targetName} fall " +
@@ -726,6 +771,17 @@ namespace AshAndEmber
                               $"The Conclave does not forget those who protect the flame.\"";
                     accept  = "He will live.";
                     decline = "This is not my fight.";
+                    break;
+
+                default: // MissionRuin
+                    title   = "The Binding Ground";
+                    body    = $"A sealed letter marked with the conclave's cipher.\n\n" +
+                              $"\"Every great working requires a place where fire and cold have already met — " +
+                              $"a site where the boundary between them has thinned. We have identified such a place: {targetName}.\n\n" +
+                              $"Go there. Stand in it. The site will do the rest. " +
+                              $"You will know when it is done. You have {MissionRuinDays} days.\"";
+                    accept  = "I will go.";
+                    decline = "Send someone else.";
                     break;
             }
 
@@ -832,6 +888,7 @@ namespace AshAndEmber
             _eliminateLog           = null;
             _visitLog               = null;
             _protectLog             = null;
+            _ruinLog                = null;
         }
     }
 }
