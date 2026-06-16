@@ -324,10 +324,13 @@ namespace AshAndEmber
         private static int _ledgerDaysReclaimed = 0; // days clawed back (Reap, Ember, rites)
         private static int _ledgerBattleCasts   = 0;
         private static int _ledgerMapCasts      = 0;
+        private static int _missionCastCount    = 0; // resets each mission — not persisted
 
-        public static int  LedgerDaysSpent    => _ledgerDaysSpent;
-        public static void RecordBattleCast() => _ledgerBattleCasts++;
-        public static void RecordMapCast()    => _ledgerMapCasts++;
+        public static int  LedgerDaysSpent     => _ledgerDaysSpent;
+        public static int  MissionCastCount    => _missionCastCount;
+        public static void ClearMissionCasts() => _missionCastCount = 0;
+        public static void RecordBattleCast()  { _ledgerBattleCasts++; _missionCastCount++; }
+        public static void RecordMapCast()     => _ledgerMapCasts++;
 
         public static string BuildLedgerText()
         {
@@ -398,6 +401,7 @@ namespace AshAndEmber
             _ledgerDaysReclaimed = 0;
             _ledgerBattleCasts   = 0;
             _ledgerMapCasts      = 0;
+            _missionCastCount    = 0;
         }
     }
 }

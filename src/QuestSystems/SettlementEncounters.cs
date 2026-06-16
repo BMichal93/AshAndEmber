@@ -179,6 +179,9 @@ namespace AshAndEmber
         private static readonly List<string> _recentEncounters = new List<string>();
         private const int RecentEncounterMemory = 6;
 
+        // Aging ambient comments — NPC observers notice a mage's accelerated age
+        private static int _agingCommentCooldown = 0;
+
         // ── Colours ───────────────────────────────────────────────────────────
         private static readonly Color FireColor  = new Color(0.90f, 0.60f, 0.20f);
         private static readonly Color GoodColor  = new Color(0.55f, 0.80f, 0.45f);
@@ -261,6 +264,7 @@ namespace AshAndEmber
             _ashBreadCountdown    = 0;
             _ashBreadOutcome      = 0;
             _ashBreadSettlementId = null;
+            _agingCommentCooldown = 0;
             _recentEncounters.Clear();
         }
 
@@ -335,6 +339,7 @@ namespace AshAndEmber
             store.SyncData("SE_AshBreadCountdown",  ref _ashBreadCountdown);
             store.SyncData("SE_AshBreadOutcome",    ref _ashBreadOutcome);
             store.SyncData("SE_AshBreadS",          ref _ashBreadSettlementId);
+            store.SyncData("SE_AgingCommentCD",     ref _agingCommentCooldown);
             string recentStr = string.Join(",", _recentEncounters);
             store.SyncData("SE_RecentEncounters",  ref recentStr);
             _recentEncounters.Clear();
@@ -393,6 +398,7 @@ namespace AshAndEmber
             if (_familyFeverCooldown > 0) _familyFeverCooldown--;
             if (_hedgeWitchCooldown > 0) _hedgeWitchCooldown--;
             if (_cinderVigilCooldown > 0) _cinderVigilCooldown--;
+            if (_agingCommentCooldown > 0) _agingCommentCooldown--;
 
             if (_hedgeWitchCurse > 0)
             {

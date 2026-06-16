@@ -72,6 +72,16 @@ namespace AshAndEmber
             store.SyncData("LDM_CampaignStartDay",    ref _campaignStartDay);
             store.SyncData("LDM_LastEventDay",       ref _lastEventElapsedDay);
             store.SyncData("LDM_LastConflictSeedDay", ref _lastConflictSeedDay);
+
+            // Battlefield echo
+            int echoPending = _battleEchoPending ? 1 : 0;
+            store.SyncData("LDM_BattleEchoPending", ref echoPending);
+            store.SyncData("LDM_BattleEchoPosX",    ref _battleEchoPosX);
+            store.SyncData("LDM_BattleEchoPosY",    ref _battleEchoPosY);
+            _battleEchoPending = echoPending != 0;
+
+            // Portents
+            SavePortents(store);
         }
     }
 }

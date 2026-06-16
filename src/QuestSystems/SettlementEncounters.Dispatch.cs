@@ -25,6 +25,7 @@ namespace AshAndEmber
         // ── Dispatch ──────────────────────────────────────────────────────────
         private static void TryFireEnter(Settlement s)
         {
+            CheckAgingAmbient(s);
             bool mage   = MageKnowledge.IsMage;
             bool ashen  = MageKnowledge.IsAshen;
             float ren   = Hero.MainHero?.Clan?.Renown ?? 0f;
@@ -111,6 +112,7 @@ namespace AshAndEmber
 
         private static void TryFireLeave(Settlement s)
         {
+            CheckAgingAmbient(s);
             bool mage   = MageKnowledge.IsMage;
             bool ashen  = MageKnowledge.IsAshen;
             float ren   = Hero.MainHero?.Clan?.Renown ?? 0f;
@@ -168,7 +170,38 @@ namespace AshAndEmber
             if (_recentEncounters.Count > RecentEncounterMemory)
                 _recentEncounters.RemoveAt(0);
 
+            ShowEncounterHint(s);
             MageKnowledge._deferredInquiry = () => { try { chosen(s); } catch { } };
+        }
+
+        private static readonly string[] _enterVillageHints = {
+            "Something stirs as you pass through the village.",
+            "A hush settles over the road — the fire feels it before you do.",
+            "The air changes as you enter the village.",
+            "A dog stops barking when you pass. A child stops playing.",
+        };
+        private static readonly string[] _enterTownHints = {
+            "Something draws the eye as you pass through the gates.",
+            "The crowd shifts before you reach the square.",
+            "You are not the only one watching today.",
+            "The city has a different feel at this hour.",
+        };
+        private static readonly string[] _enterCastleHints = {
+            "The keep's shadow falls differently today.",
+            "Eyes find you before you reach the courtyard.",
+            "Something waits behind the walls.",
+            "The garrison watches the road more carefully than usual.",
+        };
+        private static void ShowEncounterHint(Settlement s)
+        {
+            try
+            {
+                string[] pool = s.IsVillage
+                    ? _enterVillageHints
+                    : (s.IsTown ? _enterTownHints : _enterCastleHints);
+                MBInformationManager.AddQuickInformation(new TextObject(pool[_rng.Next(pool.Length)]));
+            }
+            catch { }
         }
 
         private static void FireBattle(List<Action> pool)

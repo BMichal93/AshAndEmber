@@ -131,7 +131,7 @@ namespace AshAndEmber
 
                 string shadowName = shadow.Name?.ToString() ?? "the Shadow";
 
-                // Try to harm a player-owned settlement
+                // Try to find a player-owned settlement for settlement-targeted schemes
                 Settlement target = null;
                 if (Hero.MainHero?.Clan != null)
                 {
@@ -144,28 +144,74 @@ namespace AshAndEmber
                 }
 
                 string progress = $"({_schemeCount}/5 schemes)";
-                if (target?.Town != null)
+
+                // 5 scheme types: 0–1 settlement harm, 2 assassination attempt, 3 stolen shipment, 4 dead informant
+                int schemeType = _rng.Next(5);
+                if (target?.Town == null && schemeType <= 1) schemeType = 3; // no settlement → fallback
+
+                switch (schemeType)
                 {
-                    if (_rng.Next(2) == 0)
-                    {
+                    case 0:
                         target.Town.Loyalty = Math.Max(0f, target.Town.Loyalty - 10f);
                         InformationManager.DisplayMessage(new InformationMessage(
                             $"{shadowName}'s cold schemes reach {target.Name} — loyalty erodes. {progress}",
                             new Color(0.38f, 0.50f, 0.75f)));
-                    }
-                    else
-                    {
+                        break;
+
+                    case 1:
                         target.Town.Security = Math.Max(0f, target.Town.Security - 15f);
                         InformationManager.DisplayMessage(new InformationMessage(
                             $"{shadowName}'s shadow spreads through {target.Name} — fear takes root. {progress}",
                             new Color(0.38f, 0.50f, 0.75f)));
-                    }
-                }
-                else
-                {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{shadowName} moves against you from the dark. {progress}",
-                        new Color(0.38f, 0.50f, 0.75f)));
+                        break;
+
+                    case 2:
+                        // Failed assassination — dramatic enough for a deferred inquiry
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"{shadowName}'s blade found your outriders instead of you. One dead. A message left in the wound. {progress}",
+                            new Color(0.38f, 0.50f, 0.75f)));
+                        try { AgingSystem.AgeHero(Hero.MainHero, 1); } catch { }
+                        string sName = shadowName;
+                        MageKnowledge._deferredInquiry = () =>
+                        {
+                            try
+                            {
+                                InformationManager.ShowInquiry(new InquiryData(
+                                    "The Knife That Missed",
+                                    $"Your outriders found him in a ditch three leagues back — one of your own men, a knife in his chest. Not his knife.\n\n" +
+                                    $"{sName}'s work. The blade was meant for you. It arrived early.\n\n" +
+                                    $"They are not far behind.",
+                                    true, false, "I expected worse.", null,
+                                    () => { }, null));
+                            }
+                            catch { }
+                        };
+                        break;
+
+                    case 3:
+                        // Stolen shipment — takes a share of the player's gold
+                        int goldLost = Math.Min(500, (Hero.MainHero?.Gold ?? 0) / 5);
+                        if (goldLost > 50)
+                        {
+                            try { Hero.MainHero?.ChangeHeroGold(-goldLost); } catch { }
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"A supply cart never arrived. {shadowName}'s hand was on every thief you found. (-{goldLost} gold) {progress}",
+                                new Color(0.38f, 0.50f, 0.75f)));
+                        }
+                        else
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{shadowName} reaches into your supply lines. Nothing of value — this time. {progress}",
+                                new Color(0.38f, 0.50f, 0.75f)));
+                        }
+                        break;
+
+                    case 4:
+                        // Dead informant — a contact goes silent
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"One of your contacts stopped writing. When your man found them, the door was open and the hearth cold. {shadowName} reads your correspondence. {progress}",
+                            new Color(0.38f, 0.50f, 0.75f)));
+                        break;
                 }
             }
             catch { }
