@@ -58,7 +58,20 @@ namespace AshAndEmber
             if (focusing)
             {
                 if (!_wasFocusing && inMission)
+                {
                     try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch { }
+                    try
+                    {
+                        if (Agent.Main != null)
+                        {
+                            ColorSchool focusSchool = MageKnowledge.IsAshen
+                                ? ColorSchool.Ashen
+                                : ColorSchool.Red;
+                            SpellEffects.BeginFocusVisual(Agent.Main, focusSchool);
+                        }
+                    }
+                    catch { }
+                }
 
                 _wasFocusing = true;
 
@@ -174,9 +187,12 @@ namespace AshAndEmber
                 if (!inMission && Campaign.Current != null)
                     Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop;
 
-                // Stop the looping animation before casting — TryCastAnimation takes over from here
+                // Stop the looping animation and focus visuals before casting
                 if (inMission)
+                {
                     try { SpellEffects.EndCastLoop(Agent.Main); } catch { }
+                    try { SpellEffects.EndFocusVisual(Agent.Main); } catch { }
+                }
 
                 TryCast(inMission);
 

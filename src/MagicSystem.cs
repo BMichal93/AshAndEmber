@@ -203,6 +203,7 @@ namespace AshAndEmber
             ActiveEffectManager.MissionTick(dt);
             ColourLordAI.MissionTick(dt);
             SpellEffects.TickGlows(dt);
+            SpellEffects.TickFocusVisuals(dt);
             SpellEffects.TickColourCooldown(dt);
             SpellEffects.TickAnimClears(dt);
             SpellEffects.TickCastLoops(dt);
@@ -238,6 +239,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearReflect();       } catch { }
             try { SpellEffects.ClearAttackWeaken();  } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
+            try { SpellEffects.ClearFocusVisuals();  } catch { }
             try { SpellEffects.ClearGlows();         } catch { }
             try { SpellEffects.ClearColourCooldown();} catch { }
             try { SpellEffects.ClearMoves();         } catch { }
