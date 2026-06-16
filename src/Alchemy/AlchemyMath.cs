@@ -48,11 +48,14 @@ namespace AshAndEmber
     // What a tainted elixir does instead of its promise.
     public enum AlchemyBackfire
     {
-        SelfWound      = 0, // the brew turns on the drinker
-        TroopBlast     = 1, // it bursts, scalding your own
-        MoraleCollapse = 2, // a foul reek breaks the column's spirit
-        CreepingBlight = 3, // a slow poison gnaws over time
-        Enfeeblement   = 4, // limbs go leaden, guard goes soft
+        SelfWound          = 0, // the brew turns on the drinker
+        TroopBlast         = 1, // it bursts, scalding your own
+        MoraleCollapse     = 2, // a foul reek breaks the column's spirit
+        CreepingBlight     = 3, // a slow poison gnaws over time
+        Enfeeblement       = 4, // limbs go leaden, guard goes soft
+        ScentOfBlood       = 5, // the brew opens your veins — every blade finds you
+        Petrification      = 6, // it crystallises in the blood — you freeze where you stand
+        AlchemicCorruption = 7, // the corruption bleeds outward, tainting the next vial it touches
     }
 
     public static class AlchemyMath
@@ -66,9 +69,9 @@ namespace AshAndEmber
             => Math.Max(1, intelligence);
 
         // ── Brewing (Medicine) ───────────────────────────────────────────────
-        // A novice surgeon (0 Medicine) still lands roughly one brew in five;
+        // A novice surgeon (0 Medicine) still lands roughly three brews in ten;
         // a master (300) almost never spoils the work. Linear between.
-        public const float BrewBaseChance  = 0.20f;
+        public const float BrewBaseChance  = 0.30f;
         public const float BrewPerSkill    = 0.0030f;
         public const float BrewChanceFloor = 0.10f;
         public const float BrewChanceCeil  = 0.95f;
@@ -114,11 +117,11 @@ namespace AshAndEmber
             return BrewAppraisal.Unknown;
         }
 
-        // Maps a [0,1) roll onto one of the five backfires (equal weight).
+        // Maps a [0,1) roll onto one of the eight backfires (equal weight).
         public static AlchemyBackfire PickBackfire(double roll)
         {
-            int idx = (int)(Clamp01(roll) * 5);
-            if (idx > 4) idx = 4;
+            int idx = (int)(Clamp01(roll) * 8);
+            if (idx > 7) idx = 7;
             return (AlchemyBackfire)idx;
         }
 
@@ -155,62 +158,79 @@ namespace AshAndEmber
         }
 
         // ── Effect magnitudes ────────────────────────────────────────────────
-        // Healing Draught
+        // Healing Draught — also cleanses active debuffs (enfeeble / blight / petrify)
         public const float HealFraction = 0.25f;
 
-        // Ember Brew (berserk)
+        // Ember Brew (berserk — speed + striking power; self-heal on the initial rush)
         public const float BerserkDurationSec = 20f;
         public const float BerserkSpeedMult   = 1.20f;
         public const int   BerserkBonusDamage = 8;     // extra damage per landed melee hit
-        public const float BerserkSelfHeal    = 0.15f; // top-up on the rush of fury
+        public const float BerserkSelfHeal    = 0.15f; // top-up when fury takes hold
 
-        // Oath-Wine (morale)
-        public const int OathWineMorale = 30;
+        // Oath-Wine (morale + small hero heal; courage is contagious)
+        public const int   OathWineMorale  = 30;
+        public const float OathWineHeroHeal = 0.15f;
 
         // Hearthsmoke Censer (village hearth)
-        public const float HearthsmokeBoost  = 200f;
+        public const float HearthsmokeBoost  = 100f;
         public const float HearthsmokeRange  = 12f; // map units to find a village
 
-        // Caustic Vial (battle AoE)
-        public const float CausticRadius = 5f;
-        public const float CausticDamage = 35f;
+        // Caustic Vial (battle AoE — burst damage + lingering blight on enemies)
+        public const float CausticRadius      = 5f;
+        public const float CausticDamage      = 40f;
+        public const float CausticDotDuration = 5f;  // seconds of blight DoT on enemies hit
 
-        // Stoneblood Tonic (damage resist)
-        public const float ResistDurationSec = 25f;
-        public const float ResistFraction    = 0.40f; // fraction of each blow shrugged off
+        // Stoneblood Tonic (damage resist + reflects a fraction back at the striker)
+        public const float ResistDurationSec    = 25f;
+        public const float ResistFraction       = 0.40f; // fraction of each blow shrugged off
+        public const float ResistReflectFraction = 0.20f; // of absorbed damage reflected at attacker
 
-        // Field Surgeon's Philtre (heal wounded troops)
-        public const float SurgeonHealFraction = 0.50f;
+        // Field Surgeon's Philtre (heal wounded troops — the dedicated army-medic draught)
+        public const float SurgeonHealFraction = 0.80f;
 
-        // Veil of Ash (ward)
-        public const float VeilDurationSec = 10f;
+        // Veil of Ash (ward + ash-cold slow burst on nearby enemies at activation)
+        public const float VeilDurationSec   = 10f;
+        public const float VeilAshSlowRadius = 4f;   // map units for the activation slow
+        public const float VeilAshSlowDuration = 3f; // seconds enemies are slowed
 
-        // Hoarfrost Draught (battle AoE debuff — slows and softens nearby foes;
-        // reuses the enfeeble machinery so its speed/vulnerability match the brew's
-        // own backfire, only turned outward onto the enemy).
-        public const float HoarfrostRadius      = 6f;
-        public const float HoarfrostDurationSec = 12f;
+        // Hoarfrost Draught (battle AoE — direct cold damage + lingering slow/vulnerability)
+        public const float HoarfrostRadius       = 6f;
+        public const float HoarfrostDurationSec  = 12f;
+        public const float HoarfrostDirectDamage = 15f; // cold shock on each enemy struck
 
-        // Pyreblood Philtre (battle second wind — heal + stone-skin resist)
-        public const float PyrebloodHealFraction = 0.20f;
+        // Pyreblood Philtre (lifesteal — wounds become fuel; every blow returns life)
+        public const float PyrebloodDurationSec      = 25f;
+        public const float PyrebloodLifestealFraction = 0.35f; // of damage dealt, returned as healing
 
-        // Marrowmend Tincture (map — full self-heal + mend wounded column)
-        public const float MarrowmendHealFraction = 1.0f;
+        // Marrowmend Tincture (map — full self-heal + mend a portion of the wounded column)
+        public const float MarrowmendHealFraction  = 1.0f;
+        public const float MarrowmendTroopFraction = 0.25f; // less column-heal than the Philtre; its niche is the hero
 
         // Kindling Censer (map — steadies the nearest town's people)
-        public const float KindlingLoyalty  = 15f;
-        public const float KindlingSecurity = 15f;
+        public const float KindlingLoyalty  = 20f;
+        public const float KindlingSecurity = 20f;
         public const float KindlingRange    = 14f; // map units to find a town
 
         // ── Backfire magnitudes ──────────────────────────────────────────────
-        public const float BackfireSelfWoundFraction = 0.25f; // of max HP
-        public const int   BackfireTroopBlastWounds  = 6;     // troops scalded
-        public const int   BackfireMoraleDrop        = 25;
-        public const float BackfireDotDurationSec    = 12f;
-        public const float BackfireDotPerSecond      = 4f;
-        public const float BackfireEnfeebleDuration  = 18f;
-        public const float BackfireEnfeebleSpeedMult = 0.80f;
-        public const float BackfireEnfeebleVuln      = 0.30f; // extra damage taken
+        public const float BackfireSelfWoundFraction   = 0.25f; // of max HP
+        public const int   BackfireTroopBlastWounds    = 6;     // troops scalded
+        public const int   BackfireMoraleDrop          = 25;
+        public const float BackfireDotDurationSec      = 12f;
+        public const float BackfireDotPerSecond        = 4f;
+        public const float BackfireEnfeebleDuration    = 18f;
+        public const float BackfireEnfeebleSpeedMult   = 0.80f;
+        public const float BackfireEnfeebleVuln        = 0.30f; // extra damage taken
+
+        // Scent of Blood — self-wound + brief enfeeble (shock of the opening vein)
+        public const float BackfireScentBleedFraction = 0.10f; // self-wound
+        public const float BackfireScentEnfeebleSec   = 8f;    // how long the weakness lasts
+
+        // Petrification — frozen in place, soft to every blow
+        public const float BackfirePetrifyDuration = 3f;    // seconds of complete lockdown
+        public const float BackfirePetrifyVuln     = 0.50f; // extra damage taken while frozen
+
+        // Alchemic Corruption — self-wound + taint spreads to the next clean vial
+        public const float BackfireCorruptSelfFraction = 0.12f; // of max HP
 
         // ── helpers ──────────────────────────────────────────────────────────
         private static float Clamp(float v, float lo, float hi)

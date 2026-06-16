@@ -32,18 +32,23 @@ namespace AshAndEmber
         private static readonly Random _rng = new Random();
 
         // ── Battle buff/affliction timers (seconds remaining) ─────────────────
-        private static readonly Dictionary<Agent, float> _berserk  = new Dictionary<Agent, float>();
-        private static readonly Dictionary<Agent, float> _resist   = new Dictionary<Agent, float>();
-        private static readonly Dictionary<Agent, float> _enfeeble = new Dictionary<Agent, float>();
-        private static readonly Dictionary<Agent, float> _dot      = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _berserk   = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _resist    = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _enfeeble  = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _dot       = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _petrify   = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _lifesteal = new Dictionary<Agent, float>();
 
-        public static bool IsBerserk(Agent a) => a != null && _berserk.TryGetValue(a, out float t) && t > 0f;
-        public static bool IsResistant(Agent a) => a != null && _resist.TryGetValue(a, out float t) && t > 0f;
-        public static bool IsEnfeebled(Agent a) => a != null && _enfeeble.TryGetValue(a, out float t) && t > 0f;
+        public static bool IsBerserk(Agent a)     => a != null && _berserk.TryGetValue(a, out float t)   && t > 0f;
+        public static bool IsResistant(Agent a)   => a != null && _resist.TryGetValue(a, out float t)    && t > 0f;
+        public static bool IsEnfeebled(Agent a)   => a != null && _enfeeble.TryGetValue(a, out float t)  && t > 0f;
+        public static bool IsPetrified(Agent a)   => a != null && _petrify.TryGetValue(a, out float t)   && t > 0f;
+        public static bool IsLifestealing(Agent a) => a != null && _lifesteal.TryGetValue(a, out float t) && t > 0f;
 
         public static void ClearBattleState()
         {
             _berserk.Clear(); _resist.Clear(); _enfeeble.Clear(); _dot.Clear();
+            _petrify.Clear(); _lifesteal.Clear();
         }
 
         // ── Player consumption entry point ────────────────────────────────────
@@ -99,7 +104,11 @@ namespace AshAndEmber
             {
                 case ElixirType.HealingDraught:
                     Heal(a, AlchemyMath.HealFraction);
-                    if (announce) Log(a, "drinks a Healing Draught — wounds close.", false);
+                    // Cleanse active debuffs — the draught burns them clean.
+                    _dot.Remove(a);
+                    _petrify.Remove(a);
+                    if (_enfeeble.Remove(a)) try { a.SetMaximumSpeedLimit(1f, true); } catch { }
+                    if (announce) Log(a, "drinks a Healing Draught — wounds close and the poison fades.", false);
                     break;
 
                 case ElixirType.EmberBrew:
@@ -110,33 +119,39 @@ namespace AshAndEmber
                     break;
 
                 case ElixirType.CausticVial:
-                    CausticBurst(a);
-                    if (announce) Log(a, "shatters a Caustic Vial — a searing cloud blooms.", false);
+                {
+                    int causticHit = CausticBurst(a);
+                    if (announce) Log(a, $"shatters a Caustic Vial — a searing cloud takes {causticHit}.", false);
                     break;
+                }
 
                 case ElixirType.StonebloodTonic:
                     _resist[a] = AlchemyMath.ResistDurationSec;
                     try { SpellEffects.BeginAgentGlow(a, ColorSchool.Ashen, AlchemyMath.ResistDurationSec); } catch { }
-                    if (announce) Log(a, "swallows a Stoneblood Tonic — their skin greys to slag.", false);
+                    if (announce) Log(a, "swallows a Stoneblood Tonic — skin greys to slag; blows return to the hand that threw them.", false);
                     break;
 
                 case ElixirType.VeilOfAsh:
+                {
                     try { SpellEffects.ExecuteWardFromAgent(a); } catch { }
-                    if (announce) Log(a, "breaks a Veil of Ash — grey ash closes around them.", false);
+                    // The rising ash-cloud chills those who press in at the moment of activation.
+                    int ashChilled = EnfeebleEnemiesInRadius(a, AlchemyMath.VeilAshSlowRadius, AlchemyMath.VeilAshSlowDuration, 0f);
+                    if (announce) Log(a, $"breaks a Veil of Ash — grey ash rises and {ashChilled} of the enemy slow.", false);
                     break;
+                }
 
                 case ElixirType.HoarfrostDraught:
                 {
                     int chilled = HoarfrostBurst(a);
-                    if (announce) Log(a, $"drinks a Hoarfrost Draught — the cold takes {chilled} of the enemy.", false);
+                    if (announce) Log(a, $"drinks a Hoarfrost Draught — cold strikes {chilled} of the enemy and holds them.", false);
                     break;
                 }
 
                 case ElixirType.PyrebloodPhiltre:
-                    Heal(a, AlchemyMath.PyrebloodHealFraction);
-                    _resist[a] = AlchemyMath.ResistDurationSec;
-                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.White, AlchemyMath.ResistDurationSec); } catch { }
-                    if (announce) Log(a, "drinks a Pyreblood Philtre — wounds close and the skin sets hard.", false);
+                    // Lifesteal: wounds become fuel — every blow landed heals the drinker.
+                    _lifesteal[a] = AlchemyMath.PyrebloodDurationSec;
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.White, AlchemyMath.PyrebloodDurationSec); } catch { }
+                    if (announce) Log(a, "drinks a Pyreblood Philtre — wounds become fuel; every blow returns life.", false);
                     break;
 
                 default:
@@ -168,6 +183,41 @@ namespace AshAndEmber
                     try { a.SetMaximumSpeedLimit(AlchemyMath.BackfireEnfeebleSpeedMult, true); } catch { }
                     if (announce) Log(a, "the brew sours — their limbs go leaden.", true);
                     break;
+                case AlchemyBackfire.ScentOfBlood:
+                {
+                    float scentDmg = AlchemyMath.BackfireScentBleedFraction * SafeHealthLimit(a);
+                    try { SpellEffects.DamageAgent(a, scentDmg, null, a); } catch { }
+                    _enfeeble[a] = AlchemyMath.BackfireScentEnfeebleSec;
+                    try { a.SetMaximumSpeedLimit(AlchemyMath.BackfireEnfeebleSpeedMult, true); } catch { }
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.Red, AlchemyMath.BackfireScentEnfeebleSec); } catch { }
+                    if (announce) Log(a, "the brew opens their veins — blood, and every blade finds them.", true);
+                    break;
+                }
+                case AlchemyBackfire.Petrification:
+                    _petrify[a] = AlchemyMath.BackfirePetrifyDuration;
+                    try { a.SetMaximumSpeedLimit(0f, true); } catch { }
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.Ashen, AlchemyMath.BackfirePetrifyDuration); } catch { }
+                    if (announce) Log(a, "the brew crystallises in their veins — they cannot move!", true);
+                    break;
+                case AlchemyBackfire.AlchemicCorruption:
+                {
+                    float corruptDmg = AlchemyMath.BackfireCorruptSelfFraction * SafeHealthLimit(a);
+                    try { SpellEffects.DamageAgent(a, corruptDmg, ColorSchool.Green, a); } catch { }
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.Green, 3f); } catch { }
+                    int corruptIdx = TaintRandomVial();
+                    if (corruptIdx >= 0)
+                    {
+                        string vialName = AlchemyCatalog.Name((ElixirType)AlchemyInventory._types[corruptIdx]);
+                        if (announce) Log(a, $"the corruption spreads — their {vialName} is now tainted!", true);
+                    }
+                    else
+                    {
+                        // No clean vials — corruption turns back harder.
+                        try { SpellEffects.DamageAgent(a, corruptDmg, ColorSchool.Green, a); } catch { }
+                        if (announce) Log(a, "the corruption had nowhere to flee — it turns back, twice as vile.", true);
+                    }
+                    break;
+                }
                 case AlchemyBackfire.SelfWound:
                 case AlchemyBackfire.MoraleCollapse: // no party morale mid-battle → wound
                 default:
@@ -209,7 +259,8 @@ namespace AshAndEmber
 
                 case ElixirType.OathWine:
                     try { if (party != null) party.RecentEventsMorale += AlchemyMath.OathWineMorale; } catch { }
-                    return $"Oath-Wine passes down the line. Spirits rise (+{AlchemyMath.OathWineMorale} morale).";
+                    HealHero(hero, AlchemyMath.OathWineHeroHeal);
+                    return $"Oath-Wine passes down the line — spirits rise (+{AlchemyMath.OathWineMorale} morale) and strength returns to you.";
 
                 case ElixirType.HearthsmokeCenser:
                     return BurnHearthsmoke(party);
@@ -225,7 +276,7 @@ namespace AshAndEmber
                 case ElixirType.MarrowmendTincture:
                 {
                     HealHero(hero, AlchemyMath.MarrowmendHealFraction);
-                    int mended = HealWoundedTroops(party, AlchemyMath.SurgeonHealFraction);
+                    int mended = HealWoundedTroops(party, AlchemyMath.MarrowmendTroopFraction);
                     return mended > 0
                         ? $"The Marrowmend Tincture works deep — you wake whole, and {mended} of your wounded rise with you."
                         : "The Marrowmend Tincture works deep — your wounds close and you wake whole.";
@@ -266,6 +317,32 @@ namespace AshAndEmber
                     try { if (party != null) party.RecentEventsMorale -= AlchemyMath.BackfireMoraleDrop / 2; } catch { }
                     line = "The brew leaves you reeling — weak in the knees and short of breath.";
                     break;
+                case AlchemyBackfire.ScentOfBlood:
+                    HurtHero(hero, AlchemyMath.BackfireScentBleedFraction);
+                    try { if (party != null) party.RecentEventsMorale -= AlchemyMath.BackfireMoraleDrop / 2; } catch { }
+                    line = "The brew opens your veins — blood, and the wrong kind of attention on the road.";
+                    break;
+                case AlchemyBackfire.Petrification:
+                    HurtHero(hero, AlchemyMath.BackfireSelfWoundFraction * 0.5f);
+                    try { if (party != null) party.RecentEventsMorale -= AlchemyMath.BackfireMoraleDrop / 3; } catch { }
+                    line = "The brew crystallises in your blood — briefly, you cannot breathe.";
+                    break;
+                case AlchemyBackfire.AlchemicCorruption:
+                {
+                    HurtHero(hero, AlchemyMath.BackfireCorruptSelfFraction);
+                    int corruptIdx = TaintRandomVial();
+                    if (corruptIdx >= 0)
+                    {
+                        string vialName = AlchemyCatalog.Name((ElixirType)AlchemyInventory._types[corruptIdx]);
+                        line = $"The brew's corruption spreads outward — your {vialName} is now tainted.";
+                    }
+                    else
+                    {
+                        HurtHero(hero, AlchemyMath.BackfireCorruptSelfFraction);
+                        line = "The corruption had nowhere to flee — it turned back on you instead.";
+                    }
+                    break;
+                }
             }
             if (announce)
                 InformationManager.DisplayMessage(new InformationMessage(line, new Color(0.8f, 0.35f, 0.25f)));
@@ -277,9 +354,14 @@ namespace AshAndEmber
         {
             if (Mission.Current == null) return;
 
-            DecayAndExpire(_berserk, dt, null);
-            DecayAndExpire(_resist,  dt, null);
-            DecayAndExpire(_enfeeble, dt, a =>
+            DecayAndExpire(_berserk,   dt, null);
+            DecayAndExpire(_resist,    dt, null);
+            DecayAndExpire(_lifesteal, dt, null);
+            DecayAndExpire(_enfeeble,  dt, a =>
+            {
+                try { a.SetMaximumSpeedLimit(1f, true); } catch { }
+            });
+            DecayAndExpire(_petrify, dt, a =>
             {
                 try { a.SetMaximumSpeedLimit(1f, true); } catch { }
             });
@@ -307,22 +389,30 @@ namespace AshAndEmber
         {
             if (affected == null || !affected.IsActive() || inflicted <= 0) return;
 
-            // Attacker buffs/afflictions
+            // Attacker state
             if (affector != null && affector != affected)
             {
                 if (IsBerserk(affector))
                     try { SpellEffects.DamageAgent(affected, AlchemyMath.BerserkBonusDamage, null, affector); } catch { }
                 else if (IsEnfeebled(affector))
                     try { SpellEffects.HealAgent(affected, inflicted * 0.3f); } catch { } // weakened blow
+
+                if (IsLifestealing(affector))
+                    try { SpellEffects.HealAgent(affector, inflicted * AlchemyMath.PyrebloodLifestealFraction); } catch { }
             }
 
-            // Defender buffs/afflictions
+            // Defender state — resist and enfeeble are mutually exclusive, petrify stacks on top
             if (IsResistant(affected))
+            {
                 try { SpellEffects.HealAgent(affected, inflicted * AlchemyMath.ResistFraction); } catch { }
-            else if (IsBerserk(affected))
-                try { SpellEffects.HealAgent(affected, inflicted * 0.20f); } catch { } // fury dulls pain
+                if (affector != null && affector != affected)
+                    try { SpellEffects.DamageAgent(affector, inflicted * AlchemyMath.ResistReflectFraction, null, affected); } catch { }
+            }
             else if (IsEnfeebled(affected))
                 try { SpellEffects.DamageAgent(affected, inflicted * AlchemyMath.BackfireEnfeebleVuln, null, affector); } catch { }
+
+            if (IsPetrified(affected))
+                try { SpellEffects.DamageAgent(affected, inflicted * AlchemyMath.BackfirePetrifyVuln, null, affector); } catch { }
         }
 
         // ── Battle helpers ────────────────────────────────────────────────────
@@ -336,8 +426,11 @@ namespace AshAndEmber
             try { return a.HealthLimit > 0f ? a.HealthLimit : 100f; } catch { return 100f; }
         }
 
-        // Bursts a caustic cloud around the drinker. alliesOnly restricts it to the
-        // drinker's own team (the backfire). Returns how many were struck.
+        // Bursts a caustic cloud around the drinker.
+        //   alliesOnly=false (normal use): hits everyone in radius; enemies also receive a
+        //     lingering blight DoT.
+        //   alliesOnly=true (backfire): hits only the drinker's own team, no DoT.
+        // Returns how many were struck.
         private static int CausticBurst(Agent center, bool alliesOnly = false)
         {
             if (center == null || Mission.Current == null) return 0;
@@ -355,6 +448,9 @@ namespace AshAndEmber
                     if (dx * dx + dy * dy > r2) continue;
                     if (SpellEffects.IsWarded(a)) continue;
                     try { SpellEffects.DamageAgent(a, AlchemyMath.CausticDamage, ColorSchool.Green, center); } catch { }
+                    // Apply blight DoT to enemies on intentional use only.
+                    if (!alliesOnly && (center.Team == null || a.Team == null || a.Team != center.Team))
+                        _dot[a] = AlchemyMath.CausticDotDuration;
                     hit++;
                 }
             }
@@ -363,39 +459,57 @@ namespace AshAndEmber
             return hit;
         }
 
-        // Chills every nearby ENEMY of the drinker: slows them and leaves them
-        // open (the enfeeble debuff turned outward). Reuses the _enfeeble timer
-        // so MissionTick/OnAgentHit resolve it exactly like the brew's backfire.
-        // Returns how many were caught in the cold.
-        private static int HoarfrostBurst(Agent center)
+        // Applies the hoarfrost/ash chill to nearby enemies: slows them, leaves them
+        // open to extra damage, and optionally strikes with direct cold damage upfront.
+        // Shared by HoarfrostDraught (full radius + direct damage) and VeilOfAsh
+        // activation (small radius, no direct damage).
+        private static int EnfeebleEnemiesInRadius(Agent center, float radius, float duration, float directDamage)
         {
             if (center == null || Mission.Current == null) return 0;
             int hit = 0;
             Vec3 pos;
             try { pos = center.Position; } catch { return 0; }
-            float r2 = AlchemyMath.HoarfrostRadius * AlchemyMath.HoarfrostRadius;
+            float r2 = radius * radius;
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (a == center || !a.IsActive() || a.IsMount) continue;
-                    // Enemies only: anyone not on the drinker's team (matches the
-                    // ally test used throughout the spell code).
                     if (center.Team == null || a.Team == null || a.Team == center.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
                     if (SpellEffects.IsWarded(a)) continue;
-                    _enfeeble[a] = AlchemyMath.HoarfrostDurationSec;
+                    if (directDamage > 0f)
+                        try { SpellEffects.DamageAgent(a, directDamage, ColorSchool.Ashen, center); } catch { }
+                    _enfeeble[a] = duration;
                     try { a.SetMaximumSpeedLimit(AlchemyMath.BackfireEnfeebleSpeedMult, true); } catch { }
-                    // Ashen is the one cold-blue glow in the palette — the right look
-                    // for a hoarfrost chill (every other school renders a warm tone).
-                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.Ashen, AlchemyMath.HoarfrostDurationSec); } catch { }
+                    // Ashen: the one cold-blue glow — fitting for hoarfrost and ash alike.
+                    try { SpellEffects.BeginAgentGlow(a, ColorSchool.Ashen, duration); } catch { }
                     hit++;
                 }
             }
             catch { }
             try { SpellEffects.RecordMagicCast(pos); } catch { }
             return hit;
+        }
+
+        private static int HoarfrostBurst(Agent center)
+            => EnfeebleEnemiesInRadius(center,
+                   AlchemyMath.HoarfrostRadius,
+                   AlchemyMath.HoarfrostDurationSec,
+                   AlchemyMath.HoarfrostDirectDamage);
+
+        // Taints one randomly chosen clean vial in the player's satchel.
+        // Returns the index of the tainted vial, or -1 if none were clean.
+        private static int TaintRandomVial()
+        {
+            var clean = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < AlchemyInventory._types.Count; i++)
+                if (!AlchemyInventory._tainted[i]) clean.Add(i);
+            if (clean.Count == 0) return -1;
+            int idx = clean[_rng.Next(clean.Count)];
+            AlchemyInventory._tainted[idx] = true;
+            return idx;
         }
 
         private static void Log(Agent a, string blurb, bool bad)
