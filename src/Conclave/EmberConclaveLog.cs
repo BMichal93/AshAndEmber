@@ -107,6 +107,24 @@ namespace AshAndEmber
                 "that chose him long before their rite. The remaining members did not return from the hall. " +
                 "The cold does not negotiate. It waits, and then it takes."));
 
+        internal void LogCounterContact() =>
+            AddLog(new TextObject(
+                "A second letter arrived — unsigned, no seal. Someone else refused the Conclave and is watching them. " +
+                "They made one thing clear: the circle of mages is the Conclave's strength. " +
+                "The fewer who gather around the flame, the colder it burns."));
+
+        internal void LogEnemyRisingWarning() =>
+            AddLog(new TextObject(
+                "The Conclave's influence is spreading. Their preparations have moved beyond recruitment " +
+                "into something more deliberate — coordinated, patient, advancing toward a fixed point. " +
+                "You do not know what that point is yet."));
+
+        internal void LogEnemyAscendantWarning() =>
+            AddLog(new TextObject(
+                "The Conclave has chosen someone. A mage lord seen at multiple Ashen sites in close succession — " +
+                "not as a scholar, but as a subject. Someone is being prepared for something. " +
+                "The rite is close. You do not know who the candidate is."));
+
         internal void LogDefeat() =>
             AddLog(new TextObject(
                 "The Ember Conclave has collapsed. Too few embers remain to sustain the circle. " +
