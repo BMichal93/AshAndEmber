@@ -724,15 +724,19 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void AlchemyMath_PickBackfire_CoversAllFive_AndStaysInRange()
+        public void AlchemyMath_PickBackfire_CoversAllEight_AndStaysInRange()
         {
-            Assert.AreEqual(AlchemyBackfire.SelfWound,      AlchemyMath.PickBackfire(0.0));
-            Assert.AreEqual(AlchemyBackfire.TroopBlast,     AlchemyMath.PickBackfire(0.25));
-            Assert.AreEqual(AlchemyBackfire.MoraleCollapse, AlchemyMath.PickBackfire(0.45));
-            Assert.AreEqual(AlchemyBackfire.CreepingBlight, AlchemyMath.PickBackfire(0.65));
-            Assert.AreEqual(AlchemyBackfire.Enfeeblement,   AlchemyMath.PickBackfire(0.85));
+            // Eight equally-weighted outcomes; each bucket spans 0.125.
+            Assert.AreEqual(AlchemyBackfire.SelfWound,          AlchemyMath.PickBackfire(0.00));
+            Assert.AreEqual(AlchemyBackfire.TroopBlast,          AlchemyMath.PickBackfire(0.13));
+            Assert.AreEqual(AlchemyBackfire.MoraleCollapse,      AlchemyMath.PickBackfire(0.26));
+            Assert.AreEqual(AlchemyBackfire.CreepingBlight,      AlchemyMath.PickBackfire(0.38));
+            Assert.AreEqual(AlchemyBackfire.Enfeeblement,        AlchemyMath.PickBackfire(0.51));
+            Assert.AreEqual(AlchemyBackfire.ScentOfBlood,        AlchemyMath.PickBackfire(0.63));
+            Assert.AreEqual(AlchemyBackfire.Petrification,       AlchemyMath.PickBackfire(0.76));
+            Assert.AreEqual(AlchemyBackfire.AlchemicCorruption,  AlchemyMath.PickBackfire(0.88));
             // Boundary: a roll of exactly 1.0 must not overflow past the last value.
-            Assert.AreEqual(AlchemyBackfire.Enfeeblement,   AlchemyMath.PickBackfire(1.0));
+            Assert.AreEqual(AlchemyBackfire.AlchemicCorruption,  AlchemyMath.PickBackfire(1.00));
         }
 
         [Test]
@@ -815,7 +819,7 @@ namespace AshAndEmber.Tests
         // ── AlchemyCatalog integrity ──────────────────────────────────────────
 
         [Test]
-        public void AlchemyCatalog_HasEightDistinctElixirs_EachUsableSomewhere()
+        public void AlchemyCatalog_HasTwelveDistinctElixirs_EachUsableSomewhere()
         {
             Assert.AreEqual(AlchemyMath.ElixirTypeCount, AlchemyCatalog.All.Count);
             Assert.AreEqual(AlchemyCatalog.All.Count,
