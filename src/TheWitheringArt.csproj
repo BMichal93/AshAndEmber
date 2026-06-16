@@ -225,6 +225,8 @@
     <Compile Include="Visual\NamePrefixes.cs"/>
     <Compile Include="Visual\AshenSceneTone.cs"/>
     <Compile Include="Visual\AshenVisuals.cs"/>
+    <Compile Include="Conclave\EmberConclaveSystem.cs"/>
+    <Compile Include="Conclave\EmberConclaveLog.cs"/>
   </ItemGroup>
 
   <!-- Auto-copy DLL into the game's Modules folder after every successful build. -->

@@ -40,7 +40,6 @@ using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using TaleWorlds.SaveSystem;
 
 namespace AshAndEmber
 {
@@ -903,7 +902,7 @@ namespace AshAndEmber
             {
                 if (_puppetCandidateId == null) return "your candidate";
                 var h = Hero.AllAliveHeroes.FirstOrDefault(p => p.StringId == _puppetCandidateId)
-                     ?? Hero.AllDeadOrDisabledHeroes.FirstOrDefault(p => p.StringId == _puppetCandidateId);
+                     ?? Hero.DeadOrDisabledHeroes.FirstOrDefault(p => p.StringId == _puppetCandidateId);
                 return h?.Name?.ToString() ?? "your candidate";
             }
             catch { return "your candidate"; }
