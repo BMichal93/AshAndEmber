@@ -2,6 +2,30 @@
 
 ---
 
+## v0.22
+
+### The Ember Conclave (new questline)
+- **A secret society of mage lords** who believe the Ashen can be harnessed and turned into a weapon for human dominion. Their plan ends in ruin — the cold does not negotiate; it consumes.
+- **Five phases** driven by a hidden power score: *Silent* (the Conclave forms, three mage lords seeded as members) → *Stirring* (first contact — the player chooses to ally, oppose, or stay silent) → *Rising* (missions offered on a 21-day cooldown) → *Ascendant* (a puppet candidate is chosen; corruption warnings begin) → *Hubris* (the tragic culmination fires) → *Ended* (the journal records the outcome).
+- **Three missions** in the Rising phase (one active at a time): *The First Binding* (eliminate a named lord within 30 days), *The Sealed Accord* (visit a named settlement within 21 days), and *The Kindling Pact* (keep the puppet candidate alive for 21 days).
+- **Power ebbs and flows** with your choices: members present feed it over time, completing a mission swells it, killing a member or declining a mission starves it.
+- **The culmination converts the whole Conclave to Ashen** — those who would master the cold are taken by it. Enemy players are given a clear resistance path through the Conclave's rise.
+
+### Quality of life & immersion
+- **Live aging-cost preview** — the battle input buffer now shows the projected cost (e.g. `[ UU ▷ U ] (~3d)`) while you shape a spell, so the price is visible before you commit. Ashen casters see their criminal rating instead.
+- **Fizzle colours** — each failure type now has its own colour: grey-tan for lost focus, warm orange for fumbles, muted yellow for hand-blocked casts, cool blue for captivity.
+- **Encounter readiness hint** — a brief atmospheric line ("Something stirs as you enter the village.") fires just before a settlement encounter, flagging that something is about to happen.
+- **Aging ambient comments** — NPCs near settlements occasionally remark on the mage's accelerated age (age 50+, scaling with the age bracket).
+- **Rival Shadow ambient schemes** — three new schemes: a failed assassination attempt, a stolen shipment, and a dead informant. Direct settlement harm is now rarer.
+- **Portents** — atmospheric warnings now precede the Ashen Gambit, Undying Host, and Broken Will events, granting 7–14 days of dread before they fire. They do not consume the weekly event slot.
+- **Battlefield echoes** — casting 3+ spells in a single battle leaves a residual trace; a small Ashen spawn party may appear near the battle site the next day.
+- **Whisper network intel** — at Whisper Tier 3, your cold-touched network surfaces early warnings about approaching major events.
+
+### Fixes & tweaks
+- **Miracles** — controller controls for invoking miracles made easier to use.
+
+---
+
 ## v0.21
 
 ### Miracles (Grace & Cold)
