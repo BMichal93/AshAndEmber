@@ -63,7 +63,7 @@ namespace AshAndEmber
                 Name = "Repel the Ashen",
                 Effect = "A wave of consecrated light scorches all Ashen in a wide radius and breaks their resolve.",
                 Flavour = "The flame does not argue with the cold. It simply burns, and the grey things remember what heat means.",
-                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.AllVirtues,
+                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.OneVirtue,
                 Sequence = MiracleMath.SeqRepelAshen },
 
             new MiracleDef {

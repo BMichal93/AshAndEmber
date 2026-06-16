@@ -36,10 +36,12 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, float> _frostBrand    = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _shadowShroud  = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _dreadPresence = new Dictionary<Agent, float>();
-        // Aegis of Faith: remaining absorption pool (HP "over the limit") per agent.
+        // Aegis of Faith: seconds remaining on the absorption aura, keyed by bearer.
         private static readonly Dictionary<Agent, float> _aegis         = new Dictionary<Agent, float>();
         // Pale Rigor: seconds until the freeze lifts, keyed by affected enemy.
         private static readonly Dictionary<Agent, float> _paleRigor     = new Dictionary<Agent, float>();
+        // Light of Guidance: seconds remaining on the speed surge, keyed by ally.
+        private static readonly Dictionary<Agent, float> _guidance      = new Dictionary<Agent, float>();
 
         public static bool HasSacredFlame(Agent a)  => a != null && _sacredFlame.TryGetValue(a, out float t)  && t > 0f;
         public static bool HasFrostBrand(Agent a)   => a != null && _frostBrand.TryGetValue(a, out float t)   && t > 0f;
@@ -54,6 +56,7 @@ namespace AshAndEmber
             _dreadPresence.Clear();
             _aegis.Clear();
             _paleRigor.Clear();
+            _guidance.Clear();
         }
 
         // Removes all hostile movement/morale effects from an agent (for Cleansing Rite).
@@ -216,6 +219,11 @@ namespace AshAndEmber
             {
                 try { a.SetMaximumSpeedLimit(1f, true); } catch { }
             });
+            DecayAndExpire(_aegis, dt, null);
+            DecayAndExpire(_guidance, dt, a =>
+            {
+                try { a.SetMaximumSpeedLimit(1f, true); } catch { }
+            });
         }
 
         // Resolves per-hit weapon enchantments. Called from MagicMissionBehavior.OnAgentHit.
@@ -242,16 +250,10 @@ namespace AshAndEmber
             if (HasShadowShroud(affected))
                 try { SpellEffects.HealAgent(affected, inflicted * MiracleMath.ShadowShroudResistFrac); } catch { }
 
-            // Aegis of Faith: the ward soaks damage from its pool — bonus life
-            // over the body's limit. Heal back what the pool absorbs, then drain it.
-            if (_aegis.TryGetValue(affected, out float shield) && shield > 0f)
-            {
-                float absorb = Math.Min(shield, inflicted);
-                try { SpellEffects.HealAgent(affected, absorb); } catch { }
-                shield -= absorb;
-                if (shield <= 0f) _aegis.Remove(affected);
-                else _aegis[affected] = shield;
-            }
+            // Aegis of Faith: reflects AegisResistFrac of all incoming damage as healing
+            // while the aura is active. MissionTick handles expiry.
+            if (HasAegis(affected))
+                try { SpellEffects.HealAgent(affected, inflicted * MiracleMath.AegisResistFrac); } catch { }
         }
 
         // ── Grace battle implementations ──────────────────────────────────────
@@ -316,9 +318,32 @@ namespace AshAndEmber
         private static void BattleGuidance(Agent caster, bool announce)
         {
             try { MobileParty.MainParty.RecentEventsMorale += MiracleMath.GuidanceBattleMorale; } catch { }
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 3f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, MiracleMath.GuidanceSpeedDurSec); } catch { }
+
+            // Speed surge: caster + nearby allies move faster for the duration.
+            int surged = 0;
+            Vec3 pos;
+            try { pos = caster.Position; } catch { goto announce; }
+            float r2 = MiracleMath.GuidanceSpeedRadius * MiracleMath.GuidanceSpeedRadius;
+            _guidance[caster] = MiracleMath.GuidanceSpeedDurSec;
+            try { caster.SetMaximumSpeedLimit(MiracleMath.GuidanceSpeedMult, true); } catch { }
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == caster || !a.IsActive() || a.IsMount) continue;
+                    if (caster.Team == null || a.Team != caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    _guidance[a] = MiracleMath.GuidanceSpeedDurSec;
+                    try { a.SetMaximumSpeedLimit(MiracleMath.GuidanceSpeedMult, true); } catch { }
+                    surged++;
+                }
+            }
+            catch { }
+            announce:
             if (announce)
-                Log(caster, $"invokes the light — courage spreads through the line (+{(int)MiracleMath.GuidanceBattleMorale} morale).", false, true);
+                Log(caster, $"invokes the light — courage and speed surge through {surged} allies (+{(int)MiracleMath.GuidanceBattleMorale} morale, ×{MiracleMath.GuidanceSpeedMult} speed).", false, true);
         }
 
         private static void BattleSacredFlame(Agent caster, bool announce)
@@ -331,12 +356,10 @@ namespace AshAndEmber
 
         private static void BattleAegis(Agent caster, bool announce)
         {
-            // A ward of bonus life "over the limit": the pool absorbs incoming
-            // damage (resolved in OnAgentHit) until spent or the battle ends.
-            _aegis[caster] = MiracleMath.AegisBonusHP;
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 30f); } catch { }
+            _aegis[caster] = MiracleMath.AegisDurationSec;
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, MiracleMath.AegisDurationSec); } catch { }
             if (announce)
-                Log(caster, $"is wrapped in the Aegis of Faith — a golden ward will turn aside the next {(int)MiracleMath.AegisBonusHP} damage.", false, true);
+                Log(caster, $"is wrapped in the Aegis of Faith — {(int)(MiracleMath.AegisResistFrac * 100f)}% of all damage returned as healing for {(int)MiracleMath.AegisDurationSec} seconds.", false, true);
         }
 
         // ── Cold battle implementations ───────────────────────────────────────
@@ -446,26 +469,43 @@ namespace AshAndEmber
             Vec3 pos;
             try { pos = caster.Position; } catch { return; }
             float r2 = MiracleMath.CleansingRiteRadius * MiracleMath.CleansingRiteRadius;
-            int cleansed = 0;
+            int cleansed = 0, scorched = 0;
             PurgeHostileEffects(caster);
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
                     if (a == caster || !a.IsActive() || a.IsMount) continue;
-                    if (caster.Team == null || a.Team != caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
-                    PurgeHostileEffects(a);
-                    cleansed++;
+                    if (caster.Team != null && a.Team == caster.Team)
+                    {
+                        PurgeHostileEffects(a);
+                        cleansed++;
+                    }
+                    else
+                    {
+                        if (!SpellEffects.IsWarded(a))
+                        {
+                            try { SpellEffects.DamageAgent(a, MiracleMath.CleansingRiteDamage, ColorSchool.Yellow, caster); } catch { }
+                            scorched++;
+                        }
+                    }
                 }
             }
             catch { }
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 3f); } catch { }
             if (announce)
-                Log(caster, cleansed > 0
-                    ? $"performs the Cleansing Rite — cold and dread lifted from {cleansed} allies."
-                    : "performs the Cleansing Rite — the flame burns away the shadow's mark.", false, true);
+            {
+                string ally  = cleansed > 0 ? $"{cleansed} {(cleansed == 1 ? "ally" : "allies")} cleansed" : "";
+                string foe   = scorched > 0 ? $"{scorched} {(scorched == 1 ? "enemy" : "enemies")} scorched" : "";
+                string parts = (ally.Length > 0 && foe.Length > 0) ? $"{ally}, {foe}" : (ally + foe);
+                Log(caster,
+                    parts.Length > 0
+                        ? $"unleashes the Cleansing Rite — {parts}."
+                        : "unleashes the Cleansing Rite — the flame burns through the air.",
+                    false, true);
+            }
         }
 
         private static void BattlePaleRigor(Agent caster, bool announce)
@@ -559,26 +599,21 @@ namespace AshAndEmber
 
         private static string CampaignCleansingRite(Hero hero, MobileParty party)
         {
-            // Burns away accumulated morale debt and recovers a portion of wounded.
-            try
-            {
-                if (party != null)
-                    party.RecentEventsMorale = Math.Max(party.RecentEventsMorale, -10f);
-            }
-            catch { }
+            // Clear all morale debt — the flame burns away what the dark has written.
+            try { if (party != null && party.RecentEventsMorale < 0f) party.RecentEventsMorale = 0f; } catch { }
 
+            // Fully recover all wounded soldiers.
             int healed = 0;
             if (party?.MemberRoster != null)
                 foreach (var e in party.MemberRoster.GetTroopRoster().ToList())
                 {
                     if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
-                    int recover = Math.Max(1, (int)(e.WoundedNumber * 0.30f));
-                    try { party.MemberRoster.AddToCounts(e.Character, 0, false, -recover); healed += recover; } catch { }
+                    try { party.MemberRoster.AddToCounts(e.Character, 0, false, -e.WoundedNumber); healed += e.WoundedNumber; } catch { }
                 }
 
             if (healed > 0)
-                return $"The flame burns away the shadow's mark. The men breathe easier. {healed} soldiers shake off their wounds; the weight of dark omens lifts.";
-            return "The flame burns away the shadow's mark. The men breathe easier. Whatever the cold had left behind — it is gone now.";
+                return $"The flame burns through the camp. Every wound closes. Every dark omen lifts. {healed} soldiers rise from their cots, whole.";
+            return "The flame burns through the camp. The men breathe easier. Whatever the cold had left behind is gone now.";
         }
 
         private static string CampaignAshenCurse(MobileParty party)

@@ -117,11 +117,15 @@ namespace AshAndEmber
 
         public const float GuidanceBattleMorale  = 20f;
         public const float GuidanceCampaignMorale= 30f;
+        public const float GuidanceSpeedMult     =  1.15f;
+        public const float GuidanceSpeedDurSec   = 15f;
+        public const float GuidanceSpeedRadius   = 12f;
 
         public const float SacredFlameDurationSec  = 25f;
         public const float SacredFlameBonusDamage  = 10f;
 
-        public const float AegisBonusHP = 40f;
+        public const float AegisResistFrac  = 0.30f;
+        public const float AegisDurationSec = 18f;
 
         public const float CurseRadius   = 9f;
         public const float CurseDamage   = 40f;
@@ -130,7 +134,7 @@ namespace AshAndEmber
         public const float DreadmendFrac  = 0.25f;
 
         public const float DreadPresenceRadius     = 10f;
-        public const float DreadPresenceMorale     = -35f;
+        public const float DreadPresenceMorale     = -25f;
         public const float DreadPresenceDurationSec= 18f;
         public const float DreadPresenceSpeedMult  = 0.75f;
 
@@ -142,6 +146,7 @@ namespace AshAndEmber
         public const float ShadowShroudResistFrac  = 0.40f;
 
         public const float CleansingRiteRadius = 8f;
+        public const float CleansingRiteDamage = 30f;
 
         public const float PaleRigorRadius      = 12f;
         public const float PaleRigorDurationSec =  4f;
