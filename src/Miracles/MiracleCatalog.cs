@@ -20,12 +20,14 @@ namespace AshAndEmber
         LightOfGuidance = 2,
         SacredFlame     = 3,
         AegisOfFaith    = 4,
+        CleansingRite   = 5,
         // Cold miracles
         AshenCurse      = 10,
         Dreadmending    = 11,
         DreadPresence   = 12,
         FrostBrand      = 13,
         ShadowShroud    = 14,
+        PaleRigor       = 15,
     }
 
     public struct MiracleDef
@@ -61,7 +63,7 @@ namespace AshAndEmber
                 Name = "Repel the Ashen",
                 Effect = "A wave of consecrated light scorches all Ashen in a wide radius and breaks their resolve.",
                 Flavour = "The flame does not argue with the cold. It simply burns, and the grey things remember what heat means.",
-                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.AllVirtues,
+                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.OneVirtue,
                 Sequence = MiracleMath.SeqRepelAshen },
 
             new MiracleDef {
@@ -95,6 +97,14 @@ namespace AshAndEmber
                 Flavour = "The priests say faith is a shield. They mean this literally. The shield holds until it doesn't.",
                 UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
                 Sequence = MiracleMath.SeqAegisOfFaith },
+
+            new MiracleDef {
+                Type = MiracleType.CleansingRite, IsGrace = true,
+                Name = "Cleansing Rite",
+                Effect = "Sacred fire sweeps cold and dread from those near you — fear and frost both yield to the flame.",
+                Flavour = "You say nothing. The light does not require words. What the cold laid upon them simply lifts.",
+                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.OneVirtue,
+                Sequence = MiracleMath.SeqCleansingRite },
 
             // ── Cold Miracles ──────────────────────────────────────────────────
             new MiracleDef {
@@ -136,6 +146,14 @@ namespace AshAndEmber
                 Flavour = "The cold wraps around you like a coat. What passes through it is less than what entered.",
                 UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
                 Sequence = MiracleMath.SeqShadowShroud },
+
+            new MiracleDef {
+                Type = MiracleType.PaleRigor, IsGrace = false,
+                Name = "Pale Rigor",
+                Effect = "Absolute cold seizes every enemy within reach — they cannot move or act for a few dreadful seconds.",
+                Flavour = "The cold does not negotiate. It does not ask for surrender. It simply seizes, all at once, completely.",
+                UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
+                Sequence = MiracleMath.SeqPaleRigor },
         };
 
         public static IReadOnlyList<MiracleDef> All   => _defs;

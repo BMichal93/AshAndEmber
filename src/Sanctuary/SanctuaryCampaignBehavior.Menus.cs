@@ -205,8 +205,10 @@ namespace AshAndEmber
                       $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}";
             else if (MiracleInventory.Cold > 0)
                 msg = "The cold within you snuffs the flame before it answers. Spend your Cold first.";
-            else
+            else if (MiracleInventory.Grace >= MiracleMath.GraceColdCap)
                 msg = "The flame burns, but has nothing more to give you today. Your Grace is full.";
+            else
+                msg = "The flame receives your offering, but finds no virtue to kindle. Honour, mercy, and generosity are the tinder it seeks.";
 
             try
             {

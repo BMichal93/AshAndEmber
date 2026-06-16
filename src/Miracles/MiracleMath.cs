@@ -33,6 +33,8 @@ namespace AshAndEmber
         public const string SeqDreadPresence   = "DLDLDR";
         public const string SeqFrostBrand      = "LLDRUU";
         public const string SeqShadowShroud    = "RRDDLL";
+        public const string SeqCleansingRite   = "RULRUU";
+        public const string SeqPaleRigor       = "DDDLLL";
 
         public const int SequenceLength = 6;
 
@@ -53,6 +55,8 @@ namespace AshAndEmber
                 case SeqDreadPresence:   type = MiracleType.DreadPresence;   return true;
                 case SeqFrostBrand:      type = MiracleType.FrostBrand;      return true;
                 case SeqShadowShroud:    type = MiracleType.ShadowShroud;    return true;
+                case SeqCleansingRite:   type = MiracleType.CleansingRite;   return true;
+                case SeqPaleRigor:       type = MiracleType.PaleRigor;       return true;
                 default:                                                      return false;
             }
         }
@@ -82,20 +86,21 @@ namespace AshAndEmber
         }
 
         // ── Point gains ────────────────────────────────────────────────────────
-        // Grace scales positively with virtue. Baseline 1 ensures any hero can pray.
+        // Grace scales with virtue; a hero with no virtue gains nothing.
         public static int GraceGain(int honor, int mercy, int generosity)
         {
             float avg = (honor + mercy + generosity) / 3f;
-            int gain  = (int)Math.Round(1f + Math.Max(0f, avg) * 3f);
-            return Math.Max(1, Math.Min(4, gain));
+            int gain  = (int)Math.Round(Math.Max(0f, avg) * 4f);
+            return Math.Min(4, gain);
         }
 
         // Cold scales inversely — dishonour and cruelty feed the stone.
+        // A hero with no dark traits gains nothing.
         public static int ColdGain(int honor, int mercy, int generosity)
         {
             float avg = (honor + mercy + generosity) / 3f;
-            int gain  = (int)Math.Round(1f + Math.Max(0f, -avg) * 3f);
-            return Math.Max(1, Math.Min(4, gain));
+            int gain  = (int)Math.Round(Math.Max(0f, -avg) * 4f);
+            return Math.Min(4, gain);
         }
 
         // ── NPC use chances ────────────────────────────────────────────────────
@@ -112,11 +117,15 @@ namespace AshAndEmber
 
         public const float GuidanceBattleMorale  = 20f;
         public const float GuidanceCampaignMorale= 30f;
+        public const float GuidanceSpeedMult     =  1.15f;
+        public const float GuidanceSpeedDurSec   = 15f;
+        public const float GuidanceSpeedRadius   = 12f;
 
         public const float SacredFlameDurationSec  = 25f;
         public const float SacredFlameBonusDamage  = 10f;
 
-        public const float AegisBonusHP = 40f;
+        public const float AegisResistFrac  = 0.30f;
+        public const float AegisDurationSec = 18f;
 
         public const float CurseRadius   = 9f;
         public const float CurseDamage   = 40f;
@@ -125,7 +134,7 @@ namespace AshAndEmber
         public const float DreadmendFrac  = 0.25f;
 
         public const float DreadPresenceRadius     = 10f;
-        public const float DreadPresenceMorale     = -35f;
+        public const float DreadPresenceMorale     = -25f;
         public const float DreadPresenceDurationSec= 18f;
         public const float DreadPresenceSpeedMult  = 0.75f;
 
@@ -135,5 +144,11 @@ namespace AshAndEmber
 
         public const float ShadowShroudDurationSec = 20f;
         public const float ShadowShroudResistFrac  = 0.40f;
+
+        public const float CleansingRiteRadius = 8f;
+        public const float CleansingRiteDamage = 30f;
+
+        public const float PaleRigorRadius      = 12f;
+        public const float PaleRigorDurationSec =  4f;
     }
 }

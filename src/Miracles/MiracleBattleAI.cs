@@ -98,6 +98,7 @@ namespace AshAndEmber
             {
                 MiracleType.LightOfGuidance, MiracleType.SacredFlame,
                 MiracleType.AegisOfFaith,    MiracleType.RadiantMending,
+                MiracleType.CleansingRite,
             };
             return set[_rng.Next(set.Length)];
         }
@@ -110,7 +111,7 @@ namespace AshAndEmber
             {
                 MiracleType.AshenCurse,    MiracleType.DreadPresence,
                 MiracleType.FrostBrand,    MiracleType.ShadowShroud,
-                MiracleType.Dreadmending,
+                MiracleType.Dreadmending,  MiracleType.PaleRigor,
             };
             return set[_rng.Next(set.Length)];
         }
