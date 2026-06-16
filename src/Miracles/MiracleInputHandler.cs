@@ -26,6 +26,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
+using TaleWorlds.MountAndBlade;
 
 namespace AshAndEmber
 {
@@ -87,6 +88,20 @@ namespace AshAndEmber
 
             if (holding)
             {
+                if (!_wasHolding)
+                {
+                    try
+                    {
+                        if (Agent.Main != null)
+                        {
+                            ColorSchool focusSchool = MiracleInventory.HasGrace
+                                ? ColorSchool.Yellow
+                                : ColorSchool.Ashen;
+                            SpellEffects.BeginFocusVisual(Agent.Main, focusSchool);
+                        }
+                    }
+                    catch { }
+                }
                 _wasHolding = true;
 
                 if (holdKb)
@@ -127,6 +142,7 @@ namespace AshAndEmber
                 _wasHolding  = false;
                 _lastDisplay = "";
                 _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
+                try { SpellEffects.EndFocusVisual(Agent.Main); } catch { }
                 TryCastBattle();
                 _seqBuffer = "";
             }
