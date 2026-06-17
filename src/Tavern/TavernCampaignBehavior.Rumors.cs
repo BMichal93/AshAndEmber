@@ -273,12 +273,19 @@ namespace AshAndEmber
         };
 
         // ── Spend an evening ──────────────────────────────────────────────────
+        internal static int EveningCost()
+        {
+            int size = 1;
+            try { size = Math.Max(1, MobileParty.MainParty?.MemberRoster?.TotalManCount ?? 1); } catch { }
+            return Math.Max(50, size * 10);
+        }
+
         internal static void SpendEvening()
         {
-            const int cost = 50;
+            int cost = EveningCost();
             if ((Hero.MainHero?.Gold ?? 0) < cost)
             {
-                Msg("You don't have the coin for a proper evening.", BadColor);
+                Msg("You don't have the coin to treat the whole party tonight.", BadColor);
                 return;
             }
             try { Hero.MainHero?.ChangeHeroGold(-cost); } catch { }

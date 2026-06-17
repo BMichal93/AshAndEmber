@@ -223,12 +223,13 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= 50;
+                            int eveningCost = TavernCampaignBehavior.EveningCost();
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= eveningCost;
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("TAVERN_EVENING_TEXT",
                                 canAfford
-                                    ? "Spend an evening in good company (50 denars)"
-                                    : "Spend an evening in good company (50 denars)  [not enough coin]");
+                                    ? $"Spend an evening in good company ({eveningCost} denars)"
+                                    : $"Spend an evening in good company ({eveningCost} denars)  [not enough coin]");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
