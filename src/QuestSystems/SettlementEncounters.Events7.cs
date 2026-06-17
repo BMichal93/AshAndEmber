@@ -66,11 +66,11 @@ namespace AshAndEmber
                     new InquiryElement("glory",
                         "Agree — play for glory.",
                         null, true,
-                        "Renown and standing in the world, against what defines you."),
+                        "Renown and standing in the world, against what defines you. (+150 renown, +150 influence)"),
                     new InquiryElement("power",
                         "Agree — play for power.",
                         null, true,
-                        "Four gifts of the Inner Fire, against the fire itself."),
+                        "Two gifts of the Inner Fire, against the fire itself."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -115,9 +115,9 @@ namespace AshAndEmber
                                     {
                                         if (Hero.MainHero?.Clan != null)
                                         {
-                                            Hero.MainHero.Clan.Renown    += 500f;
-                                            Hero.MainHero.Clan.Influence += 500f;
-                                            Msg("(+500 renown, +500 influence)", GoodColor);
+                                            Hero.MainHero.Clan.Renown    += 150f;
+                                            Hero.MainHero.Clan.Influence += 150f;
+                                            Msg("(+150 renown, +150 influence)", GoodColor);
                                         }
                                     }
                                     catch { }
@@ -134,8 +134,8 @@ namespace AshAndEmber
                             FlipForMerchant(
                                 winMsg:
                                     "He flips the coin. It rises higher than it should, hangs for a long moment, " +
-                                    "and falls heads. He sets four fingers briefly on the table — a count — then lifts them. " +
-                                    "Something arrives in you that was not there before. Four things, settling " +
+                                    "and falls heads. He sets two fingers briefly on the table — a count — then lifts them. " +
+                                    "Something arrives in you that was not there before. Two things, settling " +
                                     "into the fire like wood laid on a ready hearth. He says nothing. He leaves. " +
                                     "The fire is louder in you than it was.",
                                 winColor: FireColor,
@@ -169,15 +169,15 @@ namespace AshAndEmber
             var available = TalentSystem.All
                 .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id) && !t.IsInfo && !t.IsConsumable)
                 .OrderBy(_ => _rng.Next())
-                .Take(4)
+                .Take(2)
                 .ToList();
 
             foreach (var t in available)
                 TalentSystem.GrantFree(t.Id, Hero.MainHero);
 
             if (available.Count == 0)
-                Msg("The fire surges inward and finds nothing new to carry. " +
-                    "You already hold everything that was offered.", FireColor);
+                Msg("The fire surges inward and finds nothing new to carry — " +
+                    "you already hold what was offered.", FireColor);
         }
     }
 }
