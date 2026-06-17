@@ -110,12 +110,15 @@ namespace AshAndEmber
                 // Reagent cargo returns a magical ingredient, not gold
                 if (v.IsReagent)
                 {
-                    bool reagentLost = _rng.NextDouble() < 0.15;
+                    float failChance = v.FailureChance > 0f ? v.FailureChance : 0.15f;
+                    int   qty        = v.ReagentQty    > 0  ? v.ReagentQty    : 1;
+                    bool reagentLost = _rng.NextDouble() < failChance;
                     if (!reagentLost && !string.IsNullOrEmpty(v.ReagentType))
                     {
-                        ReagentSystem.Add(v.ReagentType, 1);
+                        ReagentSystem.Add(v.ReagentType, qty);
+                        string qtyNote = qty > 1 ? $" ×{qty}" : "";
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"Your factor returns with a cache of {ReagentSystem.FriendlyName(v.ReagentType)}. The harbour air smells faintly of something old.",
+                            $"Your factor returns with a cache of {ReagentSystem.FriendlyName(v.ReagentType)}{qtyNote}. The harbour air smells faintly of something old.",
                             new Color(0.7f, 0.55f, 0.85f)));
                     }
                     else
