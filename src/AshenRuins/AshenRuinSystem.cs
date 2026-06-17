@@ -55,6 +55,7 @@ namespace AshAndEmber
 
         // ── Public queries ─────────────────────────────────────────────────────
         public static bool IsCleared(string villageName) => _cleared.Contains(villageName);
+        public static int  ClearedCount              => _cleared.Count;
 
         public static bool IsOnCooldown(string villageName)
         {

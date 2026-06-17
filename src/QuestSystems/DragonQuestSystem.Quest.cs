@@ -65,6 +65,18 @@ namespace AshAndEmber
                 }
             }
             catch { }
+            try
+            {
+                // Goal 4 — Ashen Ruins cleared
+                if (!_goal4Done && AshenRuinSystem.ClearedCount >= TargetRuinsCleared)
+                {
+                    _goal4Done = true;
+                    try { _questLog?.LogGoal4(); } catch { }
+                    if (MageKnowledge._deferredInquiry == null)
+                        MageKnowledge._deferredInquiry = () => ShowGoalComplete(4);
+                }
+            }
+            catch { }
         }
 
         // ── Old man event ─────────────────────────────────────────────────────
@@ -109,7 +121,7 @@ namespace AshAndEmber
                             "Quest added: The Last Flight of the Dragons.",
                             new Color(0.75f, 0.55f, 0.3f)));
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"Goals: Clan Tier {TargetClanTier}  ·  Capture Tyal  ·  Reach Level {TargetHeroLevel}",
+                            $"Goals: Clan Tier {TargetClanTier}  ·  Capture Tyal  ·  Reach Level {TargetHeroLevel}  ·  Clear {TargetRuinsCleared} Ashen Ruins",
                             new Color(0.65f, 0.5f, 0.25f)));
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Check quest progress in the Grimoire (Alt+X).",
@@ -156,7 +168,7 @@ namespace AshAndEmber
                                 "The second condition is met.";
                         button = "Now I understand the weight of it.";
                         break;
-                    default:
+                    case 3:
                         title = "The Fire at Full Height";
                         body  = "You have been through enough battles, enough decisions, enough years " +
                                 "to have changed beyond what you were. " +
@@ -166,6 +178,17 @@ namespace AshAndEmber
                                 "enough times that you no longer flinch.\n\n" +
                                 "The third condition is met.";
                         button = "I am ready.";
+                        break;
+                    default:
+                        title = "The Darkness, Read";
+                        body  = "Across each shattered hall and sealed chamber you carried your fire into, " +
+                                "the same truth waited — patient, cold, and terrible.\n\n" +
+                                "The ruins were not left behind by accident. They were left as a warning, " +
+                                "or perhaps a promise: *this is what we are willing to become.*\n\n" +
+                                "You understand now what the Ashen are trying to prevent. And why the old man " +
+                                "said the cost of stopping them must be everything.\n\n" +
+                                "The fourth condition is met.";
+                        button = "Now I know what I am fighting.";
                         break;
                 }
 
@@ -185,7 +208,7 @@ namespace AshAndEmber
                 InformationManager.ShowInquiry(new InquiryData(
                     "The Last Light",
 
-                    "It is possible now. All three conditions are met.\n\n" +
+                    "It is possible now. All four conditions are met.\n\n" +
                     "To rekindle the world, you would pour everything — not just your own fire, " +
                     "but the fire of every mage still living, every thread of the gift " +
                     "woven through Calradia. They will not survive it. You will not survive it.\n\n" +

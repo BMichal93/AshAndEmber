@@ -27,6 +27,7 @@ namespace AshAndEmber
             store.SyncData("LDM_DragonGoal1",    ref _goal1Done);
             store.SyncData("LDM_DragonGoal2",    ref _goal2Done);
             store.SyncData("LDM_DragonGoal3",    ref _goal3Done);
+            store.SyncData("LDM_DragonGoal4",    ref _goal4Done);
             store.SyncData("LDM_WorldRekindled", ref _worldRekindled);
             store.SyncData("LDM_EndingPhase",    ref _endingPhase);
         }
@@ -39,8 +40,9 @@ namespace AshAndEmber
             if (_goal1Done) _questLog.LogGoal1();
             if (_goal2Done) _questLog.LogGoal2();
             if (_goal3Done) _questLog.LogGoal3();
-            if (_goal1Done && _goal2Done && _goal3Done) _questLog.LogAllDone();
-            _questLog.UpdateProgress(Hero.MainHero?.Clan?.Tier ?? 0, _goal2Done, Hero.MainHero?.Level ?? 0);
+            if (_goal4Done) _questLog.LogGoal4();
+            if (_goal1Done && _goal2Done && _goal3Done && _goal4Done) _questLog.LogAllDone();
+            _questLog.UpdateProgress(Hero.MainHero?.Clan?.Tier ?? 0, _goal2Done, Hero.MainHero?.Level ?? 0, AshenRuinSystem.ClearedCount);
         }
 
         public static void ResetForNewGame()
@@ -49,6 +51,7 @@ namespace AshAndEmber
             _goal1Done      = false;
             _goal2Done      = false;
             _goal3Done      = false;
+            _goal4Done      = false;
             _worldRekindled = false;
             _endingPhase    = 0;
             _questLog       = null;
