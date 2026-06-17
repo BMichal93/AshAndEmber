@@ -55,7 +55,8 @@
 // ├──────────────────────┼─────────────────────────────────────────────────────┤
 // │ The Dead March       │ (Day 50, then ~every 110 days) A necromantic rite   │
 // │                      │ raises the Ashen fallen. Every Ashen garrison and   │
-// │                      │ lord party is reinforced with 40–80 tier-4 troops.  │
+// │                      │ lord party is reinforced with 40–80 troops spread   │
+// │                      │ across tiers 2, 3, and 4 (~⅓ each).               │
 // ├──────────────────────┼─────────────────────────────────────────────────────┤
 // │ The Undying Host     │ (Once per campaign, day 80+, growing chance after   │
 // │                      │ day 200) The Ashen's greatest lord is chosen. 5 000 │
@@ -141,7 +142,7 @@ namespace AshAndEmber
         public const float ChanceDeadMarch        = 0.15f; // ~7 weeks after eligible → ~110d avg cycle
         public const int   DeadMarchFirstDay      = 50;    // forced first fire (no chance roll)
         public const int   DeadMarchRecurrenceGap = 95;    // minimum days between subsequent fires
-        public const int   DeadMarchMinTroops     = 40;    // tier-4 troops added per garrison / army
+        public const int   DeadMarchMinTroops     = 40;    // troops added per garrison / army (mixed tiers 2–4)
         public const int   DeadMarchMaxTroops     = 80;    // (random in [min, max])
 
         // The Undying Host: once-per-campaign conquest event (day 80+, scales after day 200)

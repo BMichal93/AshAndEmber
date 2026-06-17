@@ -25,9 +25,10 @@ namespace AshAndEmber
         // ── Event: The Dead March ─────────────────────────────────────────────
         // On campaign day 50 the Ashen perform a cold necromantic rite — the
         // fallen of old campaigns answer. Every Ashen garrison and lord party
-        // is reinforced with 40–80 tier-4 troops from that settlement or lord's
-        // culture. After the first fire the event recurs roughly every 110 days
-        // (chance-based, minimum 95-day gap between fires).
+        // is reinforced with 40–80 troops spread across tiers 2, 3, and 4
+        // (~⅓ each) from that settlement or lord's culture. After the first
+        // fire the event recurs roughly every 110 days (chance-based, minimum
+        // 95-day gap between fires).
         //
         // Troop tier: walks the culture's elite upgrade chain and returns the
         // first troop that reaches tier 4, or the highest available if the chain
@@ -73,11 +74,8 @@ namespace AshAndEmber
                         var garrison = s.Town?.GarrisonParty;
                         if (garrison?.MemberRoster == null) continue;
 
-                        var troop = GetTroopAtTier(s.Culture, 4);
-                        if (troop == null) continue;
-
                         int count = DeadMarchMinTroops + _rng.Next(DeadMarchMaxTroops - DeadMarchMinTroops + 1);
-                        garrison.MemberRoster.AddToCounts(troop, count);
+                        AddMixedTierTroops(garrison.MemberRoster, s.Culture, count);
                         garrisonsBoosted++;
                     }
                     catch { }
@@ -93,11 +91,8 @@ namespace AshAndEmber
                         if (party.LeaderHero == null) continue;
 
                         var culture = party.LeaderHero.Culture ?? party.MapFaction?.Culture;
-                        var troop   = GetTroopAtTier(culture, 4);
-                        if (troop == null) continue;
-
                         int count = DeadMarchMinTroops + _rng.Next(DeadMarchMaxTroops - DeadMarchMinTroops + 1);
-                        party.MemberRoster.AddToCounts(troop, count);
+                        AddMixedTierTroops(party.MemberRoster, culture, count);
                         armiesBoosted++;
                     }
                     catch { }
@@ -291,6 +286,23 @@ namespace AshAndEmber
                     $"The Undying Host has begun its march to conquest."));
             }
             catch { }
+        }
+
+        // Distributes totalCount troops across tiers 2, 3, and 4 (~⅓ each),
+        // so Dead March reinforcements feel like a returning horde rather than
+        // an elite vanguard — a mix of conscripts, veterans, and champions.
+        private static void AddMixedTierTroops(TroopRoster roster, CultureObject culture, int totalCount)
+        {
+            int perTier   = totalCount / 3;
+            int remainder = totalCount - perTier * 2; // remainder goes to the highest tier
+
+            var tier2 = GetTroopAtTier(culture, 2);
+            var tier3 = GetTroopAtTier(culture, 3);
+            var tier4 = GetTroopAtTier(culture, 4);
+
+            try { if (tier2 != null) roster.AddToCounts(tier2, perTier);   } catch { }
+            try { if (tier3 != null) roster.AddToCounts(tier3, perTier);   } catch { }
+            try { if (tier4 != null) roster.AddToCounts(tier4, remainder); } catch { }
         }
 
         // Walks a culture's elite troop upgrade chain and returns the first troop
