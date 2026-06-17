@@ -189,6 +189,56 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Listen for rumours
+            try
+            {
+                starter.AddGameMenuOption("ldm_tavern_menu", "ldm_tavern_rumors",
+                    "{TAVERN_RUMORS_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= 30;
+                            if (!canAfford) args.IsEnabled = false;
+                            MBTextManager.SetTextVariable("TAVERN_RUMORS_TEXT",
+                                canAfford
+                                    ? "Listen for word of the world (30 denars)"
+                                    : "Listen for word of the world (30 denars)  [not enough coin]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args => { try { TryListenForRumors(); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
+            // Spend an evening
+            try
+            {
+                starter.AddGameMenuOption("ldm_tavern_menu", "ldm_tavern_evening",
+                    "{TAVERN_EVENING_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= 50;
+                            if (!canAfford) args.IsEnabled = false;
+                            MBTextManager.SetTextVariable("TAVERN_EVENING_TEXT",
+                                canAfford
+                                    ? "Spend an evening in good company (50 denars)"
+                                    : "Spend an evening in good company (50 denars)  [not enough coin]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args => { try { SpendEvening(); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
             // Leave
             try
             {
