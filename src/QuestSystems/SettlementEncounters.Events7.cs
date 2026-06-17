@@ -62,7 +62,7 @@ namespace AshAndEmber
                     new InquiryElement("wealth",
                         "Agree — play for wealth.",
                         null, true,
-                        "Thirty thousand coin, against what you carry inside you."),
+                        "Twenty thousand coin, against what you carry inside you."),
                     new InquiryElement("glory",
                         "Agree — play for glory.",
                         null, true,
@@ -88,10 +88,10 @@ namespace AshAndEmber
                                 winMsg:
                                     "He flips the coin. It rises slowly, turns once, and falls heads. " +
                                     "He pushes a heavy satchel under the table with his foot without standing. " +
-                                    "'Thirty thousand,' he says, without warmth or ceremony. 'As agreed.' " +
+                                    "'Twenty thousand,' he says, without warmth or ceremony. 'As agreed.' " +
                                     "He is gone before the coin finishes settling. The satchel is real. The weight is right.",
                                 winColor: GoldColor,
-                                winAction: () => ChangeGold(30000),
+                                winAction: () => ChangeGold(20000),
                                 lossMsg:
                                     "He flips the coin. It lands tails. " +
                                     "He extends one hand across the table, palm up, and something leaves you " +
