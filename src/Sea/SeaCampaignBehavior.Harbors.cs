@@ -329,7 +329,7 @@ namespace AshAndEmber
                 string reagentType = ReagentSystem.RandomReagentForPort(here);
                 string reagentName = ReagentSystem.FriendlyName(reagentType);
 
-                string[] tierLabels = { "Send a lone peddler", "Charter a proper factor", "Commission an armed convoy" };
+                string[] tierLabels = { "Send a lone peddler", "Hire a proper factor", "Charter an armed merchant", "Commission a warded convoy" };
                 var options = new List<InquiryElement>();
                 for (int i = 0; i < SeaMath.ReagentCargoTiers.Length; i++)
                 {

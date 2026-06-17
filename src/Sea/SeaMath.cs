@@ -62,7 +62,7 @@ namespace AshAndEmber
         public static readonly int[] VentureTiers = { 500, 2000, 8000 };
 
         // ── Reagent cargo commissioning ──────────────────────────────────────
-        // Three investment tiers: more gold → lower failure chance and higher yield.
+        // Four investment tiers: more gold → lower failure chance and higher yield.
         public struct ReagentCargoTier
         {
             public int   Cost;
@@ -72,9 +72,10 @@ namespace AshAndEmber
 
         public static readonly ReagentCargoTier[] ReagentCargoTiers =
         {
-            new ReagentCargoTier { Cost = 300,  FailureChance = 0.25f, Qty = 1 },
-            new ReagentCargoTier { Cost = 700,  FailureChance = 0.12f, Qty = 1 },
-            new ReagentCargoTier { Cost = 1500, FailureChance = 0.05f, Qty = 2 },
+            new ReagentCargoTier { Cost = 500,   FailureChance = 0.60f, Qty = 1 },
+            new ReagentCargoTier { Cost = 2000,  FailureChance = 0.35f, Qty = 1 },
+            new ReagentCargoTier { Cost = 6000,  FailureChance = 0.15f, Qty = 2 },
+            new ReagentCargoTier { Cost = 15000, FailureChance = 0.05f, Qty = 3 },
         };
 
         // ── NPC sea lanes ────────────────────────────────────────────────────
