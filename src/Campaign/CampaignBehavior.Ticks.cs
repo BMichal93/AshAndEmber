@@ -70,6 +70,7 @@ namespace AshAndEmber
                 try { TickLordAnnouncement(); } catch { }
                 try { AshenRuinSystem.DailyTick(); } catch { }
                 try { ApprenticeSystem.DailyTick(); } catch { }
+                try { AmbientRemarks.DailyTick(); } catch { }
                 _dayCounter++;
                 if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
             }

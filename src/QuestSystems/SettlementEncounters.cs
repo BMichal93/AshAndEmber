@@ -272,6 +272,7 @@ namespace AshAndEmber
             _ashBreadSettlementId = null;
             _agingCommentCooldown = 0;
             _recentEncounters.Clear();
+            AmbientRemarks.ResetForNewGame();
         }
 
         public static void Save(IDataStore store)
@@ -362,6 +363,7 @@ namespace AshAndEmber
             try
             {
                 _lastSettlementId = settlement.StringId;
+                try { AmbientRemarks.CheckCompanionRemark(settlement); } catch { }
 
                 // Apprentice discovery: independent 1% roll, not gated by shared cooldown
                 if (settlement.IsVillage && MageKnowledge.IsMage && ApprenticeSystem.CanSearch
