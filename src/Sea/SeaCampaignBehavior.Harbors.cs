@@ -178,11 +178,16 @@ namespace AshAndEmber
                         try
                         {
                             if (!MageKnowledge.IsMage) return false;
-                            bool atCap     = _ventures.Count >= SeaMath.MaxActiveVentures;
-                            bool canAfford = Hero.MainHero.Gold >= SeaMath.ReagentCargoTiers[0].Cost;
-                            args.IsEnabled = !atCap && canAfford;
-                            MBTextManager.SetTextVariable("SEA_REAGENT_TEXT",
-                                atCap ? "Commission a reagent cargo  [factor slots full]" : "Commission a reagent cargo");
+                            bool inFlight  = _ventures.Any(v => v.IsReagent);
+                            int  today     = 0;
+                            try { today = (int)CampaignTime.Now.ToDays; } catch { }
+                            bool onCooldown = today < _reagentCooldownUntilDay;
+                            bool canAfford  = Hero.MainHero.Gold >= SeaMath.ReagentCargoTiers[0].Cost;
+                            args.IsEnabled  = !inFlight && !onCooldown && canAfford;
+                            string note = inFlight   ? "  [expedition already at sea]"
+                                        : onCooldown ? $"  [contact network recovering: {_reagentCooldownUntilDay - today} day(s)]"
+                                        : "";
+                            MBTextManager.SetTextVariable("SEA_REAGENT_TEXT", "Commission a reagent cargo" + note);
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                             return true;
                         }
@@ -359,7 +364,7 @@ namespace AshAndEmber
                             _ventures.Add(new Venture
                             {
                                 DestName      = here.Name?.ToString() ?? "this port",
-                                DaysLeft      = 4 + _rng.Next(4),
+                                DaysLeft      = SeaMath.ReagentExpeditionDaysMin + _rng.Next(SeaMath.ReagentExpeditionDaysRand),
                                 Invested      = tier.Cost,
                                 Blessed       = false,
                                 Distance      = dist,

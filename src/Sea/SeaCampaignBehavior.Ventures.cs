@@ -127,6 +127,12 @@ namespace AshAndEmber
                             $"Your reagent factor never returned from {v.DestName}. The sea keeps its secrets.",
                             new Color(0.85f, 0.45f, 0.35f)));
                     }
+                    try
+                    {
+                        int today = (int)CampaignTime.Now.ToDays;
+                        _reagentCooldownUntilDay = today + SeaMath.ReagentCargoCooldownDays;
+                    }
+                    catch { }
                     continue;
                 }
 
