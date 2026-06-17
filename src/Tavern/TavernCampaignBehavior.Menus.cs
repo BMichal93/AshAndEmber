@@ -535,7 +535,7 @@ namespace AshAndEmber
         private static int DiceMaxBet()
         {
             float p = Settlement.CurrentSettlement?.Town?.Prosperity ?? 1000f;
-            return (int)Math.Min(1000, Math.Max(100, p / 10));
+            return (int)Math.Max(100, p / 10);
         }
 
         private static int DiceSmallBet()  => Math.Max(25,  DiceMaxBet() / 4);
