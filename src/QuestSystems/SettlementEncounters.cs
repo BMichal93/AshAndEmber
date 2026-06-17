@@ -55,6 +55,7 @@
 // │ The Blind Eye               │ Enter village/city    │ General, no trinket│
 // │ The Pale Compass            │ Enter village/city    │ General, no trinket│
 // │ The Broken Seal             │ Enter city/castle     │ General            │
+// │ The Merchant of Endings     │ Enter city/castle     │ Mage               │
 // └─────────────────────────────┴───────────────────────┴──────────────────┘
 //
 // Wiring (CampaignBehavior.cs):
@@ -145,6 +146,10 @@ namespace AshAndEmber
         private static int    _mothersPleaCountdown   = 0;       // days until next Mother's Plea follow-up fires
         private static int    _mothersPleaPhase       = 0;       // 0=none 1=healed_7d 2=money_7d 3=refused_7d 4=child_10yr 5=assassin
         private static readonly Random _rng          = new Random();
+
+        // ── Events7 state ──────────────────────────────────────────────────
+        // The Merchant of Endings (city enter, mage-gated, 90-day cooldown)
+        private static int _merchantOfEndingsCooldown = 0;
 
         // ── Events6 state ──────────────────────────────────────────────────
         // Cartographer of Silences (city enter, mage/Ashen, 3-phase escalation)
@@ -246,6 +251,7 @@ namespace AshAndEmber
             _weaponInventorFound        = 0;
             _mothersPleaCountdown       = 0;
             _mothersPleaPhase           = 0;
+            _merchantOfEndingsCooldown        = 0;
             _cartographerPhase                = 0;
             _cartographerCooldown             = 0;
             _cartographerConsequenceCountdown = 0;
@@ -321,6 +327,7 @@ namespace AshAndEmber
             store.SyncData("SE_WeaponInventor",    ref _weaponInventorFound);
             store.SyncData("SE_MothersPleaCD",     ref _mothersPleaCountdown);
             store.SyncData("SE_MothersPleaPhase",  ref _mothersPleaPhase);
+            store.SyncData("SE_MerchantOfEndingsCD", ref _merchantOfEndingsCooldown);
             store.SyncData("SE_CartographerPhase",  ref _cartographerPhase);
             store.SyncData("SE_CartographerCD",     ref _cartographerCooldown);
             store.SyncData("SE_CartographerConseq", ref _cartographerConsequenceCountdown);
@@ -564,6 +571,9 @@ namespace AshAndEmber
                 if (_mothersPleaCountdown == 0)
                     FireMothersPleaConsequence();
             }
+
+            // ── Events7 ticks ─────────────────────────────────────────────
+            if (_merchantOfEndingsCooldown > 0) _merchantOfEndingsCooldown--;
 
             // ── Events6 ticks ─────────────────────────────────────────────
             if (_cartographerCooldown > 0) _cartographerCooldown--;
