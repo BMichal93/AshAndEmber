@@ -50,6 +50,24 @@ namespace AshAndEmber
             {
                 try { AshenCitySystem.ApplyAshenAppearanceToSettlement(settlement); } catch { }
                 try { EmberConclaveSystem.OnSettlementEntered(settlement); } catch { }
+                try { AshenMapTone.OnSettlementEntered(settlement); } catch { }
+                try
+                {
+                    if (MageKnowledge.IsKnownMage && _rng.Next(8) == 0)
+                    {
+                        string[] reactions =
+                        {
+                            "Some here look at your hands before they look at your face.",
+                            "A merchant adjusts their stall as you pass. Old habit, or something more.",
+                            "The innkeeper gives you a room without asking your name. They already know it.",
+                            "Someone in the crowd whispers to their companion as you pass. The companion looks — then looks away.",
+                        };
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            reactions[_rng.Next(reactions.Length)],
+                            new Color(0.65f, 0.6f, 0.7f)));
+                    }
+                }
+                catch { }
                 try
                 {
                     string scar = CampaignMapEvents.GetSettlementScar(settlement);
@@ -76,6 +94,7 @@ namespace AshAndEmber
             {
                 MageKnowledge.ResetForNewGame();
                 RivalShadowSystem.ResetForNewGame();
+                AshenMapTone.ResetForNewGame();
                 CampaignMapEvents.ResetForNewGame();
                 SettlementEncounters.ResetForNewGame();
                 DragonQuestSystem.ResetForNewGame();

@@ -61,6 +61,8 @@ namespace AshAndEmber
                 try { AshenQuestSystem.DailyTick(); } catch { }
                 try { BurningLabQuestSystem.DailyTick(); } catch { }
                 try { EmberConclaveSystem.DailyTick(); } catch { }
+                try { AshenMapTone.DailyTick(); } catch { }
+                try { MageKnowledge.DailyDreamTick(); } catch { }
                 try { CheckReapPrisonerYield(); } catch { }
                 if (_reapRaidCooldown > 0) _reapRaidCooldown--;
                 try { CheckAshenPrisonerEscape(); } catch { }
@@ -130,6 +132,20 @@ namespace AshAndEmber
                     }
                     catch { }
                 }
+
+                // Known Mage: occasionally word of a mage's battles reaches courts and merchants
+                try
+                {
+                    bool playerOnAttacker = mapEvent.AttackerSide?.Parties
+                        .Any(p => p.Party == PartyBase.MainParty) == true;
+                    bool playerOnDefender = mapEvent.DefenderSide?.Parties
+                        .Any(p => p.Party == PartyBase.MainParty) == true;
+                    bool playerInvolved = playerOnAttacker || playerOnDefender;
+                    if (playerInvolved && MageKnowledge.IsMage && !MageKnowledge.IsKnownMage)
+                        if (_rng.Next(20) == 0)
+                            MageKnowledge.BecomeKnown();
+                }
+                catch { }
 
                 try { ApplyNpcBattleAging(mapEvent); } catch { }
                 // Flush any battle casts not consumed above (NPCs absent from this event).

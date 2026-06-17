@@ -21,6 +21,7 @@ namespace AshAndEmber
     {
         private static bool   _isMage            = false;
         private static bool   _isAshen          = false;
+        private static bool   _isKnownMage      = false;
 
         // Deferred map-layer dialog queue. Historically a single Action slot:
         // when two systems queued a popup the same day, one was silently lost —
@@ -40,6 +41,18 @@ namespace AshAndEmber
         }
         private static readonly HashSet<string> _giftedChildIds = new HashSet<string>();
         private static readonly Random _rng = new Random();
+
+        private static int  _dreamCooldown = 0;
+        private static int  _dreamLastIdx  = -1;
+
+        public static bool IsKnownMage => _isKnownMage;
+
+        public static void BecomeKnown()
+        {
+            if (_isKnownMage || !_isMage) return;
+            _isKnownMage = true;
+            _deferredInquiry = ShowKnownMageEvent;
+        }
 
         // ── Whisper System ────────────────────────────────────────────────────
         // Tracks how deeply the cold has seeped into the player's fire.
@@ -182,6 +195,15 @@ namespace AshAndEmber
             catch { return null; }
         }
 
+        public static void DailyDreamTick()
+        {
+            if (!_isMage) return;
+            if (_dreamCooldown > 0) { _dreamCooldown--; return; }
+            if (_rng.Next(100) >= 2) return;
+            _dreamCooldown = 7;
+            _deferredInquiry = ShowDreamEvent;
+        }
+
         public static bool IsMage         => _isMage;
         public static bool IsAshen         => _isAshen;
         // Backward-compat shims used by old call sites
@@ -199,6 +221,9 @@ namespace AshAndEmber
         {
             _isMage           = false;
             _isAshen          = false;
+            _isKnownMage      = false;
+            _dreamCooldown    = 0;
+            _dreamLastIdx     = -1;
             _inquiryQueue.Clear();
             _whisperCount     = 0;
             _coldCallCountdown = 0;
