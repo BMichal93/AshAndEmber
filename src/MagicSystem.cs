@@ -50,6 +50,7 @@ namespace AshAndEmber
             try { ColourLordAI.FlushBattleCasts();      } catch { }
             try { BanditMageAI.OnMissionEnd();           } catch { }
             try { AshenSceneTone.Reset();                } catch { }
+            try { BattleWhispers.Reset();                } catch { }
             try { AshenVisuals.Reset();                  } catch { }
 
             if (game.GameType is Campaign &&
@@ -223,6 +224,7 @@ namespace AshAndEmber
             BanditMageAI.MissionTick(dt);
             BattleEvents.MissionTick(dt);
             AshenSceneTone.MissionTick(dt);
+            BattleWhispers.MissionTick(dt);
         }
 
         protected override void OnEndMission()
@@ -253,6 +255,7 @@ namespace AshAndEmber
             try { AlchemyInputHandler.ResetInputState();      } catch { }
             try { BattleEvents.OnMissionEnd();               } catch { }
             try { AshenSceneTone.Reset();                    } catch { }
+            try { BattleWhispers.Reset();                    } catch { }
         }
 
         public override void OnAgentBuild(Agent agent, Banner banner)

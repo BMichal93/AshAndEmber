@@ -25,6 +25,7 @@ namespace AshAndEmber
         private static bool   _shadowDefeated    = false;
         private static bool   _duelPending       = false;
         private static bool   _shadowHealPending = false;
+        private static int    _lastLetterScheme  = 0;
         private static readonly Random _rng = new Random();
 
         public static bool   HasShadow          => _shadowLordId != null && !_shadowDefeated;
@@ -47,6 +48,7 @@ namespace AshAndEmber
             _shadowDefeated    = false;
             _duelPending       = false;
             _shadowHealPending = false;
+            _lastLetterScheme  = 0;
         }
 
         // ── Designation ───────────────────────────────────────────────────────
@@ -213,6 +215,53 @@ namespace AshAndEmber
                             new Color(0.38f, 0.50f, 0.75f)));
                         break;
                 }
+
+                if (_schemeCount > _lastLetterScheme && _schemeCount <= 4)
+                {
+                    _lastLetterScheme = _schemeCount;
+                    string capturedName  = shadowName;
+                    int    capturedCount = _schemeCount;
+                    MageKnowledge._deferredInquiry = () => ShowShadowLetter(capturedName, capturedCount);
+                }
+            }
+            catch { }
+        }
+
+        private static void ShowShadowLetter(string shadowName, int letterNum)
+        {
+            try
+            {
+                string title, body;
+                switch (letterNum)
+                {
+                    case 1:
+                        title = "An Unsigned Letter";
+                        body  = "Parchment left on your camp table overnight. You find it before your men do. The handwriting is deliberate — someone who chose every stroke carefully.\n\n" +
+                                "\"You carry a fire not given to you. The one who gave it is gone. We are watching to see which you choose.\"\n\n" +
+                                "Nothing else. No name.";
+                        break;
+                    case 2:
+                        title = "A Second Letter";
+                        body  = "Left inside your saddlebag. The parchment smells of winter — not weather, but something older and colder than weather.\n\n" +
+                                "\"You have felt our hand twice. We have been considerate. There are terms — when you are ready to listen.\"\n\n" +
+                                "\"You are not ready yet.\"";
+                        break;
+                    case 3:
+                        title = "The Third Letter";
+                        body  = $"Pinned to the door of your room in a town you only decided to visit that morning. {shadowName} followed you inside walls.\n\n" +
+                                "\"We know who stands beside you. We know which faces you trust and which you merely use. We know which of them know what you carry, and which of them only suspect.\"\n\n" +
+                                "\"The next move will not be aimed at wood and stone.\"";
+                        break;
+                    default:
+                        title = "The Last Letter";
+                        body  = $"You find the words written in charcoal on the inside of your tent. No one entered. No one saw anything.\n\n" +
+                                $"\"We are done writing. Four times we shaped your world and left our mark where you would find it. {shadowName} rides now — not to scheme, not to watch.\"\n\n" +
+                                "\"The Shadow comes to meet the fire. Prepare yourself. Or don't. It makes less difference than you think.\"";
+                        break;
+                }
+
+                InformationManager.ShowInquiry(new InquiryData(
+                    title, body, true, false, "Set it aside.", null, () => { }, null), true, false);
             }
             catch { }
         }
@@ -369,6 +418,7 @@ namespace AshAndEmber
             store.SyncData("RS_Defeated",      ref _shadowDefeated);
             store.SyncData("RS_DuelPending",   ref _duelPending);
             store.SyncData("RS_HealPending",   ref _shadowHealPending);
+            store.SyncData("RS_LastLetter",    ref _lastLetterScheme);
         }
     }
 }

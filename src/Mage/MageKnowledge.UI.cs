@@ -376,6 +376,9 @@ namespace AshAndEmber
             store.SyncData("LDM_ColdCallCD",     ref _coldCallCountdown);
             store.SyncData("LDM_WhisperQuiet",   ref _daysSinceWhisperGain);
             store.SyncData("LDM_PossessStrain",  ref _possessionStrainDays);
+            store.SyncData("LDM_KnownMage",      ref _isKnownMage);
+            store.SyncData("LDM_DreamCD",        ref _dreamCooldown);
+            store.SyncData("LDM_DreamIdx",       ref _dreamLastIdx);
             TalentSystem.Save(store);
 
             _giftedChildIds.Clear();

@@ -24,6 +24,9 @@ namespace AshAndEmber
         private static MethodInfo _setFogMethod;
         private static bool       _fogResolved = false;
 
+        private static MethodInfo _setSunMethod;
+        private static bool       _sunResolved = false;
+
         public static void MissionTick(float dt)
         {
             if (_checked) return;
@@ -49,10 +52,13 @@ namespace AshAndEmber
             if (!playerAshen && !ashenEnemies) return;
 
             ApplyColdFog();
+            TryApplyAshenSky();
 
+            string toneMsg = ashenEnemies
+                ? "A shadow lord's cold fire reaches across the field. The sky drains."
+                : "The cold fire spreads. The air carries ash.";
             InformationManager.DisplayMessage(new InformationMessage(
-                "The cold fire spreads. The air carries ash.",
-                new Color(0.35f, 0.4f, 0.6f)));
+                toneMsg, new Color(0.35f, 0.4f, 0.6f)));
         }
 
         private static void ApplyColdFog()
@@ -78,10 +84,38 @@ namespace AshAndEmber
             catch { }
         }
 
+        private static void TryApplyAshenSky()
+        {
+            try
+            {
+                var scene = Mission.Current?.Scene;
+                if (scene == null) return;
+
+                if (!_sunResolved)
+                {
+                    _setSunMethod = scene.GetType().GetMethod("SetSun",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    _sunResolved = true;
+                }
+
+                if (_setSunMethod == null) return;
+                var parms = _setSunMethod.GetParameters();
+                if (parms.Length == 4)
+                    _setSunMethod.Invoke(scene, new object[]
+                        { new Vec3(0.3f, 0.7f, 0.4f), new Vec3(0.5f, 0.55f, 0.7f), 1.0f, 0.4f });
+                else if (parms.Length == 3)
+                    _setSunMethod.Invoke(scene, new object[]
+                        { new Vec3(0.3f, 0.7f, 0.4f), new Vec3(0.5f, 0.55f, 0.7f), 1.0f });
+            }
+            catch { }
+        }
+
         public static void Reset()
         {
             _checked     = false;
             _warmupTimer = 0f;
+            _sunResolved = false;
+            _setSunMethod = null;
         }
     }
 }
