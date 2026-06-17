@@ -26,6 +26,7 @@ namespace AshAndEmber
         // =====================================================================
         private static void DrinkRound(int cost, int tier)
         {
+            _diceMode = false;
             if ((Hero.MainHero?.Gold ?? 0) < cost)
             {
                 Msg($"You count your coin. Not enough for another round. ({cost} needed)", BadColor);
@@ -275,6 +276,69 @@ namespace AshAndEmber
                    $"You wait. Nobody comes back for it. You reason that whoever lost it has had worse nights than you. (+{gold} denars)";
         }
 
+        // ── Dedicated dice game (menu-driven, player-chosen bet) ──────────────
+        private static void ResolveDiceGame(int bet)
+        {
+            if ((Hero.MainHero?.Gold ?? 0) < bet)
+            {
+                Msg($"You count your coin. Not enough to cover that wager. ({bet} denars needed)", BadColor);
+                return;
+            }
+
+            _diceMode    = true;
+            _diceLastBet = bet;
+
+            int playerRoll   = _rng.Next(1, 7) + _rng.Next(1, 7);
+            int opponentRoll = _rng.Next(1, 7) + _rng.Next(1, 7);
+            bool cheated     = _rng.NextDouble() < 0.08;
+
+            string resultText;
+
+            if (cheated)
+            {
+                int lost = Math.Min(bet, Hero.MainHero?.Gold ?? 0);
+                if (lost > 0) try { Hero.MainHero?.ChangeHeroGold(-lost); } catch { }
+                string[] lines =
+                {
+                    $"You roll well. They roll better. Something about the way the dice land doesn't sit right — but the coin is gone before you can place it. (-{lost} denars)",
+                    $"The cup comes up short. You replay the sequence in your mind on the walk back to the bar. Those dice didn't tumble right. (-{lost} denars)",
+                    $"A clean game on the surface. You lose steadily. Only afterward does it click — the weight of those dice. (-{lost} denars)",
+                };
+                resultText = lines[_rng.Next(lines.Length)];
+            }
+            else if (playerRoll > opponentRoll)
+            {
+                try { Hero.MainHero?.ChangeHeroGold(bet); } catch { }
+                string[] lines =
+                {
+                    $"You roll {playerRoll}. They roll {opponentRoll}. The cup lifts. The table sighs. You collect. (+{bet} denars)",
+                    $"{playerRoll} against {opponentRoll}. A clean win. You drag the coin across the felt without ceremony. (+{bet} denars)",
+                    $"Your {playerRoll} against their {opponentRoll}. Nobody argues with the numbers. (+{bet} denars)",
+                };
+                resultText = lines[_rng.Next(lines.Length)];
+            }
+            else
+            {
+                int lost = Math.Min(bet, Hero.MainHero?.Gold ?? 0);
+                if (lost > 0) try { Hero.MainHero?.ChangeHeroGold(-lost); } catch { }
+                string[] lines =
+                {
+                    $"You roll {playerRoll}. They roll {opponentRoll}. The felt pulls the coin toward them. You sit with it a moment. (-{lost} denars)",
+                    $"{playerRoll} to their {opponentRoll}. The cup doesn't lie. You push the coin forward. (-{lost} denars)",
+                    $"Their {opponentRoll}, your {playerRoll}. The hand that sweeps the table isn't yours tonight. (-{lost} denars)",
+                };
+                resultText = lines[_rng.Next(lines.Length)];
+            }
+
+            try
+            {
+                MBTextManager.SetTextVariable("TAVERN_RESULT_TEXT", resultText);
+                GameMenu.SwitchToMenu("ldm_tavern_result");
+            }
+            catch { }
+        }
+
+        // ── Dice game as a drinking outcome (random windfall) ─────────────────
         private static string OutcomeDiceGame(int tier)
         {
             int gold = tier == 1 ?  30 + _rng.Next(51)    //  30-80g

@@ -73,6 +73,7 @@ namespace AshAndEmber
         {
             RegisterTownEntry(starter);
             RegisterOrderMenu(starter);
+            RegisterDiceMenus(starter);
             RegisterResultMenu(starter);
             RegisterSoberUpMenu(starter);
         }
@@ -214,6 +215,21 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Roll dice
+            try
+            {
+                starter.AddGameMenuOption("ldm_tavern_menu", "ldm_tavern_dice",
+                    "Join a dice game",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                        return true;
+                    },
+                    args => { try { GameMenu.SwitchToMenu("ldm_dice_menu"); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
             // Spend an evening
             try
             {
@@ -268,7 +284,7 @@ namespace AshAndEmber
             }
             catch { }
 
-            // Another round
+            // Another round / Roll again
             try
             {
                 starter.AddGameMenuOption("ldm_tavern_result", "ldm_tavern_another",
@@ -277,16 +293,35 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            MBTextManager.SetTextVariable("TAVERN_ANOTHER_TEXT",
-                                $"Push your luck. Order another ({_lastDrinkCost} denars).");
-                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= _lastDrinkCost;
-                            if (!canAfford) args.IsEnabled = false;
+                            if (_diceMode)
+                            {
+                                MBTextManager.SetTextVariable("TAVERN_ANOTHER_TEXT", "Roll again.");
+                                bool canAfford = (Hero.MainHero?.Gold ?? 0) >= DiceSmallBet();
+                                if (!canAfford) args.IsEnabled = false;
+                            }
+                            else
+                            {
+                                MBTextManager.SetTextVariable("TAVERN_ANOTHER_TEXT",
+                                    $"Push your luck. Order another ({_lastDrinkCost} denars).");
+                                bool canAfford = (Hero.MainHero?.Gold ?? 0) >= _lastDrinkCost;
+                                if (!canAfford) args.IsEnabled = false;
+                            }
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { } },
+                    args =>
+                    {
+                        try
+                        {
+                            if (_diceMode)
+                                GameMenu.SwitchToMenu("ldm_dice_menu");
+                            else
+                                GameMenu.SwitchToMenu("ldm_tavern_menu");
+                        }
+                        catch { }
+                    },
                     false, -1, false);
             }
             catch { }
@@ -386,6 +421,128 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Dice game menus ───────────────────────────────────────────────────
+        private static void RegisterDiceMenus(CampaignGameStarter starter)
+        {
+            // Bet selection screen
+            try
+            {
+                starter.AddGameMenu("ldm_dice_menu", "{DICE_MENU_HEADER}", args =>
+                {
+                    try
+                    {
+                        MBTextManager.SetTextVariable("DICE_MENU_HEADER",
+                            "A circle of men with a leather cup and a worn board of felt. " +
+                            "They look up when you approach. One nudges the cup your way.");
+                    }
+                    catch { }
+                });
+            }
+            catch { }
+
+            // Small bet — always available
+            try
+            {
+                starter.AddGameMenuOption("ldm_dice_menu", "ldm_dice_small",
+                    "{DICE_SMALL_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            int bet = DiceSmallBet();
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= bet;
+                            if (!canAfford) args.IsEnabled = false;
+                            MBTextManager.SetTextVariable("DICE_SMALL_TEXT",
+                                canAfford ? $"Low stakes ({bet} denars)" : $"Low stakes ({bet} denars)  [not enough coin]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args => { try { ResolveDiceGame(DiceSmallBet()); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
+            // Medium bet — prosperous towns only
+            try
+            {
+                starter.AddGameMenuOption("ldm_dice_menu", "ldm_dice_medium",
+                    "{DICE_MEDIUM_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            if (DiceMaxBet() < 200) return false;
+                            int bet = DiceMediumBet();
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= bet;
+                            if (!canAfford) args.IsEnabled = false;
+                            MBTextManager.SetTextVariable("DICE_MEDIUM_TEXT",
+                                canAfford ? $"A real wager ({bet} denars)" : $"A real wager ({bet} denars)  [not enough coin]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        }
+                        catch { return false; }
+                        return true;
+                    },
+                    args => { try { ResolveDiceGame(DiceMediumBet()); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
+            // Large bet — wealthy towns only
+            try
+            {
+                starter.AddGameMenuOption("ldm_dice_menu", "ldm_dice_large",
+                    "{DICE_LARGE_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            if (DiceMaxBet() < 500) return false;
+                            int bet = DiceLargeBet();
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= bet;
+                            if (!canAfford) args.IsEnabled = false;
+                            MBTextManager.SetTextVariable("DICE_LARGE_TEXT",
+                                canAfford ? $"Empty the table ({bet} denars)" : $"Empty the table ({bet} denars)  [not enough coin]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        }
+                        catch { return false; }
+                        return true;
+                    },
+                    args => { try { ResolveDiceGame(DiceLargeBet()); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
+            // Walk away
+            try
+            {
+                starter.AddGameMenuOption("ldm_dice_menu", "ldm_dice_back",
+                    "Walk away.",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        return true;
+                    },
+                    args => { try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { } },
+                    true, -1, false);
+            }
+            catch { }
+        }
+
+        // ── Dice bet helpers ──────────────────────────────────────────────────
+        // Max bet scales with prosperity so backwater villages can't host high-stakes games.
+        private static int DiceMaxBet()
+        {
+            float p = Settlement.CurrentSettlement?.Town?.Prosperity ?? 1000f;
+            return (int)Math.Min(1000, Math.Max(100, p / 10));
+        }
+
+        private static int DiceSmallBet()  => Math.Max(25,  DiceMaxBet() / 4);
+        private static int DiceMediumBet() => Math.Max(100, DiceMaxBet() / 2);
+        private static int DiceLargeBet()  => DiceMaxBet();
+
+        // ── Sober-up wait menu ────────────────────────────────────────────────
         private static void WakeUp()
         {
             if (_soberDone) return;
