@@ -100,10 +100,6 @@ namespace AshAndEmber
         }
         private static readonly List<Venture> _ventures = new List<Venture>();
 
-        // Campaign day from which a new reagent expedition may be commissioned.
-        // Set to today + ReagentCargoCooldownDays when an expedition resolves.
-        private static int _reagentCooldownUntilDay = 0;
-
         // NPC sea-leg cooldowns by party id — in-memory only; a reload simply
         // lets everyone sail again, which costs nothing.
         private static readonly Dictionary<string, int> _npcSailCooldown = new Dictionary<string, int>();
@@ -118,8 +114,7 @@ namespace AshAndEmber
 
         public override void SyncData(IDataStore store)
         {
-            try { store.SyncData("SEA_FareEscrow",          ref _fareEscrow); } catch { }
-            try { store.SyncData("SEA_ReagentCooldownUntil", ref _reagentCooldownUntilDay); } catch { }
+            try { store.SyncData("SEA_FareEscrow", ref _fareEscrow); } catch { }
 
             try
             {
@@ -175,9 +170,8 @@ namespace AshAndEmber
             _ventures.Clear();
             _npcSailCooldown.Clear();
             _blockades.Clear();
-            _fareEscrow              = 0;
-            _emberwindCalled         = false;
-            _reagentCooldownUntilDay = 0;
+            _fareEscrow      = 0;
+            _emberwindCalled = false;
             ResetVoyageState();
         }
 

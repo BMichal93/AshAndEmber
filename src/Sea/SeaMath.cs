@@ -78,11 +78,9 @@ namespace AshAndEmber
             new ReagentCargoTier { Cost = 15000, FailureChance = 0.05f, Qty = 3 },
         };
 
-        // Only one reagent expedition may run at a time; after it resolves a
-        // cooldown prevents immediately commissioning another.
+        // Only one reagent expedition may run at a time; duration is the natural gate.
         public const int ReagentExpeditionDaysMin  = 14;
         public const int ReagentExpeditionDaysRand = 15;  // range on top of min (14–28 days total)
-        public const int ReagentCargoCooldownDays  = 7;
 
         // ── NPC sea lanes ────────────────────────────────────────────────────
         // Lords and caravans leaving a harbor town may take ship instead of

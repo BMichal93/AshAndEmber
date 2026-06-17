@@ -179,14 +179,9 @@ namespace AshAndEmber
                         {
                             if (!MageKnowledge.IsMage) return false;
                             bool inFlight  = _ventures.Any(v => v.IsReagent);
-                            int  today     = 0;
-                            try { today = (int)CampaignTime.Now.ToDays; } catch { }
-                            bool onCooldown = today < _reagentCooldownUntilDay;
-                            bool canAfford  = Hero.MainHero.Gold >= SeaMath.ReagentCargoTiers[0].Cost;
-                            args.IsEnabled  = !inFlight && !onCooldown && canAfford;
-                            string note = inFlight   ? "  [expedition already at sea]"
-                                        : onCooldown ? $"  [contact network recovering: {_reagentCooldownUntilDay - today} day(s)]"
-                                        : "";
+                            bool canAfford = Hero.MainHero.Gold >= SeaMath.ReagentCargoTiers[0].Cost;
+                            args.IsEnabled = !inFlight && canAfford;
+                            string note    = inFlight ? "  [expedition already at sea]" : "";
                             MBTextManager.SetTextVariable("SEA_REAGENT_TEXT", "Commission a reagent cargo" + note);
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                             return true;
