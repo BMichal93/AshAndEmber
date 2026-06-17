@@ -193,6 +193,12 @@ namespace AshAndEmber
         private static int _brokenWillFired        = 0;
         private static readonly HashSet<string> _brokenKingdomIds = new HashSet<string>();
 
+        // Settlement scars: settlements visibly marked by recent events.
+        // Persisted so reloads don't silently erase them mid-window.
+        private static readonly List<string> _scarredIds   = new List<string>();
+        private static readonly List<int>    _scarredDays  = new List<int>();
+        private static readonly List<int>    _scarredTypes = new List<int>(); // 0=withering 1=plague 2=longnight
+
         // Battlefield echo: pending spawn from a spell-heavy battle
         private static bool  _battleEchoPending = false;
         private static float _battleEchoPosX    = 0f;
@@ -217,6 +223,29 @@ namespace AshAndEmber
         /// Returns true while the Long Night event is active.
         /// Called by SpellEffects.GetCampaignLightLevel() to force Dark.
         public static bool IsLongNight() => _longNightDaysRemaining > 0;
+
+        private static void RecordScar(string id, int type)
+        {
+            int existing = _scarredIds.IndexOf(id);
+            if (existing >= 0) { _scarredDays[existing] = 30; _scarredTypes[existing] = type; return; }
+            _scarredIds.Add(id);
+            _scarredDays.Add(30);
+            _scarredTypes.Add(type);
+        }
+
+        /// Returns a one-line flavor string if the settlement bears a recent event scar, or null.
+        public static string GetSettlementScar(Settlement s)
+        {
+            if (s == null) return null;
+            int idx = _scarredIds.IndexOf(s.StringId);
+            if (idx < 0 || _scarredDays[idx] <= 0) return null;
+            return _scarredTypes[idx] switch
+            {
+                1 => $"The grey sickness has not left {s.Name}. You see bandaged soldiers in doorways and shuttered stalls in the market.",
+                2 => $"The Long Night marked {s.Name}. Torches burn in rooms that should be dark, and no one speaks of what they heard during the seven days.",
+                _ => $"Something cold passed through {s.Name} not long ago. The people are quieter than they should be.",
+            };
+        }
 
         // ── Called from CampaignBehavior.OnHeroKilled ────────────────────────
         // Triggered when a faction leader dies. Rolls 5% chance and queues a
@@ -273,6 +302,18 @@ namespace AshAndEmber
                 }
             }
 
+            // Tick down settlement scars
+            for (int i = _scarredDays.Count - 1; i >= 0; i--)
+            {
+                _scarredDays[i]--;
+                if (_scarredDays[i] <= 0)
+                {
+                    _scarredIds.RemoveAt(i);
+                    _scarredDays.RemoveAt(i);
+                    _scarredTypes.RemoveAt(i);
+                }
+            }
+
             if (_longNightDaysRemaining > 0)
             {
                 _longNightDaysRemaining--;
@@ -290,8 +331,26 @@ namespace AshAndEmber
                 catch { }
 
                 if (_longNightDaysRemaining == 0)
+                {
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "Long Night — the sun rises again. The darkness retreats. But the damage lingers."));
+                    try
+                    {
+                        var scarred = Settlement.All
+                            .Where(s => s.IsTown && s.MapFaction?.StringId != AshenKingdomId)
+                            .OrderBy(_ => _rng.Next())
+                            .Take(4)
+                            .ToList();
+                        foreach (var t in scarred)
+                            RecordScar(t.StringId, 2);
+                        if (scarred.Count >= 2)
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"In {scarred[0].Name}, {scarred[1].Name}, and elsewhere — they are still counting the missing. " +
+                                "Morning returned, but not everything the dark took.",
+                                new Color(0.55f, 0.55f, 0.75f)));
+                    }
+                    catch { }
+                }
             }
 
             // Tick down protective rites
@@ -455,6 +514,9 @@ namespace AshAndEmber
             _brokenKingdomIds.Clear();
             _gotKingdoms.Clear();
             _gotDays.Clear();
+            _scarredIds.Clear();
+            _scarredDays.Clear();
+            _scarredTypes.Clear();
             ResetPortents();
         }
 

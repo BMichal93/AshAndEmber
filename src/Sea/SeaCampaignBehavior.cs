@@ -54,6 +54,30 @@ namespace AshAndEmber
         private static readonly List<Settlement> _ports = new List<Settlement>();
         private static readonly Random _rng = new Random();
 
+        // Per-port flavor text shown as the harbor menu header.
+        private static readonly Dictionary<string, string> _harborDesc =
+            new Dictionary<string, string>
+            {
+                ["Revyl"]    = "Salt-pine and old blood on the wind. The longships here have been south and come back with fewer men and better silence.",
+                ["Varcheg"]  = "Ice in the ropes even in late summer. Sturgian captains are carved from the same timber as their ships — dense, weathered, honest about the cost.",
+                ["Balgard"]  = "The harbor mouth faces north. Every captain here has survived something that left no visible mark, and the ones who have not are still at sea.",
+                ["Sibir"]    = "The water past the breakwater is black at any hour. What trades through Sibir's docks rarely appears in any ledger.",
+                ["Galend"]   = "Wool and timber move through these docks in tonnage that embarrasses the landlocked lords. The harbormaster counts coin faster than a moneylender.",
+                ["Pravend"]  = "The royal harbor. Every merchant with ambition and every agent with patience passes through Pravend's waterfront at least once.",
+                ["Jaculan"]  = "A fishing port that outgrew its origins. Half the boats work nets; the other half would rather not say what they haul.",
+                ["Ostican"]  = "Faded guild colours on every warehouse wall. This harbor lived through a siege and has charged accordingly for everything since.",
+                ["Charas"]   = "The southernmost Vlandian port. The sailors here have a different accent and a shorter temper than their countrymen to the north.",
+                ["Ortysia"]  = "Marble columns at the harbor mouth — Imperial pretension on a working quay. The longshoremen have ignored the columns for three generations and plan to continue.",
+                ["Zeonica"]  = "Everything moves with Imperial precision here: timed, logged, taxed. A captain unfamiliar with the forms can wait three days before the harbormaster speaks to them.",
+                ["Poros"]    = "The siege-walls run to the waterline. Even the harbor bristles. Poros has been taken twice by sea and built its walls with the anger of both defeats.",
+                ["Vostrum"]  = "Date palms at the quay. The Southern Empire looks different from the water — all white stone and long shadow, with the desert a hard line behind it.",
+                ["Sanala"]   = "Dhows and spice-smoke. The harbor tongue here is three languages folded together; most captains have learned enough of all three to curse in each.",
+                ["Razih"]    = "Ink-black at night, copper-bright at dawn. Pearl-divers sell on the same docks where the deep-sea merchants unload. The water here is the employer.",
+                ["Quyaz"]    = "The heat off the walls brings flies the size of thumbs and merchants from three continents. Quyaz smells of cardamom, rot, and profit in equal measure.",
+                ["Argoron"]  = "A port at the edge of the map. The sailors who call here are either new enough not to know better, or old enough not to care.",
+                ["Jalmarys"] = "Quiet for a harbor. Something happened here a generation back that the old sailors won't speak of directly. The new ones haven't learned to ask.",
+            };
+
         // ── Voyage state (transient — a reload mid-voyage refunds the fare) ───
         private static Settlement _voyageOrigin;
         private static Settlement _voyageDest;

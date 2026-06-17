@@ -57,9 +57,10 @@ namespace AshAndEmber
                             ventureNote = "  " + string.Join("  ", _ventures.Select(v =>
                                 $"[Venture to {v.DestName}: {v.DaysLeft} day(s) out, {v.Invested} denars{(v.Blessed ? ", blessed" : "")}]"));
                         string windNote = _emberwindCalled ? "  [The Emberwind is called — the next crossing will be swift and stormless]" : "";
-                        MBTextManager.SetTextVariable("SEA_HARBOR_HEADER",
-                            "The harbor. Gulls argue over fish guts, ropes creak against the tide, " +
-                            "and captains weigh your purse from across the quay." + windNote + ventureNote);
+                        string portName = Settlement.CurrentSettlement?.Name?.ToString() ?? "";
+                        string baseDesc = _harborDesc.TryGetValue(portName, out string pd) ? pd :
+                            "The harbor. Gulls argue over fish guts, ropes creak against the tide, and captains weigh your purse from across the quay.";
+                        MBTextManager.SetTextVariable("SEA_HARBOR_HEADER", baseDesc + windNote + ventureNote);
                     }
                     catch { }
                 });

@@ -82,6 +82,21 @@ namespace AshAndEmber
 
             // Portents
             SavePortents(store);
+
+            // Settlement scars
+            var scarIds   = _scarredIds.ToList();
+            var scarDays  = _scarredDays.ToList();
+            var scarTypes = _scarredTypes.ToList();
+            store.SyncData("LDM_ScarredIds",   ref scarIds);
+            store.SyncData("LDM_ScarredDays",  ref scarDays);
+            store.SyncData("LDM_ScarredTypes", ref scarTypes);
+            if (scarIds != null && scarDays != null && scarTypes != null
+                && scarIds.Count == scarDays.Count && scarIds.Count == scarTypes.Count)
+            {
+                _scarredIds.Clear(); _scarredDays.Clear(); _scarredTypes.Clear();
+                for (int i = 0; i < scarIds.Count; i++)
+                { _scarredIds.Add(scarIds[i]); _scarredDays.Add(scarDays[i]); _scarredTypes.Add(scarTypes[i]); }
+            }
         }
     }
 }

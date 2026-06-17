@@ -76,6 +76,7 @@ namespace AshAndEmber
                         $"Ashen Plague — a grey sickness sweeps through the garrison of {target.Name}. " +
                         $"{totalWounded} soldier{(totalWounded != 1 ? "s" : "")} are struck down by fever and ash." +
                         (spawned > 0 ? $" {spawned} Ashen Spawn close on the afflicted settlement." : "")));
+                RecordScar(target.StringId, 1);
             }
             catch { }
         }
@@ -104,6 +105,7 @@ namespace AshAndEmber
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Great Withering — the hearth-fires of {target.Name} gutter and die. " +
                         $"Hearth: {before:F0} → {target.Village.Hearth:F0}."));
+                    RecordScar(target.StringId, 0);
                 }
                 else
                 {
@@ -120,6 +122,7 @@ namespace AshAndEmber
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Great Withering — something cold and old passes through {target.Name}. " +
                         $"Prosperity: {before:F0} → {target.Town.Prosperity:F0}."));
+                    RecordScar(target.StringId, 0);
                 }
             }
             catch { }
