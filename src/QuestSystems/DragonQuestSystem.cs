@@ -10,6 +10,7 @@
 //   1. Reach Clan Tier 6            (grasp on the world)
 //   2. Capture Tyal                 (enter the heart of darkness)
 //   3. Reach Hero Level 25          (gain the power)
+//   4. Clear 5 Ashen Ruins          (read the darkness)
 //
 // Completion → final prompt → rekindle the world or refuse.
 //
@@ -23,7 +24,7 @@
 //
 // Save keys
 //   LDM_DragonPhase     int   0=idle 1=event-ready 2=active 3=all-done 4=rekindled 5=failed
-//   LDM_DragonGoal1-3   bool
+//   LDM_DragonGoal1-4   bool
 //   LDM_WorldRekindled  bool
 //   LDM_EndingPhase     int
 // =============================================================================
@@ -56,6 +57,7 @@ namespace AshAndEmber
         private static bool _goal1Done      = false; // clan tier
         private static bool _goal2Done      = false; // Tyal capture
         private static bool _goal3Done      = false; // hero level
+        private static bool _goal4Done      = false; // ashen ruins cleared
         private static bool _worldRekindled = false;
         private static int  _endingPhase    = 0;     // 0=not started 1-4=in progress
         internal static DragonQuestLog _questLog = null;
@@ -63,9 +65,10 @@ namespace AshAndEmber
         private static readonly Random _rng = new Random();
 
         // ── Tuning ────────────────────────────────────────────────────────────
-        public const int TargetClanTier  = 6;
-        public const int TargetHeroLevel = 25;
-        public const string TyalMarker   = "Tyal"; // matched via IndexOf
+        public const int TargetClanTier     = 6;
+        public const int TargetHeroLevel    = 25;
+        public const int TargetRuinsCleared = 5;
+        public const string TyalMarker      = "Tyal"; // matched via IndexOf
 
         // ── Public accessors (read by MageKnowledge for grimoire display) ─────
         public static bool IsActive       => _phase == PhaseActive;
@@ -75,6 +78,7 @@ namespace AshAndEmber
         public static bool Goal1Done      => _goal1Done;
         public static bool Goal2Done      => _goal2Done;
         public static bool Goal3Done      => _goal3Done;
+        public static bool Goal4Done      => _goal4Done;
 
         // ── Called from CampaignBehavior.OnMapEventEnded ──────────────────────
         public static void OnMapEventEnded(MapEvent mapEvent)
@@ -149,8 +153,8 @@ namespace AshAndEmber
             {
                 if (_questLog == null) try { EnsureQuestLog(); } catch { }
                 CheckGoals();
-                try { _questLog?.UpdateProgress(Hero.MainHero?.Clan?.Tier ?? 0, _goal2Done, Hero.MainHero?.Level ?? 0); } catch { }
-                if (_goal1Done && _goal2Done && _goal3Done && _phase == PhaseActive)
+                try { _questLog?.UpdateProgress(Hero.MainHero?.Clan?.Tier ?? 0, _goal2Done, Hero.MainHero?.Level ?? 0, AshenRuinSystem.ClearedCount); } catch { }
+                if (_goal1Done && _goal2Done && _goal3Done && _goal4Done && _phase == PhaseActive)
                 {
                     _phase = PhaseAllDone;
                     try { _questLog?.LogAllDone(); } catch { }
@@ -203,25 +207,37 @@ namespace AshAndEmber
         private JournalLog _objClan;
         private JournalLog _objTyal;
         private JournalLog _objLevel;
+        private JournalLog _objRuins;
 
         internal void LogStarted()
         {
             AddLog(new TextObject(
-                "The old mage's last words: gain a grasp on the world, enter the cold heart, gain the power — then rekindle everything. Three conditions, and a sacrifice at the end."));
+                "The old mage's last words: gain a grasp on the world, enter the cold heart, gain the power, read the darkness — then rekindle everything. Four conditions, and a sacrifice at the end."));
             EnsureObjectives();
         }
 
-        // Creates the three tracked Journal goals, or recovers the references after a
+        // Creates the four tracked Journal goals, or recovers the references after a
         // load. They are added in a fixed order right after the intro log, so on a
-        // reloaded quest they sit at JournalEntries[1..3].
+        // reloaded quest they sit at JournalEntries[1..4].
+        // Backward-compatible: old saves have only 3 objectives (indices 1-3); goal 4
+        // is added as a new entry when missing.
         private void EnsureObjectives()
         {
-            if (_objClan != null && _objTyal != null && _objLevel != null) return;
+            if (_objClan != null && _objTyal != null && _objLevel != null && _objRuins != null) return;
             if (JournalEntries != null && JournalEntries.Count >= 4)
             {
-                _objClan  = JournalEntries[1];
-                _objTyal  = JournalEntries[2];
-                _objLevel = JournalEntries[3];
+                if (_objClan  == null) _objClan  = JournalEntries[1];
+                if (_objTyal  == null) _objTyal  = JournalEntries[2];
+                if (_objLevel == null) _objLevel = JournalEntries[3];
+                if (_objRuins == null)
+                {
+                    if (JournalEntries.Count >= 5)
+                        _objRuins = JournalEntries[4];
+                    else
+                        _objRuins = AddDiscreteLog(
+                            new TextObject("Read the darkness — explore and clear the ruins the Ashen left behind."),
+                            new TextObject("Ruins Cleared"), 0, DragonQuestSystem.TargetRuinsCleared, null, false);
+                }
                 return;
             }
             _objClan = AddDiscreteLog(
@@ -233,16 +249,20 @@ namespace AshAndEmber
             _objLevel = AddDiscreteLog(
                 new TextObject("Gain the power — temper your inner fire through trial until it burns at full height."),
                 new TextObject("Hero Level"), 0, DragonQuestSystem.TargetHeroLevel, null, false);
+            _objRuins = AddDiscreteLog(
+                new TextObject("Read the darkness — explore and clear the ruins the Ashen left behind."),
+                new TextObject("Ruins Cleared"), 0, DragonQuestSystem.TargetRuinsCleared, null, false);
         }
 
         // Refreshes the tracked objective bars from live campaign state. Safe to call
         // daily and after load — EnsureObjectives self-heals the references first.
-        internal void UpdateProgress(int clanTier, bool tyalTaken, int heroLevel)
+        internal void UpdateProgress(int clanTier, bool tyalTaken, int heroLevel, int ruinsCleared)
         {
             EnsureObjectives();
             try { _objClan?.UpdateCurrentProgress(Math.Min(clanTier, DragonQuestSystem.TargetClanTier)); } catch { }
             try { _objTyal?.UpdateCurrentProgress(tyalTaken ? 1 : 0); } catch { }
             try { _objLevel?.UpdateCurrentProgress(Math.Min(heroLevel, DragonQuestSystem.TargetHeroLevel)); } catch { }
+            try { _objRuins?.UpdateCurrentProgress(Math.Min(ruinsCleared, DragonQuestSystem.TargetRuinsCleared)); } catch { }
         }
 
         internal void LogGoal1() =>
@@ -257,9 +277,13 @@ namespace AshAndEmber
             AddLog(new TextObject(
                 "The inner fire burns at full height. The third condition is met."));
 
+        internal void LogGoal4() =>
+            AddLog(new TextObject(
+                "The ruins have given up what they were hiding. The darkness has been read. The fourth condition is met."));
+
         internal void LogAllDone() =>
             AddLog(new TextObject(
-                "All three conditions are met. The rekindling is possible. The choice remains."));
+                "All four conditions are met. The rekindling is possible. The choice remains."));
 
         internal void LogComplete()
         {
