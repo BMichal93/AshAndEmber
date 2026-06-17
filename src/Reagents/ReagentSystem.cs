@@ -22,6 +22,9 @@ namespace AshAndEmber
         public const string SeaSerpentScale = "SeaSerpentScale";
         public const string VoidResin       = "VoidResin";
 
+        // Days of aging reclaimed when a Sea Serpent Scale is consumed at any ritual site.
+        public const int ScaleAgingReclaim = 1;
+
         public static readonly string[] AllTypes =
             { BrimstoneAsh, FrozenAmber, SeaSerpentScale, VoidResin };
 
@@ -92,6 +95,9 @@ namespace AshAndEmber
             var t = BestForContext(isSanctuary: false);
             return t != null && Consume(t);
         }
+
+        // Consumes one Sea Serpent Scale for its aging-reclaim effect at any ritual site.
+        public static bool ConsumeScale() => Consume(SeaSerpentScale);
 
         public static string BestForContext(bool isSanctuary)
             => AllTypes

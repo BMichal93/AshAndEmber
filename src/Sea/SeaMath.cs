@@ -61,6 +61,27 @@ namespace AshAndEmber
         public const int BlessVentureAgingDays = 1;
         public static readonly int[] VentureTiers = { 500, 2000, 8000 };
 
+        // ── Reagent cargo commissioning ──────────────────────────────────────
+        // Four investment tiers: more gold → lower failure chance and higher yield.
+        public struct ReagentCargoTier
+        {
+            public int   Cost;
+            public float FailureChance;
+            public int   Qty;
+        }
+
+        public static readonly ReagentCargoTier[] ReagentCargoTiers =
+        {
+            new ReagentCargoTier { Cost = 500,   FailureChance = 0.60f, Qty = 1 },
+            new ReagentCargoTier { Cost = 2000,  FailureChance = 0.35f, Qty = 1 },
+            new ReagentCargoTier { Cost = 6000,  FailureChance = 0.15f, Qty = 2 },
+            new ReagentCargoTier { Cost = 15000, FailureChance = 0.05f, Qty = 3 },
+        };
+
+        // Only one reagent expedition may run at a time; duration is the natural gate.
+        public const int ReagentExpeditionDaysMin  = 14;
+        public const int ReagentExpeditionDaysRand = 15;  // range on top of min (14–28 days total)
+
         // ── NPC sea lanes ────────────────────────────────────────────────────
         // Lords and caravans leaving a harbor town may take ship instead of
         // marching. Lords only sail toward a destination their AI already

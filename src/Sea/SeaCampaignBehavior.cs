@@ -95,6 +95,8 @@ namespace AshAndEmber
             public float  Distance;
             public bool   IsReagent;
             public string ReagentType;
+            public float  FailureChance;   // 0 → legacy default (0.15)
+            public int    ReagentQty;      // 0 → legacy default (1)
         }
         private static readonly List<Venture> _ventures = new List<Venture>();
 
@@ -123,6 +125,8 @@ namespace AshAndEmber
                 var dist     = _ventures.Select(v => v.Distance).ToList();
                 var reagent  = _ventures.Select(v => v.IsReagent ? 1 : 0).ToList();
                 var reagtype = _ventures.Select(v => v.ReagentType ?? "").ToList();
+                var reagfail = _ventures.Select(v => v.FailureChance).ToList();
+                var reagqty  = _ventures.Select(v => v.ReagentQty).ToList();
                 store.SyncData("SEA_VentureDests",    ref dests);
                 store.SyncData("SEA_VentureDays",     ref days);
                 store.SyncData("SEA_VentureInvested", ref invested);
@@ -130,6 +134,8 @@ namespace AshAndEmber
                 store.SyncData("SEA_VentureDist",     ref dist);
                 store.SyncData("SEA_VentureReagent",  ref reagent);
                 store.SyncData("SEA_VentureReagType", ref reagtype);
+                store.SyncData("SEA_VentureReagFail", ref reagfail);
+                store.SyncData("SEA_VentureReagQty",  ref reagqty);
 
                 if (dests != null && days != null && invested != null && blessed != null && dist != null
                     && dests.Count == days.Count && dests.Count == invested.Count
@@ -139,13 +145,15 @@ namespace AshAndEmber
                     for (int i = 0; i < dests.Count; i++)
                         _ventures.Add(new Venture
                         {
-                            DestName   = dests[i],
-                            DaysLeft   = days[i],
-                            Invested   = invested[i],
-                            Blessed    = blessed[i] != 0,
-                            Distance   = dist[i],
-                            IsReagent  = reagent  != null && i < reagent.Count  && reagent[i]  != 0,
-                            ReagentType = reagtype != null && i < reagtype.Count ? reagtype[i] : null,
+                            DestName      = dests[i],
+                            DaysLeft      = days[i],
+                            Invested      = invested[i],
+                            Blessed       = blessed[i] != 0,
+                            Distance      = dist[i],
+                            IsReagent     = reagent  != null && i < reagent.Count  && reagent[i]  != 0,
+                            ReagentType   = reagtype != null && i < reagtype.Count ? reagtype[i] : null,
+                            FailureChance = reagfail != null && i < reagfail.Count ? reagfail[i]  : 0f,
+                            ReagentQty    = reagqty  != null && i < reagqty.Count  ? reagqty[i]   : 0,
                         });
                 }
             }

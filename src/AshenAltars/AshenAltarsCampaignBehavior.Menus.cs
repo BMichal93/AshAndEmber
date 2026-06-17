@@ -138,6 +138,8 @@ namespace AshAndEmber
                                     string rn = ReagentSystem.FriendlyName(ReagentSystem.BestForContext(isSanctuary: false));
                                     reagentNote = $"  [{rn} available: −{reduc} day cooldown]";
                                 }
+                                if (ReagentSystem.HasAny(ReagentSystem.SeaSerpentScale))
+                                    reagentNote += $"  [Sea Serpent Scale: −{ReagentSystem.ScaleAgingReclaim} day aging]";
                             }
 
                             MBTextManager.SetTextVariable("ALTAR_COLD_TEXT",
@@ -241,6 +243,18 @@ namespace AshAndEmber
             }
             catch { }
 
+            int agingReclaim = 0;
+            try
+            {
+                if (ReagentSystem.HasAny(ReagentSystem.SeaSerpentScale))
+                {
+                    ReagentSystem.ConsumeScale();
+                    agingReclaim = ReagentSystem.ScaleAgingReclaim;
+                    AgingSystem.RejuvenateHero(hero, agingReclaim);
+                }
+            }
+            catch { }
+
             int gained = MiracleInventory.AddCold(baseGain);
 
             try { MageKnowledge.AddWhispers(3); } catch { }
@@ -251,12 +265,15 @@ namespace AshAndEmber
             string reagentLine = cooldownReduction > 0
                 ? $"\n\nA reagent was consumed, reducing the next cooldown by {cooldownReduction} day(s)."
                 : "";
+            string scaleLine = agingReclaim > 0
+                ? "\n\nA Sea Serpent Scale presses against the stone and dissolves. The cold returns a day it had borrowed from you."
+                : "";
 
             string msg;
             if (gained > 0)
                 msg = $"The stone takes what you offer. It does not thank you. It does not need to. " +
                       $"{gained} Cold received (cost: {costDesc}). [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]\n\n" +
-                      $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}";
+                      $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}{scaleLine}";
             else if (MiracleInventory.Grace > 0)
                 msg = "The light within you repels the stone. Spend your Grace first.";
             else if (MiracleInventory.Cold >= MiracleMath.GraceColdCap)
