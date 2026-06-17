@@ -92,6 +92,7 @@ namespace AshAndEmber
                 {
                     if (!ashen && _emberTitheRefusedCountdown == 0) pool.Add(E_EmberTithe);
                     if (_childEventCooldown == 0 && HasEligibleChild()) pool.Add(E_DarkeningInheritance);
+                    if (_merchantOfEndingsCooldown == 0) pool.Add(EC_MerchantOfEndings);
                 }
                 pool.Add(EC9_AshenElixir);
                 if (ashen) pool.Add(EV_MemoryHunger);
