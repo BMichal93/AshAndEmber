@@ -66,7 +66,7 @@ namespace AshAndEmber
                     new InquiryElement("glory",
                         "Agree — play for glory.",
                         null, true,
-                        "Renown and standing in the world, against what defines you. (+150 renown, +150 influence)"),
+                        "Renown and standing in the world, against what defines you. (+150 renown, +250 influence)"),
                     new InquiryElement("power",
                         "Agree — play for power.",
                         null, true,
@@ -116,8 +116,8 @@ namespace AshAndEmber
                                         if (Hero.MainHero?.Clan != null)
                                         {
                                             Hero.MainHero.Clan.Renown    += 150f;
-                                            Hero.MainHero.Clan.Influence += 150f;
-                                            Msg("(+150 renown, +150 influence)", GoodColor);
+                                            Hero.MainHero.Clan.Influence += 250f;
+                                            Msg("(+150 renown, +250 influence)", GoodColor);
                                         }
                                     }
                                     catch { }
