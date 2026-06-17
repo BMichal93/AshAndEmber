@@ -10,6 +10,7 @@ using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -103,6 +104,7 @@ namespace AshAndEmber
                 "  ◈ Fading Ward     — barrier expires after 60 seconds\n" +
                 "  ◈ Directed Burst  — full power forward, 40% in the rear arc\n\n" +
                 "  Open this book any time: Left Alt + X  (LB + RB on a controller)." +
+                BuildMurmursSection() +
                 (_isAshen ? AshenQuestSystem.GetGrimoireSummary() : DragonQuestSystem.GetGrimoireSummary());
 
             string title = _isAshen ? "The Ashen Fire" : "The Inner Fire";
@@ -296,6 +298,70 @@ namespace AshAndEmber
                 },
                 null, "", false
             ), false, true);
+        }
+
+        // ── Whisper murmurs ───────────────────────────────────────────────────
+        // At Tier 3 (75+ whispers) the cold shares intelligence the player
+        // couldn't otherwise know: Ashen footholds, failing kingdoms, lingering
+        // darkness. Each fragment is derived from live world state, not scripted.
+
+        private static string BuildMurmursSection()
+        {
+            if (WhisperTier < 3) return "";
+            try
+            {
+                if (Campaign.Current == null) return "";
+                var lines = new List<string>();
+
+                try
+                {
+                    int ashenTowns = Settlement.All
+                        .Count(s => s.IsTown && s.MapFaction?.StringId == "ashen_kingdom");
+                    if (ashenTowns > 0)
+                    {
+                        var ashenKingdom = Kingdom.All
+                            .FirstOrDefault(k => k.StringId == "ashen_kingdom" && !k.IsEliminated);
+                        string anchor = "";
+                        if (ashenKingdom != null)
+                        {
+                            var heaviest = ashenKingdom.Settlements
+                                .Where(s => s.IsTown && s.Town != null)
+                                .OrderByDescending(s => s.Town.Prosperity)
+                                .FirstOrDefault();
+                            if (heaviest != null) anchor = $" Their weight is greatest near {heaviest.Name}.";
+                        }
+                        lines.Add($"  The grey hold {ashenTowns} settlement{(ashenTowns != 1 ? "s" : "")}.{anchor}");
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var thin = Kingdom.All
+                        .Where(k => !k.IsEliminated && k.StringId != "ashen_kingdom")
+                        .OrderBy(k => k.Settlements.Count(s => s.IsTown))
+                        .FirstOrDefault();
+                    if (thin != null)
+                    {
+                        int n = thin.Settlements.Count(s => s.IsTown);
+                        if (n <= 3)
+                            lines.Add($"  {thin.Name} grows thin — {n} town{(n != 1 ? "s" : "")} left. Their hall burns fewer torches each season.");
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    if (CampaignMapEvents.IsLongNight())
+                        lines.Add("  The darkness has not lifted. What the Night called has not all gone back.");
+                }
+                catch { }
+
+                if (lines.Count == 0) return "";
+                return "\n── MURMURS  (the cold speaks plainly now) ──────────\n" +
+                       string.Join("\n", lines) + "\n";
+            }
+            catch { return ""; }
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────

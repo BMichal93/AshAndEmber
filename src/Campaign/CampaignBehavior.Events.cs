@@ -50,6 +50,14 @@ namespace AshAndEmber
             {
                 try { AshenCitySystem.ApplyAshenAppearanceToSettlement(settlement); } catch { }
                 try { EmberConclaveSystem.OnSettlementEntered(settlement); } catch { }
+                try
+                {
+                    string scar = CampaignMapEvents.GetSettlementScar(settlement);
+                    if (scar != null)
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            scar, new Color(0.55f, 0.55f, 0.70f)));
+                }
+                catch { }
             }
         }
 
