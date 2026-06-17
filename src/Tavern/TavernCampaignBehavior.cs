@@ -34,6 +34,8 @@ namespace AshAndEmber
         private static int    _roundsDrunk       = 0;
         private static int    _totalSpent        = 0;
         private static int    _lastDrinkCost     = 50; // remembered between rounds
+        private static int    _diceLastBet       = 0;
+        private static bool   _diceMode          = false; // true after a dice game, so result menu offers "Roll again"
         private static float  _soberHoursTotal   = 0f;
         private static float  _soberHoursElapsed = 0f;
         private static bool   _soberDone         = false;
@@ -63,6 +65,8 @@ namespace AshAndEmber
         {
             _roundsDrunk       = 0;
             _totalSpent        = 0;
+            _diceLastBet       = 0;
+            _diceMode          = false;
             _soberHoursTotal   = 0f;
             _soberHoursElapsed = 0f;
             _soberDone         = false;
