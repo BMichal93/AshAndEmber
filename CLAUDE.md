@@ -87,7 +87,7 @@ Both `SanctuaryCampaignBehavior` and `AshenAltarsCampaignBehavior` share the sam
 
 ### Talent and Focus Point Costs
 
-All talents cost 1 focus point each, regardless of how many you already own. Lost Forms always cost 3 focus points. Campaign (non-battle) spells cost 1 day for the first cast per day, then escalate (1 → 7 → 14 → 21 …).
+All talents cost 1 focus point each, regardless of how many you already own. Lost Forms cost 1 focus point like any other talent. Campaign (non-battle) spells cost 1 day for the first cast per day, then escalate (1 → 7 → 14 → 21 …).
 
 ### Key Numerical Constants
 

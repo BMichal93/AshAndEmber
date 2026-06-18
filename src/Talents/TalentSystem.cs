@@ -290,28 +290,28 @@ namespace AshAndEmber
             new TalentDef
             {
                 Id = TalentId.LostBlast, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Widened Blast",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Widened Blast",
                 Lore = "The fire does not ask how wide your arms can reach. It asks how wide your will can hold. You found a slightly different angle of release — not taught, not passed down, only survived. The cone opens. More earth scorched, fewer who dodge the edges.",
                 MechanicDesc = "Lost Form. Blast cone widens from ~49° to ~60°. More enemies caught at the edge; the forward reach is unchanged."
             },
             new TalentDef
             {
                 Id = TalentId.LostMissile, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Twin Bolt",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Twin Bolt",
                 Lore = "The first time you split the bolt it was an accident — it came apart in your hands before release, two pieces each carrying their own heat. The second time was deliberate. Neither bolt is as strong as one whole. But one bolt can miss.",
                 MechanicDesc = "Lost Form. Missile fires two bolts side by side. Each bolt carries 60% of the original damage and heal power."
             },
             new TalentDef
             {
                 Id = TalentId.LostBarrier, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Fading Ward",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Fading Ward",
                 Lore = "The old barrier stood until you let it go. This one does not ask to be released — it knows when it has done its work. Sixty seconds, then the fire returns to you. Less permanent, but you carry it lighter.",
                 MechanicDesc = "Lost Form. Barrier nodes expire after 60 seconds instead of persisting indefinitely. The fire returns on its own."
             },
             new TalentDef
             {
                 Id = TalentId.LostBurst, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Directed Burst",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Directed Burst",
                 Lore = "You have always stood at the center. The fire went out evenly, touching everything the same. But an even field is not always what the moment needs. Lean into the front; let the rear feel only the echo. Not a perfect circle — a pointed wave.",
                 MechanicDesc = "Lost Form. Burst is asymmetric. The forward hemisphere receives full power; the rear hemisphere receives 40%. Useful when your allies stand behind you."
             },
@@ -348,21 +348,21 @@ namespace AshAndEmber
             new TalentDef
             {
                 Id = TalentId.WardenRing, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 3, Name = "The Warden's Ring",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "The Warden's Ring",
                 Lore = "The old form of the barrier was always a wall — a line you drew between yourself and what was coming. But a wall has two ends. The older working was a ring: fire surrounding, not dividing. The form was nearly lost because the warding requires standing inside the fire.",
                 MechanicDesc = "Lost Form (3 focus points). Barrier nodes form a complete ring around the caster instead of a wall in front. Each node is placed 2.5 metres from the caster at equal angles."
             },
             new TalentDef
             {
                 Id = TalentId.Dirge, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Dirge",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Dirge",
                 Lore = "Most who carry the fire scatter it outward. The old form collapses it inward — downward, into the earth beneath the feet. It does not explode. It seeps. The ground smokes for a long time after. Anything that walks through it, walks through a working that has not finished yet.",
                 MechanicDesc = "Lost Form (3 focus points). Burst drives fire into the ground rather than outward. A smouldering patch lingers for 12 seconds, burning enemies who walk through it."
             },
             new TalentDef
             {
                 Id = TalentId.PaleComet, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Pale Comet",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Pale Comet",
                 Lore = "A bolt that does not stop at the first thing it finds. The fire passes through — not weakened, only saved for later. It finishes what it started at the far end of its reach. You do not see what it does until it is done.",
                 MechanicDesc = "Lost Form (3 focus points). The missile passes through enemies rather than detonating on first contact. Each enemy it crosses is struck by the full cast. The bolt detonates only when its full range is spent."
             },
