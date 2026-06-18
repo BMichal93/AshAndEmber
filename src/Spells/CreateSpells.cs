@@ -140,8 +140,8 @@ namespace AshAndEmber
                     dest.z = a.Position.z;
                     try { QueueMove(a, dest, 0.3f); } catch { }
 
-                    // Anchor Ward: sear the approach, slowing enemies near the barrier.
-                    if (!a.IsHero && TalentSystem.Has(TalentId.AnchorWard))
+                    // Cinder Shell: the hardening fire also warns — slows enemies near the barrier.
+                    if (!a.IsHero && TalentSystem.Has(TalentId.CinderShell))
                     {
                         try
                         {

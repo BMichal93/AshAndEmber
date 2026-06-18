@@ -167,8 +167,8 @@ namespace AshAndEmber
                 }
             }
 
-            // Scorch: lingering burn DoT per Sear input. Refreshes on subsequent hits.
-            if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Scorch))
+            // Immolate: survivors of a Sear hit burn (DoT). Runs before the kill check so it applies regardless of outcome.
+            if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Immolate))
             {
                 try
                 {
@@ -182,8 +182,8 @@ namespace AshAndEmber
                 catch { }
             }
 
-            // Ashmark: brands enemy morale at its current level for 30 seconds.
-            if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Ashmark))
+            // Smoulder: Sear inputs seal the morale brand — enemies cannot recover morale for 30 seconds.
+            if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Smoulder))
             {
                 try
                 {
@@ -305,8 +305,8 @@ namespace AshAndEmber
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Immolate — consumed.", new Color(1f, 0.4f, 0.1f)));
 
-                        // Chain Ignite: fire leaps to nearby enemies on kill.
-                        if (CasterHasEnchantment(caster, TalentId.ChainIgnite) && Mission.Current != null)
+                        // Immolate: fire leaps to nearby enemies on kill.
+                        if (CasterHasEnchantment(caster, TalentId.Immolate) && Mission.Current != null)
                         {
                             Vec3 killPos  = target.Position;
                             float chainDmg = cast.EffSear * 25f * 0.30f;
