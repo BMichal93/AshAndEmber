@@ -38,6 +38,9 @@ namespace AshAndEmber
             try { SpellEffects.ClearChar();          } catch { }
             try { SpellEffects.ClearReflect();       } catch { }
             try { SpellEffects.ClearAttackWeaken();  } catch { }
+            try { SpellEffects.ClearScorch();        } catch { }
+            try { SpellEffects.ClearAshmark();       } catch { }
+            try { SpellEffects.ClearInnerFireHeat(); } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { MagicInputHandler.ResetInputState();  } catch { }
             try { AlchemyEffects.ClearBattleState();     } catch { }
@@ -218,6 +221,9 @@ namespace AshAndEmber
             SpellEffects.TickChar(dt);
             SpellEffects.TickReflect(dt);
             SpellEffects.TickAttackWeaken(dt);
+            SpellEffects.TickScorch(dt);
+            SpellEffects.TickAshmark(dt);
+            SpellEffects.TickInnerFireHeat(dt);
             SpellEffects.TickMagicMemory(dt);
             SpellEffects.TickHaltedAgents(dt);
             SpellEffects.FlushPendingDeaths();
@@ -240,6 +246,9 @@ namespace AshAndEmber
             try { SpellEffects.ClearChar();          } catch { }
             try { SpellEffects.ClearReflect();       } catch { }
             try { SpellEffects.ClearAttackWeaken();  } catch { }
+            try { SpellEffects.ClearScorch();        } catch { }
+            try { SpellEffects.ClearAshmark();       } catch { }
+            try { SpellEffects.ClearInnerFireHeat(); } catch { }
             try { SpellEffects.ClearMagicMemory();   } catch { }
             try { SpellEffects.ClearFocusVisuals();  } catch { }
             try { SpellEffects.ClearGlows();         } catch { }

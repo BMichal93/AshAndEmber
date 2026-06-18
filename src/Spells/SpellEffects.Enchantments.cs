@@ -192,6 +192,57 @@ namespace AshAndEmber
 
         public static void ClearReflect() => _reflectAgents.Clear();
 
+        // ── Scorch (Scorch enchantment — Sear DoT) ────────────────────────────────
+        private static readonly Dictionary<Agent, (float Dps, float Remaining)>
+            _scorchAgents = new Dictionary<Agent, (float, float)>();
+
+        public static void TickScorch(float dt)
+        {
+            foreach (Agent key in _scorchAgents.Keys.ToList())
+            {
+                var (dps, remaining) = _scorchAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive() || key.Health <= 0f)
+                {
+                    _scorchAgents.Remove(key);
+                    continue;
+                }
+                try { DamageAgent(key, dps * dt); } catch { }
+                _scorchAgents[key] = (dps, remaining);
+            }
+        }
+
+        public static void ClearScorch() => _scorchAgents.Clear();
+
+        // ── Ashmark (Ashmark enchantment — morale lock) ───────────────────────────
+        // Stores the morale value at the moment of branding. Each tick clamps the
+        // agent's morale to that ceiling so recovery buffs cannot exceed the brand.
+        private static readonly Dictionary<Agent, (float LockedMorale, float Remaining)>
+            _ashmarkedAgents = new Dictionary<Agent, (float, float)>();
+
+        public static void TickAshmark(float dt)
+        {
+            foreach (Agent key in _ashmarkedAgents.Keys.ToList())
+            {
+                var (locked, remaining) = _ashmarkedAgents[key];
+                remaining -= dt;
+                if (remaining <= 0f || key == null || !key.IsActive() || key.Health <= 0f)
+                {
+                    _ashmarkedAgents.Remove(key);
+                    continue;
+                }
+                try
+                {
+                    float cur = key.GetMorale();
+                    if (cur > locked) key.SetMorale(locked);
+                }
+                catch { }
+                _ashmarkedAgents[key] = (locked, remaining);
+            }
+        }
+
+        public static void ClearAshmark() => _ashmarkedAgents.Clear();
+
         // ── Flashfire (passive — spell echo) ────────────────────────────────────
         // Prevents recursion if Flashfire somehow echoes into itself.
         private static bool _flashfireActive = false;

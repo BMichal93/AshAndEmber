@@ -167,6 +167,36 @@ namespace AshAndEmber
                 }
             }
 
+            // Scorch: lingering burn DoT per Sear input. Refreshes on subsequent hits.
+            if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Scorch))
+            {
+                try
+                {
+                    float dps = cast.EffSear * 2f;
+                    if (!_scorchAgents.TryGetValue(target, out var cur))
+                        _scorchAgents[target] = (dps, 3f);
+                    else
+                        _scorchAgents[target] = (Math.Max(cur.Dps, dps), 3f);
+                    BeginAgentGlow(target, ColorSchool.Red, 1.5f);
+                }
+                catch { }
+            }
+
+            // Ashmark: brands enemy morale at its current level for 30 seconds.
+            if (cast.EffSear > 0 && CasterHasEnchantment(caster, TalentId.Ashmark))
+            {
+                try
+                {
+                    float morale = target.GetMorale();
+                    if (!_ashmarkedAgents.TryGetValue(target, out var cur) || cur.Remaining <= 0f)
+                        _ashmarkedAgents[target] = (morale, 30f);
+                    else
+                        _ashmarkedAgents[target] = (Math.Min(cur.LockedMorale, morale), 30f);
+                    BeginAgentGlow(target, ColorSchool.Red, 2f);
+                }
+                catch { }
+            }
+
             // Smoulder: morale penalty + bewildering random effect (merged Bewilder)
             if (CasterHasEnchantment(caster, TalentId.Smoulder))
             {
@@ -274,6 +304,31 @@ namespace AshAndEmber
                         BeginAgentGlow(target, ColorSchool.Red, 2f);
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Immolate — consumed.", new Color(1f, 0.4f, 0.1f)));
+
+                        // Chain Ignite: fire leaps to nearby enemies on kill.
+                        if (CasterHasEnchantment(caster, TalentId.ChainIgnite) && Mission.Current != null)
+                        {
+                            Vec3 killPos  = target.Position;
+                            float chainDmg = cast.EffSear * 25f * 0.30f;
+                            bool anyChain = false;
+                            try
+                            {
+                                foreach (Agent a in Mission.Current.Agents.ToList())
+                                {
+                                    if (!a.IsActive() || a.IsMount || a == target || IsWarded(a)) continue;
+                                    if (caster?.Team == null || a.Team == null || a.Team == caster.Team) continue;
+                                    float dist = new Vec3(a.Position.x - killPos.x, a.Position.y - killPos.y, 0f).Length;
+                                    if (dist > 3f) continue;
+                                    DamageAgent(a, chainDmg, owner: caster);
+                                    BeginAgentGlow(a, ColorSchool.Red, 1f);
+                                    anyChain = true;
+                                }
+                            }
+                            catch { }
+                            if (anyChain)
+                                InformationManager.DisplayMessage(new InformationMessage(
+                                    "Chain Ignite — the fire spreads.", new Color(1f, 0.55f, 0.1f)));
+                        }
                     }
                     else
                     {

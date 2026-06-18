@@ -421,6 +421,26 @@ namespace AshAndEmber
                         }
                         break;
                     }
+
+                    case "spell_dirge":
+                    {
+                        SpawnTempFireParticle(e.Position, 1.5f);
+                        SpawnTempLight(e.Position, ColorSchool.Red, Math.Max(5f, e.Radius * 0.6f), 1.5f);
+                        foreach (Agent a in Mission.Current.Agents.ToList())
+                        {
+                            if (!a.IsActive() || a.IsMount) continue;
+                            if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                            if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            if (IsWarded(a)) continue;
+                            try
+                            {
+                                DamageAgent(a, e.Power);
+                                BeginAgentGlow(a, ColorSchool.Red, 1.5f);
+                            }
+                            catch { }
+                        }
+                        break;
+                    }
                 }
                 } catch { } // guard: Mission.Agents modified during switch case
             }

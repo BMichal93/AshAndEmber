@@ -29,6 +29,8 @@ namespace AshAndEmber
 
         private static readonly Dictionary<string, float> _cooldowns   = new Dictionary<string, float>();
         private static readonly Dictionary<string, int>   _battleCasts = new Dictionary<string, int>();
+        // Tracks Pyre Lords who have already planted a barrier this battle.
+        private static readonly HashSet<string> _pyreBarriersPlaced = new HashSet<string>();
         private static readonly Random _rng = new Random();
 
         private static float _tickAccum   = 0f;
@@ -40,6 +42,7 @@ namespace AshAndEmber
         public static void ClearCooldowns()
         {
             _cooldowns.Clear();
+            _pyreBarriersPlaced.Clear();
             // _battleCasts is NOT cleared here — OnMapEventEnded consumes it after
             // the battle via ApplyNpcBattleAging, which fires after OnMissionEnded.
             // Call FlushBattleCasts() after aging is processed.
@@ -146,6 +149,13 @@ namespace AshAndEmber
                 isImpulsive   = !isAshen && calc < 0;
             }
             catch { }
+
+            // -1. Pyre Lord: plant a barrier wall once at battle start before attacking.
+            if (IsPyreLord(hero) && !_pyreBarriersPlaced.Contains(hero.StringId) && nearEnemies >= 1)
+            {
+                CastBarrierWall(agent, hero);
+                return;
+            }
 
             // 0. Defensive burst when endangered — Ward is now a Restoration talent, not NPC-castable.
             //    False emperor responds with maximum devastation; Ashen with overwhelming force.
@@ -296,6 +306,31 @@ namespace AshAndEmber
                 else if (nearEnemies > 0)
                     CastBurst(agent, hero, 3, 2, 0); // light pressure while repositioning
             }
+        }
+
+        // Pyre Lords: highly calculating (Calculating >= 2) non-Ashen lords who prefer to
+        // fortify with a barrier wall before attacking from behind it.
+        private static bool IsPyreLord(Hero hero)
+        {
+            if (hero == null || ColourLordRegistry.IsAshenLord(hero)) return false;
+            try { return hero.GetTraitLevel(DefaultTraits.Calculating) >= 2; } catch { return false; }
+        }
+
+        private static void CastBarrierWall(Agent agent, Hero hero)
+        {
+            try
+            {
+                AnnounceEnemyCast(agent, hero, "raises a wall of fire.");
+                SetCooldown(hero);
+                RecordCast(hero, 6); // 3 nodes + 3 damage inputs
+                _pyreBarriersPlaced.Add(hero.StringId);
+                SpellEffects.QueueNpcCastWithWindup(agent, () =>
+                {
+                    SpellEffects.ExecuteNpcBarrier(agent, 3, 3, 0, agent.Team);
+                    ApplyCastVisuals(agent);
+                });
+            }
+            catch { }
         }
 
         private static void CastBlast(Agent agent, Hero hero, int formCount, int dmg, int restore)

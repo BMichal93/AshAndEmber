@@ -59,6 +59,10 @@ namespace AshAndEmber
         public bool UsingLostMissile;
         public bool UsingLostBarrier;
         public bool UsingLostBurst;
+        // New Lost Forms take priority over the original ones when both are owned.
+        public bool UsingWardenRing;  // circular barrier
+        public bool UsingDirge;       // burst becomes ground patch
+        public bool UsingPaleComet;   // piercing missile
 
         public int DamageCount;    // total damage inputs — fire damage to enemies
         public int RestoreCount;   // D effects — healing to allies (and caster on Burst)
@@ -210,9 +214,22 @@ namespace AshAndEmber
             }
 
             if (cast.BlastCount   > 0) cast.UsingLostBlast   = TalentSystem.Has(TalentId.LostBlast);
-            if (cast.MissileCount > 0) cast.UsingLostMissile = TalentSystem.Has(TalentId.LostMissile);
-            if (cast.BarrierCount > 0) cast.UsingLostBarrier = TalentSystem.Has(TalentId.LostBarrier);
-            if (cast.BurstCount   > 0) cast.UsingLostBurst   = TalentSystem.Has(TalentId.LostBurst);
+            // New Lost Forms take priority over originals when both are owned.
+            if (cast.MissileCount > 0)
+            {
+                cast.UsingPaleComet   = TalentSystem.Has(TalentId.PaleComet);
+                cast.UsingLostMissile = !cast.UsingPaleComet && TalentSystem.Has(TalentId.LostMissile);
+            }
+            if (cast.BarrierCount > 0)
+            {
+                cast.UsingWardenRing  = TalentSystem.Has(TalentId.WardenRing);
+                cast.UsingLostBarrier = !cast.UsingWardenRing && TalentSystem.Has(TalentId.LostBarrier);
+            }
+            if (cast.BurstCount   > 0)
+            {
+                cast.UsingDirge      = TalentSystem.Has(TalentId.Dirge);
+                cast.UsingLostBurst  = !cast.UsingDirge && TalentSystem.Has(TalentId.LostBurst);
+            }
 
             if (MageKnowledge.IsAshen)
                 cast.OverrideVisualColor = ColorSchool.Ashen;
@@ -231,6 +248,7 @@ namespace AshAndEmber
             if (inMission)
             {
                 SpellEffects.ResetImmolateKill();
+                SpellEffects.AddCastHeat(cast.AgingDays(TalentSystem.Has(TalentId.BattleMage)));
                 int multi = cast.BlastCount + cast.MissileCount + cast.BarrierCount + cast.BurstCount;
 
                 if (multi == 0)

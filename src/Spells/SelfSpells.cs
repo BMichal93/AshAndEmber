@@ -30,6 +30,8 @@ namespace AshAndEmber
             public GameEntity  Light;
             public GameEntity  Light2;  // fireball cluster — upper glow for sphere appearance
             public float       TrailTimer = 0f;
+            // Pale Comet: tracks agents already struck so each is only hit once per flight.
+            public HashSet<Agent> PiercedAgents = null;
             public const float Speed         = 28f;
             public const float TrailInterval = 0.035f;  // was 0.05 — denser fire trail
             public const float DetectRadius  = 1.5f;
@@ -116,12 +118,15 @@ namespace AshAndEmber
                     TravelLeft = range, ExplosionRadius = explRadius,
                     Cast = cast, CasterTeam = caster.Team,
                 };
+                if (cast.UsingPaleComet)
+                    _missile.PiercedAgents = new HashSet<Agent>();
                 Vec3 rgb = SchoolToLightColor(col);
                 _missile.Light  = SpawnAreaLight(startPos, col, 6f);
                 _missile.Light2 = SpawnAreaLightRaw(startPos + new Vec3(0f, 0f, 0.4f), rgb, 3.5f);
                 if (col != ColorSchool.Ashen) SpawnBigFireParticle(startPos, 0.6f);
+                string formLabel = cast.UsingPaleComet ? "Pale Comet" : "Missile";
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"Missile ({range:F0}m, {explRadius:F0}m blast) — {cast.EffectSummary()}.",
+                    $"{formLabel} ({range:F0}m, {explRadius:F0}m blast) — {cast.EffectSummary()}.",
                     ColorSchoolData.GetMessageColor(col)));
             }
 
@@ -177,25 +182,59 @@ namespace AshAndEmber
             bool wantDmg  = m.Cast.DamageCount  > 0;
             bool wantHeal = m.Cast.RestoreCount > 0;
             Vec3 mpos = m.Position;
-            try
-            {
-                foreach (Agent a in Mission.Current.Agents)
-                {
-                    if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
-                    bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
-                    bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
-                    if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
-                    float dx = a.Position.x - mpos.x;
-                    float dy = a.Position.y - mpos.y;
-                    if (dx * dx + dy * dy > MissileState.DetectRadius * MissileState.DetectRadius) continue;
-                    ExplodeMissileState(ref m, mpos, isTwin);
-                    return;
-                }
-            }
-            catch { }
 
-            if (m.TravelLeft <= 0f)
-                ExplodeMissileState(ref m, m.Position, isTwin);
+            // Pale Comet: pass through enemies, applying effects on first contact per agent.
+            if (m.PiercedAgents != null)
+            {
+                try
+                {
+                    foreach (Agent a in Mission.Current.Agents)
+                    {
+                        if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
+                        if (m.PiercedAgents.Contains(a)) continue;
+                        bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                        bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
+                        if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
+                        float dx = a.Position.x - mpos.x;
+                        float dy = a.Position.y - mpos.y;
+                        if (dx * dx + dy * dy > MissileState.DetectRadius * MissileState.DetectRadius) continue;
+                        m.PiercedAgents.Add(a);
+                        if (!IsWarded(a))
+                        {
+                            try
+                            {
+                                ApplyEffectsToAgent(a, m.Cast, Agent.Main);
+                                SpawnImpactBurst(a.Position, m.Cast.VisualColor, 3f);
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+                if (m.TravelLeft <= 0f)
+                    ExplodeMissileState(ref m, m.Position, isTwin);
+            }
+            else
+            {
+                try
+                {
+                    foreach (Agent a in Mission.Current.Agents)
+                    {
+                        if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
+                        bool isEnemy = m.CasterTeam != null && a.Team != null && a.Team != m.CasterTeam;
+                        bool isAlly  = m.CasterTeam != null && a.Team != null && a.Team == m.CasterTeam;
+                        if (!((wantDmg && isEnemy) || (wantHeal && isAlly))) continue;
+                        float dx = a.Position.x - mpos.x;
+                        float dy = a.Position.y - mpos.y;
+                        if (dx * dx + dy * dy > MissileState.DetectRadius * MissileState.DetectRadius) continue;
+                        ExplodeMissileState(ref m, mpos, isTwin);
+                        return;
+                    }
+                }
+                catch { }
+                if (m.TravelLeft <= 0f)
+                    ExplodeMissileState(ref m, m.Position, isTwin);
+            }
         }
 
         // ── Explosion ─────────────────────────────────────────────────────────

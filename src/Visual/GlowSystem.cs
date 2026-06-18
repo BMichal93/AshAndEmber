@@ -109,6 +109,39 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Inner Fire Heat (glow intensity — scales with recent aging spend) ─────
+        // Each battle spell cast adds heat proportional to its aging cost.
+        // The heat decays passively and, above a threshold, radiates a visible
+        // ambient light around the caster — the inner fire running closer to the surface.
+        private static float _innerFireHeat  = 0f;
+        private static float _heatLightTimer = 0f;
+        private const  float HeatDecayRate   = 2f;   // per second
+        private const  float HeatLightInterval = 0.5f;
+
+        public static void AddCastHeat(float agingDays)
+        {
+            _innerFireHeat = Math.Min(100f, _innerFireHeat + agingDays * 2f);
+        }
+
+        public static void TickInnerFireHeat(float dt)
+        {
+            if (_innerFireHeat <= 0f) return;
+            _innerFireHeat = Math.Max(0f, _innerFireHeat - HeatDecayRate * dt);
+            if (_innerFireHeat < 10f || Agent.Main?.IsActive() != true) return;
+            _heatLightTimer -= dt;
+            if (_heatLightTimer > 0f) return;
+            _heatLightTimer = HeatLightInterval;
+            float radius = 3f + _innerFireHeat * 0.15f;
+            try { SpawnTempLight(Agent.Main.Position + new Vec3(0f, 0f, 1f), ColorSchool.Red, radius, HeatLightInterval + 0.1f); }
+            catch { }
+        }
+
+        public static void ClearInnerFireHeat()
+        {
+            _innerFireHeat  = 0f;
+            _heatLightTimer = 0f;
+        }
+
         public static void CastGlow(Agent caster, ColorSchool school)
         {
             if (caster == null) return;

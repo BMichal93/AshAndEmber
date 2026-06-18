@@ -71,6 +71,15 @@ namespace AshAndEmber
         LostMissile = 38, // Lost Form — twin bolts at 60% power each
         LostBarrier = 39, // Lost Form — barrier expires after 60 seconds
         LostBurst   = 40, // Lost Form — asymmetric burst (full front, 40% rear)
+        // ── New enchantments ───────────────────────────────────────────────
+        Scorch      = 42, // Enchantment — Damage: Sear leaves a lingering burn
+        ChainIgnite = 43, // Enchantment — Damage: Immolate kill spreads fire to nearby enemies
+        Ashmark     = 44, // Enchantment — Damage: Sear brands and locks enemy morale
+        AnchorWard  = 45, // Enchantment — Barrier warning zone slows enemies
+        // ── New Lost Forms ─────────────────────────────────────────────────
+        WardenRing  = 46, // Lost Form — circular barrier around caster
+        Dirge       = 47, // Lost Form — burst becomes a ground fire patch
+        PaleComet   = 48, // Lost Form — missile pierces enemies, detonates at range end
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm }
@@ -305,6 +314,57 @@ namespace AshAndEmber
                 Category = TalentCategory.LostForm, FocusCost = 2, Name = "Directed Burst",
                 Lore = "You have always stood at the center. The fire went out evenly, touching everything the same. But an even field is not always what the moment needs. Lean into the front; let the rear feel only the echo. Not a perfect circle — a pointed wave.",
                 MechanicDesc = "Lost Form. Burst is asymmetric. The forward hemisphere receives full power; the rear hemisphere receives 40%. Useful when your allies stand behind you."
+            },
+            // ── New enchantments (damage) ─────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.Scorch, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Scorch",
+                Lore = "Fire that touches skin does not simply wound — it lingers. Beneath the surface, in the places the healing cannot reach first, it keeps burning. The body does not forget what it felt.",
+                MechanicDesc = "Enchantment. Sear (W) inputs leave a burning wound. Each Sear input applies 2 fire damage per second for 3 seconds. A stronger strike refreshes the brand."
+            },
+            new TalentDef
+            {
+                Id = TalentId.ChainIgnite, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Chain Ignite",
+                Lore = "One flame touches another and does not ask permission. Where the fire kills, it does not simply stop — the heat that was in them seeks somewhere else to go. The nearest body will do.",
+                MechanicDesc = "Enchantment. When Immolate kills an enemy, fire leaps to all enemies within 3 metres, dealing 30% of the original cast's fire damage."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Ashmark, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Ashmark",
+                Lore = "The fire does not only burn the flesh. Something older brands the will. A man can run from pain. He cannot run from the mark that tells him there is nowhere left to go.",
+                MechanicDesc = "Enchantment. Sear (W) inputs brand the target's courage. Marked enemies cannot recover morale for 30 seconds — their will is sealed at the moment they were struck."
+            },
+            new TalentDef
+            {
+                Id = TalentId.AnchorWard, IsSpell = false, IsEnchantment = true,
+                Category = TalentCategory.Enchantment, Name = "Anchor Ward",
+                Lore = "The barrier does not only stop — it warns. Something in the flame recognises approach and reaches out before contact. What passes through that warmth finds itself slower, heavier, less sure of where it wanted to go.",
+                MechanicDesc = "Enchantment. Enemies entering the barrier's warning zone are seared by its heat, reducing movement speed by 30% for 4 seconds."
+            },
+            // ── New Lost Forms ─────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.WardenRing, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 3, Name = "The Warden's Ring",
+                Lore = "The old form of the barrier was always a wall — a line you drew between yourself and what was coming. But a wall has two ends. The older working was a ring: fire surrounding, not dividing. The form was nearly lost because the warding requires standing inside the fire.",
+                MechanicDesc = "Lost Form (3 focus points). Barrier nodes form a complete ring around the caster instead of a wall in front. Each node is placed 2.5 metres from the caster at equal angles."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Dirge, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Dirge",
+                Lore = "Most who carry the fire scatter it outward. The old form collapses it inward — downward, into the earth beneath the feet. It does not explode. It seeps. The ground smokes for a long time after. Anything that walks through it, walks through a working that has not finished yet.",
+                MechanicDesc = "Lost Form (3 focus points). Burst drives fire into the ground rather than outward. A smouldering patch lingers for 12 seconds, burning enemies who walk through it."
+            },
+            new TalentDef
+            {
+                Id = TalentId.PaleComet, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 3, Name = "Pale Comet",
+                Lore = "A bolt that does not stop at the first thing it finds. The fire passes through — not weakened, only saved for later. It finishes what it started at the far end of its reach. You do not see what it does until it is done.",
+                MechanicDesc = "Lost Form (3 focus points). The missile passes through enemies rather than detonating on first contact. Each enemy it crosses is struck by the full cast. The bolt detonates only when its full range is spent."
             },
         };
 

@@ -28,12 +28,28 @@ namespace AshAndEmber
             Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();
             int  count = Math.Max(1, cast.BarrierCount > 0 ? cast.BarrierCount : cast.FormCount);
 
-            for (int i = 0; i < count; i++)
+            if (cast.UsingWardenRing)
             {
-                // Spread nodes left to right across the forward direction
-                float offset = (i - (count - 1) * 0.5f) * 1.5f; // 1.5m = hit radius → solid wall, no gaps
-                Vec3 pos = caster.Position + fwd * 3f + right * offset;
-                AddBarrierNode(pos, cast, caster.Team);
+                // Warden's Ring: nodes evenly spaced in a full circle around the caster.
+                float ringR = 2.5f;
+                for (int i = 0; i < count; i++)
+                {
+                    double angle = Math.PI * 2.0 / count * i;
+                    Vec3 pos = caster.Position + new Vec3(
+                        (float)Math.Cos(angle) * ringR,
+                        (float)Math.Sin(angle) * ringR, 0f);
+                    AddBarrierNode(pos, cast, caster.Team);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    // Spread nodes left to right across the forward direction
+                    float offset = (i - (count - 1) * 0.5f) * 1.5f; // 1.5m = hit radius → solid wall, no gaps
+                    Vec3 pos = caster.Position + fwd * 3f + right * offset;
+                    AddBarrierNode(pos, cast, caster.Team);
+                }
             }
 
             ColorSchool col = cast.VisualColor;
@@ -123,6 +139,20 @@ namespace AshAndEmber
                     Vec3 dest = a.Position + outDir * pushDist;
                     dest.z = a.Position.z;
                     try { QueueMove(a, dest, 0.3f); } catch { }
+
+                    // Anchor Ward: sear the approach, slowing enemies near the barrier.
+                    if (!a.IsHero && TalentSystem.Has(TalentId.AnchorWard))
+                    {
+                        try
+                        {
+                            float reducedSpeed = 7f; // ~30% reduction from default cap of 10
+                            if (!_charredAgents.TryGetValue(a, out var cur) || cur.Remaining < 4f)
+                                _charredAgents[a] = (reducedSpeed, 4f);
+                            a.SetMaximumSpeedLimit(_charredAgents[a].ReducedSpeed, false);
+                            BeginAgentGlow(a, ColorSchool.Red, 1f);
+                        }
+                        catch { }
+                    }
                 }
 
                 if (dist > e.Radius) continue;
@@ -204,6 +234,36 @@ namespace AshAndEmber
             catch { }
 
             ColorSchool col = cast.VisualColor;
+
+            // Dirge Lost Form: collapse fire into the ground as a smouldering patch.
+            if (cast.UsingDirge && wantDmg)
+            {
+                SpawnDirgePatch(caster.Position, cast.DamageCount, radius, casterTeam);
+                TryCastSound(caster.Position, col);
+                TryCastAnimation(caster);
+                BeginAgentGlow(caster, col, 2f);
+                if (wantHeal && caster.IsActive())
+                {
+                    try
+                    {
+                        HealAgent(caster, cast.RestoreCount * 15f);
+                        ApplyRestoreEnchantments(caster, cast, caster);
+                    }
+                    catch { }
+                    if (caster == Agent.Main)
+                        SpawnHolyZone(caster.Position, cast.RestoreCount, radius, casterTeam);
+                }
+                if (caster == Agent.Main)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Dirge — fire driven into the earth ({radius:F0}m, 12 seconds).",
+                        ColorSchoolData.GetMessageColor(col)));
+                else
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{caster.Name} — dirge burns the ground.",
+                        new Color(0.6f, 0.6f, 0.6f)));
+                return;
+            }
+
             SpawnBurstExplosion(caster.Position, col, radius, 6f);
             TryCastSound(caster.Position, col);
             TryCastAnimation(caster);
