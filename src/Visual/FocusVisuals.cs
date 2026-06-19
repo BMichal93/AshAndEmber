@@ -76,6 +76,17 @@ namespace AshAndEmber
             }
         }
 
+        // One-shot focus aura for NPC casters. NPCs do not "hold" the focus key, so
+        // instead of a persistent, key-released entry we fire a single focus pulse
+        // (contour glow + warm light + fire particles) the moment they begin a cast.
+        // The glow lasts ~FocusGlowDuration, long enough to read as "channelling"
+        // through the short NPC wind-up. No teardown needed — the pulse self-expires.
+        public static void FlashFocusAura(Agent agent, ColorSchool school)
+        {
+            if (agent == null || !agent.IsActive() || agent.Health <= 0f) return;
+            PulseFocusVisual(agent, school);
+        }
+
         // Clear all focus visuals — called on mission end.
         public static void ClearFocusVisuals()
         {

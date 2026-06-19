@@ -98,6 +98,7 @@ namespace AshAndEmber
                 CampaignMapEvents.ResetForNewGame();
                 SettlementEncounters.ResetForNewGame();
                 DragonQuestSystem.ResetForNewGame();
+                KeybindReferenceSystem.ResetForNewGame();
                 AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
                 EmberConclaveSystem.ResetForNewGame();
@@ -158,12 +159,12 @@ namespace AshAndEmber
                     new InquiryElement("faith", "I devoted myself to faith. The fire became a prayer.", null,
                         heroHonor >= 1,
                         heroHonor >= 1
-                            ? "Your piety consecrated the gift. You begin as a mage with 5 Grace."
+                            ? "Your piety turned the gift to prayer. You walk the path of miracles, not spells, and begin with 5 Grace."
                             : "Only those who walk an honourable path may speak of sacred devotion. [Requires: Honourable]"),
                     new InquiryElement("dark_rites", "I suppressed it through dark rites. The cost was steep.", null,
                         heroHonor <= -1,
                         heroHonor <= -1
-                            ? "The rites hollowed the warmth from you, and the cold rushed in to fill the void. You begin as a mage with 5 Cold."
+                            ? "The rites hollowed the warmth from you, and the cold rushed in to fill the void. You walk the path of cold miracles, not spells, and begin with 5 Cold."
                             : "Only those who have walked crooked paths know such rites. [Requires: Dishonorable]"),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
@@ -177,8 +178,9 @@ namespace AshAndEmber
                 {
                     bool isFaith     = chosen?.Any(e => e.Identifier is string s && s == "faith")      == true;
                     bool isDarkRites = chosen?.Any(e => e.Identifier is string s && s == "dark_rites") == true;
-                    bool isMage      = chosen?.Any(e => e.Identifier is string s && s == "yes")        == true
-                                       || isFaith || isDarkRites;
+                    // Faith and dark rites walk the miracle path (Grace / Cold) — they are NOT
+                    // mages and cannot shape spells, so they never enter the spellcasting focus.
+                    bool isMage      = chosen?.Any(e => e.Identifier is string s && s == "yes")        == true;
                     bool isAshen     = chosen?.Any(e => e.Identifier is string s && s == "ashen")      == true;
                     if (isAshen) isMage = true;
                     MageKnowledge.SetMage(isMage);

@@ -177,10 +177,31 @@ namespace AshAndEmber
         }
 
         public static void QueueNpcCastWithWindup(Agent agent, Action castAction)
+            => QueueNpcCastWithWindup(agent, NpcCastFocusSchool(agent), castAction);
+
+        public static void QueueNpcCastWithWindup(Agent agent, ColorSchool focusSchool, Action castAction)
         {
             BeginCastLoop(agent);
+            // Show the caster's focus aura during the wind-up — the NPC analogue of
+            // the player's held-focus glow.
+            FlashFocusAura(agent, focusSchool);
             _pendingNpcCasts.RemoveAll(x => x.agent == agent);
             _pendingNpcCasts.Add((agent, NpcCastWindup, castAction));
+        }
+
+        // Infers the focus-aura colour for an NPC spell caster from its identity:
+        // Ashen lords burn cold, colour lords burn violet, and bandits/troops who
+        // borrow the fire show plain red.
+        private static ColorSchool NpcCastFocusSchool(Agent agent)
+        {
+            try
+            {
+                Hero h = (agent?.Character as CharacterObject)?.HeroObject;
+                if (h != null)
+                    return ColourLordRegistry.IsAshenLord(h) ? ColorSchool.Ashen : ColorSchool.Purple;
+            }
+            catch { }
+            return ColorSchool.Red;
         }
 
         public static void ClearAnimTimers()

@@ -58,6 +58,7 @@ namespace AshAndEmber
                 try { CampaignMapEvents.DailyTick(); } catch { }
                 try { SettlementEncounters.DailyTick(); } catch { }
                 try { DragonQuestSystem.DailyTick(); } catch { }
+                try { KeybindReferenceSystem.DailyTick(); } catch { }
                 try { AshenQuestSystem.DailyTick(); } catch { }
                 try { BurningLabQuestSystem.DailyTick(); } catch { }
                 try { EmberConclaveSystem.DailyTick(); } catch { }

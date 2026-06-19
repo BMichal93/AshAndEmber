@@ -80,11 +80,20 @@
       <HintPath>$(_BL)\TaleWorlds.Engine.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="TaleWorlds.Engine.GauntletUI">
+      <HintPath>$(_BL)\TaleWorlds.Engine.GauntletUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.ScreenSystem">
+      <HintPath>$(_BL)\TaleWorlds.ScreenSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="SaveDefiner.cs"/>
+    <Compile Include="Startup\AshEmberSplash.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.Quest.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.Ending.cs"/>
@@ -99,6 +108,7 @@
     <Compile Include="QuestSystems\BurningLabQuestSystem.QuestlineC.cs"/>
     <Compile Include="QuestSystems\BurningLabQuestSystem.Helpers.cs"/>
     <Compile Include="QuestSystems\ArenicosDialogue.cs"/>
+    <Compile Include="QuestSystems\KeybindReferenceLog.cs"/>
     <Compile Include="AgingSystem.cs"/>
     <Compile Include="SchoolData.cs"/>
     <Compile Include="SpellDatabase.cs"/>

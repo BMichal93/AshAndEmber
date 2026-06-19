@@ -1,0 +1,15 @@
+<Prefab>
+  <Window>
+    <!-- Full-screen black plate. DoNotAcceptEvents so it never steals menu clicks. -->
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" DoNotAcceptEvents="true" DoNotUseCustomScale="true">
+      <Children>
+        <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" StackLayout.LayoutMethod="VerticalTopToBottom">
+          <Children>
+            <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="AshEmber.Splash.Title" Text="@Title" />
+            <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="AshEmber.Splash.Subtitle" Text="@Subtitle" MarginTop="24" />
+          </Children>
+        </ListPanel>
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>

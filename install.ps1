@@ -184,6 +184,15 @@ if (Test-Path $dataDir) {
     Write-Warn "ModuleData\ not found — XML data files skipped."
 }
 
+# GUI (brushes + prefabs for the opening title card)
+$guiDir = Join-Path $ModRoot "GUI"
+if (Test-Path $guiDir) {
+    $guiDest = Join-Path $modDest "GUI"
+    $null = New-Item -ItemType Directory -Force $guiDest
+    Copy-Item (Join-Path $guiDir "*") $guiDest -Recurse -Force
+    Write-OK "GUI\ (brushes + prefabs)"
+}
+
 # DLL
 try {
     Copy-Item $sourceDll $modBinDest -Force

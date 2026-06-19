@@ -165,6 +165,14 @@ namespace AshAndEmber
         public static void ApplyBattleMiracle(Agent a, MiracleType type, bool announce)
         {
             if (a == null || !a.IsActive()) return;
+            // Focus aura for the invoking NPC — golden for Grace, cold for the dark rites,
+            // mirroring the player's focus glow when casting a miracle.
+            try
+            {
+                bool grace = MiracleCatalog.Get(type).IsGrace;
+                SpellEffects.FlashFocusAura(a, grace ? ColorSchool.Yellow : ColorSchool.Ashen);
+            }
+            catch { }
             switch (type)
             {
                 case MiracleType.RepelAshen:      BattleRepelAshen(a, announce);      break;

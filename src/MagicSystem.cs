@@ -85,6 +85,11 @@ namespace AshAndEmber
 
         protected override void OnApplicationTick(float dt)
         {
+            // Runs before the campaign gate below so it also fires at the main menu and
+            // during the new-game flow, where Campaign.Current is still null.
+            try { SkipIntroVideos(); } catch { }
+            try { AshEmberSplash.Tick(dt); } catch { }
+
             try
             {
                 if (Campaign.Current == null || Mission.Current != null) return;
@@ -134,6 +139,23 @@ namespace AshAndEmber
                     }
                 }
                 catch { }
+            }
+            catch { }
+        }
+
+        // Skips TaleWorlds' intro cinematics — the logo reels at launch and, more
+        // importantly, the campaign intro video that plays before character creation.
+        // We simply finish any active VideoPlaybackState the moment it appears, which
+        // is exactly what the engine's own "skip" button does, so the flow advances
+        // cleanly to the next state. Guarded so a future engine change degrades to a
+        // no-op rather than a crash.
+        private static void SkipIntroVideos()
+        {
+            try
+            {
+                var active = GameStateManager.Current?.ActiveState;
+                if (active is VideoPlaybackState video)
+                    video.OnVideoFinished();
             }
             catch { }
         }

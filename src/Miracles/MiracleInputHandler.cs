@@ -81,6 +81,21 @@ namespace AshAndEmber
             }
             _prevPadMenu = padMenu;
 
+            // Keyboard shortcut: Shift+X opens the miracle menu mid-battle — the same
+            // window the map uses, and consistent with Alt+X (grimoire) / Ctrl+X (satchel).
+            // Guarded against Ctrl/Alt so it never shadows the Ctrl sequence or spell focus.
+            bool shiftHeld = Input.IsKeyDown(InputKey.LeftShift) || Input.IsKeyDown(InputKey.RightShift);
+            bool ctrlHeld  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
+            bool altHeld   = Input.IsKeyDown(InputKey.LeftAlt);
+            bool shiftX    = shiftHeld && !ctrlHeld && !altHeld && Input.IsKeyPressed(InputKey.X);
+            if (shiftX && !_prevShiftX)
+            {
+                _prevShiftX = true;
+                ShowMiracleMenu();
+                return;
+            }
+            _prevShiftX = shiftX;
+
             bool holdKb  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
             // Controller: hold RBumper alone (not with LBumper which is spells).
             bool holdPad = rbHeld;
@@ -232,6 +247,11 @@ namespace AshAndEmber
             }
             catch { }
 
+            // The same window serves the map and the battlefield. In a mission we gate
+            // by battle-usability and invoke the battle effect; on the map, the reverse.
+            bool inBattle = false;
+            try { inBattle = Mission.Current != null; } catch { }
+
             var elements = new List<InquiryElement>();
             var source   = MiracleInventory.HasGrace ? MiracleCatalog.GraceAll : MiracleCatalog.ColdAll;
 
@@ -240,17 +260,27 @@ namespace AshAndEmber
                 bool gateMet = def.IsGrace
                     ? MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity)
                     : MiracleMath.MeetsColdGate(def.Gate, honor, mercy, generosity);
-                bool usable = def.UsableOnMap && gateMet;
+                bool usable = (inBattle ? def.UsableInBattle : def.UsableOnMap) && gateMet;
 
-                string label = $"{def.Name}  [{def.Sequence}]  [{def.Context}]  {def.GateNote}";
-                elements.Add(new InquiryElement(def.Type, label, null, usable, $"{def.Effect}  {def.Flavour}"));
+                // Show the actual battle key combo (Ctrl + W/A/S/D), the place it can
+                // be used, and any virtue gate — all on the always-visible label.
+                string keys  = SequenceToKeys(def.Sequence);
+                string gate  = string.IsNullOrEmpty(def.GateNote) ? "" : "  " + def.GateNote;
+                string label = $"{def.Name}   [Ctrl + {keys}]   ({def.Context}){gate}";
+                // Full description lives in the hover hint.
+                string hint  = $"{def.Effect}\n\n{def.Flavour}";
+                elements.Add(new InquiryElement(def.Type, label, null, usable, hint));
             }
 
             string counter = MiracleInventory.HasGrace
                 ? $"Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}"
                 : $"Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}";
             string title = $"Miracles  [{counter}]";
-            string body  = "Choose a miracle to invoke. Each costs 1 point. Sequences shown for battle casting.";
+            string body  = inBattle
+                ? "Choose a miracle to invoke now. Each costs 1 point. " +
+                  "In battle you may also cast by holding Ctrl and tracing the keys shown."
+                : "Choose a miracle to invoke. Each costs 1 point. " +
+                  "The keys shown are the battle sequence: hold Ctrl and press them in order.";
 
             try
             {
@@ -260,7 +290,7 @@ namespace AshAndEmber
                     {
                         if (chosen == null || chosen.Count == 0) return;
                         var type = (MiracleType)chosen[0].Identifier;
-                        MiracleEffects.TryUseMiracle(type, inMission: false);
+                        MiracleEffects.TryUseMiracle(type, inMission: inBattle);
                     },
                     null, "", false), false, true);
             }
@@ -269,6 +299,27 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The miracle window will not open just now.", new Color(0.7f, 0.7f, 0.7f)));
             }
+        }
+
+        // Translates a stored U/L/R/D miracle sequence into the keys the player
+        // actually presses (W/A/S/D), matching the battle-casting bindings above.
+        private static string SequenceToKeys(string seq)
+        {
+            if (string.IsNullOrEmpty(seq)) return "";
+            var sb = new System.Text.StringBuilder(seq.Length * 2);
+            foreach (char c in seq)
+            {
+                switch (c)
+                {
+                    case 'U': sb.Append('W'); break;
+                    case 'L': sb.Append('A'); break;
+                    case 'R': sb.Append('D'); break;
+                    case 'D': sb.Append('S'); break;
+                    default:  sb.Append(c);   break;
+                }
+                sb.Append(' ');
+            }
+            return sb.ToString().TrimEnd();
         }
     }
 }

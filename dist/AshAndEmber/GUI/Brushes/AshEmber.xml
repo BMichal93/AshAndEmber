@@ -1,0 +1,19 @@
+<Brushes>
+  <!-- Muted-gold serif title for the opening card. Mirrors the engine's own
+       BoundaryCrossing overlay brushes (gold #D8BA86) so it sits in-style, but
+       larger, with a faint glow and outline for a Dark-Souls embossed feel. -->
+  <Brush Name="AshEmber.Splash.Title">
+    <Layers>
+    </Layers>
+    <Styles>
+      <Style Name="Default" FontColor="#D8BA86FF" TextBlur="0" TextOutlineAmount="0.55" TextGlowRadius="2" FontSize="120" />
+    </Styles>
+  </Brush>
+  <Brush Name="AshEmber.Splash.Subtitle">
+    <Layers>
+    </Layers>
+    <Styles>
+      <Style Name="Default" FontColor="#9A875EFF" TextBlur="0" TextOutlineAmount="0" TextGlowRadius="0" FontSize="34" />
+    </Styles>
+  </Brush>
+</Brushes>
