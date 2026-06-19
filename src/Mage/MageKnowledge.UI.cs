@@ -242,6 +242,8 @@ namespace AshAndEmber
                 if (d.IsConsumable) continue;
                 // Info cards are only shown when the condition is met
                 if (d.IsInfo && d.Id == TalentId.AshenGift && !_isAshen) continue;
+                // Rite talents are learned through system-specific menus, not the grimoire
+                if (d.Category == TalentCategory.Rite) continue;
 
                 // Insert a disabled separator when the category changes
                 if (d.Category != lastCategory)
@@ -293,6 +295,46 @@ namespace AshAndEmber
                     {
                         int id = (int)chosen[0].Identifier;
                         if (id < 0) return; // separator row — ignore
+                        _deferredInquiry = () => TalentSystem.TryPurchase((TalentId)id, Hero.MainHero);
+                    }
+                },
+                null, "", false
+            ), false, true);
+        }
+
+        // ── Rite talent menu (shown by Altar / Sanctuary / Alchemy lab) ─────────
+
+        public static void ShowRiteTalentMenu(string systemName, IEnumerable<TalentId> talentIds)
+        {
+            var ids = new HashSet<TalentId>(talentIds);
+            var elements = new List<InquiryElement>();
+
+            foreach (var d in TalentSystem.All)
+            {
+                if (!ids.Contains(d.Id)) continue;
+                bool   owned      = TalentSystem.Has(d.Id);
+                bool   selectable = !owned;
+                int    talentCost = d.FocusCost > 0 ? d.FocusCost : TalentSystem.PurchaseCost();
+                string check = owned ? "✓ " : "   ";
+                string label = $"{check}◈  {d.Name}";
+                string costHint = $"Cost: {talentCost} focus point{(talentCost != 1 ? "s" : "")}";
+                string hint  = $"【 {d.Name} 】  rite\n\n" +
+                               $"{d.MechanicDesc}\n\n" +
+                               $"{d.Lore}\n\n" +
+                               (owned ? "— Already known —" : costHint);
+                elements.Add(new InquiryElement((int)d.Id, label, null, selectable, hint));
+            }
+
+            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                $"Rites — {systemName}",
+                "Rites transform your mastery of this discipline. Each costs 2 focus points.",
+                elements, true, 0, 1,
+                "Learn", "Close",
+                chosen =>
+                {
+                    if (chosen?.Count > 0)
+                    {
+                        int id = (int)chosen[0].Identifier;
                         _deferredInquiry = () => TalentSystem.TryPurchase((TalentId)id, Hero.MainHero);
                     }
                 },

@@ -69,6 +69,27 @@ namespace AshAndEmber
             _areaEffects.Add(node);
         }
 
+        // Called from ExecuteBurstFromAgent (UsingDirge) — fire smoulders in the earth
+        // for 12 seconds, burning enemies who enter the radius each second.
+        internal static void SpawnDirgePatch(Vec3 pos, int damageCount, float radius, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id           = "spell_dirge",
+                School       = ColorSchool.Red,
+                Position     = pos,
+                Radius       = Math.Max(3f, radius),
+                TickInterval = 1f,
+                TickTimer    = 1f,
+                Remaining    = 12f,
+                Power        = damageCount * 8f,
+                CasterTeam   = casterTeam,
+            };
+            node.LightEntity = SpawnAreaLight(pos, ColorSchool.Red, Math.Max(5f, radius));
+            _areaEffects.Add(node);
+            SpawnTempFireParticle(pos, 12f);
+        }
+
         public static void ClearAreaEffects()
         {
             foreach (var e in _areaEffects)

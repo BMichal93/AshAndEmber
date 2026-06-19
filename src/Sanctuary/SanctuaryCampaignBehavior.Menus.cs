@@ -113,8 +113,9 @@ namespace AshAndEmber
                                     reagentNote += $"  [Sea Serpent Scale: −{ReagentSystem.ScaleAgingReclaim} day aging]";
                             }
 
+                            int prayHpCost = TalentSystem.Has(TalentId.EmberCovenant) ? 8 : 12;
                             MBTextManager.SetTextVariable("SANCT_GRACE_TEXT",
-                                $"Pray for Grace  (costs 12 HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{reagentNote}");
+                                $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{reagentNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -142,14 +143,36 @@ namespace AshAndEmber
                                 : "";
                             if (onCooldown) args.IsEnabled = false;
 
+                            int wardPreview = TalentSystem.Has(TalentId.UnbrokenWard) ? 21 : 14;
                             MBTextManager.SetTextVariable("SANCT_WARD_TEXT",
-                                $"Take the Warding Seal  (costs 15 HP) — ward against Ashen events for 14 days{active}{cd}");
+                                $"Take the Warding Seal  (costs 15 HP) — ward against Ashen events for {wardPreview} days{active}{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
                         return true;
                     },
                     args => DoWardingSeal());
+            }
+            catch { }
+
+            // ── Option 3: Meditate on the Flame ───────────────────────────────
+            try
+            {
+                starter.AddGameMenuOption("sanctuary_menu", "sanctuary_meditate_rite", "Meditate on the Flame",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            MageKnowledge.ShowRiteTalentMenu("The Sanctuary",
+                                new[] { TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant });
+                        }
+                        catch { }
+                    });
             }
             catch { }
 
@@ -170,8 +193,9 @@ namespace AshAndEmber
             var hero = Hero.MainHero;
             if (hero == null) { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } return; }
 
-            // Non-lethal HP cost.
-            try { hero.HitPoints = Math.Max(1, hero.HitPoints - 12); } catch { }
+            // Non-lethal HP cost (EmberCovenant reduces it).
+            int hpCost = TalentSystem.Has(TalentId.EmberCovenant) ? 8 : 12;
+            try { hero.HitPoints = Math.Max(1, hero.HitPoints - hpCost); } catch { }
 
             int honor = 0, mercy = 0, generosity = 0;
             try
@@ -182,7 +206,35 @@ namespace AshAndEmber
             }
             catch { }
 
-            int gained = MiracleInventory.AddGrace(MiracleMath.GraceGain(honor, mercy, generosity));
+            int graceGain = MiracleMath.GraceGain(honor, mercy, generosity);
+            // EmberCovenant: prayer yields twice the Grace.
+            if (TalentSystem.Has(TalentId.EmberCovenant)) graceGain *= 2;
+            int gained = MiracleInventory.AddGrace(graceGain);
+
+            if (TalentSystem.Has(TalentId.KeepingFlame))
+            {
+                try
+                {
+                    var party = MobileParty.MainParty;
+                    if (party?.MemberRoster != null)
+                    {
+                        int totalHealed = 0;
+                        foreach (var e in party.MemberRoster.GetTroopRoster().ToList())
+                        {
+                            if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
+                            int heal = Math.Max(1, (int)(e.WoundedNumber * 0.25f));
+                            try { party.MemberRoster.AddToCounts(e.Character, 0, false, -heal); totalHealed += heal; } catch { }
+                        }
+                        // +20 morale from shared warmth
+                        try { party.RecentEventsMorale += 20f; } catch { }
+                        string healLine = totalHealed > 0
+                            ? $"The Keeping Flame — {totalHealed} of your wounded are mended and the column's courage lifts (+20 morale)."
+                            : "The Keeping Flame — the warmth spreads through your column (+20 morale).";
+                        InformationManager.DisplayMessage(new InformationMessage(healLine, new Color(0.95f, 0.75f, 0.35f)));
+                    }
+                }
+                catch { }
+            }
 
             int cooldownReduction = 0;
             try
@@ -247,7 +299,7 @@ namespace AshAndEmber
 
             try { hero.HitPoints = Math.Max(1, hero.HitPoints - 15); } catch { }
 
-            const int wardDays = 14;
+            int wardDays = TalentSystem.Has(TalentId.UnbrokenWard) ? 21 : 14;
             CampaignMapEvents.StartProtection(wardDays);
             _lastProtectiveDay   = CurrentCampaignDay();
             _lastSanctuaryUseDay = CurrentCampaignDay();
@@ -269,7 +321,7 @@ namespace AshAndEmber
                 : "\n\nNo grey things stir within the seal's sight right now.";
 
             string msg = $"The priest draws the seal across your palms in ash. The flame burns hotter for a moment, then steadies. " +
-                         $"The ward will hold for {wardDays} days. The grey things will find your scent harder to follow.{ashenNote}";
+                         $"The ward will hold for {wardDays} day{(wardDays != 1 ? "s" : "")}. The grey things will find your scent harder to follow.{ashenNote}";
 
             try
             {

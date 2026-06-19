@@ -71,9 +71,30 @@ namespace AshAndEmber
         LostMissile = 38, // Lost Form — twin bolts at 60% power each
         LostBarrier = 39, // Lost Form — barrier expires after 60 seconds
         LostBurst   = 40, // Lost Form — asymmetric burst (full front, 40% rear)
+        // ── New enchantments ───────────────────────────────────────────────
+        Scorch      = 42, // Enchantment — Damage: Sear leaves a lingering burn
+        ChainIgnite = 43, // Enchantment — Damage: Immolate kill spreads fire to nearby enemies
+        Ashmark     = 44, // Enchantment — Damage: Sear brands and locks enemy morale
+        AnchorWard  = 45, // Enchantment — Barrier warning zone slows enemies
+        // ── New Lost Forms ─────────────────────────────────────────────────
+        WardenRing  = 46, // Lost Form — circular barrier around caster
+        Dirge       = 47, // Lost Form — burst becomes a ground fire patch
+        PaleComet   = 48, // Lost Form — missile pierces enemies, detonates at range end
+        // ── Altar Rites ──────────────────────────────────────────────────────────
+        ColdTithe       = 49, // Rite — Soul Tithe: tier-based prisoner heal + bonus Cold
+        DreadTide       = 50, // Rite — Dread Tide: all three tide effects + 5 HP surcharge
+        ColdCovenant    = 51, // Rite — halved cooldowns; 1 Whisper; -5 HP invoke
+        // ── Sanctuary Rites ───────────────────────────────────────────────────────
+        KeepingFlame    = 52, // Rite — 25% wound heal + 20 morale on prayer; morale floor 30
+        UnbrokenWard    = 53, // Rite — 21-day ward; +10 morale/day; -2 aging while active
+        EmberCovenant   = 54, // Rite — 8 HP cost; double Grace; daily troop heal; +5 morale
+        // ── Alchemy Rites ─────────────────────────────────────────────────────────
+        SteadierHand    = 55, // Rite — +15% brew; no mislead; 20% double-brew on success
+        DeeperSatchel   = 56, // Rite — +4 capacity; flat 150g; 25% field refill
+        VolatileHarvest = 57, // Rite — 40% salvage; volatile burst; 30% harm reduction
     }
 
-    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm }
+    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite }
 
     public class TalentDef
     {
@@ -165,7 +186,7 @@ namespace AshAndEmber
                 Id = TalentId.Smoulder, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Smoulder",
                 Lore = "The fire knows what frightens. It does not need to kill a man to defeat him — only to let him feel how little warmth he carries. The courage drains out with the heat.",
-                MechanicDesc = "Enchantment. Any Damage input scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%. Fear of fire does not care what shape the fire takes."
+                MechanicDesc = "Enchantment. Any Damage input scorches enemy morale (−15 per input) and bewilders non-hero enemies with a random effect — instant rout, force charge, dismount, or morale fractured to 25%. Sear (W) inputs additionally seal the mark: branded enemies cannot recover morale for 30 seconds."
             },
             new TalentDef
             {
@@ -179,7 +200,7 @@ namespace AshAndEmber
                 Id = TalentId.Immolate, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Immolate",
                 Lore = "Three times the fire has been called. Twice it asked. The third time, it takes. Not the wound — the whole. The body, the heat that kept it standing. The fire does not return what it has already claimed.",
-                MechanicDesc = "Enchantment. Amplifies Sear (W) inputs: additional burn damage scales with inputs. At 1 Sear: 33% chance to kill. At 2 Sear: 50% chance to kill. At 3+ Sear: guaranteed kills (Sear inputs / 3). Without this talent, Sear gives a weak 5-per-input burn."
+                MechanicDesc = "Enchantment. Amplifies Sear (W) inputs: additional burn damage scales with inputs. At 1 Sear: 33% chance to kill. At 2 Sear: 50% chance to kill. At 3+ Sear: guaranteed kills (Sear inputs / 3). Survivors are left burning (2 damage/s per Sear input, 3 seconds). When a kill lands, fire leaps to all enemies within 3m for 30% of the Sear damage. Without this talent, Sear gives a weak 5-per-input burn."
             },
             // ── Enchantments (Restore) ────────────────────────────────────────
             new TalentDef
@@ -194,7 +215,7 @@ namespace AshAndEmber
                 Id = TalentId.CinderShell, IsSpell = false, IsEnchantment = true,
                 Category = TalentCategory.Enchantment, Name = "Cinder Shell",
                 Lore = "Fire hardens what it doesn't consume. The skin does not become stone — it becomes something older. Whatever falls on them will not find the same flesh.",
-                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 6% per Restore input (max 30% at 5 inputs). Duration = 4s + 1s per Restore input. When an ally is above 90% health, excess fire adds a damage shield of 10 HP per Restore input for 5s."
+                MechanicDesc = "Enchantment. Restore hardens allies, reducing incoming damage. Protection = 6% per Restore input (max 30% at 5 inputs). Duration = 4s + 1s per Restore input. When an ally is above 90% health, excess fire adds a damage shield of 10 HP per Restore input for 5s. Your barrier nodes also warn — enemies entering their heat zone are slowed by 30% for 4 seconds."
             },
             new TalentDef
             {
@@ -281,30 +302,87 @@ namespace AshAndEmber
             new TalentDef
             {
                 Id = TalentId.LostBlast, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Widened Blast",
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Widened Blast",
                 Lore = "The fire does not ask how wide your arms can reach. It asks how wide your will can hold. You found a slightly different angle of release — not taught, not passed down, only survived. The cone opens. More earth scorched, fewer who dodge the edges.",
                 MechanicDesc = "Lost Form. Blast cone widens from ~49° to ~60°. More enemies caught at the edge; the forward reach is unchanged."
             },
             new TalentDef
             {
-                Id = TalentId.LostMissile, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Twin Bolt",
-                Lore = "The first time you split the bolt it was an accident — it came apart in your hands before release, two pieces each carrying their own heat. The second time was deliberate. Neither bolt is as strong as one whole. But one bolt can miss.",
-                MechanicDesc = "Lost Form. Missile fires two bolts side by side. Each bolt carries 60% of the original damage and heal power."
+                Id = TalentId.WardenRing, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "The Warden's Ring",
+                Lore = "The old form of the barrier was always a wall — a line you drew between yourself and what was coming. But a wall has two ends. The older working was a ring: fire surrounding, not dividing. The form was nearly lost because the warding requires standing inside the fire.",
+                MechanicDesc = "Lost Form. Barrier nodes form a complete ring around the caster instead of a wall in front. Each node is placed 2.5 metres from the caster at equal angles."
             },
             new TalentDef
             {
-                Id = TalentId.LostBarrier, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Fading Ward",
-                Lore = "The old barrier stood until you let it go. This one does not ask to be released — it knows when it has done its work. Sixty seconds, then the fire returns to you. Less permanent, but you carry it lighter.",
-                MechanicDesc = "Lost Form. Barrier nodes expire after 60 seconds instead of persisting indefinitely. The fire returns on its own."
+                Id = TalentId.Dirge, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Dirge",
+                Lore = "Most who carry the fire scatter it outward. The old form collapses it inward — downward, into the earth beneath the feet. It does not explode. It seeps. The ground smokes for a long time after. Anything that walks through it, walks through a working that has not finished yet.",
+                MechanicDesc = "Lost Form. Burst drives fire into the ground rather than outward. A smouldering patch lingers for 12 seconds, burning enemies who walk through it."
             },
             new TalentDef
             {
-                Id = TalentId.LostBurst, IsSpell = false, IsEnchantment = false,
-                Category = TalentCategory.LostForm, FocusCost = 2, Name = "Directed Burst",
-                Lore = "You have always stood at the center. The fire went out evenly, touching everything the same. But an even field is not always what the moment needs. Lean into the front; let the rear feel only the echo. Not a perfect circle — a pointed wave.",
-                MechanicDesc = "Lost Form. Burst is asymmetric. The forward hemisphere receives full power; the rear hemisphere receives 40%. Useful when your allies stand behind you."
+                Id = TalentId.PaleComet, IsSpell = false, IsEnchantment = false,
+                Category = TalentCategory.LostForm, FocusCost = 1, Name = "Pale Comet",
+                Lore = "A bolt that does not stop at the first thing it finds. The fire passes through — not weakened, only saved for later. It finishes what it started at the far end of its reach. You do not see what it does until it is done.",
+                MechanicDesc = "Lost Form. The missile passes through enemies rather than detonating on first contact. Each enemy it crosses is struck by the full cast. The bolt detonates only when its full range is spent."
+            },
+            // ── Altar Rites ──────────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.ColdTithe, Category = TalentCategory.Rite, FocusCost = 2, Name = "Soul Tithe",
+                Lore = "The cold does not forget what it receives. A life given in the grey dark carries warmth — the last warmth of the dying — and the stone passes some of it back to the hand that held the offering. The higher the vessel, the deeper the debt it carries, and the more the stone returns.",
+                MechanicDesc = "Rite. Prisoner sacrifices heal you in proportion to their tier — T1: 5 HP, T2: 8 HP, T3: 10 HP, T4+: 15 HP and 1 bonus Cold. If no prisoner is available and you pay in HP instead, the ritual returns 5 of those HP immediately. The cold never forgets a gift freely given."
+            },
+            new TalentDef
+            {
+                Id = TalentId.DreadTide, Category = TalentCategory.Rite, FocusCost = 2, Name = "Dread Tide",
+                Lore = "What the altar calls does not come in pieces. The stone was never a door you could open partway — it is all the way or nothing, and the tide that answers is not patient. It wounds, it drains, it breaks courage. All three. At once. The ones who taught this did not survive to warn against it.",
+                MechanicDesc = "Rite. When you Invoke the Dark Tide, all three tide effects fire simultaneously: soldiers are wounded nearby, a town's loyalty and security drain, and a wave of despair breaks over every close enemy force. The ritual demands 5 more HP (20 total) for this breadth. With Cold Covenant: 15 HP for all three."
+            },
+            new TalentDef
+            {
+                Id = TalentId.ColdCovenant, Category = TalentCategory.Rite, FocusCost = 2, Name = "Cold Covenant",
+                Lore = "You have stopped asking the stone to come to you on your terms. The stone prefers practitioners who understand the arrangement — that it is patient, and you are not, and that its patience can be borrowed if you acknowledge the debt properly. Fewer marks. A shorter wait. Less cost on the dark invocation.",
+                MechanicDesc = "Rite. Altar and Invoke cooldowns are halved. The Altar accumulates only 1 Whisper per rite instead of 3. Invoking the Dark Tide costs 5 fewer HP (10 instead of 15; 15 instead of 20 with Dread Tide). The cold teaches economy to those who have earned its patience."
+            },
+            // ── Sanctuary Rites ──────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.KeepingFlame, Category = TalentCategory.Rite, FocusCost = 2, Name = "The Keeping Flame",
+                Lore = "To open yourself as a vessel is to open a channel wider than your own body. What the fire pours through you reaches the ones beside you — the wounded, the afraid, the ones whose fire was dimming. You cannot direct it; you can only stay open and trust the warmth to find what needs it most.",
+                MechanicDesc = "Rite. Each prayer heals 25% of wounded troops and grants your column +20 morale from shared warmth. Daily, your party's morale cannot fall below 30 — the Keeping Flame holds a floor of courage in the ones who march beside you."
+            },
+            new TalentDef
+            {
+                Id = TalentId.UnbrokenWard, Category = TalentCategory.Rite, FocusCost = 2, Name = "Unbroken Ward",
+                Lore = "The fuller form of the warding sinks deeper into the earth and the air, leaves less of a seam at the edges. The grey things find the seal and do not try the same approach twice. Meanwhile those who march beneath it feel a warmth they cannot name, and their courage does not drain as fast.",
+                MechanicDesc = "Rite. The Warding Seal lasts 21 days instead of 14. While the ward holds: your party gains +10 morale each day, and each battle spell costs 2 fewer aging days (minimum 1). The ward makes the fire cheaper to spend while it burns."
+            },
+            new TalentDef
+            {
+                Id = TalentId.EmberCovenant, Category = TalentCategory.Rite, FocusCost = 2, Name = "Ember Covenant",
+                Lore = "Devotion is its own fuel — the rite does not need to reach as deep when the channel has been worn smooth by repetition. And what you carry comes back to you in the breathing: the Grace you hold does not sit still, it moves, it circulates, it mends what it finds. Quietly. While you sleep.",
+                MechanicDesc = "Rite. Prayer costs 8 HP instead of 12, and yields twice the Grace. While you carry any Grace: +5 morale each day. When Grace exceeds half your cap, the warmth quietly heals one wounded soldier per troop type each dawn."
+            },
+            // ── Alchemy Rites ─────────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.SteadierHand, Category = TalentCategory.Rite, FocusCost = 2, Name = "The Steadier Hand",
+                Lore = "Most who spoil a brew do so in the final measure. You have learned to finish confidently — and the confident finish is its own catalyst. Sometimes the brew that should have been one becomes two, as though the formula agreed it was not done yet.",
+                MechanicDesc = "Rite. Brewing success chance increases by 15%. Misleading read results are replaced with Unknown — the hand that seals it may doubt, but it will not lie. On a clean brew, 20% chance the formula yields a second vial at no additional cost."
+            },
+            new TalentDef
+            {
+                Id = TalentId.DeeperSatchel, Category = TalentCategory.Rite, FocusCost = 2, Name = "The Deeper Satchel",
+                Lore = "The satchel was always larger than it looked. A practised hand arranges rather than counts — the vials nest, the heat distributes, the seams of the old leather know where to give. And sometimes, when the vial rises to the lips, the hand reaches back and finds it is somehow still there.",
+                MechanicDesc = "Rite. Satchel capacity increases by 4. Ingredient costs drop to a flat 150 denars per brew. When you drink a clean elixir in the field, 25% chance the satchel refills with one clean vial of the same kind — you reach in and find it was not gone after all."
+            },
+            new TalentDef
+            {
+                Id = TalentId.VolatileHarvest, Category = TalentCategory.Rite, FocusCost = 2, Name = "Volatile Harvest",
+                Lore = "A ruined brew is not always a waste. The instincts of a careful hand find what set true before the rest turned. It takes nerve to drink something that smells like failure. And when the good part surfaces unexpectedly, the volatile remainder does not vanish quietly — it needs somewhere to go.",
+                MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the clean effect. In battle, the volatile remnant lashes the nearest enemy for 25 fire damage on a salvage. When a backfire does land, 30% of the self-wound is returned as a partial heal — not all of the ruin reaches you."
             },
         };
 

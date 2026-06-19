@@ -3,9 +3,9 @@
 // Two-phase input: form keys before Break, effect keys after Break.
 //
 // KEYS (while holding Left Alt / LB):
-//   W = U (form: Blast   / effect: Damage)
-//   A = L (form: Missile / effect: Damage)
-//   D = R (form: Barrier / effect: Damage)
+//   W = U (form: Blast   / effect: Sear)
+//   A = L (form: Missile / effect: Force)
+//   D = R (form: Barrier / effect: Shred)
 //   S = D (form: Burst   / effect: Restore)
 //   X = Break (keyboard, while form buffer has input)
 //   L3 click = Break (gamepad)
@@ -13,6 +13,9 @@
 //   LB + RB = Spellbook (gamepad)
 //
 // Release Alt/LB → SpellBuilder.Parse + SpellBuilder.Execute
+//
+// Cap: 5 form inputs max (reaching 5 auto-breaks to effect phase),
+//      5 effect inputs max.
 // =============================================================================
 
 using System;
@@ -31,8 +34,8 @@ namespace AshAndEmber
         private static bool   _inEffectPhase  = false;
         private static bool   _wasFocusing    = false;
         private static string _lastDisplayed  = "";
-        // 12 so the full debug combo (UUDDLLRRULDR) fits in the form buffer.
-        private const  int    MaxLen          = 12;
+        private const  int    MaxFormInputs   = 5;
+        private const  int    MaxEffectInputs = 5;
 
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
         private static bool _prevBreakPad;
@@ -217,20 +220,24 @@ namespace AshAndEmber
 
         private static void AppendForm(string dir)
         {
-            if (_formBuffer.Length < MaxLen) _formBuffer += dir;
+            if (_formBuffer.Length < MaxFormInputs)
+                _formBuffer += dir;
+            // Auto-break to effect phase when the form cap is reached.
+            if (_formBuffer.Length >= MaxFormInputs)
+                _inEffectPhase = true;
         }
 
         private static void AppendEffect(string dir)
         {
-            if (_effectBuffer.Length < MaxLen) _effectBuffer += dir;
+            if (_effectBuffer.Length < MaxEffectInputs) _effectBuffer += dir;
         }
 
         private static void TryCast(bool inMission)
         {
             if (_formBuffer.Length == 0) return;
 
-            // Debug: Alt + UUDDLLRRULDR → unlock all talents
-            if (!_inEffectPhase && _formBuffer == "UUDDLLRRULDR")
+            // Debug: form "UULDR" + effect "RULUU" → unlock all talents (both buffers at max)
+            if (_inEffectPhase && _formBuffer == "UULDR" && _effectBuffer == "RULUU")
             {
                 TalentSystem.UnlockAll();
                 return;
@@ -319,6 +326,10 @@ namespace AshAndEmber
                 // Temple covenant: the Temple's rites steady the fire — 1 day cheaper (min 1)
                 if (inMission && agingDays > 1 && TempleCovenant.CovenantActive)
                     agingDays -= 1;
+
+                // Unbroken Ward: while the Warding Seal holds, the fire runs cheaper in battle
+                if (inMission && TalentSystem.Has(TalentId.UnbrokenWard) && CampaignMapEvents.ProtectedDaysRemaining > 0)
+                    agingDays = Math.Max(1, agingDays - 2);
 
                 if (agingDays > 0)
                 {

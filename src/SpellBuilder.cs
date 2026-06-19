@@ -13,12 +13,12 @@
 //   R = Barrier (wall, 1 node per R)
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
-// EFFECTS (effect buffer, stackable — each damage key carries its own nature)
-//   U = Sear    — 25 fire dmg + searing burn   (Immolate talent amplifies)
-//   L = Force   — 25 fire dmg + concussive push (Scatter talent amplifies)
-//   R = Shred   — 25 fire dmg + armour shred    (Sunder talent amplifies)
-//   D = Restore — 15 heal per D (White visual), heals allies; Burst also heals caster
-//                 (innate small morale lift; Restore enchantments amplify)
+// EFFECTS (effect buffer, stackable up to 5 total — each damage key carries its own nature)
+//   U = Sear    — 35 fire dmg + push per input     (Immolate replaces push with DoT/kill)
+//   L = Force   — 22 fire dmg + 5% vuln per input  (Scatter replaces vuln with big push+slow)
+//   R = Shred   — 22 fire dmg + 12 morale per input(Sunder replaces morale with armour shred)
+//   D = Restore — 15 heal + 6 morale per input, heals allies; Burst also heals caster
+//                 (Hearthlight amplifies morale)
 // =============================================================================
 
 using System;
@@ -59,6 +59,10 @@ namespace AshAndEmber
         public bool UsingLostMissile;
         public bool UsingLostBarrier;
         public bool UsingLostBurst;
+        // New Lost Forms take priority over the original ones when both are owned.
+        public bool UsingWardenRing;  // circular barrier
+        public bool UsingDirge;       // burst becomes ground patch
+        public bool UsingPaleComet;   // piercing missile
 
         public int DamageCount;    // total damage inputs — fire damage to enemies
         public int RestoreCount;   // D effects — healing to allies (and caster on Burst)
@@ -107,16 +111,18 @@ namespace AshAndEmber
             var parts = new List<string>();
             if (DamageCount > 0)
             {
-                string nature = "";
                 if (HasSplitDamage)
                 {
                     var natures = new List<string>();
-                    if (SearCount  > 0) natures.Add($"sear ×{SearCount}");
-                    if (ForceCount > 0) natures.Add($"force ×{ForceCount}");
-                    if (ShredCount > 0) natures.Add($"shred ×{ShredCount}");
-                    nature = $" ({string.Join(", ", natures)})";
+                    if (SearCount  > 0) natures.Add($"sear ×{SearCount} ({SearCount * 35})");
+                    if (ForceCount > 0) natures.Add($"force ×{ForceCount} ({ForceCount * 22})");
+                    if (ShredCount > 0) natures.Add($"shred ×{ShredCount} ({ShredCount * 22})");
+                    parts.Add($"damage ({string.Join(", ", natures)})");
                 }
-                parts.Add($"{DamageCount * 25} damage{nature}");
+                else
+                {
+                    parts.Add($"{DamageCount * 25} damage");
+                }
             }
             if (RestoreCount > 0) parts.Add($"+{RestoreCount * 15} restore");
             return string.Join(", ", parts);
@@ -175,10 +181,10 @@ namespace AshAndEmber
             {
                 switch (c)
                 {
-                    case 'U': cast.BlastCount++;   break;
-                    case 'L': cast.MissileCount++; break;
-                    case 'R': cast.BarrierCount++; break;
-                    case 'D': cast.BurstCount++;   break;
+                    case 'U': if (cast.BlastCount   < 5) cast.BlastCount++;   break;
+                    case 'L': if (cast.MissileCount < 5) cast.MissileCount++; break;
+                    case 'R': if (cast.BarrierCount < 5) cast.BarrierCount++; break;
+                    case 'D': if (cast.BurstCount   < 5) cast.BurstCount++;   break;
                     default:  cast.IsFumble = true; return cast;
                 }
             }
@@ -195,10 +201,12 @@ namespace AshAndEmber
             }
 
             // Effects: U = Sear, L = Force, R = Shred (all deal damage), D = Restore.
+            // Total effects capped at 5 (matching MaxEffectInputs in MagicInputHandler).
             if (!string.IsNullOrEmpty(effectBuffer))
             {
                 foreach (char c in effectBuffer)
                 {
+                    if (cast.DamageCount + cast.RestoreCount >= 5) break;
                     switch (c)
                     {
                         case 'U': cast.DamageCount++; cast.SearCount++;  break;
@@ -210,9 +218,22 @@ namespace AshAndEmber
             }
 
             if (cast.BlastCount   > 0) cast.UsingLostBlast   = TalentSystem.Has(TalentId.LostBlast);
-            if (cast.MissileCount > 0) cast.UsingLostMissile = TalentSystem.Has(TalentId.LostMissile);
-            if (cast.BarrierCount > 0) cast.UsingLostBarrier = TalentSystem.Has(TalentId.LostBarrier);
-            if (cast.BurstCount   > 0) cast.UsingLostBurst   = TalentSystem.Has(TalentId.LostBurst);
+            // New Lost Forms take priority over originals when both are owned.
+            if (cast.MissileCount > 0)
+            {
+                cast.UsingPaleComet   = TalentSystem.Has(TalentId.PaleComet);
+                cast.UsingLostMissile = !cast.UsingPaleComet && TalentSystem.Has(TalentId.LostMissile);
+            }
+            if (cast.BarrierCount > 0)
+            {
+                cast.UsingWardenRing  = TalentSystem.Has(TalentId.WardenRing);
+                cast.UsingLostBarrier = !cast.UsingWardenRing && TalentSystem.Has(TalentId.LostBarrier);
+            }
+            if (cast.BurstCount   > 0)
+            {
+                cast.UsingDirge      = TalentSystem.Has(TalentId.Dirge);
+                cast.UsingLostBurst  = !cast.UsingDirge && TalentSystem.Has(TalentId.LostBurst);
+            }
 
             if (MageKnowledge.IsAshen)
                 cast.OverrideVisualColor = ColorSchool.Ashen;
@@ -231,6 +252,7 @@ namespace AshAndEmber
             if (inMission)
             {
                 SpellEffects.ResetImmolateKill();
+                SpellEffects.AddCastHeat(cast.AgingDays(TalentSystem.Has(TalentId.BattleMage)));
                 int multi = cast.BlastCount + cast.MissileCount + cast.BarrierCount + cast.BurstCount;
 
                 if (multi == 0)

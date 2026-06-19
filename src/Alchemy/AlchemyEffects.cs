@@ -87,7 +87,19 @@ namespace AshAndEmber
 
             if (tainted)
             {
+                if (TalentSystem.Has(TalentId.VolatileHarvest) && _rng.NextDouble() < 0.40)
+                {
+                    // Salvage: 40% chance the brew yields its clean effect instead.
+                    Log(self, "a steady hand finds what set true inside the ruin — the brew holds.", false);
+                    ApplyBattleEffect(self, type, true);
+                    // Volatile burst: the remnant lashes the nearest enemy for 25 fire damage.
+                    TryVolatileBurst(self);
+                    return;
+                }
                 ApplyBattleBackfire(self, AlchemyMath.PickBackfire(_rng.NextDouble()), true);
+                // Volatile Harvest: 30% of the self-wound is returned as a partial heal.
+                if (TalentSystem.Has(TalentId.VolatileHarvest))
+                    try { SpellEffects.HealAgent(self, SafeHealthLimit(self) * AlchemyMath.BackfireSelfWoundFraction * 0.30f); } catch { }
                 return;
             }
 
@@ -238,11 +250,26 @@ namespace AshAndEmber
 
             if (tainted)
             {
+                if (TalentSystem.Has(TalentId.VolatileHarvest) && _rng.NextDouble() < 0.40)
+                {
+                    string salvaged = ApplyCampaignEffect(hero, party, type);
+                    string line = "A steady hand finds what set true inside the ruin."
+                        + (string.IsNullOrEmpty(salvaged) ? "" : "  " + salvaged);
+                    InformationManager.DisplayMessage(new InformationMessage(line, new Color(0.6f, 0.8f, 0.55f)));
+                    return;
+                }
                 ApplyCampaignBackfire(hero, party, AlchemyMath.PickBackfire(_rng.NextDouble()), announce: true);
                 return;
             }
 
             string msg = ApplyCampaignEffect(hero, party, type);
+            // DeeperSatchel: 25% chance the satchel refills with one clean vial of the same kind.
+            if (TalentSystem.Has(TalentId.DeeperSatchel) && _rng.NextDouble() < 0.25 && AlchemyInventory.HasSpace())
+            {
+                AlchemyInventory.Add(type, tainted: false);
+                string refill = "The satchel keeps its secret — a clean vial remains where the empty was.";
+                msg = string.IsNullOrEmpty(msg) ? refill : msg + "  " + refill;
+            }
             if (!string.IsNullOrEmpty(msg))
                 InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.6f, 0.8f, 0.55f)));
         }
@@ -510,6 +537,32 @@ namespace AshAndEmber
             int idx = clean[_rng.Next(clean.Count)];
             AlchemyInventory._tainted[idx] = true;
             return idx;
+        }
+
+        // Volatile burst: lashes the nearest visible enemy for 25 fire damage on a salvage.
+        private static void TryVolatileBurst(Agent self)
+        {
+            if (self == null || Mission.Current == null) return;
+            try
+            {
+                Vec3 pos = self.Position;
+                Agent nearest = null;
+                float bestD2 = float.MaxValue;
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == self || !a.IsActive() || a.IsMount) continue;
+                    if (self.Team != null && a.Team == self.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    float d2 = dx * dx + dy * dy;
+                    if (d2 < bestD2) { bestD2 = d2; nearest = a; }
+                }
+                if (nearest != null && !SpellEffects.IsWarded(nearest))
+                {
+                    try { SpellEffects.DamageAgent(nearest, 25f, ColorSchool.Red, self); } catch { }
+                    Log(self, "the volatile remnant lashes out — 25 fire damage to the nearest foe.", false);
+                }
+            }
+            catch { }
         }
 
         private static void Log(Agent a, string blurb, bool bad)

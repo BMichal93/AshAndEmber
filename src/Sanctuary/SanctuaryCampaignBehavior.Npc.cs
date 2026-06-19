@@ -11,8 +11,10 @@
 // Partial of SanctuaryCampaignBehavior (shared static state lives in SanctuaryCampaignBehavior.cs).
 // =============================================================================
 
+using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 
@@ -26,6 +28,48 @@ namespace AshAndEmber
             // get the establishment toast on their first tick once IDs are settled.
             if (_needsAnnouncementAfterSync)
                 AnnounceSanctuaries();
+
+            var mainParty = MobileParty.MainParty;
+
+            // EmberCovenant: +5 morale/day while carrying any Grace.
+            // When Grace exceeds half the cap, quietly heals 1 wounded per troop type each dawn.
+            if (TalentSystem.Has(TalentId.EmberCovenant) && MiracleInventory.Grace > 0)
+            {
+                try { if (mainParty != null) mainParty.RecentEventsMorale += 5f; } catch { }
+
+                if (MiracleInventory.Grace > MiracleMath.GraceColdCap / 2)
+                {
+                    try
+                    {
+                        if (mainParty?.MemberRoster != null)
+                        {
+                            foreach (var e in mainParty.MemberRoster.GetTroopRoster().ToList())
+                            {
+                                if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
+                                try { mainParty.MemberRoster.AddToCounts(e.Character, 0, false, -1); } catch { }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+
+            // UnbrokenWard: +10 morale/day while the Warding Seal is active.
+            if (TalentSystem.Has(TalentId.UnbrokenWard) && CampaignMapEvents.ProtectedDaysRemaining > 0)
+            {
+                try { if (mainParty != null) mainParty.RecentEventsMorale += 10f; } catch { }
+            }
+
+            // KeepingFlame: party morale floor of 30 — the warmth holds a floor of courage.
+            if (TalentSystem.Has(TalentId.KeepingFlame))
+            {
+                try
+                {
+                    if (mainParty != null && mainParty.RecentEventsMorale < 30f)
+                        mainParty.RecentEventsMorale = 30f;
+                }
+                catch { }
+            }
 
             // Trait drift: every 10 sanctuary uses, nudge the player's weakest virtue up.
             if (_sanctuaryUseCount > 0 && _sanctuaryUseCount % TraitDriftThreshold == 0)

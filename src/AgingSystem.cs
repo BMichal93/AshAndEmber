@@ -1,6 +1,6 @@
 ﻿// =============================================================================
 // LIFE & DEATH MAGIC — AgingSystem.cs
-// Aging cost mechanic: each battle spell costs (totalInputs / 4) days,
+// Aging cost mechanic: each battle spell costs round(1.65^(n-1)) days (max 84),
 // each campaign spell costs 1 day (Resonance: 25% chance to skip).
 // On reaching age 100, the mage dies.
 // =============================================================================
@@ -58,9 +58,9 @@ namespace AshAndEmber
         public static void ClearKnockdowns() { }
 
         /// <summary>
-        /// Battle spell aging cost: geometric — round(1.4^(n−1)), capped at 84 days (1 Bannerlord year).
+        /// Battle spell aging cost: geometric — round(1.65^(n−1)), capped at 84 days (1 Bannerlord year).
         /// Bannerlord year = 84 campaign days (4 seasons × 21 days).
-        /// Examples: 1–2 inputs = 1 day | 5 = 4 | 7 = 8 | 10 = 21 | 12 = 41 | 14 = 80 | 16+ = 84 (cap).
+        /// With the 5-form + 5-effect cap (max 10 inputs): 1→1 | 2→2 | 3→3 | 4→4 | 5→7 | 6→12 | 7→20 | 8→33 | 9→55 | 10→84 (cap).
         /// Tempered (BattleMage) talent reduces cost by whichever is larger: 25% or 1 flat day
         /// (minimum 1 — battle casts are never free), and beyond age 40 also shaves 0.5% per year
         /// off the final cost, capped at 30%. The flat floor means even 1-input spells feel the talent.
@@ -83,8 +83,9 @@ namespace AshAndEmber
         public static int ComputeBattleAgingCost(int totalInputs, bool hasBattleMageTalent, float heroAge)
         {
             // Geometric scaling: small spells are cheap; large spells become very expensive.
-            // Base 1.4, standard rounding, hard cap at 84 campaign days (= 1 Bannerlord year).
-            int cost = Math.Min(84, Math.Max(1, (int)(Math.Pow(1.4, totalInputs - 1) + 0.5)));
+            // Base 1.65, standard rounding, hard cap at 84 campaign days (= 1 Bannerlord year).
+            // At the 5+5 max (10 inputs), 1.65^9 ≈ 90.6 → rounds to 84 (cap).
+            int cost = Math.Min(84, Math.Max(1, (int)(Math.Pow(1.65, totalInputs - 1) + 0.5)));
             if (hasBattleMageTalent)
             {
                 int reduction = Math.Max(1, (int)Math.Round(cost * 0.25f));

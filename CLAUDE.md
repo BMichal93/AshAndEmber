@@ -87,13 +87,20 @@ Both `SanctuaryCampaignBehavior` and `AshenAltarsCampaignBehavior` share the sam
 
 ### Talent and Focus Point Costs
 
-All talents cost 1 focus point each, regardless of how many you already own. Lost Forms always cost 3 focus points. Campaign (non-battle) spells cost 1 day for the first cast per day, then escalate (1 → 7 → 14 → 21 …).
+All talents cost 1 focus point each, regardless of how many you already own. Lost Forms cost 1 focus point like any other talent. Campaign (non-battle) spells cost 1 day for the first cast per day, then escalate (1 → 7 → 14 → 21 …).
 
 ### Key Numerical Constants
 
 | Thing | Value |
 |---|---|
-| Aging cost cap | 84 days |
+| Max form inputs per cast | 5 (reaching 5 auto-breaks to effect phase) |
+| Max effect inputs per cast | 5 |
+| Aging cost formula | round(1.65^(n−1)), capped at 84 days |
+| Aging cost at max (10 inputs) | 84 days |
+| Sear base damage per input | 35 HP + 1 m push |
+| Force base damage per input | 22 HP + 5% vulnerability 6 s |
+| Shred base damage per input | 22 HP + 12 morale drain |
+| Restore base heal per input | 15 HP + 6 morale |
 | Blast radius per input | 2.5 m |
 | Burst radius per input | 2.5 m |
 | Missile range per input | 3 m |

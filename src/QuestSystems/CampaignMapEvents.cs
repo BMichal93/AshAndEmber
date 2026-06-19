@@ -113,6 +113,7 @@ namespace AshAndEmber
         public const float ChancePeasantUnrest   = 0.06f;  // ~every 17 weeks  (medium — like Great Withering)
         public const float ChanceWolfSheepCloth = 0.03f;  // ~every 33 weeks  (rare but not very)
         public const float ChanceMageFatwa      = 0.025f; // ~every 40 weeks  (rare)
+        public const float ChanceTheBranded    = 0.05f;  // ~every 20 weeks  (player-mage interactive)
         public const int   TempleEarliestDay    = 120;   // first possible trigger day
         public const float ChanceTheTemple      = 0.33f; // day 120–239: ~33% per eligible tick
         public const int   TempleSecondTierDay  = 240;   // second escalation
@@ -451,6 +452,7 @@ namespace AshAndEmber
             TryFireAshenGambit();
             TryFireDeadMarch();
             TryFireTheUndyingHost();
+            TryFireTheBranded();
 
             if (_weeklySlotFilled || _warSlotFilled)
                 _lastEventElapsedDay = (int)ElapsedCampaignDays();

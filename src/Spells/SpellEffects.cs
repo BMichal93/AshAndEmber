@@ -164,6 +164,28 @@ namespace AshAndEmber
             ExecuteBurstFromAgent(caster, cast, casterTeam);
         }
 
+        public static void ExecuteNpcBarrier(Agent caster, int nodeCount,
+            int damageCount, int restoreCount, Team casterTeam)
+        {
+            if (caster == null || !caster.IsActive()) return;
+            var cast = new SpellCast
+            {
+                Form = SpellForm.Barrier, FormCount = nodeCount, BarrierCount = nodeCount,
+                DamageCount = damageCount, RestoreCount = restoreCount,
+                OverrideVisualColor = ResolveNpcSchool(caster)
+            };
+            Vec3 fwd   = caster.LookDirection.NormalizedCopy();
+            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f).NormalizedCopy();
+            for (int i = 0; i < nodeCount; i++)
+            {
+                float offset = (i - (nodeCount - 1) * 0.5f) * 1.5f;
+                Vec3 pos = caster.Position + fwd * 3f + right * offset;
+                AddBarrierNode(pos, cast, casterTeam);
+            }
+            try { TryCastSound(caster.Position, cast.VisualColor); } catch { }
+            try { TryCastAnimation(caster); } catch { }
+        }
+
         // Returns ColorSchool.Ashen for Ashen lords so their spells show cold-blue
         // visuals; null for everyone else so the default school logic applies.
         private static ColorSchool? ResolveNpcSchool(Agent caster)

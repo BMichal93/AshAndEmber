@@ -113,7 +113,9 @@ namespace AshAndEmber
                         try
                         {
                             int today = CurrentCampaignDay();
-                            bool onCooldown = (today - _lastAltarUseDay) < MiracleMath.AltarCooldownDays;
+                            int effectiveAltarCd = TalentSystem.Has(TalentId.ColdCovenant)
+                                ? Math.Max(1, MiracleMath.AltarCooldownDays / 2) : MiracleMath.AltarCooldownDays;
+                            bool onCooldown = (today - _lastAltarUseDay) < effectiveAltarCd;
                             bool blockedByGrace = MiracleInventory.Grace > 0;
                             bool atCap = MiracleInventory.Cold >= MiracleMath.GraceColdCap;
 
@@ -127,7 +129,7 @@ namespace AshAndEmber
                             else if (atCap)
                             { args.IsEnabled = false; suffix = "  [Cold is full — cast a miracle first]"; }
                             else if (onCooldown)
-                            { args.IsEnabled = false; suffix = $"  [On cooldown: {MiracleMath.AltarCooldownDays - (today - _lastAltarUseDay)} day(s)]"; }
+                            { args.IsEnabled = false; suffix = $"  [On cooldown: {effectiveAltarCd - (today - _lastAltarUseDay)} day(s)]"; }
 
                             string reagentNote = "";
                             if (!blockedByGrace && !atCap && !onCooldown)
@@ -162,19 +164,46 @@ namespace AshAndEmber
                         try
                         {
                             int today = CurrentCampaignDay();
-                            bool onCooldown = (today - _lastInvokeDay) < MiracleMath.InvokeCooldownDays;
+                            int effectiveInvokeCd = TalentSystem.Has(TalentId.ColdCovenant)
+                                ? Math.Max(1, MiracleMath.InvokeCooldownDays / 2) : MiracleMath.InvokeCooldownDays;
+                            bool onCooldown = (today - _lastInvokeDay) < effectiveInvokeCd;
                             string cd = onCooldown
-                                ? $"  [On cooldown: {MiracleMath.InvokeCooldownDays - (today - _lastInvokeDay)} day(s)]"
+                                ? $"  [On cooldown: {effectiveInvokeCd - (today - _lastInvokeDay)} day(s)]"
                                 : "";
                             if (onCooldown) args.IsEnabled = false;
+                            int invokeHpDisplay = 15;
+                            if (TalentSystem.Has(TalentId.DreadTide)) invokeHpDisplay += 5;
+                            if (TalentSystem.Has(TalentId.ColdCovenant)) invokeHpDisplay -= 5;
+                            string dreadNote = TalentSystem.Has(TalentId.DreadTide) ? " [Dread Tide: all three effects]" : "";
                             MBTextManager.SetTextVariable("ALTAR_INVOKE_TEXT",
-                                $"Invoke the Dark Tide  (costs 15 HP) — unleash Ashen influence upon the world{cd}");
+                                $"Invoke the Dark Tide  (costs {invokeHpDisplay} HP){dreadNote} — unleash Ashen influence upon the world{cd}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
                         return true;
                     },
                     args => DoInvokeDarkTide());
+            }
+            catch { }
+
+            // ── Option 3: Study the Rite ──────────────────────────────────────
+            try
+            {
+                starter.AddGameMenuOption("altar_menu", "altar_study_rite", "Study the Rite",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            MageKnowledge.ShowRiteTalentMenu("The Ashen Altar",
+                                new[] { TalentId.ColdTithe, TalentId.DreadTide, TalentId.ColdCovenant });
+                        }
+                        catch { }
+                    });
             }
             catch { }
 
@@ -215,6 +244,7 @@ namespace AshAndEmber
             // Cost: prisoner first; HP if none.
             string costDesc = "10 HP";
             bool usedPrisoner = false;
+            int prisonerTier = 0;
             try
             {
                 if (party?.PrisonRoster != null && party.PrisonRoster.Count > 0)
@@ -224,6 +254,7 @@ namespace AshAndEmber
                                          .OrderBy(e => e.Character.Tier).FirstOrDefault();
                     if (!lowest.Equals(default) && lowest.Number > 0)
                     {
+                        prisonerTier = lowest.Character.Tier;
                         party.PrisonRoster.AddToCounts(lowest.Character, -1);
                         costDesc = $"1 {lowest.Character.Name} (prisoner)";
                         usedPrisoner = true;
@@ -233,7 +264,20 @@ namespace AshAndEmber
             catch { }
 
             if (!usedPrisoner)
+            {
                 try { hero.HitPoints = Math.Max(1, hero.HitPoints - 10); } catch { }
+                // Soul Tithe: even the HP toll returns a fraction of warmth
+                if (TalentSystem.Has(TalentId.ColdTithe))
+                    try { hero.HitPoints = Math.Min(hero.MaxHitPoints, hero.HitPoints + 5); } catch { }
+            }
+            else if (TalentSystem.Has(TalentId.ColdTithe))
+            {
+                // Soul Tithe: tier-based heal — T1=5, T2=8, T3=10, T4+=15 + 1 bonus Cold
+                int soulHeal = prisonerTier <= 1 ? 5 : prisonerTier == 2 ? 8 : prisonerTier == 3 ? 10 : 15;
+                try { hero.HitPoints = Math.Min(hero.MaxHitPoints, hero.HitPoints + soulHeal); } catch { }
+                if (prisonerTier >= 4)
+                    try { MiracleInventory.AddCold(1); } catch { }
+            }
 
             int cooldownReduction = 0;
             try
@@ -257,7 +301,7 @@ namespace AshAndEmber
 
             int gained = MiracleInventory.AddCold(baseGain);
 
-            try { MageKnowledge.AddWhispers(3); } catch { }
+            try { MageKnowledge.AddWhispers(TalentSystem.Has(TalentId.ColdCovenant) ? 1 : 3); } catch { }
 
             _lastAltarUseDay = today - cooldownReduction;
             _altarUseCount++;
@@ -300,7 +344,10 @@ namespace AshAndEmber
             var party = MobileParty.MainParty;
             if (hero == null) { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } return; }
 
-            try { hero.HitPoints = Math.Max(1, hero.HitPoints - 15); } catch { }
+            int invokeHpCost = 15;
+            if (TalentSystem.Has(TalentId.DreadTide)) invokeHpCost += 5;
+            if (TalentSystem.Has(TalentId.ColdCovenant)) invokeHpCost -= 5;
+            try { hero.HitPoints = Math.Max(1, hero.HitPoints - invokeHpCost); } catch { }
 
             _lastInvokeDay  = CurrentCampaignDay();
             _lastAltarUseDay = CurrentCampaignDay();
@@ -324,6 +371,14 @@ namespace AshAndEmber
 
         private static string PerformDarkTideEffect(MobileParty party)
         {
+            // Dread Tide: all three effects fire simultaneously.
+            if (TalentSystem.Has(TalentId.DreadTide))
+            {
+                string r1 = DarkTideWoundNearby(party);
+                string r2 = DarkTideDrainTown(party);
+                string r3 = DarkTideMoraleCollapse(party);
+                return $"{r1}\n{r2}\n{r3}";
+            }
             int roll = _rng.Next(3);
             switch (roll)
             {
@@ -353,9 +408,10 @@ namespace AshAndEmber
                 return "The grey hunger rolls outward. No enemy stands close enough to be touched.";
 
             int total = 0;
+            int tideMultiplier = TalentSystem.Has(TalentId.DreadTide) ? 2 : 1;
             foreach (var mp in targets)
             {
-                int toWound = 10 + _rng.Next(6);
+                int toWound = (10 + _rng.Next(6)) * tideMultiplier;
                 int w = 0;
                 foreach (var e in mp.MemberRoster.GetTroopRoster().ToList())
                 {
