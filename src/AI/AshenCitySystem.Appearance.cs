@@ -127,8 +127,6 @@ namespace AshAndEmber
             var assignments = new[]
             {
                 ("Husn Fulq", "empire_s"),
-                ("Charas",    "empire_w"),
-                ("Sargot",    "empire_w"),
                 ("Seonon",    "empire_n"),
             };
             foreach (var (name, kingdomId) in assignments)

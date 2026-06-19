@@ -255,11 +255,20 @@ namespace AshAndEmber
 
         private static void ReassignImperialSettlements()
         {
-            // Marunath (town_B1) + castles B5/B2      → Northern Empire
-            // Jaculan  (town_V6) + castles V2/V7      → Western  Empire
-            // Seonon   (by name) + nearby B castles   → Northern Empire
-            // Razih    (by name) + nearby A castles   → Southern Empire
-            // Ostican  + nearby V castles              → Ashen kingdom
+            // ── Northern Empire ───────────────────────────────────────────────
+            // Marunath  (town_B1) + castles B5/B2          → Northern Empire
+            // Seonon    (by name) + nearby castles          → Northern Empire
+            // Ocs Hall, Rovalt    (Vlandia → North border)  → Northern Empire
+            // Car Banseth         (Battania → North border) → Northern Empire
+            // ── Western Empire ────────────────────────────────────────────────
+            // Jaculan   (town_V6) + castles V2/V7           → Western  Empire
+            // Charas, Galend, Pravend (Vlandia → West)      → Western  Empire
+            // Quyaz, Sanala           (Aserai  → West)      → Western  Empire
+            // ── Southern Empire ───────────────────────────────────────────────
+            // Razih     (by name) + nearby castles          → Southern Empire
+            // Akkalat             (Khuzait → South border)  → Southern Empire
+            // ── Ashen kingdom ─────────────────────────────────────────────────
+            // Ostican   + nearby castles                    → Ashen kingdom
             Hero northLeader = null;
             Hero westLeader  = null;
             Hero southLeader = null;
@@ -273,6 +282,7 @@ namespace AshAndEmber
             }
             catch { }
 
+            // ── Northern Empire (explicit IDs) ────────────────────────────────
             if (northLeader != null)
             {
                 foreach (string id in new[] { "town_B1", "castle_B5", "castle_B2" })
@@ -284,6 +294,7 @@ namespace AshAndEmber
                     catch { }
             }
 
+            // ── Western Empire (explicit IDs) ─────────────────────────────────
             if (westLeader != null)
             {
                 foreach (string id in new[] { "town_V6", "castle_V2", "castle_V7" })
@@ -295,15 +306,40 @@ namespace AshAndEmber
                     catch { }
             }
 
-            // Seonon (Battanian city near Northern Empire border) → Northern Empire
+            // ── Northern Empire (by name) ─────────────────────────────────────
             if (northLeader != null)
-                try { AssignSettlementAndNearby("Seonon", northLeader, 40f); } catch { }
+            {
+                // Seonon: Battanian city near the Northern Empire border
+                try { AssignSettlementAndNearby("Seonon",      northLeader, 40f); } catch { }
+                // Ocs Hall, Rovalt: Vlandian castles at the Vlandia–North border
+                try { AssignSettlementAndNearby("Ocs Hall",    northLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Rovalt",      northLeader, 40f); } catch { }
+                // Car Banseth: Battanian city at the Battania–North border
+                try { AssignSettlementAndNearby("Car Banseth", northLeader, 40f); } catch { }
+            }
 
-            // Razih (Aserai city near Southern Empire border) → Southern Empire
+            // ── Western Empire (by name) ──────────────────────────────────────
+            if (westLeader != null)
+            {
+                // Vlandian coastal cities reassigned to Western Empire
+                try { AssignSettlementAndNearby("Charas",  westLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Galend",  westLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Pravend", westLeader, 40f); } catch { }
+                // Aserai border cities reassigned to Western Empire
+                try { AssignSettlementAndNearby("Quyaz",  westLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Sanala", westLeader, 40f); } catch { }
+            }
+
+            // ── Southern Empire (by name) ─────────────────────────────────────
             if (southLeader != null)
-                try { AssignSettlementAndNearby("Razih", southLeader, 40f); } catch { }
+            {
+                // Razih: Aserai city near the Southern Empire border
+                try { AssignSettlementAndNearby("Razih",   southLeader, 40f); } catch { }
+                // Akkalat: Khuzait city at the Khuzait–South border
+                try { AssignSettlementAndNearby("Akkalat", southLeader, 40f); } catch { }
+            }
 
-            // Ostican (Vlandian settlement) → Ashen kingdom
+            // ── Ashen kingdom ─────────────────────────────────────────────────
             if (ashenLeader != null)
                 try { AssignSettlementAndNearby("Ostican", ashenLeader, 40f); } catch { }
         }

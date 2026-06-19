@@ -14,6 +14,7 @@
 //
 // Seven target capitals
 //   Pravend, Epicrotea, Pen Cannoc, Husn Fulq, Quyaz, Sargot, Marunath
+//   (Pravend and Quyaz are reassigned to Western Empire at game-start)
 //   (Epicrotea is also the prereq conquest target — capture it, then consecrate it.)
 //
 // Wasteland Rite effects
@@ -82,7 +83,7 @@ namespace AshAndEmber
             "Pen Cannoc", // Battania
             "Husn Fulq",  // Southern Empire
             "Quyaz",      // Aserai / Khuzait
-            "Sargot",     // Western Empire
+            "Sargot",     // Vlandia
             "Marunath",   // Battanian / Northern Empire (reassigned in mod)
         };
 
