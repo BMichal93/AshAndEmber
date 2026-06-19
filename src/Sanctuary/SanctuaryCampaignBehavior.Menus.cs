@@ -206,7 +206,10 @@ namespace AshAndEmber
             }
             catch { }
 
-            int gained = MiracleInventory.AddGrace(MiracleMath.GraceGain(honor, mercy, generosity));
+            int graceGain = MiracleMath.GraceGain(honor, mercy, generosity);
+            // EmberCovenant: prayer yields twice the Grace.
+            if (TalentSystem.Has(TalentId.EmberCovenant)) graceGain *= 2;
+            int gained = MiracleInventory.AddGrace(graceGain);
 
             if (TalentSystem.Has(TalentId.KeepingFlame))
             {
@@ -219,13 +222,15 @@ namespace AshAndEmber
                         foreach (var e in party.MemberRoster.GetTroopRoster().ToList())
                         {
                             if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
-                            int heal = Math.Max(1, (int)(e.WoundedNumber * 0.10f));
+                            int heal = Math.Max(1, (int)(e.WoundedNumber * 0.25f));
                             try { party.MemberRoster.AddToCounts(e.Character, 0, false, -heal); totalHealed += heal; } catch { }
                         }
-                        if (totalHealed > 0)
-                            InformationManager.DisplayMessage(new InformationMessage(
-                                $"The Keeping Flame — {totalHealed} of your wounded are mended by the warmth of your prayer.",
-                                new Color(0.95f, 0.75f, 0.35f)));
+                        // +20 morale from shared warmth
+                        try { party.RecentEventsMorale += 20f; } catch { }
+                        string healLine = totalHealed > 0
+                            ? $"The Keeping Flame — {totalHealed} of your wounded are mended and the column's courage lifts (+20 morale)."
+                            : "The Keeping Flame — the warmth spreads through your column (+20 morale).";
+                        InformationManager.DisplayMessage(new InformationMessage(healLine, new Color(0.95f, 0.75f, 0.35f)));
                     }
                 }
                 catch { }

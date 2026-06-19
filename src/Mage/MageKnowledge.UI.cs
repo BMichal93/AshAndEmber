@@ -306,8 +306,6 @@ namespace AshAndEmber
 
         public static void ShowRiteTalentMenu(string systemName, IEnumerable<TalentId> talentIds)
         {
-            int cost = TalentSystem.PurchaseCost();
-            string costStr = $"{cost} focus point{(cost != 1 ? "s" : "")}";
             var ids = new HashSet<TalentId>(talentIds);
             var elements = new List<InquiryElement>();
 
@@ -316,7 +314,7 @@ namespace AshAndEmber
                 if (!ids.Contains(d.Id)) continue;
                 bool   owned      = TalentSystem.Has(d.Id);
                 bool   selectable = !owned;
-                int    talentCost = d.FocusCost > 0 ? d.FocusCost : cost;
+                int    talentCost = d.FocusCost > 0 ? d.FocusCost : TalentSystem.PurchaseCost();
                 string check = owned ? "✓ " : "   ";
                 string label = $"{check}◈  {d.Name}";
                 string costHint = $"Cost: {talentCost} focus point{(talentCost != 1 ? "s" : "")}";
@@ -329,7 +327,7 @@ namespace AshAndEmber
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 $"Rites — {systemName}",
-                $"Rites deepen your understanding of this discipline. Cost: {costStr}.",
+                "Rites transform your mastery of this discipline. Each costs 2 focus points.",
                 elements, true, 0, 1,
                 "Learn", "Close",
                 chosen =>

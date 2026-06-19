@@ -327,6 +327,10 @@ namespace AshAndEmber
                 if (inMission && agingDays > 1 && TempleCovenant.CovenantActive)
                     agingDays -= 1;
 
+                // Unbroken Ward: while the Warding Seal holds, the fire runs cheaper in battle
+                if (inMission && TalentSystem.Has(TalentId.UnbrokenWard) && CampaignMapEvents.ProtectedDaysRemaining > 0)
+                    agingDays = Math.Max(1, agingDays - 2);
+
                 if (agingDays > 0)
                 {
                     if (MageKnowledge.IsAshen)

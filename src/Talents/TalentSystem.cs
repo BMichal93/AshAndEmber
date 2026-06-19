@@ -81,17 +81,17 @@ namespace AshAndEmber
         Dirge       = 47, // Lost Form — burst becomes a ground fire patch
         PaleComet   = 48, // Lost Form — missile pierces enemies, detonates at range end
         // ── Altar Rites ──────────────────────────────────────────────────────────
-        ColdTithe       = 49, // Rite — prisoner sacrifice heals caster
-        DreadTide       = 50, // Rite — Dark Tide wounds twice as many soldiers
-        ColdCovenant    = 51, // Rite — Altar accumulates 1 Whisper instead of 3
+        ColdTithe       = 49, // Rite — Soul Tithe: tier-based prisoner heal + bonus Cold
+        DreadTide       = 50, // Rite — Dread Tide: all three tide effects + 5 HP surcharge
+        ColdCovenant    = 51, // Rite — halved cooldowns; 1 Whisper; -5 HP invoke
         // ── Sanctuary Rites ───────────────────────────────────────────────────────
-        KeepingFlame    = 52, // Rite — prayer heals 10% wounded troops
-        UnbrokenWard    = 53, // Rite — Warding Seal lasts 21 days
-        EmberCovenant   = 54, // Rite — prayer costs 8 HP; Grace grants +5 morale/day
+        KeepingFlame    = 52, // Rite — 25% wound heal + 20 morale on prayer; morale floor 30
+        UnbrokenWard    = 53, // Rite — 21-day ward; +10 morale/day; -2 aging while active
+        EmberCovenant   = 54, // Rite — 8 HP cost; double Grace; daily troop heal; +5 morale
         // ── Alchemy Rites ─────────────────────────────────────────────────────────
-        SteadierHand    = 55, // Rite — +15% brew chance; no misleading reads
-        DeeperSatchel   = 56, // Rite — +2 satchel capacity; 20% cheap brew
-        VolatileHarvest = 57, // Rite — 40% chance to salvage tainted vials
+        SteadierHand    = 55, // Rite — +15% brew; no mislead; 20% double-brew on success
+        DeeperSatchel   = 56, // Rite — +4 capacity; flat 150g; 25% field refill
+        VolatileHarvest = 57, // Rite — 40% salvage; volatile burst; 30% harm reduction
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite }
@@ -330,59 +330,59 @@ namespace AshAndEmber
             // ── Altar Rites ──────────────────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.ColdTithe, Category = TalentCategory.Rite, Name = "Cold Tithe",
-                Lore = "The cold takes, but it is not without memory. A life given freely — not stolen, not borrowed — leaves a trace of warmth in the giving. The stone returns what it can.",
-                MechanicDesc = "Rite. When a prisoner is offered at the Altar, the sacrifice also heals you for 5 HP. The cold repays a small debt."
+                Id = TalentId.ColdTithe, Category = TalentCategory.Rite, FocusCost = 2, Name = "Soul Tithe",
+                Lore = "The cold does not forget what it receives. A life given in the grey dark carries warmth — the last warmth of the dying — and the stone passes some of it back to the hand that held the offering. The higher the vessel, the deeper the debt it carries, and the more the stone returns.",
+                MechanicDesc = "Rite. Prisoner sacrifices heal you in proportion to their tier — T1: 5 HP, T2: 8 HP, T3: 10 HP, T4+: 15 HP and 1 bonus Cold. If no prisoner is available and you pay in HP instead, the ritual returns 5 of those HP immediately. The cold never forgets a gift freely given."
             },
             new TalentDef
             {
-                Id = TalentId.DreadTide, Category = TalentCategory.Rite, Name = "Dread Tide",
-                Lore = "What the altar calls does not stay near the stone. The grey hunger travels, and it does not stop when it has taken enough. It stops when it has taken what it came for.",
-                MechanicDesc = "Rite. Invoke the Dark Tide wounds twice as many soldiers in nearby enemy forces."
+                Id = TalentId.DreadTide, Category = TalentCategory.Rite, FocusCost = 2, Name = "Dread Tide",
+                Lore = "What the altar calls does not come in pieces. The stone was never a door you could open partway — it is all the way or nothing, and the tide that answers is not patient. It wounds, it drains, it breaks courage. All three. At once. The ones who taught this did not survive to warn against it.",
+                MechanicDesc = "Rite. When you Invoke the Dark Tide, all three tide effects fire simultaneously: soldiers are wounded nearby, a town's loyalty and security drain, and a wave of despair breaks over every close enemy force. The ritual demands 5 more HP (20 total) for this breadth. With Cold Covenant: 15 HP for all three."
             },
             new TalentDef
             {
-                Id = TalentId.ColdCovenant, Category = TalentCategory.Rite, Name = "Cold Covenant",
-                Lore = "The stone does not need your suffering — it needs your understanding. An offering given in knowing is worth more than one given in desperation. The cold is patient, and it teaches patience.",
-                MechanicDesc = "Rite. The Altar accumulates only 1 Whisper per rite instead of 3. The cold leaves fewer marks on your standing."
+                Id = TalentId.ColdCovenant, Category = TalentCategory.Rite, FocusCost = 2, Name = "Cold Covenant",
+                Lore = "You have stopped asking the stone to come to you on your terms. The stone prefers practitioners who understand the arrangement — that it is patient, and you are not, and that its patience can be borrowed if you acknowledge the debt properly. Fewer marks. A shorter wait. Less cost on the dark invocation.",
+                MechanicDesc = "Rite. Altar and Invoke cooldowns are halved. The Altar accumulates only 1 Whisper per rite instead of 3. Invoking the Dark Tide costs 5 fewer HP (10 instead of 15; 15 instead of 20 with Dread Tide). The cold teaches economy to those who have earned its patience."
             },
             // ── Sanctuary Rites ──────────────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.KeepingFlame, Category = TalentCategory.Rite, Name = "The Keeping Flame",
-                Lore = "The fire does not distinguish between the vessel that tends it and the vessels that warm beside it. To pray is to open a channel; what pours through does not always stop at the one who opened it.",
-                MechanicDesc = "Rite. Each prayer at the Sanctuary also heals 10% of wounded troops in your party. The warmth spreads."
+                Id = TalentId.KeepingFlame, Category = TalentCategory.Rite, FocusCost = 2, Name = "The Keeping Flame",
+                Lore = "To open yourself as a vessel is to open a channel wider than your own body. What the fire pours through you reaches the ones beside you — the wounded, the afraid, the ones whose fire was dimming. You cannot direct it; you can only stay open and trust the warmth to find what needs it most.",
+                MechanicDesc = "Rite. Each prayer heals 25% of wounded troops and grants your column +20 morale from shared warmth. Daily, your party's morale cannot fall below 30 — the Keeping Flame holds a floor of courage in the ones who march beside you."
             },
             new TalentDef
             {
-                Id = TalentId.UnbrokenWard, Category = TalentCategory.Rite, Name = "Unbroken Ward",
-                Lore = "A seal drawn in haste does not hold as long as one drawn with knowledge. The priest teaches you the fuller form. The grey things will not find the edges of it as quickly.",
-                MechanicDesc = "Rite. The Warding Seal lasts 21 days instead of 14."
+                Id = TalentId.UnbrokenWard, Category = TalentCategory.Rite, FocusCost = 2, Name = "Unbroken Ward",
+                Lore = "The fuller form of the warding sinks deeper into the earth and the air, leaves less of a seam at the edges. The grey things find the seal and do not try the same approach twice. Meanwhile those who march beneath it feel a warmth they cannot name, and their courage does not drain as fast.",
+                MechanicDesc = "Rite. The Warding Seal lasts 21 days instead of 14. While the ward holds: your party gains +10 morale each day, and each battle spell costs 2 fewer aging days (minimum 1). The ward makes the fire cheaper to spend while it burns."
             },
             new TalentDef
             {
-                Id = TalentId.EmberCovenant, Category = TalentCategory.Rite, Name = "Ember Covenant",
-                Lore = "The flame asks less of those who carry it carefully. Devotion is its own fuel — the rite does not need to burn as deep to find the same warmth.",
-                MechanicDesc = "Rite. Prayer at the Sanctuary costs 8 HP instead of 12. While you carry any Grace, your party gains +5 morale each day from the warmth you hold."
+                Id = TalentId.EmberCovenant, Category = TalentCategory.Rite, FocusCost = 2, Name = "Ember Covenant",
+                Lore = "Devotion is its own fuel — the rite does not need to reach as deep when the channel has been worn smooth by repetition. And what you carry comes back to you in the breathing: the Grace you hold does not sit still, it moves, it circulates, it mends what it finds. Quietly. While you sleep.",
+                MechanicDesc = "Rite. Prayer costs 8 HP instead of 12, and yields twice the Grace. While you carry any Grace: +5 morale each day. When Grace exceeds half your cap, the warmth quietly heals one wounded soldier per troop type each dawn."
             },
             // ── Alchemy Rites ─────────────────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.SteadierHand, Category = TalentCategory.Rite, Name = "The Steadier Hand",
-                Lore = "Most who spoil a brew do so in the final measure — the pour, the seal, the moment between intent and completion. You have learned to finish cleanly.",
-                MechanicDesc = "Rite. Brewing success chance increases by 15%. Misleading read results are replaced with Unknown at worst — the hand that seals it may doubt, but it will not lie."
+                Id = TalentId.SteadierHand, Category = TalentCategory.Rite, FocusCost = 2, Name = "The Steadier Hand",
+                Lore = "Most who spoil a brew do so in the final measure. You have learned to finish confidently — and the confident finish is its own catalyst. Sometimes the brew that should have been one becomes two, as though the formula agreed it was not done yet.",
+                MechanicDesc = "Rite. Brewing success chance increases by 15%. Misleading read results are replaced with Unknown — the hand that seals it may doubt, but it will not lie. On a clean brew, 20% chance the formula yields a second vial at no additional cost."
             },
             new TalentDef
             {
-                Id = TalentId.DeeperSatchel, Category = TalentCategory.Rite, Name = "The Deeper Satchel",
-                Lore = "The satchel was always larger than it looked. A practised hand understands the arrangement — what nests against what, which vials share heat and which do not. More can be carried than the count suggests.",
-                MechanicDesc = "Rite. Satchel capacity increases by 2. Each brew has a 20% chance to cost only 100 denars as the ingredients combine without waste."
+                Id = TalentId.DeeperSatchel, Category = TalentCategory.Rite, FocusCost = 2, Name = "The Deeper Satchel",
+                Lore = "The satchel was always larger than it looked. A practised hand arranges rather than counts — the vials nest, the heat distributes, the seams of the old leather know where to give. And sometimes, when the vial rises to the lips, the hand reaches back and finds it is somehow still there.",
+                MechanicDesc = "Rite. Satchel capacity increases by 4. Ingredient costs drop to a flat 150 denars per brew. When you drink a clean elixir in the field, 25% chance the satchel refills with one clean vial of the same kind — you reach in and find it was not gone after all."
             },
             new TalentDef
             {
-                Id = TalentId.VolatileHarvest, Category = TalentCategory.Rite, Name = "Volatile Harvest",
-                Lore = "A ruined brew is not always a waste. The instincts of a careful hand can find what is still good inside what went wrong — the part that set true before the rest turned. It takes nerve to drink something that smells like failure.",
-                MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the elixir's clean effect instead."
+                Id = TalentId.VolatileHarvest, Category = TalentCategory.Rite, FocusCost = 2, Name = "Volatile Harvest",
+                Lore = "A ruined brew is not always a waste. The instincts of a careful hand find what set true before the rest turned. It takes nerve to drink something that smells like failure. And when the good part surfaces unexpectedly, the volatile remainder does not vanish quietly — it needs somewhere to go.",
+                MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the clean effect. In battle, the volatile remnant lashes the nearest enemy for 25 fire damage on a salvage. When a backfire does land, 30% of the self-wound is returned as a partial heal — not all of the ruin reaches you."
             },
         };
 

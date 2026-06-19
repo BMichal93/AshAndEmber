@@ -35,7 +35,7 @@ namespace AshAndEmber
                     intel = h.GetAttributeValue(DefaultCharacterAttributes.Intelligence);
             }
             catch { }
-            int bonus = TalentSystem.Has(TalentId.DeeperSatchel) ? 2 : 0;
+            int bonus = TalentSystem.Has(TalentId.DeeperSatchel) ? 4 : 0;
             return AlchemyMath.CarryCapacity(intel) + bonus;
         }
 

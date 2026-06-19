@@ -232,10 +232,11 @@ namespace AshAndEmber
                         {
                             args.optionLeaveType = GameMenuOption.LeaveType.Default;
                             bool full = !AlchemyInventory.HasSpace();
-                            bool poor = (Hero.MainHero?.Gold ?? 0) < BrewGoldCost;
+                            int minCost = TalentSystem.Has(TalentId.DeeperSatchel) ? 150 : BrewGoldCost;
+                            bool poor = (Hero.MainHero?.Gold ?? 0) < minCost;
                             args.IsEnabled = !full && !poor;
                             if (full)      args.Tooltip = new TextObject("Your satchel is full.");
-                            else if (poor) args.Tooltip = new TextObject($"You need {BrewGoldCost} denars for ingredients.");
+                            else if (poor) args.Tooltip = new TextObject($"You need {minCost} denars for ingredients.");
                         }
                         catch { }
                         return true;
@@ -291,9 +292,10 @@ namespace AshAndEmber
                     d.Type, $"{d.Name}  [{d.Context}]", null, true,
                     $"{d.Effect}  {d.Flavour}")).ToList();
 
+                int displayCost = TalentSystem.Has(TalentId.DeeperSatchel) ? 150 : BrewGoldCost;
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "Brew an Elixir",
-                    $"Choose your formula. Ingredients cost {BrewGoldCost} denars. The brew is added to your "
+                    $"Choose your formula. Ingredients cost {displayCost} denars. The brew is added to your "
                         + "satchel whatever the outcome — but a clumsy hand may spoil it, and a spoiled brew "
                         + "turns on whoever drinks it.",
                     elements, true, 1, 1, "Brew", "Cancel",
@@ -317,16 +319,14 @@ namespace AshAndEmber
                 ShowResult("Your satchel has no room for another vial.");
                 return;
             }
-            if (hero.Gold < BrewGoldCost)
+
+            // DeeperSatchel: ingredient costs drop to a flat 150 denars.
+            int actualCost = TalentSystem.Has(TalentId.DeeperSatchel) ? 150 : BrewGoldCost;
+            if (hero.Gold < actualCost)
             {
-                ShowResult($"You cannot afford the ingredients ({BrewGoldCost} denars).");
+                ShowResult($"You cannot afford the ingredients ({actualCost} denars).");
                 return;
             }
-
-            // DeeperSatchel: 20% chance the ingredients combine without waste — 100g instead.
-            int actualCost = BrewGoldCost;
-            if (TalentSystem.Has(TalentId.DeeperSatchel) && _rng.NextDouble() < 0.20)
-                actualCost = 100;
             try { hero.Gold -= actualCost; } catch { }
 
             int med = SafeMedicine(hero);
@@ -345,10 +345,16 @@ namespace AshAndEmber
             AlchemyInventory.Add(type, tainted: !clean);
             try { hero.HeroDeveloper?.AddSkillXp(DefaultSkills.Medicine, BrewMedicineXp); } catch { }
 
+            // SteadierHand: 20% chance to yield a second clean vial on success.
+            bool doubleBrew = false;
+            if (clean && TalentSystem.Has(TalentId.SteadierHand) && _rng.NextDouble() < 0.20 && AlchemyInventory.HasSpace())
+            {
+                doubleBrew = true;
+                AlchemyInventory.Add(type, tainted: false);
+            }
+
             // The brew is sealed — but whether you can tell good from bad is a
-            // separate test against your Intelligence. On a true read you know
-            // its quality; on a poor read you are left guessing; on a bad read
-            // you walk away believing the opposite of the truth.
+            // separate test against your Intelligence.
             int wit = SafeIntelligence(hero);
             BrewAppraisal read = AlchemyMath.ReadBrew(wit, _rng.NextDouble());
             // SteadierHand: the hand that seals it may doubt, but it will not lie.
@@ -356,7 +362,10 @@ namespace AshAndEmber
                 read = BrewAppraisal.Unknown;
 
             string name = AlchemyCatalog.Name(type);
-            ShowResult(BrewResultLine(name, clean, read));
+            string result = BrewResultLine(name, clean, read);
+            if (doubleBrew)
+                result += " The formula yields twice — a second vial settles in your satchel.";
+            ShowResult(result);
         }
 
         // Builds the after-brew message from the true quality and how well it was
