@@ -70,7 +70,7 @@ namespace AshAndEmber
         private static RelationTier GetRelationTier(Hero companion)
         {
             int rel = 0;
-            try { rel = companion.GetRelationWithPlayer(); } catch { }
+            try { rel = (int)companion.GetRelationWithPlayer(); } catch { }
             if (rel <= -50) return RelationTier.VeryNegative;
             if (rel <= -10) return RelationTier.Negative;
             if (rel <=   9) return RelationTier.Neutral;

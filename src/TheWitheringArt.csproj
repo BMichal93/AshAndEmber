@@ -64,6 +64,10 @@
       <HintPath>$(_BL)\TaleWorlds.ObjectSystem.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="TaleWorlds.SaveSystem">
+      <HintPath>$(_BL)\TaleWorlds.SaveSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="TaleWorlds.DotNet">
       <HintPath>$(_BL)\TaleWorlds.DotNet.dll</HintPath>
       <Private>false</Private>
@@ -80,6 +84,7 @@
 
   <ItemGroup>
     <Compile Include="MagicSystem.cs"/>
+    <Compile Include="SaveDefiner.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.Quest.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.Ending.cs"/>
@@ -113,6 +118,8 @@
     <Compile Include="Campaign\CampaignBehavior.Ticks.cs"/>
     <Compile Include="Campaign\CampaignBehavior.ReapAging.cs"/>
     <Compile Include="Campaign\CampaignBehavior.Lifecycle.cs"/>
+    <Compile Include="Campaign\AmbientRemarks.cs"/>
+    <Compile Include="Campaign\AshenMapTone.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.Events01_09.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.ApiSeasonal.cs"/>
@@ -120,6 +127,7 @@
     <Compile Include="QuestSystems\CampaignMapEvents.Events19_23.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.DeadMarch.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.Diplomatic.cs"/>
+    <Compile Include="QuestSystems\CampaignMapEvents.Branded.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.Helpers.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.Persistence.cs"/>
     <Compile Include="QuestSystems\CampaignMapEvents.Portents.cs"/>
@@ -134,6 +142,7 @@
     <Compile Include="QuestSystems\SettlementEncounters.Events4.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Events5.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Events6.cs"/>
+    <Compile Include="QuestSystems\SettlementEncounters.Events7.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Ambient.cs"/>
     <Compile Include="QuestSystems\BattleEvents.cs"/>
     <Compile Include="QuestSystems\BattleEvents.Events.cs"/>
@@ -203,6 +212,7 @@
     <Compile Include="Tavern\TavernCampaignBehavior.Menus.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Outcomes.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Helpers.cs"/>
+    <Compile Include="Tavern\TavernCampaignBehavior.Rumors.cs"/>
     <Compile Include="Reagents\ReagentSystem.cs"/>
     <Compile Include="AshenRuins\AshenRuinDefs.cs"/>
     <Compile Include="AshenRuins\AshenRuinSystem.cs"/>
@@ -227,6 +237,8 @@
     <Compile Include="Visual\NamePrefixes.cs"/>
     <Compile Include="Visual\AshenSceneTone.cs"/>
     <Compile Include="Visual\AshenVisuals.cs"/>
+    <Compile Include="Visual\BattleWhispers.cs"/>
+    <Compile Include="Visual\FocusVisuals.cs"/>
     <Compile Include="Conclave\EmberConclaveSystem.cs"/>
     <Compile Include="Conclave\EmberConclaveLog.cs"/>
   </ItemGroup>
