@@ -97,9 +97,9 @@ All talents cost 1 focus point each, regardless of how many you already own. Los
 | Max effect inputs per cast | 5 |
 | Aging cost formula | round(1.65^(n−1)), capped at 84 days |
 | Aging cost at max (10 inputs) | 84 days |
-| Sear base damage per input | 18 HP + 1 m push |
-| Force base damage per input | 10 HP + 5% vulnerability 6 s |
-| Shred base damage per input | 10 HP + 12 morale drain |
+| Sear base damage per input | 30 HP + 1 m push |
+| Force base damage per input | 20 HP + 5% vulnerability 6 s |
+| Shred base damage per input | 20 HP + 12 morale drain |
 | Restore base heal per input | 15 HP + 6 morale |
 | Blast radius per input | 2.5 m |
 | Burst radius per input | 2.5 m |
