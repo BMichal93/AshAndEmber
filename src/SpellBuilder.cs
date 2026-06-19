@@ -14,9 +14,9 @@
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
 // EFFECTS (effect buffer, stackable up to 5 total — each damage key carries its own nature)
-//   U = Sear    — 30 fire dmg + push per input     (Immolate replaces push with DoT/kill)
-//   L = Force   — 20 fire dmg + 5% vuln per input  (Scatter replaces vuln with big push+slow)
-//   R = Shred   — 20 fire dmg + 12 morale per input(Sunder replaces morale with armour shred)
+//   U = Sear    — 35 fire dmg + push per input     (Immolate replaces push with DoT/kill)
+//   L = Force   — 22 fire dmg + 5% vuln per input  (Scatter replaces vuln with big push+slow)
+//   R = Shred   — 22 fire dmg + 12 morale per input(Sunder replaces morale with armour shred)
 //   D = Restore — 15 heal + 6 morale per input, heals allies; Burst also heals caster
 //                 (Hearthlight amplifies morale)
 // =============================================================================
@@ -114,9 +114,9 @@ namespace AshAndEmber
                 if (HasSplitDamage)
                 {
                     var natures = new List<string>();
-                    if (SearCount  > 0) natures.Add($"sear ×{SearCount} ({SearCount * 30})");
-                    if (ForceCount > 0) natures.Add($"force ×{ForceCount} ({ForceCount * 20})");
-                    if (ShredCount > 0) natures.Add($"shred ×{ShredCount} ({ShredCount * 20})");
+                    if (SearCount  > 0) natures.Add($"sear ×{SearCount} ({SearCount * 35})");
+                    if (ForceCount > 0) natures.Add($"force ×{ForceCount} ({ForceCount * 22})");
+                    if (ShredCount > 0) natures.Add($"shred ×{ShredCount} ({ShredCount * 22})");
                     parts.Add($"damage ({string.Join(", ", natures)})");
                 }
                 else

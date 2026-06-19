@@ -46,14 +46,14 @@ namespace AshAndEmber
             {
                 if (cast.HasSplitDamage)
                 {
-                    if (cast.SearCount  > 0) DamageAgent(target, cast.SearCount  * 30f, owner: caster);
-                    if (cast.ForceCount > 0) DamageAgent(target, cast.ForceCount * 20f, owner: caster);
-                    if (cast.ShredCount > 0) DamageAgent(target, cast.ShredCount * 20f, owner: caster);
+                    if (cast.SearCount  > 0) DamageAgent(target, cast.SearCount  * 35f, owner: caster);
+                    if (cast.ForceCount > 0) DamageAgent(target, cast.ForceCount * 22f, owner: caster);
+                    if (cast.ShredCount > 0) DamageAgent(target, cast.ShredCount * 22f, owner: caster);
                     ApplyInnateDamageNatures(target, cast, caster);
                 }
                 else
                 {
-                    DamageAgent(target, cast.DamageCount * 30f, owner: caster);
+                    DamageAgent(target, cast.DamageCount * 35f, owner: caster);
                 }
                 ApplyDamageEnchantments(target, cast, caster);
             }
@@ -349,7 +349,7 @@ namespace AshAndEmber
                     }
                     else
                     {
-                        DamageAgent(target, cast.EffSear * 15f, owner: caster);
+                        DamageAgent(target, cast.EffSear * 17f, owner: caster);
                         BeginAgentGlow(target, ColorSchool.Red, 1.5f);
                     }
                 }
