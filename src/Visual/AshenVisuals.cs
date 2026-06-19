@@ -17,6 +17,7 @@ using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
+using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
 
@@ -31,6 +32,18 @@ namespace AshAndEmber
         {
             "ashen_thrall", "ashen_invoker",
         };
+
+        // All custom mod troops that already carry a meaningful name — do not overwrite with "Ashen Warrior"
+        private static readonly HashSet<string> _namedModTroopIds = new HashSet<string>
+        {
+            "ashen_thrall", "ashen_invoker", "ashen_priest", "flame_priest",
+            "fire_devotee", "fire_zealot", "ember_caller", "ember_shaman",
+            "circle_acolyte", "circle_druid", "circle_shaman",
+        };
+
+        // Reflected backing field used to rename agents in-battle
+        private static FieldInfo _agentNameField;
+        private static bool      _agentNameResolved;
 
         // Cold ash-grey / frost-blue cloth tint for agents we spawn ourselves
         public const uint ClothAshGrey  = 0xFF46505A;
@@ -296,6 +309,48 @@ namespace AshAndEmber
                     refresh.Invoke(agent, new object[] { eq });
             }
             catch { }
+        }
+
+        // ── In-battle unit rename ─────────────────────────────────────────────
+
+        // Sets the battle nameplate of regular (non-hero, non-named-custom) troops
+        // in Ashen armies to "Ashen Warrior". Called from OnAgentBuild.
+        public static void TryRenameToAshenWarrior(Agent agent)
+        {
+            if (agent == null || agent.IsHero || agent.IsMount) return;
+
+            var character = agent.Character as CharacterObject;
+            if (character != null && _namedModTroopIds.Contains(character.StringId)) return;
+
+            if (!ShouldRenameAshenAgent(agent)) return;
+
+            if (!_agentNameResolved)
+            {
+                _agentNameResolved = true;
+                var field = typeof(Agent).GetField("_name",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                if (field != null && field.FieldType == typeof(TextObject))
+                    _agentNameField = field;
+            }
+            if (_agentNameField == null) return;
+            try { _agentNameField.SetValue(agent, new TextObject("Ashen Warrior")); } catch { }
+        }
+
+        private static bool ShouldRenameAshenAgent(Agent agent)
+        {
+            try
+            {
+                var party = agent.Origin?.BattleCombatant as PartyBase;
+                if (party == null) return false;
+
+                var mobile = party.MobileParty;
+                if (mobile != null && MageKnowledge.IsAshen && mobile == MobileParty.MainParty)
+                    return true;
+
+                if (party.MapFaction?.StringId == AshenKingdomId) return true;
+            }
+            catch { }
+            return false;
         }
 
         // Cheapest native item of the given type whose id matches a hint —

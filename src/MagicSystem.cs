@@ -264,6 +264,9 @@ namespace AshAndEmber
             // elements) for Ashen Spawn units, Ashen kingdom soldiers and
             // Ashen heroes.
             try { AshenVisuals.TryApply(agent); } catch { }
+            // All non-hero soldiers fighting for the Ashen (kingdom or Ashen player)
+            // are called "Ashen Warrior" in battle — they have abandoned their old names.
+            try { AshenVisuals.TryRenameToAshenWarrior(agent); } catch { }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
