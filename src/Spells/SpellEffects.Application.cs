@@ -53,7 +53,7 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    DamageAgent(target, cast.DamageCount * 25f, owner: caster);
+                    DamageAgent(target, cast.DamageCount * 30f, owner: caster);
                 }
                 ApplyDamageEnchantments(target, cast, caster);
             }
