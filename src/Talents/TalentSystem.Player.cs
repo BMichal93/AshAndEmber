@@ -63,9 +63,31 @@ namespace AshAndEmber
         // ── Player talent tracking ─────────────────────────────────────────────
         private static readonly HashSet<TalentId> _purchased = new HashSet<TalentId>();
 
-        public static bool Has(TalentId id) => _purchased.Contains(id);
+        // A talent is owned if it was purchased directly (legacy single-talent
+        // saves) OR if the class that bundles it has been purchased.
+        public static bool Has(TalentId id)
+        {
+            if (_purchased.Contains(id)) return true;
+            if (_memberToClass.TryGetValue(id, out var owningClass) && _purchased.Contains(owningClass))
+                return true;
+            return false;
+        }
+
         public static IEnumerable<TalentId> AllPurchased => _purchased;
-        public static int PurchasedCount => _purchased.Count;
+
+        // Effective ability count: a class counts for all the talents it bundles,
+        // so systems that scale by "how much magic you know" (e.g. Ashen Ruins
+        // proficiency) read the same whether a player bought singles or classes.
+        public static int PurchasedCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var id in _purchased)
+                    n += ClassMembers.TryGetValue(id, out var members) ? members.Length : 1;
+                return n;
+            }
+        }
 
         public static void ResetForNewGame()
         {
@@ -85,13 +107,18 @@ namespace AshAndEmber
 
         public static int PurchaseCost() => 1;
 
+        // Test seam: add a talent or class to the owned set with no focus-point
+        // cost, hero traits, or UI. Mirrors what a purchase does to _purchased,
+        // without touching the TaleWorlds runtime, so the bundle logic stays
+        // coverable by PureLogicTests.
+        public static void GrantClassForTest(TalentId id) => _purchased.Add(id);
+
         // Grant a talent for free (no focus-point cost). Returns false if already owned.
         public static bool GrantFree(TalentId id, Hero hero)
         {
             if (_purchased.Contains(id)) return false;
             _purchased.Add(id);
-            if (id == TalentId.Camaraderie) ApplyCamaraderie(hero);
-            if (id == TalentId.Reap)        ApplyReapTraits(hero);
+            ApplyMemberHooks(id, hero);
             var def = GetDef(id);
             if (def != null)
                 InformationManager.DisplayMessage(new InformationMessage(
@@ -141,14 +168,29 @@ namespace AshAndEmber
 
             _purchased.Add(id);
 
-            if (id == TalentId.Camaraderie) ApplyCamaraderie(hero);
-            if (id == TalentId.Reap)        ApplyReapTraits(hero);
+            ApplyMemberHooks(id, hero);
 
             var def = GetDef(id);
             InformationManager.DisplayMessage(new InformationMessage(
                 $"You have learned {def.Name}. {def.MechanicDesc}",
                 new Color(0.7f, 0.9f, 0.7f)));
             return true;
+        }
+
+        // Run the per-talent purchase side-effects for a newly learned talent or
+        // class. Buying a class fires the hooks of every member it bundles, so
+        // Dark Mage darkens you (Reap) and Ashbinder warms mage relations (Kinship)
+        // exactly as the single talents once did.
+        private static void ApplyMemberHooks(TalentId purchased, Hero hero)
+        {
+            IEnumerable<TalentId> ids = ClassMembers.TryGetValue(purchased, out var members)
+                ? members
+                : new[] { purchased };
+            foreach (var t in ids)
+            {
+                if (t == TalentId.Camaraderie) ApplyCamaraderie(hero);
+                if (t == TalentId.Reap)        ApplyReapTraits(hero);
+            }
         }
 
         private static void ApplyReapTraits(Hero hero)

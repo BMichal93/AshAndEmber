@@ -92,9 +92,21 @@ namespace AshAndEmber
         SteadierHand    = 55, // Rite — +15% brew; no mislead; 20% double-brew on success
         DeeperSatchel   = 56, // Rite — +4 capacity; flat 150g; 25% field refill
         VolatileHarvest = 57, // Rite — 40% salvage; volatile burst; 30% harm reduction
+        // ── Classes (talent packs — 2 FP each; bundle the older single talents) ──
+        DarkMage        = 58, // Class — life-eater path
+        Seer            = 59, // Class — foresight path
+        BattleSworn     = 60, // Class — war-caster path
+        WardKeeper      = 61, // Class — ward/shield path
+        Heartfire       = 62, // Class — healer/support path
+        Pyrelord        = 63, // Class — raw destruction path
+        Ashbinder       = 64, // Class — unmaker (morale/control) path
+        // ── Discipline classes (rite packs — 2 FP each; bundle the 9 rites) ──────
+        Coldsworn       = 65, // Class — Ashen Altar (Cold) rites
+        Gracebound      = 66, // Class — Sanctuary (Grace) rites
+        AshenAlchemist  = 67, // Class — Alchemy rites
     }
 
-    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite }
+    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite, Class }
 
     public class TalentDef
     {
@@ -116,6 +128,60 @@ namespace AshAndEmber
 
         public static readonly IReadOnlyList<TalentDef> All = new List<TalentDef>
         {
+            // ── Classes (2 focus points each) ─────────────────────────────────
+            // Each class is a path: one purchase grants a themed bundle of the
+            // older single talents, so a mage chooses a handful of identities
+            // instead of picking through thirty entries. (Wiring of the bundled
+            // effects to Has() lands in a second pass — see CHANGELOG.)
+            new TalentDef
+            {
+                Id = TalentId.DarkMage, Category = TalentCategory.Class, FocusCost = 2,
+                Name = "Dark Mage",
+                Lore = "The fire in you has learned to feed on others — their warmth, their years. It does not ask permission, and it does not give back what it takes.",
+                MechanicDesc = "Class (2 focus points). The path of the life-eater. Grants four talents: Ember (each battle kill may restore a day of youth), Reap (raids and executions restore years), Wither (drain an enemy village's hearth), and Extinguish (wound and break an enemy party at range). Walking this path darkens you — others will remember what you do."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Seer, Category = TalentCategory.Class, FocusCost = 2,
+                Name = "Seer",
+                Lore = "You read the fire the way a navigator reads stars — imperfectly, but well enough. The lines that bind every living thing are never quite still, and you have learned to look without flinching.",
+                MechanicDesc = "Class (2 focus points). The path of foresight. Grants four talents: Clairvoyance (turn insight into influence or gold), Tempered (battle casts cost 25% fewer days, deepening with age), Fade (conceal your party from enemy scouts), and Unsettle (shatter an enemy party's morale at a distance)."
+            },
+            new TalentDef
+            {
+                Id = TalentId.BattleSworn, Category = TalentCategory.Class, FocusCost = 2,
+                Name = "Battle-Sworn",
+                Lore = "The fire made familiar through war, where theory burns away and only what works remains. You do not reach for the flame any more — it is already in your hands when the line breaks.",
+                MechanicDesc = "Class (2 focus points). The path of the war-caster. Grants four talents: Warcast (cast without sheathing your weapons), Flashfire (battle spells have a 10% chance to echo at no cost), Pale Comet (missile forms pierce through enemies), and Widened Blast (a wider blast cone)."
+            },
+            new TalentDef
+            {
+                Id = TalentId.WardKeeper, Category = TalentCategory.Class, FocusCost = 2,
+                Name = "Ward-Keeper",
+                Lore = "The fire that keeps things out has always been harder to learn than the fire that burns. To shield is to stand still inside the flame and trust it not to turn.",
+                MechanicDesc = "Class (2 focus points). The path of the shield. Grants four talents: Ashveil (Restore grants brief magic immunity), Cinder Shell (Restore hardens allies and shields overhealed ones), Reflect (Restore retaliates against melee attackers), and The Warden's Ring (barrier nodes ring the caster instead of forming a wall)."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Heartfire, Category = TalentCategory.Class, FocusCost = 2,
+                Name = "Heartfire",
+                Lore = "The fire that tends the living is rarer than the fire that takes. It does not announce itself with smoke. It simply reminds the dying that warmth was theirs all along.",
+                MechanicDesc = "Class (2 focus points). The path of the tender. Grants three talents: Hearthlight (Restore lifts allied morale, +10 per input), Kindle (a campaign working that heals wounded soldiers and rallies your party), and Dirge (burst sinks into the ground as a lingering fire patch)."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Pyrelord, Category = TalentCategory.Class, FocusCost = 2,
+                Name = "Pyrelord",
+                Lore = "Fire taken to its furthest expression — where warmth becomes judgment. There is no shaping left at this reach, only the question of what is allowed to remain.",
+                MechanicDesc = "Class (2 focus points). The path of ruin. Grants four talents: Immolate (Sear can kill outright at 3+ inputs), Scatter (Force hurls and slows the broken), Sunder (Shred rends armour and saps attack), and Ashstorm (call a storm of fire down on an enemy settlement)."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Ashbinder, Category = TalentCategory.Class, FocusCost = 2,
+                Name = "Ashbinder",
+                Lore = "Fire need not kill to win. It hollows — strips the steel from a man's arm and the courage from his chest until nothing answers the call to fight. The body walks away. Whatever held it together does not.",
+                MechanicDesc = "Class (2 focus points). The path of the unmaker — fire that breaks resolve rather than bodies. Grants three talents: Smoulder (any Damage input shatters morale and bewilders, routing non-heroes), Kinship (favour among fire-bearers; battle casts cost up to 50% less beside allied mages), and Resonance (your first campaign working each day costs nothing, with a 25% chance on later ones)."
+            },
             // ── Passive ──────────────────────────────────────────────────────
             new TalentDef
             {
@@ -327,6 +393,28 @@ namespace AshAndEmber
                 Lore = "A bolt that does not stop at the first thing it finds. The fire passes through — not weakened, only saved for later. It finishes what it started at the far end of its reach. You do not see what it does until it is done.",
                 MechanicDesc = "Lost Form. The missile passes through enemies rather than detonating on first contact. Each enemy it crosses is struck by the full cast. The bolt detonates only when its full range is spent."
             },
+            // ── Discipline classes (rite packs — learned at their own sites) ──────
+            // Each bundles a whole discipline's rites into one 2-point purchase,
+            // mirroring the combat classes. Sold at the Altar / Sanctuary / Lab,
+            // not in the grimoire (Category.Rite is skipped there).
+            new TalentDef
+            {
+                Id = TalentId.Coldsworn, Category = TalentCategory.Rite, FocusCost = 2, Name = "Coldsworn",
+                Lore = "You no longer bargain with the stone one favour at a time. The cold has taken your measure and found you worth teaching. What it offers now, it offers whole — the tithe, the tide, and the patience between them.",
+                MechanicDesc = "Class (2 focus points). The full discipline of the Ashen Altar. Grants Soul Tithe (prisoner sacrifices heal you by tier), Dread Tide (one invocation fires all three tide effects at once), and Cold Covenant (halved cooldowns, 1 Whisper per rite instead of 3, and cheaper Dark Tide). The cold teaches economy to those who have earned its patience."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Gracebound, Category = TalentCategory.Rite, FocusCost = 2, Name = "Gracebound",
+                Lore = "Devotion worn smooth becomes a channel rather than a struggle. You no longer reach for the warmth — it is already moving through you, into the wounded beside you, into the ward overhead, into the courage of those who march in your shadow.",
+                MechanicDesc = "Class (2 focus points). The full discipline of the Sanctuary. Grants The Keeping Flame (each prayer heals a quarter of your wounded and holds a morale floor of 30), Unbroken Ward (a 21-day warding seal that grants daily morale and cheaper battle casts while it holds), and Ember Covenant (cheaper prayer, double Grace, and a quiet daily heal while Grace runs high)."
+            },
+            new TalentDef
+            {
+                Id = TalentId.AshenAlchemist, Category = TalentCategory.Rite, FocusCost = 2, Name = "Ashen Alchemist",
+                Lore = "The satchel was always larger than it looked, the brew always more willing than it seemed. A practised hand finishes confidently, carries more than it counts, and salvages what a clumsier one would spill into ruin.",
+                MechanicDesc = "Class (2 focus points). The full discipline of the Lab. Grants The Steadier Hand (+15% brew success, no misleading reads, a chance of a second vial), The Deeper Satchel (+4 capacity, flat 150-denar brews, a chance the field vial refills), and Volatile Harvest (salvage tainted vials, lash a nearby enemy on the save, and soften backfires)."
+            },
             // ── Altar Rites ──────────────────────────────────────────────────────
             new TalentDef
             {
@@ -385,6 +473,44 @@ namespace AshAndEmber
                 MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the clean effect. In battle, the volatile remnant lashes the nearest enemy for 25 fire damage on a salvage. When a backfire does land, 30% of the self-wound is returned as a partial heal — not all of the ruin reaches you."
             },
         };
+
+        // ── Class membership ───────────────────────────────────────────────────
+        // Each class bundles the older single talents it replaces. Owning the class
+        // satisfies Has() for every member (see TalentSystem.Player.cs). Only live
+        // talents (those with a TalentDef) are bundled — the consolidated-out forms
+        // (Scorch, Chain Ignite, Ashmark, Anchor Ward, Twin Bolts, Lost Burst, Lost
+        // Barrier) are deliberately left out, not silently revived.
+        public static readonly IReadOnlyDictionary<TalentId, TalentId[]> ClassMembers =
+            new Dictionary<TalentId, TalentId[]>
+            {
+                [TalentId.DarkMage]       = new[] { TalentId.Ember, TalentId.Reap, TalentId.Plague, TalentId.Extinguish },
+                [TalentId.Seer]           = new[] { TalentId.Clairvoyance, TalentId.BattleMage, TalentId.Fade, TalentId.BreakWills },
+                [TalentId.BattleSworn]    = new[] { TalentId.ArmedCasting, TalentId.Flashfire, TalentId.PaleComet, TalentId.LostBlast },
+                [TalentId.WardKeeper]     = new[] { TalentId.Ashveil, TalentId.CinderShell, TalentId.Reflect, TalentId.WardenRing },
+                [TalentId.Heartfire]      = new[] { TalentId.Hearthlight, TalentId.Inspire, TalentId.Dirge },
+                [TalentId.Pyrelord]       = new[] { TalentId.Immolate, TalentId.Scatter, TalentId.Sunder, TalentId.Ashstorm },
+                [TalentId.Ashbinder]      = new[] { TalentId.Smoulder, TalentId.Camaraderie, TalentId.Sorcerer },
+                [TalentId.Coldsworn]      = new[] { TalentId.ColdTithe, TalentId.DreadTide, TalentId.ColdCovenant },
+                [TalentId.Gracebound]     = new[] { TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant },
+                [TalentId.AshenAlchemist] = new[] { TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest },
+            };
+
+        private static readonly Dictionary<TalentId, TalentId> _memberToClass = BuildMemberToClass();
+        private static Dictionary<TalentId, TalentId> BuildMemberToClass()
+        {
+            var map = new Dictionary<TalentId, TalentId>();
+            foreach (var kv in ClassMembers)
+                foreach (var member in kv.Value)
+                    map[member] = kv.Key;
+            return map;
+        }
+
+        /// <summary>True if the id is a class (bundles other talents).</summary>
+        public static bool IsClass(TalentId id) => ClassMembers.ContainsKey(id);
+
+        /// <summary>The class that grants this member talent, if any.</summary>
+        public static bool TryGetOwningClass(TalentId member, out TalentId owningClass) =>
+            _memberToClass.TryGetValue(member, out owningClass);
 
     }
 

@@ -2,6 +2,17 @@
 
 ---
 
+## Unreleased
+
+### Mage Classes (talent tree simplification)
+- **The talent tree is now a class tree.** Instead of buying dozens of single talents one focus point at a time, a mage now picks **Classes** — each costs 2 focus points and grants a themed bundle of the older talents at once.
+- **Seven combat/spell classes:** *Dark Mage* (life-eater: Ember, Reap, Wither, Extinguish), *Seer* (foresight: Clairvoyance, Tempered, Fade, Unsettle), *Battle-Sworn* (war-caster: Warcast, Flashfire, Pale Comet, Widened Blast), *Ward-Keeper* (shields: Ashveil, Cinder Shell, Reflect, Warden's Ring), *Heartfire* (healer: Hearthlight, Kindle, Dirge), *Pyrelord* (ruin: Immolate, Scatter, Sunder, Ashstorm), and *Ashbinder* (control: Smoulder, Kinship, Resonance).
+- **Three discipline classes** replace the nine separate rites, learned at their own sites: *Coldsworn* (the Ashen Altar's three Cold rites), *Gracebound* (the Sanctuary's three Grace rites), and *Ashen Alchemist* (the Lab's three Alchemy rites).
+- **Backward compatible.** Existing saves keep any single talents already purchased — they still function; they are simply no longer listed for purchase. Buying a class fires every member's side-effects (e.g. Dark Mage darkens you as Reap once did, Ashbinder warms mage relations as Kinship did).
+- Consolidated-out forms (Scorch, Chain Ignite, Ashmark, Anchor Ward, Twin Bolts, Lost Burst, Lost Barrier) are **not** revived by the bundles — only live talents are granted.
+
+---
+
 ## v0.22
 
 ### The Ember Conclave (new questline)

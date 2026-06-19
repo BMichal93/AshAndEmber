@@ -133,6 +133,56 @@ namespace AshAndEmber.Tests
                 "Gift should be purchased automatically at game start.");
         }
 
+        // ── Class bundles ─────────────────────────────────────────────────────
+
+        [Test]
+        public void TalentSystem_EveryClassMember_IsALiveTalentDefinition()
+        {
+            // A class must never bundle a consolidated-out talent (no TalentDef),
+            // or owning the class would silently revive a cut mechanic.
+            foreach (var kv in TalentSystem.ClassMembers)
+                foreach (var member in kv.Value)
+                    Assert.IsTrue(TalentSystem.All.Any(d => d.Id == member),
+                        $"Class {kv.Key} bundles {member}, which has no live TalentDef.");
+        }
+
+        [Test]
+        public void TalentSystem_NoTalentIsBundledByTwoClasses()
+        {
+            var seen = new HashSet<TalentId>();
+            foreach (var kv in TalentSystem.ClassMembers)
+                foreach (var member in kv.Value)
+                    Assert.IsTrue(seen.Add(member),
+                        $"{member} is bundled by more than one class (second: {kv.Key}).");
+        }
+
+        [Test]
+        public void TalentSystem_EveryClass_CostsTwoFocusPoints()
+        {
+            foreach (var classId in TalentSystem.ClassMembers.Keys)
+            {
+                var def = TalentSystem.All.FirstOrDefault(d => d.Id == classId);
+                Assert.IsNotNull(def, $"Class {classId} has no TalentDef.");
+                Assert.AreEqual(2, def.FocusCost, $"Class {classId} should cost 2 focus points.");
+            }
+        }
+
+        [Test]
+        public void TalentSystem_OwningAClass_GrantsAllItsMembers()
+        {
+            TalentSystem.ResetForNewGame();
+            // Grant a class directly (no Hero needed) and confirm Has() reports
+            // every bundled member as owned.
+            TalentSystem.GrantClassForTest(TalentId.Pyrelord);
+            foreach (var member in TalentSystem.ClassMembers[TalentId.Pyrelord])
+                Assert.IsTrue(TalentSystem.Has(member),
+                    $"Owning Pyrelord should grant {member}.");
+            // A talent from a different, unowned class is not granted.
+            Assert.IsFalse(TalentSystem.Has(TalentId.Ashveil),
+                "Owning Pyrelord must not grant Ward-Keeper's Ashveil.");
+            TalentSystem.ResetForNewGame();
+        }
+
         // ── AgingSystem pure math ─────────────────────────────────────────────
 
         // Tests use the pure overload (explicit hero age) so they run without the

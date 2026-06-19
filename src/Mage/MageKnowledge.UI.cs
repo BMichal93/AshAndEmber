@@ -244,6 +244,11 @@ namespace AshAndEmber
                 if (d.IsInfo && d.Id == TalentId.AshenGift && !_isAshen) continue;
                 // Rite talents are learned through system-specific menus, not the grimoire
                 if (d.Category == TalentCategory.Rite) continue;
+                // Single talents are now bundled into Classes — only the class is
+                // purchasable. (Legacy saves keep any singles they already bought;
+                // those still function via Has(), they are just no longer listed.)
+                if (d.Category == TalentCategory.Passive || d.Category == TalentCategory.Enchantment
+                    || d.Category == TalentCategory.Spell || d.Category == TalentCategory.LostForm) continue;
 
                 // Insert a disabled separator when the category changes
                 if (d.Category != lastCategory)
@@ -251,6 +256,7 @@ namespace AshAndEmber
                     lastCategory = d.Category;
                     string header = d.Category switch
                     {
+                        TalentCategory.Class       => "─── Class ───",
                         TalentCategory.Passive     => "─── Passive ───",
                         TalentCategory.Enchantment => "─── Enchantment ───",
                         TalentCategory.Spell       => "─── Spell ───",
@@ -266,6 +272,7 @@ namespace AshAndEmber
                 bool   selectable = !d.IsInfo && !owned;
                 int    talentCost = d.FocusCost > 0 ? d.FocusCost : cost;
                 string icon  = d.IsInfo                                   ? "◉"
+                             : d.Category == TalentCategory.Class         ? "❖"
                              : d.Category == TalentCategory.Spell         ? "✦"
                              : d.Category == TalentCategory.Enchantment   ? "❋"
                              : d.Category == TalentCategory.LostForm      ? "◈"

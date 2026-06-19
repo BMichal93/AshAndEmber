@@ -169,7 +169,7 @@ namespace AshAndEmber
                         try
                         {
                             MageKnowledge.ShowRiteTalentMenu("The Sanctuary",
-                                new[] { TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant });
+                                new[] { TalentId.Gracebound });
                         }
                         catch { }
                     });

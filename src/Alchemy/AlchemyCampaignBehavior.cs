@@ -266,7 +266,7 @@ namespace AshAndEmber
                         try
                         {
                             MageKnowledge.ShowRiteTalentMenu("The Alchemical Lab",
-                                new[] { TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest });
+                                new[] { TalentId.AshenAlchemist });
                         }
                         catch { }
                     });

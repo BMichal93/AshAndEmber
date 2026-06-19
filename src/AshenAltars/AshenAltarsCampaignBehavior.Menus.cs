@@ -200,7 +200,7 @@ namespace AshAndEmber
                         try
                         {
                             MageKnowledge.ShowRiteTalentMenu("The Ashen Altar",
-                                new[] { TalentId.ColdTithe, TalentId.DreadTide, TalentId.ColdCovenant });
+                                new[] { TalentId.Coldsworn });
                         }
                         catch { }
                     });
