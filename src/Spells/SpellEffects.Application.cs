@@ -39,11 +39,22 @@ namespace AshAndEmber
             ColorSchool glowColor = cast.VisualColor;
             BeginAgentGlowRaw(target, ColorSchoolData.GetGlowColor(glowColor), 2f);
 
-            // Damage — fire hits everyone (friendly fire)
+            // Damage — fire hits everyone (friendly fire).
+            // Player casts (HasSplitDamage) use per-nature base damage values.
+            // NPC casts (DamageCount set directly, no split) use the flat 25/input.
             if (cast.DamageCount > 0)
             {
-                DamageAgent(target, cast.DamageCount * 25f, owner: caster);
-                if (cast.HasSplitDamage) ApplyInnateDamageNatures(target, cast, caster);
+                if (cast.HasSplitDamage)
+                {
+                    if (cast.SearCount  > 0) DamageAgent(target, cast.SearCount  * 18f, owner: caster);
+                    if (cast.ForceCount > 0) DamageAgent(target, cast.ForceCount * 10f, owner: caster);
+                    if (cast.ShredCount > 0) DamageAgent(target, cast.ShredCount * 10f, owner: caster);
+                    ApplyInnateDamageNatures(target, cast, caster);
+                }
+                else
+                {
+                    DamageAgent(target, cast.DamageCount * 25f, owner: caster);
+                }
                 ApplyDamageEnchantments(target, cast, caster);
             }
 
@@ -57,29 +68,15 @@ namespace AshAndEmber
         }
 
         // ── Innate damage natures ──────────────────────────────────────────────
-        // Each damage key carries a very weak built-in effect when the caster
-        // lacks the matching talent — just enough to feel present:
-        //   Sear (U)  → 2 burn damage per input (down from 5)
-        //   Force (L) → 0.75 m push per input   (down from 1.5 m)
-        //   Shred (R) → 2 vulnerability per input, max 6, 3 s  (down from 4/12/4 s)
-        // The matching enchantment talent (Immolate / Scatter / Sunder)
-        // supersedes its innate version with the full effect, so a talent owner
-        // does not double-dip.
+        // Each damage key carries a distinct built-in side effect (beyond base damage).
+        // The matching enchantment supersedes the innate version — no double-dip.
+        //   Sear (U)  → 1 m push per input          (Immolate replaces with DoT + kill)
+        //   Force (L) → 5% vulnerability per input   (Scatter replaces with big push + slow)
+        //   Shred (R) → 12 morale drain per input    (Sunder replaces with armour shred)
         private static void ApplyInnateDamageNatures(Agent target, SpellCast cast, Agent caster)
         {
-            // Sear: lingering burn — a fraction of Immolate's burn damage.
+            // Sear: push enemies back — suppressed when Immolate is active (DoT/kill supersedes).
             if (cast.SearCount > 0 && !CasterHasEnchantment(caster, TalentId.Immolate))
-            {
-                try
-                {
-                    DamageAgent(target, cast.SearCount * 2f, owner: caster);
-                    BeginAgentGlow(target, ColorSchool.Red, 1.5f);
-                }
-                catch { }
-            }
-
-            // Force: short push away from the caster — a fraction of Scatter's throw.
-            if (cast.ForceCount > 0 && !CasterHasEnchantment(caster, TalentId.Scatter))
             {
                 bool isMounted = false;
                 try { isMounted = target.MountAgent != null; } catch { }
@@ -87,7 +84,7 @@ namespace AshAndEmber
                 {
                     try
                     {
-                        float dist  = cast.ForceCount * 0.75f;
+                        float dist  = cast.SearCount * 1f;
                         Vec3 origin = caster?.Position ?? target.Position;
                         Vec3 dir    = (target.Position - origin);
                         if (dir.Length < 0.01f) dir = new Vec3(1f, 0f, 0f);
@@ -100,13 +97,13 @@ namespace AshAndEmber
                 }
             }
 
-            // Shred: brief minor vulnerability — a fraction of Sunder's shred.
-            if (cast.ShredCount > 0 && !CasterHasEnchantment(caster, TalentId.Sunder))
+            // Force: minor vulnerability — suppressed when Scatter is active (kinetic push supersedes).
+            if (cast.ForceCount > 0 && !CasterHasEnchantment(caster, TalentId.Scatter))
             {
                 try
                 {
-                    float vuln     = Math.Min(6f, cast.ShredCount * 2f); // raw value, /100 in DamageAgent
-                    float duration = 3f;
+                    float vuln     = Math.Min(25f, cast.ForceCount * 5f);
+                    float duration = 6f;
                     if (!_sunderedAgents.TryGetValue(target, out var existing))
                         _sunderedAgents[target] = (vuln, duration);
                     else
@@ -114,17 +111,37 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+
+            // Shred: morale drain + chance to bewilder — suppressed when Sunder is active (armour shred supersedes).
+            if (cast.ShredCount > 0 && !CasterHasEnchantment(caster, TalentId.Sunder))
+            {
+                try
+                {
+                    float delta = cast.ShredCount * 12f;
+                    float cur   = target.GetMorale();
+                    target.SetMorale(Math.Max(cur - delta, 0f));
+                }
+                catch { }
+                if (!target.IsHero && _rng.NextDouble() < 0.40)
+                {
+                    try
+                    {
+                        target.SetMorale(0f);
+                        BeginAgentGlow(target, ColorSchool.Red, 1f);
+                    }
+                    catch { }
+                }
+            }
         }
 
-        // Restore carries a weak built-in morale lift; the Hearthlight talent
-        // supersedes it with the full boost.
+        // Restore carries a built-in morale lift; the Hearthlight talent supersedes it.
         private static void ApplyInnateRestoreNature(Agent target, SpellCast cast, Agent caster)
         {
             if (cast.RestoreCount <= 0 || CasterHasEnchantment(caster, TalentId.Hearthlight)) return;
             try
             {
                 float cur = target.GetMorale();
-                target.SetMorale(Math.Min(cur + cast.RestoreCount * 4f, 100f));
+                target.SetMorale(Math.Min(cur + cast.RestoreCount * 6f, 100f));
             }
             catch { }
         }

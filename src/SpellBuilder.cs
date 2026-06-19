@@ -13,12 +13,12 @@
 //   R = Barrier (wall, 1 node per R)
 //   D = Burst   (circle on caster, 2.5m radius per D)
 //
-// EFFECTS (effect buffer, stackable — each damage key carries its own nature)
-//   U = Sear    — 25 fire dmg + searing burn   (Immolate talent amplifies)
-//   L = Force   — 25 fire dmg + concussive push (Scatter talent amplifies)
-//   R = Shred   — 25 fire dmg + armour shred    (Sunder talent amplifies)
-//   D = Restore — 15 heal per D (White visual), heals allies; Burst also heals caster
-//                 (innate small morale lift; Restore enchantments amplify)
+// EFFECTS (effect buffer, stackable up to 5 total — each damage key carries its own nature)
+//   U = Sear    — 18 fire dmg + push per input     (Immolate replaces push with DoT/kill)
+//   L = Force   — 10 fire dmg + 5% vuln per input  (Scatter replaces vuln with big push+slow)
+//   R = Shred   — 10 fire dmg + 12 morale per input(Sunder replaces morale with armour shred)
+//   D = Restore — 15 heal + 6 morale per input, heals allies; Burst also heals caster
+//                 (Hearthlight amplifies morale)
 // =============================================================================
 
 using System;
@@ -111,16 +111,18 @@ namespace AshAndEmber
             var parts = new List<string>();
             if (DamageCount > 0)
             {
-                string nature = "";
                 if (HasSplitDamage)
                 {
                     var natures = new List<string>();
-                    if (SearCount  > 0) natures.Add($"sear ×{SearCount}");
-                    if (ForceCount > 0) natures.Add($"force ×{ForceCount}");
-                    if (ShredCount > 0) natures.Add($"shred ×{ShredCount}");
-                    nature = $" ({string.Join(", ", natures)})";
+                    if (SearCount  > 0) natures.Add($"sear ×{SearCount} ({SearCount * 18})");
+                    if (ForceCount > 0) natures.Add($"force ×{ForceCount} ({ForceCount * 10})");
+                    if (ShredCount > 0) natures.Add($"shred ×{ShredCount} ({ShredCount * 10})");
+                    parts.Add($"damage ({string.Join(", ", natures)})");
                 }
-                parts.Add($"{DamageCount * 25} damage{nature}");
+                else
+                {
+                    parts.Add($"{DamageCount * 25} damage");
+                }
             }
             if (RestoreCount > 0) parts.Add($"+{RestoreCount * 15} restore");
             return string.Join(", ", parts);
@@ -179,10 +181,10 @@ namespace AshAndEmber
             {
                 switch (c)
                 {
-                    case 'U': cast.BlastCount++;   break;
-                    case 'L': cast.MissileCount++; break;
-                    case 'R': cast.BarrierCount++; break;
-                    case 'D': cast.BurstCount++;   break;
+                    case 'U': if (cast.BlastCount   < 5) cast.BlastCount++;   break;
+                    case 'L': if (cast.MissileCount < 5) cast.MissileCount++; break;
+                    case 'R': if (cast.BarrierCount < 5) cast.BarrierCount++; break;
+                    case 'D': if (cast.BurstCount   < 5) cast.BurstCount++;   break;
                     default:  cast.IsFumble = true; return cast;
                 }
             }
@@ -199,10 +201,12 @@ namespace AshAndEmber
             }
 
             // Effects: U = Sear, L = Force, R = Shred (all deal damage), D = Restore.
+            // Total effects capped at 5 (matching MaxEffectInputs in MagicInputHandler).
             if (!string.IsNullOrEmpty(effectBuffer))
             {
                 foreach (char c in effectBuffer)
                 {
+                    if (cast.DamageCount + cast.RestoreCount >= 5) break;
                     switch (c)
                     {
                         case 'U': cast.DamageCount++; cast.SearCount++;  break;
