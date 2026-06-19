@@ -178,6 +178,27 @@ namespace AshAndEmber
             }
             catch { }
 
+            // ── Option 3: Study the Rite ──────────────────────────────────────
+            try
+            {
+                starter.AddGameMenuOption("altar_menu", "altar_study_rite", "Study the Rite",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            MageKnowledge.ShowRiteTalentMenu("The Ashen Altar",
+                                new[] { TalentId.ColdTithe, TalentId.DreadTide, TalentId.ColdCovenant });
+                        }
+                        catch { }
+                    });
+            }
+            catch { }
+
             // ── Leave ──────────────────────────────────────────────────────────
             try
             {
@@ -234,6 +255,8 @@ namespace AshAndEmber
 
             if (!usedPrisoner)
                 try { hero.HitPoints = Math.Max(1, hero.HitPoints - 10); } catch { }
+            else if (TalentSystem.Has(TalentId.ColdTithe))
+                try { hero.HitPoints = Math.Min(hero.MaxHitPoints, hero.HitPoints + 5); } catch { }
 
             int cooldownReduction = 0;
             try
@@ -257,7 +280,7 @@ namespace AshAndEmber
 
             int gained = MiracleInventory.AddCold(baseGain);
 
-            try { MageKnowledge.AddWhispers(3); } catch { }
+            try { MageKnowledge.AddWhispers(TalentSystem.Has(TalentId.ColdCovenant) ? 1 : 3); } catch { }
 
             _lastAltarUseDay = today - cooldownReduction;
             _altarUseCount++;
@@ -353,9 +376,10 @@ namespace AshAndEmber
                 return "The grey hunger rolls outward. No enemy stands close enough to be touched.";
 
             int total = 0;
+            int tideMultiplier = TalentSystem.Has(TalentId.DreadTide) ? 2 : 1;
             foreach (var mp in targets)
             {
-                int toWound = 10 + _rng.Next(6);
+                int toWound = (10 + _rng.Next(6)) * tideMultiplier;
                 int w = 0;
                 foreach (var e in mp.MemberRoster.GetTroopRoster().ToList())
                 {

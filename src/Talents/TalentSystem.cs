@@ -80,9 +80,21 @@ namespace AshAndEmber
         WardenRing  = 46, // Lost Form — circular barrier around caster
         Dirge       = 47, // Lost Form — burst becomes a ground fire patch
         PaleComet   = 48, // Lost Form — missile pierces enemies, detonates at range end
+        // ── Altar Rites ──────────────────────────────────────────────────────────
+        ColdTithe       = 49, // Rite — prisoner sacrifice heals caster
+        DreadTide       = 50, // Rite — Dark Tide wounds twice as many soldiers
+        ColdCovenant    = 51, // Rite — Altar accumulates 1 Whisper instead of 3
+        // ── Sanctuary Rites ───────────────────────────────────────────────────────
+        KeepingFlame    = 52, // Rite — prayer heals 10% wounded troops
+        UnbrokenWard    = 53, // Rite — Warding Seal lasts 21 days
+        EmberCovenant   = 54, // Rite — prayer costs 8 HP; Grace grants +5 morale/day
+        // ── Alchemy Rites ─────────────────────────────────────────────────────────
+        SteadierHand    = 55, // Rite — +15% brew chance; no misleading reads
+        DeeperSatchel   = 56, // Rite — +2 satchel capacity; 20% cheap brew
+        VolatileHarvest = 57, // Rite — 40% chance to salvage tainted vials
     }
 
-    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm }
+    public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite }
 
     public class TalentDef
     {
@@ -314,6 +326,63 @@ namespace AshAndEmber
                 Category = TalentCategory.LostForm, FocusCost = 1, Name = "Pale Comet",
                 Lore = "A bolt that does not stop at the first thing it finds. The fire passes through — not weakened, only saved for later. It finishes what it started at the far end of its reach. You do not see what it does until it is done.",
                 MechanicDesc = "Lost Form. The missile passes through enemies rather than detonating on first contact. Each enemy it crosses is struck by the full cast. The bolt detonates only when its full range is spent."
+            },
+            // ── Altar Rites ──────────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.ColdTithe, Category = TalentCategory.Rite, Name = "Cold Tithe",
+                Lore = "The cold takes, but it is not without memory. A life given freely — not stolen, not borrowed — leaves a trace of warmth in the giving. The stone returns what it can.",
+                MechanicDesc = "Rite. When a prisoner is offered at the Altar, the sacrifice also heals you for 5 HP. The cold repays a small debt."
+            },
+            new TalentDef
+            {
+                Id = TalentId.DreadTide, Category = TalentCategory.Rite, Name = "Dread Tide",
+                Lore = "What the altar calls does not stay near the stone. The grey hunger travels, and it does not stop when it has taken enough. It stops when it has taken what it came for.",
+                MechanicDesc = "Rite. Invoke the Dark Tide wounds twice as many soldiers in nearby enemy forces."
+            },
+            new TalentDef
+            {
+                Id = TalentId.ColdCovenant, Category = TalentCategory.Rite, Name = "Cold Covenant",
+                Lore = "The stone does not need your suffering — it needs your understanding. An offering given in knowing is worth more than one given in desperation. The cold is patient, and it teaches patience.",
+                MechanicDesc = "Rite. The Altar accumulates only 1 Whisper per rite instead of 3. The cold leaves fewer marks on your standing."
+            },
+            // ── Sanctuary Rites ──────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.KeepingFlame, Category = TalentCategory.Rite, Name = "The Keeping Flame",
+                Lore = "The fire does not distinguish between the vessel that tends it and the vessels that warm beside it. To pray is to open a channel; what pours through does not always stop at the one who opened it.",
+                MechanicDesc = "Rite. Each prayer at the Sanctuary also heals 10% of wounded troops in your party. The warmth spreads."
+            },
+            new TalentDef
+            {
+                Id = TalentId.UnbrokenWard, Category = TalentCategory.Rite, Name = "Unbroken Ward",
+                Lore = "A seal drawn in haste does not hold as long as one drawn with knowledge. The priest teaches you the fuller form. The grey things will not find the edges of it as quickly.",
+                MechanicDesc = "Rite. The Warding Seal lasts 21 days instead of 14."
+            },
+            new TalentDef
+            {
+                Id = TalentId.EmberCovenant, Category = TalentCategory.Rite, Name = "Ember Covenant",
+                Lore = "The flame asks less of those who carry it carefully. Devotion is its own fuel — the rite does not need to burn as deep to find the same warmth.",
+                MechanicDesc = "Rite. Prayer at the Sanctuary costs 8 HP instead of 12. While you carry any Grace, your party gains +5 morale each day from the warmth you hold."
+            },
+            // ── Alchemy Rites ─────────────────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.SteadierHand, Category = TalentCategory.Rite, Name = "The Steadier Hand",
+                Lore = "Most who spoil a brew do so in the final measure — the pour, the seal, the moment between intent and completion. You have learned to finish cleanly.",
+                MechanicDesc = "Rite. Brewing success chance increases by 15%. Misleading read results are replaced with Unknown at worst — the hand that seals it may doubt, but it will not lie."
+            },
+            new TalentDef
+            {
+                Id = TalentId.DeeperSatchel, Category = TalentCategory.Rite, Name = "The Deeper Satchel",
+                Lore = "The satchel was always larger than it looked. A practised hand understands the arrangement — what nests against what, which vials share heat and which do not. More can be carried than the count suggests.",
+                MechanicDesc = "Rite. Satchel capacity increases by 2. Each brew has a 20% chance to cost only 100 denars as the ingredients combine without waste."
+            },
+            new TalentDef
+            {
+                Id = TalentId.VolatileHarvest, Category = TalentCategory.Rite, Name = "Volatile Harvest",
+                Lore = "A ruined brew is not always a waste. The instincts of a careful hand can find what is still good inside what went wrong — the part that set true before the rest turned. It takes nerve to drink something that smells like failure.",
+                MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the elixir's clean effect instead."
             },
         };
 

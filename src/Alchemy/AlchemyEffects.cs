@@ -87,6 +87,13 @@ namespace AshAndEmber
 
             if (tainted)
             {
+                if (TalentSystem.Has(TalentId.VolatileHarvest) && _rng.NextDouble() < 0.40)
+                {
+                    // Salvage: 40% chance the brew yields its clean effect instead.
+                    Log(self, "a steady hand finds what set true inside the ruin — the brew holds.", false);
+                    ApplyBattleEffect(self, type, true);
+                    return;
+                }
                 ApplyBattleBackfire(self, AlchemyMath.PickBackfire(_rng.NextDouble()), true);
                 return;
             }
@@ -238,6 +245,14 @@ namespace AshAndEmber
 
             if (tainted)
             {
+                if (TalentSystem.Has(TalentId.VolatileHarvest) && _rng.NextDouble() < 0.40)
+                {
+                    string salvaged = ApplyCampaignEffect(hero, party, type);
+                    string line = "A steady hand finds what set true inside the ruin."
+                        + (string.IsNullOrEmpty(salvaged) ? "" : "  " + salvaged);
+                    InformationManager.DisplayMessage(new InformationMessage(line, new Color(0.6f, 0.8f, 0.55f)));
+                    return;
+                }
                 ApplyCampaignBackfire(hero, party, AlchemyMath.PickBackfire(_rng.NextDouble()), announce: true);
                 return;
             }

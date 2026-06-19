@@ -13,6 +13,7 @@
 
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 
@@ -26,6 +27,17 @@ namespace AshAndEmber
             // get the establishment toast on their first tick once IDs are settled.
             if (_needsAnnouncementAfterSync)
                 AnnounceSanctuaries();
+
+            // EmberCovenant: while carrying any Grace, the warmth grants +5 morale/day.
+            if (TalentSystem.Has(TalentId.EmberCovenant) && MiracleInventory.Grace > 0)
+            {
+                try
+                {
+                    if (MobileParty.MainParty != null)
+                        MobileParty.MainParty.RecentEventsMorale += 5f;
+                }
+                catch { }
+            }
 
             // Trait drift: every 10 sanctuary uses, nudge the player's weakest virtue up.
             if (_sanctuaryUseCount > 0 && _sanctuaryUseCount % TraitDriftThreshold == 0)

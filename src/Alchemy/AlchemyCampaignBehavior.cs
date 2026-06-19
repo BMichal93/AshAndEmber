@@ -254,6 +254,26 @@ namespace AshAndEmber
 
             try
             {
+                starter.AddGameMenuOption("alchemy_lab_menu", "alchemy_study_rite", "Study the Art",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            MageKnowledge.ShowRiteTalentMenu("The Alchemical Lab",
+                                new[] { TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest });
+                        }
+                        catch { }
+                    });
+            }
+            catch { }
+
+            try
+            {
                 starter.AddGameMenuOption("alchemy_lab_menu", "alchemy_leave", "Leave the lab",
                     args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
                     args => { try { GameMenu.SwitchToMenu("town"); } catch { } },
@@ -303,9 +323,25 @@ namespace AshAndEmber
                 return;
             }
 
-            try { hero.Gold -= BrewGoldCost; } catch { }
+            // DeeperSatchel: 20% chance the ingredients combine without waste — 100g instead.
+            int actualCost = BrewGoldCost;
+            if (TalentSystem.Has(TalentId.DeeperSatchel) && _rng.NextDouble() < 0.20)
+                actualCost = 100;
+            try { hero.Gold -= actualCost; } catch { }
+
             int med = SafeMedicine(hero);
-            bool clean = AlchemyMath.IsBrewSuccess(med, _rng.NextDouble());
+            // SteadierHand: boost brew success chance by 15%.
+            bool clean;
+            if (TalentSystem.Has(TalentId.SteadierHand))
+            {
+                float boostedChance = Math.Min(AlchemyMath.BrewChanceCeil,
+                    AlchemyMath.BrewSuccessChance(med) + 0.15f);
+                clean = _rng.NextDouble() < boostedChance;
+            }
+            else
+            {
+                clean = AlchemyMath.IsBrewSuccess(med, _rng.NextDouble());
+            }
             AlchemyInventory.Add(type, tainted: !clean);
             try { hero.HeroDeveloper?.AddSkillXp(DefaultSkills.Medicine, BrewMedicineXp); } catch { }
 
@@ -315,6 +351,9 @@ namespace AshAndEmber
             // you walk away believing the opposite of the truth.
             int wit = SafeIntelligence(hero);
             BrewAppraisal read = AlchemyMath.ReadBrew(wit, _rng.NextDouble());
+            // SteadierHand: the hand that seals it may doubt, but it will not lie.
+            if (TalentSystem.Has(TalentId.SteadierHand) && read == BrewAppraisal.Misleading)
+                read = BrewAppraisal.Unknown;
 
             string name = AlchemyCatalog.Name(type);
             ShowResult(BrewResultLine(name, clean, read));
