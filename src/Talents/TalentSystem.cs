@@ -135,7 +135,7 @@ namespace AshAndEmber
 
         public static readonly IReadOnlyList<TalentDef> All = new List<TalentDef>
         {
-            // ── Classes (2 focus points each) ─────────────────────────────────
+            // ── Classes (fire paths — escalating cost) ────────────────────────
             // Six fire paths define a mage's identity. Path cost escalates: 1 fp
             // for the first path owned, 2 fp for the second, and so on. BattleSworn
             // is kept in ClassMembers below for save compatibility but is no longer

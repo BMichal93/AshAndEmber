@@ -197,7 +197,7 @@ namespace AshAndEmber
 
         // Run the per-talent purchase side-effects for a newly learned talent or
         // class. Buying a class fires the hooks of every member it bundles, so
-        // Dark Mage darkens you (Reap) and Ashbinder warms mage relations (Kinship)
+        // Reaper darkens you (Reap) and Heartfire warms mage relations (Kinship)
         // exactly as the single talents once did.
         private static void ApplyMemberHooks(TalentId purchased, Hero hero)
         {
