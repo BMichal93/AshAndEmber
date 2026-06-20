@@ -1,7 +1,10 @@
 ﻿// =============================================================================
-// LIFE & DEATH MAGIC — AI/ColourLordRegistry.cs
+// ASH AND EMBER — AI/ColourLordRegistry.cs
 // Tracks which NPC lords carry the gift (isMage).
 // Population target: ~20% of all lords. Weekly regulator keeps it stable.
+// Each mage lord is seeded with a path archetype (Reaper / Seer / Warden /
+// Heartfire / Pyrelord / Ashbinder) that determines their campaign spells
+// and battle enchantments. Ashen lords override to the cold-fire destroyer set.
 // NPC campaign map spells use TalentSystem.ExecuteNpcMapSpell.
 // Mage lords age when they cast and die at age 100.
 // =============================================================================
@@ -23,7 +26,7 @@ namespace AshAndEmber
         private static readonly HashSet<string> _mageIds        = new HashSet<string>();
         private static readonly HashSet<string> _ashenIds        = new HashSet<string>();
         private static readonly HashSet<string> _companionMageIds = new HashSet<string>();
-        // Subset of spell talents each mage lord knows (1-2 random)
+        // Spell/enchantment talents per lord, keyed by StringId. Assigned at seeding via AssignPathArchetype.
         private static readonly Dictionary<string, List<int>> _lordTalents
             = new Dictionary<string, List<int>>();
         private static bool _seeded = false;
@@ -35,12 +38,26 @@ namespace AshAndEmber
         private static readonly Dictionary<string, int> _campaignCooldowns
             = new Dictionary<string, int>();
 
-        private static readonly TalentId[] SpellTalents =
+        // Six NPC path archetypes — each mirrors one player fire path.
+        // Spells  : campaign-map workings (TalentId values 4–8, filtered in DailyMapCast).
+        // Enchants: battle passives activated by ColourLordAI.
+        private static readonly (TalentId[] Spells, TalentId[] Enchants)[] _npcPathArchetypes =
         {
-            TalentId.BreakWills, TalentId.Inspire, TalentId.Plague,
-            TalentId.Clairvoyance, TalentId.Extinguish,
+            // Reaper — attrition and life-drain
+            (new[] { TalentId.Extinguish, TalentId.Plague },    new[] { TalentId.Smoulder, TalentId.Sunder }),
+            // Seer — foresight and political influence
+            (new[] { TalentId.Clairvoyance },                   new[] { TalentId.Ashveil, TalentId.Reflect }),
+            // Warden — defence and endurance
+            (new[] { TalentId.Inspire },                         new[] { TalentId.Ashveil, TalentId.CinderShell, TalentId.Reflect }),
+            // Heartfire — warmth and rally
+            (new[] { TalentId.Inspire, TalentId.Clairvoyance }, new[] { TalentId.Hearthlight, TalentId.CinderShell }),
+            // Pyrelord — ruin and conquest
+            (new[] { TalentId.Extinguish },                      new[] { TalentId.Scatter, TalentId.Immolate, TalentId.Sunder }),
+            // Ashbinder — control and unmaking
+            (new[] { TalentId.BreakWills, TalentId.Plague },    new[] { TalentId.Smoulder }),
         };
 
+        // Used only by AssignCompanionEnchantments — companions draw from the full pool.
         private static readonly TalentId[] DamageEnchantments =
             { TalentId.Scatter, TalentId.Smoulder, TalentId.Sunder, TalentId.Immolate };
 
@@ -61,7 +78,7 @@ namespace AshAndEmber
             {
                 _mageIds.Add(hero.StringId);
                 if (!_lordTalents.ContainsKey(hero.StringId))
-                    AssignRandomTalents(hero.StringId);
+                    AssignPathArchetype(hero.StringId);
             }
             else
             {
@@ -79,29 +96,19 @@ namespace AshAndEmber
                 MageKnowledge.ApplyAshenAppearance(hero);
                 // Move clan to the Ashen kingdom (or eject if kingdom isn't ready yet)
                 try { AshenCitySystem.OnHeroSetAshen(hero); } catch { }
-                // Cold fire hungers for harm — ensure Blight lords have offensive workings
-                if (!_lordTalents.TryGetValue(hero.StringId, out var current))
+                // Ashen lords take the cold-fire destroyer archetype.
+                // Overwrite any prior path assignment so their talent set is coherent.
+                var ashenTalents = new List<int>
                 {
-                    current = new List<int>();
-                    _lordTalents[hero.StringId] = current;
-                }
-                foreach (TalentId t in new[] { TalentId.Extinguish, TalentId.BreakWills, TalentId.Plague })
-                {
-                    if (!current.Contains((int)t))
-                        current.Add((int)t);
-                }
-                // Ashen lords always have Scatter (cold fire flings enemies away — Pyrelord enchantment)
-                if (!current.Contains((int)TalentId.Scatter))
-                    current.Add((int)TalentId.Scatter);
-                // 50% chance of also gaining Smoulder (terror-through-morale drain)
-                if (_rng.Next(2) == 0 && !current.Contains((int)TalentId.Smoulder))
-                    current.Add((int)TalentId.Smoulder);
-                // 50% chance of Sunder (cold fire strips the body's defences)
-                if (_rng.Next(2) == 0 && !current.Contains((int)TalentId.Sunder))
-                    current.Add((int)TalentId.Sunder);
-                // 40% chance of Immolate (the cold that takes without asking)
-                if (_rng.Next(10) < 4 && !current.Contains((int)TalentId.Immolate))
-                    current.Add((int)TalentId.Immolate);
+                    (int)TalentId.Extinguish,
+                    (int)TalentId.BreakWills,
+                    (int)TalentId.Plague,
+                    (int)TalentId.Scatter,   // cold fire flings enemies away
+                };
+                if (_rng.Next(2) == 0) ashenTalents.Add((int)TalentId.Smoulder); // 50% terror drain
+                if (_rng.Next(2) == 0) ashenTalents.Add((int)TalentId.Sunder);   // 50% strips defences
+                if (_rng.Next(10) < 4) ashenTalents.Add((int)TalentId.Immolate); // 40% the cold that takes
+                _lordTalents[hero.StringId] = ashenTalents;
             }
             else
             {
@@ -170,28 +177,20 @@ namespace AshAndEmber
                 for (int i = 0; i < Math.Min(target, lords.Count); i++)
                 {
                     _mageIds.Add(lords[i].StringId);
-                    AssignRandomTalents(lords[i].StringId);
+                    AssignPathArchetype(lords[i].StringId);
                 }
                 // seeding is silent — no announcement
             }
             catch { }
         }
 
-        private static void AssignRandomTalents(string heroId)
+        private static void AssignPathArchetype(string heroId)
         {
-            var pool = SpellTalents.ToList();
-            Shuffle(pool);
-            int count = 1 + _rng.Next(2); // 1 or 2 talents
-            var assigned = pool.Take(count).Select(t => (int)t).ToList();
-
-            // 30% chance for a damage enchantment
-            if (_rng.Next(100) < 30)
-                assigned.Add((int)DamageEnchantments[_rng.Next(DamageEnchantments.Length)]);
-
-            // 30% chance for a restore enchantment
-            if (_rng.Next(100) < 30)
-                assigned.Add((int)RestoreEnchantments[_rng.Next(RestoreEnchantments.Length)]);
-
+            var (spells, enchants) = _npcPathArchetypes[_rng.Next(_npcPathArchetypes.Length)];
+            var assigned = spells.Select(t => (int)t).ToList();
+            // 40% chance for one enchantment from this path's pool
+            if (_rng.Next(100) < 40 && enchants.Length > 0)
+                assigned.Add((int)enchants[_rng.Next(enchants.Length)]);
             _lordTalents[heroId] = assigned;
         }
 
@@ -241,7 +240,7 @@ namespace AshAndEmber
                     for (int i = 0; i < needed && i < candidates.Count; i++)
                     {
                         _mageIds.Add(candidates[i].StringId);
-                        AssignRandomTalents(candidates[i].StringId);
+                        AssignPathArchetype(candidates[i].StringId);
                         added++;
                     }
                     // population adjustment is silent
