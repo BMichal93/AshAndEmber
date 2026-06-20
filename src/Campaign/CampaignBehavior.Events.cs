@@ -109,41 +109,11 @@ namespace AshAndEmber
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
                 AlchemyCampaignBehavior.EstablishForNewCampaign();
-                ShowLoreIntro();
+                // The opening lore now plays as a cinematic before character creation
+                // (see AshEmberLoreIntro), so here we go straight to the Gift prompt.
+                MageKnowledge._deferredInquiry = ShowGiftPrompt;
             }
             catch { }
-        }
-
-        private void ShowLoreIntro()
-        {
-            const string loreText =
-                "Fire is not merely warmth. It is the living breath of the world — mystical, sacred, " +
-                "the force that binds the soul to the flesh and grants mages the power to reshape it. " +
-                "Every lord, every warrior, every creature that walks beneath the sun carries this flame within them. " +
-                "When it dies, so does what made them human.\n\n" +
-                "In the far north, lords who refused that end made a different choice. " +
-                "They did not let their fires fade. They smothered them — and welcomed the cold that flooded in to fill the void. " +
-                "The cold preserved them. Stilled them. And in that stillness, it gave them purpose.\n\n" +
-                "They are called the Ashen. They do not age. They do not tire. They do not stop.\n\n" +
-                "For an age they waited in the frozen dark, their numbers growing in silence. " +
-                "Now the Empire has shattered — Rhagaea, Lucon, and Derthert tearing at its bones — " +
-                "and the Ashen have chosen this moment to march. " +
-                "The clans of Calradia war amongst themselves, blind to the pale tide moving south. " +
-                "Some mages, seduced by the promise of undying stillness, have already answered the cold's call.\n\n" +
-                "This is the eternal war. Flame against ash. The living against those who chose otherwise. " +
-                "It has been fought before, in ages no history remembers. " +
-                "It has never been won.\n\n" +
-                "The mystical flame is asking something of you. The ash is already listening for your answer.";
-
-            InformationManager.ShowInquiry(new InquiryData(
-                "Embers and Ash",
-                loreText,
-                true, false,
-                "Enter the dark.",
-                "",
-                () => { MageKnowledge._deferredInquiry = ShowGiftPrompt; },
-                () => { MageKnowledge._deferredInquiry = ShowGiftPrompt; }
-            ), true, true);
         }
 
         private void ShowGiftPrompt()

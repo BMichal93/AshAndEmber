@@ -1,0 +1,18 @@
+<Prefab>
+  <Window>
+    <!-- Opening lore cinematic: black plate, one paragraph at a time. The text's
+         AlphaFactor is driven from code (AshEmberLoreIntro) to fade each paragraph
+         in and then out to black. DoNotAcceptEvents so it never leaks clicks; the
+         layer itself is set focusable in code to block the screen beneath. -->
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" DoNotAcceptEvents="true" DoNotUseCustomScale="true">
+      <Children>
+        <TextWidget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="1100"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Brush="AshEmber.Lore.Body" Text="@ParagraphText" AlphaFactor="@TextAlpha" ClipContents="false" />
+        <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="60"
+                    Brush="AshEmber.Splash.Subtitle" Text="@SkipHint" AlphaFactor="@HintAlpha" />
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>

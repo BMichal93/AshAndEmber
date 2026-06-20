@@ -89,6 +89,7 @@ namespace AshAndEmber
             // during the new-game flow, where Campaign.Current is still null.
             try { SkipIntroVideos(); } catch { }
             try { AshEmberSplash.Tick(dt); } catch { }
+            try { AshEmberLoreIntro.Tick(dt); } catch { }
 
             try
             {

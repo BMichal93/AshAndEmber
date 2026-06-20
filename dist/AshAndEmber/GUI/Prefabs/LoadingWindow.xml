@@ -1,0 +1,148 @@
+<Prefab>
+  <Window>
+    <!-- AshAndEmber loading screen: black plate + a small pixel bonfire.
+         Built only from the Native BlankWhiteSquare_9 sprite tinted per cell,
+         so it needs no packed art and renders deterministically. This file
+         overrides Native's LoadingWindow prefab (later module wins). -->
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" DoNotUseCustomScale="true">
+      <Children>
+        <!-- faint fire glow behind the flame -->
+        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="150" SuggestedHeight="150" HorizontalAlignment="Center" VerticalAlignment="Center" Sprite="BlankWhiteSquare_9" Color="#FF8A2E1A" MarginBottom="20" />
+        <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" StackLayout.LayoutMethod="VerticalTopToBottom">
+          <Children>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FF8A2EFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#FFD64FFF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#C23A12FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#C23A12FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#C23A12FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#00000000" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+              </Children>
+            </ListPanel>
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+              <Children>
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#7A5733FF" />
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="7" SuggestedHeight="7" Sprite="BlankWhiteSquare_9" Color="#4E3620FF" />
+              </Children>
+            </ListPanel>
+          </Children>
+        </ListPanel>
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>

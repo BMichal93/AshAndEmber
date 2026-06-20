@@ -16,4 +16,12 @@
       <Style Name="Default" FontColor="#9A875EFF" TextBlur="0" TextOutlineAmount="0" TextGlowRadius="0" FontSize="34" />
     </Styles>
   </Brush>
+  <!-- Readable gold serif for the opening lore cinematic. Centered, multi-line. -->
+  <Brush Name="AshEmber.Lore.Body" TextHorizontalAlignment="Center">
+    <Layers>
+    </Layers>
+    <Styles>
+      <Style Name="Default" FontColor="#D8BA86FF" TextBlur="0" TextOutlineAmount="0" TextGlowRadius="1" FontSize="40" />
+    </Styles>
+  </Brush>
 </Brushes>
