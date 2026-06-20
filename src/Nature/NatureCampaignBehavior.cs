@@ -3,12 +3,15 @@
 // Campaign wiring for The Living Ember system.
 //
 // Hermits:
-//   Gwydion the Root-Listener  — Battania  — teaches Living Root
-//   Birna of the Still Water   — Strugia   — teaches Still Draw
-//   Bekh the Open Hand         — Khuzait   — teaches Open Grip
+//   Gwydion the Root-Listener  — Battania (any town, random)   — teaches Living Root
+//   Birna of the Still Water   — Strugia  (any town, random)   — teaches Still Draw
+//   Bekh the Open Hand         — Khuzait  (any town, random)   — teaches Open Grip
+//   Tiryn of the High Root     — Marunath (village, always)    — teaches Deep Earth
+//   Faruk the Patient          — Aserai   (any village, random) — teaches Dawn Call
 //
-// Each hermit appears when the player enters a qualifying settlement in their
-// region with sufficient renown (≥100) and is attuned to the living world.
+// Gwydion, Birna, Bekh, and Faruk appear when the player enters a qualifying
+// settlement with ≥100 renown and is attuned to the living world (25% chance).
+// Tiryn is always available via the village menu at Marunath — no randomness.
 // Each hermit is a one-time encounter; after teaching they are gone.
 //
 // Unit seeding:
@@ -21,10 +24,12 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace AshAndEmber
 {
@@ -40,6 +45,12 @@ namespace AshAndEmber
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
             CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
             CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
+            CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+        }
+
+        private void OnSessionLaunched(CampaignGameStarter starter)
+        {
+            try { RegisterNatureMenus(starter); } catch { }
         }
 
         public override void SyncData(IDataStore store)
@@ -64,9 +75,13 @@ namespace AshAndEmber
         {
             try { NatureCharge.DailyTick(); } catch { }
 
-            // Passive charge accumulation (33% chance per day for attuned players)
-            if (NatureKnowledge.IsAttuned && _rng.Next(3) == 0)
-                try { NatureCharge.TryCampaignAccumulate(); } catch { }
+            // Passive charge accumulation. Dawn Call guarantees it each dawn; otherwise 33% chance.
+            if (NatureKnowledge.IsAttuned)
+            {
+                bool dawnCall = TalentSystem.Has(TalentId.NatureDawnCall);
+                if (dawnCall || _rng.Next(3) == 0)
+                    try { NatureCharge.TryCampaignAccumulate(); } catch { }
+            }
 
             // Tick hermit cooldowns
             foreach (string key in _hermitCooldowns.Keys.ToList())
@@ -120,6 +135,15 @@ namespace AshAndEmber
             {
                 _hermitCooldowns[settlement.StringId] = 3;
                 MageKnowledge._deferredInquiry = ShowBekh;
+                return;
+            }
+
+            // Faruk the Patient — Aserai villages (not towns) — teaches Dawn Call
+            if (culture == "aserai" && !NatureKnowledge.FoundFringeHermit
+                && settlement.IsVillage && _rng.Next(4) == 0)
+            {
+                _hermitCooldowns[settlement.StringId] = 3;
+                MageKnowledge._deferredInquiry = ShowFaruk;
                 return;
             }
         }
@@ -206,6 +230,163 @@ namespace AshAndEmber
                     InformationManager.DisplayMessage(new InformationMessage(
                         "Bekh's teaching opens something in your grip. " +
                         "What the land gives, it gives to stay.",
+                        new Color(0.35f, 0.75f, 0.35f)));
+                },
+                null), true, false);
+        }
+
+        // ── Retreat menu — Tiryn of the High Root (Marunath) ─────────────────
+        // Always visible as a village menu option; no randomness — the retreat is
+        // there for anyone attuned enough to find it.
+        private const string RetreatVillageName = "Marunath";
+
+        private static void RegisterNatureMenus(CampaignGameStarter starter)
+        {
+            // Entry option on the village menu
+            try
+            {
+                starter.AddGameMenuOption("village", "nature_retreat_entry", "{NATURE_RETREAT_LABEL}",
+                    args =>
+                    {
+                        try
+                        {
+                            var s = Settlement.CurrentSettlement;
+                            if (s == null || !s.IsVillage) return false;
+                            string sName = null;
+                            try { sName = s.Name?.ToString()?.Trim(); } catch { }
+                            if (!string.Equals(sName, RetreatVillageName,
+                                    System.StringComparison.OrdinalIgnoreCase)) return false;
+                            if (!NatureKnowledge.IsAttuned) return false;
+
+                            bool taught = NatureKnowledge.HermitFound(NatureHermitId.Retreat);
+                            MBTextManager.SetTextVariable("NATURE_RETREAT_LABEL",
+                                taught ? "The mountain retreat [Tiryn has taught you what she knows]"
+                                       : "Seek the hermit at the mountain retreat");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            args.IsEnabled = !taught;
+                            return true;
+                        }
+                        catch { return false; }
+                    },
+                    args =>
+                    {
+                        try { GameMenu.SwitchToMenu("nature_retreat_menu"); } catch { }
+                    },
+                    false, -1, false);
+            }
+            catch { }
+
+            // Retreat submenu
+            try
+            {
+                starter.AddGameMenu("nature_retreat_menu",
+                    "A cairn of flat stones marks the high edge of the village, older than the " +
+                    "settlement below it. Tiryn sits beside it — she is small and wind-dried, " +
+                    "her hair braided with heather and old root. She does not seem surprised to see you.\n\n" +
+                    "\"You listen,\" she says. \"Come, then.\"",
+                    args => { });
+            }
+            catch { }
+
+            try
+            {
+                starter.AddGameMenuOption("nature_retreat_menu", "nature_retreat_speak",
+                    "I am listening.",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            if (MageKnowledge._deferredInquiry == null)
+                                MageKnowledge._deferredInquiry = ShowTiryn;
+                        }
+                        catch { }
+                        try { GameMenu.SwitchToMenu("village"); } catch { }
+                    },
+                    false, -1, false);
+            }
+            catch { }
+
+            try
+            {
+                starter.AddGameMenuOption("nature_retreat_menu", "nature_retreat_leave",
+                    "Leave.",
+                    args =>
+                    {
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try { GameMenu.SwitchToMenu("village"); } catch { }
+                    },
+                    false, -1, false);
+            }
+            catch { }
+        }
+
+        // ── Tiryn — Marunath Retreat — Deep Earth ─────────────────────────────
+        private static void ShowTiryn()
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "Tiryn of the High Root",
+                "She has been sitting at this cairn for so long that the stones have started to lean " +
+                "toward her. She does not introduce herself. She has been waiting for someone like you.\n\n" +
+                "\"The wall does not stop the root-voice,\" she says, picking a flake of lichen " +
+                "from the stone beside her. \"People think stone is dead. It is not dead. " +
+                "It is only slow. You have been impatient with it.\"\n\n" +
+                "She presses the flat of her palm against the cairn. Something in the stone settles.\n\n" +
+                "\"Listen to a wall the same way you listen to soil. Give it the same silence you " +
+                "would give a tree. You will find the land did not stop at the foundation — " +
+                "it runs under the mortar, under the keep, under the whole of it. " +
+                "Stone was earth once. It remembers.\"\n\n" +
+                "She takes her hand away. The lichen is greener where she touched it.",
+                true, false,
+                "I will be patient with the stone.",
+                null,
+                () =>
+                {
+                    NatureKnowledge.RecordHermitFound(NatureHermitId.Retreat);
+                    TalentSystem.GrantFree(TalentId.NatureDeepEarth, Hero.MainHero);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "Tiryn's patience settles in you. Stone walls no longer muffle the root-voice " +
+                        "— the land speaks through them as freely as through open ground.",
+                        new Color(0.35f, 0.75f, 0.35f)));
+                },
+                null), true, false);
+        }
+
+        // ── Faruk — Aserai villages — Dawn Call ────────────────────────────────
+        private static void ShowFaruk()
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "Faruk the Patient",
+                "He is old — older than the village, maybe. He is not from the Aserai. " +
+                "He is not from anywhere you could name. He speaks before you reach him, " +
+                "without looking up from the ground he is studying.\n\n" +
+                "\"You wait for it,\" he says. \"That is your mistake.\"\n\n" +
+                "He turns a stone over with one finger. Under it, something is alive — " +
+                "a beetle, a root-thread, you cannot tell.\n\n" +
+                "\"The desert is loudest at dawn. Not because something changes — " +
+                "because you change. The cold lifts. The dark lifts. " +
+                "The ground lets out what it held all night. " +
+                "You do not have to reach for it. You only have to be awake when it offers.\"\n\n" +
+                "He does not look at you. He replaces the stone carefully, corner to corner.\n\n" +
+                "\"Stop reaching. Be awake at dawn. Let the land find you.\"",
+                true, false,
+                "I will be awake.",
+                null,
+                () =>
+                {
+                    NatureKnowledge.RecordHermitFound(NatureHermitId.Fringe);
+                    TalentSystem.GrantFree(TalentId.NatureDawnCall, Hero.MainHero);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "Faruk's lesson takes root before you leave the village. " +
+                        "Each dawn the land offers a charge without being asked.",
                         new Color(0.35f, 0.75f, 0.35f)));
                 },
                 null), true, false);

@@ -144,8 +144,10 @@ namespace AshAndEmber
         {
             Agent caster = inMission ? Agent.Main : null;
 
-            // Siege/city cooldown: stone and mortar muffle the living channel
-            if (inMission && _siegeCooldown > 0f && IsInSiegeOrCity())
+            // Siege/city cooldown: stone and mortar muffle the living channel.
+            // Deep Earth talent has taught the player to hear through stone — no cooldown.
+            if (inMission && _siegeCooldown > 0f && IsInSiegeOrCity()
+                && !TalentSystem.Has(TalentId.NatureDeepEarth))
             {
                 Msg($"The earth here is muffled by stone and old mortar. " +
                     $"({Math.Ceiling(_siegeCooldown):0}s until the land stirs again.)", NatureColor);
