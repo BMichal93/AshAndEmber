@@ -260,17 +260,18 @@ namespace AshAndEmber
             // ── Northern Empire ───────────────────────────────────────────────
             // Marunath  (town_B1) + castles B5/B2          → Northern Empire
             // Seonon    (by name) + nearby castles          → Northern Empire
-            // Ocs Hall, Rovalt    (Vlandia → North border)  → Northern Empire
             // Car Banseth         (Battania → North border) → Northern Empire
             // ── Western Empire ────────────────────────────────────────────────
             // Jaculan   (town_V6) + castles V2/V7           → Western  Empire
-            // Charas, Galend, Pravend (Vlandia → West)      → Western  Empire
             // Quyaz, Sanala           (Aserai  → West)      → Western  Empire
             // ── Southern Empire ───────────────────────────────────────────────
             // Razih     (by name) + nearby castles          → Southern Empire
             // Akkalat             (Khuzait → South border)  → Southern Empire
             // ── Ashen kingdom ─────────────────────────────────────────────────
             // Ostican   + nearby castles                    → Ashen kingdom
+            // ── Holy Temple (Vlandia) ─────────────────────────────────────────
+            // Ocs Hall, Rovalt, Charas, Galend, Pravend STAY with Vlandia
+            // Vlandia IS The Holy Temple — stripping their cities is suppressed.
             Hero northLeader = null;
             Hero westLeader  = null;
             Hero southLeader = null;
@@ -313,23 +314,18 @@ namespace AshAndEmber
             {
                 // Seonon: Battanian city near the Northern Empire border
                 try { AssignSettlementAndNearby("Seonon",      northLeader, 40f); } catch { }
-                // Ocs Hall, Rovalt: Vlandian castles at the Vlandia–North border
-                try { AssignSettlementAndNearby("Ocs Hall",    northLeader, 40f); } catch { }
-                try { AssignSettlementAndNearby("Rovalt",      northLeader, 40f); } catch { }
                 // Car Banseth: Battanian city at the Battania–North border
                 try { AssignSettlementAndNearby("Car Banseth", northLeader, 40f); } catch { }
+                // Ocs Hall and Rovalt remain with the Holy Temple (Vlandia).
             }
 
             // ── Western Empire (by name) ──────────────────────────────────────
             if (westLeader != null)
             {
-                // Vlandian coastal cities reassigned to Western Empire
-                try { AssignSettlementAndNearby("Charas",  westLeader, 40f); } catch { }
-                try { AssignSettlementAndNearby("Galend",  westLeader, 40f); } catch { }
-                try { AssignSettlementAndNearby("Pravend", westLeader, 40f); } catch { }
                 // Aserai border cities reassigned to Western Empire
                 try { AssignSettlementAndNearby("Quyaz",  westLeader, 40f); } catch { }
                 try { AssignSettlementAndNearby("Sanala", westLeader, 40f); } catch { }
+                // Charas, Galend, Pravend remain with the Holy Temple (Vlandia).
             }
 
             // ── Southern Empire (by name) ─────────────────────────────────────
@@ -344,6 +340,17 @@ namespace AshAndEmber
             // ── Ashen kingdom ─────────────────────────────────────────────────
             if (ashenLeader != null)
                 try { AssignSettlementAndNearby("Ostican", ashenLeader, 40f); } catch { }
+
+            // ── The Holy Temple (Vlandia) — declare founding war with Ashen ───
+            // Ashen seized Ostican from Vlandia above; this seeds the permanent war.
+            try
+            {
+                var vlandia = Kingdom.All.FirstOrDefault(k => k.StringId == "vlandia" && !k.IsEliminated);
+                var ashen   = Kingdom.All.FirstOrDefault(k => k.StringId == "ashen_kingdom" && !k.IsEliminated);
+                if (vlandia != null && ashen != null && !vlandia.IsAtWarWith(ashen))
+                    DeclareWarAction.ApplyByDefault(vlandia, ashen);
+            }
+            catch { }
         }
 
         // Finds a settlement by exact display name, transfers it and all non-town

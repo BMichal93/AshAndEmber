@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
@@ -137,6 +138,46 @@ namespace AshAndEmber
         private static void SetSettlementName(Settlement settlement, string name)
         {
             _nameField?.SetValue(settlement, new TextObject(name));
+        }
+
+        // ── Holy Temple kingdom rename ─────────────────────────────────────────
+        // Vlandia IS The Holy Temple. Kingdoms revert to their XML names on every
+        // session load, so this runs on the first daily tick each session.
+        public static void RenameHolyTempleKingdom()
+        {
+            try
+            {
+                var vlandia = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "vlandia" && !k.IsEliminated);
+                if (vlandia == null) return;
+
+                // MBObjectBase._name backs the Name property for all game objects.
+                _nameField?.SetValue(vlandia, new TextObject("The Holy Temple"));
+
+                // Kingdom-specific informal name and ruler title fields.
+                // Try both the explicit-field and auto-property backing-field conventions.
+                SetKingdomField(vlandia,
+                    new[] { "_informalName", "<InformalName>k__BackingField" },
+                    new TextObject("Temple"));
+                SetKingdomField(vlandia,
+                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new TextObject("High Templar"));
+            }
+            catch { }
+        }
+
+        private static void SetKingdomField(Kingdom kingdom, string[] candidates, TextObject value)
+        {
+            foreach (var fieldName in candidates)
+            {
+                try
+                {
+                    var f = typeof(Kingdom).GetField(fieldName,
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (f != null) { f.SetValue(kingdom, value); return; }
+                }
+                catch { }
+            }
         }
     }
 }
