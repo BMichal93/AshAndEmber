@@ -1,14 +1,15 @@
 // =============================================================================
 // AshenDiplomacyModel.cs
-// Subclasses DefaultDiplomacyModel with two purposes:
+// Subclasses DefaultDiplomacyModel with three purposes:
 //
 //  • IsAtConstantWar — marks every Ashen-vs-faction pair as a constant war so
 //    the AI never proposes peace with the Ashen and does not count that war
 //    against a kingdom's overcommitment limit.
 //
 //  • GetScoreOfDeclaringPeace — returns -10000 for any Ashen-involved pair.
-//    For all other pairs, blocks peace for the first MinWarDays of a war so
-//    kingdoms cannot immediately end a war they just declared.
+//    Returns +10000 for Temple-vs-non-Ashen (Temple avoids all wars except
+//    its eternal conflict with the Ashen). For all other pairs, blocks peace
+//    for the first MinWarDays of a war.
 // =============================================================================
 
 using TaleWorlds.CampaignSystem;
@@ -21,6 +22,8 @@ namespace AshAndEmber
         private const float MinWarDays = 60f; // ~2 in-game months before peace is possible
 
         private static bool IsAshenFaction(IFaction f) => AshenCitySystem.IsAshenFaction(f);
+
+        private static bool IsTempleFaction(IFaction f) => (f as Kingdom)?.StringId == "vlandia";
 
         private static bool IsAshenVsOther(IFaction f1, IFaction f2)
         {
@@ -52,6 +55,13 @@ namespace AshAndEmber
                 return -10000f;
             if (IsArenicosPostMerger(factionDeclaresPeace) || IsArenicosPostMerger(factionDeclaredPeace))
                 return -10000f;
+
+            // The Holy Temple fights only the Ashen — push it strongly toward peace
+            // with every other faction. Any war it stumbles into should end quickly.
+            bool templeInvolved = IsTempleFaction(factionDeclaresPeace) || IsTempleFaction(factionDeclaredPeace);
+            bool ashenInvolved  = IsAshenFaction(factionDeclaresPeace)  || IsAshenFaction(factionDeclaredPeace);
+            if (templeInvolved && !ashenInvolved)
+                return 10000f;
 
             // Prevent any kingdom from ending a war that started less than MinWarDays ago.
             try
