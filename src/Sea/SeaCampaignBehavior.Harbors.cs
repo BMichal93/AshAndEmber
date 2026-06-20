@@ -56,7 +56,9 @@ namespace AshAndEmber
                         if (_ventures.Count > 0)
                             ventureNote = "  " + string.Join("  ", _ventures.Select(v =>
                                 $"[Venture to {v.DestName}: {v.DaysLeft} day(s) out, {v.Invested} denars{(v.Blessed ? ", blessed" : "")}]"));
-                        string windNote = _emberwindCalled ? "  [The Emberwind is called — the next crossing will be swift and stormless]" : "";
+                        string windNote = _emberwindCalled
+                            ? "  [The Emberwind is called — the next crossing will be swift and stormless]"
+                            : (_stillWatersCalled ? "  [The waters are stilled — the next crossing will run swift and calm]" : "");
                         string portName = Settlement.CurrentSettlement?.Name?.ToString() ?? "";
                         string baseDesc = _harborDesc.TryGetValue(portName, out string pd) ? pd :
                             "The harbor. Gulls argue over fish guts, ropes creak against the tide, and captains weigh your purse from across the quay.";
@@ -76,7 +78,9 @@ namespace AshAndEmber
                         try
                         {
                             MBTextManager.SetTextVariable("SEA_CHARTER_TEXT",
-                                "Charter passage to another port" + (_emberwindCalled ? " (Emberwind called)" : ""));
+                                "Charter passage to another port" +
+                                (_emberwindCalled ? " (Emberwind called)" :
+                                 _stillWatersCalled ? " (Waters stilled)" : ""));
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -135,6 +139,49 @@ namespace AshAndEmber
                             _emberwindCalled = true;
                             MBInformationManager.AddQuickInformation(new TextObject(
                                 "You breathe a thread of the Inner Fire into the sky. The pennants snap taut toward open water."));
+                            try { GameMenu.SwitchToMenu("sea_harbor"); } catch { }
+                        }
+                        catch { }
+                    });
+            }
+            catch { }
+
+            // ── Still the Waters (nature mages) ────────────────────────────
+            try
+            {
+                starter.AddGameMenuOption("sea_harbor", "sea_still_waters", "{SEA_STILL_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            if (!NatureKnowledge.IsAttuned) return false;
+                            bool canAfford = Hero.MainHero.HitPoints > SeaMath.StillWatersHpCost + 10;
+                            if (_stillWatersCalled || !canAfford) args.IsEnabled = false;
+                            MBTextManager.SetTextVariable("SEA_STILL_TEXT",
+                                _stillWatersCalled
+                                    ? "Still the Waters  [already stilled — the deep waits]"
+                                    : $"Still the Waters ({SeaMath.StillWatersHpCost} HP) — halve the next crossing and ward it against storms");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        }
+                        catch { return false; }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            if (_stillWatersCalled) return;
+                            if (Hero.MainHero.HitPoints <= SeaMath.StillWatersHpCost + 10)
+                            {
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    "You do not have enough left to give. The sea does not take the dying."));
+                                return;
+                            }
+                            Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - SeaMath.StillWatersHpCost);
+                            _stillWatersCalled = true;
+                            MBInformationManager.AddQuickInformation(new TextObject(
+                                "You reach down into the harbour bed and call to what moves beneath. " +
+                                "Something vast and patient stirs. The water outside the breakwater goes flat."));
                             try { GameMenu.SwitchToMenu("sea_harbor"); } catch { }
                         }
                         catch { }

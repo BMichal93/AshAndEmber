@@ -113,9 +113,9 @@ namespace AshAndEmber
                 case NaturePower.LevinStep:    BattleLevinStep(caster);                     break;
             }
 
-            // Visual: green glow pulse + temp light
+            // Visual: living-green glow on caster + element-specific light bloom
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2.5f); } catch { }
-            try { SpellEffects.SpawnTempLight(pos + new Vec3(0,0,0.8f), ColorSchool.Nature, 8f, 2f); } catch { }
+            try { SpawnElementVisual(power, pos); } catch { }
             Msg($"{NatureMath.PowerName(power)} — the world answers.", NatureColor);
         }
 
@@ -282,13 +282,8 @@ namespace AshAndEmber
             try { primary.SetMaximumSpeedLimit(0f, false); } catch { }
             ApplySpeedToken(primary, 0f, 1.5f);
 
-            // Spawn lightning visual
-            try
-            {
-                SpellEffects.SpawnTempLight(primary.Position + new Vec3(0,0,1f),
-                    ColorSchool.Nature, 6f, 1f);
-            }
-            catch { }
+            // Spawn lightning visual on the primary target
+            try { SpellEffects.SpawnTempLightWhite(primary.Position + new Vec3(0f, 0f, 1f), 10f, 0.3f); } catch { }
 
             // Chain hits
             int chains = 0;
@@ -313,6 +308,45 @@ namespace AshAndEmber
                 ApplySpeedToken(caster, 1.5f, NatureMath.LevinStepInvulnerSec);
             }
             catch { }
+        }
+
+        // Element-specific colored lights. Each element gets a signature palette:
+        // Verdant = vivid green, Stone = amber-earth, Water = sky blue,
+        // Wind = near-white (fast fade), Frost = ice blue, Storm = white flash.
+        private static void SpawnElementVisual(NaturePower power, Vec3 pos)
+        {
+            Vec3 up  = new Vec3(0f, 0f, 0.8f);
+            Vec3 up2 = new Vec3(0f, 0f, 1.5f);
+            switch (NatureMath.ElementOf(power))
+            {
+                case NatureElement.Verdant:
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.15f, 1.0f, 0.15f), 9f,  2.5f);
+                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.1f,  0.7f, 0.1f),  5f,  1.5f);
+                    break;
+                case NatureElement.Stone:
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.9f, 0.55f, 0.1f),  8f, 2.0f);
+                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.65f, 0.35f, 0.05f), 5f, 1.2f);
+                    break;
+                case NatureElement.Water:
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.2f, 0.6f, 1.0f),  10f, 2.5f);
+                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.3f, 0.7f, 1.0f),   6f, 1.5f);
+                    break;
+                case NatureElement.Wind:
+                    // Fast-fading near-white — the light is gone before you are sure you saw it
+                    SpellEffects.SpawnTempLightRgb(pos + up2, new Vec3(0.88f, 0.90f, 1.0f), 12f, 0.8f);
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.82f, 0.85f, 1.0f),  8f, 0.5f);
+                    break;
+                case NatureElement.Frost:
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.55f, 0.82f, 1.0f), 10f, 3.0f);
+                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.7f,  0.88f, 1.0f),  7f, 2.0f);
+                    break;
+                case NatureElement.Storm:
+                    // White lightning flash: instant bright spike, then lingering violet afterglow
+                    SpellEffects.SpawnTempLightWhite(pos + up2, 18f, 0.25f);
+                    SpellEffects.SpawnTempLightWhite(pos + up,  12f, 0.40f);
+                    SpellEffects.SpawnTempLightRgb(pos + up, new Vec3(0.65f, 0.65f, 1.0f), 8f, 1.5f);
+                    break;
+            }
         }
 
         // ── Campaign effects ───────────────────────────────────────────────────

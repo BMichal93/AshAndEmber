@@ -45,8 +45,12 @@ namespace AshAndEmber
 
                 _voyageOrigin       = here;
                 _voyageDest         = dest;
-                _voyageEmberwind    = _emberwindCalled;
+                bool emberwindUsed  = _emberwindCalled;
+                bool natureCalmUsed = _stillWatersCalled;
                 _emberwindCalled    = false;
+                _stillWatersCalled  = false;
+                _voyageEmberwind    = emberwindUsed || natureCalmUsed;
+                _voyageNatureCalm   = natureCalmUsed && !emberwindUsed;
                 _voyageHoursTotal   = SeaMath.TravelHours(dist, _voyageEmberwind);
                 _voyageHoursElapsed = 0f;
                 _voyageDone         = false;
@@ -115,6 +119,7 @@ namespace AshAndEmber
             _blockadeFaction    = null;
             _blockadeStrength   = 0f;
             _voyageEmberwind    = false;
+            _voyageNatureCalm   = false;
             _voyageDone         = false;
         }
 
@@ -211,7 +216,9 @@ namespace AshAndEmber
             try
             {
                 int left = Math.Max(0, (int)(_voyageHoursTotal - _voyageHoursElapsed));
-                string wind = _voyageEmberwind ? " The Emberwind hums in the rigging." : "";
+                string wind = _voyageNatureCalm
+                    ? " The waters lie still beneath the hull — the deep holds its breath."
+                    : (_voyageEmberwind ? " The Emberwind hums in the rigging." : "");
                 MBTextManager.SetTextVariable("SEA_VOYAGE_TEXT",
                     $"At sea, bound for {_voyageDest?.Name}.{wind} The coast is a smudge behind you. About {left} hour(s) of water remain.");
             }
@@ -288,6 +295,15 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("burn",
                         $"Burn it away ({SeaMath.FogBurnAgingDays} days aging)", null, true,
                         "Push a thread of the Inner Fire through the air. The fog boils off clean — no delay, no danger."));
+                if (NatureKnowledge.IsAttuned)
+                {
+                    bool canAffordFog = Hero.MainHero.HitPoints > SeaMath.FogPartHpCost + 10;
+                    options.Add(new InquiryElement("part",
+                        $"Part the fog ({SeaMath.FogPartHpCost} HP)", null, canAffordFog,
+                        canAffordFog
+                            ? "Call to the wind. The living air parts the grey curtain like a hand through smoke — no delay."
+                            : "You do not have enough left to give. The land does not take the dying."));
+                }
                 options.Add(new InquiryElement("push",
                     "Push through — the captain swears he knows these waters", null, true,
                     "Even odds. Either you thread the channel cleanly, or something hard finds the hull."));
@@ -307,6 +323,13 @@ namespace AshAndEmber
                                 MBInformationManager.AddQuickInformation(new TextObject(
                                     "A breath of the Inner Fire and the fog tears apart like cloth. " +
                                     "The crew stares. The crossing continues."));
+                                break;
+                            case "part":
+                                try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - SeaMath.FogPartHpCost); } catch { }
+                                MBInformationManager.AddQuickInformation(new TextObject(
+                                    "You reach into the air and call. The wind stirs, warm and deliberate, " +
+                                    "and the fog peels back on both sides. The crew does not ask how. " +
+                                    "The crossing continues."));
                                 break;
                             case "push":
                                 if (_rng.NextDouble() < 0.5)
@@ -357,6 +380,15 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("sense",
                         $"Read the wreck ({SeaMath.SenseWreckAgingDays} days aging)", null, true,
                         "Let the Inner Fire taste the hull — feel where coin and cargo lay heaviest. Finds more than blind hands would."));
+                if (NatureKnowledge.IsAttuned)
+                {
+                    bool canAffordSense = Hero.MainHero.HitPoints > SeaMath.SenseWreckHpCost + 10;
+                    options.Add(new InquiryElement("feel",
+                        $"Feel the wreck ({SeaMath.SenseWreckHpCost} HP)", null, canAffordSense,
+                        canAffordSense
+                            ? "Let the living world taste the wood — feel where hands last gripped, where life last moved. More yield than blind salvage."
+                            : "You do not have enough left to give."));
+                }
 
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "⚓  Flotsam",
@@ -395,6 +427,20 @@ namespace AshAndEmber
                                     true, false, "Back on course.", "", null, null), true);
                                 break;
                             }
+                            case "feel":
+                            {
+                                try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - SeaMath.SenseWreckHpCost); } catch { }
+                                _voyageHoursTotal += 1f;
+                                int gold = SeaMath.FloatsamGold(_rng.NextDouble()) * 2;
+                                if (gold > 0)
+                                    try { GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, gold, true); } catch { }
+                                InformationManager.ShowInquiry(new InquiryData(
+                                    "⚓  Flotsam — Felt",
+                                    "You reach into the timbers and feel the memory of the wood. Life passed here, and coin changed hands. " +
+                                    $"Your men follow the current of it and surface with {gold} denars before the hull slips under.",
+                                    true, false, "Back on course.", "", null, null), true);
+                                break;
+                            }
                             default: // pass
                                 MBInformationManager.AddQuickInformation(new TextObject(
                                     "You sail past. The wreck slowly turns in the current, keeping its secrets."));
@@ -430,6 +476,15 @@ namespace AshAndEmber
                 if (MageKnowledge.IsMage)
                     options.Add(new InquiryElement("sear", $"Sear the Tide ({SeaMath.SearTheTideAgingDays} days aging)", null, true,
                         "Open the Inner Fire over open water. Burning rigging, screaming corsairs, and much better odds."));
+                if (NatureKnowledge.IsAttuned)
+                {
+                    bool canAffordCurrent = Hero.MainHero.HitPoints > SeaMath.CallCurrentHpCost + 10;
+                    options.Add(new InquiryElement("current",
+                        $"Call the Current ({SeaMath.CallCurrentHpCost} HP)", null, canAffordCurrent,
+                        canAffordCurrent
+                            ? "Reach into the water and pull. A rogue current catches their hulls and throws their formation. Much better odds."
+                            : "You do not have enough left to give."));
+                }
                 options.Add(new InquiryElement("tribute", $"Pay tribute ({tribute} denars)", null, Hero.MainHero.Gold >= tribute,
                     Hero.MainHero.Gold >= tribute
                         ? "Coin buys passage. It always has."
@@ -449,6 +504,10 @@ namespace AshAndEmber
                         {
                             case "sear":
                                 try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.SearTheTideAgingDays); } catch { }
+                                ResolveBoardingFight(FleetStrengthOf(MobileParty.MainParty, searTheTide: true), corsairStr);
+                                break;
+                            case "current":
+                                try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - SeaMath.CallCurrentHpCost); } catch { }
                                 ResolveBoardingFight(FleetStrengthOf(MobileParty.MainParty, searTheTide: true), corsairStr);
                                 break;
                             case "tribute":
@@ -537,6 +596,15 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("sear",
                         $"Sear the Tide ({SeaMath.SearTheTideAgingDays} days aging)", null, true,
                         "Open the Inner Fire over the blockade line. Burning rigging, broken formation, and much better odds."));
+                if (NatureKnowledge.IsAttuned)
+                {
+                    bool canAffordLine = Hero.MainHero.HitPoints > SeaMath.CallCurrentHpCost + 10;
+                    options.Add(new InquiryElement("current_blk",
+                        $"Call the Current ({SeaMath.CallCurrentHpCost} HP)", null, canAffordLine,
+                        canAffordLine
+                            ? "Reach into the water beneath the blockade. A surge of current capsizes galleys and scatters the line. Better odds of forcing the harbor."
+                            : "You do not have enough left to give."));
+                }
                 options.Add(new InquiryElement("turn", "Turn back — the harbor is denied today", null, true,
                     "Abort the crossing and return to your port of origin. Your fare will be refunded."));
 
@@ -552,6 +620,11 @@ namespace AshAndEmber
                         if (pick == "sear")
                         {
                             try { AgingSystem.AgeHero(Hero.MainHero, SeaMath.SearTheTideAgingDays); } catch { }
+                            effectiveStr = FleetStrengthOf(MobileParty.MainParty, searTheTide: true);
+                        }
+                        else if (pick == "current_blk")
+                        {
+                            try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - SeaMath.CallCurrentHpCost); } catch { }
                             effectiveStr = FleetStrengthOf(MobileParty.MainParty, searTheTide: true);
                         }
                         if (pick == "turn")
@@ -639,6 +712,15 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("read",
                         $"Read the boat before you close ({SeaMath.SenseWreckAgingDays} day aging)", null, true,
                         "The Inner Fire can taste the boat from here — learn who they are before you decide whether to close."));
+                if (NatureKnowledge.IsAttuned)
+                {
+                    bool canAffordFeel = Hero.MainHero.HitPoints > SeaMath.FeelLifeHpCost + 10;
+                    options.Add(new InquiryElement("feel_life",
+                        $"Feel for life before you close ({SeaMath.FeelLifeHpCost} HP)", null, canAffordFeel,
+                        canAffordFeel
+                            ? "Let the living world taste the boat — feel whether those aboard are what they seem."
+                            : "You do not have enough left to give."));
+                }
 
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "🚣  Survivors",
@@ -673,6 +755,41 @@ namespace AshAndEmber
                                         "You pull them in. Ordinary men, far from home, with nothing left to offer but their gratitude. " +
                                         "Two hours lost. The crossing continues.",
                                         true, false, "Sail on.", "", null, null), true);
+                                }
+                                break;
+                            }
+                            case "feel_life":
+                            {
+                                try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - SeaMath.FeelLifeHpCost); } catch { }
+                                if (_rng.NextDouble() < 0.60)
+                                {
+                                    var lord = FindRandomLord();
+                                    _voyageHoursTotal += 2f;
+                                    if (lord != null)
+                                    {
+                                        string lName = lord.Name?.ToString() ?? "a lord";
+                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 2, false); } catch { }
+                                        InformationManager.ShowInquiry(new InquiryData(
+                                            "🚣  Survivors — Felt",
+                                            $"The living world tastes the boat: men sworn to {lName}, worth saving. " +
+                                            $"You take them on. {lName} will hear of this. " +
+                                            $"Two hours lost. (Relation with {lName}: +2)",
+                                            true, false, "Sail on.", "", null, null), true);
+                                    }
+                                    else
+                                    {
+                                        InformationManager.ShowInquiry(new InquiryData(
+                                            "🚣  Survivors — Felt",
+                                            "The living world finds honest men in misfortune — no hidden threat, no sickness. You take them on. " +
+                                            "Two hours lost.",
+                                            true, false, "Sail on.", "", null, null), true);
+                                    }
+                                }
+                                else
+                                {
+                                    MBInformationManager.AddQuickInformation(new TextObject(
+                                        "The living world finds fever and despair in the boat — not deception, but a sickness that would spread. " +
+                                        "You leave a waterskin on a rope and sail on. The sea's arithmetic is what it is."));
                                 }
                                 break;
                             }
@@ -743,6 +860,16 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("speak",
                         $"Speak to it through the Inner Fire ({SeaMath.SerpentAgingDays} days aging)", null, true,
                         "Ancient things in the deep listen to the Fire. It costs years — but they do not always mean harm."));
+                if (NatureKnowledge.IsAttuned)
+                {
+                    bool canAffordCommune = Hero.MainHero.HitPoints > SeaMath.SerpentCommuneHpCost + 10;
+                    options.Add(new InquiryElement("commune",
+                        $"Commune with the deep ({SeaMath.SerpentCommuneHpCost} HP)", null, canAffordCommune,
+                        canAffordCommune
+                            ? "The living world runs deep as well as wide. Let it carry your presence down. " +
+                              "Old things in dark water are not always what they seem."
+                            : "You do not have enough left to give."));
+                }
 
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "🐉  Something in the Deep",
@@ -776,6 +903,19 @@ namespace AshAndEmber
                                     "For a long moment there is nothing but the water and something enormous beneath it, paying attention. " +
                                     "Then it turns, smooth and deliberate, and is gone into the dark. " +
                                     "The crew does not ask what you did. They do not want to know.",
+                                    true, false, "Sail on.", "", null, null), true);
+                                break;
+                            }
+                            case "commune":
+                            {
+                                try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - SeaMath.SerpentCommuneHpCost); } catch { }
+                                AddSeaMorale(2f);
+                                InformationManager.ShowInquiry(new InquiryData(
+                                    "🐉  The Deep Receives",
+                                    "You open yourself to the living world beneath the water — the cold, the pressure, the slow dark patience of it. " +
+                                    "The shape beneath the hull goes still. For a moment it is aware of you, and you of it. " +
+                                    "Then something vast and old simply... moves on. The crew breathes again. " +
+                                    "The crossing continues.",
                                     true, false, "Sail on.", "", null, null), true);
                                 break;
                             }

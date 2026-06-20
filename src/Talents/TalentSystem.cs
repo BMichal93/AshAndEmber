@@ -109,6 +109,8 @@ namespace AshAndEmber
         NatureStillDraw  = 69, // Rite — no HP draw cost while stationary in combat
         NatureOpenGrip   = 70, // Rite — held charges do not expire
         Wildsworn        = 71, // Class — the living-ember path
+        NatureDeepEarth  = 72, // Rite — siege/city draw cooldown removed
+        NatureDawnCall   = 73, // Rite — passive charge accumulation fires every dawn
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite, Class }
@@ -501,6 +503,18 @@ namespace AshAndEmber
                 Id = TalentId.Wildsworn, Category = TalentCategory.Rite, FocusCost = 2, Name = "Wildsworn",
                 Lore = "You have listened long enough that the listening has changed you. The root-voice, the river's patience, the open hand of the wind — you carry all three, and the land knows you for what you are.",
                 MechanicDesc = "Class (2 focus points). The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (free draw while stationary), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureDeepEarth, Category = TalentCategory.Rite, FocusCost = 1, Name = "Deep Earth",
+                Lore = "Stone is slow to speak, but it does not stay silent. Those who wait long enough beside an old wall or a mountain face come to hear the root-voice through the rock as clearly as through open soil. The muffling is a failure of patience, not a failure of the land.",
+                MechanicDesc = "Rite. Drawing elemental charge inside a siege or walled city no longer triggers the stone-muffling cooldown. The land speaks through stone as freely as through soil."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureDawnCall, Category = TalentCategory.Rite, FocusCost = 1, Name = "Dawn Call",
+                Lore = "The desert is loudest at dawn. Most people miss it. The angle of the light, the shift of the cold, the moment when dark ground releases what it held through the night — if you are open enough when it happens, the living world gives without being asked.",
+                MechanicDesc = "Rite. The land offers an elemental charge each dawn without fail. The 1-in-3 chance of passive accumulation on the campaign map becomes a certainty."
             },
         };
 

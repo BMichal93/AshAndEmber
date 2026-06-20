@@ -40,21 +40,26 @@ namespace AshAndEmber
         private static bool  _prevW        = false;
         private static bool  _prevPadDown  = false;
         private static bool  _prevPadUp    = false;
+        // In sieges and walled towns the earth is muffled — draws require a cooldown.
+        private static float _siegeCooldown = 0f;
+        private const  float SiegeCooldownSec = 4f;
 
         public static void ResetInputState()
         {
-            _wasHolding  = false;
-            _pendingDraw = false;
-            _pendingCast = false;
-            _prevS       = false;
-            _prevW       = false;
-            _prevPadDown = false;
-            _prevPadUp   = false;
+            _wasHolding   = false;
+            _pendingDraw  = false;
+            _pendingCast  = false;
+            _prevS        = false;
+            _prevW        = false;
+            _prevPadDown  = false;
+            _prevPadUp    = false;
+            _siegeCooldown = 0f;
         }
 
-        public static void Tick(bool inMission)
+        public static void Tick(bool inMission, float dt = 0f)
         {
             if (!NatureKnowledge.IsAttuned) return;
+            if (_siegeCooldown > 0f) _siegeCooldown = Math.Max(0f, _siegeCooldown - dt);
 
             // Guard: Right Alt must not conflict with existing modifiers.
             bool leftAltHeld  = Input.IsKeyDown(InputKey.LeftAlt);
@@ -130,9 +135,24 @@ namespace AshAndEmber
         }
 
         // ── Draw ──────────────────────────────────────────────────────────────
+        private static bool IsInSiegeOrCity()
+        {
+            try { return Settlement.CurrentSettlement != null; } catch { return false; }
+        }
+
         private static void TryDraw(bool inMission)
         {
             Agent caster = inMission ? Agent.Main : null;
+
+            // Siege/city cooldown: stone and mortar muffle the living channel.
+            // Deep Earth talent has taught the player to hear through stone — no cooldown.
+            if (inMission && _siegeCooldown > 0f && IsInSiegeOrCity()
+                && !TalentSystem.Has(TalentId.NatureDeepEarth))
+            {
+                Msg($"The earth here is muffled by stone and old mortar. " +
+                    $"({Math.Ceiling(_siegeCooldown):0}s until the land stirs again.)", NatureColor);
+                return;
+            }
 
             // Weapon check (battle only)
             if (inMission && caster != null)
@@ -159,6 +179,10 @@ namespace AshAndEmber
                     Msg(failReason, NatureColor);
                 return;
             }
+
+            // Siege/city draws impose a cooldown on the next draw attempt
+            if (inMission && IsInSiegeOrCity())
+                _siegeCooldown = SiegeCooldownSec;
 
             // HP cost for combat draws (except Verdant)
             if (inMission && caster != null)

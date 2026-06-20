@@ -50,6 +50,15 @@ namespace AshAndEmber
         // Aging cost for a mage to commune with the serpent.
         public const int   SerpentAgingDays        = 2;
 
+        // ── Nature-mage sea abilities (HP cost instead of aging days) ─────────
+        // Drawing on the living world to still waters, sense the deep, and call
+        // the current — all paid in the seer's own blood, not years.
+        public const int StillWatersHpCost    = 20;   // halve crossing + ward storms
+        public const int FogPartHpCost        = 15;   // part the sea fog
+        public const int SenseWreckHpCost     = 15;   // feel the wreck / survivors
+        public const int CallCurrentHpCost    = 25;   // fight aid vs corsairs / blockade
+        public const int SerpentCommuneHpCost = 20;   // commune with the deep
+
         // ── Boarding battle ──────────────────────────────────────────────────
         public const int   SearTheTideAgingDays    = 3;
         public const float SearTheTideStrengthMult = 1.6f;
