@@ -1,32 +1,30 @@
 // =============================================================================
 // ASH AND EMBER — DragonQuestSystem.cs
-// The Last Flight of the Dragons — main campaign goal.
+// The Silence Between Fires — main campaign goal for non-Ashen players.
 //
-// Trigger : Player defeats an Ashen lord's party for the first time.
-// Event   : A dying old mage approaches. Lore, then death.
-// Quest   : Active if player does not disregard him.
+// Trigger  : Player's party enters any Temple (Vlandia)-owned settlement,
+//            campaign day ≥ 30. No Temple membership required — contact alone
+//            is enough.
 //
-// Goals
-//   1. Reach Clan Tier 6            (grasp on the world)
-//   2. Capture Tyal                 (enter the heart of darkness)
-//   3. Reach Hero Level 25          (gain the power)
-//   4. Clear 5 Ashen Ruins          (read the darkness)
+// Sequence
+//   1. Temple contact — a grey-robed rider passes a letter; quest begins
+//   2. Three military objectives (parallel, any order):
+//      · Kill 5 Ashen lords in battle (player leads winning party)
+//      · Capture 3 Ashen towns or castles (player's clan)
+//      · Clear 4 Ashen ruins (AshenRuinSystem.ClearedCount)
+//   3. Lord stories — 5 deferred encounters revealing who the dead lords were
+//      before the cold took them; fire one by one after each kill
+//   4. Temple letters — 6 dispatches on a progress-gated timer, building the
+//      context until the full truth is in the player's hands
+//   5. Final choice (no sooner than 180 days after contact, day ≥ 150):
+//      · Accept the Binding → ending sequence → player dies, Ashen crumble
+//      · Refuse → quest closed; the world continues unchanged
 //
-// Completion → final prompt → rekindle the world or refuse.
-//
-// Ending (Yes)
-//   · All Ashen lords, mage lords, and mage companions die.
-//   · All Ashen settlements distributed to other kingdoms.
-//   · World map events disabled.
-//   · Player hero dies — Bannerlord game-over screen.
-//
-// Ending (No)  → quest fails, game continues normally.
-//
-// Save keys
-//   LDM_DragonPhase     int   0=idle 1=event-ready 2=active 3=all-done 4=rekindled 5=failed
-//   LDM_DragonGoal1-4   bool
-//   LDM_WorldRekindled  bool
-//   LDM_EndingPhase     int
+// Save keys  (prefix LDQ_)
+//   LDQ_Phase, LDQ_LordsSlain, LDQ_CitiesTaken,
+//   LDQ_StoryPhase, LDQ_LetterPhase, LDQ_EndingPhase,
+//   LDQ_WorldBound, LDQ_ContactDay,
+//   LDQ_EverAshen, LDQ_CapturedAshen
 // =============================================================================
 
 using System;
@@ -46,75 +44,103 @@ namespace AshAndEmber
     public static partial class DragonQuestSystem
     {
         // ── Quest phases ──────────────────────────────────────────────────────
-        private const int PhaseIdle       = 0;
-        private const int PhaseEventReady = 1;  // event pending, fires on next map tick
-        private const int PhaseActive     = 2;  // quest running
-        private const int PhaseAllDone    = 3;  // all goals met, final prompt pending
-        private const int PhaseRekindled  = 4;  // ending triggered
-        private const int PhaseFailed     = 5;  // player refused
-
-        private static int  _phase          = PhaseIdle;
-        private static bool _goal1Done      = false; // clan tier
-        private static bool _goal2Done      = false; // Tyal capture
-        private static bool _goal3Done      = false; // hero level
-        private static bool _goal4Done      = false; // ashen ruins cleared
-        private static bool _worldRekindled = false;
-        private static int  _endingPhase    = 0;     // 0=not started 1-4=in progress
-        internal static DragonQuestLog _questLog = null;
-
-        private static readonly Random _rng = new Random();
+        private const int PhaseIdle      = 0;  // not triggered yet
+        private const int PhaseContacted = 1;  // Temple reached out, intro pending
+        private const int PhaseActive    = 2;  // objectives in progress
+        private const int PhaseAllDone   = 3;  // all three met; final prompt pending
+        private const int PhaseAccepted  = 4;  // Binding triggered, ending in progress
+        private const int PhaseRefused   = 5;  // player declined or never engaged
 
         // ── Tuning ────────────────────────────────────────────────────────────
-        public const int TargetClanTier     = 6;
-        public const int TargetHeroLevel    = 25;
-        public const int TargetRuinsCleared = 5;
-        public const string TyalMarker      = "Tyal"; // matched via IndexOf
+        public const int TargetLordsSlain   = 5;
+        public const int TargetCitiesTaken  = 3;
+        public const int TargetRuinsCleared = 4;
+        private const int TriggerEarliestDay    = 30;
+        private const int FinalChoiceMinDay     = 150;   // absolute day floor
+        private const int FinalChoiceMinContact = 180;   // days after first contact
+        private const string TempleKingdomId = "vlandia";
+        private const string AshenKingdomId  = "ashen_kingdom";
 
-        // ── Public accessors (read by MageKnowledge for grimoire display) ─────
-        public static bool IsActive       => _phase == PhaseActive;
-        public static bool IsAllDone      => _phase == PhaseAllDone;
-        public static bool IsDone         => _phase == PhaseRekindled || _phase == PhaseFailed;
-        public static bool WorldRekindled => _worldRekindled;
-        public static bool Goal1Done      => _goal1Done;
-        public static bool Goal2Done      => _goal2Done;
-        public static bool Goal3Done      => _goal3Done;
-        public static bool Goal4Done      => _goal4Done;
+        // ── State ─────────────────────────────────────────────────────────────
+        private static int  _phase        = PhaseIdle;
+        private static int  _lordsSlain   = 0;
+        private static int  _citiesTaken  = 0;
+        private static int  _storyPhase   = 0;  // 0-5: how many lord stories shown
+        private static int  _letterPhase  = 0;  // 0-6: how many Temple letters sent
+        private static int  _endingPhase  = 0;  // 0-4: ending sequence progress
+        private static bool _worldBound   = false;
+        private static int  _contactDay   = -1;
+        internal static DragonQuestLog _questLog = null;
+
+        private static readonly HashSet<string> _everAshenSettlements = new HashSet<string>();
+        private static readonly HashSet<string> _capturedAshenCities  = new HashSet<string>();
+        private static readonly Random          _rng                  = new Random();
+
+        // ── Public accessors ──────────────────────────────────────────────────
+        public static bool IsActive       => _phase == PhaseActive || _phase == PhaseAllDone;
+        public static bool IsDone         => _phase == PhaseAccepted || _phase == PhaseRefused;
+        public static bool WorldRekindled => _worldBound;  // consumed by CampaignMapEvents, ColourLordRegistry, AshenCitySystem
+        public static int  LordsSlain     => _lordsSlain;
+        public static int  CitiesTaken    => _citiesTaken;
+
+        private static int Today()
+        {
+            try { return (int)CampaignTime.Now.ToDays; } catch { return 0; }
+        }
+
+        // ── Called from CampaignBehavior.Events.cs / OnSettlementEntered ─────
+        public static void OnSettlementEntered(Settlement settlement)
+        {
+            if (_phase != PhaseIdle) return;
+            if (MageKnowledge.IsAshen) return;
+            if (!MageKnowledge.IsMage) return;
+            if (Today() < TriggerEarliestDay) return;
+            if (settlement == null) return;
+
+            try
+            {
+                if (settlement.MapFaction?.StringId != TempleKingdomId) return;
+                if (MageKnowledge._deferredInquiry != null) return;
+                _phase = PhaseContacted;
+                _contactDay = Today();
+                MageKnowledge._deferredInquiry = ShowTempleContact;
+            }
+            catch { }
+        }
 
         // ── Called from CampaignBehavior.OnMapEventEnded ──────────────────────
         public static void OnMapEventEnded(MapEvent mapEvent)
         {
-            if (_phase != PhaseIdle) return;
+            if (_phase < PhaseActive) return;
             if (MageKnowledge.IsAshen) return;
+            if (_lordsSlain >= TargetLordsSlain) return;
             try
             {
-                // MapEventEnded fires for EVERY battle in the world, so first confirm the
-                // player's own party actually fought here. Without this guard a "!playerAttacker"
-                // defender-win on any off-screen battle (e.g. an Ashen lord losing a raid the
-                // player never joined) would count as a player victory and trigger the quest.
                 bool playerAttacker = mapEvent.AttackerSide?.Parties
                     .Any(p => p.Party == PartyBase.MainParty) == true;
                 bool playerDefender = mapEvent.DefenderSide?.Parties
                     .Any(p => p.Party == PartyBase.MainParty) == true;
                 if (!playerAttacker && !playerDefender) return;
 
-                // Only fires if player won
                 bool playerWon = (playerAttacker && mapEvent.WinningSide == BattleSideEnum.Attacker)
                               || (playerDefender && mapEvent.WinningSide == BattleSideEnum.Defender);
                 if (!playerWon) return;
 
-                // Check if any enemy hero is an Ashen lord
                 var enemySide = playerAttacker ? mapEvent.DefenderSide : mapEvent.AttackerSide;
                 if (enemySide == null) return;
-                bool ashenLordDefeated = false;
-                foreach (var meparty in enemySide.Parties)
-                {
-                    Hero leader = meparty?.Party?.LeaderHero;
-                    if (leader != null && ColourLordRegistry.IsAshenLord(leader))
-                    { ashenLordDefeated = true; break; }
-                }
-                if (!ashenLordDefeated) return;
 
-                _phase = PhaseEventReady;
+                foreach (var meparty in enemySide.Parties.ToList())
+                {
+                    if (_lordsSlain >= TargetLordsSlain) break;
+                    Hero leader = meparty?.Party?.LeaderHero;
+                    if (leader == null || leader.IsAlive) continue;
+                    if (!ColourLordRegistry.IsAshenLord(leader)) continue;
+                    _lordsSlain++;
+                    try { _questLog?.LogLordSlain(_lordsSlain); } catch { }
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"An Ashen lord falls. The cold retreats where you go. [{_lordsSlain}/{TargetLordsSlain}]",
+                        new Color(0.70f, 0.55f, 0.35f)));
+                }
             }
             catch { }
         }
@@ -122,64 +148,118 @@ namespace AshAndEmber
         // ── Called from CampaignBehavior.OnDailyTick ─────────────────────────
         public static void DailyTick()
         {
-            // The ending sequence must complete even after _worldRekindled is set
-            // (phase 1 sets the flag; phases 2-4 must still run on subsequent days).
             if (_endingPhase > 0)
             {
                 if (_endingPhase < 5) TickEnding();
                 return;
             }
 
-            if (_worldRekindled) return;
-
-            // Withering ending already resolved the world via cold fire — rekindling is no longer possible.
+            if (_worldBound) return;
             if (BurningLabQuestSystem.WitheringFired) return;
-
-            // Dragon Quest is only for non-Ashen players.
             if (MageKnowledge.IsAshen) return;
 
-            // Fire old man event (deferred so the UI is clean)
-            if (_phase == PhaseEventReady && MageKnowledge._deferredInquiry == null)
+            // Re-queue contact popup if somehow lost
+            if (_phase == PhaseContacted && MageKnowledge._deferredInquiry == null)
             {
-                _phase = PhaseIdle; // prevent re-trigger if player cancels the UI
-                MageKnowledge._deferredInquiry = ShowOldManEvent;
+                MageKnowledge._deferredInquiry = ShowTempleContact;
                 return;
             }
 
             if (_phase != PhaseActive && _phase != PhaseAllDone) return;
 
-            // Check goals in active quest
-            if (_phase == PhaseActive)
-            {
-                if (_questLog == null) try { EnsureQuestLog(); } catch { }
-                CheckGoals();
-                try { _questLog?.UpdateProgress(Hero.MainHero?.Clan?.Tier ?? 0, _goal2Done, Hero.MainHero?.Level ?? 0, AshenRuinSystem.ClearedCount); } catch { }
-                if (_goal1Done && _goal2Done && _goal3Done && _goal4Done && _phase == PhaseActive)
-                {
-                    _phase = PhaseAllDone;
-                    try { _questLog?.LogAllDone(); } catch { }
+            if (_questLog == null) try { EnsureQuestLog(); } catch { }
 
-                    if (BurningLabQuestSystem.FalseEmperorIsAlive)
-                    {
-                        // All conditions met, but a false emperor walks — rekindling is blocked.
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "The Last Flight of the Dragons — all conditions are met. " +
-                            "But something wears the world's face. " +
-                            "The rekindling cannot be attempted while the false emperor lives.",
-                            new Color(0.75f, 0.55f, 0.3f)));
-                    }
-                    else if (MageKnowledge._deferredInquiry == null)
-                    {
-                        MageKnowledge._deferredInquiry = ShowFinalPrompt;
-                    }
-                }
-            }
-            else if (_phase == PhaseAllDone && MageKnowledge._deferredInquiry == null)
+            // Track Ashen settlement history and new player captures
+            try { TrackSettlements(); } catch { }
+
+            // Update journal objectives
+            try { _questLog?.UpdateProgress(_lordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount); } catch { }
+
+            // Transition to AllDone when objectives complete
+            if (_phase == PhaseActive
+                && _lordsSlain  >= TargetLordsSlain
+                && _citiesTaken >= TargetCitiesTaken
+                && AshenRuinSystem.ClearedCount >= TargetRuinsCleared)
             {
-                // Re-show final prompt if somehow missed — still blocked while false emperor lives.
-                if (!BurningLabQuestSystem.FalseEmperorIsAlive)
-                    MageKnowledge._deferredInquiry = ShowFinalPrompt;
+                _phase = PhaseAllDone;
+                try { _questLog?.LogAllDone(); } catch { }
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "The Silence Between Fires — all conditions are met. A final letter from the Temple waits.",
+                    new Color(0.75f, 0.55f, 0.3f)));
             }
+
+            // Queue pending lord story — one at a time, after each kill
+            if (_storyPhase < _lordsSlain && MageKnowledge._deferredInquiry == null)
+            {
+                int storyIdx = _storyPhase;
+                _storyPhase++;
+                MageKnowledge._deferredInquiry = () => ShowLordStory(storyIdx);
+                return;
+            }
+
+            // Queue Temple letters once lord stories for that tier are shown
+            try { CheckLetterDelivery(); } catch { }
+
+            // Final prompt: all done, all 6 letters sent, time gates met
+            if (_phase == PhaseAllDone
+                && _letterPhase >= 6
+                && Today() >= FinalChoiceMinDay
+                && (_contactDay < 0 || Today() - _contactDay >= FinalChoiceMinContact)
+                && MageKnowledge._deferredInquiry == null)
+            {
+                MageKnowledge._deferredInquiry = ShowFinalPrompt;
+            }
+        }
+
+        private static void TrackSettlements()
+        {
+            var playerClan = Hero.MainHero?.Clan;
+            if (playerClan == null) return;
+
+            foreach (Settlement s in Settlement.All)
+            {
+                if (!s.IsTown && !s.IsCastle) continue;
+
+                // Maintain a running set of settlements that have ever been Ashen
+                if (s.MapFaction?.StringId == AshenKingdomId)
+                    _everAshenSettlements.Add(s.StringId);
+
+                // Detect captures: settlement is now player's but was ever Ashen
+                if (_citiesTaken >= TargetCitiesTaken) continue;
+                if (s.OwnerClan != playerClan) continue;
+                if (!_everAshenSettlements.Contains(s.StringId)) continue;
+                if (!_capturedAshenCities.Add(s.StringId)) continue;
+
+                _citiesTaken++;
+                try { _questLog?.LogCityTaken(s.Name?.ToString() ?? "settlement", _citiesTaken); } catch { }
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{s.Name} wrested from the grey march. [{_citiesTaken}/{TargetCitiesTaken}]",
+                    new Color(0.65f, 0.50f, 0.30f)));
+            }
+        }
+
+        private static void CheckLetterDelivery()
+        {
+            if (_letterPhase >= 6) return;
+            if (MageKnowledge._deferredInquiry != null) return;
+            if (_storyPhase < _lordsSlain) return;  // let the story queue drain first
+
+            bool shouldSend = false;
+            switch (_letterPhase)
+            {
+                case 0: shouldSend = _contactDay > 0 && Today() - _contactDay >= 14; break;
+                case 1: shouldSend = _lordsSlain >= 1 && _storyPhase >= 1; break;
+                case 2: shouldSend = _lordsSlain >= 2 && _storyPhase >= 2; break;
+                case 3: shouldSend = _lordsSlain >= 3 && _storyPhase >= 3; break;
+                case 4: shouldSend = _lordsSlain >= 4 && _storyPhase >= 4; break;
+                case 5: shouldSend = _lordsSlain >= 5 && _storyPhase >= 5; break;
+            }
+
+            if (!shouldSend) return;
+
+            int idx = _letterPhase;
+            _letterPhase++;
+            MageKnowledge._deferredInquiry = () => ShowTempleLetterByIndex(idx);
         }
 
     }
@@ -190,7 +270,7 @@ namespace AshAndEmber
         public DragonQuestLog()
             : base("ldm_dragon_quest", Hero.MainHero, CampaignTime.Never, 0) { }
 
-        public override TextObject Title => new TextObject("The Last Flight of the Dragons");
+        public override TextObject Title => new TextObject("The Silence Between Fires");
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()
@@ -201,99 +281,72 @@ namespace AshAndEmber
         protected override void RegisterEvents() { }
         protected override void SetDialogs() { }
 
-        // Tracked Journal objectives. The JournalLog objects themselves are persisted
-        // by QuestBase, but these field handles are not — UpdateProgress/EnsureObjectives
-        // re-link them from JournalEntries after a save/load.
-        private JournalLog _objClan;
-        private JournalLog _objTyal;
-        private JournalLog _objLevel;
+        private JournalLog _objLords;
+        private JournalLog _objCities;
         private JournalLog _objRuins;
 
         internal void LogStarted()
         {
             AddLog(new TextObject(
-                "The old mage's last words: gain a grasp on the world, enter the cold heart, gain the power, read the darkness — then rekindle everything. Four conditions, and a sacrifice at the end."));
+                "The Temple has made contact. Their plan requires three things of you: " +
+                "silence five Ashen lords in battle, claim three Ashen strongholds for your clan, " +
+                "and read the darkness of four Ashen ruin sites. The letters will follow your progress."));
             EnsureObjectives();
         }
 
-        // Creates the four tracked Journal goals, or recovers the references after a
-        // load. They are added in a fixed order right after the intro log, so on a
-        // reloaded quest they sit at JournalEntries[1..4].
-        // Backward-compatible: old saves have only 3 objectives (indices 1-3); goal 4
-        // is added as a new entry when missing.
         private void EnsureObjectives()
         {
-            if (_objClan != null && _objTyal != null && _objLevel != null && _objRuins != null) return;
+            if (_objLords != null && _objCities != null && _objRuins != null) return;
             if (JournalEntries != null && JournalEntries.Count >= 4)
             {
-                if (_objClan  == null) _objClan  = JournalEntries[1];
-                if (_objTyal  == null) _objTyal  = JournalEntries[2];
-                if (_objLevel == null) _objLevel = JournalEntries[3];
-                if (_objRuins == null)
-                {
-                    if (JournalEntries.Count >= 5)
-                        _objRuins = JournalEntries[4];
-                    else
-                        _objRuins = AddDiscreteLog(
-                            new TextObject("Read the darkness — explore and clear the ruins the Ashen left behind."),
-                            new TextObject("Ruins Cleared"), 0, DragonQuestSystem.TargetRuinsCleared, null, false);
-                }
+                if (_objLords  == null) _objLords  = JournalEntries[1];
+                if (_objCities == null) _objCities = JournalEntries[2];
+                if (_objRuins  == null) _objRuins  = JournalEntries[3];
                 return;
             }
-            _objClan = AddDiscreteLog(
-                new TextObject("Establish your dominion — grow your clan into a power the world must answer to."),
-                new TextObject("Clan Tier"), 0, DragonQuestSystem.TargetClanTier, null, false);
-            _objTyal = AddDiscreteLog(
-                new TextObject("Enter the cold heart — take the Ashen stronghold of Tyal for your clan."),
-                new TextObject("Capture Tyal"), 0, 1, null, false);
-            _objLevel = AddDiscreteLog(
-                new TextObject("Gain the power — temper your inner fire through trial until it burns at full height."),
-                new TextObject("Hero Level"), 0, DragonQuestSystem.TargetHeroLevel, null, false);
+            _objLords = AddDiscreteLog(
+                new TextObject("Silence five Ashen lords in battle — lead the winning party."),
+                new TextObject("Ashen Lords"), 0, DragonQuestSystem.TargetLordsSlain, null, false);
+            _objCities = AddDiscreteLog(
+                new TextObject("Claim three Ashen cities or castles for your clan."),
+                new TextObject("Ashen Strongholds"), 0, DragonQuestSystem.TargetCitiesTaken, null, false);
             _objRuins = AddDiscreteLog(
-                new TextObject("Read the darkness — explore and clear the ruins the Ashen left behind."),
+                new TextObject("Clear four Ashen ruin sites — read what was left there."),
                 new TextObject("Ruins Cleared"), 0, DragonQuestSystem.TargetRuinsCleared, null, false);
         }
 
-        // Refreshes the tracked objective bars from live campaign state. Safe to call
-        // daily and after load — EnsureObjectives self-heals the references first.
-        internal void UpdateProgress(int clanTier, bool tyalTaken, int heroLevel, int ruinsCleared)
+        internal void UpdateProgress(int lords, int cities, int ruins)
         {
             EnsureObjectives();
-            try { _objClan?.UpdateCurrentProgress(Math.Min(clanTier, DragonQuestSystem.TargetClanTier)); } catch { }
-            try { _objTyal?.UpdateCurrentProgress(tyalTaken ? 1 : 0); } catch { }
-            try { _objLevel?.UpdateCurrentProgress(Math.Min(heroLevel, DragonQuestSystem.TargetHeroLevel)); } catch { }
-            try { _objRuins?.UpdateCurrentProgress(Math.Min(ruinsCleared, DragonQuestSystem.TargetRuinsCleared)); } catch { }
+            try { _objLords?.UpdateCurrentProgress(Math.Min(lords,  DragonQuestSystem.TargetLordsSlain));   } catch { }
+            try { _objCities?.UpdateCurrentProgress(Math.Min(cities, DragonQuestSystem.TargetCitiesTaken)); } catch { }
+            try { _objRuins?.UpdateCurrentProgress(Math.Min(ruins,   DragonQuestSystem.TargetRuinsCleared)); } catch { }
         }
 
-        internal void LogGoal1() =>
+        internal void LogLordSlain(int count) =>
             AddLog(new TextObject(
-                "Clan Tier 6 reached. Your name is known across Calradia. The first condition is met."));
+                $"An Ashen lord silenced. [{count}/{DragonQuestSystem.TargetLordsSlain}]"));
 
-        internal void LogGoal2() =>
+        internal void LogCityTaken(string name, int count) =>
             AddLog(new TextObject(
-                "Tyal taken. The cold heart has been entered and understood. The second condition is met."));
-
-        internal void LogGoal3() =>
-            AddLog(new TextObject(
-                "The inner fire burns at full height. The third condition is met."));
-
-        internal void LogGoal4() =>
-            AddLog(new TextObject(
-                "The ruins have given up what they were hiding. The darkness has been read. The fourth condition is met."));
+                $"{name} claimed from the grey march. [{count}/{DragonQuestSystem.TargetCitiesTaken}]"));
 
         internal void LogAllDone() =>
             AddLog(new TextObject(
-                "All four conditions are met. The rekindling is possible. The choice remains."));
+                "All three conditions are met. A final letter from the Temple waits. " +
+                "The choice draws close."));
 
         internal void LogComplete()
         {
-            AddLog(new TextObject("The fire is released. The world has its morning. The cost was everything."));
+            AddLog(new TextObject("The Binding fires. The grey retreats. The world has more time."));
             CompleteQuestWithSuccess();
         }
 
-        internal void LogFailed()
+        internal void LogRefused()
         {
-            AddLog(new TextObject("The chance is gone. Whatever the old mage was offering died with your refusal."));
+            AddLog(new TextObject(
+                "You walked away from the Binding. The Temple accepted it. " +
+                "The world turns as it always has. The cycle continues."));
             CompleteQuestWithFail();
         }
     }
