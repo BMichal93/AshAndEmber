@@ -394,7 +394,7 @@ namespace AshAndEmber
 
         // ── Hero death ─────────────────────────────────────────────────────────
         private void OnHeroKilled(Hero victim, Hero killer,
-            TaleWorlds.CampaignSystem.KillCharacterAction.KillCharacterActionDetail detail,
+            TaleWorlds.CampaignSystem.Actions.KillCharacterAction.KillCharacterActionDetail detail,
             bool showNotification)
         {
             try { NatureSeerRegistry.OnLordDied(victim); } catch { }

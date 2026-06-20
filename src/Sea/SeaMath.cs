@@ -56,6 +56,7 @@ namespace AshAndEmber
         public const int StillWatersHpCost    = 20;   // halve crossing + ward storms
         public const int FogPartHpCost        = 15;   // part the sea fog
         public const int SenseWreckHpCost     = 15;   // feel the wreck / survivors
+        public const int FeelLifeHpCost       = 15;   // feel for life among survivors
         public const int CallCurrentHpCost    = 25;   // fight aid vs corsairs / blockade
         public const int SerpentCommuneHpCost = 20;   // commune with the deep
 

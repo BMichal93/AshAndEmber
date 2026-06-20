@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
@@ -48,7 +49,7 @@ namespace AshAndEmber
             try
             {
                 if (Campaign.Current == null || MobileParty.MainParty == null) return;
-                Vec2 pos = MobileParty.MainParty.GetPosition2D;
+                CampaignVec2 pos = MobileParty.MainParty.Position;
                 string terrainName = "Plain";
                 try
                 {
@@ -73,7 +74,7 @@ namespace AshAndEmber
             {
                 if (Campaign.Current == null || MobileParty.MainParty == null)
                     return NatureMath.TerrainElements("Plain");
-                Vec2 pos = MobileParty.MainParty.GetPosition2D;
+                CampaignVec2 pos = MobileParty.MainParty.Position;
                 string terrainName = "Plain";
                 try
                 {

@@ -157,13 +157,27 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void TalentSystem_EveryClass_CostsTwoFocusPoints()
+        public void TalentSystem_EveryClass_HasCorrectFocusCost()
         {
+            // Fire paths (Category.Class) use the escalating cost curve, marked by
+            // FocusCost 0. Discipline classes bought at ritual sites (Category.Rite)
+            // cost a fixed 2 fp. BattleSworn is kept in ClassMembers for save
+            // compatibility only and intentionally has no TalentDef.
             foreach (var classId in TalentSystem.ClassMembers.Keys)
             {
                 var def = TalentSystem.All.FirstOrDefault(d => d.Id == classId);
+                if (classId == TalentId.BattleSworn)
+                {
+                    Assert.IsNull(def, "Legacy BattleSworn should have no TalentDef.");
+                    continue;
+                }
                 Assert.IsNotNull(def, $"Class {classId} has no TalentDef.");
-                Assert.AreEqual(2, def.FocusCost, $"Class {classId} should cost 2 focus points.");
+                if (def.Category == TalentCategory.Class)
+                    Assert.AreEqual(0, def.FocusCost,
+                        $"Fire-path {classId} should use the escalating cost curve (FocusCost 0).");
+                else
+                    Assert.AreEqual(2, def.FocusCost,
+                        $"Discipline class {classId} should cost 2 focus points.");
             }
         }
 

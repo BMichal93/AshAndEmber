@@ -164,7 +164,8 @@ namespace AshAndEmber
                 Mission.Current?.Teams?.ToList().ForEach(t =>
                 {
                     if (t == team && t.IsValid)
-                        try { t.QuerySystem.TeamMorale += NatureMath.LivingBreathMorale; } catch { }
+                        foreach (Agent a in t.ActiveAgents)
+                            try { a.SetMorale(Math.Min(100f, a.GetMorale() + NatureMath.LivingBreathMorale)); } catch { }
                 });
             }
             catch { }
@@ -384,7 +385,7 @@ namespace AshAndEmber
                     {
                         if (row.WoundedNumber <= 0) continue;
                         int recover = Math.Min(row.WoundedNumber, 6);
-                        roster.AddToCountsData(row.Character, 0, -recover);
+                        roster.AddToCounts(row.Character, 0, false, -recover);
                         healed += recover;
                     }
                     if (healed > 0)
@@ -476,7 +477,7 @@ namespace AshAndEmber
         {
             if (agent == null) return incomingDamage;
             if (!_resistTokens.TryGetValue(agent.Index, out var tok)) return incomingDamage;
-            return incomingDamage * (1f - tok.frac);
+            return incomingDamage * (1f - tok.fraction);
         }
 
         public static bool HasResist(Agent agent)

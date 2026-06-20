@@ -169,6 +169,7 @@
     <Compile Include="AI\AshenCitySystem.Appearance.cs"/>
     <Compile Include="AI\AshenCitySystem.Prisoners.cs"/>
     <Compile Include="AI\AshenCitySystem.Tick.cs"/>
+    <Compile Include="AI\AshenCitySystem.Renaming.cs"/>
     <Compile Include="AI\AshenCitySystem.Persistence.cs"/>
     <Compile Include="AI\AshenDiplomacyModel.cs"/>
     <Compile Include="AI\AshenDialogue.cs"/>
@@ -219,6 +220,14 @@
     <Compile Include="Miracles\MiracleCampaignBehavior.cs"/>
     <Compile Include="Miracles\MiracleInputHandler.cs"/>
     <Compile Include="Miracles\PriestTroops.cs"/>
+    <Compile Include="Nature\NatureMath.cs"/>
+    <Compile Include="Nature\NatureKnowledge.cs"/>
+    <Compile Include="Nature\NatureCharge.cs"/>
+    <Compile Include="Nature\NatureEffects.cs"/>
+    <Compile Include="Nature\NatureSeerRegistry.cs"/>
+    <Compile Include="Nature\NatureSeerAI.cs"/>
+    <Compile Include="Nature\NatureInputHandler.cs"/>
+    <Compile Include="Nature\NatureCampaignBehavior.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Menus.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Outcomes.cs"/>

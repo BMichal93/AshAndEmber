@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -119,7 +120,7 @@ namespace AshAndEmber
                     _battleElements = new[] { NatureElement.Wind };
                     return;
                 }
-                Vec2 pos = MobileParty.MainParty.GetPosition2D;
+                CampaignVec2 pos = MobileParty.MainParty.Position;
                 string terrainName = "Plain";
                 try
                 {
