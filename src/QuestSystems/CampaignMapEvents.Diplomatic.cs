@@ -70,6 +70,7 @@ namespace AshAndEmber
             var pool = Kingdom.All
                 .Where(k => !k.IsEliminated
                          && k.StringId != AshenKingdomId
+                         && k.StringId != "vlandia"   // Holy Temple fights only the Ashen
                          && k.Leader != null && k.Leader.IsAlive && !k.Leader.IsChild)
                 .ToList();
             if (pool.Count < 2) return false;

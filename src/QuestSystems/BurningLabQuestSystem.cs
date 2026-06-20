@@ -220,8 +220,8 @@ namespace AshAndEmber
                     "Battania receives the scrolls. They know things about life and death that predate the Empire.");
                 AddFactionOption(elements, "aserai",   "give_aserai",   "Give it to the Aserai — scholars of the deep south.",
                     "The Aserai receive the scrolls. Desert silence is good for dangerous research.");
-                AddFactionOption(elements, "vlandia",  "give_vlandia",  "Give it to the Vlandians — wealth buys discretion.",
-                    "Vlandia receives the scrolls. Their coin and their ambition will put these to use.");
+                AddFactionOption(elements, "vlandia",  "give_vlandia",  "Give it to The Holy Temple — the Templars guard old fire.",
+                    "The Holy Temple receives the scrolls. They will lock them beneath an altar and pray no one breaks the seal.");
 
                 if (elements.Count < 2)
                 {

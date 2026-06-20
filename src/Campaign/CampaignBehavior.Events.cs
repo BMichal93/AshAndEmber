@@ -284,6 +284,8 @@ namespace AshAndEmber
             // Akkalat             (Khuzait → South border)  → Southern Empire
             // ── Ashen kingdom ─────────────────────────────────────────────────
             // Ostican   + nearby castles                    → Ashen kingdom
+            // ── Holy Temple (Vlandia) ─────────────────────────────────────────
+            // Stripped cities above leave Vlandia with 1–2 cities (Ortysia/Sargot).
             Hero northLeader = null;
             Hero westLeader  = null;
             Hero southLeader = null;
@@ -357,6 +359,17 @@ namespace AshAndEmber
             // ── Ashen kingdom ─────────────────────────────────────────────────
             if (ashenLeader != null)
                 try { AssignSettlementAndNearby("Ostican", ashenLeader, 40f); } catch { }
+
+            // ── The Holy Temple (Vlandia) — declare founding war with Ashen ───
+            // Ashen seized Ostican from Vlandia above; this seeds the permanent war.
+            try
+            {
+                var vlandia = Kingdom.All.FirstOrDefault(k => k.StringId == "vlandia" && !k.IsEliminated);
+                var ashen   = Kingdom.All.FirstOrDefault(k => k.StringId == "ashen_kingdom" && !k.IsEliminated);
+                if (vlandia != null && ashen != null && !vlandia.IsAtWarWith(ashen))
+                    DeclareWarAction.ApplyByDefault(vlandia, ashen);
+            }
+            catch { }
         }
 
         // Finds a settlement by exact display name, transfers it and all non-town

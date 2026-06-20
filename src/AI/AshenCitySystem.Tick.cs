@@ -29,11 +29,13 @@ namespace AshAndEmber
 
             EnsureKingdomAlive();
 
-            // Apply Ashen settlement names on first tick after clans are known.
-            // Not persisted so this runs on every session (new game and reload).
+            // Apply Ashen settlement names and Holy Temple kingdom rename on first
+            // tick each session. Names come from game XML on every load so this
+            // must run on both new games and reloads.
             if (!_settlementsRenamed)
             {
-                try { RenameAshenSettlements(); } catch { }
+                try { RenameAshenSettlements();     } catch { }
+                try { RenameHolyTempleKingdom();    } catch { }
                 _settlementsRenamed = true;
             }
 

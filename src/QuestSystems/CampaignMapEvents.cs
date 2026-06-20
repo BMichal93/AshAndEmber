@@ -178,7 +178,7 @@ namespace AshAndEmber
         public const int   GoTMinClans         = 4;
 
         // The Long March: which kingdoms are eligible targets (vanilla Bannerlord string IDs)
-        private static readonly string[] LongMarchTargets = { "vlandia", "aserai", "khuzait", "sturgia" };
+        private static readonly string[] LongMarchTargets = { "aserai", "khuzait", "sturgia" };
 
         // Iron Winter: northern kingdoms — Sturgia and the Northern Empire endure the worst of the freeze.
         private static readonly string[] NorthernKingdoms = { "sturgia", "empire_n" };
@@ -370,33 +370,30 @@ namespace AshAndEmber
                 try
                 {
                     var templeK = Kingdom.All.FirstOrDefault(k =>
-                        k.StringId == "the_temple" && !k.IsEliminated);
+                        k.StringId == "vlandia" && !k.IsEliminated);
                     var clan = Hero.MainHero?.Clan;
                     if (templeK != null && clan != null)
                     {
                         if (clan.Kingdom != null && clan.Kingdom != templeK)
                             try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                        if (clan.Kingdom?.StringId != "the_temple")
+                        if (clan.Kingdom?.StringId != "vlandia")
                             try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK); } catch { }
                     }
                 }
                 catch { }
             }
 
-            // The Temple's war with the Ashen is permanent — re-declare if peace is made
-            if (_templeFounded)
+            // The Holy Temple (Vlandia) is permanently at war with the Ashen — re-declare if peace is made
+            try
             {
-                try
-                {
-                    var temple = Kingdom.All.FirstOrDefault(k =>
-                        k.StringId == "the_temple" && !k.IsEliminated);
-                    var ashen = Kingdom.All.FirstOrDefault(k =>
-                        k.StringId == AshenKingdomId && !k.IsEliminated);
-                    if (temple != null && ashen != null && !temple.IsAtWarWith(ashen))
-                        DeclareWarAction.ApplyByDefault(temple, ashen);
-                }
-                catch { }
+                var temple = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "vlandia" && !k.IsEliminated);
+                var ashen = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == AshenKingdomId && !k.IsEliminated);
+                if (temple != null && ashen != null && !temple.IsAtWarWith(ashen))
+                    DeclareWarAction.ApplyByDefault(temple, ashen);
             }
+            catch { }
 
             // The Temple's covenant / anathema relationship with the player
             try { TempleCovenant.DailyTick(); } catch { }
@@ -438,7 +435,6 @@ namespace AshAndEmber
             TryFirePeasantUnrest();
             TryFireWolfSheepClothing();
             TryFireMageFatwa();
-            TryFireTheTemple();
             TryFireIronWinter();
             TryFireScorchingSun();
             TryFireFirstGreen();
@@ -497,7 +493,7 @@ namespace AshAndEmber
         {
             _longNightDaysRemaining  = 0;
             _brokenWillFired         = 0;
-            _templeFounded           = false;
+            _templeFounded           = true;  // Vlandia IS The Holy Temple from day one
             _pendingTempleJoin       = false;
             _debugForceNextTemple    = false;
             _protectedDaysRemaining  = 0;
