@@ -2,8 +2,9 @@
 // LIFE & DEATH MAGIC — AI/AshenCitySystem.cs
 // Manages the Ashen city clans and their kingdom.
 //
-// Target settlements: Tyal, Sibir, Baltakhand (cities)
-//                     Urikskala, Kaysar, Dinar, Vladiv (castles)
+// Target settlements: Tyal (Heart of Winter), Sibir, Baltakhand, Amprela (cities)
+//                     Urikskala, Kaysar, Dinar, Vladiv, and others (castles)
+//                     All renamed to Ashen names on session start (see Renaming.cs)
 //
 // On initialization:
 //   1. Finds each target settlement, looks up its owner clan.
@@ -58,6 +59,7 @@ namespace AshAndEmber
         private static int      _appearanceDayCounter = 0;
         private static bool     _declaringWar        = false;
         private static bool     _ownershipInitDone   = false;
+        private static bool     _settlementsRenamed  = false;
         private static readonly Random _rng  = new Random();
         private const  int      AppearanceTickInterval = 30;
 
@@ -112,6 +114,7 @@ namespace AshAndEmber
             _settlementClanMap.Clear();
             _conqueredDays.Clear();
             _appearanceDayCounter = 0;
+            _settlementsRenamed   = false;
             _warThrottle      = 0;
             _clanThrottle     = 0;
             _villageThrottle  = 0;
