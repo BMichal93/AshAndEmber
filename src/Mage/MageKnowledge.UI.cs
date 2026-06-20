@@ -74,7 +74,7 @@ namespace AshAndEmber
                 "  D / →  Shred  — armour shred  (+4% damage taken; Sunder amplifies)\n" +
                 "  S / ↓  Restore — 15 healing per press + small morale lift to allies\n" +
                 "  Mix natures freely: WWA after Break = 75 damage, sear ×2 + force ×1.\n" +
-                "  Owning a key's talent replaces its weak innate effect with the full one.\n\n" +
+                "  Each fire path you walk transforms what your fire can do.\n\n" +
                 "── EXAMPLES  (try these first!) ─────────────────────\n" +
                 "  W, X, W, release        →  Blast,   25 dmg,   1 day\n" +
                 "  A, X, W, release        →  Missile, 25 dmg,   1 day\n" +
@@ -98,11 +98,6 @@ namespace AshAndEmber
                 "    0/3 correct → 0.50×   Scattered.\n\n" +
                 "  The aging cost is always paid.\n" +
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +
-                "\n── LOST FORMS  (Talents → Lost Form, 2 focus pts each) ──────\n" +
-                "  ◈ Widened Blast   — blast cone opens from ~49° to ~60°\n" +
-                "  ◈ Twin Bolt       — missile fires two bolts at 60% power each\n" +
-                "  ◈ Fading Ward     — barrier expires after 60 seconds\n" +
-                "  ◈ Directed Burst  — full power forward, 40% in the rear arc\n\n" +
                 "  Open this book any time: Left Alt + X  (LB + RB on a controller)." +
                 BuildMurmursSection() +
                 (_isAshen ? AshenQuestSystem.GetGrimoireSummary() : DragonQuestSystem.GetGrimoireSummary());
@@ -276,7 +271,9 @@ namespace AshAndEmber
 
                 bool   owned      = TalentSystem.Has(d.Id);
                 bool   selectable = !d.IsInfo && !owned;
-                int    talentCost = d.FocusCost > 0 ? d.FocusCost : cost;
+                int    talentCost = (d.Category == TalentCategory.Class && d.FocusCost == 0)
+                                  ? TalentSystem.GetNextPathCost()
+                                  : (d.FocusCost > 0 ? d.FocusCost : cost);
                 string icon  = d.IsInfo                                   ? "◉"
                              : d.Category == TalentCategory.Class         ? "❖"
                              : d.Category == TalentCategory.Spell         ? "✦"
@@ -297,8 +294,8 @@ namespace AshAndEmber
             }
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Talents  —  The Inner Fire",
-                $"✦ = spell   ❋ = enchantment   ◆ = passive   ◈ = lost form   Cost: {costStr} (lost forms: 2 pts).",
+                "Paths  —  The Inner Fire",
+                $"❖ = path   Cost: {TalentSystem.GetNextPathCost()} fp for your next path, then +1 fp each additional. Discipline rites are learned at their ritual sites.",
                 elements,
                 true, 0, 1,
                 "Learn", "Close",

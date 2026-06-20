@@ -90,7 +90,7 @@ namespace AshAndEmber
                     if (!current.Contains((int)t))
                         current.Add((int)t);
                 }
-                // Ashen lords always have Scatter (cold fire flings enemies away)
+                // Ashen lords always have Scatter (cold fire flings enemies away — Pyrelord enchantment)
                 if (!current.Contains((int)TalentId.Scatter))
                     current.Add((int)TalentId.Scatter);
                 // 50% chance of also gaining Smoulder (terror-through-morale drain)
