@@ -52,6 +52,7 @@ namespace AshAndEmber
                 try { TalentSystem.EnforceKinship(); } catch { }
                 try { TalentSystem.DailyFadeTick(); } catch { }
                 try { AgingSystem.DailyAgeCheck(); } catch { }
+                try { AgingSystem.FlushPendingMilestone(); } catch { }
                 try { RivalShadowSystem.TryDesignateShadow(); } catch { }
                 try { RivalShadowSystem.DailyTick(); } catch { }
                 try { MageKnowledge.DailyWhisperTick(); } catch { }
@@ -105,6 +106,7 @@ namespace AshAndEmber
                 try { SpellEffects.ClearSelfEffects(); } catch { }
                 try { SpellEffects.ClearGlows(); } catch { }
                 try { SpellEffects.ClearMoves(); } catch { }
+                try { AgingSystem.FlushPendingMilestone(); } catch { }
             }
             catch { }
         }
