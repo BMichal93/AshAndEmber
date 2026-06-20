@@ -55,7 +55,8 @@ namespace AshAndEmber
         public const int TargetLordsSlain   = 5;
         public const int TargetCitiesTaken  = 3;
         public const int TargetRuinsCleared = 4;
-        private const int TriggerEarliestDay    = 30;
+        private const int TriggerEarliestDay    = 50;
+        private const int TriggerMinClanTier   = 2;
         private const int FinalChoiceMinDay     = 150;   // absolute day floor
         private const int FinalChoiceMinContact = 180;   // days after first contact
         private const string TempleKingdomId = "vlandia";
@@ -95,6 +96,7 @@ namespace AshAndEmber
             if (MageKnowledge.IsAshen) return;
             if (!MageKnowledge.IsMage) return;
             if (Today() < TriggerEarliestDay) return;
+            if ((Hero.MainHero?.Clan?.Tier ?? 0) < TriggerMinClanTier) return;
             if (settlement == null) return;
 
             try
