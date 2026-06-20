@@ -29,6 +29,14 @@ namespace AshAndEmber
 
             EnsureKingdomAlive();
 
+            // Apply Ashen settlement names on first tick after clans are known.
+            // Not persisted so this runs on every session (new game and reload).
+            if (!_settlementsRenamed)
+            {
+                try { RenameAshenSettlements(); } catch { }
+                _settlementsRenamed = true;
+            }
+
             // Decrement throttle counters (only when above zero)
             if (_clanThrottle     > 0) _clanThrottle--;
             if (_warThrottle      > 0) _warThrottle--;
