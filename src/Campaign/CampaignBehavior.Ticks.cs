@@ -85,6 +85,7 @@ namespace AshAndEmber
             {
                 try { ColourLordRegistry.CheckPopulationBounds(); } catch { }
                 try { ColourLordRegistry.CheckAgeLimit(); } catch { }
+                try { NatureSeerRegistry.CheckPopulationBounds(); } catch { }
                 try { CampaignMapEvents.WeeklyTick(); } catch { }
                 try { BurningLabQuestSystem.WeeklyTick(); } catch { }
                 try { EmberConclaveSystem.WeeklyTick(); } catch { }

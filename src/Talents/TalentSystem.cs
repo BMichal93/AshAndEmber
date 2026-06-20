@@ -104,6 +104,11 @@ namespace AshAndEmber
         Coldsworn       = 65, // Class — Ashen Altar (Cold) rites
         Gracebound      = 66, // Class — Sanctuary (Grace) rites
         AshenAlchemist  = 67, // Class — Alchemy rites
+        // ── Nature — The Living Ember ────────────────────────────────────────
+        NatureLivingRoot = 68, // Rite — charge capacity ×2; passive gain doubled
+        NatureStillDraw  = 69, // Rite — no HP draw cost while stationary in combat
+        NatureOpenGrip   = 70, // Rite — held charges do not expire
+        Wildsworn        = 71, // Class — the living-ember path
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite, Class }
@@ -472,6 +477,31 @@ namespace AshAndEmber
                 Lore = "A ruined brew is not always a waste. The instincts of a careful hand find what set true before the rest turned. It takes nerve to drink something that smells like failure. And when the good part surfaces unexpectedly, the volatile remainder does not vanish quietly — it needs somewhere to go.",
                 MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the clean effect. In battle, the volatile remnant lashes the nearest enemy for 25 fire damage on a salvage. When a backfire does land, 30% of the self-wound is returned as a partial heal — not all of the ruin reaches you."
             },
+            // ── Nature — The Living Ember ─────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.NatureLivingRoot, Category = TalentCategory.Rite, FocusCost = 1, Name = "Living Root",
+                Lore = "The root-voice speaks twice when you know how to listen. The land does not give more than it is asked for — but a patient hand, reaching twice, finds what a hasty one misses.",
+                MechanicDesc = "Rite. You may hold two elemental charges at once instead of one. Passive charge accumulation on the campaign map rolls twice each day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureStillDraw, Category = TalentCategory.Rite, FocusCost = 1, Name = "Still Draw",
+                Lore = "The river does not charge you for what it offers when you are still. Motion is cost. Stillness is the oldest prayer the land knows.",
+                MechanicDesc = "Rite. Drawing elemental charge in combat costs no HP when you are stationary. Move, and the land asks its price."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureOpenGrip, Category = TalentCategory.Rite, FocusCost = 1, Name = "Open Grip",
+                Lore = "The steppe does not take back a gift. What the land gives, it means you to have — for as long as you carry it. Open the hand, not wide, just open, and what the world gives you will stay.",
+                MechanicDesc = "Rite. Held elemental charges no longer expire. What you draw in battle stays in your hands until you use it or leave the field."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Wildsworn, Category = TalentCategory.Rite, FocusCost = 2, Name = "Wildsworn",
+                Lore = "You have listened long enough that the listening has changed you. The root-voice, the river's patience, the open hand of the wind — you carry all three, and the land knows you for what you are.",
+                MechanicDesc = "Class (2 focus points). The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (free draw while stationary), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
+            },
         };
 
         // ── Class membership ───────────────────────────────────────────────────
@@ -493,6 +523,7 @@ namespace AshAndEmber
                 [TalentId.Coldsworn]      = new[] { TalentId.ColdTithe, TalentId.DreadTide, TalentId.ColdCovenant },
                 [TalentId.Gracebound]     = new[] { TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant },
                 [TalentId.AshenAlchemist] = new[] { TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest },
+                [TalentId.Wildsworn]      = new[] { TalentId.NatureLivingRoot, TalentId.NatureStillDraw, TalentId.NatureOpenGrip },
             };
 
         private static readonly Dictionary<TalentId, TalentId> _memberToClass = BuildMemberToClass();

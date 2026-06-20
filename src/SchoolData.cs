@@ -21,6 +21,7 @@ namespace AshAndEmber
         Purple = 5,  // Lord caster glow
         White  = 6,  // Restore / Ward
         Ashen  = 7,  // Ash-cold — Ashen mages only
+        Nature = 8,  // The Living Ember — nature seers
     }
 
     public static class ColorSchoolData
@@ -38,6 +39,7 @@ namespace AshAndEmber
                 case ColorSchool.Purple: return 0xFFDD1100u; // deep crimson
                 case ColorSchool.White:  return 0xFFFFDD44u; // golden-yellow restore
                 case ColorSchool.Ashen:  return 0xFF5588CCu; // cold blue
+                case ColorSchool.Nature: return 0xFF44CC44u; // living green
                 default:                 return 0xFFFFEECCu;
             }
         }
@@ -55,6 +57,7 @@ namespace AshAndEmber
                 case ColorSchool.Purple: return 0xFFCC8844u;
                 case ColorSchool.White:  return 0xFFFFEE88u; // pale yellow
                 case ColorSchool.Ashen:  return 0xFF334466u;
+                case ColorSchool.Nature: return 0xFF99EE99u; // pale leaf
                 default:                 return 0xFFFFEEDDu;
             }
         }
@@ -71,6 +74,7 @@ namespace AshAndEmber
                 case ColorSchool.Purple: return new Color(0.87f, 0.07f, 0.0f);
                 case ColorSchool.White:  return new Color(1.0f,  0.87f, 0.2f); // golden-yellow
                 case ColorSchool.Ashen:  return new Color(0.38f, 0.50f, 0.75f);
+                case ColorSchool.Nature: return new Color(0.35f, 0.75f, 0.35f);
                 default:                 return Color.White;
             }
         }
@@ -96,6 +100,7 @@ namespace AshAndEmber
                 case ColorSchool.Purple: return "Cinder";
                 case ColorSchool.White:  return "Restore";
                 case ColorSchool.Ashen:  return "Ash";
+                case ColorSchool.Nature: return "Living Ember";
                 default:                 return "Fire";
             }
         }
