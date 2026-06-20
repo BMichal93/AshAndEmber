@@ -228,7 +228,7 @@ namespace AshAndEmber
             MagicInputHandler.Tick(inMission: true);
             AlchemyInputHandler.Tick(inMission: true);
             MiracleInputHandler.Tick(inMission: true);
-            NatureInputHandler.Tick(inMission: true);
+            NatureInputHandler.Tick(inMission: true, dt);
             AlchemyEffects.MissionTick(dt);
             AlchemyBattleAI.MissionTick(dt);
             MiracleEffects.MissionTick(dt);

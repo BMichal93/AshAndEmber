@@ -123,8 +123,10 @@ namespace AshAndEmber
             _familyFeverCooldown = 600;
 
             bool mage          = MageKnowledge.IsMage;
+            bool isAshen       = MageKnowledge.IsAshen;
             bool hasDarkTalent = mage && (TalentSystem.Has(TalentId.Ember)
                                        || TalentSystem.Has(TalentId.Reap));
+            bool isNature      = NatureKnowledge.IsAttuned;
 
             string spouseName = spouse.Name?.ToString() ?? "your spouse";
             string childName  = child.Name?.ToString()  ?? "your child";
@@ -135,6 +137,12 @@ namespace AshAndEmber
             string dHint = hasDarkTalent
                 ? $"The ritual requires something living. It requires a lot of it."
                 : "Requires Ember or Reap talent.";
+            string nHint = isNature
+                ? "Let the living world work through them. It takes what it needs from you — your blood, not your years."
+                : "Requires attunement to The Living Ember.";
+            string ashenHint = isAshen
+                ? "The cold holds them in stillness — suspended between life and letting go. They will survive. The cold always asks something back."
+                : "Requires Ashen affinity.";
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "★  The Wasting",
@@ -146,7 +154,9 @@ namespace AshAndEmber
                     new InquiryElement("b", $"Save {childName}.", null, true,
                         $"You put everything into one of them. That is the shape of this decision."),
                     new InquiryElement("c", "Channel the fire through both of them.", null, mage, cHint),
+                    new InquiryElement("n", "Let nature breathe through both of them.", null, isNature, nHint),
                     new InquiryElement("d", "Perform a dark ritual to sustain them.", null, hasDarkTalent, dHint),
+                    new InquiryElement("cold_hold", "Hold them in the cold between living and dying.", null, isAshen, ashenHint),
                     new InquiryElement("e", "Make a pact with the cold. Pay whatever it asks.", null, true,
                         $"The cold accepts immediately. They survive. What you become is the cost."),
                 },
@@ -169,6 +179,20 @@ namespace AshAndEmber
                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, 10, false); } catch { }
                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  10, false); } catch { }
                             Msg($"You put the fire through both of them at once — not a thing that is meant to be done like this, not a thing you will be able to explain. It costs ten years. They both wake. {spouseName} holds your face when you come back to yourself and does not ask what you gave. {childName} is already asking for food.", FireColor);
+                            break;
+                        case "n":
+                            try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - 40); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, 8, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  8, false); } catch { }
+                            Msg($"You sit between them and open yourself to the living world — not the fire, not the cold, but the quiet warmth that runs through roots and rivers and the palms of living hands. It moves through you and into them. The sickness does not burn away; it simply has no purchase in something the land has touched. They both wake, slowly, over the course of a night. {spouseName} watches your face the whole time, understanding nothing but the cost. {childName} does not understand either, but they take your hand when it is over.",
+                                new TaleWorlds.Library.Color(0.35f, 0.75f, 0.35f));
+                            break;
+                        case "cold_hold":
+                            AgePlayer(1825); // 5 years
+                            ShiftTrait(DefaultTraits.Mercy, -1);
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -10, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -10, false); } catch { }
+                            Msg($"You hold the cold around them like a hand cupping a flame — not to extinguish, but to suspend. The sickness cannot spread in stillness. It costs you five years and the warmth of the next two weeks, and when {spouseName} and {childName} wake they are whole but quieter than they were. They look at you as if they went somewhere while they slept and you were what brought them back, and they are not entirely certain how they feel about the place you pulled them from.", AshenColor);
                             break;
                         case "d":
                             try

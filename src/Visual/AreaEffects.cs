@@ -90,6 +90,21 @@ namespace AshAndEmber
 
         public static bool HasAreaEffect(string id) => _areaEffects.Any(e => e.Id == id);
 
+        // Spawns a point light using a raw RGB color — for nature elements where each element
+        // has its own color that doesn't map to an existing ColorSchool.
+        public static void SpawnTempLightRgb(Vec3 position, Vec3 rgb, float radius, float duration)
+        {
+            var node = new AreaEffect
+            {
+                Id = "temp_light", School = ColorSchool.Nature,
+                Position = position, Radius = radius,
+                TickInterval = duration, TickTimer = duration,
+                Remaining = duration
+            };
+            node.LightEntity = SpawnAreaLightRaw(position, rgb, radius);
+            _areaEffects.Add(node);
+        }
+
         // Spawns a coloured point light that expires after `duration` seconds with no gameplay effect.
         internal static void SpawnTempLight(Vec3 position, ColorSchool school, float radius, float duration)
         {
