@@ -30,11 +30,12 @@ namespace AshAndEmber
 
         protected override void DefineClassTypes()
         {
-            AddClassDefinition(typeof(DragonQuestLog),   1);
-            AddClassDefinition(typeof(AshenQuestLog),    2);
-            AddClassDefinition(typeof(BurningLabQALog),  3);
-            AddClassDefinition(typeof(BurningLabQBLog),  4);
-            AddClassDefinition(typeof(BurningLabQCLog),  5);
+            AddClassDefinition(typeof(DragonQuestLog),      1);
+            AddClassDefinition(typeof(AshenQuestLog),       2);
+            AddClassDefinition(typeof(BurningLabQALog),     3);
+            AddClassDefinition(typeof(BurningLabQBLog),     4);
+            AddClassDefinition(typeof(BurningLabQCLog),     5);
+            AddClassDefinition(typeof(KeybindReferenceLog), 6);
         }
     }
 }

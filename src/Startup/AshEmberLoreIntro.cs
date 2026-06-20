@@ -66,31 +66,35 @@ namespace AshAndEmber
         // ShowLoreIntro pop-up; the wording is unchanged.
         private static readonly string[] Paragraphs =
         {
-            "Fire is not merely warmth. It is the living breath of the world — mystical, sacred, " +
-            "the force that binds the soul to the flesh and grants mages the power to reshape it. " +
-            "Every lord, every warrior, every creature that walks beneath the sun carries this flame within them. " +
-            "When it dies, so does what made them human.",
+            "Every living thing carries a fire. Not the kind that warms a hall or burns a field — " +
+            "the older kind, the one that binds soul to flesh and remembers what you were. " +
+            "The wise call it the Inner Fire. Mages have learned to reach into it, to shape it, to spend it. " +
+            "And like any flame, it can be fed, it can be smothered, and it can be stolen.",
 
-            "In the far north, lords who refused that end made a different choice. " +
-            "They did not let their fires fade. They smothered them — and welcomed the cold that flooded in to fill the void. " +
-            "The cold preserved them. Stilled them. And in that stillness, it gave them purpose.",
+            "Long ago, in the frozen north, certain lords looked into their own guttering fires and refused the dark. " +
+            "So they did the thing no one had dared: they let the flame go out, " +
+            "and opened themselves to the cold that came rushing in to take its place. " +
+            "The cold did not kill them. It kept them — perfect, patient, and wholly changed.",
 
-            "They are called the Ashen. They do not age. They do not tire. They do not stop.",
+            "They are the Ashen. They do not age. They do not grieve. They do not stop. " +
+            "And they have been waiting a very long time.",
 
-            "For an age they waited in the frozen dark, their numbers growing in silence. " +
-            "Now the Empire has shattered — Rhagaea, Lucon, and Derthert tearing at its bones — " +
-            "and the Ashen have chosen this moment to march. " +
-            "The clans of Calradia war amongst themselves; only the Holy Temple in the west has named " +
-            "the pale tide for what it is, its Templars meeting the cold with sacred fire. " +
-            "Elsewhere, some mages — seduced by the promise of undying stillness — have already answered " +
-            "the cold's call instead.",
+            "Now the chain that held Calradia has snapped. Three would-be emperors — Rhagaea, Lucon, Derthert — " +
+            "drag the Empire apart, and the lords of the realm bleed one another over its corpse. " +
+            "Only in the west has anyone turned to look north and understood: " +
+            "the Holy Temple has raised its Templars against the pale tide, " +
+            "answering the cold not with steel but with sacred fire. " +
+            "Elsewhere the cold is already whispering — and some mages have begun to whisper back.",
 
-            "This is the eternal war. Flame against ash; the living against those who chose otherwise. " +
-            "It is not fought with steel alone — some meet the cold with the fire in their hands, " +
-            "some with prayer, some with the voice of the living land. " +
-            "It has been fought before, in ages no history remembers. It has never been won.",
+            "This is the war beneath all the others. Flame against ash; " +
+            "the living against those who traded their lives for permanence. " +
+            "It is fought with the fire in a mage's hands, with the prayers of the faithful, " +
+            "with the deep voice of the living land itself — and it has been fought, and lost, " +
+            "in ages no chronicle remembers.",
 
-            "The world is asking something of you. The ash is already listening for your answer.",
+            "Something in you has been listening to all of this. " +
+            "The fire knows it. So does the cold. " +
+            "Both are waiting to learn which way you will burn.",
         };
 
         // Per-paragraph timing (seconds).

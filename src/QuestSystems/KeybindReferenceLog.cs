@@ -32,9 +32,13 @@ namespace AshAndEmber
         private static void EnsureLog()
         {
             if (_log != null) return;
-            _log = new KeybindReferenceLog();
-            _log.StartQuest();
-            _log.WriteEntries();
+            // Assign _log only after the quest fully starts, so a transient failure
+            // leaves _log null and we retry next tick rather than stranding a
+            // half-created quest that never appears in the Journal.
+            var log = new KeybindReferenceLog();
+            log.StartQuest();
+            log.WriteEntries();
+            _log = log;
         }
 
         public static void ResetForNewGame()

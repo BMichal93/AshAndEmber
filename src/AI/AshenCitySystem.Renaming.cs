@@ -14,6 +14,7 @@ using System.Linq;
 using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.Core;
 using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
 
@@ -162,6 +163,17 @@ namespace AshAndEmber
                 SetKingdomField(vlandia,
                     new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("High Templar"));
+
+                // The Vlandian culture IS the Templar order — rename the culture so a
+                // character's background reads "Templar" rather than "Vlandian"
+                // everywhere it is shown (character sheet, encyclopedia, troop culture).
+                try
+                {
+                    var vlandiaCulture = MBObjectManager.Instance.GetObject<CultureObject>("vlandia");
+                    if (vlandiaCulture != null)
+                        _nameField?.SetValue(vlandiaCulture, new TextObject("Templar"));
+                }
+                catch { }
             }
             catch { }
         }
