@@ -66,34 +66,23 @@ namespace AshAndEmber
         // ShowLoreIntro pop-up; the wording is unchanged.
         private static readonly string[] Paragraphs =
         {
-            "Every living thing carries a fire. Not the kind that warms a hall or burns a field — " +
-            "the older kind, the one that binds soul to flesh and remembers what you were. " +
-            "The wise call it the Inner Fire. Mages have learned to reach into it, to shape it, to spend it. " +
-            "And like any flame, it can be fed, it can be smothered, and it can be stolen.",
+            "Every living thing carries a fire. Not warmth. Not light. " +
+            "The older kind — the one that binds soul to flesh, that keeps the living from the cold. " +
+            "Mages have learned to reach into it. Some have learned to spend it.",
 
-            "Long ago, in the frozen north, certain lords looked into their own guttering fires and refused the dark. " +
-            "So they did the thing no one had dared: they let the flame go out, " +
-            "and opened themselves to the cold that came rushing in to take its place. " +
-            "The cold did not kill them. It kept them — perfect, patient, and wholly changed.",
+            "Long ago, in the frozen north, certain lords stared into their own dying flames and refused the dark. " +
+            "So they did what no one had dared: they let the fire go out.\n\n" +
+            "The cold did not kill them.",
 
-            "They are the Ashen. They do not age. They do not grieve. They do not stop. " +
+            "They are the Ashen. They do not age. They do not grieve. They do not stop.\n\n" +
             "And they have been waiting a very long time.",
 
-            "Now the chain that held Calradia has snapped. Three would-be emperors — Rhagaea, Lucon, Derthert — " +
-            "drag the Empire apart, and the lords of the realm bleed one another over its corpse. " +
-            "Only in the west has anyone turned to look north and understood: " +
-            "the Holy Temple has raised its Templars against the pale tide, " +
-            "answering the cold not with steel but with sacred fire. " +
-            "Elsewhere the cold is already whispering — and some mages have begun to whisper back.",
+            "Now kingdoms crack. Emperors war over ruins. " +
+            "And in the silence between the battles, the cold is already whispering — " +
+            "and some mages have begun to whisper back.",
 
-            "This is the war beneath all the others. Flame against ash; " +
-            "the living against those who traded their lives for permanence. " +
-            "It is fought with the fire in a mage's hands, with the prayers of the faithful, " +
-            "with the deep voice of the living land itself — and it has been fought, and lost, " +
-            "in ages no chronicle remembers.",
-
-            "Something in you has been listening to all of this. " +
-            "The fire knows it. So does the cold. " +
+            "Something in you has been listening.\n\n" +
+            "The fire knows. So does the cold.\n\n" +
             "Both are waiting to learn which way you will burn.",
         };
 
