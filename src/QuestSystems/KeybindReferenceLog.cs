@@ -90,6 +90,14 @@ namespace AshAndEmber
             AddLog(new TextObject(
                 "ALCHEMY — Ctrl + X opens your satchel, in the field or in the thick of battle. " +
                 "Gamepad: RB + R3."));
+
+            AddLog(new TextObject(
+                "THE LIVING EMBER — For those attuned to the living world (not the inner fire). " +
+                "Hold Right Alt, then: S = draw a charge from the land.  W = release and cast. " +
+                "Gamepad: hold R3 (right stick), L-stick Down = draw, L-stick Up = cast. " +
+                "Both hands must be empty. Armour weight must not exceed 25. " +
+                "Verdant terrain (forest) draws for free; all other elements cost HP. " +
+                "Hermits in Battania, Strugia, and Khuzait teach those who are ready."));
         }
     }
 }
