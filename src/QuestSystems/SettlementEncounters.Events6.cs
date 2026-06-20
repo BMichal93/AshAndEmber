@@ -940,8 +940,9 @@ namespace AshAndEmber
         {
             if (MageKnowledge._deferredInquiry != null) { _feverRoadSpreadCountdown = 1; return; }
 
-            bool isMage  = MageKnowledge.IsMage;
-            bool isAshen = MageKnowledge.IsAshen;
+            bool isMage    = MageKnowledge.IsMage;
+            bool isAshen   = MageKnowledge.IsAshen;
+            bool isNature  = NatureKnowledge.IsAttuned;
 
             MageKnowledge._deferredInquiry = () =>
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
@@ -957,6 +958,10 @@ namespace AshAndEmber
                             "Some of them are. The question is which some."),
                         new InquiryElement("fire",    "Use the Inner Fire to purge it.",                  null, isMage && !isAshen,
                             "The fire can burn out fever. The cost is in your years."),
+                        new InquiryElement("nature",  "Draw from the living world to clear the fever.",   null, isNature,
+                            "The land's warmth knows sickness. You give of yourself — your own blood, not your years."),
+                        new InquiryElement("cold",    "Let the cold still the fever.",                    null, isAshen,
+                            "Extreme cold kills what heat sustains. You will cleanse them — but the cold asks something back."),
                     },
                     false, 1, 1, "Decide", "",
                     sub =>
@@ -996,6 +1001,28 @@ namespace AshAndEmber
                                     "They understand the result. The cost is thirty days of your years, spent without ceremony " +
                                     "in a camp that will never know the exact price.", FireColor);
                                 AddMorale(8f);
+                                break;
+
+                            case "nature":
+                                try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - 25); } catch { }
+                                ShiftTrait(DefaultTraits.Mercy, 1);
+                                Msg("You move through the camp at dusk and let the living world work through your hands. " +
+                                    "It does not burn — it draws. The fever lifts off your men like morning mist off a river, " +
+                                    "and settles somewhere beyond you, dispersed into the land. By dawn the column is clear. " +
+                                    "What it cost is in you now — not years, but blood. You will feel it for a day or two.",
+                                    new TaleWorlds.Library.Color(0.35f, 0.75f, 0.35f));
+                                AddMorale(8f);
+                                break;
+
+                            case "cold":
+                                AgePlayer(15);
+                                ShiftTrait(DefaultTraits.Mercy, -1);
+                                Msg("You push the cold through the camp like a winter passing through. " +
+                                    "The fever breaks instantly — fever cannot survive this. Your men wake shivering " +
+                                    "and hollow-eyed, but standing. The sickness is gone. So is something else: " +
+                                    "the camp feels three degrees colder than the night accounts for, " +
+                                    "and two of the dogs refuse to come in from the dark.", AshenColor);
+                                AddMorale(3f);
                                 break;
                         }
                     }, null, "", false), false, true);

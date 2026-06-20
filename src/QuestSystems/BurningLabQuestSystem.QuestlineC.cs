@@ -102,8 +102,8 @@ namespace AshAndEmber
                     "Pass them to the Aserai.",
                     "The Aserai receive the scrolls.");
                 AddFactionOption(elements, "vlandia",  "give_vlandia",
-                    "Pass them to the Vlandians.",
-                    "Vlandia receives the scrolls.");
+                    "Pass them to The Holy Temple.",
+                    "The Templars receive the scrolls.");
 
                 elements.Add(new InquiryElement("sell", "Sell them. You have carried them long enough to know their value.", null, true,
                     "+10 000 gold. −Honour. The buyer's identity is their own business."));

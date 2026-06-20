@@ -31,7 +31,7 @@ namespace AshAndEmber
 {
     public static class TempleCovenant
     {
-        private const string TempleKingdomId = "the_temple";
+        private const string TempleKingdomId = "vlandia";
         private const string AshenKingdomId  = "ashen_kingdom";
 
         // Covenant state machine.
@@ -75,8 +75,6 @@ namespace AshAndEmber
         {
             try
             {
-                if (!CampaignMapEvents.TempleFounded) return;
-
                 Kingdom temple = FindTemple();
                 if (temple == null)
                 {

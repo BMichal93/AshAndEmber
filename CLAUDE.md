@@ -87,7 +87,7 @@ Both `SanctuaryCampaignBehavior` and `AshenAltarsCampaignBehavior` share the sam
 
 ### Talent and Focus Point Costs
 
-All talents cost 1 focus point each, regardless of how many you already own. Lost Forms cost 1 focus point like any other talent. Campaign (non-battle) spells cost 1 day for the first cast per day, then escalate (1 → 7 → 14 → 21 …).
+The six purchasable fire paths (Reaper, Seer, Warden, Heartfire, Pyrelord, Ashbinder) use escalating cost: 1 fp for the first path you own, 2 fp for the second, 3 fp for the third, and so on. Discipline classes (Coldsworn, Gracebound, AshenAlchemist, NatureSage) cost a flat 2 fp each and are purchased at their ritual sites. Campaign (non-battle) spells cost 1 day for the first cast per day, then escalate (1 → 7 → 14 → 21 …).
 
 ### Key Numerical Constants
 

@@ -794,12 +794,12 @@ namespace AshAndEmber
             {
                 var templeLords = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && h != Hero.MainHero
-                             && h.MapFaction?.StringId == "the_temple")
+                             && h.MapFaction?.StringId == "vlandia")
                     .ToList();
                 foreach (var lord in templeLords)
                     try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -10, false); } catch { }
                 if (templeLords.Count > 0)
-                    Msg("(All Temple lords: −10 relation)", BadColor);
+                    Msg("(All Templar lords: −10 relation)", BadColor);
                 Msg("The temple received a formal complaint: a lord drove off a priest at the city gate and had him beaten. The complaint includes the city, the gate, the hour, and three witnesses. The temple does not issue threats. It issues records. Your name is in the record, and the record is in the archive, and everyone who needs to know what is in the archive already knows.", BadColor);
             };
         }

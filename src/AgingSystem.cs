@@ -12,6 +12,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.MountAndBlade;
 
 namespace AshAndEmber
 {
@@ -23,6 +24,9 @@ namespace AshAndEmber
         // Tracks which aging milestones the player has already received (ages 50/60/70/80/90).
         // Persisted so reloading doesn't re-fire a milestone the player already got.
         private static readonly HashSet<int> _milestonesTriggered = new HashSet<int>();
+
+        // Milestone queued but not yet shown — held until the campaign map is active.
+        private static int _pendingMilestoneAge = 0;
 
         // ── Core aging ────────────────────────────────────────────────────────
 
@@ -49,7 +53,10 @@ namespace AshAndEmber
                 CheckAgeLimit(hero);
 
                 if (hero == Hero.MainHero)
+                {
                     try { CheckAgingMilestone(hero); } catch { }
+                    try { FlushPendingMilestone(); } catch { }
+                }
             }
             catch { }
         }
@@ -202,117 +209,75 @@ namespace AshAndEmber
             {
                 if (age >= milestone && _milestonesTriggered.Add(milestone))
                 {
-                    ApplyMilestoneBoon(milestone);
-                    ShowMilestoneEvent(milestone);
+                    if (_pendingMilestoneAge == 0)
+                        _pendingMilestoneAge = milestone;
                 }
             }
         }
 
-        private static void ApplyMilestoneBoon(int milestone)
+        /// <summary>
+        /// Shows the pending age-milestone popup if we are on the campaign map.
+        /// Call from AgeHero (immediate path when not in battle) and from OnMissionEnded / OnDailyTick.
+        /// </summary>
+        public static void FlushPendingMilestone()
         {
-            try
-            {
-                switch (milestone)
-                {
-                    case 50:
-                        if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 75f;
-                        break;
+            if (_pendingMilestoneAge <= 0) return;
+            try { if (Mission.Current != null) return; } catch { }
+            if (MageKnowledge._deferredInquiry != null) return;
 
-                    case 60:
-                        foreach (var h in Hero.AllAliveHeroes
-                            .Where(h => h.IsAlive && ColourLordRegistry.IsColourLord(h)).ToList())
-                        {
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, h, 2); } catch { }
-                        }
-                        break;
-
-                    case 70:
-                        if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 150f;
-                        try
-                        {
-                            var party70 = Hero.MainHero?.PartyBelongedTo;
-                            if (party70 != null) party70.RecentEventsMorale += 30f;
-                        }
-                        catch { }
-                        break;
-
-                    case 80:
-                        try
-                        {
-                            var roster = Hero.MainHero?.PartyBelongedTo?.MemberRoster;
-                            if (roster != null)
-                            {
-                                foreach (var element in roster.GetTroopRoster().ToList())
-                                {
-                                    if (element.WoundedNumber > 0)
-                                        roster.AddToCounts(element.Character, 0, false, -element.WoundedNumber);
-                                }
-                            }
-                        }
-                        catch { }
-                        break;
-
-                    case 90:
-                        if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 300f;
-                        break;
-                }
-            }
-            catch { }
+            int milestone = _pendingMilestoneAge;
+            _pendingMilestoneAge = 0;
+            ShowMilestoneEvent(milestone);
         }
 
         private static void ShowMilestoneEvent(int milestone)
         {
             try
             {
-                string title, body, boon;
+                string title, body, button;
                 switch (milestone)
                 {
                     case 50:
-                        title = "Fifty Years";
-                        body  = "Most who carry the fire never see this birthday. You have. The world has noticed.";
-                        boon  = "+75 renown";
+                        title  = "Fifty Years of Ash";
+                        body   = "You have outlived half your blood. The fire does not celebrate. It simply keeps burning, and so do you — a little less of what you were before, a little more of something else entirely.\n\nYou do not know if that is a fair trade.";
+                        button = "Time passes.";
                         break;
                     case 60:
-                        title = "Sixty Years";
-                        body  = "There are mages who were children when you first cast. They know your name now — as a warning, or an ideal.";
-                        boon  = "+2 relations with all mage lords";
+                        title  = "Sixty Years";
+                        body   = "The faces around you change now. The lords you knew when you first learned the fire's name — some are ash, some are grey-haired, some you cannot place anymore.\n\nYou remember everything. That is its own weight.";
+                        button = "So it goes.";
                         break;
                     case 70:
-                        title = "Seventy Years";
-                        body  = "The fire is not burning you alive. It is burning you clear. Your soldiers feel it — something steadier than courage.";
-                        boon  = "+150 renown, party morale +30";
+                        title  = "Seventy Years";
+                        body   = "The fire is still there. That is not comfort — it is accounting. You have traded seventy years for what the fire gave you, and you cannot say anymore whether the ledger was worth keeping.\n\nThe flame does not answer when you ask.";
+                        button = "The years mount.";
                         break;
                     case 80:
-                        title = "Eighty Years";
-                        body  = "You are not living longer. You are burning slower. The wounded at your side rise — the fire lends them what it will not spend on you.";
-                        boon  = "All wounded troops healed";
+                        title  = "Eighty Years";
+                        body   = "People stop calling you old. They call you ancient, as if you have become a landmark rather than a person. There are children alive who were born after you first learned to cast. They will bury you, perhaps.\n\nYou find that is not the part that troubles you.";
+                        button = "What remains.";
                         break;
                     case 90:
-                        title = "Ninety Years";
-                        body  = "Ten years to the limit. Whatever you have left to do, the fire will remember it long after you are done.";
-                        boon  = "+300 renown";
+                        title  = "Ninety Years";
+                        body   = "A decade before the end — not the fire's end, which is your body failing or the cold claiming you. The world has moved in ways you remember as fresh and recent, and then moved on again, and a third time, and still you burn.\n\nThe weight of that is different from what you expected.";
+                        button = "A little more.";
                         break;
                     default:
                         return;
                 }
 
-                if (MageKnowledge._deferredInquiry == null)
+                MageKnowledge._deferredInquiry = () =>
                 {
-                    MageKnowledge._deferredInquiry = () =>
+                    try
                     {
-                        try
-                        {
-                            InformationManager.ShowInquiry(new InquiryData(
-                                title,
-                                $"{body}\n\n{boon}.",
-                                true, false,
-                                "The fire endures.",
-                                null,
-                                () => { }, null));
-                        }
-                        catch { }
-                    };
-                }
+                        InformationManager.ShowInquiry(new InquiryData(
+                            title, body,
+                            true, false,
+                            button, null,
+                            () => { }, null));
+                    }
+                    catch { }
+                };
             }
             catch { }
         }
@@ -382,22 +347,24 @@ namespace AshAndEmber
         public static void Save(IDataStore store)
         {
             var list = _milestonesTriggered.ToList();
-            store.SyncData("AG_Milestones", ref list);
+            store.SyncData("AG_Milestones",        ref list);
             if (list != null)
             {
                 _milestonesTriggered.Clear();
                 foreach (var m in list) _milestonesTriggered.Add(m);
             }
 
-            store.SyncData("AG_LedgerSpent",     ref _ledgerDaysSpent);
-            store.SyncData("AG_LedgerReclaimed", ref _ledgerDaysReclaimed);
-            store.SyncData("AG_LedgerBattle",    ref _ledgerBattleCasts);
-            store.SyncData("AG_LedgerMap",       ref _ledgerMapCasts);
+            store.SyncData("AG_PendingMilestone",  ref _pendingMilestoneAge);
+            store.SyncData("AG_LedgerSpent",       ref _ledgerDaysSpent);
+            store.SyncData("AG_LedgerReclaimed",   ref _ledgerDaysReclaimed);
+            store.SyncData("AG_LedgerBattle",      ref _ledgerBattleCasts);
+            store.SyncData("AG_LedgerMap",         ref _ledgerMapCasts);
         }
 
         public static void ResetForNewGame()
         {
             _milestonesTriggered.Clear();
+            _pendingMilestoneAge = 0;
             _ledgerDaysSpent     = 0;
             _ledgerDaysReclaimed = 0;
             _ledgerBattleCasts   = 0;

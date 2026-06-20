@@ -52,6 +52,7 @@ namespace AshAndEmber
                 try { TalentSystem.EnforceKinship(); } catch { }
                 try { TalentSystem.DailyFadeTick(); } catch { }
                 try { AgingSystem.DailyAgeCheck(); } catch { }
+                try { AgingSystem.FlushPendingMilestone(); } catch { }
                 try { RivalShadowSystem.TryDesignateShadow(); } catch { }
                 try { RivalShadowSystem.DailyTick(); } catch { }
                 try { MageKnowledge.DailyWhisperTick(); } catch { }
@@ -85,6 +86,7 @@ namespace AshAndEmber
             {
                 try { ColourLordRegistry.CheckPopulationBounds(); } catch { }
                 try { ColourLordRegistry.CheckAgeLimit(); } catch { }
+                try { NatureSeerRegistry.CheckPopulationBounds(); } catch { }
                 try { CampaignMapEvents.WeeklyTick(); } catch { }
                 try { BurningLabQuestSystem.WeeklyTick(); } catch { }
                 try { EmberConclaveSystem.WeeklyTick(); } catch { }
@@ -104,6 +106,7 @@ namespace AshAndEmber
                 try { SpellEffects.ClearSelfEffects(); } catch { }
                 try { SpellEffects.ClearGlows(); } catch { }
                 try { SpellEffects.ClearMoves(); } catch { }
+                try { AgingSystem.FlushPendingMilestone(); } catch { }
             }
             catch { }
         }

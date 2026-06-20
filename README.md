@@ -122,12 +122,17 @@ The gift selection follows immediately after.
 
 ## Getting the Gift
 
-The Inner Fire must be *found*, not chosen at a menu.
+Two paths open at campaign start. Each is permanent — you walk one or the other.
 
-- At campaign start a prompt appears asking if the fire has always been there. Accepting grants the Gift.
+**The Inner Fire** — The fire must be *found*, not chosen at a menu.
+- A prompt appears asking if the fire has always been there. Accepting grants the Gift.
 - The Gift can also arrive through certain in-game events (aging, bloodline, encounters, companions).
+- Once you carry the Gift, the grimoire is available at any time (Left Alt + X).
 
-Once you carry the Gift, the grimoire is available at any time. Without it, spellcasting does nothing.
+**The Living Ember** — For those who hear the land instead of carrying a fire within.
+- At the same gift prompt, choose *"The world beneath me has always been louder than the fire."*
+- This opens the Living Ember path — terrain-drawing, elemental powers, and hermit teachers.
+- The two paths are mutually exclusive.
 
 ---
 
@@ -166,6 +171,88 @@ Different form types may be mixed freely before Break — all fire simultaneousl
 The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Damage ×2.
 
 **Free hand required.** You cannot cast while wielding anything — weapon or shield. Sheathe everything first (**X** on keyboard, or the sheathe button on gamepad). Both hands must be empty.
+
+---
+
+## The Living Ember
+
+A second discipline, separate from the Inner Fire. Those who hear the living land — root, river, stone, and sky — may draw elemental charges from the terrain beneath them and release them as natural forces.
+
+### Choosing this path
+
+At the gift prompt at campaign start, select **"The world beneath me has always been louder than the fire."** This grants attunement to the Living Ember instead of the Inner Fire. The two paths are mutually exclusive.
+
+### Controls
+
+| Action | Keyboard | Gamepad |
+|--------|----------|---------|
+| Draw a charge from the land | Hold **Right Alt** + **S** | Hold **R3**, L-stick **Down** |
+| Release and cast | Hold **Right Alt** + **W** | Hold **R3**, L-stick **Up** |
+
+**Requirements:** Both hands must be empty (no weapon or shield). Armour weight must not exceed 25.
+
+### Terrain, elements, and draw cost
+
+The charge you draw is shaped by the ground you stand on. Hybrid terrain gives a random element from those listed.
+
+| Terrain | Element | HP draw cost |
+|---------|---------|-------------|
+| Forest | Verdant | **Free** |
+| Meadow, Grassland | Verdant or Wind | Free / 10 HP |
+| Mountain | Stone | 12 HP |
+| Swamp, Wetland | Stone or Water | 12 / 10 HP |
+| Hill, Hills | Stone or Wind | 12 / 10 HP |
+| Water, River, Lake | Water | 10 HP |
+| Shore | Water or Wind | 10 HP |
+| Plain | Wind | 10 HP |
+| Snow, Arctic | Frost | 14 HP |
+| Steppe | Storm or Wind | 13 / 10 HP |
+| Desert | Storm | 13 HP |
+| (other) | Wind | 10 HP |
+
+### Powers
+
+Each element carries two possible powers — one attack, one support — chosen randomly when the charge is released.
+
+| Element | Attack | Support |
+|---------|--------|---------|
+| **Verdant** | **Thorngrasp** — pulls nearest enemy 3 m and roots them 2.5 s | **Living Breath** — 25 HP self + 18 HP allies + 15 morale, 10 m radius |
+| **Stone** | **Stone Surge** — 45 damage eruption, 5 m radius, roots 4 s | **Earth Mantle** — 40% damage reduction for 10 s |
+| **Water** | **Undertow** — 30 damage cone knockback (4 m push, 25% slow), 8 m range | **Still Water** — self-heal 35 HP |
+| **Wind** | **Calling Gale** — 20 damage 360° knockback + speed boost for allies, 10 m | **Fair Wind** — 35% speed for self and allies 8 m, 15 s |
+| **Frost** | **Hoarfrost** — 30 damage + 40% slow, 8 m radius, 7 s | **Glacial Shell** — 40% damage reduction + 20% self-slow, 10 s |
+| **Storm** | **Wrath of the Sky** — 70 damage lightning bolt, chains to 2 nearby enemies (35 each) | **Levin Step** — instant 5 m dash with brief invulnerability |
+
+Held charges expire after 90 seconds in battle or 1 campaign day. Only one charge may be held at a time unless the **Living Root** talent is active.
+
+### Hermit teachers
+
+Three hermits scatter across the old lands. Each teaches one rite and is a one-time encounter, appearing when you enter a qualifying town with clan renown ≥ 100 (25% chance per visit, 3-day cooldown per settlement).
+
+| Hermit | Region | Teaches |
+|--------|--------|---------|
+| **Gwydion the Root-Listener** | Battanian towns | Living Root |
+| **Birna of the Still Water** | Sturgian towns | Still Draw |
+| **Bekh the Open Hand** | Khuzait towns | Open Grip |
+
+Hermits do not appear for an Inner Fire mage.
+
+### Talents
+
+| Talent | Effect |
+|--------|--------|
+| **Living Root** | Charge capacity ×2 — hold two charges simultaneously. Passive daily accumulation chance rises from 33% to ~67%. |
+| **Still Draw** | Drawing while stationary in combat costs no HP, regardless of terrain. |
+| **Open Grip** | Held charges do not expire. |
+| **Wildsworn** | Class talent — bundles Living Root, Still Draw, and Open Grip for 2 focus points. |
+
+### Nature seers (NPC)
+
+Some lords and companions carry attunement to the living world. In battle they draw and release nature charges independently. Seeded at campaign start by culture: Battanian lords (~20%), Sturgian lords (~15%), Khuzait lords (~10%), others (~3%).
+
+Two unit types appear rarely in warbands:
+- **Battanian Forest Listener** — melee nature seer in Battanian parties
+- **Sturgian Storm-Reader** — ranged nature seer in Sturgian parties
 
 ---
 

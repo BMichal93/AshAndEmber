@@ -104,6 +104,13 @@ namespace AshAndEmber
         Coldsworn       = 65, // Class — Ashen Altar (Cold) rites
         Gracebound      = 66, // Class — Sanctuary (Grace) rites
         AshenAlchemist  = 67, // Class — Alchemy rites
+        // ── Nature — The Living Ember ────────────────────────────────────────
+        NatureLivingRoot = 68, // Rite — charge capacity ×2; passive gain doubled
+        NatureStillDraw  = 69, // Rite — no HP draw cost while stationary in combat
+        NatureOpenGrip   = 70, // Rite — held charges do not expire
+        Wildsworn        = 71, // Class — the living-ember path
+        NatureDeepEarth  = 72, // Rite — siege/city draw cooldown removed
+        NatureDawnCall   = 73, // Rite — passive charge accumulation fires every dawn
     }
 
     public enum TalentCategory { Passive, Enchantment, Spell, Info, LostForm, Rite, Class }
@@ -128,59 +135,52 @@ namespace AshAndEmber
 
         public static readonly IReadOnlyList<TalentDef> All = new List<TalentDef>
         {
-            // ── Classes (2 focus points each) ─────────────────────────────────
-            // Each class is a path: one purchase grants a themed bundle of the
-            // older single talents, so a mage chooses a handful of identities
-            // instead of picking through thirty entries. (Wiring of the bundled
-            // effects to Has() lands in a second pass — see CHANGELOG.)
+            // ── Classes (fire paths — escalating cost) ────────────────────────
+            // Six fire paths define a mage's identity. Path cost escalates: 1 fp
+            // for the first path owned, 2 fp for the second, and so on. BattleSworn
+            // is kept in ClassMembers below for save compatibility but is no longer
+            // purchasable (no TalentDef).
             new TalentDef
             {
-                Id = TalentId.DarkMage, Category = TalentCategory.Class, FocusCost = 2,
-                Name = "Dark Mage",
-                Lore = "The fire in you has learned to feed on others — their warmth, their years. It does not ask permission, and it does not give back what it takes.",
-                MechanicDesc = "Class (2 focus points). The path of the life-eater. Grants four talents: Ember (each battle kill may restore a day of youth), Reap (raids and executions restore years), Wither (drain an enemy village's hearth), and Extinguish (wound and break an enemy party at range). Walking this path darkens you — others will remember what you do."
+                Id = TalentId.DarkMage, Category = TalentCategory.Class, FocusCost = 0,
+                Name = "Reaper",
+                Lore = "The fire has learned to feed on what dies. Each kill leaves a warmth behind — not theirs, not quite yours, but yours to take if you know how to hold a vessel for it. The raids and the executions are not cruelty. They are fuel.",
+                MechanicDesc = "Path (cost scales: 1 fp first, 2 fp second, etc.). The way of the life-eater. Grants four talents: Ember (each battlefield kill carries a 10% chance to restore a day of youth), Reap (raids and executions restore years of your life), Wither (drain the hearth from a nearby enemy village), and Extinguish (wound and break a distant enemy party). Walking this path darkens you."
             },
             new TalentDef
             {
-                Id = TalentId.Seer, Category = TalentCategory.Class, FocusCost = 2,
+                Id = TalentId.Seer, Category = TalentCategory.Class, FocusCost = 0,
                 Name = "Seer",
-                Lore = "You read the fire the way a navigator reads stars — imperfectly, but well enough. The lines that bind every living thing are never quite still, and you have learned to look without flinching.",
-                MechanicDesc = "Class (2 focus points). The path of foresight. Grants four talents: Clairvoyance (turn insight into influence or gold), Tempered (battle casts cost 25% fewer days, deepening with age), Fade (conceal your party from enemy scouts), and Unsettle (shatter an enemy party's morale at a distance)."
+                Lore = "You read the fire the way a navigator reads stars — imperfectly, but well enough. The lines that bind every living thing are never quite still, and you have learned to look without flinching. What you see, you do not always share.",
+                MechanicDesc = "Path (cost scales: 1 fp first, 2 fp second, etc.). The way of foresight. Grants three talents: Tempered (battle casts cost 25% fewer days, deepening with age), Clairvoyance (read the threads — turn insight into influence or gold), and Fade (draw your fire inward — conceal your party from enemy scouts for a day)."
             },
             new TalentDef
             {
-                Id = TalentId.BattleSworn, Category = TalentCategory.Class, FocusCost = 2,
-                Name = "Battle-Sworn",
-                Lore = "The fire made familiar through war, where theory burns away and only what works remains. You do not reach for the flame any more — it is already in your hands when the line breaks.",
-                MechanicDesc = "Class (2 focus points). The path of the war-caster. Grants four talents: Warcast (cast without sheathing your weapons), Flashfire (battle spells have a 10% chance to echo at no cost), Pale Comet (missile forms pierce through enemies), and Widened Blast (a wider blast cone)."
+                Id = TalentId.WardKeeper, Category = TalentCategory.Class, FocusCost = 0,
+                Name = "Warden",
+                Lore = "The fire that keeps things out is harder to learn than the fire that burns. You have stopped moving toward what threatens you. You have learned to stand still inside the flame and hold your shape while everything else changes around you.",
+                MechanicDesc = "Path (cost scales: 1 fp first, 2 fp second, etc.). The way of the shield. Grants four talents: Ashveil (Restore grants brief magic immunity), Cinder Shell (Restore hardens allies and shields overhealed ones), Reflect (Restore retaliates against melee attackers), and The Warden's Ring (barrier nodes ring the caster instead of forming a wall)."
             },
             new TalentDef
             {
-                Id = TalentId.WardKeeper, Category = TalentCategory.Class, FocusCost = 2,
-                Name = "Ward-Keeper",
-                Lore = "The fire that keeps things out has always been harder to learn than the fire that burns. To shield is to stand still inside the flame and trust it not to turn.",
-                MechanicDesc = "Class (2 focus points). The path of the shield. Grants four talents: Ashveil (Restore grants brief magic immunity), Cinder Shell (Restore hardens allies and shields overhealed ones), Reflect (Restore retaliates against melee attackers), and The Warden's Ring (barrier nodes ring the caster instead of forming a wall)."
-            },
-            new TalentDef
-            {
-                Id = TalentId.Heartfire, Category = TalentCategory.Class, FocusCost = 2,
+                Id = TalentId.Heartfire, Category = TalentCategory.Class, FocusCost = 0,
                 Name = "Heartfire",
-                Lore = "The fire that tends the living is rarer than the fire that takes. It does not announce itself with smoke. It simply reminds the dying that warmth was theirs all along.",
-                MechanicDesc = "Class (2 focus points). The path of the tender. Grants three talents: Hearthlight (Restore lifts allied morale, +10 per input), Kindle (a campaign working that heals wounded soldiers and rallies your party), and Dirge (burst sinks into the ground as a lingering fire patch)."
+                Lore = "The fire that tends the living is rarer than the fire that takes. It does not announce itself with smoke. It simply reminds the dying that warmth was theirs all along. Those who carry fire recognise each other across a room — there is something almost like trust in that.",
+                MechanicDesc = "Path (cost scales: 1 fp first, 2 fp second, etc.). The way of warmth. Grants four talents: Hearthlight (Restore lifts allied morale, +10 per input), Kinship (mage lords trust you; their presence in battle cuts your casting cost by 10% each, up to 50%), Kindle (a campaign working that heals wounded soldiers and rallies your party), and Dirge (burst sinks into the ground as a lingering fire patch)."
             },
             new TalentDef
             {
-                Id = TalentId.Pyrelord, Category = TalentCategory.Class, FocusCost = 2,
+                Id = TalentId.Pyrelord, Category = TalentCategory.Class, FocusCost = 0,
                 Name = "Pyrelord",
                 Lore = "Fire taken to its furthest expression — where warmth becomes judgment. There is no shaping left at this reach, only the question of what is allowed to remain.",
-                MechanicDesc = "Class (2 focus points). The path of ruin. Grants four talents: Immolate (Sear can kill outright at 3+ inputs), Scatter (Force hurls and slows the broken), Sunder (Shred rends armour and saps attack), and Ashstorm (call a storm of fire down on an enemy settlement)."
+                MechanicDesc = "Path (cost scales: 1 fp first, 2 fp second, etc.). The way of ruin. Grants four talents: Immolate (Sear kills outright — scales with inputs, guaranteed at 3+, deaths spread fire to nearby enemies), Scatter (Force hurls enemies back and breaks their stride), Sunder (Shred rends armour and saps attack power), and Ashstorm (call a firestorm down on a nearby enemy settlement)."
             },
             new TalentDef
             {
-                Id = TalentId.Ashbinder, Category = TalentCategory.Class, FocusCost = 2,
+                Id = TalentId.Ashbinder, Category = TalentCategory.Class, FocusCost = 0,
                 Name = "Ashbinder",
                 Lore = "Fire need not kill to win. It hollows — strips the steel from a man's arm and the courage from his chest until nothing answers the call to fight. The body walks away. Whatever held it together does not.",
-                MechanicDesc = "Class (2 focus points). The path of the unmaker — fire that breaks resolve rather than bodies. Grants three talents: Smoulder (any Damage input shatters morale and bewilders, routing non-heroes), Kinship (favour among fire-bearers; battle casts cost up to 50% less beside allied mages), and Resonance (your first campaign working each day costs nothing, with a 25% chance on later ones)."
+                MechanicDesc = "Path (cost scales: 1 fp first, 2 fp second, etc.). The way of the unmaker — fire that breaks resolve rather than bodies. Grants three talents: Smoulder (any Damage input scorches morale and bewilders non-heroes, routing them at random), Unsettle (shatter the morale of a nearby enemy party without touching them), and Resonance (your first campaign working each day costs nothing, with a 25% chance on later ones)."
             },
             // ── Passive ──────────────────────────────────────────────────────
             new TalentDef
@@ -472,6 +472,43 @@ namespace AshAndEmber
                 Lore = "A ruined brew is not always a waste. The instincts of a careful hand find what set true before the rest turned. It takes nerve to drink something that smells like failure. And when the good part surfaces unexpectedly, the volatile remainder does not vanish quietly — it needs somewhere to go.",
                 MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the clean effect. In battle, the volatile remnant lashes the nearest enemy for 25 fire damage on a salvage. When a backfire does land, 30% of the self-wound is returned as a partial heal — not all of the ruin reaches you."
             },
+            // ── Nature — The Living Ember ─────────────────────────────────────────
+            new TalentDef
+            {
+                Id = TalentId.NatureLivingRoot, Category = TalentCategory.Rite, FocusCost = 1, Name = "Living Root",
+                Lore = "The root-voice speaks twice when you know how to listen. The land does not give more than it is asked for — but a patient hand, reaching twice, finds what a hasty one misses.",
+                MechanicDesc = "Rite. You may hold two elemental charges at once instead of one. Passive charge accumulation on the campaign map rolls twice each day."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureStillDraw, Category = TalentCategory.Rite, FocusCost = 1, Name = "Still Draw",
+                Lore = "The river does not charge you for what it offers when you are still. Motion is cost. Stillness is the oldest prayer the land knows.",
+                MechanicDesc = "Rite. Drawing elemental charge in combat costs no HP when you are stationary. Move, and the land asks its price."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureOpenGrip, Category = TalentCategory.Rite, FocusCost = 1, Name = "Open Grip",
+                Lore = "The steppe does not take back a gift. What the land gives, it means you to have — for as long as you carry it. Open the hand, not wide, just open, and what the world gives you will stay.",
+                MechanicDesc = "Rite. Held elemental charges no longer expire. What you draw in battle stays in your hands until you use it or leave the field."
+            },
+            new TalentDef
+            {
+                Id = TalentId.Wildsworn, Category = TalentCategory.Rite, FocusCost = 2, Name = "Wildsworn",
+                Lore = "You have listened long enough that the listening has changed you. The root-voice, the river's patience, the open hand of the wind — you carry all three, and the land knows you for what you are.",
+                MechanicDesc = "Class (2 focus points). The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (free draw while stationary), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureDeepEarth, Category = TalentCategory.Rite, FocusCost = 1, Name = "Deep Earth",
+                Lore = "Stone is slow to speak, but it does not stay silent. Those who wait long enough beside an old wall or a mountain face come to hear the root-voice through the rock as clearly as through open soil. The muffling is a failure of patience, not a failure of the land.",
+                MechanicDesc = "Rite. Drawing elemental charge inside a siege or walled city no longer triggers the stone-muffling cooldown. The land speaks through stone as freely as through soil."
+            },
+            new TalentDef
+            {
+                Id = TalentId.NatureDawnCall, Category = TalentCategory.Rite, FocusCost = 1, Name = "Dawn Call",
+                Lore = "The desert is loudest at dawn. Most people miss it. The angle of the light, the shift of the cold, the moment when dark ground releases what it held through the night — if you are open enough when it happens, the living world gives without being asked.",
+                MechanicDesc = "Rite. The land offers an elemental charge each dawn without fail. The 1-in-3 chance of passive accumulation on the campaign map becomes a certainty."
+            },
         };
 
         // ── Class membership ───────────────────────────────────────────────────
@@ -483,16 +520,20 @@ namespace AshAndEmber
         public static readonly IReadOnlyDictionary<TalentId, TalentId[]> ClassMembers =
             new Dictionary<TalentId, TalentId[]>
             {
+                // ── Six fire paths (purchasable, escalating cost) ─────────────────
                 [TalentId.DarkMage]       = new[] { TalentId.Ember, TalentId.Reap, TalentId.Plague, TalentId.Extinguish },
-                [TalentId.Seer]           = new[] { TalentId.Clairvoyance, TalentId.BattleMage, TalentId.Fade, TalentId.BreakWills },
-                [TalentId.BattleSworn]    = new[] { TalentId.ArmedCasting, TalentId.Flashfire, TalentId.PaleComet, TalentId.LostBlast },
+                [TalentId.Seer]           = new[] { TalentId.BattleMage, TalentId.Clairvoyance, TalentId.Fade },
                 [TalentId.WardKeeper]     = new[] { TalentId.Ashveil, TalentId.CinderShell, TalentId.Reflect, TalentId.WardenRing },
-                [TalentId.Heartfire]      = new[] { TalentId.Hearthlight, TalentId.Inspire, TalentId.Dirge },
+                [TalentId.Heartfire]      = new[] { TalentId.Hearthlight, TalentId.Camaraderie, TalentId.Inspire, TalentId.Dirge },
                 [TalentId.Pyrelord]       = new[] { TalentId.Immolate, TalentId.Scatter, TalentId.Sunder, TalentId.Ashstorm },
-                [TalentId.Ashbinder]      = new[] { TalentId.Smoulder, TalentId.Camaraderie, TalentId.Sorcerer },
+                [TalentId.Ashbinder]      = new[] { TalentId.Smoulder, TalentId.BreakWills, TalentId.Sorcerer },
+                // ── Legacy (no TalentDef — kept for save compatibility only) ──────
+                [TalentId.BattleSworn]    = new[] { TalentId.ArmedCasting, TalentId.Flashfire, TalentId.PaleComet, TalentId.LostBlast },
+                // ── Discipline classes (purchased at their ritual sites) ───────────
                 [TalentId.Coldsworn]      = new[] { TalentId.ColdTithe, TalentId.DreadTide, TalentId.ColdCovenant },
                 [TalentId.Gracebound]     = new[] { TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant },
                 [TalentId.AshenAlchemist] = new[] { TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest },
+                [TalentId.Wildsworn]      = new[] { TalentId.NatureLivingRoot, TalentId.NatureStillDraw, TalentId.NatureOpenGrip },
             };
 
         private static readonly Dictionary<TalentId, TalentId> _memberToClass = BuildMemberToClass();

@@ -29,6 +29,16 @@ namespace AshAndEmber
 
             EnsureKingdomAlive();
 
+            // Apply Ashen settlement names and Holy Temple kingdom rename on first
+            // tick each session. Names come from game XML on every load so this
+            // must run on both new games and reloads.
+            if (!_settlementsRenamed)
+            {
+                try { RenameAshenSettlements();     } catch { }
+                try { RenameHolyTempleKingdom();    } catch { }
+                _settlementsRenamed = true;
+            }
+
             // Decrement throttle counters (only when above zero)
             if (_clanThrottle     > 0) _clanThrottle--;
             if (_warThrottle      > 0) _warThrottle--;

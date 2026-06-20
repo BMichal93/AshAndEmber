@@ -63,6 +63,20 @@ namespace AshAndEmber
         // ── Player talent tracking ─────────────────────────────────────────────
         private static readonly HashSet<TalentId> _purchased = new HashSet<TalentId>();
 
+        // The six purchasable fire paths. Cost escalates: 1 fp for the first owned,
+        // 2 fp for the second, 3 fp for the third, and so on.
+        private static readonly TalentId[] _firePathIds =
+        {
+            TalentId.DarkMage, TalentId.Seer, TalentId.WardKeeper,
+            TalentId.Heartfire, TalentId.Pyrelord, TalentId.Ashbinder,
+        };
+
+        public static int GetNextPathCost()
+        {
+            int owned = _firePathIds.Count(id => _purchased.Contains(id));
+            return owned + 1;
+        }
+
         // A talent is owned if it was purchased directly (legacy single-talent
         // saves) OR if the class that bundles it has been purchased.
         public static bool Has(TalentId id)
@@ -145,7 +159,11 @@ namespace AshAndEmber
                 return false;
             }
 
-            int cost = defCheck?.FocusCost > 0 ? defCheck.FocusCost : PurchaseCost();
+            int cost;
+            if (defCheck?.Category == TalentCategory.Class && defCheck.FocusCost == 0)
+                cost = GetNextPathCost();
+            else
+                cost = defCheck?.FocusCost > 0 ? defCheck.FocusCost : PurchaseCost();
 
             bool spent = false;
             try
@@ -179,7 +197,7 @@ namespace AshAndEmber
 
         // Run the per-talent purchase side-effects for a newly learned talent or
         // class. Buying a class fires the hooks of every member it bundles, so
-        // Dark Mage darkens you (Reap) and Ashbinder warms mage relations (Kinship)
+        // Reaper darkens you (Reap) and Heartfire warms mage relations (Kinship)
         // exactly as the single talents once did.
         private static void ApplyMemberHooks(TalentId purchased, Hero hero)
         {

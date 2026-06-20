@@ -95,6 +95,10 @@ namespace AshAndEmber
 
         // Emberwind bought in the harbor, consumed by the next voyage this session.
         private static bool _emberwindCalled;
+        // Still the Waters — nature mage equivalent of the Emberwind, consumed by the next voyage.
+        private static bool _stillWatersCalled;
+        // True during a voyage started with Still the Waters (not Emberwind) — changes voyage text.
+        private static bool _voyageNatureCalm;
 
         // ── Blockade state (in-memory, recomputed on daily tick) ──────────────
         // Maps port StringId → (blockading faction, combined fleet strength).
@@ -194,8 +198,9 @@ namespace AshAndEmber
             _ventures.Clear();
             _npcSailCooldown.Clear();
             _blockades.Clear();
-            _fareEscrow      = 0;
-            _emberwindCalled = false;
+            _fareEscrow        = 0;
+            _emberwindCalled   = false;
+            _stillWatersCalled = false;
             ResetVoyageState();
         }
 

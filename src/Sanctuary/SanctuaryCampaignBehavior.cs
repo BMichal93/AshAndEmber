@@ -7,8 +7,8 @@
 // Grace is spent on miracles (see the Miracle system). NPC miracle use lives
 // entirely in MiracleBattleAI / MiracleCampaignBehavior — not here.
 //
-// Sanctuaries: Temple-owned towns + 4 random Empire towns + 1 random Vlandia
-// town, picked once per campaign. Temple members get shorter rite cooldowns.
+// Sanctuaries: Holy Temple (Vlandia)-owned towns auto-qualify + 5 random Empire
+// towns picked once per campaign. Temple members get shorter rite cooldowns.
 // =============================================================================
 
 using System;
@@ -28,9 +28,9 @@ namespace AshAndEmber
         private const int TraitDriftThreshold     = 10; // uses between virtue nudges
         private const int CrossInterferenceDays    = 30; // altar use saps Grace yield
         private const int PermanentSanctuaryCount  = 5;
-        private const int EmpireSanctuaryCount     = 4;
+        private const int EmpireSanctuaryCount     = 5;
 
-        private const string TempleKingdomId = "the_temple";
+        private const string TempleKingdomId = "vlandia";
 
         private static readonly List<string> _permanentSanctuaryIds = new List<string>();
         private static bool _sanctuariesAnnounced       = false;
@@ -140,26 +140,23 @@ namespace AshAndEmber
                 var empireIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     { "empire_w", "empire", "empire_s", "empire_n" };
                 var towns = Settlement.All.Where(s => s.IsTown).ToList();
+                // All Vlandia (Holy Temple) towns are auto-sanctuaries via HasSanctuary.
+                // The permanent list holds Empire towns only.
                 var empirePicks = towns
                     .Where(s => s.OwnerClan?.Kingdom != null
                              && empireIds.Contains(s.OwnerClan.Kingdom.StringId))
                     .OrderBy(_ => _rng.Next()).Take(EmpireSanctuaryCount).ToList();
 
-                // Fallback: if the empire filter comes up short top up with any towns.
+                // Fallback: if the empire filter comes up short top up with any non-Temple towns.
                 if (empirePicks.Count < EmpireSanctuaryCount)
-                    empirePicks.AddRange(towns.Where(s => !empirePicks.Contains(s))
-                                              .OrderBy(_ => _rng.Next())
-                                              .Take(EmpireSanctuaryCount - empirePicks.Count));
-
-                // One Vlandia sanctuary — the Flame reaches even the western knights.
-                var vlandiaPick = towns
-                    .Where(s => s.OwnerClan?.Kingdom?.StringId == "vlandia"
-                             && !empirePicks.Contains(s))
-                    .OrderBy(_ => _rng.Next()).FirstOrDefault();
+                    empirePicks.AddRange(towns
+                        .Where(s => !empirePicks.Contains(s)
+                                 && s.OwnerClan?.Kingdom?.StringId != TempleKingdomId)
+                        .OrderBy(_ => _rng.Next())
+                        .Take(EmpireSanctuaryCount - empirePicks.Count));
 
                 _permanentSanctuaryIds.Clear();
                 foreach (var s in empirePicks) _permanentSanctuaryIds.Add(s.StringId);
-                if (vlandiaPick != null) _permanentSanctuaryIds.Add(vlandiaPick.StringId);
 
                 if (_permanentSanctuaryIds.Count > 0 && !_sanctuariesAnnounced)
                     _needsAnnouncementAfterSync = true;

@@ -56,7 +56,7 @@ namespace AshAndEmber
 
             var templeLords = Hero.AllAliveHeroes
                 .Where(h => h.IsLord && h.IsAlive && !h.IsPrisoner && h != Hero.MainHero
-                         && h.MapFaction?.StringId == "the_temple")
+                         && h.MapFaction?.StringId == "vlandia")
                 .ToList();
 
             string leadHint   = SkillHint(DefaultSkills.Leadership, 0.30f, "Convince the commander");
