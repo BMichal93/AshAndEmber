@@ -80,13 +80,17 @@ namespace AshAndEmber
             "For an age they waited in the frozen dark, their numbers growing in silence. " +
             "Now the Empire has shattered — Rhagaea, Lucon, and Derthert tearing at its bones — " +
             "and the Ashen have chosen this moment to march. " +
-            "The clans of Calradia war amongst themselves, blind to the pale tide moving south. " +
-            "Some mages, seduced by the promise of undying stillness, have already answered the cold's call.",
+            "The clans of Calradia war amongst themselves; only the Holy Temple in the west has named " +
+            "the pale tide for what it is, its Templars meeting the cold with sacred fire. " +
+            "Elsewhere, some mages — seduced by the promise of undying stillness — have already answered " +
+            "the cold's call instead.",
 
-            "This is the eternal war. Flame against ash. The living against those who chose otherwise. " +
+            "This is the eternal war. Flame against ash; the living against those who chose otherwise. " +
+            "It is not fought with steel alone — some meet the cold with the fire in their hands, " +
+            "some with prayer, some with the voice of the living land. " +
             "It has been fought before, in ages no history remembers. It has never been won.",
 
-            "The mystical flame is asking something of you. The ash is already listening for your answer.",
+            "The world is asking something of you. The ash is already listening for your answer.",
         };
 
         // Per-paragraph timing (seconds).

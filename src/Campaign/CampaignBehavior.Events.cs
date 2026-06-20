@@ -341,6 +341,12 @@ namespace AshAndEmber
                     DeclareWarAction.ApplyByDefault(vlandia, ashen);
             }
             catch { }
+
+            // Present Vlandia as The Holy Temple — the Templars — from the very start.
+            // The daily tick re-applies this on every reload (names revert to XML on
+            // load), but new players should see the Templars immediately at character
+            // creation, not only after the first in-game day passes.
+            try { AshenCitySystem.RenameHolyTempleKingdom(); } catch { }
         }
 
         // Finds a settlement by exact display name, transfers it and all non-town
