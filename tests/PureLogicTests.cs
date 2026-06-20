@@ -868,6 +868,109 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(0, MiracleMath.ColdGain(2, 2, 2));
         }
 
+        // ── NatureMath ────────────────────────────────────────────────────────
+
+        [Test]
+        public void NatureMath_DrawHpCost_Verdant_IsZero()
+        {
+            Assert.AreEqual(0f, NatureMath.DrawHpCost(NatureElement.Verdant));
+        }
+
+        [Test]
+        public void NatureMath_DrawHpCost_AllNonVerdant_ArePositive()
+        {
+            var elements = new[]
+            {
+                NatureElement.Stone, NatureElement.Water,
+                NatureElement.Wind,  NatureElement.Frost, NatureElement.Storm,
+            };
+            foreach (var el in elements)
+                Assert.Greater(NatureMath.DrawHpCost(el), 0f,
+                    $"DrawHpCost for {el} must be positive.");
+        }
+
+        [Test]
+        public void NatureMath_TerrainElements_Forest_ReturnsVerdant()
+        {
+            var els = NatureMath.TerrainElements("Forest");
+            Assert.AreEqual(1, els.Length);
+            Assert.AreEqual(NatureElement.Verdant, els[0]);
+        }
+
+        [Test]
+        public void NatureMath_TerrainElements_Swamp_ReturnsTwoElements()
+        {
+            var els = NatureMath.TerrainElements("Swamp");
+            Assert.AreEqual(2, els.Length);
+            CollectionAssert.Contains(els, NatureElement.Stone);
+            CollectionAssert.Contains(els, NatureElement.Water);
+        }
+
+        [Test]
+        public void NatureMath_TerrainElements_Unknown_ReturnsWind()
+        {
+            var els = NatureMath.TerrainElements("SomeFictionalTerrain");
+            Assert.AreEqual(1, els.Length);
+            Assert.AreEqual(NatureElement.Wind, els[0]);
+        }
+
+        [Test]
+        public void NatureMath_ElementOf_EachPower_RoundTrips()
+        {
+            var pairs = new[]
+            {
+                (NaturePower.Thorngrasp,   NatureElement.Verdant),
+                (NaturePower.LivingBreath, NatureElement.Verdant),
+                (NaturePower.StoneSurge,   NatureElement.Stone),
+                (NaturePower.EarthMantle,  NatureElement.Stone),
+                (NaturePower.Undertow,     NatureElement.Water),
+                (NaturePower.StillWater,   NatureElement.Water),
+                (NaturePower.CallingGale,  NatureElement.Wind),
+                (NaturePower.FairWind,     NatureElement.Wind),
+                (NaturePower.Hoarfrost,    NatureElement.Frost),
+                (NaturePower.GlacialShell, NatureElement.Frost),
+                (NaturePower.WrathOfTheSky,NatureElement.Storm),
+                (NaturePower.LevinStep,    NatureElement.Storm),
+            };
+            foreach (var (power, expected) in pairs)
+                Assert.AreEqual(expected, NatureMath.ElementOf(power),
+                    $"ElementOf({power}) should be {expected}.");
+        }
+
+        [Test]
+        public void NatureMath_RandomPower_Verdant_OnlyVerdantPowers()
+        {
+            var rng = new System.Random(42);
+            for (int i = 0; i < 20; i++)
+            {
+                var p = NatureMath.RandomPower(NatureElement.Verdant, rng);
+                Assert.IsTrue(p == NaturePower.Thorngrasp || p == NaturePower.LivingBreath,
+                    $"Verdant random power must be Thorngrasp or LivingBreath, got {p}.");
+            }
+        }
+
+        [Test]
+        public void NatureMath_PowerName_AllPowers_NonEmpty()
+        {
+            foreach (NaturePower p in System.Enum.GetValues(typeof(NaturePower)))
+            {
+                if (p == NaturePower.None) continue;
+                Assert.IsFalse(string.IsNullOrEmpty(NatureMath.PowerName(p)),
+                    $"PowerName({p}) must not be empty.");
+            }
+        }
+
+        [Test]
+        public void NatureMath_ElementName_AllElements_NonEmpty()
+        {
+            foreach (NatureElement el in System.Enum.GetValues(typeof(NatureElement)))
+            {
+                if (el == NatureElement.None) continue;
+                Assert.IsFalse(string.IsNullOrEmpty(NatureMath.ElementName(el)),
+                    $"ElementName({el}) must not be empty.");
+            }
+        }
+
         // ── AlchemyCatalog integrity ──────────────────────────────────────────
 
         [Test]

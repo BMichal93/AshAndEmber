@@ -106,6 +106,7 @@ namespace AshAndEmber
                 AshenRuinSystem.ResetForNewGame();
                 ApprenticeSystem.ResetForNewGame();
                 MiracleCampaignBehavior.ResetForNewGame();
+                NatureCampaignBehavior.ResetForNewGame();
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
                 AlchemyCampaignBehavior.EstablishForNewCampaign();
@@ -168,6 +169,8 @@ namespace AshAndEmber
                             : "Only those who have walked crooked paths know such rites. [Requires: Dishonorable]"),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
+                    new InquiryElement("living_ember", "The world beneath me has always been louder than the fire.", null, true,
+                        "You hear the living land. Seek those in the old forests, the still rivers, the open steppe — those who still remember how to listen."),
                     new InquiryElement("ashen", "The fire in me died long ago.", null, true,
                         "You are Ashen. You do not age. Each casting costs criminal standing instead of years. After your first working each day, further casts risk possession. You begin aligned with the Ashen."),
                 },
@@ -176,10 +179,12 @@ namespace AshAndEmber
                 "",
                 chosen =>
                 {
-                    bool isFaith     = chosen?.Any(e => e.Identifier is string s && s == "faith")      == true;
-                    bool isDarkRites = chosen?.Any(e => e.Identifier is string s && s == "dark_rites") == true;
+                    bool isFaith       = chosen?.Any(e => e.Identifier is string s && s == "faith")        == true;
+                    bool isDarkRites   = chosen?.Any(e => e.Identifier is string s && s == "dark_rites")   == true;
+                    bool isLivingEmber = chosen?.Any(e => e.Identifier is string s && s == "living_ember") == true;
                     // Faith and dark rites walk the miracle path (Grace / Cold) — they are NOT
                     // mages and cannot shape spells, so they never enter the spellcasting focus.
+                    // Living Ember is exclusive with both Inner Fire and Miracles.
                     bool isMage      = chosen?.Any(e => e.Identifier is string s && s == "yes")        == true;
                     bool isAshen     = chosen?.Any(e => e.Identifier is string s && s == "ashen")      == true;
                     if (isAshen) isMage = true;
@@ -205,6 +210,14 @@ namespace AshAndEmber
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The rites scoured you of warmth. The cold rushed in to fill what was hollowed. Five measures of Cold settle within you.",
                             new Color(0.3f, 0.55f, 0.8f)));
+                    }
+                    else if (isLivingEmber)
+                    {
+                        NatureKnowledge.SetAttuned(true);
+                        try { NatureCampaignBehavior.EstablishForNewCampaign(); } catch { }
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The land has always known you were listening. Find those who remember the old ways — the hermits who still hear the root-voice.",
+                            new Color(0.35f, 0.75f, 0.35f)));
                     }
                     else if (isMage)
                     {
