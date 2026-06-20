@@ -383,7 +383,7 @@ namespace AshAndEmber
                 catch { }
             }
 
-            // The Holy Temple (Vlandia) is permanently at war with the Ashen — re-declare if peace is made
+            // The Holy Temple (Vlandia) wars: enforce permanent Ashen war, no other wars.
             try
             {
                 var temple = Kingdom.All.FirstOrDefault(k =>
@@ -392,6 +392,19 @@ namespace AshAndEmber
                     k.StringId == AshenKingdomId && !k.IsEliminated);
                 if (temple != null && ashen != null && !temple.IsAtWarWith(ashen))
                     DeclareWarAction.ApplyByDefault(temple, ashen);
+
+                // End any accidental non-Ashen war immediately — the Temple's only
+                // permitted conflict is its eternal struggle with the Ashen.
+                if (temple != null)
+                {
+                    foreach (var enemy in Kingdom.All.ToList())
+                    {
+                        if (enemy.IsEliminated || enemy == temple) continue;
+                        if (enemy.StringId == AshenKingdomId) continue;
+                        if (temple.IsAtWarWith(enemy))
+                            try { MakePeaceAction.Apply(temple, enemy); } catch { }
+                    }
+                }
             }
             catch { }
 
