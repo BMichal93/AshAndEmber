@@ -101,33 +101,30 @@ namespace AshAndEmber
             Mission mission = Mission.Current;
             if (mission == null) return;
 
-            Vec3 playerPos;
-            try { playerPos = player.Position; } catch { return; }
-
             foreach (var spirit in _darkSpirits)
             {
                 spirit.DamageCooldown -= dt;
 
-                // Find or validate target.
+                // Reacquire target from the spirit's own position if it's gone.
                 if (spirit.Target == null || !spirit.Target.IsActive() || spirit.Target.Health <= 0f)
-                    spirit.Target = FindNearestEnemy(playerPos, player.Team);
+                    spirit.Target = FindNearestEnemy(spirit.Position, player.Team);
 
                 if (spirit.Target == null) continue;
 
                 Vec3 targetPos;
-                try { targetPos = spirit.Target.Position; } catch { continue; }
+                try { targetPos = spirit.Target.Position; } catch { spirit.Target = null; continue; }
 
                 Vec3 delta = targetPos - spirit.Position;
                 float dist = delta.Length;
 
-                // Move spirit toward target.
-                if (dist > DarkSpiritRange)
+                // Move spirit toward target every tick.
+                if (dist > 0.1f)
                 {
                     Vec3 dir = delta * (1f / dist);
                     spirit.Position += dir * (DarkSpiritSpeed * dt);
                 }
 
-                // Deal damage when close enough.
+                // Deal damage when within strike range; keep the target until it dies.
                 if (spirit.DamageCooldown <= 0f && dist <= DarkSpiritRange + 1f)
                 {
                     try
@@ -137,7 +134,7 @@ namespace AshAndEmber
                     }
                     catch { }
                     spirit.DamageCooldown = DarkSpiritDamageInterval;
-                    spirit.Target = null; // find a new target after each hit
+                    // Do NOT clear Target here — keep chasing until it dies or flees range.
                 }
             }
         }
