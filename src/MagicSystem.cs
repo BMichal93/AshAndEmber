@@ -96,6 +96,11 @@ namespace AshAndEmber
             try { AshEmberSplash.Tick(dt); } catch { }
             try { AshEmberLoreIntro.Tick(dt); } catch { }
 
+            // Vlandia IS The Holy Temple. The kingdom rename needs a live campaign,
+            // but the culture name is shown on the character-creation screen (which
+            // runs before any daily tick), so apply the culture rename early here.
+            try { RenameTempleCultureForCharacterCreation(); } catch { }
+
             try
             {
                 if (Campaign.Current == null || Mission.Current != null) return;
@@ -165,6 +170,24 @@ namespace AshAndEmber
                     video.OnVideoFinished();
             }
             catch { }
+        }
+
+        // Tracks the character-creation state instance we last renamed the culture
+        // for, so the reflection rename runs once per new-game flow rather than
+        // every application tick.
+        private static object _lastCultureRenameState;
+
+        // Renames the Vlandian culture to "Templar" while the character-creation
+        // screen is up. The in-campaign rename (AshenCitySystem.RenameHolyTempleKingdom)
+        // only fires on the first daily tick, which is too late for the culture to
+        // read correctly on the creation screen.
+        private static void RenameTempleCultureForCharacterCreation()
+        {
+            var state = GameStateManager.Current?.ActiveState;
+            if (!(state is TaleWorlds.CampaignSystem.CharacterCreationContent.CharacterCreationState)) return;
+            if (ReferenceEquals(state, _lastCultureRenameState)) return;
+            _lastCultureRenameState = state;
+            try { AshenCitySystem.RenameTempleCulture(); } catch { }
         }
 
         private static void DebugTriggerCombat()
