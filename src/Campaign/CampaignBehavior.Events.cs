@@ -198,7 +198,7 @@ namespace AshAndEmber
                     else
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The current passes you by.",
+                            "Your fire is silent. You live as others do, and the world will treat you as it treats them.",
                             new Color(0.6f, 0.6f, 0.6f)));
                     }
                     _selectionDone = true;

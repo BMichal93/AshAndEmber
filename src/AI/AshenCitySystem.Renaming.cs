@@ -188,6 +188,51 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Character-creation culture card text override ───────────────────────
+        // The culture-selection card does NOT read CultureObject.Name. It builds its
+        // title from the game text "str_culture_rich_name" and its blurb from
+        // "str_culture_description", both keyed by the culture's StringId ("vlandia").
+        // So renaming the culture object is not enough — those two game-text
+        // variations must be rewritten as well. Game texts are session data (never
+        // serialised), so this is safe and reverts cleanly if the mod is removed.
+        // Returns true once the game-text manager is available (so callers can stop
+        // retrying). Idempotent: skips work once the variation already matches.
+        public static bool ApplyTempleCultureTexts()
+        {
+            try
+            {
+                RenameTempleCulture();
+
+                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                var mgr = mgrField?.GetValue(null) as GameTextManager;
+                if (mgr == null) return false;
+
+                SetCultureVariation(mgr, "str_culture_rich_name", "vlandia", "Templars");
+                SetCultureVariation(mgr, "str_culture_description", "vlandia",
+                    "The Templars are a holy order founded to stand against the Ashen and the " +
+                    "eternal cold they carry. Where lesser folk let their inner fire gutter, the " +
+                    "Templars keep it burning as a sacred trust. Descended from western lords who " +
+                    "once served the Empire, they have bound throne to altar and meet the grey " +
+                    "march with disciplined lances and unbending faith.");
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private static void SetCultureVariation(GameTextManager mgr, string textId, string variation, string value)
+        {
+            try
+            {
+                var existing = GameTexts.FindText(textId, variation);
+                if (existing != null && existing.ToString() == value) return;  // already applied
+                GameText gt = mgr.GetGameText(textId);
+                if (gt == null) return;
+                gt.SetVariationWithId(variation, new TextObject(value), null);
+            }
+            catch { }
+        }
+
         private static void SetKingdomField(Kingdom kingdom, string[] candidates, TextObject value)
         {
             foreach (var fieldName in candidates)
