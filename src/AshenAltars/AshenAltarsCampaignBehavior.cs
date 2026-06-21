@@ -79,9 +79,11 @@ namespace AshAndEmber
 
         public static void EstablishForNewCampaign()
         {
-            ResetForNewGame();
-            EnsureDynamicAltars();
-            AnnounceAltars();
+            // The altars themselves are set up and announced once by OnSessionLaunched
+            // (which fires for both new games and loads). Re-running it here would
+            // re-roll the cities and announce a SECOND time, so only the player's gift
+            // slate is cleared for a fresh campaign.
+            DarkGiftSystem.ResetForNewGame();
         }
 
         public static void ResetForNewGame()

@@ -104,6 +104,20 @@ namespace AshAndEmber
             "Ov Castle", "Mazhadan", "Mecalovea", "Rhesos",
         };
 
+        // True if a settlement is one of the renamed Ashen cities/castles (matched by
+        // vanilla name). The Ashen realm is exactly this set — never any other town.
+        internal static bool IsTargetSettlement(Settlement s)
+        {
+            if (s == null) return false;
+            try
+            {
+                string name = s.Name?.ToString() ?? "";
+                return _targetSettlementNames.Any(n =>
+                    name.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0);
+            }
+            catch { return false; }
+        }
+
         public static void ResetForNewGame()
         {
             _initialized       = false;

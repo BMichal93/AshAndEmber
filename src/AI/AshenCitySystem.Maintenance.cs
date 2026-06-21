@@ -277,13 +277,17 @@ namespace AshAndEmber
             catch { }
             if (ashenLord == null) return;
 
-            // Pick a random town not already controlled by the Ashen or the player
+            // Reclaim only a settlement that BELONGS to the Ashen by design — one of
+            // the renamed target cities. The Ashen must never spread to ordinary
+            // Empire/Battanian/etc. towns (e.g. Ocs Hall): their realm is exactly the
+            // renamed set, no more.
             Settlement target = null;
             try
             {
                 var candidates = Settlement.All
                     .Where(s => s.IsTown && !s.IsUnderSiege
                              && s.MapFaction?.StringId != AshenKingdomId
+                             && IsTargetSettlement(s)
                              && s.OwnerClan?.Leader != Hero.MainHero
                              && s.MapFaction != Hero.MainHero?.MapFaction)
                     .ToList();

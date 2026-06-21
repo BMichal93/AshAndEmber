@@ -192,6 +192,10 @@ namespace AshAndEmber
                 // Mark and rename — SetAshen calls OnHeroSetAshen which joins the Ashen kingdom
                 foreach (Hero hero in clan.Heroes.Where(h => h.IsAlive).ToList())
                 {
+                    // Ashen lords should hold their cold thrones, not start in chains —
+                    // free any who were captive when the cold claimed them.
+                    if (hero.IsPrisoner)
+                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
                     try { ColourLordRegistry.SetAshen(hero, true); } catch { }
                     try { RenameAshenHero(hero); } catch { }
                     try { ColourLordRegistry.SetMage(hero, true); } catch { }
