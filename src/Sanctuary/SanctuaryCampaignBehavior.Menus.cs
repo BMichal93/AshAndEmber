@@ -89,11 +89,13 @@ namespace AshAndEmber
                         {
                             int today = CurrentCampaignDay();
                             bool onCooldown = (today - _lastPrayerDay) < MiracleMath.PrayerCooldownDays;
-                            bool blockedByCold = MiracleInventory.Cold > 0;
+                            bool blockedByCold = MiracleInventory.Cold > 0 || DarkGiftSystem.HasAnyGift;
                             bool atCap = MiracleInventory.Grace >= MiracleMath.GraceColdCap;
 
                             string suffix = "";
-                            if (blockedByCold)
+                            if (DarkGiftSystem.HasAnyGift)
+                            { args.IsEnabled = false; suffix = "  [The darkness in you repels the flame]"; }
+                            else if (blockedByCold)
                             { args.IsEnabled = false; suffix = "  [Cold within you — the flame will not answer]"; }
                             else if (atCap)
                             { args.IsEnabled = false; suffix = "  [Grace is full — cast a miracle first]"; }

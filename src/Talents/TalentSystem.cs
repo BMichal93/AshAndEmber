@@ -395,14 +395,11 @@ namespace AshAndEmber
             },
             // ── Discipline classes (rite packs — learned at their own sites) ──────
             // Each bundles a whole discipline's rites into one 2-point purchase,
-            // mirroring the combat classes. Sold at the Altar / Sanctuary / Lab,
+            // mirroring the combat classes. Sold at the Sanctuary / Lab,
             // not in the grimoire (Category.Rite is skipped there).
-            new TalentDef
-            {
-                Id = TalentId.Coldsworn, Category = TalentCategory.Rite, FocusCost = 2, Name = "Coldsworn",
-                Lore = "You no longer bargain with the stone one favour at a time. The cold has taken your measure and found you worth teaching. What it offers now, it offers whole — the tithe, the tide, and the patience between them.",
-                MechanicDesc = "Class (2 focus points). The full discipline of the Ashen Altar. Grants Soul Tithe (prisoner sacrifices heal you by tier), Dread Tide (one invocation fires all three tide effects at once), and Cold Covenant (halved cooldowns, 1 Whisper per rite instead of 3, and cheaper Dark Tide). The cold teaches economy to those who have earned its patience."
-            },
+            // Coldsworn and its rites (ColdTithe, DreadTide, ColdCovenant) are
+            // retired — Dark Altars now grant permanent Dark Gifts instead.
+            // TalentId values are kept for save compatibility.
             new TalentDef
             {
                 Id = TalentId.Gracebound, Category = TalentCategory.Rite, FocusCost = 2, Name = "Gracebound",
@@ -414,25 +411,6 @@ namespace AshAndEmber
                 Id = TalentId.AshenAlchemist, Category = TalentCategory.Rite, FocusCost = 2, Name = "Ashen Alchemist",
                 Lore = "The satchel was always larger than it looked, the brew always more willing than it seemed. A practised hand finishes confidently, carries more than it counts, and salvages what a clumsier one would spill into ruin.",
                 MechanicDesc = "Class (2 focus points). The full discipline of the Lab. Grants The Steadier Hand (+15% brew success, no misleading reads, a chance of a second vial), The Deeper Satchel (+4 capacity, flat 150-denar brews, a chance the field vial refills), and Volatile Harvest (salvage tainted vials, lash a nearby enemy on the save, and soften backfires)."
-            },
-            // ── Altar Rites ──────────────────────────────────────────────────────
-            new TalentDef
-            {
-                Id = TalentId.ColdTithe, Category = TalentCategory.Rite, FocusCost = 2, Name = "Soul Tithe",
-                Lore = "The cold does not forget what it receives. A life given in the grey dark carries warmth — the last warmth of the dying — and the stone passes some of it back to the hand that held the offering. The higher the vessel, the deeper the debt it carries, and the more the stone returns.",
-                MechanicDesc = "Rite. Prisoner sacrifices heal you in proportion to their tier — T1: 5 HP, T2: 8 HP, T3: 10 HP, T4+: 15 HP and 1 bonus Cold. If no prisoner is available and you pay in HP instead, the ritual returns 5 of those HP immediately. The cold never forgets a gift freely given."
-            },
-            new TalentDef
-            {
-                Id = TalentId.DreadTide, Category = TalentCategory.Rite, FocusCost = 2, Name = "Dread Tide",
-                Lore = "What the altar calls does not come in pieces. The stone was never a door you could open partway — it is all the way or nothing, and the tide that answers is not patient. It wounds, it drains, it breaks courage. All three. At once. The ones who taught this did not survive to warn against it.",
-                MechanicDesc = "Rite. When you Invoke the Dark Tide, all three tide effects fire simultaneously: soldiers are wounded nearby, a town's loyalty and security drain, and a wave of despair breaks over every close enemy force. The ritual demands 5 more HP (20 total) for this breadth. With Cold Covenant: 15 HP for all three."
-            },
-            new TalentDef
-            {
-                Id = TalentId.ColdCovenant, Category = TalentCategory.Rite, FocusCost = 2, Name = "Cold Covenant",
-                Lore = "You have stopped asking the stone to come to you on your terms. The stone prefers practitioners who understand the arrangement — that it is patient, and you are not, and that its patience can be borrowed if you acknowledge the debt properly. Fewer marks. A shorter wait. Less cost on the dark invocation.",
-                MechanicDesc = "Rite. Altar and Invoke cooldowns are halved. The Altar accumulates only 1 Whisper per rite instead of 3. Invoking the Dark Tide costs 5 fewer HP (10 instead of 15; 15 instead of 20 with Dread Tide). The cold teaches economy to those who have earned its patience."
             },
             // ── Sanctuary Rites ──────────────────────────────────────────────────
             new TalentDef
@@ -530,7 +508,8 @@ namespace AshAndEmber
                 // ── Legacy (no TalentDef — kept for save compatibility only) ──────
                 [TalentId.BattleSworn]    = new[] { TalentId.ArmedCasting, TalentId.Flashfire, TalentId.PaleComet, TalentId.LostBlast },
                 // ── Discipline classes (purchased at their ritual sites) ───────────
-                [TalentId.Coldsworn]      = new[] { TalentId.ColdTithe, TalentId.DreadTide, TalentId.ColdCovenant },
+                // Coldsworn retired — Dark Altars now grant Dark Gifts directly.
+                // [TalentId.Coldsworn] intentionally absent.
                 [TalentId.Gracebound]     = new[] { TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant },
                 [TalentId.AshenAlchemist] = new[] { TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest },
                 [TalentId.Wildsworn]      = new[] { TalentId.NatureLivingRoot, TalentId.NatureStillDraw, TalentId.NatureOpenGrip },

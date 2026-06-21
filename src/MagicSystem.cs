@@ -41,9 +41,10 @@ namespace AshAndEmber
             try { SpellEffects.ClearScorch();        } catch { }
             try { SpellEffects.ClearAshmark();       } catch { }
             try { SpellEffects.ClearInnerFireHeat(); } catch { }
-            try { SpellEffects.ClearMagicMemory();   } catch { }
-            try { MagicInputHandler.ResetInputState();  } catch { }
-            try { AlchemyEffects.ClearBattleState();     } catch { }
+            try { SpellEffects.ClearMagicMemory();           } catch { }
+            try { SpellEffects.ClearDarkGiftsBattleState();  } catch { }
+            try { MagicInputHandler.ResetInputState();        } catch { }
+            try { AlchemyEffects.ClearBattleState();          } catch { }
             try { AlchemyBattleAI.Reset();               } catch { }
             try { AlchemyInputHandler.ResetInputState(); } catch { }
             try { MiracleEffects.ClearBattleState();     } catch { }
@@ -275,6 +276,7 @@ namespace AshAndEmber
             SpellEffects.TickInnerFireHeat(dt);
             SpellEffects.TickMagicMemory(dt);
             SpellEffects.TickHaltedAgents(dt);
+            SpellEffects.TickDarkGifts(dt);
             SpellEffects.FlushPendingDeaths();
             BanditMageAI.MissionTick(dt);
             BattleEvents.MissionTick(dt);
@@ -298,7 +300,8 @@ namespace AshAndEmber
             try { SpellEffects.ClearScorch();        } catch { }
             try { SpellEffects.ClearAshmark();       } catch { }
             try { SpellEffects.ClearInnerFireHeat(); } catch { }
-            try { SpellEffects.ClearMagicMemory();   } catch { }
+            try { SpellEffects.ClearMagicMemory();         } catch { }
+            try { SpellEffects.ClearDarkGiftsBattleState(); } catch { }
             try { SpellEffects.ClearFocusVisuals();  } catch { }
             try { SpellEffects.ClearGlows();         } catch { }
             try { SpellEffects.ClearColourCooldown();} catch { }
@@ -341,6 +344,9 @@ namespace AshAndEmber
                 try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             // Sunder enchantment: applies to all hits (attacker is globally weakened).
             try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            // Dark Gifts: passive on-hit effects for attacker and defender.
+            try { SpellEffects.ApplyDarkGiftAttackEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
+            try { SpellEffects.ApplyDarkGiftDefenseEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
             // Alchemy combat buffs/afflictions (berserk bonus, stone-skin, enfeeblement).
             try { AlchemyEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             try { MiracleEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
@@ -352,12 +358,15 @@ namespace AshAndEmber
         {
             try
             {
-                if (affectorAgent != Agent.Main) return;
                 if (affectedAgent == null || affectedAgent.IsMount) return;
                 if (agentState != AgentState.Killed) return;
-                if (!MageKnowledge.IsMage || !TalentSystem.Has(TalentId.Ember)) return;
-                if (_rng.NextDouble() < 0.10)
-                    AgingSystem.RejuvenateHero(Hero.MainHero, 1);
+                // Blood Pact gift: heal player on kill
+                if (affectorAgent == Agent.Main)
+                    try { SpellEffects.ApplyDarkGiftKillEffects(affectedAgent); } catch { }
+                // Ember passive: rejuvenate on kill
+                if (affectorAgent == Agent.Main && MageKnowledge.IsMage && TalentSystem.Has(TalentId.Ember))
+                    if (_rng.NextDouble() < 0.10)
+                        AgingSystem.RejuvenateHero(Hero.MainHero, 1);
             }
             catch { }
         }
