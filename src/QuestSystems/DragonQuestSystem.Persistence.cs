@@ -28,6 +28,7 @@ namespace AshAndEmber
             store.SyncData("LDQ_LetterPhase", ref _letterPhase);
             store.SyncData("LDQ_EndingPhase", ref _endingPhase);
             store.SyncData("LDQ_ContactDay",  ref _contactDay);
+            store.SyncData("LDQ_ColdTarget",  ref _coldTownTarget);
 
             int worldBoundInt = _worldBound ? 1 : 0;
             store.SyncData("LDQ_WorldBound",  ref worldBoundInt);
@@ -50,6 +51,13 @@ namespace AshAndEmber
             _questLog.UpdateProgress(_lordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount);
         }
 
+        private static void EnsureColdQuestLog()
+        {
+            _coldQuestLog = new EternalColdQuestLog();
+            _coldQuestLog.StartQuest();
+            _coldQuestLog.LogStarted(_coldTownTarget);
+        }
+
         public static void ResetForNewGame()
         {
             _phase        = PhaseIdle;
@@ -60,7 +68,9 @@ namespace AshAndEmber
             _endingPhase  = 0;
             _worldBound   = false;
             _contactDay   = -1;
+            _coldTownTarget = 0;
             _questLog     = null;
+            _coldQuestLog = null;
             _everAshenSettlements.Clear();
             _capturedAshenCities.Clear();
         }

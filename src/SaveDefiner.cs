@@ -36,6 +36,7 @@ namespace AshAndEmber
             AddClassDefinition(typeof(BurningLabQBLog),     4);
             AddClassDefinition(typeof(BurningLabQCLog),     5);
             AddClassDefinition(typeof(KeybindReferenceLog), 6);
+            AddClassDefinition(typeof(EternalColdQuestLog), 7);
         }
     }
 }

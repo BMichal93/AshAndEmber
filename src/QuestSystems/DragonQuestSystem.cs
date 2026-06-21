@@ -2,8 +2,9 @@
 // ASH AND EMBER — DragonQuestSystem.cs
 // The Silence Between Fires — main campaign goal for non-Ashen players.
 //
-// Trigger  : Player's party enters any Temple (Vlandia)-owned settlement,
-//            campaign day ≥ 30. No Temple membership required — contact alone
+// Trigger  : Player defeats their first Ashen lord in battle (leading the
+//            winning side). That kill draws the Temple's eye and counts as the
+//            first of the five. No Temple membership required — contact alone
 //            is enough.
 //
 // Sequence
@@ -50,15 +51,15 @@ namespace AshAndEmber
         private const int PhaseAllDone   = 3;  // all three met; final prompt pending
         private const int PhaseAccepted  = 4;  // Binding triggered, ending in progress
         private const int PhaseRefused   = 5;  // player declined or never engaged
+        private const int PhaseColdActive = 6; // player turned Ashen; Temple path failed, cold conquest begins
+        private const int PhaseColdDone   = 7; // cold conquest complete — everything is conquered
 
         // ── Tuning ────────────────────────────────────────────────────────────
         public const int TargetLordsSlain   = 5;
         public const int TargetCitiesTaken  = 3;
         public const int TargetRuinsCleared = 4;
-        private const int TriggerEarliestDay    = 30;
         private const int FinalChoiceMinDay     = 150;   // absolute day floor
         private const int FinalChoiceMinContact = 180;   // days after first contact
-        private const string TempleKingdomId = "vlandia";
         private const string AshenKingdomId  = "ashen_kingdom";
 
         // ── State ─────────────────────────────────────────────────────────────
@@ -70,7 +71,9 @@ namespace AshAndEmber
         private static int  _endingPhase  = 0;  // 0-4: ending sequence progress
         private static bool _worldBound   = false;
         private static int  _contactDay   = -1;
-        internal static DragonQuestLog _questLog = null;
+        private static int  _coldTownTarget = 0;  // total towns to conquer for the cold quest
+        internal static DragonQuestLog      _questLog     = null;
+        internal static EternalColdQuestLog _coldQuestLog = null;
 
         private static readonly HashSet<string> _everAshenSettlements = new HashSet<string>();
         private static readonly HashSet<string> _capturedAshenCities  = new HashSet<string>();
@@ -88,32 +91,21 @@ namespace AshAndEmber
             try { return (int)CampaignTime.Now.ToDays; } catch { return 0; }
         }
 
-        // ── Called from CampaignBehavior.Events.cs / OnSettlementEntered ─────
-        public static void OnSettlementEntered(Settlement settlement)
-        {
-            if (_phase != PhaseIdle) return;
-            if (MageKnowledge.IsAshen) return;
-            if (!MageKnowledge.IsMage) return;
-            if (Today() < TriggerEarliestDay) return;
-            if (settlement == null) return;
-
-            try
-            {
-                if (settlement.MapFaction?.StringId != TempleKingdomId) return;
-                if (MageKnowledge._deferredInquiry != null) return;
-                _phase = PhaseContacted;
-                _contactDay = Today();
-                MageKnowledge._deferredInquiry = ShowTempleContact;
-            }
-            catch { }
-        }
-
         // ── Called from CampaignBehavior.OnMapEventEnded ──────────────────────
+        // Two roles, by phase:
+        //   · Idle   — the player's first Ashen-lord kill triggers Temple contact
+        //              and counts as the first of the five.
+        //   · Active — each Ashen-lord kill counts toward the objective.
         public static void OnMapEventEnded(MapEvent mapEvent)
         {
-            if (_phase < PhaseActive) return;
+            if (mapEvent == null) return;
             if (MageKnowledge.IsAshen) return;
-            if (_lordsSlain >= TargetLordsSlain) return;
+
+            bool idle   = _phase == PhaseIdle;
+            bool active = _phase == PhaseActive || _phase == PhaseAllDone;
+            if (!idle && !active) return;                       // Contacted/finished: nothing to do
+            if (active && _lordsSlain >= TargetLordsSlain) return;
+
             try
             {
                 bool playerAttacker = mapEvent.AttackerSide?.Parties
@@ -129,12 +121,33 @@ namespace AshAndEmber
                 var enemySide = playerAttacker ? mapEvent.DefenderSide : mapEvent.AttackerSide;
                 if (enemySide == null) return;
 
+                // Ashen lords who fell on the losing side of this battle.
+                int ashenKilled = 0;
                 foreach (var meparty in enemySide.Parties.ToList())
                 {
-                    if (_lordsSlain >= TargetLordsSlain) break;
                     Hero leader = meparty?.Party?.LeaderHero;
                     if (leader == null || leader.IsAlive) continue;
                     if (!ColourLordRegistry.IsAshenLord(leader)) continue;
+                    ashenKilled++;
+                }
+                if (ashenKilled <= 0) return;
+
+                if (idle)
+                {
+                    // First Ashen lord defeated — the Temple takes notice. Open to
+                    // any non-Ashen player, mage or not (the Ashen gate is above).
+                    _phase      = PhaseContacted;
+                    _contactDay = Today();
+                    _lordsSlain = Math.Min(ashenKilled, TargetLordsSlain);  // the kill that drew their eye counts
+                    if (MageKnowledge._deferredInquiry == null)
+                        MageKnowledge._deferredInquiry = ShowTempleContact;
+                    // else DailyTick re-queues the contact popup when the slot frees
+                    return;
+                }
+
+                // Active / AllDone: tally kills toward the objective, capped.
+                for (int i = 0; i < ashenKilled && _lordsSlain < TargetLordsSlain; i++)
+                {
                     _lordsSlain++;
                     try { _questLog?.LogLordSlain(_lordsSlain); } catch { }
                     InformationManager.DisplayMessage(new InformationMessage(
@@ -156,7 +169,10 @@ namespace AshAndEmber
 
             if (_worldBound) return;
             if (BurningLabQuestSystem.WitheringFired) return;
-            if (MageKnowledge.IsAshen) return;
+
+            // The cold has claimed the player. The Temple's path dies; a colder
+            // ambition takes its place.
+            if (MageKnowledge.IsAshen) { TurnToCold(); return; }
 
             // Re-queue contact popup if somehow lost
             if (_phase == PhaseContacted && MageKnowledge._deferredInquiry == null)
@@ -262,6 +278,79 @@ namespace AshAndEmber
             MageKnowledge._deferredInquiry = () => ShowTempleLetterByIndex(idx);
         }
 
+        // ── Cold conversion (player turned Ashen) ─────────────────────────────
+        // Fails an in-progress Temple quest and replaces it with the cold conquest.
+        // Idle / already-ended states are left untouched: a never-started quest has
+        // nothing to fail, and the Ashen Hunger questline covers players who were
+        // Ashen from the outset.
+        private static void TurnToCold()
+        {
+            if (_phase == PhaseColdActive) { TickColdQuest(); return; }
+            if (_phase == PhaseColdDone)   return;
+
+            bool inProgress = _phase == PhaseContacted
+                           || _phase == PhaseActive
+                           || _phase == PhaseAllDone;
+            if (!inProgress) return;
+
+            // The Temple's path dies the moment the player's fire goes out.
+            try { _questLog?.LogColdConversion(); } catch { }
+            _questLog = null;
+
+            _phase = PhaseColdActive;
+            try { StartColdQuest(); } catch { }
+            try { TickColdQuest();  } catch { }
+        }
+
+        private static void StartColdQuest()
+        {
+            _coldTownTarget = CountTowns(out _);
+            _coldQuestLog = new EternalColdQuestLog();
+            _coldQuestLog.StartQuest();
+            _coldQuestLog.LogStarted(_coldTownTarget);
+            InformationManager.DisplayMessage(new InformationMessage(
+                "Quest added: Bring the Eternal Cold.",
+                new Color(0.40f, 0.55f, 0.80f)));
+        }
+
+        private static void TickColdQuest()
+        {
+            if (_coldQuestLog == null) { try { EnsureColdQuestLog(); } catch { } }
+
+            int owned = CountTowns(out int total);
+            if (_coldTownTarget <= 0) _coldTownTarget = total;
+
+            try { _coldQuestLog?.UpdateProgress(owned, _coldTownTarget); } catch { }
+
+            if (total > 0 && owned >= total)
+            {
+                try { _coldQuestLog?.LogComplete(); } catch { }
+                _phase = PhaseColdDone;
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "Calradia is yours. The cold inherits everything. There is nothing left to warm.",
+                    new Color(0.40f, 0.55f, 0.80f)));
+            }
+        }
+
+        // Counts towns owned by the player's faction; outputs the total town count.
+        private static int CountTowns(out int total)
+        {
+            total = 0;
+            int owned = 0;
+            try
+            {
+                var playerFaction = Hero.MainHero?.MapFaction;
+                foreach (Settlement s in Settlement.All)
+                {
+                    if (!s.IsTown) continue;
+                    total++;
+                    if (playerFaction != null && s.MapFaction == playerFaction) owned++;
+                }
+            }
+            catch { }
+            return owned;
+        }
+
     }
 
 
@@ -348,6 +437,73 @@ namespace AshAndEmber
                 "You walked away from the Binding. The Temple accepted it. " +
                 "The world turns as it always has. The cycle continues."));
             CompleteQuestWithFail();
+        }
+
+        internal void LogColdConversion()
+        {
+            AddLog(new TextObject(
+                "Your fire has gone out. The Temple's riders will not come again — " +
+                "you are no longer the kind of flame their plan was written for. " +
+                "Whatever they were building, you are now the thing it was meant to stop."));
+            CompleteQuestWithFail();
+        }
+    }
+
+
+    public sealed class EternalColdQuestLog : QuestBase
+    {
+        public EternalColdQuestLog()
+            : base("ldq_eternal_cold", Hero.MainHero, CampaignTime.Never, 0) { }
+
+        public override TextObject Title => new TextObject("Bring the Eternal Cold");
+        public override bool IsRemainingTimeHidden => true;
+
+        protected override void InitializeQuestOnGameLoad()
+        {
+            DragonQuestSystem._coldQuestLog = this;
+        }
+
+        protected override void RegisterEvents() { }
+        protected override void SetDialogs() { }
+
+        private JournalLog _objConquer;
+
+        internal void LogStarted(int townTarget)
+        {
+            AddLog(new TextObject(
+                "The warmth is gone, and with it every smaller want. " +
+                "What is left of you reaches for the only thing the cold has ever wanted: " +
+                "all of it. Every hearth put out. Every banner grey. " +
+                "Conquer everything — let the eternal cold inherit the world."));
+            EnsureObjective(townTarget);
+        }
+
+        private void EnsureObjective(int townTarget)
+        {
+            if (_objConquer != null) return;
+            if (JournalEntries != null && JournalEntries.Count >= 2)
+            {
+                _objConquer = JournalEntries[1];
+                return;
+            }
+            if (townTarget < 1) townTarget = 1;
+            _objConquer = AddDiscreteLog(
+                new TextObject("Conquer every town in Calradia."),
+                new TextObject("Towns Held"), 0, townTarget, null, false);
+        }
+
+        internal void UpdateProgress(int owned, int target)
+        {
+            EnsureObjective(target);
+            try { _objConquer?.UpdateCurrentProgress(Math.Min(owned, Math.Max(target, 1))); } catch { }
+        }
+
+        internal void LogComplete()
+        {
+            AddLog(new TextObject(
+                "The last warm hearth is yours. Calradia is one unbroken silence now. " +
+                "The cold has everything it ever asked for, and asks for nothing more."));
+            CompleteQuestWithSuccess();
         }
     }
 }

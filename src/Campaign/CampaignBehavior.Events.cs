@@ -48,7 +48,6 @@ namespace AshAndEmber
             try { SettlementEncounters.OnPartyEnteredSettlement(party, settlement); } catch { }
             if (party == MobileParty.MainParty)
             {
-                try { DragonQuestSystem.OnSettlementEntered(settlement); } catch { }
                 try { AshenCitySystem.ApplyAshenAppearanceToSettlement(settlement); } catch { }
                 try { EmberConclaveSystem.OnSettlementEntered(settlement); } catch { }
                 try { AshenMapTone.OnSettlementEntered(settlement); } catch { }
