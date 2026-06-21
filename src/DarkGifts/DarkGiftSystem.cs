@@ -162,6 +162,23 @@ namespace AshAndEmber
             return true;
         }
 
+        // Grant a gift with no sacrifice — for character creation and scripted
+        // events. Clears Grace, since gifts bar the holy path.
+        public static void GrantGift(DarkGiftId gift)
+        {
+            ApplyGift(gift);
+            try { MiracleInventory._grace = 0; } catch { }
+        }
+
+        // Grant one random gift (used by the character-creation dark path).
+        public static DarkGiftId GrantRandomGift()
+        {
+            var pool = (DarkGiftId[])Enum.GetValues(typeof(DarkGiftId));
+            DarkGiftId gift = pool[_rng.Next(pool.Length)];
+            GrantGift(gift);
+            return gift;
+        }
+
         public static void RenounceGift(DarkGiftId gift)
         {
             if (gift == DarkGiftId.DarkSpirit)

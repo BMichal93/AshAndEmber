@@ -132,7 +132,10 @@ Two paths open at campaign start. Each is permanent — you walk one or the othe
 **The Living Ember** — For those who hear the land instead of carrying a fire within.
 - At the same gift prompt, choose *"The world beneath me has always been louder than the fire."*
 - This opens the Living Ember path — terrain-drawing, elemental powers, and hermit teachers.
-- The two paths are mutually exclusive.
+
+**The Dark Gift** — For the cruel. If your hero is **Dishonourable**, the gift prompt also offers *"I bargained with the dark, and it marked me."* — choosing it starts you bearing **one random Dark Gift** (see *The Dark Altars and the Dark Gifts*). Visit a Dark Altar to buy more or renounce them.
+
+All these paths are **mutually exclusive** — Inner Fire, Grace, Nature, and the Dark Gifts cannot be mixed.
 
 ---
 
@@ -184,46 +187,41 @@ At the gift prompt at campaign start, select **"The world beneath me has always 
 
 ### Controls
 
+You gather a charge by **standing still and focusing**, then spend it with your **Attack** or **Block**. The focus key is shared with miracles (Grace, Cold, Nature and the Dark Gifts are all mutually exclusive).
+
 | Action | Keyboard | Gamepad |
 |--------|----------|---------|
-| Draw a charge from the land | Hold **Right Alt** + **S** | Hold **R3**, L-stick **Down** |
-| Release and cast | Hold **Right Alt** + **W** | Hold **R3**, L-stick **Up** |
+| Gather a charge | Hold **Left Ctrl** and **stand still** | Hold **R3** and stand still |
+| Cast attack | Hold **Left Ctrl** + **Attack** (left mouse) | Hold **R3** + **Right Trigger** |
+| Cast support | Hold **Left Ctrl** + **Block** (right mouse) | Hold **R3** + **Left Trigger** |
+| Campaign map | Stand still ~4 hours to gather; cast via the litany window (**Shift+X** / RB+L3) | — |
 
-**Requirements:** Both hands must be empty (no weapon or shield). Armour weight must not exceed 25.
+A bar appears while you channel, coloured by the element, filling over ~6 seconds; the charge then lasts ~30 seconds. **Requirements (battle):** both hands empty (no weapon or shield) and armour weight ≤ 25.
 
-### Terrain, elements, and draw cost
+### Terrain and elements
 
-The charge you draw is shaped by the ground you stand on. Hybrid terrain gives a random element from those listed.
+The charge is the element of the ground you stand on — you don't choose it. Mixed or unfamiliar terrain gives a random element.
 
-| Terrain | Element | HP draw cost |
-|---------|---------|-------------|
-| Forest | Verdant | **Free** |
-| Meadow, Grassland | Verdant or Wind | Free / 10 HP |
-| Mountain | Stone | 12 HP |
-| Swamp, Wetland | Stone or Water | 12 / 10 HP |
-| Hill, Hills | Stone or Wind | 12 / 10 HP |
-| Water, River, Lake | Water | 10 HP |
-| Shore | Water or Wind | 10 HP |
-| Plain | Wind | 10 HP |
-| Snow, Arctic | Frost | 14 HP |
-| Steppe | Storm or Wind | 13 / 10 HP |
-| Desert | Storm | 13 HP |
-| (other) | Wind | 10 HP |
+| Terrain | Element |
+|---------|---------|
+| Mountain, Hills, Steppe | **Wind** |
+| Forest | **Earth** |
+| River, Lake, Shore, Snow, Wetland | **Water** |
+| Desert, Plains, Meadow | **Storm** |
+| (other / mixed) | random |
 
 ### Powers
 
-Each element carries two possible powers — one attack, one support — chosen randomly when the charge is released.
+Each element has one attack (Attack key) and one support (Block key).
 
 | Element | Attack | Support |
 |---------|--------|---------|
-| **Verdant** | **Thorngrasp** — pulls nearest enemy 3 m and roots them 2.5 s | **Living Breath** — 25 HP self + 18 HP allies + 15 morale, 10 m radius |
-| **Stone** | **Stone Surge** — 45 damage eruption, 5 m radius, roots 4 s | **Earth Mantle** — 40% damage reduction for 10 s |
-| **Water** | **Undertow** — 30 damage cone knockback (4 m push, 25% slow), 8 m range | **Still Water** — self-heal 35 HP |
-| **Wind** | **Calling Gale** — 20 damage 360° knockback + speed boost for allies, 10 m | **Fair Wind** — 35% speed for self and allies 8 m, 15 s |
-| **Frost** | **Hoarfrost** — 30 damage + 40% slow, 8 m radius, 7 s | **Glacial Shell** — 40% damage reduction + 20% self-slow, 10 s |
-| **Storm** | **Wrath of the Sky** — 70 damage lightning bolt, chains to 2 nearby enemies (35 each) | **Levin Step** — instant 5 m dash with brief invulnerability |
+| **Wind** | **Gale** — 360° gust, ~22 damage + knockback + slow, 10 m | **Tailwind** — +35% speed for you and nearby allies, 15 s |
+| **Earth** | **Entangle** — roots erupt in 6 m: ~40 damage and foes held fast ~4 s | **Bulwark** — −40% damage taken for you and allies, 12 s |
+| **Water** | **Torrent** — forward cone, ~30 damage + knockback that breaks formations | **Renewal** — heal yourself and nearby allies + morale |
+| **Storm** | **Thunderclap** — ~65 damage bolt that chains to 2 more foes | **Stormstep** — an instant dash forward |
 
-Held charges expire after 90 seconds in battle or 1 campaign day. Only one charge may be held at a time unless the **Living Root** talent is active.
+A held charge lasts ~30 seconds in battle. Only one charge at a time unless the **Living Root** talent is active. On the campaign map the support powers help your column (lighter march, mended wounded, a quickening).
 
 ### Hermit teachers
 
@@ -241,10 +239,12 @@ Hermits do not appear for an Inner Fire mage.
 
 | Talent | Effect |
 |--------|--------|
-| **Living Root** | Charge capacity ×2 — hold two charges simultaneously. Passive daily accumulation chance rises from 33% to ~67%. |
-| **Still Draw** | Drawing while stationary in combat costs no HP, regardless of terrain. |
-| **Open Grip** | Held charges do not expire. |
-| **Wildsworn** | Class talent — bundles Living Root, Still Draw, and Open Grip for 2 focus points. |
+| **Living Root** | Charge capacity ×2 — hold two charges at once. |
+| **Still Draw** | The channel bar fills faster. |
+| **Deep Earth** | The channel bar fills faster (stacks with Still Draw). |
+| **Open Grip** | Held charges no longer fade. |
+| **Dawn Call** | On the campaign map the land fills your charge after fewer hours of standing still. |
+| **Wildsworn** | Class talent — bundles the core nature talents for 2 focus points. |
 
 ### Nature seers (NPC)
 
@@ -995,64 +995,45 @@ Once the Temple stands, it watches players who are **not** members:
 
 - **Anathema** — a mage whose whispers reach tier 3 (75+) is declared anathema: any covenant is revoked, relations with the High Templar collapse (−30 to −40), and templar zealots periodically ambush the player's column (3–8 soldiers wounded every ~2 weeks) until the whispers fade below tier 2. Redemption lifts the hunt, but the covenant is not offered twice.
 
-### The Ashen Altars
+### The Dark Altars and the Dark Gifts
 
-In **Tyal, Sibir, Baltakhand, and Amprela**, a grey stone altar stands permanently in the town. These altars are announced at game start.
+Grey stone **Dark Altars** stand permanently in the cold cities (**Tyal, Sibir, Baltakhand, Amprela**) and in **two random Empire cities**, rolled at game start. At a Dark Altar you do not cast or hoard cold — you buy **permanent Dark Gifts** with blood.
 
-**Open access:** Any hero may approach an altar. Alignment (−(Mercy + Honor + Generosity) / 6) determines yield. Full evil alignment yields ~6.5 pts/round. Zero or virtuous alignment yields 1 pt/round — success requires enormous sacrifice for a weakened reward.
+**Who may bargain:** only the **Merciless or Devious** (Mercy ≤ −1 *or* Honour ≤ −1). Gifts you own are permanent, but they **sleep** if you ever stop being either — and wake again when you return to the dark.
 
-#### How rites work — the Sacrifice ritual
+**Exclusivity:** bearing even one Dark Gift bars you from **Grace** (Sanctuary) and from **Nature** (the Living Ember). The three dark/holy/wild paths cannot be mixed. You may **renounce** any gift at a Dark Altar to walk another road again.
 
-Selecting a rite begins a **Sacrifice ritual**. The game secretly rolls a hidden target threshold. Each round of sacrifice:
+#### The price — blood sacrifice
 
-1. **Costs the player** — prisoners are killed first (lowest-tier first), then healthy party members if needed. A tier-N troop is worth N sacrifice points. Morale drains proportional to the blood spent. The menu header shows total available sacrifice points.
-2. **Accumulates hidden progress** — points per round = `round(roll(3–10) × mult)`, where `mult = −(Mercy + Honor + Generosity) / 6`. At maximum evil (−6 total) you average 6.5 pts/round. At zero or virtuous alignment you earn exactly 1 pt/round. The reward on success is also scaled by mult.
-3. **Prompts the player** — offer more with *a measured hand* (normal roll), offer more *heedlessly* (progress ×1.5, but one round in three the stone drinks the round's cost twice), or *complete the rite — take what blood has bought*.
+Each gift costs a **geometrically growing** tithe taken from your prison roster: first prisoners, then prisoners **and captured lords**. Lord-prisoners are spent first, then the lowest-tier commoners.
 
-When the player stops: if accumulated progress **≥ hidden target**, the rite fires. If not, the sacrifice was wasted. The target number is never shown. If you run out of available sacrifice before stopping voluntarily, the ritual resolves immediately.
+| Gift # owned | Prisoners | Captured lords |
+|---|---|---|
+| 1st | 5 | 0 |
+| 2nd | 12 | 0 |
+| 3rd | 25 | 1 |
+| 4th | 50 | 2 |
+| 5th | 80 | 4 |
+| 6th | 130 | 6 |
+| 7th | 200 | 9 |
+| 8th+ | 300 | 12 |
 
-**Atmospheric hints** appear after each round ("something stirs in the stone", "the grey flame leans toward you", "one more offering and it moves").
+#### The boons (all passive)
 
-| Rite | Per-round cost | Effect on success |
-|------|----------------|-------------------|
-| **Blood Tribute** | 2 pts/round | Each surviving non-hero troop type gains 75 XP |
-| **The Ashen Solstice** | 4 pts/round | Choice: Iron Winter (north) or Scorching Sun (south) for 30 days |
-| **Carrion Gift** | 3 pts/round | Wounds 30–60% of a chosen garrison |
-| **Break Hearts and Wills** | 3 pts/round | Drains 15–25 loyalty and security from a chosen city |
-| **Rite of Cold Fire** | 3 pts/round | Wounds 8–15 soldiers in nearest enemy party; −30 morale; freezes for 2 days |
-| **Rite of Subjugation** | 20 morale/round | Sacrifice one prisoner, convert the rest to your party |
+| Gift | Effect |
+|------|--------|
+| **Iron Veil** | −10% incoming damage. |
+| **Dark Strike** | Each melee hit erupts for +20 dark damage. |
+| **Soul Mirror** | Reflects 20% of melee damage back at attackers. |
+| **Dark Spirit** | A dark shade hunts the enemy each battle (≈25 damage every 4 s). Buy up to **3**. |
+| **Pale Rider's Curse** | Every horse within 5 m of you dies each second. |
+| **Soul Drain** | Each melee hit saps 30 morale from the victim. |
+| **Blood Pact** | Each kill restores 12 HP to you. |
+| **Dread Presence** | Every 3 s, enemies within 8 m lose morale and may rout. |
 
-*Rite of Subjugation* uses morale as the round cost (not prisoners) so the prison roster is preserved for the conversion effect. After a successful ritual, choose whether to sacrifice the lowest-tier or highest-tier prisoner.
+**NPC gifts:** Ashen lords carry 1–2 gifts (often Soul Drain and a Dark Spirit); other genuinely evil lords occasionally carry one. Seeded at battle/encounter time and re-rolled each session.
 
-**Hidden target ranges** (for reference; never shown in-game):
-
-| Rite | Target range | Avg rounds — max evil (all −2) | Avg rounds — typical (all −1) | Avg rounds — zero alignment |
-|------|-------------|-------------------------------|------------------------------|----------------------------|
-| Blood Tribute | 10–18 | 2–3 | 4–5 | ~14 |
-| Rite of Subjugation | 15–25 | 2–4 | 6–8 | ~20 |
-| Cold Fire / Break Wills | 18–28 / 18–30 | 3–5 | 7–9 | ~23–24 |
-| Carrion Gift | 22–35 | 4–6 | 8–11 | ~29 |
-| Ashen Solstice | 35–55 | 6–9 | 13–17 | ~45 |
-
-*Zero-alignment heroes earn 1 pt/round and sacrifice many more lives for a weaker reward.*
-
-Cooldowns (base; longer at lower alignment):
-
-| Rite | Base cooldown |
-|------|--------------|
-| Blood Tribute | 7 days |
-| Rite of Cold Fire | 7 days |
-| Break Hearts and Wills | 7 days |
-| Carrion Gift | 7 days |
-| Rite of Subjugation | 7 days |
-| The Ashen Solstice | 14 days |
-
-**Location depletion:** after 5 ritual starts at a single altar (any mix of rites), the stone rests for 30 days and all options are disabled. Travel to another altar city. The counter and recovery timer are shown in the sub-menu header.
-
-**Sanctuary interference:** the grey stone and the flame reject each other. Praying at a Sanctuary halves altar yield for the next **30 days** (and vice versa). The remaining interference window is shown in the sub-menu header.
-
-**NPC behavior (simulated ritual):** NPC lords simulate 3 rounds of sacrifice. If their simulated accumulation meets the threshold, the effect applies.
-- Ashen lords in an altar city: **0.5% chance per day** to perform a dark rite (partial healing, morale boost, or nearby curse). A campaign-map notification appears.
+> Note: the old Ashen-Altar **rituals** (Blood Tribute, Ashen Solstice, Cold accumulation, etc.) and the talents tied to them have been **replaced** by this permanent-gift system.
 
 ### Player-interactive world events
 

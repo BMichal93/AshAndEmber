@@ -133,11 +133,11 @@ namespace AshAndEmber
                         heroHonor >= 1
                             ? "Your piety turned the gift to prayer. You walk the path of miracles, not spells, and begin with 5 Grace."
                             : "Only those who walk an honourable path may speak of sacred devotion. [Requires: Honourable]"),
-                    new InquiryElement("dark_rites", "I suppressed it through dark rites. The cost was steep.", null,
+                    new InquiryElement("dark_rites", "I bargained with the dark, and it marked me.", null,
                         heroHonor <= -1,
                         heroHonor <= -1
-                            ? "The rites hollowed the warmth from you, and the cold rushed in to fill the void. You walk the path of cold miracles, not spells, and begin with 5 Cold."
-                            : "Only those who have walked crooked paths know such rites. [Requires: Dishonorable]"),
+                            ? "An altar's bargain was struck before you ever knew it. You begin bearing one random Dark Gift — a permanent, passive boon. The darkness bars you from Grace and from Nature, and its gifts only wake while you are Merciless or Devious. Seek a Dark Altar to buy more or renounce them."
+                            : "Only those who have walked crooked paths bear the altar's mark. [Requires: Dishonorable]"),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
                     new InquiryElement("living_ember", "The world beneath me has always been louder than the fire.", null, true,
@@ -177,10 +177,11 @@ namespace AshAndEmber
                     }
                     else if (isDarkRites)
                     {
-                        MiracleInventory.AddCold(5);
+                        DarkGiftId gift = DarkGiftSystem.GrantRandomGift();
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The rites scoured you of warmth. The cold rushed in to fill what was hollowed. Five measures of Cold settle within you.",
-                            new Color(0.3f, 0.55f, 0.8f)));
+                            $"The altar's mark was on you from the first. You bear the Dark Gift of {DarkGiftSystem.GetGiftName(gift)}. " +
+                            "It bars you from Grace and from Nature.",
+                            new Color(0.55f, 0.25f, 0.6f)));
                     }
                     else if (isLivingEmber)
                     {

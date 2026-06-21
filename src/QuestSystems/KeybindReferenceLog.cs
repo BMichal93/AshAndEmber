@@ -183,67 +183,65 @@ namespace AshAndEmber
             AddLog(new TextObject(
                 "THE LIVING EMBER — the art of those attuned to the living world rather than the " +
                 "inner fire. It shares the Left Ctrl key with miracles, but a hero walks only one " +
-                "of these paths: if you carry Grace or Cold you cannot draw from the land, and if " +
-                "you are attuned to the land you work no miracles. Hold Left Ctrl to begin; release " +
-                "it when you are done."), true);
+                "of these paths: Grace, Cold, Nature, and the Dark Gifts are all mutually exclusive."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · DRAW & CAST — Hold Left Ctrl and STAND STILL: the land fills your " +
-                "grip with a charge of its element (it tops up to your capacity, then stops). Then, " +
-                "still holding Ctrl, choose how to spend it:  W = the element's ATTACK power,  " +
-                "S = the element's SUPPORT power. Each cast spends one charge. You hold one charge " +
-                "at a time, two with the Living Root talent."), true);
+                "LIVING EMBER · GATHER A CHARGE — Hold Left Ctrl and STAND STILL (both hands empty, " +
+                "armour weight ≤ 25). A bar fills over about six seconds, coloured by the element of " +
+                "the ground beneath you; when it completes you hold one charge, which lasts about " +
+                "thirty seconds. Moving interrupts the gathering."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · WHAT THE LAND GIVES — The element is set by the terrain you stand " +
-                "on, never by choice. Forest = Verdant, Mountain = Stone, River/Lake/Shallows = " +
-                "Water, Plains = Wind, Snow/Arctic = Frost, Desert = Storm. Mixed ground offers " +
-                "two, drawn at random: Shore (Water/Wind), Steppe (Storm/Wind), Swamp " +
-                "(Stone/Water), Hills (Stone/Wind), Meadow (Verdant/Wind). The instant you hold " +
-                "Ctrl, a reading appears showing the local element(s) and any charge you already carry."), true);
+                "LIVING EMBER · CAST — While holding Left Ctrl and carrying a charge:  Attack " +
+                "(left mouse) looses the element's ATTACK,  Block (right mouse) calls its SUPPORT. " +
+                "Each cast spends the charge. Gamepad: hold R3 to gather, Right Trigger = attack, " +
+                "Left Trigger = support."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · THE PRICE (in battle) — You must be standing still to draw, with " +
-                "both hands empty (no weapon, no shield) and a total armour weight no greater than " +
-                "25. Drawing from Verdant (forest) is free; every other element is paid in your own " +
-                "health per draw: Stone 12, Water 10, Wind 10, Frost 14, Storm 13 — and you cannot " +
-                "draw if the cost would leave you at death's door. Inside a settlement or during a " +
-                "siege, stone and mortar muffle the land: a few seconds must pass between draws."), true);
+                "LIVING EMBER · THE FOUR ELEMENTS — The land decides, not you: " +
+                "WIND on mountains, hills and steppes; EARTH in forests; WATER by rivers, shores, " +
+                "rain and snow; STORM on open plains and deserts. Mixed or unfamiliar ground gives " +
+                "a random element."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · ON THE CAMPAIGN MAP — The same way serves: hold Left Ctrl and stand " +
-                "still to draw (free on the road, no weapon or armour limit), then W or S to cast. " +
-                "The land is generous on the march — while your hands are empty it will quietly place " +
-                "a charge in them once a day. A held charge does not last forever: it fades after " +
-                "about 90 seconds in battle, or after one day on the map, if left unused."), true);
+                "LIVING EMBER · THE POWERS — WIND: Gale (Attack — a ring of wind, knockback + " +
+                "damage) · Tailwind (Block — haste for you and allies). EARTH: Entangle (Attack — " +
+                "roots that hold foes fast and wound them) · Bulwark (Block — heavy damage resistance). " +
+                "WATER: Torrent (Attack — a cone that scatters and breaks formations) · Renewal " +
+                "(Block — heal). STORM: Thunderclap (Attack — a bolt that chains between foes) · " +
+                "Stormstep (Block — a sudden dash)."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · THE TWELVE POWERS (1/2) — VERDANT — W Thorngrasp: drag the nearest " +
-                "foe to you and root them. S Living Breath: heal yourself and nearby allies and lift " +
-                "their morale. STONE — W Stone Surge: a blunt shockwave that roots all around you. " +
-                "S Earth Mantle: −40% damage taken for a time. WATER — W Undertow: a forward cone " +
-                "that batters, knocks back and slows. S Still Water: heal yourself."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · THE TWELVE POWERS (2/2) — WIND — W Calling Gale: a 360° gust that " +
-                "knocks back foes and quickens allies. S Fair Wind: hasten yourself and nearby allies. " +
-                "FROST — W Hoarfrost: cold damage and a heavy slow around you. S Glacial Shell: " +
-                "−40% damage taken and stagger immunity. STORM — W Wrath of the Sky: a lightning " +
-                "bolt that chains to two more foes. S Levin Step: an instant dash forward."), true);
+                "LIVING EMBER · ON THE CAMPAIGN MAP — Halt in open country; standing still a few " +
+                "hours lets the land fill a charge of the local element. Spend it through the litany " +
+                "window (Shift+X / RB+L3): Wind eases the march, Earth and Water mend your wounded, " +
+                "Storm quickens the column."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +
-                "Living Root: hold two charges, and the land gives twice as readily. " +
-                "Open Grip: your charges no longer fade. " +
-                "Still Draw: your draws cost no health at all. " +
-                "Deep Earth: you hear the land through stone, removing the settlement-and-siege delay."), true);
+                "Living Root: hold two charges. Open Grip: your charge never fades. " +
+                "Still Draw / Deep Earth: the bar fills faster. Dawn Call: the land gives more " +
+                "readily on the march. Hermits in Battania, Sturgia, and the Khuzait steppe teach " +
+                "those who come ready — empty-handed and lightly armoured."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · GAMEPAD & TEACHERS — Gamepad: hold R3 (right-stick click) and stand " +
-                "still to draw, then Left-stick Up = cast attack, Left-stick Down = cast support. " +
-                "The art is not bought with focus or coin: hermits living apart in Battania, Sturgia, " +
-                "and the Khuzait steppe will teach those who come to them ready — empty-handed, " +
-                "lightly armoured, and willing to give of themselves."), true);
+                "THE DARK GIFTS — Permanent boons bought at a Dark Altar (in the Empire and the " +
+                "old cold lands) with blood: each gift costs a growing tithe of prisoners, then " +
+                "prisoners AND captured lords. They are passive and forever — but renounce-able at " +
+                "any Dark Altar. Bearing even one gift bars you from Grace and from Nature."), true);
+
+            AddLog(new TextObject(
+                "DARK GIFTS · THE PRICE OF DARKNESS — Gifts only work while you are Merciless or " +
+                "Devious (Mercy ≤ −1 or Honour ≤ −1). Lose both and your gifts sleep until you " +
+                "return to the dark. No keys to press — their power is woven into you. " +
+                "Your grimoire (Alt+X) lists the gifts you bear and whether they are active."), true);
+
+            AddLog(new TextObject(
+                "DARK GIFTS · THE BOONS — Iron Veil (−10% damage taken) · Dark Strike (+20 dark " +
+                "damage on each melee hit) · Soul Mirror (reflect 20% of melee damage) · Dark Spirit " +
+                "(a shade hunts the enemy each battle; up to three) · Pale Rider's Curse (horses " +
+                "near you die) · Soul Drain (your hits sap enemy morale) · Blood Pact (each kill " +
+                "heals you) · Dread Presence (nearby foes lose heart and may rout)."), true);
         }
     }
 }
