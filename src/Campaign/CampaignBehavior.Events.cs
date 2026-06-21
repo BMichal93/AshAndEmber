@@ -134,10 +134,8 @@ namespace AshAndEmber
                             ? "Your piety turned the gift to prayer. You walk the path of miracles, not spells, and begin with 5 Grace."
                             : "Only those who walk an honourable path may speak of sacred devotion. [Requires: Honourable]"),
                     new InquiryElement("dark_rites", "I bargained with the dark, and it marked me.", null,
-                        heroHonor <= -1,
-                        heroHonor <= -1
-                            ? "An altar's bargain was struck before you ever knew it. You begin bearing one random Dark Gift — a permanent, passive boon. The darkness bars you from Grace and from Nature, and its gifts only wake while you are Merciless or Devious. Seek a Dark Altar to buy more or renounce them."
-                            : "Only those who have walked crooked paths bear the altar's mark. [Requires: Dishonorable]"),
+                        true,
+                        "An altar's bargain was struck before you ever knew it. You begin bearing one random Dark Gift — a permanent, passive boon — and the bargain has already turned you Devious and Merciless, so its power is yours at once. The darkness bars you from Grace and from Nature. Seek a Dark Altar to buy more or renounce them."),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
                     new InquiryElement("living_ember", "The world beneath me has always been louder than the fire.", null, true,
@@ -177,9 +175,20 @@ namespace AshAndEmber
                     }
                     else if (isDarkRites)
                     {
+                        // The bargain itself turns you to darkness, so the gift is active at once.
+                        try
+                        {
+                            var h = Hero.MainHero;
+                            if (h != null)
+                            {
+                                if (h.GetTraitLevel(DefaultTraits.Mercy) > -1) h.SetTraitLevel(DefaultTraits.Mercy, -1);
+                                if (h.GetTraitLevel(DefaultTraits.Honor) > -1) h.SetTraitLevel(DefaultTraits.Honor, -1);
+                            }
+                        }
+                        catch { }
                         DarkGiftId gift = DarkGiftSystem.GrantRandomGift();
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"The altar's mark was on you from the first. You bear the Dark Gift of {DarkGiftSystem.GetGiftName(gift)}. " +
+                            $"The altar's mark was on you from the first. You are turned Merciless and Devious, and bear the Dark Gift of {DarkGiftSystem.GetGiftName(gift)}. " +
                             "It bars you from Grace and from Nature.",
                             new Color(0.55f, 0.25f, 0.6f)));
                     }

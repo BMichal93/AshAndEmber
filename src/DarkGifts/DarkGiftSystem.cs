@@ -291,11 +291,14 @@ namespace AshAndEmber
 
             var gifts = new List<DarkGiftId>();
 
+            // NPCs only benefit from on-hit / on-kill gifts; the tick-based ones
+            // (DarkSpirit, Pale Rider's Curse, Dread Presence) run for the player
+            // only, so they are excluded from NPC seeding.
             if (isAshenLord)
             {
-                // Ashen lords always get 1-2 gifts. SoulDrain and DarkSpirit are thematic.
+                // Ashen lords always get 1-2 gifts. SoulDrain is thematic.
                 gifts.Add(DarkGiftId.SoulDrain);
-                if (_rng.Next(2) == 0) gifts.Add(DarkGiftId.DarkSpirit);
+                if (_rng.Next(2) == 0) gifts.Add(DarkGiftId.SoulMirror);
                 if (_rng.Next(3) == 0) gifts.Add(_rng.Next(2) == 0 ? DarkGiftId.DarkStrike : DarkGiftId.IronVeil);
             }
             else if (isEvilLord)

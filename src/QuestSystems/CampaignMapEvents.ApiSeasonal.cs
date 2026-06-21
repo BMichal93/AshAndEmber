@@ -27,10 +27,6 @@ namespace AshAndEmber
         internal static bool IsProtectedFromAshen   => _protectedDaysRemaining > 0;
         internal static void StartProtection(int days)
             => _protectedDaysRemaining = Math.Max(_protectedDaysRemaining, days);
-        internal static void DebugForceTemple()
-        {
-            if (!_templeFounded) _debugForceNextTemple = true;
-        }
 
         // ── Ashen Altar forced seasonal events ───────────────────────────────
         // Called by AshenAltarsCampaignBehavior when a player performs the

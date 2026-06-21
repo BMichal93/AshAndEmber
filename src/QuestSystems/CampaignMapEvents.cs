@@ -495,7 +495,6 @@ namespace AshAndEmber
             _brokenWillFired         = 0;
             _templeFounded           = true;  // Vlandia IS The Holy Temple from day one
             _pendingTempleJoin       = false;
-            _debugForceNextTemple    = false;
             _protectedDaysRemaining  = 0;
             _ashenGambitFired        = false;
             _deadMarchFirstFired     = false;

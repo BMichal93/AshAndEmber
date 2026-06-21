@@ -104,13 +104,8 @@ namespace AshAndEmber
         }
 
         // ── Event 20: The Temple Rises (retired) ─────────────────────────────
-        // Vlandia IS The Holy Temple from the start of the campaign — this
-        // dynamic-founding event no longer fires. The stub is kept so that any
-        // saved debug flag (_debugForceNextTemple) is consumed harmlessly.
-        private static void TryFireTheTemple()
-        {
-            _debugForceNextTemple = false;
-        }
+        // Vlandia IS The Holy Temple from the start of the campaign, so this
+        // dynamic-founding event no longer exists.
 
         // ── Event 21: Peasant Unrest ─────────────────────────────────────────
         // The people have had enough. Three bands of desperate peasants-turned-

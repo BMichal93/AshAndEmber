@@ -89,7 +89,7 @@ namespace AshAndEmber
             _host = ScreenManager.TopScreen;
             if (_host == null) return;
             _vm    = new NatureChargeBarVM();
-            _layer = new GauntletLayer("AshEmberNatureBar", 90, false);
+            _layer = new GauntletLayer("AshEmberNatureBar", 1000, false);  // above the mission HUD
             _movie = _layer.LoadMovie("AshEmberNatureBar", _vm);
             _host.AddLayer(_layer);
             _active = true;

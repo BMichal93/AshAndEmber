@@ -141,7 +141,7 @@ namespace AshAndEmber
                 try { NatureInputHandler.Tick(inMission: false);  } catch { }
                 try { ActiveEffectManager.MapTick(dt); } catch { }
 
-                // Ctrl+Shift+F10 — toggle scheme debug mode; also force-fires The Temple event
+                // Ctrl+Shift+F10 — toggle scheme debug mode
                 try
                 {
                     if (TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftControl)
@@ -149,24 +149,10 @@ namespace AshAndEmber
                      && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.F10))
                     {
                         SchemeSystem.DebugFree = !SchemeSystem.DebugFree;
-                        string schemeMsg = SchemeSystem.DebugFree
-                            ? "[DEBUG] Schemes: costs disabled, success forced."
-                            : "[DEBUG] Schemes: normal mode restored.";
-
-                        // Also queue The Temple event if it hasn't fired yet
-                        string templeMsg = "";
-                        try
-                        {
-                            if (SchemeSystem.DebugFree)
-                            {
-                                CampaignMapEvents.DebugForceTemple();
-                                templeMsg = " Temple event queued for next weekly tick.";
-                            }
-                        }
-                        catch { }
-
                         MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
-                            schemeMsg + templeMsg));
+                            SchemeSystem.DebugFree
+                                ? "[DEBUG] Schemes: costs disabled, success forced."
+                                : "[DEBUG] Schemes: normal mode restored."));
                     }
                 }
                 catch { }
@@ -374,7 +360,21 @@ namespace AshAndEmber
             // Alchemy combat buffs/afflictions (berserk bonus, stone-skin, enfeeblement).
             try { AlchemyEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             try { MiracleEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
-            try { NatureEffects.ApplyResistance(affectedAgent, blow.InflictedDamage); } catch { }
+            // Nature Bulwark resist: OnAgentHit fires after damage is applied and the
+            // blow is read-only, so we heal back the mitigated portion to realise the
+            // resistance against real weapon hits.
+            try
+            {
+                if (affectedAgent != null && affectedAgent.IsActive()
+                    && NatureEffects.HasResist(affectedAgent) && blow.InflictedDamage > 0)
+                {
+                    float kept      = NatureEffects.ApplyResistance(affectedAgent, blow.InflictedDamage);
+                    float mitigated = blow.InflictedDamage - kept;
+                    if (mitigated > 0f)
+                        affectedAgent.Health = Math.Min(affectedAgent.HealthLimit, affectedAgent.Health + mitigated);
+                }
+            }
+            catch { }
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent,

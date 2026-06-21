@@ -2,8 +2,8 @@
 // ASH AND EMBER — QuestSystems/TempleCovenant.cs
 // The Temple's relationship with a player who is NOT one of its members.
 //
-// Once The Temple has risen (CampaignMapEvents.TryFireTheTemple), it watches
-// the player:
+// The Temple exists from the start of the campaign (Vlandia IS The Holy Temple),
+// and it watches the player:
 //   • A clean-handed player (whisper tier ≤ 1, clan tier ≥ 2) may be offered
 //     the COVENANT: a standing pact against the Ashen. While sworn, battle
 //     casts cost 1 fewer day of life (the Temple's rites steady the fire),
