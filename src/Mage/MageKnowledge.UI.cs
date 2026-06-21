@@ -98,7 +98,16 @@ namespace AshAndEmber
                 "    0/3 correct → 0.50×   Scattered.\n\n" +
                 "  The aging cost is always paid.\n" +
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +
-                "  Open this book any time: Left Alt + X  (LB + RB on a controller)." +
+                "  Open this book any time: Left Alt + X  (LB + RB on a controller).\n\n" +
+                "── DARK ALTARS ──────────────────────────────────────────\n" +
+                "  Dark Altars stand in Tyal, Sibir, Baltakhand, Amprela,\n" +
+                "  one random Aserai city, and two random Empire cities.\n" +
+                "  The Merciless and Devious may purchase permanent Dark Gifts\n" +
+                "  by sacrificing prisoners and captured lords.\n" +
+                "  Dark Gifts are always active while you remain cruel or cunning.\n" +
+                "  They block Grace (Sanctuary) and Nature (Living Ember) magic.\n" +
+                "  Visit a Dark Altar at any time to renounce a gift.\n" +
+                DarkGiftSystem.BuildGiftSummary() +
                 BuildMurmursSection() +
                 (_isAshen ? AshenQuestSystem.GetGrimoireSummary() : DragonQuestSystem.GetGrimoireSummary());
 

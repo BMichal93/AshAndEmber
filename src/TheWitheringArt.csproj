@@ -198,6 +198,8 @@
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Menus.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Npc.cs"/>
+    <Compile Include="DarkGifts\DarkGiftSystem.cs"/>
+    <Compile Include="DarkGifts\DarkGiftBattleEffects.cs"/>
     <Compile Include="Sea\SeaMath.cs"/>
     <Compile Include="Sea\SeaCampaignBehavior.cs"/>
     <Compile Include="Sea\SeaCampaignBehavior.NpcLanes.cs"/>

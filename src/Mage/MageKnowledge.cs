@@ -236,6 +236,7 @@ namespace AshAndEmber
             AshenCitySystem.ResetForNewGame();
             AgingSystem.ResetForNewGame();
             TempleCovenant.ResetForNewGame();
+            DarkGiftSystem.ResetForNewGame();
         }
 
         public static bool IsChildGifted(string id) => _giftedChildIds.Contains(id);

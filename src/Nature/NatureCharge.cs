@@ -100,6 +100,12 @@ namespace AshAndEmber
             drawn      = NaturePower.None;
             failReason = null;
 
+            if (DarkGiftSystem.HasAnyGift)
+            {
+                failReason = "The darkness in you silences the root-voice.";
+                return false;
+            }
+
             if (!NatureKnowledge.IsAttuned)
             {
                 failReason = "You are not attuned to the living world.";

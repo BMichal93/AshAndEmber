@@ -1,9 +1,14 @@
 // =============================================================================
 // ASH AND EMBER — AshenAltarsCampaignBehavior.Menus.cs
-// Altar menu: two options — Embrace the Cold, Invoke the Dark Tide.
-// The old six-rite system has been replaced. Old ALTAR_* save keys that are
-// no longer written are silently ignored on load (backward compatible).
-// Partial of AshenAltarsCampaignBehavior.
+//
+// Dark Altar menu system. Replaces the old Cold-charging Ashen Altar menus.
+//
+// Structure:
+//   Town menu → "Visit the Dark Altar"
+//     → altar_main  (summary of owned gifts + active state)
+//       → altar_buy_gift  (buy a new gift — submenu)
+//       → altar_renounce  (choose a gift to remove)
+//       → altar_leave
 // =============================================================================
 
 using System;
@@ -23,31 +28,46 @@ namespace AshAndEmber
     {
         private static void RegisterAltarMenus(CampaignGameStarter starter)
         {
-            // ── Town entry option ──────────────────────────────────────────────
+            RegisterTownEntry(starter);
+            RegisterWastelandRite(starter);
+            RegisterMainMenu(starter);
+            RegisterBuyMenu(starter);
+            RegisterRenounceMenu(starter);
+        }
+
+        // ── Town entry ─────────────────────────────────────────────────────────
+        private static void RegisterTownEntry(CampaignGameStarter starter)
+        {
             try
             {
-                starter.AddGameMenuOption("town", "altar_enter", "{ALTAR_ENTER_TEXT}",
+                starter.AddGameMenuOption("town", "dark_altar_enter", "{DARK_ALTAR_ENTER_TEXT}",
                     args =>
                     {
                         try
                         {
-                            if (!HasAshenAltar(Settlement.CurrentSettlement)) return false;
-                            string coldNote = MiracleInventory.HasGrace
-                                ? "  [Grace: the stone is wary]"
-                                : $"  [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]";
-                            MBTextManager.SetTextVariable("ALTAR_ENTER_TEXT", "Visit the Ashen Altar" + coldNote);
+                            if (!HasDarkAltar(Settlement.CurrentSettlement)) return false;
+                            string status = DarkGiftSystem.GiftsDisabled
+                                ? "  [Gifts inactive — virtue has softened you]"
+                                : DarkGiftSystem.HasAnyGift
+                                    ? $"  [{DarkGiftSystem.TotalOwned} dark gift(s)]"
+                                    : "";
+                            MBTextManager.SetTextVariable("DARK_ALTAR_ENTER_TEXT",
+                                "Visit the Dark Altar" + status);
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
                             args.IsEnabled = true;
                             return true;
                         }
                         catch { return false; }
                     },
-                    args => { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } },
                     false, -1, false);
             }
             catch { }
+        }
 
-            // ── Wasteland Rite (questline option — unchanged) ──────────────────
+        // ── Wasteland Rite (questline — unchanged) ─────────────────────────────
+        private static void RegisterWastelandRite(CampaignGameStarter starter)
+        {
             try
             {
                 starter.AddGameMenuOption("town", "wasteland_rite", "{WASTELAND_RITE_TEXT}",
@@ -58,14 +78,11 @@ namespace AshAndEmber
                             if (!AshenQuestSystem.IsWastelandUnlocked) return false;
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsTown) return false;
-                            bool isAshenOwned = s.MapFaction?.StringId == AshenKingdomId;
-                            if (!isAshenOwned) return false;
-                            bool alreadyDone = AshenQuestSystem.IsWastelandCity(s.StringId);
+                            if (s.MapFaction?.StringId != AshenKingdomId) return false;
+                            bool done = AshenQuestSystem.IsWastelandCity(s.StringId);
                             MBTextManager.SetTextVariable("WASTELAND_RITE_TEXT",
-                                alreadyDone
-                                    ? "Wasteland Rite  [already consecrated]"
-                                    : "Perform the Wasteland Rite");
-                            args.IsEnabled = !alreadyDone;
+                                done ? "Wasteland Rite  [already consecrated]" : "Perform the Wasteland Rite");
+                            args.IsEnabled = !done;
                             return true;
                         }
                         catch { return false; }
@@ -74,143 +91,105 @@ namespace AshAndEmber
                     false, -1, false);
             }
             catch { }
+        }
 
-            // ── Sub-menu header ────────────────────────────────────────────────
+        // ── Main altar menu ────────────────────────────────────────────────────
+        private static void RegisterMainMenu(CampaignGameStarter starter)
+        {
             try
             {
-                starter.AddGameMenu("altar_menu", "{ALTAR_MENU_HEADER}", args =>
+                starter.AddGameMenu("dark_altar_main", "{DARK_ALTAR_HEADER}", args =>
                 {
                     try
                     {
-                        int today = CurrentCampaignDay();
-
-                        string coldNote;
-                        if (MiracleInventory.HasGrace)
-                            coldNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap} — the stone smells the light on you]";
+                        string giftList = "";
+                        if (DarkGiftSystem.HasAnyGift)
+                        {
+                            giftList = "\n\nYour dark gifts:";
+                            foreach (DarkGiftId g in DarkGiftSystem.AllGifts)
+                            {
+                                if (g == DarkGiftId.DarkSpirit)
+                                {
+                                    int cnt = DarkGiftSystem.DarkSpiritCount;
+                                    if (cnt > 0)
+                                        giftList += $"\n  • {DarkGiftSystem.GetGiftName(g)} ×{cnt}";
+                                }
+                                else if (DarkGiftSystem.HasGift(g))
+                                    giftList += $"\n  • {DarkGiftSystem.GetGiftName(g)}";
+                            }
+                        }
                         else
-                            coldNote = $"  [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]";
+                            giftList = "\n\nYou carry no dark gifts yet.";
 
-                        string interNote = "";
-                        int sinceSanct = today - SanctuaryCampaignBehavior._lastSanctuaryUseDay;
-                        if (sinceSanct >= 0 && sinceSanct < CrossInterferenceDays)
-                            interNote = $"  [Sanctuary interference: Cold yield halved for {CrossInterferenceDays - sinceSanct} day(s)]";
+                        string activeNote = DarkGiftSystem.GiftsDisabled
+                            ? "\n\n[Gifts are dormant. You have grown too virtuous — become Merciless or Devious again to reawaken them.]"
+                            : "";
 
-                        MBTextManager.SetTextVariable("ALTAR_MENU_HEADER",
-                            $"The Ashen Altar. Stone worn smooth by blood that never fully dried. " +
-                            $"The flame here is grey, and it is always hungry.{coldNote}{interNote}");
+                        MBTextManager.SetTextVariable("DARK_ALTAR_HEADER",
+                            "The Dark Altar. The stone is older than the city around it, and colder than the stone should be. "
+                          + "It does not ask your name. It already knows what you are willing to give."
+                          + giftList + activeNote);
                     }
                     catch { }
                 });
             }
             catch { }
 
-            // ── Option 1: Embrace the Cold ─────────────────────────────────────
+            // Buy gift option
             try
             {
-                starter.AddGameMenuOption("altar_menu", "altar_embrace_cold", "{ALTAR_COLD_TEXT}",
+                starter.AddGameMenuOption("dark_altar_main", "dark_altar_buy", "{DARK_ALTAR_BUY_TEXT}",
                     args =>
                     {
                         try
                         {
-                            int today = CurrentCampaignDay();
-                            int effectiveAltarCd = TalentSystem.Has(TalentId.ColdCovenant)
-                                ? Math.Max(1, MiracleMath.AltarCooldownDays / 2) : MiracleMath.AltarCooldownDays;
-                            bool onCooldown = (today - _lastAltarUseDay) < effectiveAltarCd;
-                            bool blockedByGrace = MiracleInventory.Grace > 0;
-                            bool atCap = MiracleInventory.Cold >= MiracleMath.GraceColdCap;
+                            bool qualifies = DarkGiftSystem.PlayerQualifies();
+                            int  owned     = DarkGiftSystem.TotalOwned;
+                            int  pCost     = DarkGiftCosts.GetNextPrisonerCost(owned);
+                            int  lCost     = DarkGiftCosts.GetNextLordCost(owned);
+                            string costStr = lCost > 0
+                                ? $"{pCost} prisoners + {lCost} lord(s)"
+                                : $"{pCost} prisoners";
+                            string lockNote = !qualifies ? "  [Requires Merciless or Devious]" : "";
+                            MBTextManager.SetTextVariable("DARK_ALTAR_BUY_TEXT",
+                                $"Offer blood for a Dark Gift  (costs {costStr}){lockNote}");
+                            args.IsEnabled = qualifies;
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_buy"); } catch { } });
+            }
+            catch { }
 
-                            bool hasPrisoners = false;
-                            try { hasPrisoners = MobileParty.MainParty?.PrisonRoster?.Count > 0; } catch { }
-                            string cost = hasPrisoners ? "1 prisoner" : "10 HP";
-
-                            string suffix = "";
-                            if (blockedByGrace)
-                            { args.IsEnabled = false; suffix = "  [Grace within you — the stone will not answer]"; }
-                            else if (atCap)
-                            { args.IsEnabled = false; suffix = "  [Cold is full — cast a miracle first]"; }
-                            else if (onCooldown)
-                            { args.IsEnabled = false; suffix = $"  [On cooldown: {effectiveAltarCd - (today - _lastAltarUseDay)} day(s)]"; }
-
-                            string reagentNote = "";
-                            if (!blockedByGrace && !atCap && !onCooldown)
+            // Renounce gift option
+            try
+            {
+                starter.AddGameMenuOption("dark_altar_main", "dark_altar_renounce", "Renounce a Dark Gift",
+                    args =>
+                    {
+                        try
+                        {
+                            args.IsEnabled = DarkGiftSystem.HasAnyGift;
+                            if (!DarkGiftSystem.HasAnyGift)
                             {
-                                int reduc = ReagentSystem.AltarCooldownReduction();
-                                if (reduc > 0)
-                                {
-                                    string rn = ReagentSystem.FriendlyName(ReagentSystem.BestForContext(isSanctuary: false));
-                                    reagentNote = $"  [{rn} available: −{reduc} day cooldown]";
-                                }
-                                if (ReagentSystem.HasAny(ReagentSystem.SeaSerpentScale))
-                                    reagentNote += $"  [Sea Serpent Scale: −{ReagentSystem.ScaleAgingReclaim} day aging]";
+                                MBTextManager.SetTextVariable("DARK_ALTAR_RENOUNCE_INFO",
+                                    "  [You carry no dark gifts]");
                             }
-
-                            MBTextManager.SetTextVariable("ALTAR_COLD_TEXT",
-                                $"Embrace the Cold  (costs {cost}) — [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]{suffix}{reagentNote}");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
                         }
                         catch { }
                         return true;
                     },
-                    args => DoEmbraceCold());
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_renounce"); } catch { } });
             }
             catch { }
 
-            // ── Option 2: Invoke the Dark Tide ─────────────────────────────────
+            // Leave
             try
             {
-                starter.AddGameMenuOption("altar_menu", "altar_invoke_dark_tide", "{ALTAR_INVOKE_TEXT}",
-                    args =>
-                    {
-                        try
-                        {
-                            int today = CurrentCampaignDay();
-                            int effectiveInvokeCd = TalentSystem.Has(TalentId.ColdCovenant)
-                                ? Math.Max(1, MiracleMath.InvokeCooldownDays / 2) : MiracleMath.InvokeCooldownDays;
-                            bool onCooldown = (today - _lastInvokeDay) < effectiveInvokeCd;
-                            string cd = onCooldown
-                                ? $"  [On cooldown: {effectiveInvokeCd - (today - _lastInvokeDay)} day(s)]"
-                                : "";
-                            if (onCooldown) args.IsEnabled = false;
-                            int invokeHpDisplay = 15;
-                            if (TalentSystem.Has(TalentId.DreadTide)) invokeHpDisplay += 5;
-                            if (TalentSystem.Has(TalentId.ColdCovenant)) invokeHpDisplay -= 5;
-                            string dreadNote = TalentSystem.Has(TalentId.DreadTide) ? " [Dread Tide: all three effects]" : "";
-                            MBTextManager.SetTextVariable("ALTAR_INVOKE_TEXT",
-                                $"Invoke the Dark Tide  (costs {invokeHpDisplay} HP){dreadNote} — unleash Ashen influence upon the world{cd}");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                        }
-                        catch { }
-                        return true;
-                    },
-                    args => DoInvokeDarkTide());
-            }
-            catch { }
-
-            // ── Option 3: Study the Rite ──────────────────────────────────────
-            try
-            {
-                starter.AddGameMenuOption("altar_menu", "altar_study_rite", "Study the Rite",
-                    args =>
-                    {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                        return true;
-                    },
-                    args =>
-                    {
-                        try
-                        {
-                            MageKnowledge.ShowRiteTalentMenu("The Ashen Altar",
-                                new[] { TalentId.Coldsworn });
-                        }
-                        catch { }
-                    });
-            }
-            catch { }
-
-            // ── Leave ──────────────────────────────────────────────────────────
-            try
-            {
-                starter.AddGameMenuOption("altar_menu", "altar_leave", "Leave the Altar",
+                starter.AddGameMenuOption("dark_altar_main", "dark_altar_leave", "Leave the Altar",
                     args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
                     args => { try { GameMenu.SwitchToMenu("town"); } catch { } },
                     true, -1, false);
@@ -218,260 +197,176 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Action: Embrace the Cold ───────────────────────────────────────────
-        private static void DoEmbraceCold()
+        // ── Buy gift submenu ───────────────────────────────────────────────────
+        private static void RegisterBuyMenu(CampaignGameStarter starter)
         {
-            var hero  = Hero.MainHero;
-            var party = MobileParty.MainParty;
-            if (hero == null) { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } return; }
-
-            int honor = 0, mercy = 0, generosity = 0;
             try
             {
-                honor      = hero.GetTraitLevel(DefaultTraits.Honor);
-                mercy      = hero.GetTraitLevel(DefaultTraits.Mercy);
-                generosity = hero.GetTraitLevel(DefaultTraits.Generosity);
+                starter.AddGameMenu("dark_altar_buy", "Choose the gift you would take from the darkness. Each carries its own hunger.",
+                    args => { });
             }
             catch { }
 
-            // Interference penalty: if sanctuary used within 30 days, gain is halved.
-            int baseGain = MiracleMath.ColdGain(honor, mercy, generosity);
-            int today = CurrentCampaignDay();
-            int sinceSanct = today - SanctuaryCampaignBehavior._lastSanctuaryUseDay;
-            if (sinceSanct >= 0 && sinceSanct < CrossInterferenceDays)
-                baseGain = Math.Max(1, baseGain / 2);
-
-            // Cost: prisoner first; HP if none.
-            string costDesc = "10 HP";
-            bool usedPrisoner = false;
-            int prisonerTier = 0;
-            try
+            foreach (var gift in DarkGiftSystem.AllGifts)
             {
-                if (party?.PrisonRoster != null && party.PrisonRoster.Count > 0)
+                var capturedGift = gift; // closure capture
+                string optionId  = $"dark_gift_buy_{(int)gift}";
+                try
                 {
-                    var prisoners = party.PrisonRoster.GetTroopRoster().ToList();
-                    var lowest = prisoners.Where(e => !e.Character.IsHero)
-                                         .OrderBy(e => e.Character.Tier).FirstOrDefault();
-                    if (!lowest.Equals(default) && lowest.Number > 0)
-                    {
-                        prisonerTier = lowest.Character.Tier;
-                        party.PrisonRoster.AddToCounts(lowest.Character, -1);
-                        costDesc = $"1 {lowest.Character.Name} (prisoner)";
-                        usedPrisoner = true;
-                    }
+                    starter.AddGameMenuOption("dark_altar_buy", optionId, $"{{DARK_GIFT_BUY_{(int)gift}}}",
+                        args =>
+                        {
+                            try
+                            {
+                                bool canBuy = DarkGiftSystem.CanBuyGift(capturedGift);
+                                int  owned  = DarkGiftSystem.TotalOwned;
+                                int  pCost  = DarkGiftCosts.GetNextPrisonerCost(owned);
+                                int  lCost  = DarkGiftCosts.GetNextLordCost(owned);
+                                string costStr = lCost > 0
+                                    ? $"{pCost}p + {lCost}L"
+                                    : $"{pCost}p";
+
+                                string ownedNote = "";
+                                if (capturedGift == DarkGiftId.DarkSpirit)
+                                {
+                                    int cnt = DarkGiftSystem.DarkSpiritCount;
+                                    if (cnt > 0) ownedNote = $" [owned ×{cnt}/3]";
+                                    if (cnt >= 3) { args.IsEnabled = false; ownedNote = " [max 3]"; }
+                                }
+                                else if (DarkGiftSystem.HasGift(capturedGift))
+                                {
+                                    args.IsEnabled = false;
+                                    ownedNote = " [already owned]";
+                                }
+
+                                MBTextManager.SetTextVariable($"DARK_GIFT_BUY_{(int)capturedGift}",
+                                    $"{DarkGiftSystem.GetGiftName(capturedGift)}{ownedNote}  ({costStr})  — {DarkGiftSystem.GetGiftMechanic(capturedGift)}");
+                                try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            }
+                            catch { }
+                            return true;
+                        },
+                        args => DoBuyGift(capturedGift));
                 }
-            }
-            catch { }
-
-            if (!usedPrisoner)
-            {
-                try { hero.HitPoints = Math.Max(1, hero.HitPoints - 10); } catch { }
-                // Soul Tithe: even the HP toll returns a fraction of warmth
-                if (TalentSystem.Has(TalentId.ColdTithe))
-                    try { hero.HitPoints = Math.Min(hero.MaxHitPoints, hero.HitPoints + 5); } catch { }
-            }
-            else if (TalentSystem.Has(TalentId.ColdTithe))
-            {
-                // Soul Tithe: tier-based heal — T1=5, T2=8, T3=10, T4+=15 + 1 bonus Cold
-                int soulHeal = prisonerTier <= 1 ? 5 : prisonerTier == 2 ? 8 : prisonerTier == 3 ? 10 : 15;
-                try { hero.HitPoints = Math.Min(hero.MaxHitPoints, hero.HitPoints + soulHeal); } catch { }
-                if (prisonerTier >= 4)
-                    try { MiracleInventory.AddCold(1); } catch { }
+                catch { }
             }
 
-            int cooldownReduction = 0;
+            // Back
             try
             {
-                cooldownReduction = ReagentSystem.AltarCooldownReduction();
-                ReagentSystem.ConsumeForAltar();
+                starter.AddGameMenuOption("dark_altar_buy", "dark_altar_buy_back", "Step away",
+                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } },
+                    true, -1, false);
             }
             catch { }
-
-            int agingReclaim = 0;
-            try
-            {
-                if (ReagentSystem.HasAny(ReagentSystem.SeaSerpentScale))
-                {
-                    ReagentSystem.ConsumeScale();
-                    agingReclaim = ReagentSystem.ScaleAgingReclaim;
-                    AgingSystem.RejuvenateHero(hero, agingReclaim);
-                }
-            }
-            catch { }
-
-            int gained = MiracleInventory.AddCold(baseGain);
-
-            try { MageKnowledge.AddWhispers(TalentSystem.Has(TalentId.ColdCovenant) ? 1 : 3); } catch { }
-
-            _lastAltarUseDay = today - cooldownReduction;
-            _altarUseCount++;
-
-            string reagentLine = cooldownReduction > 0
-                ? $"\n\nA reagent was consumed, reducing the next cooldown by {cooldownReduction} day(s)."
-                : "";
-            string scaleLine = agingReclaim > 0
-                ? "\n\nA Sea Serpent Scale presses against the stone and dissolves. The cold returns a day it had borrowed from you."
-                : "";
-
-            string msg;
-            if (gained > 0)
-                msg = $"The stone takes what you offer. It does not thank you. It does not need to. " +
-                      $"{gained} Cold received (cost: {costDesc}). [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}]\n\n" +
-                      $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}{scaleLine}";
-            else if (MiracleInventory.Grace > 0)
-                msg = "The light within you repels the stone. Spend your Grace first.";
-            else if (MiracleInventory.Cold >= MiracleMath.GraceColdCap)
-                msg = "The stone has filled you to the brim. Spend your Cold before it will take more.";
-            else
-                msg = "The stone finds nothing in you to draw upon. Dishonour, cruelty, and greed are what feed it.";
-
-            try
-            {
-                InformationManager.ShowInquiry(new InquiryData("Embrace the Cold", msg, true, false,
-                    "It is done.", "", () => { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }, null));
-            }
-            catch
-            {
-                MBInformationManager.AddQuickInformation(new TextObject(msg.Length > 80 ? msg.Substring(0, 80) + "…" : msg));
-                try { GameMenu.SwitchToMenu("altar_menu"); } catch { }
-            }
         }
 
-        // ── Action: Invoke the Dark Tide ───────────────────────────────────────
-        private static void DoInvokeDarkTide()
+        // ── Renounce submenu ───────────────────────────────────────────────────
+        private static void RegisterRenounceMenu(CampaignGameStarter starter)
         {
-            var hero  = Hero.MainHero;
-            var party = MobileParty.MainParty;
-            if (hero == null) { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } return; }
+            try
+            {
+                starter.AddGameMenu("dark_altar_renounce",
+                    "The altar does not refuse. It simply takes back what it gave, and leaves you lighter for it — though not cleaner.",
+                    args => { });
+            }
+            catch { }
 
-            int invokeHpCost = 15;
-            if (TalentSystem.Has(TalentId.DreadTide)) invokeHpCost += 5;
-            if (TalentSystem.Has(TalentId.ColdCovenant)) invokeHpCost -= 5;
-            try { hero.HitPoints = Math.Max(1, hero.HitPoints - invokeHpCost); } catch { }
+            foreach (var gift in DarkGiftSystem.AllGifts)
+            {
+                var capturedGift = gift;
+                string optionId  = $"dark_gift_renounce_{(int)gift}";
+                try
+                {
+                    starter.AddGameMenuOption("dark_altar_renounce", optionId, $"{{DARK_GIFT_RENOUNCE_{(int)gift}}}",
+                        args =>
+                        {
+                            try
+                            {
+                                bool has = DarkGiftSystem.HasGift(capturedGift);
+                                if (!has) return false; // hide options for gifts not owned
 
-            _lastInvokeDay  = CurrentCampaignDay();
+                                string stackNote = capturedGift == DarkGiftId.DarkSpirit
+                                    ? $" ×{DarkGiftSystem.DarkSpiritCount}"
+                                    : "";
+                                MBTextManager.SetTextVariable($"DARK_GIFT_RENOUNCE_{(int)capturedGift}",
+                                    $"Renounce: {DarkGiftSystem.GetGiftName(capturedGift)}{stackNote}");
+                                try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            }
+                            catch { return false; }
+                            return true;
+                        },
+                        args => DoRenounceGift(capturedGift));
+                }
+                catch { }
+            }
+
+            // Back
+            try
+            {
+                starter.AddGameMenuOption("dark_altar_renounce", "dark_altar_renounce_back", "Leave",
+                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } },
+                    true, -1, false);
+            }
+            catch { }
+        }
+
+        // ── Buy action ─────────────────────────────────────────────────────────
+        private static void DoBuyGift(DarkGiftId gift)
+        {
             _lastAltarUseDay = CurrentCampaignDay();
 
-            string result = PerformDarkTideEffect(party);
+            if (!DarkGiftSystem.TryPurchaseGift(gift, out string error))
+            {
+                ShowDialog("The altar is unmoved.",
+                    $"The stone takes nothing. {error}",
+                    () => { try { GameMenu.SwitchToMenu("dark_altar_buy"); } catch { } });
+                return;
+            }
 
-            string msg = $"You press both hands to the altar stone and speak the word that has no comfortable translation. " +
-                         $"The stone answers.\n\n{result}";
+            string lore = DarkGiftSystem.GetGiftLore(gift);
+            string mech = DarkGiftSystem.GetGiftMechanic(gift);
+            string blockNote = "";
+            if (MiracleInventory.Grace == 0)
+                blockNote = "";
+            else
+                blockNote = "\n\nThe warmth in you gutters and dies. You cannot hold both.";
 
+            ShowDialog($"The Altar Accepts — {DarkGiftSystem.GetGiftName(gift)}",
+                $"{lore}\n\n{mech}{blockNote}",
+                () => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } });
+        }
+
+        // ── Renounce action ────────────────────────────────────────────────────
+        private static void DoRenounceGift(DarkGiftId gift)
+        {
+            string name = DarkGiftSystem.GetGiftName(gift);
+            DarkGiftSystem.RenounceGift(gift);
+
+            ShowDialog("The Altar Reclaims",
+                $"You press your hands to the stone and name what you are giving back. "
+              + $"The {name} withdraws from you like a tide pulling sand. "
+              + "You are smaller for it. Perhaps that is the point.",
+                () => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } });
+        }
+
+        // ── Helpers ────────────────────────────────────────────────────────────
+        private static void ShowDialog(string title, string body, Action onClose)
+        {
             try
             {
-                InformationManager.ShowInquiry(new InquiryData("The Dark Tide", msg, true, false,
-                    "It is done.", "", () => { try { GameMenu.SwitchToMenu("altar_menu"); } catch { } }, null));
+                InformationManager.ShowInquiry(new InquiryData(
+                    title, body, true, false, "It is done.", "",
+                    onClose, null));
             }
             catch
             {
-                MBInformationManager.AddQuickInformation(new TextObject("The Dark Tide stirs."));
-                try { GameMenu.SwitchToMenu("altar_menu"); } catch { }
+                string brief = body.Length > 80 ? body.Substring(0, 80) + "…" : body;
+                MBInformationManager.AddQuickInformation(new TextObject(brief));
+                try { onClose?.Invoke(); } catch { }
             }
-        }
-
-        private static string PerformDarkTideEffect(MobileParty party)
-        {
-            // Dread Tide: all three effects fire simultaneously.
-            if (TalentSystem.Has(TalentId.DreadTide))
-            {
-                string r1 = DarkTideWoundNearby(party);
-                string r2 = DarkTideDrainTown(party);
-                string r3 = DarkTideMoraleCollapse(party);
-                return $"{r1}\n{r2}\n{r3}";
-            }
-            int roll = _rng.Next(3);
-            switch (roll)
-            {
-                case 0: return DarkTideWoundNearby(party);
-                case 1: return DarkTideDrainTown(party);
-                default: return DarkTideMoraleCollapse(party);
-            }
-        }
-
-        private static string DarkTideWoundNearby(MobileParty party)
-        {
-            if (party == null) return "The tide finds nothing.";
-            Vec2 p;
-            try { p = party.GetPosition2D; } catch { return "The tide finds nothing."; }
-            float rng2 = 150f * 150f;
-            string mainFactionId = "";
-            try { mainFactionId = Hero.MainHero?.MapFaction?.StringId ?? ""; } catch { }
-            var targets = MobileParty.All
-                .Where(mp => mp.IsActive && !mp.IsMainParty
-                          && (mp.MapFaction?.StringId ?? "") != mainFactionId)
-                .Select(mp => { Vec2 pp; try { pp = mp.GetPosition2D; } catch { pp = new Vec2(9999,9999); }
-                                float dx = pp.x - p.x, dy = pp.y - p.y;
-                                return (party: mp, d2: dx*dx+dy*dy); })
-                .Where(t => t.d2 < rng2).OrderBy(t => t.d2).Take(3).Select(t => t.party).ToList();
-
-            if (targets.Count == 0)
-                return "The grey hunger rolls outward. No enemy stands close enough to be touched.";
-
-            int total = 0;
-            int tideMultiplier = TalentSystem.Has(TalentId.DreadTide) ? 2 : 1;
-            foreach (var mp in targets)
-            {
-                int toWound = (10 + _rng.Next(6)) * tideMultiplier;
-                int w = 0;
-                foreach (var e in mp.MemberRoster.GetTroopRoster().ToList())
-                {
-                    if (e.Character.IsHero) continue;
-                    int n = Math.Min(e.Number - e.WoundedNumber, toWound - w);
-                    if (n <= 0) continue;
-                    try { mp.MemberRoster.AddToCounts(e.Character, 0, false, n); w += n; } catch { }
-                    if (w >= toWound) break;
-                }
-                try { mp.RecentEventsMorale -= 20f; } catch { }
-                total += w;
-            }
-            return $"The grey hunger reaches {targets.Count} nearby {(targets.Count > 1 ? "forces" : "force")}. {total} soldiers are brought low, their morale broken.";
-        }
-
-        private static string DarkTideDrainTown(MobileParty party)
-        {
-            if (party == null) return "The tide finds nothing.";
-            Vec2 p;
-            try { p = party.GetPosition2D; } catch { return "The tide finds nothing."; }
-            Settlement nearest = null;
-            float best = 80f * 80f;
-            string mainFactionId = "";
-            try { mainFactionId = Hero.MainHero?.MapFaction?.StringId ?? ""; } catch { }
-            foreach (var s in Settlement.All)
-            {
-                if (!s.IsTown || s.Town == null) continue;
-                if ((s.MapFaction?.StringId ?? "") == mainFactionId) continue;
-                Vec2 sp; try { sp = s.GetPosition2D; } catch { continue; }
-                float dx = sp.x - p.x, dy = sp.y - p.y;
-                float d2 = dx * dx + dy * dy;
-                if (d2 < best) { best = d2; nearest = s; }
-            }
-            if (nearest == null)
-                return "The tide rolls out and finds no enemy settlement within its reach.";
-            try { nearest.Town.Loyalty  = Math.Max(0f, nearest.Town.Loyalty  - 15f); } catch { }
-            try { nearest.Town.Security = Math.Max(0f, nearest.Town.Security - 15f); } catch { }
-            return $"The grey cold settles over {nearest.Name}. The people grow restless. Loyalty and security drain away (−15 each).";
-        }
-
-        private static string DarkTideMoraleCollapse(MobileParty party)
-        {
-            if (party == null) return "The tide finds nothing.";
-            Vec2 p;
-            try { p = party.GetPosition2D; } catch { return "The tide finds nothing."; }
-            float rng2 = 200f * 200f;
-            string mainFactionId = "";
-            try { mainFactionId = Hero.MainHero?.MapFaction?.StringId ?? ""; } catch { }
-            int hit = 0;
-            foreach (var mp in MobileParty.All.ToList())
-            {
-                if (!mp.IsActive || mp.IsMainParty || (mp.MapFaction?.StringId ?? "") == mainFactionId) continue;
-                Vec2 pp; try { pp = mp.GetPosition2D; } catch { continue; }
-                float dx = pp.x - p.x, dy = pp.y - p.y;
-                if (dx * dx + dy * dy > rng2) continue;
-                try { mp.RecentEventsMorale -= 20f; hit++; } catch { }
-            }
-            return hit > 0
-                ? $"A wave of despair breaks across the horizon. {hit} nearby {(hit > 1 ? "forces sink" : "force sinks")} under it (−20 morale each)."
-                : "The despair rolls out and finds nothing near enough to break.";
         }
     }
 }
