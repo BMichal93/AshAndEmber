@@ -148,6 +148,74 @@ namespace AshAndEmber
             }
         }
 
+        // ── Nature (Living Ember) particle effects ──────────────────────────────
+        // Real terrain debris stands in for each element so a cast looks like the
+        // land itself answering: torn grass and leaves for Earth (forest), water
+        // splashes for Water, blown dust for Wind, and sparks for Storm. All names
+        // are verified present in this build
+        // (drawn from the engine's collision/footstep/weather particle sets); the
+        // first that attaches wins, the rest are fallbacks.
+        private static string[] NatureParticleNames(NatureElement el)
+        {
+            switch (el)
+            {
+                case NatureElement.Earth:   // forest — torn grass, leaves, roots
+                    return new[] { "psys_game_infantry_grass_col", "psys_game_hoof_grass_col",
+                                   "psys_game_boulder_grass_coll", "psys_dust_env_forest" };
+                case NatureElement.Water:   // splashes
+                    return new[] { "psys_game_water_splash_circular", "psys_game_water_splash_1",
+                                   "psys_game_water_splash_2", "psys_game_hoof_water_coll" };
+                case NatureElement.Wind:    // blown dust
+                    return new[] { "psys_dust_env", "psys_game_cam_dust",
+                                   "psys_dust_env_2", "psys_game_hoof_dust" };
+                case NatureElement.Storm:   // sparks
+                    return new[] { "psys_campfire_sparks", "psys_game_stone_dust_a",
+                                   "psys_dust_env" };
+                default:
+                    return new[] { "psys_dust_env" };
+            }
+        }
+
+        // A cluster: one burst at the point plus a couple of scattered companions.
+        internal static void SpawnNatureBurst(Vec3 position, NatureElement el, float duration)
+        {
+            string[] names = NatureParticleNames(el);
+            SpawnSingleParticle(position, duration, names);
+            for (int i = 0; i < 2; i++)
+            {
+                float a = (float)(_rng.NextDouble() * Math.PI * 2);
+                float r = 0.3f + (float)_rng.NextDouble() * 0.7f;
+                Vec3  off = new Vec3((float)Math.Cos(a) * r, (float)Math.Sin(a) * r, 0f);
+                SpawnSingleParticle(position + off, duration * 0.8f, names);
+            }
+        }
+
+        // A ring of bursts at the given radius — for shockwaves and AoE pulses.
+        internal static void SpawnNatureRing(Vec3 origin, NatureElement el, float radius, float duration)
+        {
+            string[] names = NatureParticleNames(el);
+            int count = Math.Max(6, Math.Min(14, (int)(radius * 1.6f)));
+            for (int i = 0; i < count; i++)
+            {
+                double ang = Math.PI * 2.0 / count * i;
+                Vec3 p = origin + new Vec3((float)Math.Cos(ang) * radius, (float)Math.Sin(ang) * radius, 0f);
+                SpawnSingleParticle(p, duration, names);
+            }
+        }
+
+        // A line of bursts between two points — for cones, pulls, dashes, beams.
+        internal static void SpawnNatureLine(Vec3 from, Vec3 to, NatureElement el, float duration)
+        {
+            string[] names = NatureParticleNames(el);
+            Vec3 delta = to - from;
+            int steps = Math.Max(3, Math.Min(10, (int)(delta.Length)));
+            for (int i = 0; i <= steps; i++)
+            {
+                float t = steps == 0 ? 0f : (float)i / steps;
+                SpawnSingleParticle(from + delta * t, duration, names);
+            }
+        }
+
         // Fireball detonation: central explosion column + radial fire-jet ring.
         // Centre uses impact/explosion particles; ring uses ambient fire as scatter.
         internal static void SpawnExplosionEffect(Vec3 pos, ColorSchool school, float radius, float duration)

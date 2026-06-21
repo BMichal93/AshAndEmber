@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ash and Ember — English localization overrides.
+  Merged into the base English language, so it can rewrite vanilla display text
+  (here: the Vlandian culture name/description shown on the character-creation
+  card and in the encyclopedia) without touching any game files.
+-->
+<LanguageData id="English">
+	<LanguageFile xml_path="std_temple_strings_xml.xml" />
+</LanguageData>

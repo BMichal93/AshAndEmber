@@ -1,0 +1,21 @@
+<Prefab>
+  <Window>
+    <!-- Transparent full-screen host; only the bar at the bottom is drawn.
+         DoNotAcceptEvents so it never steals input. -->
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" DoNotAcceptEvents="true" DoNotUseCustomScale="true">
+      <Children>
+        <!-- Track (dark backing) -->
+        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="320" SuggestedHeight="22"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="180"
+                Sprite="BlankWhiteSquare_9" Color="#0A0A0AC8" DoNotAcceptEvents="true">
+          <Children>
+            <!-- Fill (element-coloured); width is driven by the view model. -->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="@FillWidth" SuggestedHeight="18"
+                    HorizontalAlignment="Left" VerticalAlignment="Center" MarginLeft="2"
+                    Sprite="BlankWhiteSquare_9" Color="@FillColor" DoNotAcceptEvents="true" />
+          </Children>
+        </Widget>
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>

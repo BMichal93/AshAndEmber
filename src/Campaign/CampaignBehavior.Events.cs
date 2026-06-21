@@ -99,6 +99,7 @@ namespace AshAndEmber
                 SettlementEncounters.ResetForNewGame();
                 DragonQuestSystem.ResetForNewGame();
                 KeybindReferenceSystem.ResetForNewGame();
+                KeybindReferenceSystem.EnsureForSession();   // present from the very start
                 AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
                 EmberConclaveSystem.ResetForNewGame();

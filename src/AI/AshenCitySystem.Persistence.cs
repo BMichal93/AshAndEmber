@@ -80,6 +80,12 @@ namespace AshAndEmber
             _ashenKingdom  = null;
             _declaringWar  = false;
 
+            // Settlement names revert to their XML originals every session, so the
+            // rename must run again. This flag is session-scoped (not persisted);
+            // clearing it here guarantees the next daily tick re-applies the Ashen
+            // names on every load, not just on a fresh process.
+            _settlementsRenamed = false;
+
             // Set grace periods so heavy campaign actions never fire on the
             // first daily ticks after loading (avoids stacking ChangeOwner /
             // DeclareWar / KillCharacter calls during game initialization).

@@ -40,12 +40,50 @@ namespace AshAndEmber
         // Settlement cooldown so the hermit doesn't spam on every enter.
         private readonly Dictionary<string, int> _hermitCooldowns = new Dictionary<string, int>();
 
+        // Campaign-charge tracking: standing still for a few hours fills a charge.
+        private Vec2 _lastHourPos = Vec2.Zero;
+        private bool _haveHourPos = false;
+        private int  _stillHours  = 0;
+
         public override void RegisterEvents()
         {
             CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+            CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
             CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
             CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+        }
+
+        // Standing still on the map fills a charge over a few hours; movement resets
+        // the count. Cast it through the litany window (Shift+X). Dawn Call hastens it.
+        private void OnHourlyTick()
+        {
+            try
+            {
+                if (!NatureKnowledge.IsAttuned) return;
+                var party = MobileParty.MainParty;
+                if (party == null) return;
+
+                Vec2 pos = party.GetPosition2D;
+                if (_haveHourPos && (pos - _lastHourPos).Length < 0.05f) _stillHours++;
+                else _stillHours = 0;
+                _lastHourPos = pos;
+                _haveHourPos = true;
+
+                int needed = TalentSystem.Has(TalentId.NatureDawnCall)
+                    ? Math.Max(1, NatureMath.ChargeCampaignHours - 1)
+                    : NatureMath.ChargeCampaignHours;
+
+                if (_stillHours >= needed && !NatureCharge.IsFull)
+                {
+                    if (NatureCharge.GrantCampaignCharge())
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            "The land has filled your hands — a charge waits. Open the litany (Shift+X) to spend it.",
+                            new Color(0.4f, 0.75f, 0.4f)));
+                    _stillHours = 0;
+                }
+            }
+            catch { }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -73,15 +111,7 @@ namespace AshAndEmber
         // ── Daily tick ────────────────────────────────────────────────────────
         private void OnDailyTick()
         {
-            try { NatureCharge.DailyTick(); } catch { }
-
-            // Passive charge accumulation. Dawn Call guarantees it each dawn; otherwise 33% chance.
-            if (NatureKnowledge.IsAttuned)
-            {
-                bool dawnCall = TalentSystem.Has(TalentId.NatureDawnCall);
-                if (dawnCall || _rng.Next(3) == 0)
-                    try { NatureCharge.TryCampaignAccumulate(); } catch { }
-            }
+            // Campaign charges come from standing still (see OnHourlyTick).
 
             // Tick hermit cooldowns
             foreach (string key in _hermitCooldowns.Keys.ToList())

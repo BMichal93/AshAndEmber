@@ -158,10 +158,11 @@ namespace AshAndEmber
                 + "  Open the satchel     Left Ctrl + X        (RB + R3)\n\n"
                 + "── THE LIVING EMBER — the land's own fire ───────────\n"
                 + "  (For those attuned to the living world, not the inner fire.)\n"
-                + "  Draw from the land   Hold Right Alt + S   (hold R3, L-stick Down)\n"
-                + "  Release and cast     Hold Right Alt + W   (hold R3, L-stick Up)\n"
+                + "  Gather a charge     Hold Left Ctrl + stand still   (hold R3, stand still)\n"
+                + "  Cast attack         Hold Ctrl + Attack             (Right Trigger)\n"
+                + "  Cast support        Hold Ctrl + Block              (Left Trigger)\n"
                 + "  Both hands must be empty. Armour weight must not exceed 25.\n"
-                + "  Verdant terrain (forest) draws for free; all other terrain costs HP.\n\n"
+                + "  The element is the land's: Wind, Earth, Water, or Storm.\n\n"
                 + "The grimoire holds the deeper craft of the Fire. "
                 + "The rest, you will learn by surviving.";
 

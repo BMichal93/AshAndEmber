@@ -1,12 +1,12 @@
 // =============================================================================
 // ASH AND EMBER — Nature/NatureCharge.cs
-// Holds the player's current elemental charge(s) and handles terrain detection.
+// Holds the player's elemental charge(s) and the channelling fill.
 //
-// Draw:    pulls one charge from the environment — element from terrain.
-// Release: spends the oldest charge and returns the power to cast.
-// Expiry:  charges expire after NatureMath.ChargeMissionExpirySec unless
-//          the player owns the Open Grip talent.
-// Capacity: 1 normally, 2 with the Living Root talent.
+// Channel: standing still while focusing fills a bar; when it completes you gain
+//          one charge of the local element. The charge then lasts ~10 s.
+// Cast:    the input handler spends the charge as the element's attack or support.
+// Element: decided by the battle terrain (cached at mission start). Mixed/unknown
+//          ground gives a random element.
 // =============================================================================
 
 using System;
@@ -22,27 +22,57 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
 
-        // Each charge: (power, timer remaining in seconds or campaign days)
-        private static readonly List<(NaturePower power, float timer)> _charges
-            = new List<(NaturePower, float)>();
+        // Each charge: (element, seconds remaining).
+        private static readonly List<(NatureElement element, float timer)> _charges
+            = new List<(NatureElement, float)>();
 
-        // Battle terrain is cached once at mission start so mid-fight draws are
-        // consistent with the map position that determined the battle terrain.
+        // Channel progress in seconds toward one charge.
+        private static float _fill = 0f;
+
+        // Battle terrain cached at mission start.
         private static NatureElement[] _battleTerrainElements = null;
 
-        // ── Capacity ──────────────────────────────────────────────────────────
+        // ── Capacity / talents ──────────────────────────────────────────────────
         private static int Capacity => TalentSystem.Has(TalentId.NatureLivingRoot) ? 2 : 1;
 
-        // ── Public state ──────────────────────────────────────────────────────
-        public static bool HasCharge    => _charges.Count > 0;
-        public static int  ChargeCount  => _charges.Count;
+        // Channel speed multiplier from talents (faster fill).
+        private static float FillRate
+        {
+            get
+            {
+                float rate = 1f;
+                if (TalentSystem.Has(TalentId.NatureStillDraw)) rate += 1f;   // twice as fast
+                if (TalentSystem.Has(TalentId.NatureDeepEarth)) rate += 0.5f;
+                return rate;
+            }
+        }
 
-        public static NaturePower CurrentPower =>
-            _charges.Count > 0 ? _charges[0].power : NaturePower.None;
+        // ── Public state ────────────────────────────────────────────────────────
+        public static bool HasCharge   => _charges.Count > 0;
+        public static int  ChargeCount => _charges.Count;
+        public static bool IsFull      => _charges.Count >= Capacity;
+        public static int  MaxCharges  => Capacity;
 
-        // ── Terrain ───────────────────────────────────────────────────────────
+        public static NatureElement CurrentElement =>
+            _charges.Count > 0 ? _charges[0].element : NatureElement.None;
 
-        // Call at mission start to lock in the terrain type for this battle.
+        // 0..1 fill toward the next charge — for the channel bar (Part 3).
+        public static float FillProgress01 =>
+            NatureMath.ChannelFillSeconds <= 0f ? 1f
+            : Math.Min(1f, _fill / NatureMath.ChannelFillSeconds);
+
+        public static bool IsChannelling => _fill > 0f && !IsFull;
+
+        // The element the bar should colour itself with: the held charge if any,
+        // else a preview of the local terrain (first option of a mixed set).
+        public static NatureElement PreviewElement(bool inMission)
+        {
+            if (HasCharge) return CurrentElement;
+            var pool = GetCurrentTerrainElements(inMission);
+            return (pool != null && pool.Length > 0) ? pool[0] : NatureElement.Wind;
+        }
+
+        // ── Terrain ─────────────────────────────────────────────────────────────
         public static void CacheBattleTerrain()
         {
             _battleTerrainElements = null;
@@ -53,10 +83,8 @@ namespace AshAndEmber
                 string terrainName = "Plain";
                 try
                 {
-                    var terrain = Campaign.Current.MapSceneWrapper
-                        ?.GetTerrainTypeAtPosition(pos);
-                    if (terrain.HasValue)
-                        terrainName = terrain.Value.ToString();
+                    var terrain = Campaign.Current.MapSceneWrapper?.GetTerrainTypeAtPosition(pos);
+                    if (terrain.HasValue) terrainName = terrain.Value.ToString();
                 }
                 catch { }
                 _battleTerrainElements = NatureMath.TerrainElements(terrainName);
@@ -66,10 +94,7 @@ namespace AshAndEmber
 
         private static NatureElement[] GetCurrentTerrainElements(bool inMission)
         {
-            if (inMission && _battleTerrainElements != null)
-                return _battleTerrainElements;
-
-            // Campaign map: read live position
+            if (inMission && _battleTerrainElements != null) return _battleTerrainElements;
             try
             {
                 if (Campaign.Current == null || MobileParty.MainParty == null)
@@ -78,10 +103,8 @@ namespace AshAndEmber
                 string terrainName = "Plain";
                 try
                 {
-                    var terrain = Campaign.Current.MapSceneWrapper
-                        ?.GetTerrainTypeAtPosition(pos);
-                    if (terrain.HasValue)
-                        terrainName = terrain.Value.ToString();
+                    var terrain = Campaign.Current.MapSceneWrapper?.GetTerrainTypeAtPosition(pos);
+                    if (terrain.HasValue) terrainName = terrain.Value.ToString();
                 }
                 catch { }
                 return NatureMath.TerrainElements(terrainName);
@@ -89,115 +112,67 @@ namespace AshAndEmber
             catch { return NatureMath.TerrainElements("Plain"); }
         }
 
-        // Returns the terrain element list so callers can display it before drawing.
-        public static NatureElement[] PeekTerrainElements(bool inMission)
-            => GetCurrentTerrainElements(inMission);
+        public static NatureElement[] PeekTerrainElements(bool inMission) => GetCurrentTerrainElements(inMission);
 
-        // ── Draw ──────────────────────────────────────────────────────────────
-        // Returns true and the drawn power on success, false if blocked.
-        public static bool TryDraw(bool inMission, out NaturePower drawn, out string failReason)
+        // ── Channel ─────────────────────────────────────────────────────────────
+        // Advances the fill while the player stands still and focuses. Returns true
+        // on the frame a charge is granted. No-op (and no progress) once full.
+        public static bool ChannelTick(float dt, bool inMission)
         {
-            drawn      = NaturePower.None;
-            failReason = null;
+            if (IsFull) { _fill = 0f; return false; }
+            if (dt <= 0f) return false;
 
-            if (!NatureKnowledge.IsAttuned)
-            {
-                failReason = "You are not attuned to the living world.";
-                return false;
-            }
+            _fill += dt * FillRate;
+            if (_fill < NatureMath.ChannelFillSeconds) return false;
 
-            if (_charges.Count >= Capacity)
-            {
-                failReason = "Your grip is already full. Release what you hold before drawing again.";
-                return false;
-            }
-
+            _fill = 0f;
             NatureElement[] pool = GetCurrentTerrainElements(inMission);
-            NatureElement el = pool[_rng.Next(pool.Length)];
-            drawn = NatureMath.RandomPower(el, _rng);
-
-            float timer = inMission
-                ? NatureMath.ChargeMissionExpirySec
-                : (float)NatureMath.ChargeCampaignExpiryDays;
-            _charges.Add((drawn, timer));
+            NatureElement el = (pool != null && pool.Length > 0)
+                ? pool[_rng.Next(pool.Length)] : NatureElement.Wind;
+            _charges.Add((el, NatureMath.ChargeLifeSeconds));
             return true;
         }
 
-        // ── Release ───────────────────────────────────────────────────────────
-        // Consumes the oldest charge and returns its power.
-        public static NaturePower Release()
+        public static void ResetFill() => _fill = 0f;
+
+        // Grant a charge directly (campaign standing-still — Part 4).
+        public static bool GrantCampaignCharge()
         {
-            if (_charges.Count == 0) return NaturePower.None;
-            NaturePower p = _charges[0].power;
-            _charges.RemoveAt(0);
-            return p;
+            if (IsFull) return false;
+            NatureElement[] pool = GetCurrentTerrainElements(false);
+            NatureElement el = (pool != null && pool.Length > 0)
+                ? pool[_rng.Next(pool.Length)] : NatureElement.Wind;
+            _charges.Add((el, NatureMath.ChargeLifeSeconds));
+            return true;
         }
 
-        // ── Tick (mission) ────────────────────────────────────────────────────
+        // ── Release ─────────────────────────────────────────────────────────────
+        public static NatureElement Release()
+        {
+            if (_charges.Count == 0) return NatureElement.None;
+            NatureElement el = _charges[0].element;
+            _charges.RemoveAt(0);
+            return el;
+        }
+
+        // ── Expiry tick (battle) ────────────────────────────────────────────────
         public static void MissionTick(float dt)
         {
-            if (TalentSystem.Has(TalentId.NatureOpenGrip)) return;
+            if (TalentSystem.Has(TalentId.NatureOpenGrip)) return;  // charges never fade
             for (int i = _charges.Count - 1; i >= 0; i--)
             {
                 float t = _charges[i].timer - dt;
-                if (t <= 0f)
-                {
-                    NaturePower expired = _charges[i].power;
-                    _charges.RemoveAt(i);
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"The {NatureMath.PowerName(expired)} fades — the land takes back what you did not use.",
-                        new Color(0.5f, 0.7f, 0.4f)));
-                }
-                else
-                {
-                    _charges[i] = (_charges[i].power, t);
-                }
+                if (t <= 0f) _charges.RemoveAt(i);
+                else _charges[i] = (_charges[i].element, t);
             }
         }
 
-        // ── Tick (campaign day) ───────────────────────────────────────────────
-        public static void DailyTick()
-        {
-            if (TalentSystem.Has(TalentId.NatureOpenGrip)) return;
-            for (int i = _charges.Count - 1; i >= 0; i--)
-            {
-                float t = _charges[i].timer - 1f;
-                if (t <= 0f)
-                    _charges.RemoveAt(i);
-                else
-                    _charges[i] = (_charges[i].power, t);
-            }
-        }
-
-        // ── Passive campaign accumulation ─────────────────────────────────────
-        // Called on the daily tick: adds a free charge if empty and terrain qualifies.
-        // Double rate with Living Root talent.
-        public static void TryCampaignAccumulate()
-        {
-            if (!NatureKnowledge.IsAttuned) return;
-            if (_charges.Count >= Capacity) return;
-            int passes = TalentSystem.Has(TalentId.NatureLivingRoot) ? 2 : 1;
-            for (int p = 0; p < passes; p++)
-            {
-                if (_charges.Count >= Capacity) break;
-                NaturePower drawn;
-                string _;
-                if (TryDraw(inMission: false, out drawn, out _))
-                {
-                    // Passive accumulation: silent unless it filled from empty
-                    if (_charges.Count == 1)
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"The land is generous. You carry a {NatureMath.PowerName(drawn)} charge.",
-                            new Color(0.4f, 0.75f, 0.4f)));
-                }
-            }
-        }
-
-        // ── Clear ─────────────────────────────────────────────────────────────
+        // ── Clear ───────────────────────────────────────────────────────────────
         public static void ClearForMission()
         {
             _charges.Clear();
             _battleTerrainElements = null;
+            _fill = 0f;
         }
     }
 }

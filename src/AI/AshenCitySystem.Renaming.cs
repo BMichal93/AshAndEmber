@@ -77,8 +77,16 @@ namespace AshAndEmber
         };
 
         // Reflection handle for MBObjectBase._name — cached once, used per-call.
+        // Works for Kingdom and CultureObject (they read the base field).
         private static readonly FieldInfo _nameField =
             typeof(MBObjectBase).GetField("_name",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // Settlement SHADOWS MBObjectBase._name with its own _name field, and
+        // Settlement.Name reads the shadowing field. Writing the base field has no
+        // effect — that was the bug that left towns named Tyal, Sibir, … in game.
+        private static readonly FieldInfo _settlementNameField =
+            typeof(Settlement).GetField("_name",
                 BindingFlags.NonPublic | BindingFlags.Instance);
 
         // ── Entry point ───────────────────────────────────────────────────────
@@ -138,7 +146,9 @@ namespace AshAndEmber
         // ── Name setter ───────────────────────────────────────────────────────
         private static void SetSettlementName(Settlement settlement, string name)
         {
-            _nameField?.SetValue(settlement, new TextObject(name));
+            if (settlement == null) return;
+            // Use the Settlement-declared _name field (see field comment above).
+            (_settlementNameField ?? _nameField)?.SetValue(settlement, new TextObject(name));
         }
 
         // ── Holy Temple kingdom rename ─────────────────────────────────────────

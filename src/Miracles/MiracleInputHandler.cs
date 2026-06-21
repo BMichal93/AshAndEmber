@@ -99,7 +99,12 @@ namespace AshAndEmber
             bool holdKb  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
             // Controller: hold RBumper alone (not with LBumper which is spells).
             bool holdPad = rbHeld;
-            bool holding = holdKb || holdPad;
+            // Only the faithful (Grace) or the cold-touched react to the Ctrl modifier.
+            // Without either, holding Ctrl must do nothing — no focus light, no buffer —
+            // so it does not bleed into Nature's casting (which shares the modifier) or
+            // glow for a hero who carries no miracles at all.
+            bool holding = (holdKb || holdPad)
+                        && (MiracleInventory.HasGrace || MiracleInventory.HasCold);
 
             if (holding)
             {
@@ -226,6 +231,14 @@ namespace AshAndEmber
 
         public static void ShowMiracleMenu()
         {
+            // Grace, Cold and Nature are mutually exclusive. A hero attuned to the
+            // living world uses this same key (Shift+X / RB+L3) to invoke nature.
+            if (NatureKnowledge.IsAttuned)
+            {
+                NatureInputHandler.ShowNatureMenu();
+                return;
+            }
+
             if (!MiracleInventory.HasGrace && !MiracleInventory.HasCold)
             {
                 InformationManager.DisplayMessage(new InformationMessage(

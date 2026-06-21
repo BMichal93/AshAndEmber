@@ -885,47 +885,33 @@ namespace AshAndEmber.Tests
         // ── NatureMath ────────────────────────────────────────────────────────
 
         [Test]
-        public void NatureMath_DrawHpCost_Verdant_IsZero()
-        {
-            Assert.AreEqual(0f, NatureMath.DrawHpCost(NatureElement.Verdant));
-        }
-
-        [Test]
-        public void NatureMath_DrawHpCost_AllNonVerdant_ArePositive()
-        {
-            var elements = new[]
-            {
-                NatureElement.Stone, NatureElement.Water,
-                NatureElement.Wind,  NatureElement.Frost, NatureElement.Storm,
-            };
-            foreach (var el in elements)
-                Assert.Greater(NatureMath.DrawHpCost(el), 0f,
-                    $"DrawHpCost for {el} must be positive.");
-        }
-
-        [Test]
-        public void NatureMath_TerrainElements_Forest_ReturnsVerdant()
+        public void NatureMath_TerrainElements_Forest_ReturnsEarth()
         {
             var els = NatureMath.TerrainElements("Forest");
             Assert.AreEqual(1, els.Length);
-            Assert.AreEqual(NatureElement.Verdant, els[0]);
+            Assert.AreEqual(NatureElement.Earth, els[0]);
         }
 
         [Test]
-        public void NatureMath_TerrainElements_Swamp_ReturnsTwoElements()
+        public void NatureMath_TerrainElements_KnownTerrains_MapAsExpected()
         {
-            var els = NatureMath.TerrainElements("Swamp");
-            Assert.AreEqual(2, els.Length);
-            CollectionAssert.Contains(els, NatureElement.Stone);
-            CollectionAssert.Contains(els, NatureElement.Water);
+            Assert.AreEqual(NatureElement.Wind,  NatureMath.TerrainElements("Mountain")[0]);
+            Assert.AreEqual(NatureElement.Wind,  NatureMath.TerrainElements("Steppe")[0]);
+            Assert.AreEqual(NatureElement.Water, NatureMath.TerrainElements("River")[0]);
+            Assert.AreEqual(NatureElement.Water, NatureMath.TerrainElements("Snow")[0]);
+            Assert.AreEqual(NatureElement.Storm, NatureMath.TerrainElements("Desert")[0]);
+            Assert.AreEqual(NatureElement.Storm, NatureMath.TerrainElements("Plain")[0]);
         }
 
         [Test]
-        public void NatureMath_TerrainElements_Unknown_ReturnsWind()
+        public void NatureMath_TerrainElements_Unknown_ReturnsAllFour()
         {
             var els = NatureMath.TerrainElements("SomeFictionalTerrain");
-            Assert.AreEqual(1, els.Length);
-            Assert.AreEqual(NatureElement.Wind, els[0]);
+            Assert.AreEqual(4, els.Length);
+            CollectionAssert.Contains(els, NatureElement.Wind);
+            CollectionAssert.Contains(els, NatureElement.Earth);
+            CollectionAssert.Contains(els, NatureElement.Water);
+            CollectionAssert.Contains(els, NatureElement.Storm);
         }
 
         [Test]
@@ -933,18 +919,14 @@ namespace AshAndEmber.Tests
         {
             var pairs = new[]
             {
-                (NaturePower.Thorngrasp,   NatureElement.Verdant),
-                (NaturePower.LivingBreath, NatureElement.Verdant),
-                (NaturePower.StoneSurge,   NatureElement.Stone),
-                (NaturePower.EarthMantle,  NatureElement.Stone),
-                (NaturePower.Undertow,     NatureElement.Water),
-                (NaturePower.StillWater,   NatureElement.Water),
-                (NaturePower.CallingGale,  NatureElement.Wind),
-                (NaturePower.FairWind,     NatureElement.Wind),
-                (NaturePower.Hoarfrost,    NatureElement.Frost),
-                (NaturePower.GlacialShell, NatureElement.Frost),
-                (NaturePower.WrathOfTheSky,NatureElement.Storm),
-                (NaturePower.LevinStep,    NatureElement.Storm),
+                (NaturePower.Gale,        NatureElement.Wind),
+                (NaturePower.Tailwind,    NatureElement.Wind),
+                (NaturePower.Entangle,    NatureElement.Earth),
+                (NaturePower.Bulwark,     NatureElement.Earth),
+                (NaturePower.Torrent,     NatureElement.Water),
+                (NaturePower.Renewal,     NatureElement.Water),
+                (NaturePower.ThunderClap, NatureElement.Storm),
+                (NaturePower.Stormstep,   NatureElement.Storm),
             };
             foreach (var (power, expected) in pairs)
                 Assert.AreEqual(expected, NatureMath.ElementOf(power),
@@ -952,14 +934,29 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void NatureMath_RandomPower_Verdant_OnlyVerdantPowers()
+        public void NatureMath_AttackAndSupport_MatchElement()
+        {
+            foreach (NatureElement el in new[]
+                { NatureElement.Wind, NatureElement.Earth, NatureElement.Water, NatureElement.Storm })
+            {
+                var atk = NatureMath.AttackPower(el);
+                var sup = NatureMath.SupportPower(el);
+                Assert.AreEqual(el, NatureMath.ElementOf(atk), $"Attack power of {el} mismatched.");
+                Assert.AreEqual(el, NatureMath.ElementOf(sup), $"Support power of {el} mismatched.");
+                Assert.IsTrue(NatureMath.IsAttack(atk),  $"{atk} should be an attack.");
+                Assert.IsFalse(NatureMath.IsAttack(sup), $"{sup} should be a support.");
+            }
+        }
+
+        [Test]
+        public void NatureMath_RandomPower_Earth_OnlyEarthPowers()
         {
             var rng = new System.Random(42);
             for (int i = 0; i < 20; i++)
             {
-                var p = NatureMath.RandomPower(NatureElement.Verdant, rng);
-                Assert.IsTrue(p == NaturePower.Thorngrasp || p == NaturePower.LivingBreath,
-                    $"Verdant random power must be Thorngrasp or LivingBreath, got {p}.");
+                var p = NatureMath.RandomPower(NatureElement.Earth, rng);
+                Assert.IsTrue(p == NaturePower.Entangle || p == NaturePower.Bulwark,
+                    $"Earth random power must be Entangle or Bulwark, got {p}.");
             }
         }
 

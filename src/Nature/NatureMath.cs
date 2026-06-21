@@ -1,249 +1,206 @@
 // =============================================================================
 // ASH AND EMBER — Nature/NatureMath.cs
 //
-// Pure numeric logic for The Living Ember — no TaleWorlds types, fully
-// testable. Terrain-to-element mapping, power constants, and draw costs.
+// Pure numeric logic for The Living Ember — no TaleWorlds types, fully testable.
+// Simplified to FOUR elements, each with one attack and one support power, drawn
+// from the combat environment:
+//   Wind  — mountains, steppes, hills
+//   Earth — forests
+//   Water — rivers, shores, lakes, rain, snow, wetland
+//   Storm — deserts, open plains
+//   (mixed / unknown ground gives a random element)
 // =============================================================================
 
 using System;
-using System.Collections.Generic;
 
 namespace AshAndEmber
 {
-    // Six elemental channels of the living world.
+    // The four channels of the living world.
     public enum NatureElement
     {
-        None    = 0,
-        Verdant = 1,   // Forest — the living web of root and branch
-        Stone   = 2,   // Mountain — unyielding earth
-        Water   = 3,   // River / Shore — flowing, cold, patient
-        Wind    = 4,   // Plain / Sky — the breath between things
-        Frost   = 5,   // Tundra / Snow — crystalline stillness
-        Storm   = 6,   // Steppe / Desert — charge in open sky
+        None  = 0,
+        Wind  = 1,   // open high country — the breath between things
+        Earth = 2,   // forest — root, branch, and the grip of growing things
+        Water = 3,   // river, shore, rain and snow — flowing and patient
+        Storm = 4,   // open plain and desert sky — charge and sudden violence
     }
 
-    // The twelve powers: two per element (attack + support).
+    // Eight powers: an attack and a support for each element.
     public enum NaturePower
     {
         None = 0,
-        // Verdant
-        Thorngrasp   = 1,   // pull + hold   — attack
-        LivingBreath = 2,   // AoE heal       — support
-        // Stone
-        StoneSurge   = 3,   // blunt + root   — attack
-        EarthMantle  = 4,   // resist buff    — support
-        // Water
-        Undertow     = 5,   // cone knockback — attack
-        StillWater   = 6,   // self-heal      — support
         // Wind
-        CallingGale  = 7,   // 360° knockback — attack
-        FairWind     = 8,   // speed buff     — support
-        // Frost
-        Hoarfrost    = 9,   // AoE slow       — attack
-        GlacialShell = 10,  // ice armour     — support
+        Gale       = 1,   // attack  — 360° knockback + damage
+        Tailwind   = 2,   // support — speed for you and allies
+        // Earth
+        Entangle   = 3,   // attack  — roots immobilise + damage
+        Bulwark    = 4,   // support — damage resistance
+        // Water
+        Torrent    = 5,   // attack  — forward cone, knockback (breaks formation)
+        Renewal    = 6,   // support — heal you and allies
         // Storm
-        WrathOfTheSky = 11, // lightning arc  — attack
-        LevinStep    = 12,  // instant dash   — support
+        ThunderClap = 7,  // attack  — bolt + chain
+        Stormstep   = 8,  // support — dash / speed burst
     }
 
     public static class NatureMath
     {
-        // ── Armour gate ────────────────────────────────────────────────────────
-        // Total armour weight above this cap blocks drawing and casting.
+        // ── Channel / charge ────────────────────────────────────────────────────
+        // Standing still while focusing fills a charge over this many seconds…
+        public const float ChannelFillSeconds = 6f;
+        // …and the resulting charge then lasts this long before it fades.
+        public const float ChargeLifeSeconds  = 30f;
+        // On the campaign map, standing still this many hours yields a charge.
+        public const int   ChargeCampaignHours = 4;
+
+        // ── Armour gate ─────────────────────────────────────────────────────────
+        // Total armour weight above this cap blocks channelling and casting.
         public const float ArmourWeightCap = 25f;
 
-        // ── Charge ────────────────────────────────────────────────────────────
-        // Base expiry for a held charge (seconds in mission, days on campaign).
-        public const float ChargeMissionExpirySec  = 90f;
-        public const int   ChargeCampaignExpiryDays = 1;
-
-        // HP cost when drawing in combat (except Verdant, which is free).
-        public const float DrawHpCostStone   = 12f;
-        public const float DrawHpCostWater   = 10f;
-        public const float DrawHpCostWind    = 10f;
-        public const float DrawHpCostFrost   = 14f;
-        public const float DrawHpCostStorm   = 13f;
-        public const float DrawHpCostVerdant =  0f; // free — the world gives willingly
-
-        public static float DrawHpCost(NatureElement el)
-        {
-            switch (el)
-            {
-                case NatureElement.Stone:   return DrawHpCostStone;
-                case NatureElement.Water:   return DrawHpCostWater;
-                case NatureElement.Wind:    return DrawHpCostWind;
-                case NatureElement.Frost:   return DrawHpCostFrost;
-                case NatureElement.Storm:   return DrawHpCostStorm;
-                default:                   return DrawHpCostVerdant;
-            }
-        }
-
-        // ── Terrain mapping ────────────────────────────────────────────────────
-        // Bannerlord TerrainType name → NatureElement list (1 = pure, 2 = hybrid).
-        // Matched by .ToString() so enum integer drift does not break the lookup.
+        // ── Terrain mapping ─────────────────────────────────────────────────────
+        // Bannerlord TerrainType name → element. Matched by .ToString() so enum
+        // integer drift does not break the lookup. Unknown / mixed ground returns
+        // all four, so the draw is random.
         public static NatureElement[] TerrainElements(string terrainTypeName)
         {
             switch (terrainTypeName ?? "")
             {
-                case "Forest":                          return _verdant;
-                case "Mountain":                        return _stone;
-                case "Water": case "ShallowRiver":
-                case "River": case "Lake":              return _water;
-                case "Shore":                           return _waterWind;
-                case "Plain":                           return _wind;
-                case "Snow": case "Arctic":             return _frost;
-                case "Desert":                          return _storm;
-                case "Steppe":                          return _stormWind;
-                case "Swamp": case "Wetland":           return _stoneWater;
-                case "Hill": case "Hills":              return _stoneWind;
-                case "Meadow": case "Grassland":        return _verdantWind;
-                default:                                return _wind;
+                case "Forest":                                  return _earth;
+                case "Mountain": case "Hill": case "Hills":
+                case "Steppe":                                  return _wind;
+                case "Water": case "ShallowRiver": case "River":
+                case "Lake":   case "Shore":
+                case "Snow":   case "Arctic":
+                case "Swamp":  case "Wetland":                  return _water;
+                case "Desert": case "Plain":
+                case "Meadow": case "Grassland":                return _storm;
+                default:                                        return _mixed;  // random
             }
         }
 
-        private static readonly NatureElement[] _verdant     = { NatureElement.Verdant };
-        private static readonly NatureElement[] _stone       = { NatureElement.Stone };
-        private static readonly NatureElement[] _water       = { NatureElement.Water };
-        private static readonly NatureElement[] _wind        = { NatureElement.Wind };
-        private static readonly NatureElement[] _frost       = { NatureElement.Frost };
-        private static readonly NatureElement[] _storm       = { NatureElement.Storm };
-        private static readonly NatureElement[] _waterWind   = { NatureElement.Water,   NatureElement.Wind   };
-        private static readonly NatureElement[] _stormWind   = { NatureElement.Storm,   NatureElement.Wind   };
-        private static readonly NatureElement[] _stoneWater  = { NatureElement.Stone,   NatureElement.Water  };
-        private static readonly NatureElement[] _stoneWind   = { NatureElement.Stone,   NatureElement.Wind   };
-        private static readonly NatureElement[] _verdantWind = { NatureElement.Verdant, NatureElement.Wind   };
+        private static readonly NatureElement[] _wind  = { NatureElement.Wind  };
+        private static readonly NatureElement[] _earth = { NatureElement.Earth };
+        private static readonly NatureElement[] _water = { NatureElement.Water };
+        private static readonly NatureElement[] _storm = { NatureElement.Storm };
+        private static readonly NatureElement[] _mixed =
+            { NatureElement.Wind, NatureElement.Earth, NatureElement.Water, NatureElement.Storm };
 
-        // Given an element, randomly pick attack or support power.
-        public static NaturePower RandomPower(NatureElement el, Random rng)
+        // ── Power lookups ───────────────────────────────────────────────────────
+        public static NaturePower AttackPower(NatureElement el)
         {
-            bool attack = rng.Next(2) == 0;
             switch (el)
             {
-                case NatureElement.Verdant: return attack ? NaturePower.Thorngrasp    : NaturePower.LivingBreath;
-                case NatureElement.Stone:   return attack ? NaturePower.StoneSurge    : NaturePower.EarthMantle;
-                case NatureElement.Water:   return attack ? NaturePower.Undertow      : NaturePower.StillWater;
-                case NatureElement.Wind:    return attack ? NaturePower.CallingGale   : NaturePower.FairWind;
-                case NatureElement.Frost:   return attack ? NaturePower.Hoarfrost     : NaturePower.GlacialShell;
-                case NatureElement.Storm:   return attack ? NaturePower.WrathOfTheSky : NaturePower.LevinStep;
-                default:                    return NaturePower.None;
+                case NatureElement.Wind:  return NaturePower.Gale;
+                case NatureElement.Earth: return NaturePower.Entangle;
+                case NatureElement.Water: return NaturePower.Torrent;
+                case NatureElement.Storm: return NaturePower.ThunderClap;
+                default:                  return NaturePower.None;
             }
         }
+
+        public static NaturePower SupportPower(NatureElement el)
+        {
+            switch (el)
+            {
+                case NatureElement.Wind:  return NaturePower.Tailwind;
+                case NatureElement.Earth: return NaturePower.Bulwark;
+                case NatureElement.Water: return NaturePower.Renewal;
+                case NatureElement.Storm: return NaturePower.Stormstep;
+                default:                  return NaturePower.None;
+            }
+        }
+
+        // NPC use: pick attack or support at random for an element.
+        public static NaturePower RandomPower(NatureElement el, Random rng)
+            => rng.Next(2) == 0 ? AttackPower(el) : SupportPower(el);
 
         public static NatureElement ElementOf(NaturePower power)
         {
             switch (power)
             {
-                case NaturePower.Thorngrasp:
-                case NaturePower.LivingBreath:  return NatureElement.Verdant;
-                case NaturePower.StoneSurge:
-                case NaturePower.EarthMantle:   return NatureElement.Stone;
-                case NaturePower.Undertow:
-                case NaturePower.StillWater:    return NatureElement.Water;
-                case NaturePower.CallingGale:
-                case NaturePower.FairWind:      return NatureElement.Wind;
-                case NaturePower.Hoarfrost:
-                case NaturePower.GlacialShell:  return NatureElement.Frost;
-                case NaturePower.WrathOfTheSky:
-                case NaturePower.LevinStep:     return NatureElement.Storm;
-                default:                        return NatureElement.None;
+                case NaturePower.Gale:
+                case NaturePower.Tailwind:    return NatureElement.Wind;
+                case NaturePower.Entangle:
+                case NaturePower.Bulwark:     return NatureElement.Earth;
+                case NaturePower.Torrent:
+                case NaturePower.Renewal:     return NatureElement.Water;
+                case NaturePower.ThunderClap:
+                case NaturePower.Stormstep:   return NatureElement.Storm;
+                default:                      return NatureElement.None;
             }
         }
 
-        // ── NPC use chances ────────────────────────────────────────────────────
+        public static bool IsAttack(NaturePower power)
+            => power == NaturePower.Gale || power == NaturePower.Entangle
+            || power == NaturePower.Torrent || power == NaturePower.ThunderClap;
+
+        // ── NPC use chances ─────────────────────────────────────────────────────
         public static double NpcBattleUseChance() => 0.003;
         public static double NpcDailyUseChance()  => 0.015;
 
-        // ── Battle effect constants ────────────────────────────────────────────
+        // ── Battle effect constants ─────────────────────────────────────────────
+        // Wind · Gale — 360° knockback + light damage
+        public const float GaleRadius     = 10f;
+        public const float GaleDamage     = 22f;
+        public const float GaleKnockback  = 4f;
+        public const float GaleSlowMult   = 0.80f;
+        public const float GaleSlowSec    = 5f;
+        // Wind · Tailwind — speed for caster + allies
+        public const float TailwindMult   = 1.35f;
+        public const float TailwindSec    = 15f;
+        public const float TailwindRadius = 8f;
 
-        // Thorngrasp — pull + hold
-        public const float ThorngrassPullDist  = 3f;
-        public const float ThorngaspHoldSec    = 2.5f;
-        public const float ThorngraspDamage    = 0f;   // no direct damage
-        public const float ThorngraspRange     = 7f;
+        // Earth · Entangle — roots immobilise + damage
+        public const float EntangleRadius   = 6f;
+        public const float EntangleDamage   = 40f;
+        public const float EntangleRootSec  = 4f;
+        public const float EntangleStaggerSec = 0.4f;  // brief caster pause
 
-        // Living Breath — AoE heal (Verdant: no HP cost to draw, so this is pure gain)
-        public const float LivingBreathSelfHp     = 25f;
-        public const float LivingBreathAllyHp     = 18f;
-        public const float LivingBreathMorale     = 15f;
-        public const float LivingBreathRadius     = 10f;
+        // Earth · Bulwark — damage resistance (caster + nearby allies)
+        public const float BulwarkResist  = 0.40f;
+        public const float BulwarkSec     = 12f;
+        public const float BulwarkRadius  = 6f;
 
-        // Stone Surge — blunt + root
-        public const float StoneSurgeDamage   = 45f;
-        public const float StoneSurgeRadius   = 5f;
-        public const float StoneSurgeRootSec  = 4f;
-        public const float StoneSurgeStaggerSec = 0.5f;  // caster immobile
+        // Water · Torrent — forward cone, damage + knockback (breaks formation)
+        public const float TorrentRange     = 9f;
+        public const float TorrentAngleDeg  = 70f;
+        public const float TorrentDamage    = 30f;
+        public const float TorrentKnockback = 5f;
+        public const float TorrentSlowMult  = 0.70f;
+        public const float TorrentSlowSec   = 5f;
 
-        // Earth Mantle — resist buff
-        public const float EarthMantleResist  = 0.40f;
-        public const float EarthMantleSec     = 10f;
+        // Water · Renewal — heal caster + allies
+        public const float RenewalSelfHp  = 30f;
+        public const float RenewalAllyHp  = 22f;
+        public const float RenewalMorale  = 15f;
+        public const float RenewalRadius  = 10f;
 
-        // Undertow — cone knockback
-        public const float UndertowDamage     = 30f;
-        public const float UndertowKnockback  = 4f;
-        public const float UndertowSpeedMult  = 0.75f;
-        public const float UndertowSpeedSec   = 5f;
-        public const float UndertowRange      = 8f;
-        public const float UndertowAngleDeg   = 60f;
+        // Storm · ThunderClap — bolt + chain
+        public const float ThunderRange       = 9f;
+        public const float ThunderDamage      = 65f;
+        public const float ThunderChainDamage = 32f;
+        public const int   ThunderChainCount  = 2;
+        public const float ThunderChainRadius = 6f;
+        public const float ThunderStunSec     = 1.5f;
 
-        // Still Water — self-heal (free draw in Verdant; costs HP in Water, so moderate)
-        public const float StillWaterHeal     = 35f;
+        // Storm · Stormstep — dash forward + brief speed
+        public const float StormstepDist     = 6f;
+        public const float StormstepBurstSec = 0.4f;
 
-        // Calling Gale — 360° knockback
-        public const float CallingGaleDamage  = 20f;
-        public const float CallingGaleKnockback = 3f;
-        public const float CallingGaleSpeedMult = 0.80f;
-        public const float CallingGaleSpeedSec  = 6f;
-        public const float CallingGaleAllySpeed = 1.15f;
-        public const float CallingGaleAllySpeedSec = 8f;
-        public const float CallingGaleRadius   = 10f;
-
-        // Fair Wind — speed buff
-        public const float FairWindSpeedMult  = 1.35f;
-        public const float FairWindSec        = 15f;
-        public const float FairWindRadius     = 8f;
-
-        // Hoarfrost — AoE slow
-        public const float HoarfrostDamage   = 30f;
-        public const float HoarfrostSpeedMult = 0.60f;
-        public const float HoarfrostSpeedSec  = 7f;
-        public const float HoarfrostRadius   = 8f;
-        public const float HoarfrostSelfSlowSec = 2f;
-        public const float HoarfrostSelfSlowMult = 0.85f;
-
-        // Glacial Shell — ice armour
-        public const float GlacialShellResist   = 0.40f;
-        public const float GlacialShellSec      = 10f;
-        public const float GlacialShellSpeedMult = 0.80f;
-
-        // Wrath of the Sky — lightning arc + chain
-        public const float WrathDamagePrimary   = 70f;
-        public const float WrathDamageChain     = 35f;
-        public const float WrathRange           = 8f;
-        public const int   WrathChainCount      = 2;
-        public const float WrathChainRadius     = 6f;
-
-        // Levin Step — instant dash
-        public const float LevinStepDist        = 5f;
-        public const float LevinStepInvulnerSec = 0.3f;
-
-        // ── Naming ────────────────────────────────────────────────────────────
+        // ── Naming ──────────────────────────────────────────────────────────────
         public static string PowerName(NaturePower p)
         {
             switch (p)
             {
-                case NaturePower.Thorngrasp:    return "Thorngrasp";
-                case NaturePower.LivingBreath:  return "Living Breath";
-                case NaturePower.StoneSurge:    return "Stone Surge";
-                case NaturePower.EarthMantle:   return "Earth Mantle";
-                case NaturePower.Undertow:      return "Undertow";
-                case NaturePower.StillWater:    return "Still Water";
-                case NaturePower.CallingGale:   return "Calling Gale";
-                case NaturePower.FairWind:      return "Fair Wind";
-                case NaturePower.Hoarfrost:     return "Hoarfrost";
-                case NaturePower.GlacialShell:  return "Glacial Shell";
-                case NaturePower.WrathOfTheSky: return "Wrath of the Sky";
-                case NaturePower.LevinStep:     return "Levin Step";
-                default:                        return "None";
+                case NaturePower.Gale:        return "Gale";
+                case NaturePower.Tailwind:    return "Tailwind";
+                case NaturePower.Entangle:    return "Entangle";
+                case NaturePower.Bulwark:     return "Bulwark";
+                case NaturePower.Torrent:     return "Torrent";
+                case NaturePower.Renewal:     return "Renewal";
+                case NaturePower.ThunderClap: return "Thunderclap";
+                case NaturePower.Stormstep:   return "Stormstep";
+                default:                      return "None";
             }
         }
 
@@ -251,13 +208,11 @@ namespace AshAndEmber
         {
             switch (el)
             {
-                case NatureElement.Verdant: return "Verdant";
-                case NatureElement.Stone:   return "Stone";
-                case NatureElement.Water:   return "Water";
-                case NatureElement.Wind:    return "Wind";
-                case NatureElement.Frost:   return "Frost";
-                case NatureElement.Storm:   return "Storm";
-                default:                   return "None";
+                case NatureElement.Wind:  return "Wind";
+                case NatureElement.Earth: return "Earth";
+                case NatureElement.Water: return "Water";
+                case NatureElement.Storm: return "Storm";
+                default:                  return "None";
             }
         }
     }

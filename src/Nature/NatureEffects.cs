@@ -1,6 +1,8 @@
 // =============================================================================
 // ASH AND EMBER — Nature/NatureEffects.cs
-// Executes the twelve Living Ember powers in battle and on the campaign map.
+// Executes the eight Living Ember powers (an attack and a support for each of the
+// four elements) in battle and on the campaign map, each with real terrain
+// particles so a cast looks like the land itself answering.
 // =============================================================================
 
 using System;
@@ -18,16 +20,14 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
 
-        // Speed-limit tokens applied by nature effects, keyed by agent index.
-        // (agent index → remaining seconds)
+        // Speed-limit tokens (agent index → remaining seconds).
         private static readonly Dictionary<int, (float remaining, Agent agent)> _speedTokens
             = new Dictionary<int, (float, Agent)>();
-
-        // Damage resistance tokens.
+        // Damage-resistance tokens.
         private static readonly Dictionary<int, (float fraction, float remaining, Agent agent)> _resistTokens
             = new Dictionary<int, (float, float, Agent)>();
 
-        // ── Armour gate ────────────────────────────────────────────────────────
+        // ── Armour gate ─────────────────────────────────────────────────────────
         public static bool ArmourTooHeavy(Agent agent)
         {
             if (agent == null) return false;
@@ -36,8 +36,7 @@ namespace AshAndEmber
                 float total = 0f;
                 var eq = agent.SpawnEquipment;
                 if (eq == null) return false;
-                for (EquipmentIndex idx = EquipmentIndex.Head;
-                     idx <= EquipmentIndex.Cape; idx++)
+                for (EquipmentIndex idx = EquipmentIndex.Head; idx <= EquipmentIndex.Cape; idx++)
                 {
                     var item = eq.GetEquipmentFromSlot(idx).Item;
                     if (item != null) total += item.Weight;
@@ -47,9 +46,7 @@ namespace AshAndEmber
             catch { return false; }
         }
 
-        // ── Execute ───────────────────────────────────────────────────────────
-        // Called by NatureInputHandler after a charge is released.
-        // Returns true if something meaningful happened.
+        // ── Execute ─────────────────────────────────────────────────────────────
         public static bool Execute(NaturePower power, Agent caster, bool inMission)
         {
             if (power == NaturePower.None) return false;
@@ -69,280 +66,183 @@ namespace AshAndEmber
                 }
                 return ExecuteBattle(power, caster);
             }
-            else
-            {
-                return ExecuteCampaign(power);
-            }
+            return ExecuteCampaign(power);
         }
 
-        // NPC variant — no player restrictions (no hand check, no armour check).
+        // NPC variant — no player restrictions.
         public static void ExecuteNpc(NaturePower power, Agent caster, Team casterTeam)
         {
             if (power == NaturePower.None || caster == null || !caster.IsActive()) return;
             try { ExecuteBattleCore(power, caster, casterTeam); } catch { }
         }
 
-        // ── Battle effects ─────────────────────────────────────────────────────
+        // ── Battle ──────────────────────────────────────────────────────────────
         private static bool ExecuteBattle(NaturePower power, Agent caster)
         {
-            try
-            {
-                ExecuteBattleCore(power, caster, caster.Team);
-                return true;
-            }
+            try { ExecuteBattleCore(power, caster, caster.Team); return true; }
             catch { return false; }
         }
 
-        private static void ExecuteBattleCore(NaturePower power, Agent caster, Team casterTeam)
+        private static void ExecuteBattleCore(NaturePower power, Agent caster, Team team)
         {
             Vec3 pos = caster.Position;
-
             switch (power)
             {
-                case NaturePower.Thorngrasp:   BattleThorngrasp(caster, pos, casterTeam);   break;
-                case NaturePower.LivingBreath: BattleLivingBreath(caster, pos, casterTeam); break;
-                case NaturePower.StoneSurge:   BattleStoneSurge(caster, pos, casterTeam);   break;
-                case NaturePower.EarthMantle:  BattleEarthMantle(caster, pos);              break;
-                case NaturePower.Undertow:     BattleUndertow(caster, pos, casterTeam);     break;
-                case NaturePower.StillWater:   BattleStillWater(caster);                    break;
-                case NaturePower.CallingGale:  BattleCallingGale(caster, pos, casterTeam);  break;
-                case NaturePower.FairWind:     BattleFairWind(caster, pos, casterTeam);     break;
-                case NaturePower.Hoarfrost:    BattleHoarfrost(caster, pos, casterTeam);    break;
-                case NaturePower.GlacialShell: BattleGlacialShell(caster, pos);             break;
-                case NaturePower.WrathOfTheSky:BattleWrathOfTheSky(caster, pos, casterTeam);break;
-                case NaturePower.LevinStep:    BattleLevinStep(caster);                     break;
+                case NaturePower.Gale:        BattleGale(caster, pos, team);        break;
+                case NaturePower.Tailwind:    BattleTailwind(caster, pos, team);    break;
+                case NaturePower.Entangle:    BattleEntangle(caster, pos, team);    break;
+                case NaturePower.Bulwark:     BattleBulwark(caster, pos, team);     break;
+                case NaturePower.Torrent:     BattleTorrent(caster, pos, team);     break;
+                case NaturePower.Renewal:     BattleRenewal(caster, pos, team);     break;
+                case NaturePower.ThunderClap: BattleThunderClap(caster, pos, team); break;
+                case NaturePower.Stormstep:   BattleStormstep(caster);             break;
             }
 
-            // Visual: living-green glow on caster + element-specific light bloom
+            // Living glow + element light bloom (the per-power shapes are spawned
+            // inside each Battle* method).
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2.5f); } catch { }
-            try { SpawnElementVisual(power, pos); } catch { }
-            Msg($"{NatureMath.PowerName(power)} — the world answers.", NatureColor);
+            try { SpawnElementVisual(NatureMath.ElementOf(power), pos); } catch { }
         }
 
-        // Thorngrasp: single target pull to 3m, held 2.5s, no direct damage
-        private static void BattleThorngrasp(Agent caster, Vec3 pos, Team team)
+        // Wind · Gale — 360° knockback + damage; a ring of blown dust.
+        private static void BattleGale(Agent caster, Vec3 pos, Team team)
         {
-            Agent target = NearestEnemy(caster, pos, NatureMath.ThorngraspRange, team);
-            if (target == null) return;
-            try
+            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f, 1.6f); } catch { }
+            ForEachEnemyInRadius(pos, NatureMath.GaleRadius, team, enemy =>
             {
-                Vec3 dir = (pos - target.Position);
-                float dist = dir.Length;
-                if (dist > 0.1f)
-                {
-                    Vec3 dest = target.Position + dir.NormalizedCopy() * Math.Max(0f, dist - NatureMath.ThorngrassPullDist);
-                    target.TeleportToPosition(dest);
-                }
-                target.SetMaximumSpeedLimit(0f, false);
-                ApplySpeedToken(target, 0f, NatureMath.ThorngaspHoldSec);
-            }
-            catch { }
-        }
-
-        // Living Breath: caster +25 HP, allies in 10m +18 HP, +15 morale
-        private static void BattleLivingBreath(Agent caster, Vec3 pos, Team team)
-        {
-            try
-            {
-                caster.Health = Math.Min(caster.HealthLimit, caster.Health + NatureMath.LivingBreathSelfHp);
-            }
-            catch { }
-
-            ForEachAllyInRadius(pos, NatureMath.LivingBreathRadius, caster, team, ally =>
-            {
-                try { ally.Health = Math.Min(ally.HealthLimit, ally.Health + NatureMath.LivingBreathAllyHp); } catch { }
+                ApplyDamage(enemy, caster, NatureMath.GaleDamage, DamageTypes.Invalid);
                 try
                 {
-                    var formation = ally.Formation;
-                    if (formation != null) formation.ApplyActionOnEachUnit(_ => { }, null);
+                    Vec3 dir = (enemy.Position - pos).NormalizedCopy();
+                    enemy.TeleportToPosition(enemy.Position + dir * NatureMath.GaleKnockback);
                 }
                 catch { }
+                ApplySpeedToken(enemy, NatureMath.GaleSlowMult, NatureMath.GaleSlowSec);
             });
-
-            try
-            {
-                Mission.Current?.Teams?.ToList().ForEach(t =>
-                {
-                    if (t == team && t.IsValid)
-                        foreach (Agent a in t.ActiveAgents)
-                            try { a.SetMorale(Math.Min(100f, a.GetMorale() + NatureMath.LivingBreathMorale)); } catch { }
-                });
-            }
-            catch { }
         }
 
-        // Stone Surge: blunt damage + root in 5m radius; caster immobile 0.5s
-        private static void BattleStoneSurge(Agent caster, Vec3 pos, Team team)
+        // Wind · Tailwind — speed to caster + nearby allies; trailing dust.
+        private static void BattleTailwind(Agent caster, Vec3 pos, Team team)
         {
-            ForEachEnemyInRadius(pos, NatureMath.StoneSurgeRadius, team, enemy =>
+            ApplySpeedToken(caster, NatureMath.TailwindMult, NatureMath.TailwindSec);
+            ForEachAllyInRadius(pos, NatureMath.TailwindRadius, caster, team, ally =>
             {
-                ApplyDamage(enemy, caster, NatureMath.StoneSurgeDamage, DamageTypes.Blunt);
-                ApplySpeedToken(enemy, 0f, NatureMath.StoneSurgeRootSec);
+                ApplySpeedToken(ally, NatureMath.TailwindMult, NatureMath.TailwindSec);
+                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Wind, 1.2f); } catch { }
             });
-            // Brief caster stagger
-            ApplySpeedToken(caster, 0f, NatureMath.StoneSurgeStaggerSec);
         }
 
-        // Earth Mantle: -40% physical damage taken for 10s
-        private static void BattleEarthMantle(Agent caster, Vec3 pos)
+        // Earth · Entangle — roots erupt in an AoE: damage + immobilise; root ring.
+        private static void BattleEntangle(Agent caster, Vec3 pos, Team team)
         {
-            ApplyResistToken(caster, NatureMath.EarthMantleResist, NatureMath.EarthMantleSec);
+            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f, 2.5f); } catch { }
+            ForEachEnemyInRadius(pos, NatureMath.EntangleRadius, team, enemy =>
+            {
+                ApplyDamage(enemy, caster, NatureMath.EntangleDamage, DamageTypes.Blunt);
+                try { enemy.SetMaximumSpeedLimit(0f, false); } catch { }
+                ApplySpeedToken(enemy, 0f, NatureMath.EntangleRootSec);   // held in place
+                try { SpellEffects.SpawnNatureBurst(enemy.Position, NatureElement.Earth, 2.0f); } catch { }
+            });
+            ApplySpeedToken(caster, 0f, NatureMath.EntangleStaggerSec);
         }
 
-        // Undertow: 60° cone 8m — cold damage + knockback + -25% speed 5s
-        private static void BattleUndertow(Agent caster, Vec3 pos, Team team)
+        // Earth · Bulwark — damage resistance to caster + nearby allies.
+        private static void BattleBulwark(Agent caster, Vec3 pos, Team team)
+        {
+            ApplyResistToken(caster, NatureMath.BulwarkResist, NatureMath.BulwarkSec);
+            ForEachAllyInRadius(pos, NatureMath.BulwarkRadius, caster, team, ally =>
+            {
+                ApplyResistToken(ally, NatureMath.BulwarkResist, NatureMath.BulwarkSec);
+                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Earth, 1.5f); } catch { }
+            });
+        }
+
+        // Water · Torrent — forward cone: damage + knockback that breaks formation.
+        private static void BattleTorrent(Agent caster, Vec3 pos, Team team)
         {
             Vec3 fwd = caster.LookDirection.NormalizedCopy();
-            float halfAngle = NatureMath.UndertowAngleDeg * 0.5f * (float)(Math.PI / 180.0);
+            float halfAngle = NatureMath.TorrentAngleDeg * 0.5f * (float)(Math.PI / 180.0);
+            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.TorrentRange, NatureElement.Water, 2.0f); } catch { }
 
-            ForEachEnemyInRadius(pos, NatureMath.UndertowRange, team, enemy =>
+            ForEachEnemyInRadius(pos, NatureMath.TorrentRange, team, enemy =>
             {
                 Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
-                float dot = Vec3.DotProduct(fwd, toEnemy);
-                if (dot < Math.Cos(halfAngle)) return;
-
-                ApplyDamage(enemy, caster, NatureMath.UndertowDamage, DamageTypes.Invalid);
-                // Knockback away from caster
-                try
-                {
-                    Vec3 dir = (enemy.Position - pos).NormalizedCopy();
-                    enemy.TeleportToPosition(enemy.Position + dir * NatureMath.UndertowKnockback);
-                }
-                catch { }
-                ApplySpeedToken(enemy, NatureMath.UndertowSpeedMult, NatureMath.UndertowSpeedSec);
+                if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;
+                ApplyDamage(enemy, caster, NatureMath.TorrentDamage, DamageTypes.Invalid);
+                try { enemy.TeleportToPosition(enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch { }
+                ApplySpeedToken(enemy, NatureMath.TorrentSlowMult, NatureMath.TorrentSlowSec);
             });
         }
 
-        // Still Water: self-heal 35 HP
-        private static void BattleStillWater(Agent caster)
+        // Water · Renewal — heal caster + nearby allies, lift morale.
+        private static void BattleRenewal(Agent caster, Vec3 pos, Team team)
         {
-            try
+            try { caster.Health = Math.Min(caster.HealthLimit, caster.Health + NatureMath.RenewalSelfHp); } catch { }
+            ForEachAllyInRadius(pos, NatureMath.RenewalRadius, caster, team, ally =>
             {
-                caster.Health = Math.Min(caster.HealthLimit, caster.Health + NatureMath.StillWaterHeal);
-            }
-            catch { }
-        }
-
-        // Calling Gale: 360° — damage + knockback to enemies, speed buff to allies
-        private static void BattleCallingGale(Agent caster, Vec3 pos, Team team)
-        {
-            ForEachEnemyInRadius(pos, NatureMath.CallingGaleRadius, team, enemy =>
-            {
-                ApplyDamage(enemy, caster, NatureMath.CallingGaleDamage, DamageTypes.Invalid);
-                try
-                {
-                    Vec3 dir = (enemy.Position - pos).NormalizedCopy();
-                    enemy.TeleportToPosition(enemy.Position + dir * NatureMath.CallingGaleKnockback);
-                }
-                catch { }
-                ApplySpeedToken(enemy, NatureMath.CallingGaleSpeedMult, NatureMath.CallingGaleSpeedSec);
-            });
-
-            ForEachAllyInRadius(pos, NatureMath.CallingGaleRadius, caster, team, ally =>
-            {
-                ApplySpeedToken(ally, NatureMath.CallingGaleAllySpeed, NatureMath.CallingGaleAllySpeedSec);
+                try { ally.Health = Math.Min(ally.HealthLimit, ally.Health + NatureMath.RenewalAllyHp); } catch { }
+                try { ally.SetMorale(Math.Min(100f, ally.GetMorale() + NatureMath.RenewalMorale)); } catch { }
+                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Water, 1.6f); } catch { }
             });
         }
 
-        // Fair Wind: speed buff +35% to caster + allies in 8m for 15s
-        private static void BattleFairWind(Agent caster, Vec3 pos, Team team)
+        // Storm · Thunderclap — bolt to nearest enemy, chaining to a couple more.
+        private static void BattleThunderClap(Agent caster, Vec3 pos, Team team)
         {
-            ApplySpeedToken(caster, NatureMath.FairWindSpeedMult, NatureMath.FairWindSec);
-            ForEachAllyInRadius(pos, NatureMath.FairWindRadius, caster, team, ally =>
-            {
-                ApplySpeedToken(ally, NatureMath.FairWindSpeedMult, NatureMath.FairWindSec);
-            });
-        }
-
-        // Hoarfrost: AoE cold damage + -40% speed 7s + brief self slow
-        private static void BattleHoarfrost(Agent caster, Vec3 pos, Team team)
-        {
-            ForEachEnemyInRadius(pos, NatureMath.HoarfrostRadius, team, enemy =>
-            {
-                ApplyDamage(enemy, caster, NatureMath.HoarfrostDamage, DamageTypes.Invalid);
-                ApplySpeedToken(enemy, NatureMath.HoarfrostSpeedMult, NatureMath.HoarfrostSpeedSec);
-            });
-            ApplySpeedToken(caster, NatureMath.HoarfrostSelfSlowMult, NatureMath.HoarfrostSelfSlowSec);
-        }
-
-        // Glacial Shell: -40% damage taken + stagger immunity 10s, -20% speed
-        private static void BattleGlacialShell(Agent caster, Vec3 pos)
-        {
-            ApplyResistToken(caster, NatureMath.GlacialShellResist, NatureMath.GlacialShellSec);
-            ApplySpeedToken(caster, NatureMath.GlacialShellSpeedMult, NatureMath.GlacialShellSec);
-        }
-
-        // Wrath of the Sky: primary target up to 8m — 70 dmg + stagger;
-        // chains to up to 2 nearby enemies for 35 each.
-        private static void BattleWrathOfTheSky(Agent caster, Vec3 pos, Team team)
-        {
-            Agent primary = NearestEnemy(caster, pos, NatureMath.WrathRange, team);
+            Agent primary = NearestEnemy(caster, pos, NatureMath.ThunderRange, team);
             if (primary == null) return;
 
-            ApplyDamage(primary, caster, NatureMath.WrathDamagePrimary, DamageTypes.Invalid);
+            ApplyDamage(primary, caster, NatureMath.ThunderDamage, DamageTypes.Invalid);
             try { primary.SetMaximumSpeedLimit(0f, false); } catch { }
-            ApplySpeedToken(primary, 0f, 1.5f);
-
-            // Spawn lightning visual on the primary target
+            ApplySpeedToken(primary, 0f, NatureMath.ThunderStunSec);
             try { SpellEffects.SpawnTempLightWhite(primary.Position + new Vec3(0f, 0f, 1f), 10f, 0.3f); } catch { }
+            try { SpellEffects.SpawnNatureBurst(primary.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 1.0f); } catch { }
 
-            // Chain hits
             int chains = 0;
-            ForEachEnemyInRadius(primary.Position, NatureMath.WrathChainRadius, team, chain =>
+            ForEachEnemyInRadius(primary.Position, NatureMath.ThunderChainRadius, team, chain =>
             {
-                if (chains >= NatureMath.WrathChainCount) return;
-                if (chain == primary) return;
-                ApplyDamage(chain, caster, NatureMath.WrathDamageChain, DamageTypes.Invalid);
+                if (chains >= NatureMath.ThunderChainCount || chain == primary) return;
+                ApplyDamage(chain, caster, NatureMath.ThunderChainDamage, DamageTypes.Invalid);
+                try { SpellEffects.SpawnTempLightWhite(chain.Position + new Vec3(0f, 0f, 1f), 7f, 0.25f); } catch { }
+                try { SpellEffects.SpawnNatureBurst(chain.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 0.9f); } catch { }
                 chains++;
             });
         }
 
-        // Levin Step: dash forward 5m, brief invuln frame via speed burst
-        private static void BattleLevinStep(Agent caster)
+        // Storm · Stormstep — dash forward with a brief speed burst; dust trail.
+        private static void BattleStormstep(Agent caster)
         {
             try
             {
-                Vec3 fwd = caster.LookDirection.NormalizedCopy();
-                Vec3 dest = caster.Position + fwd * NatureMath.LevinStepDist;
+                Vec3 fwd  = caster.LookDirection.NormalizedCopy();
+                Vec3 dest = caster.Position + fwd * NatureMath.StormstepDist;
+                try { SpellEffects.SpawnNatureLine(caster.Position, dest, NatureElement.Storm, 1.0f); } catch { }
                 caster.TeleportToPosition(dest);
-                // Brief speed token to represent the invuln window / momentum
-                ApplySpeedToken(caster, 1.5f, NatureMath.LevinStepInvulnerSec);
+                ApplySpeedToken(caster, 1.5f, NatureMath.StormstepBurstSec);
             }
             catch { }
         }
 
-        // Element-specific colored lights. Each element gets a signature palette:
-        // Verdant = vivid green, Stone = amber-earth, Water = sky blue,
-        // Wind = near-white (fast fade), Frost = ice blue, Storm = white flash.
-        private static void SpawnElementVisual(NaturePower power, Vec3 pos)
+        // Element light bloom: Wind pale-white, Earth green, Water blue, Storm flash.
+        private static void SpawnElementVisual(NatureElement el, Vec3 pos)
         {
             Vec3 up  = new Vec3(0f, 0f, 0.8f);
             Vec3 up2 = new Vec3(0f, 0f, 1.5f);
-            switch (NatureMath.ElementOf(power))
+            switch (el)
             {
-                case NatureElement.Verdant:
-                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.15f, 1.0f, 0.15f), 9f,  2.5f);
-                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.1f,  0.7f, 0.1f),  5f,  1.5f);
-                    break;
-                case NatureElement.Stone:
-                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.9f, 0.55f, 0.1f),  8f, 2.0f);
-                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.65f, 0.35f, 0.05f), 5f, 1.2f);
-                    break;
-                case NatureElement.Water:
-                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.2f, 0.6f, 1.0f),  10f, 2.5f);
-                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.3f, 0.7f, 1.0f),   6f, 1.5f);
-                    break;
                 case NatureElement.Wind:
-                    // Fast-fading near-white — the light is gone before you are sure you saw it
                     SpellEffects.SpawnTempLightRgb(pos + up2, new Vec3(0.88f, 0.90f, 1.0f), 12f, 0.8f);
                     SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.82f, 0.85f, 1.0f),  8f, 0.5f);
                     break;
-                case NatureElement.Frost:
-                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.55f, 0.82f, 1.0f), 10f, 3.0f);
-                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.7f,  0.88f, 1.0f),  7f, 2.0f);
+                case NatureElement.Earth:
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.15f, 1.0f, 0.15f),  9f, 2.5f);
+                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.1f,  0.7f, 0.1f),   5f, 1.5f);
+                    break;
+                case NatureElement.Water:
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.2f, 0.6f, 1.0f),   10f, 2.5f);
+                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.3f, 0.7f, 1.0f),    6f, 1.5f);
                     break;
                 case NatureElement.Storm:
-                    // White lightning flash: instant bright spike, then lingering violet afterglow
                     SpellEffects.SpawnTempLightWhite(pos + up2, 18f, 0.25f);
                     SpellEffects.SpawnTempLightWhite(pos + up,  12f, 0.40f);
                     SpellEffects.SpawnTempLightRgb(pos + up, new Vec3(0.65f, 0.65f, 1.0f), 8f, 1.5f);
@@ -350,33 +250,26 @@ namespace AshAndEmber
             }
         }
 
-        // ── Campaign effects ───────────────────────────────────────────────────
+        // ── Campaign effects ────────────────────────────────────────────────────
+        // Support powers help the column; attack powers have no map use.
         private static bool ExecuteCampaign(NaturePower power)
         {
             switch (power)
             {
-                case NaturePower.LivingBreath:
-                    CampaignLivingBreath(); return true;
-                case NaturePower.StillWater:
-                    CampaignStillWater();   return true;
-                case NaturePower.FairWind:
-                    CampaignFairWind();     return true;
-                case NaturePower.EarthMantle:
-                    CampaignEarthMantle();  return true;
-                case NaturePower.GlacialShell:
-                    CampaignGlacialShell(); return true;
+                case NaturePower.Renewal:   CampaignRenewal();  return true;
+                case NaturePower.Tailwind:  CampaignTailwind(); return true;
+                case NaturePower.Bulwark:   CampaignBulwark();  return true;
+                case NaturePower.Stormstep: CampaignStormstep();return true;
                 default:
-                    Msg($"{NatureMath.PowerName(power)} — this power only stirs in conflict.",
-                        NatureColor);
+                    Msg($"{NatureMath.PowerName(power)} — this power only stirs in conflict.", NatureColor);
                     return false;
             }
         }
 
-        private static void CampaignLivingBreath()
+        private static void CampaignRenewal()
         {
             try
             {
-                // Heal wounded troops (same pattern as Inspire/Kindle)
                 var roster = MobileParty.MainParty?.MemberRoster;
                 if (roster != null)
                 {
@@ -388,53 +281,50 @@ namespace AshAndEmber
                         roster.AddToCounts(row.Character, 0, false, -recover);
                         healed += recover;
                     }
-                    if (healed > 0)
-                        Msg($"Living Breath — {healed} wounded soldiers recover.", NatureColor);
+                    if (healed > 0) Msg($"Renewal — {healed} wounded soldiers recover.", NatureColor);
                 }
-                // Morale boost
                 try { MobileParty.MainParty.RecentEventsMorale += 20f; } catch { }
             }
             catch { }
         }
 
-        private static void CampaignStillWater()
+        private static void CampaignTailwind()
         {
+            try { MobileParty.MainParty.RecentEventsMorale += 25f;
+                  Msg("Tailwind — your column marches with lighter feet.", NatureColor); } catch { }
+        }
+
+        private static void CampaignBulwark()
+        {
+            // The forest mends the column — a modest restoration of the wounded.
             try
             {
-                var h = TaleWorlds.CampaignSystem.Hero.MainHero;
-                if (h != null)
+                var roster = MobileParty.MainParty?.MemberRoster;
+                if (roster != null)
                 {
-                    h.HitPoints = Math.Min(h.HitPoints + 20, 100);
-                    Msg("Still Water — your wounds settle and grow quiet.", NatureColor);
+                    int healed = 0;
+                    foreach (var row in roster.GetTroopRoster().ToList())
+                    {
+                        if (row.WoundedNumber <= 0) continue;
+                        int recover = Math.Min(row.WoundedNumber, 4);
+                        roster.AddToCounts(row.Character, 0, false, -recover);
+                        healed += recover;
+                    }
+                    Msg(healed > 0
+                        ? $"Bulwark — the land knits {healed} of your wounded whole again."
+                        : "Bulwark — the ground braces beneath you.", NatureColor);
                 }
             }
             catch { }
         }
 
-        private static void CampaignFairWind()
+        private static void CampaignStormstep()
         {
-            try
-            {
-                MobileParty.MainParty.RecentEventsMorale += 25f;
-                Msg("Fair Wind — your column marches with lighter feet.", NatureColor);
-            }
-            catch { }
+            try { MobileParty.MainParty.RecentEventsMorale += 15f;
+                  Msg("Stormstep — a charge in the air; the march quickens.", NatureColor); } catch { }
         }
 
-        private static void CampaignEarthMantle()
-        {
-            Msg("Earth Mantle — the ground braces beneath you. " +
-                "(Grants +40% resist in the next battle for 10s.)", NatureColor);
-            // Battle effect is handled when the power is cast in-mission
-        }
-
-        private static void CampaignGlacialShell()
-        {
-            Msg("Glacial Shell — ice settles across your skin. " +
-                "(Grants +40% resist in the next battle for 10s.)", NatureColor);
-        }
-
-        // ── Tick ──────────────────────────────────────────────────────────────
+        // ── Tick ────────────────────────────────────────────────────────────────
         public static void MissionTick(float dt)
         {
             TickSpeedTokens(dt);
@@ -452,10 +342,7 @@ namespace AshAndEmber
                     try { agent?.SetMaximumSpeedLimit(10f, false); } catch { }
                     _speedTokens.Remove(key);
                 }
-                else
-                {
-                    _speedTokens[key] = (remaining, agent);
-                }
+                else _speedTokens[key] = (remaining, agent);
             }
         }
 
@@ -465,14 +352,11 @@ namespace AshAndEmber
             {
                 var (frac, remaining, agent) = _resistTokens[key];
                 remaining -= dt;
-                if (remaining <= 0f)
-                    _resistTokens.Remove(key);
-                else
-                    _resistTokens[key] = (frac, remaining, agent);
+                if (remaining <= 0f) _resistTokens.Remove(key);
+                else _resistTokens[key] = (frac, remaining, agent);
             }
         }
 
-        // Called from OnAgentHit to reduce incoming damage for resist token holders.
         public static float ApplyResistance(Agent agent, float incomingDamage)
         {
             if (agent == null) return incomingDamage;
@@ -483,7 +367,6 @@ namespace AshAndEmber
         public static bool HasResist(Agent agent)
             => agent != null && _resistTokens.ContainsKey(agent.Index);
 
-        // ── Clear ─────────────────────────────────────────────────────────────
         public static void ClearBattleState()
         {
             foreach (var (_, agent) in _speedTokens.Values)
@@ -492,15 +375,14 @@ namespace AshAndEmber
             _resistTokens.Clear();
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // ── Helpers ─────────────────────────────────────────────────────────────
         private static void ApplyDamage(Agent target, Agent source, float amount, DamageTypes dmgType)
         {
             if (target == null || !target.IsActive() || target.Health <= 0f) return;
             try
             {
                 target.Health -= amount;
-                if (target.Health <= 0f)
-                    target.Die(new Blow(source?.Index ?? -1));
+                if (target.Health <= 0f) target.Die(new Blow(source?.Index ?? -1));
             }
             catch { }
         }
@@ -549,15 +431,13 @@ namespace AshAndEmber
                     bool enemy = false;
                     try { enemy = team != null && team.IsEnemyOf(a.Team); } catch { continue; }
                     if (!enemy) continue;
-                    if ((a.Position - pos).LengthSquared <= r2)
-                        try { action(a); } catch { }
+                    if ((a.Position - pos).LengthSquared <= r2) try { action(a); } catch { }
                 }
             }
             catch { }
         }
 
-        private static void ForEachAllyInRadius(Vec3 pos, float radius, Agent exclude,
-            Team team, Action<Agent> action)
+        private static void ForEachAllyInRadius(Vec3 pos, float radius, Agent exclude, Team team, Action<Agent> action)
         {
             float r2 = radius * radius;
             try
@@ -566,8 +446,7 @@ namespace AshAndEmber
                 {
                     if (!a.IsActive() || a.IsMount || a == exclude || a.Health <= 0f) continue;
                     if (a.Team != team) continue;
-                    if ((a.Position - pos).LengthSquared <= r2)
-                        try { action(a); } catch { }
+                    if ((a.Position - pos).LengthSquared <= r2) try { action(a); } catch { }
                 }
             }
             catch { }

@@ -95,6 +95,7 @@
     <Compile Include="SaveDefiner.cs"/>
     <Compile Include="Startup\AshEmberSplash.cs"/>
     <Compile Include="Startup\AshEmberLoreIntro.cs"/>
+    <Compile Include="Startup\AshEmberLoadingScreen.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.Quest.cs"/>
     <Compile Include="QuestSystems\DragonQuestSystem.Ending.cs"/>
@@ -227,6 +228,7 @@
     <Compile Include="Nature\NatureSeerRegistry.cs"/>
     <Compile Include="Nature\NatureSeerAI.cs"/>
     <Compile Include="Nature\NatureInputHandler.cs"/>
+    <Compile Include="Nature\NatureChargeBar.cs"/>
     <Compile Include="Nature\NatureCampaignBehavior.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Menus.cs"/>

@@ -51,6 +51,7 @@ namespace AshAndEmber
             try { MiracleInputHandler.ResetInputState(); } catch { }
             try { NatureEffects.ClearBattleState();      } catch { }
             try { NatureCharge.ClearForMission();        } catch { }
+            try { NatureChargeBar.Reset();               } catch { }
             try { NatureSeerAI.ClearCooldowns();         } catch { }
             try { NatureInputHandler.ResetInputState();  } catch { }
             try { ColourLordAI.ClearCooldowns();        } catch { }
@@ -59,11 +60,6 @@ namespace AshAndEmber
             try { AshenSceneTone.Reset();                } catch { }
             try { BattleWhispers.Reset();                } catch { }
             try { AshenVisuals.Reset();                  } catch { }
-
-            // Vlandia IS The Holy Temple. Rewrite the culture-selection card text
-            // now, before the character-creation screen is built (it reads game
-            // texts, not CultureObject.Name). Runs on both new game and load.
-            try { _cultureTextsApplied = AshenCitySystem.ApplyTempleCultureTexts(); } catch { }
 
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
@@ -88,6 +84,30 @@ namespace AshAndEmber
             }
         }
 
+        // Game.Initialize() reloads all game texts from XML, which runs AFTER
+        // OnGameStart and would wipe an earlier override. This hook fires after that
+        // reload and before the character-creation screen is built, so it is the
+        // correct point to rewrite the culture-card text (Vlandia IS The Holy Temple).
+        public override void OnGameInitializationFinished(Game game)
+        {
+            base.OnGameInitializationFinished(game);
+            try { AshenCitySystem.ApplyTempleCultureTexts(); } catch { }
+        }
+
+        // Re-applies the Templar culture text while still in the menu / intro-video /
+        // character-creation flow (before the campaign map exists). Stops once the
+        // campaign is actually running so it costs nothing during play.
+        private static void EnsureTempleCultureTextPreGame()
+        {
+            object st = null;
+            try { st = GameStateManager.Current?.ActiveState; } catch { }
+            bool preGame = Campaign.Current == null
+                || st is TaleWorlds.CampaignSystem.CharacterCreationContent.CharacterCreationState
+                || st is VideoPlaybackState;
+            if (preGame)
+                try { AshenCitySystem.ApplyTempleCultureTexts(); } catch { }
+        }
+
         public override void OnMissionBehaviorInitialize(Mission mission)
         {
             mission.AddMissionBehavior(new MagicMissionBehavior());
@@ -95,18 +115,21 @@ namespace AshAndEmber
 
         protected override void OnApplicationTick(float dt)
         {
+            // Vlandia IS The Holy Temple. Game.Initialize() reloads every game text
+            // (restoring "Vlandian") AFTER our game-start hooks, and the culture card
+            // is built a few frames later — after the intro-video state — by
+            // LaunchSandboxCharacterCreation. The text override (a first-match replace)
+            // is cheap and idempotent, so re-apply it every frame through the
+            // pre-campaign flow, and do it BEFORE SkipIntroVideos hands off to the
+            // character-creation screen, so the card is guaranteed to read "Templars".
+            try { EnsureTempleCultureTextPreGame(); } catch { }
+
             // Runs before the campaign gate below so it also fires at the main menu and
             // during the new-game flow, where Campaign.Current is still null.
             try { SkipIntroVideos(); } catch { }
             try { AshEmberSplash.Tick(dt); } catch { }
             try { AshEmberLoreIntro.Tick(dt); } catch { }
-
-            // Safety net: if the game texts were not yet loaded at OnGameStart, keep
-            // retrying until the culture card text is rewritten. Self-stops once done.
-            if (!_cultureTextsApplied)
-            {
-                try { _cultureTextsApplied = AshenCitySystem.ApplyTempleCultureTexts(); } catch { }
-            }
+            try { AshEmberLoadingScreen.Tick(dt); } catch { }
 
             try
             {
@@ -179,9 +202,6 @@ namespace AshAndEmber
             catch { }
         }
 
-        // True once the culture-card game texts have been rewritten this session.
-        // Reset implicitly each session because OnGameStart reassigns it.
-        private static bool _cultureTextsApplied;
 
         private static void DebugTriggerCombat()
         {
@@ -246,6 +266,7 @@ namespace AshAndEmber
             AlchemyInputHandler.Tick(inMission: true);
             MiracleInputHandler.Tick(inMission: true);
             NatureInputHandler.Tick(inMission: true, dt);
+            NatureChargeBar.Tick(dt);
             AlchemyEffects.MissionTick(dt);
             AlchemyBattleAI.MissionTick(dt);
             MiracleEffects.MissionTick(dt);
@@ -313,6 +334,7 @@ namespace AshAndEmber
             try { AlchemyInputHandler.ResetInputState();      } catch { }
             try { NatureEffects.ClearBattleState();           } catch { }
             try { NatureCharge.ClearForMission();             } catch { }
+            try { NatureChargeBar.Reset();                    } catch { }
             try { NatureSeerAI.ClearCooldowns();              } catch { }
             try { NatureInputHandler.ResetInputState();       } catch { }
             try { BattleEvents.OnMissionEnd();               } catch { }

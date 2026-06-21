@@ -95,14 +95,11 @@ namespace AshAndEmber
                 if (_battleElements == null || _battleElements.Length == 0) return;
                 NatureElement el = _battleElements[_rng.Next(_battleElements.Length)];
 
-                // Preference: heal if low HP, otherwise attack
-                NaturePower power;
+                // Preference: a support power when low on HP, otherwise random.
                 bool lowHp = agent.Health < agent.HealthLimit * 0.40f;
-                if (lowHp && (el == NatureElement.Verdant || el == NatureElement.Water))
-                    power = el == NatureElement.Verdant
-                        ? NaturePower.LivingBreath : NaturePower.StillWater;
-                else
-                    power = NatureMath.RandomPower(el, _rng);
+                NaturePower power = lowHp
+                    ? NatureMath.SupportPower(el)
+                    : NatureMath.RandomPower(el, _rng);
 
                 SpellEffects.FlashFocusAura(agent, ColorSchool.Nature);
                 NatureEffects.ExecuteNpc(power, agent, agent.Team);
