@@ -332,6 +332,8 @@ namespace AshAndEmber
             // All non-hero soldiers fighting for the Ashen (kingdom or Ashen player)
             // are called "Ashen Warrior" in battle — they have abandoned their old names.
             try { AshenVisuals.TryRenameToAshenWarrior(agent); } catch { }
+            // Dark Gifts: apply persistent contour to player if gifts are active.
+            try { SpellEffects.ApplyDarkGiftAgentBuild(agent); } catch { }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
@@ -360,9 +362,8 @@ namespace AshAndEmber
             {
                 if (affectedAgent == null || affectedAgent.IsMount) return;
                 if (agentState != AgentState.Killed) return;
-                // Blood Pact gift: heal player on kill
-                if (affectorAgent == Agent.Main)
-                    try { SpellEffects.ApplyDarkGiftKillEffects(affectedAgent); } catch { }
+                // Blood Pact gift: heal killer on kill (player and gifted NPC lords)
+                try { SpellEffects.ApplyDarkGiftKillEffects(affectedAgent, affectorAgent); } catch { }
                 // Ember passive: rejuvenate on kill
                 if (affectorAgent == Agent.Main && MageKnowledge.IsMage && TalentSystem.Has(TalentId.Ember))
                     if (_rng.NextDouble() < 0.10)

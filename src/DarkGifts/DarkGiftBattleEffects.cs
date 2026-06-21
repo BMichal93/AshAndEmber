@@ -7,12 +7,17 @@
 // Ticked from MagicMissionBehavior.OnMissionTick.
 // OnAgentHit hooks called from MagicMissionBehavior.OnAgentHit.
 // OnAgentRemoved hook called from MagicMissionBehavior.OnAgentRemoved.
+// OnAgentBuild hook called from MagicMissionBehavior.OnAgentBuild.
 // Spirits are seeded lazily on the first tick after Agent.Main becomes active.
+//
+// NPC heroes with Dark Gifts (Ashen Lords, evil lords) have their gifts applied
+// through the same hit hooks — gifts are checked via DarkGiftSystem.NpcHasGift.
 // =============================================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -31,21 +36,31 @@ namespace AshAndEmber
 
         private static readonly List<DarkSpiritState> _darkSpirits = new List<DarkSpiritState>();
         private static bool _darkSpiritsSeeded = false;
-        private const float DarkSpiritSpeed     = 6f;   // m/s
+        private const float DarkSpiritSpeed          = 6f;   // m/s
         private const float DarkSpiritDamageInterval = 4f;
-        private const float DarkSpiritDamage    = 25f;
-        private const float DarkSpiritRange     = 2.5f; // m to deal damage
+        private const float DarkSpiritDamage         = 25f;
+        private const float DarkSpiritRange          = 2.5f; // m to deal damage
 
         // ── HorseKiller ─────────────────────────────────────────────────────────
         private static float _horseKillerCooldown = 0f;
-        private const float HorseKillerInterval  = 1f;
-        private const float HorseKillerRange2    = 5f * 5f;
+        private const float HorseKillerInterval   = 1f;
+        private const float HorseKillerRange2     = 5f * 5f;
 
         // ── DreadPresence ───────────────────────────────────────────────────────
         private static float _dreadPresenceCooldown = 0f;
-        private const float DreadPresenceInterval  = 3f;
-        private const float DreadPresenceRange2    = 8f * 8f;
+        private const float DreadPresenceInterval   = 3f;
+        private const float DreadPresenceRange2     = 8f * 8f;
         private const float DreadPresenceMoraleDrain = 20f;
+
+        // ── Persistent player contour ───────────────────────────────────────────
+        // Re-applied every ContourRefreshInterval seconds so it survives the
+        // glow-timer system clearing it via a timed flash from another gift.
+        private static float _playerContourTimer = 0f;
+        private const float ContourRefreshInterval = 2f;
+
+        // Dark charcoal-red — unmistakably marked without being distracting.
+        private static readonly uint DarkGiftPlayerContour =
+            new Color(0.35f, 0f, 0.05f).ToUnsignedInteger();
 
         // Seeds dark spirits on the first tick where Agent.Main is available.
         private static void EnsureDarkSpiritsSeeded()
@@ -74,6 +89,19 @@ namespace AshAndEmber
             }
         }
 
+        // Called from OnAgentBuild — applies the persistent dark contour to the
+        // player immediately when they enter the battle.
+        public static void ApplyDarkGiftAgentBuild(Agent agent)
+        {
+            if (agent != Agent.Main) return;
+            if (!DarkGiftSystem.GiftsActive) return;
+            try
+            {
+                agent.AgentVisuals?.GetEntity()?.SetContourColor(DarkGiftPlayerContour, true);
+            }
+            catch { }
+        }
+
         // ── MissionTick ─────────────────────────────────────────────────────────
         public static void TickDarkGifts(float dt)
         {
@@ -81,6 +109,16 @@ namespace AshAndEmber
 
             var player = Agent.Main;
             if (player == null || !player.IsActive()) return;
+
+            // Keep the player contour alive — timed flashes from other gifts
+            // temporarily overwrite it; re-apply after they expire.
+            _playerContourTimer -= dt;
+            if (_playerContourTimer <= 0f)
+            {
+                _playerContourTimer = ContourRefreshInterval;
+                try { player.AgentVisuals?.GetEntity()?.SetContourColor(DarkGiftPlayerContour, true); }
+                catch { }
+            }
 
             if (DarkGiftSystem.HasGift(DarkGiftId.DarkSpirit))
                 EnsureDarkSpiritsSeeded();
@@ -130,11 +168,12 @@ namespace AshAndEmber
                     try
                     {
                         DamageAgent(spirit.Target, DarkSpiritDamage);
-                        BeginAgentGlowRaw(spirit.Target, new Color(0.6f, 0f, 0.1f).ToUnsignedInteger(), 0.6f);
+                        // Deep crimson pulse on the struck agent.
+                        BeginAgentGlowRaw(spirit.Target, new Color(0.7f, 0f, 0.15f).ToUnsignedInteger(), 0.5f);
                     }
                     catch { }
                     spirit.DamageCooldown = DarkSpiritDamageInterval;
-                    // Do NOT clear Target here — keep chasing until it dies or flees range.
+                    // Do NOT clear Target — keep chasing until it dies.
                 }
             }
         }
@@ -186,7 +225,7 @@ namespace AshAndEmber
                     try
                     {
                         DamageAgent(a, a.Health + 10f); // kill
-                        BeginAgentGlowRaw(a, new Color(0.4f, 0f, 0f).ToUnsignedInteger(), 1f);
+                        BeginAgentGlowRaw(a, new Color(0.5f, 0f, 0f).ToUnsignedInteger(), 0.8f);
                     }
                     catch { }
                 }
@@ -221,6 +260,8 @@ namespace AshAndEmber
                         a.SetMorale(Math.Max(m - DreadPresenceMoraleDrain, 0f));
                         if (a.GetMorale() < 15f)
                             try { a.SetMorale(0f); } catch { }
+                        // Pale desaturated purple flash — fear seeping in.
+                        BeginAgentGlowRaw(a, new Color(0.25f, 0f, 0.25f).ToUnsignedInteger(), 0.6f);
                     }
                     catch { }
                 }
@@ -228,57 +269,87 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── OnAgentHit (player attacking) ──────────────────────────────────────
+        // ── OnAgentHit (attacker has gifts — player OR NPC lord) ───────────────
         public static void ApplyDarkGiftAttackEffects(Agent victim, Agent attacker, int inflictedDamage, bool isMelee)
         {
-            if (attacker != Agent.Main) return;
-            if (!DarkGiftSystem.GiftsActive) return;
+            if (attacker == null || victim == null || victim.IsMount) return;
             if (!isMelee) return;
-            if (victim == null || victim.IsMount) return;
 
-            // DarkStrike — bonus dark damage
-            if (DarkGiftSystem.HasGift(DarkGiftId.DarkStrike))
+            bool isPlayer = attacker == Agent.Main;
+            Hero npcHero  = isPlayer ? null : (attacker.Character as CharacterObject)?.HeroObject;
+
+            // Only proceed if the attacker is the player (gifts active) or a gifted NPC lord.
+            if (isPlayer && !DarkGiftSystem.GiftsActive) return;
+            if (!isPlayer && npcHero == null) return;
+
+            bool hasDarkStrike = isPlayer
+                ? DarkGiftSystem.HasGift(DarkGiftId.DarkStrike)
+                : DarkGiftSystem.NpcHasGift(npcHero, DarkGiftId.DarkStrike);
+
+            bool hasSoulDrain = isPlayer
+                ? DarkGiftSystem.HasGift(DarkGiftId.SoulDrain)
+                : DarkGiftSystem.NpcHasGift(npcHero, DarkGiftId.SoulDrain);
+
+            // DarkStrike — bonus dark damage + black-red flash on victim
+            if (hasDarkStrike)
             {
                 try
                 {
                     DamageAgent(victim, 20f);
-                    BeginAgentGlowRaw(victim, new Color(0.5f, 0f, 0.05f).ToUnsignedInteger(), 0.4f);
+                    BeginAgentGlowRaw(victim, new Color(0.6f, 0f, 0.08f).ToUnsignedInteger(), 0.35f);
                 }
                 catch { }
             }
 
-            // SoulDrain — morale drain on victim
-            if (DarkGiftSystem.HasGift(DarkGiftId.SoulDrain))
+            // SoulDrain — morale drain + deep indigo flash on victim
+            if (hasSoulDrain)
             {
                 try
                 {
                     float m = victim.GetMorale();
                     victim.SetMorale(Math.Max(m - 30f, 0f));
+                    BeginAgentGlowRaw(victim, new Color(0.1f, 0f, 0.4f).ToUnsignedInteger(), 0.4f);
                 }
                 catch { }
             }
         }
 
-        // ── OnAgentHit (player being attacked) ─────────────────────────────────
+        // ── OnAgentHit (victim has gifts — player OR NPC lord) ────────────────
         public static void ApplyDarkGiftDefenseEffects(Agent victim, Agent attacker, int inflictedDamage, bool isMelee)
         {
-            if (victim != Agent.Main) return;
-            if (!DarkGiftSystem.GiftsActive) return;
+            if (victim == null || attacker == null) return;
 
-            // IronVeil — reduce incoming damage by healing back 10%
-            if (DarkGiftSystem.HasGift(DarkGiftId.IronVeil) && inflictedDamage > 0)
+            bool isPlayer = victim == Agent.Main;
+            Hero npcHero  = isPlayer ? null : (victim.Character as CharacterObject)?.HeroObject;
+
+            if (isPlayer && !DarkGiftSystem.GiftsActive) return;
+            if (!isPlayer && npcHero == null) return;
+
+            bool hasIronVeil = isPlayer
+                ? DarkGiftSystem.HasGift(DarkGiftId.IronVeil)
+                : DarkGiftSystem.NpcHasGift(npcHero, DarkGiftId.IronVeil);
+
+            bool hasSoulMirror = isPlayer
+                ? DarkGiftSystem.HasGift(DarkGiftId.SoulMirror)
+                : DarkGiftSystem.NpcHasGift(npcHero, DarkGiftId.SoulMirror);
+
+            // IronVeil — heal back 10% of incoming damage + brief silver flash
+            if (hasIronVeil && inflictedDamage > 0)
             {
                 try
                 {
                     float healBack = inflictedDamage * 0.10f;
-                    if (healBack >= 1f) HealAgent(victim, healBack);
+                    if (healBack >= 1f)
+                    {
+                        HealAgent(victim, healBack);
+                        BeginAgentGlowRaw(victim, new Color(0.3f, 0.3f, 0.3f).ToUnsignedInteger(), 0.25f);
+                    }
                 }
                 catch { }
             }
 
-            // SoulMirror — reflect 20% of melee damage
-            if (DarkGiftSystem.HasGift(DarkGiftId.SoulMirror) && isMelee
-                && attacker != null && !attacker.IsMount && inflictedDamage > 0)
+            // SoulMirror — reflect 20% of melee damage + purple flash on victim
+            if (hasSoulMirror && isMelee && !attacker.IsMount && inflictedDamage > 0)
             {
                 try
                 {
@@ -286,32 +357,49 @@ namespace AshAndEmber
                     if (reflected >= 1f)
                     {
                         DamageAgent(attacker, reflected);
-                        BeginAgentGlowRaw(victim, new Color(0.3f, 0f, 0.3f).ToUnsignedInteger(), 0.5f);
+                        BeginAgentGlowRaw(victim,   new Color(0.4f, 0f, 0.45f).ToUnsignedInteger(), 0.45f);
+                        BeginAgentGlowRaw(attacker, new Color(0.4f, 0f, 0.45f).ToUnsignedInteger(), 0.3f);
                     }
                 }
                 catch { }
             }
         }
 
-        // ── OnAgentRemoved (player kill) ────────────────────────────────────────
-        public static void ApplyDarkGiftKillEffects(Agent killed)
+        // ── OnAgentRemoved (killer has BloodPact — player OR NPC) ─────────────
+        public static void ApplyDarkGiftKillEffects(Agent killed, Agent killer)
         {
-            if (!DarkGiftSystem.GiftsActive) return;
-            if (!DarkGiftSystem.HasGift(DarkGiftId.BloodPact)) return;
+            if (killer == null) return;
 
-            var player = Agent.Main;
-            if (player == null || !player.IsActive()) return;
+            bool isPlayer = killer == Agent.Main;
+            Hero npcHero  = isPlayer ? null : (killer.Character as CharacterObject)?.HeroObject;
 
-            try { HealAgent(player, 12f); } catch { }
+            if (isPlayer && !DarkGiftSystem.GiftsActive) return;
+            if (!isPlayer && npcHero == null) return;
+
+            bool hasBloodPact = isPlayer
+                ? DarkGiftSystem.HasGift(DarkGiftId.BloodPact)
+                : DarkGiftSystem.NpcHasGift(npcHero, DarkGiftId.BloodPact);
+
+            if (!hasBloodPact) return;
+            if (!killer.IsActive()) return;
+
+            try
+            {
+                HealAgent(killer, 12f);
+                // Crimson flash on the killer — life stolen back.
+                BeginAgentGlowRaw(killer, new Color(0.7f, 0f, 0.1f).ToUnsignedInteger(), 0.5f);
+            }
+            catch { }
         }
 
         // ── Clear / reset ────────────────────────────────────────────────────────
         public static void ClearDarkGiftsBattleState()
         {
             _darkSpirits.Clear();
-            _darkSpiritsSeeded     = false;
-            _horseKillerCooldown   = 0f;
-            _dreadPresenceCooldown = 0f;
+            _darkSpiritsSeeded      = false;
+            _horseKillerCooldown    = 0f;
+            _dreadPresenceCooldown  = 0f;
+            _playerContourTimer     = 0f;
         }
     }
 }
