@@ -1,14 +1,12 @@
 // =============================================================================
 // ASH AND EMBER — AshenAltars/AshenAltarsCampaignBehavior.cs
 //
-// Ashen Altars are the player's Cold charging stations. Each offers two rites:
-//   • Embrace the Cold    — gain Cold (scales inversely with Honor/Mercy/Generosity).
-//   • Invoke the Dark Tide — unleash Ashen influence on the world around you.
-// Cold is spent on miracles (see the Miracle system). NPC miracle use lives
-// entirely in MiracleBattleAI / MiracleCampaignBehavior — not here.
+// Dark Altars are sites of blood sacrifice where the willing (and the
+// merciless) purchase permanent Dark Gifts. Each gift exacts a geometrically
+// growing toll of prisoners and captured lords.
 //
-// Altars: the fixed cities Tyal / Sibir / Baltakhand / Amprela, the wasteland
-// cities, and one random Aserai town picked per campaign.
+// Fixed altar cities: Tyal / Sibir / Baltakhand / Amprela (Ashen lands),
+// plus one random Aserai town and two random Empire towns per campaign.
 // =============================================================================
 
 using System;
@@ -24,24 +22,22 @@ namespace AshAndEmber
 {
     public partial class AshenAltarsCampaignBehavior : CampaignBehaviorBase
     {
-        // ── Tuning ─────────────────────────────────────────────────────────────
-        private const int TraitDriftThreshold   = 10; // uses between virtue nudges
-        private const int CrossInterferenceDays  = 30; // sanctuary use saps Cold yield
-
         private const string AshenKingdomId  = "ashen_kingdom";
         private const string AseraiKingdomId = "aserai";
-        private static readonly string[] AshenAltarCities = { "Tyal", "Sibir", "Baltakhand", "Amprela" };
+        private static readonly HashSet<string> EmpireKingdomIds =
+            new HashSet<string> { "empire", "empire_n", "empire_s", "empire_w" };
+
+        private static readonly string[] FixedAltarCities =
+            { "Tyal", "Sibir", "Baltakhand", "Amprela" };
+
+        // Dynamic altar settlement StringIds — 1 Aserai + 2 Empire
         private static readonly List<string> _dynamicAltarIds = new List<string>();
-        private static readonly Random _rng = new Random();
 
         private static bool _altarsAnnounced = false;
+        private static readonly Random _rng = new Random();
 
-        // Cross-system state (read by SanctuaryCampaignBehavior)
-        internal static int _lastAltarUseDay  = -999;
-        private static int  _altarUseCount    = 0;
-
-        // Per-rite cooldown tracking
-        internal static int _lastInvokeDay = -999;
+        // Cross-system: last day any Dark Altar was used (read by SanctuaryCampaignBehavior)
+        internal static int _lastAltarUseDay = -999;
 
         // ── CampaignBehaviorBase ───────────────────────────────────────────────
         public override void RegisterEvents()
@@ -52,28 +48,35 @@ namespace AshAndEmber
 
         public override void SyncData(IDataStore store)
         {
-            try { store.SyncData("ALTAR_Announced", ref _altarsAnnounced); } catch { }
-            try { store.SyncData("ALTAR_LastUseDay", ref _lastAltarUseDay); } catch { }
-            try { store.SyncData("ALTAR_UseCount", ref _altarUseCount); } catch { }
-            try { store.SyncData("ALTAR_LastInvokeDay", ref _lastInvokeDay); } catch { }
+            try { store.SyncData("ALTAR_Announced",   ref _altarsAnnounced); } catch { }
+            try { store.SyncData("ALTAR_LastUseDay",  ref _lastAltarUseDay); } catch { }
+
+            // Backward-compat: silently read (and discard) old Cold keys so saves don't error.
+            try { int dummy = 0; store.SyncData("ALTAR_UseCount",     ref dummy); } catch { }
+            try { int dummy = 0; store.SyncData("ALTAR_LastInvokeDay", ref dummy); } catch { }
+
             try
             {
                 var dynIds = _dynamicAltarIds.ToList();
                 store.SyncData("ALTAR_DynamicIds", ref dynIds);
-                if (dynIds != null) { _dynamicAltarIds.Clear(); foreach (var id in dynIds) _dynamicAltarIds.Add(id); }
-            } catch { }
+                if (dynIds != null)
+                {
+                    _dynamicAltarIds.Clear();
+                    foreach (var id in dynIds) _dynamicAltarIds.Add(id);
+                }
+            }
+            catch { }
+
+            DarkGiftSystem.SyncData(store);
         }
 
-        private void OnSessionLaunched(CampaignGameStarter starter)
+        private static void OnSessionLaunched(CampaignGameStarter starter)
         {
             EnsureDynamicAltars();
             AnnounceAltars();
             RegisterAltarMenus(starter);
         }
 
-        // Authoritative new-game setup, fired once from OnCharacterCreationIsOver
-        // (after the world is built, never on a load). Clears carry-over from a prior
-        // game in the same session, then announces the altars fresh.
         public static void EstablishForNewCampaign()
         {
             ResetForNewGame();
@@ -81,29 +84,30 @@ namespace AshAndEmber
             AnnounceAltars();
         }
 
-        // Clears per-campaign static state so a new game started in the same
-        // Bannerlord session does not inherit the previous game's "announced" flag
-        // (which would suppress the altar establishment toast) or stale cooldowns.
         public static void ResetForNewGame()
         {
-            _altarsAnnounced  = false;
-            _lastAltarUseDay  = -999;
-            _altarUseCount    = 0;
-            _lastInvokeDay    = -999;
+            _altarsAnnounced = false;
+            _lastAltarUseDay = -999;
             _dynamicAltarIds.Clear();
+            DarkGiftSystem.ResetForNewGame();
         }
 
-        // Selects one random Aserai town as a dynamic altar if not already set.
-        // Called on session launch (existing saves) and on new campaign creation.
         private static void EnsureDynamicAltars()
         {
             if (_dynamicAltarIds.Count > 0) return;
             try
             {
-                var pick = Settlement.All
+                // 1 Aserai town
+                var aserai = Settlement.All
                     .Where(s => s.IsTown && s.OwnerClan?.Kingdom?.StringId == AseraiKingdomId)
                     .OrderBy(_ => _rng.Next()).FirstOrDefault();
-                if (pick != null) _dynamicAltarIds.Add(pick.StringId);
+                if (aserai != null) _dynamicAltarIds.Add(aserai.StringId);
+
+                // 2 Empire towns
+                var empireTowns = Settlement.All
+                    .Where(s => s.IsTown && EmpireKingdomIds.Contains(s.OwnerClan?.Kingdom?.StringId ?? ""))
+                    .OrderBy(_ => _rng.Next()).Take(2).ToList();
+                foreach (var t in empireTowns) _dynamicAltarIds.Add(t.StringId);
             }
             catch { }
         }
@@ -114,37 +118,40 @@ namespace AshAndEmber
             _altarsAnnounced = true;
             try
             {
-                var names = AshenAltarCities.ToList();
+                var names = FixedAltarCities.ToList();
                 foreach (var id in _dynamicAltarIds)
                 {
                     var s = Settlement.All.FirstOrDefault(x => x.StringId == id);
                     if (s != null) names.Add(s.Name?.ToString() ?? id);
                 }
                 MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Ashen Altars stand in {string.Join(", ", names)}. " +
+                    $"Dark Altars have been raised in {string.Join(", ", names)}. " +
                     "Only the Merciless and Devious may kneel before them."));
             }
             catch { }
         }
 
-        // ── Shared helpers (previously in the now-removed Rites partial) ────────
+        // ── Helpers ────────────────────────────────────────────────────────────
         private static int CurrentCampaignDay()
         {
             try { return (int)CampaignTime.Now.ToDays; } catch { return 0; }
         }
 
-        internal static bool HasAshenAltar(Settlement s)
+        internal static bool HasDarkAltar(Settlement s)
         {
             if (s == null || !s.IsTown) return false;
             try
             {
                 string name = s.Name?.ToString() ?? "";
-                return AshenAltarCities.Any(city =>
+                return FixedAltarCities.Any(city =>
                     name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0)
                     || AshenQuestSystem.IsWastelandCity(s.StringId)
                     || _dynamicAltarIds.Contains(s.StringId);
             }
             catch { return false; }
         }
+
+        // Keep old name for any call sites that still reference HasAshenAltar
+        internal static bool HasAshenAltar(Settlement s) => HasDarkAltar(s);
     }
 }

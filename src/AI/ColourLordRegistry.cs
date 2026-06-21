@@ -109,6 +109,8 @@ namespace AshAndEmber
                 if (_rng.Next(2) == 0) ashenTalents.Add((int)TalentId.Sunder);   // 50% strips defences
                 if (_rng.Next(10) < 4) ashenTalents.Add((int)TalentId.Immolate); // 40% the cold that takes
                 _lordTalents[hero.StringId] = ashenTalents;
+                // Seed dark gifts for this Ashen lord.
+                try { DarkGiftSystem.SeedNpcGifts(hero, isAshenLord: true, isEvilLord: false); } catch { }
             }
             else
             {
@@ -180,6 +182,20 @@ namespace AshAndEmber
                     AssignPathArchetype(lords[i].StringId);
                 }
                 // seeding is silent — no announcement
+
+                // Seed dark gifts for evil lords (low Honor AND low Mercy).
+                try
+                {
+                    foreach (Hero h in Hero.AllAliveHeroes
+                        .Where(h => h.IsLord && h != Hero.MainHero && h.IsAlive
+                                 && !_ashenIds.Contains(h.StringId)
+                                 && h.GetTraitLevel(DefaultTraits.Honor) <= -2
+                                 && h.GetTraitLevel(DefaultTraits.Mercy) <= -2))
+                    {
+                        DarkGiftSystem.SeedNpcGifts(h, isAshenLord: false, isEvilLord: true);
+                    }
+                }
+                catch { }
             }
             catch { }
         }

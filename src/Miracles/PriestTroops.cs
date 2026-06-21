@@ -4,7 +4,7 @@
 // Seeds dedicated miracle-casting priest troops into the world so the Miracle
 // battle AI (MiracleBattleAI) has bodies to act through:
 //   • "Priest of the Flame" (flame_priest) → Sanctuary towns — Grace miracles.
-//   • "Ashen Priest"        (ashen_priest)  → Ashen / altar towns — Cold miracles.
+//   • "Ashen Priest"        (ashen_priest)  → Ashen / Dark Altar towns.
 //
 // Priests are garrisoned (so they appear when their town is besieged or
 // defended) and topped up slowly each week up to a small cap per town. Troop

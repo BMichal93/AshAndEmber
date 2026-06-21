@@ -121,6 +121,8 @@ namespace AshAndEmber
         {
             if (IsFull) { _fill = 0f; return false; }
             if (dt <= 0f) return false;
+            // Dark gifts silence the living world — no nature magic while gifted.
+            if (DarkGiftSystem.HasAnyGift) { _fill = 0f; return false; }
 
             _fill += dt * FillRate;
             if (_fill < NatureMath.ChannelFillSeconds) return false;
@@ -139,6 +141,7 @@ namespace AshAndEmber
         public static bool GrantCampaignCharge()
         {
             if (IsFull) return false;
+            if (DarkGiftSystem.HasAnyGift) return false;   // gifts block nature
             NatureElement[] pool = GetCurrentTerrainElements(false);
             NatureElement el = (pool != null && pool.Length > 0)
                 ? pool[_rng.Next(pool.Length)] : NatureElement.Wind;

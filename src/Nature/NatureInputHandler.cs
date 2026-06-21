@@ -41,6 +41,7 @@ namespace AshAndEmber
         public static void Tick(bool inMission, float dt = 0f)
         {
             if (!NatureKnowledge.IsAttuned) return;
+            if (DarkGiftSystem.HasAnyGift) return;   // the darkness silences the living world
             // On the campaign map, casting is done through the miracle window
             // (ShowNatureMenu) and charges come from standing still for hours, so the
             // direct hold-and-click input runs in battle only.
@@ -124,6 +125,12 @@ namespace AshAndEmber
         // direct Attack/Block cast.
         public static void ShowNatureMenu()
         {
+            if (DarkGiftSystem.HasAnyGift)
+            {
+                Msg("The darkness in you has silenced the living world. Renounce your gifts at a Dark Altar to walk with the land again.", NatureColor);
+                return;
+            }
+
             bool inBattle = false;
             try { inBattle = Mission.Current != null; } catch { }
 
