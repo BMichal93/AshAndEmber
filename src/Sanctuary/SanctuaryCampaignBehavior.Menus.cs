@@ -115,9 +115,17 @@ namespace AshAndEmber
                                     reagentNote += $"  [Sea Serpent Scale: −{ReagentSystem.ScaleAgingReclaim} day aging]";
                             }
 
+                            string coldNote = "";
+                            if (!blockedByCold && MageKnowledge.IsMage)
+                            {
+                                int wt = MageKnowledge.WhisperTier;
+                                if (wt >= 3) coldNote = "  [the cold dims the flame: −2 Grace]";
+                                else if (wt >= 2) coldNote = "  [the cold resists the flame: −1 Grace]";
+                            }
+
                             int prayHpCost = TalentSystem.Has(TalentId.EmberCovenant) ? 8 : 12;
                             MBTextManager.SetTextVariable("SANCT_GRACE_TEXT",
-                                $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{reagentNote}");
+                                $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{coldNote}{reagentNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -211,6 +219,11 @@ namespace AshAndEmber
             int graceGain = MiracleMath.GraceGain(honor, mercy, generosity);
             // EmberCovenant: prayer yields twice the Grace.
             if (TalentSystem.Has(TalentId.EmberCovenant)) graceGain *= 2;
+            // The cold dims the flame: Whisper Tier 2 costs 1 Grace, Tier 3 costs 2.
+            int whisperPenalty = MageKnowledge.IsMage
+                ? (MageKnowledge.WhisperTier >= 3 ? 2 : MageKnowledge.WhisperTier >= 2 ? 1 : 0)
+                : 0;
+            graceGain = Math.Max(0, graceGain - whisperPenalty);
             int gained = MiracleInventory.AddGrace(graceGain);
 
             if (TalentSystem.Has(TalentId.KeepingFlame))

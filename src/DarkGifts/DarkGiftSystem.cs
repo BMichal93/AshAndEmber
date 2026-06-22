@@ -136,6 +136,10 @@ namespace AshAndEmber
         /// the player's party. Returns false if the party lacks the required
         /// sacrifices or if the gift is already owned.
         public static bool TryPurchaseGift(DarkGiftId gift, out string errorMsg)
+            => TryPurchaseGift(gift, 0, out errorMsg);
+
+        /// Overload that accepts a prisoner discount (e.g. from WhisperTier).
+        public static bool TryPurchaseGift(DarkGiftId gift, int prisonerDiscount, out string errorMsg)
         {
             errorMsg = "";
             if (!CanBuyGift(gift))
@@ -147,7 +151,7 @@ namespace AshAndEmber
             }
 
             int owned = TotalOwned;
-            int pCost = DarkGiftCosts.GetNextPrisonerCost(owned);
+            int pCost = Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - prisonerDiscount);
             int lCost = DarkGiftCosts.GetNextLordCost(owned);
 
             if (!HasSufficientSacrifice(pCost, lCost, out errorMsg))

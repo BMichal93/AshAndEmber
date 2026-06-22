@@ -44,7 +44,8 @@ namespace AshAndEmber
         public static bool CanSearch =>
             _apprenticeId == null &&
             _searchCooldown == 0 &&
-            _totalEver < MaxApprenticesEver;
+            _totalEver < MaxApprenticesEver &&
+            (Hero.MainHero?.Clan?.Tier ?? 0) >= 2;
 
         // ── Discovery event ───────────────────────────────────────────────────
         public static void ShowDiscovery(Settlement s)
