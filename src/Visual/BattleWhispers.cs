@@ -42,6 +42,16 @@ namespace AshAndEmber
             "Something beyond the treeline watches with familiar eyes.",
         };
 
+        // Only reached at WhisperTier 3 — the cold now speaks directly to you.
+        private static readonly string[] _whispersPersonal =
+        {
+            "The voice says your name the way someone says the name of a thing they already own.",
+            "You know which one of them carries the cold. You knew before you saw them.",
+            "The fire in you leans toward their line. You have to remind it which side you are on.",
+            "One of them smiles at you across the field. You almost smile back.",
+            "The ash drifts toward you, not away. As if it remembers where it came from.",
+        };
+
         public static void Reset()
         {
             _timer         = 40f;
@@ -79,23 +89,33 @@ namespace AshAndEmber
                 _enabled = true;
             }
 
-            if (_rng.Next(3) == 0) return;
+            // Skip probability scales with how deeply the cold has seeped in.
+            // Tier 3: no skip — the voice does not wait for permission.
+            int whisperTier = MageKnowledge.IsMage ? MageKnowledge.WhisperTier : 0;
+            int skipDenominator = whisperTier >= 3 ? 0 : whisperTier >= 2 ? 4 : 3;
+            if (skipDenominator > 0 && _rng.Next(skipDenominator) == 0) return;
+
+            // At Tier 3 the cold speaks personally — draw from the combined pool.
+            bool usePersonal = whisperTier >= 3 && _rng.Next(2) == 0;
+            string[] pool = usePersonal ? _whispersPersonal : _whispers;
 
             int idx = -1;
             for (int attempt = 0; attempt < 20; attempt++)
             {
-                int candidate = _rng.Next(_whispers.Length);
+                // Offset personal-pool indices to keep them separate from _used for the base pool.
+                int candidate = usePersonal ? _whispers.Length + _rng.Next(pool.Length) : _rng.Next(pool.Length);
                 if (!_used.Contains(candidate)) { idx = candidate; break; }
             }
             if (idx < 0) return;
 
             _used.Add(idx);
             _whispersFired++;
+            string line = usePersonal ? pool[idx - _whispers.Length] : pool[idx];
 
             try
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    _whispers[idx], new Color(0.35f, 0.4f, 0.6f)));
+                    line, new Color(0.35f, 0.4f, 0.6f)));
             }
             catch { }
         }

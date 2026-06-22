@@ -143,16 +143,18 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            bool qualifies = DarkGiftSystem.PlayerQualifies();
-                            int  owned     = DarkGiftSystem.TotalOwned;
-                            int  pCost     = DarkGiftCosts.GetNextPrisonerCost(owned);
-                            int  lCost     = DarkGiftCosts.GetNextLordCost(owned);
-                            string costStr = lCost > 0
+                            bool qualifies  = DarkGiftSystem.PlayerQualifies();
+                            int  owned      = DarkGiftSystem.TotalOwned;
+                            int  discount   = GetWhisperDiscount();
+                            int  pCost      = Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount);
+                            int  lCost      = DarkGiftCosts.GetNextLordCost(owned);
+                            string costStr  = lCost > 0
                                 ? $"{pCost} prisoners + {lCost} lord(s)"
                                 : $"{pCost} prisoners";
-                            string lockNote = !qualifies ? "  [Requires Merciless or Devious]" : "";
+                            string lockNote    = !qualifies ? "  [Requires Merciless or Devious]" : "";
+                            string discountNote = discount > 0 ? $"  [−{discount} from the cold's favour]" : "";
                             MBTextManager.SetTextVariable("DARK_ALTAR_BUY_TEXT",
-                                $"Offer blood for a Dark Gift  (costs {costStr}){lockNote}");
+                                $"Offer blood for a Dark Gift  (costs {costStr}){lockNote}{discountNote}");
                             args.IsEnabled = qualifies;
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
                         }
@@ -218,10 +220,11 @@ namespace AshAndEmber
                         {
                             try
                             {
-                                bool canBuy = DarkGiftSystem.CanBuyGift(capturedGift);
-                                int  owned  = DarkGiftSystem.TotalOwned;
-                                int  pCost  = DarkGiftCosts.GetNextPrisonerCost(owned);
-                                int  lCost  = DarkGiftCosts.GetNextLordCost(owned);
+                                bool canBuy   = DarkGiftSystem.CanBuyGift(capturedGift);
+                                int  owned    = DarkGiftSystem.TotalOwned;
+                                int  discount = GetWhisperDiscount();
+                                int  pCost    = Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount);
+                                int  lCost    = DarkGiftCosts.GetNextLordCost(owned);
                                 string costStr = lCost > 0
                                     ? $"{pCost}p + {lCost}L"
                                     : $"{pCost}p";
@@ -313,12 +316,17 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Helpers ────────────────────────────────────────────────────────────
+        // At Whisper Tier 2+ the cold recognises you; the altar asks less of you.
+        private static int GetWhisperDiscount() =>
+            MageKnowledge.IsMage ? (MageKnowledge.WhisperTier >= 3 ? 2 : MageKnowledge.WhisperTier >= 2 ? 1 : 0) : 0;
+
         // ── Buy action ─────────────────────────────────────────────────────────
         private static void DoBuyGift(DarkGiftId gift)
         {
             _lastAltarUseDay = CurrentCampaignDay();
 
-            if (!DarkGiftSystem.TryPurchaseGift(gift, out string error))
+            if (!DarkGiftSystem.TryPurchaseGift(gift, GetWhisperDiscount(), out string error))
             {
                 ShowDialog("The altar is unmoved.",
                     $"The stone takes nothing. {error}",
