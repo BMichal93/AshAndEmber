@@ -225,10 +225,10 @@ namespace AshAndEmber
         {
             switch (p)
             {
-                case NaturePower.Windwall:  return "Windward — the breeze steadies your soldiers";
-                case NaturePower.Thornwall: return "Root-Mend — the earth closes wounded flesh";
-                case NaturePower.Mistwall:  return "Still Waters — mist soothes wounds and lifts hearts";
-                case NaturePower.Stormwall: return "Thunder's Edge — the storm's charge fills your ranks";
+                case NaturePower.Windwall:  return "Windward — the high wind answers";
+                case NaturePower.Thornwall: return "Root-Mend — the earth draws the hurt out";
+                case NaturePower.Mistwall:  return "Still Waters — cool mist rises through the column";
+                case NaturePower.Stormwall: return "Thunder's Edge — the storm sees your need";
                 default:                    return "";
             }
         }

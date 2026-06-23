@@ -219,13 +219,17 @@ namespace AshAndEmber
             AddLog(new TextObject(
                 "LIVING EMBER · ON THE CAMPAIGN MAP — Halt in open country; standing still a few " +
                 "hours lets the land fill a charge of the local element. Open the litany (Shift+X / " +
-                "RB+L3) to spend it on that element's MARCH POWER. Attacks only answer in battle, " +
-                "but the four march powers work anywhere: " +
-                "WIND — Windward (+15 morale, the breeze steadies your soldiers). " +
-                "EARTH — Root-Mend (closes up to 5 wounds, the land draws the hurt out). " +
-                "WATER — Still Waters (heals 3 wounded and lifts hearts +8 morale). " +
-                "STORM — Thunder's Edge (+20 morale, the charge of the sky fills your ranks). " +
-                "NPC seers who walk this path draw on the land daily in the same way."), true);
+                "RB+L3) to spend it on that element's MARCH POWER — all four work anywhere on the march: " +
+                "WIND — Windward: high air tears through the column, sealing wounds and lifting hearts; " +
+                "your own body is restored (+25 morale, 8 healed, hero restored). " +
+                "EARTH — Root-Mend: root-threads erupt from the earth and close EVERY wound in the " +
+                "column — none left behind (+12 morale, all wounded healed). " +
+                "WATER — Still Waters: luminous mist drifts through the march, breaking fever and " +
+                "mending the deep hurts; the hero is made whole (+15 morale, 15 healed, hero to full). " +
+                "STORM — Thunder's Edge: three bolts crack the sky and the thunder enters your " +
+                "soldiers' chests; nearby enemies on the map lose heart (+40 morale, enemies shaken). " +
+                "NPC seers who walk this path draw on the land daily in the same way, favouring " +
+                "Root-Mend when their column carries many wounded."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +

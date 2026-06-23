@@ -235,47 +235,112 @@ namespace AshAndEmber
         public static string ApplyCampaignEffect(NaturePower power, MobileParty party)
         {
             if (party == null) return "";
+            bool isMain = false;
+            try { isMain = party.IsMainParty; } catch { }
             switch (power)
             {
-                case NaturePower.Windwall:  return CampaignWindward(party);
-                case NaturePower.Thornwall: return CampaignRootMend(party);
-                case NaturePower.Mistwall:  return CampaignStillWaters(party);
-                case NaturePower.Stormwall: return CampaignThundersEdge(party);
+                case NaturePower.Windwall:  return CampaignWindward(party, isMain);
+                case NaturePower.Thornwall: return CampaignRootMend(party, isMain);
+                case NaturePower.Mistwall:  return CampaignStillWaters(party, isMain);
+                case NaturePower.Stormwall: return CampaignThundersEdge(party, isMain);
                 default:                    return "";
             }
         }
 
-        // Wind — the breeze steadies soldiers (+15 morale).
-        private static string CampaignWindward(MobileParty party)
+        // Wind — a column of high air tears through the march; wounds seal, hearts lift.
+        // Player: also restores the hero's body. Morale +25, heal 8 wounded.
+        private static string CampaignWindward(MobileParty party, bool isPlayer)
         {
+            try { party.RecentEventsMorale += 25f; } catch { }
+            int healed = HealWounded(party, isPlayer ? 8 : 4);
+            if (isPlayer)
+            {
+                try
+                {
+                    var h = Hero.MainHero;
+                    if (h != null) h.HitPoints = Math.Min(h.HitPoints + 45, h.MaxHitPoints);
+                }
+                catch { }
+                return healed > 0
+                    ? $"The world draws a breath. Cold air, tasting of altitude and stone, tears through the column — banners rip sideways, dust lifts in spirals, and when the gust passes your body is lighter and {healed} of the wounded have risen. (+25 morale, hero restored)"
+                    : "The world draws a breath. Cold air, tasting of altitude and stone, tears through the column — banners rip sideways, dust lifts in spirals, and when it passes your body is lighter. (+25 morale, hero restored)";
+            }
+            return healed > 0
+                ? $"The wind steadies the march (+25 morale, {healed} healed)."
+                : "The wind steadies the march (+25 morale).";
+        }
+
+        // Earth — roots erupt and coil around every wound in the column; the land closes them all.
+        // Player: heals ALL wounded. Morale +12 (the soldiers saw it happen).
+        private static string CampaignRootMend(MobileParty party, bool isPlayer)
+        {
+            int healed = HealWounded(party, isPlayer ? int.MaxValue : 10);
+            try { party.RecentEventsMorale += 12f; } catch { }
+            if (isPlayer)
+            {
+                return healed > 0
+                    ? $"The ground shudders. Root-threads, thin as hair and countless, push through the soil and coil around the wounded where they sit. They tighten once. When they pull back, {healed} wound{(healed > 1 ? "s have" : " has")} closed. The earth remembers what a body should be. (+12 morale)"
+                    : "The ground shudders. Root-threads push through the soil, searching — but there is nothing to mend. The land offers what it finds. (+12 morale)";
+            }
+            return healed > 0
+                ? $"The earth closes {healed} wound{(healed > 1 ? "s" : "")} (+12 morale)."
+                : "The earth stirs but finds no wounds to close (+12 morale).";
+        }
+
+        // Water — luminous mist drifts through the column, soothing wounds and fever alike.
+        // Player: heals hero to full HP, heals 15 wounded, morale +15.
+        private static string CampaignStillWaters(MobileParty party, bool isPlayer)
+        {
+            int healed = HealWounded(party, isPlayer ? 15 : 6);
             try { party.RecentEventsMorale += 15f; } catch { }
-            return "Windward — the breeze lifts the hearts of your soldiers (+15 morale).";
-        }
-
-        // Earth — roots close wounded flesh (heal up to 5 wounded troops).
-        private static string CampaignRootMend(MobileParty party)
-        {
-            int healed = HealWounded(party, 5);
+            if (isPlayer)
+            {
+                try
+                {
+                    var h = Hero.MainHero;
+                    if (h != null) h.HitPoints = h.MaxHitPoints;
+                }
+                catch { }
+                return healed > 0
+                    ? $"Mist rises from the ground — cold, faintly luminous, smelling of deep water. It drifts through the column like a held breath and where it passes, fever breaks and wounds stop bleeding. {healed} of the wounded are on their feet. You breathe it in and the ache leaves you. (+15 morale, hero made whole)"
+                    : "Mist rises from the ground — cold, faintly luminous, smelling of deep water. It drifts through the column and where it passes, tired shoulders straighten. You breathe it in and the ache leaves you. (+15 morale, hero made whole)";
+            }
             return healed > 0
-                ? $"Root-Mend — the earth closes {healed} wound{(healed > 1 ? "s" : "")}."
-                : "Root-Mend — no wounded to tend.";
+                ? $"Cool mist passes through the march; {healed} healed (+15 morale)."
+                : "Cool mist passes through the march (+15 morale).";
         }
 
-        // Water — mist soothes wounds and lifts hearts (heal 3 + morale +8).
-        private static string CampaignStillWaters(MobileParty party)
+        // Storm — lightning cracks the sky three times; the thunder enters the soldiers' chests.
+        // Player: morale +40, nearby enemy parties lose 20 morale (the sky is not subtle).
+        private static string CampaignThundersEdge(MobileParty party, bool isPlayer)
         {
-            int healed = HealWounded(party, 3);
-            try { party.RecentEventsMorale += 8f; } catch { }
-            return healed > 0
-                ? $"Still Waters — {healed} healed; the calm settles over your march (+8 morale)."
-                : "Still Waters — the calm settles over your march (+8 morale).";
+            try { party.RecentEventsMorale += isPlayer ? 40f : 25f; } catch { }
+            if (isPlayer)
+            {
+                DemoralizeNearbyEnemies(20f, 18f);
+                return "Three bolts strike the earth within thirty paces — crack, crack, crack — the sound is not thunder but something you feel in your sternum. The air turns sharp with ozone. Your soldiers stand rigid for one second. Then they roar, every one of them, and the sound carries. Nearby enemies falter. (+40 morale, enemies shaken)";
+            }
+            return "The storm fills the march with iron courage (+25 morale).";
         }
 
-        // Storm — lightning fills soldiers' hearts (+20 morale).
-        private static string CampaignThundersEdge(MobileParty party)
+        private static void DemoralizeNearbyEnemies(float moraleDrain, float mapRadius)
         {
-            try { party.RecentEventsMorale += 20f; } catch { }
-            return "Thunder's Edge — lightning fills your soldiers' hearts (+20 morale).";
+            try
+            {
+                Vec2 centre = MobileParty.MainParty?.GetPosition2D ?? Vec2.Zero;
+                var playerFaction = Hero.MainHero?.MapFaction;
+                if (playerFaction == null) return;
+                foreach (MobileParty mp in MobileParty.All.ToList())
+                {
+                    if (mp == null || !mp.IsActive || mp.IsMainParty) continue;
+                    bool hostile = false;
+                    try { hostile = mp.MapFaction != null && mp.MapFaction.IsAtWarWith(playerFaction); } catch { continue; }
+                    if (!hostile) continue;
+                    if ((mp.GetPosition2D - centre).Length > mapRadius) continue;
+                    try { mp.RecentEventsMorale -= moraleDrain; } catch { }
+                }
+            }
+            catch { }
         }
 
         private static int HealWounded(MobileParty party, int count)
