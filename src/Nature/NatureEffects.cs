@@ -213,11 +213,90 @@ namespace AshAndEmber
         }
 
         // ── Campaign effects ────────────────────────────────────────────────────
-        // Barriers need the heat of battle; all powers are now battle-only.
         private static bool ExecuteCampaign(NaturePower power)
         {
-            Msg($"{NatureMath.PowerName(power)} — barriers only rise in the heat of battle. Carry your charge into conflict.", NatureColor);
-            return false;
+            if (NatureMath.IsAttack(power))
+            {
+                Msg($"{NatureMath.PowerName(power)} — this force needs enemies. Carry your charge into battle.", NatureColor);
+                return false;
+            }
+            try
+            {
+                var party = MobileParty.MainParty;
+                if (party == null) return false;
+                string result = ApplyCampaignEffect(power, party);
+                if (!string.IsNullOrEmpty(result)) Msg(result, NatureColor);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // Public so NPC daily tick and player path share the same effect logic.
+        public static string ApplyCampaignEffect(NaturePower power, MobileParty party)
+        {
+            if (party == null) return "";
+            switch (power)
+            {
+                case NaturePower.Windwall:  return CampaignWindward(party);
+                case NaturePower.Thornwall: return CampaignRootMend(party);
+                case NaturePower.Mistwall:  return CampaignStillWaters(party);
+                case NaturePower.Stormwall: return CampaignThundersEdge(party);
+                default:                    return "";
+            }
+        }
+
+        // Wind — the breeze steadies soldiers (+15 morale).
+        private static string CampaignWindward(MobileParty party)
+        {
+            try { party.RecentEventsMorale += 15f; } catch { }
+            return "Windward — the breeze lifts the hearts of your soldiers (+15 morale).";
+        }
+
+        // Earth — roots close wounded flesh (heal up to 5 wounded troops).
+        private static string CampaignRootMend(MobileParty party)
+        {
+            int healed = HealWounded(party, 5);
+            return healed > 0
+                ? $"Root-Mend — the earth closes {healed} wound{(healed > 1 ? "s" : "")}."
+                : "Root-Mend — no wounded to tend.";
+        }
+
+        // Water — mist soothes wounds and lifts hearts (heal 3 + morale +8).
+        private static string CampaignStillWaters(MobileParty party)
+        {
+            int healed = HealWounded(party, 3);
+            try { party.RecentEventsMorale += 8f; } catch { }
+            return healed > 0
+                ? $"Still Waters — {healed} healed; the calm settles over your march (+8 morale)."
+                : "Still Waters — the calm settles over your march (+8 morale).";
+        }
+
+        // Storm — lightning fills soldiers' hearts (+20 morale).
+        private static string CampaignThundersEdge(MobileParty party)
+        {
+            try { party.RecentEventsMorale += 20f; } catch { }
+            return "Thunder's Edge — lightning fills your soldiers' hearts (+20 morale).";
+        }
+
+        private static int HealWounded(MobileParty party, int count)
+        {
+            int healed = 0;
+            try
+            {
+                var roster = party.MemberRoster;
+                int remaining = count;
+                foreach (var elem in roster.GetTroopRoster().ToList())
+                {
+                    if (remaining <= 0) break;
+                    if (elem.WoundedNumber <= 0) continue;
+                    int toHeal = Math.Min(elem.WoundedNumber, remaining);
+                    roster.AddToCounts(elem.Character, 0, false, -toHeal, 0);
+                    healed   += toHeal;
+                    remaining -= toHeal;
+                }
+            }
+            catch { }
+            return healed;
         }
 
         // ── Tick ────────────────────────────────────────────────────────────────

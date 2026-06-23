@@ -145,11 +145,35 @@ namespace AshAndEmber
 
             NatureElement el = NatureCharge.CurrentElement;
 
-            // Barriers and attacks both need battle; on the map just inform the player.
+            // On the campaign map only the support power has a map form; attacks need enemies.
             if (!inBattle)
             {
-                Msg($"You carry {NatureMath.ElementName(el)}. " +
-                    "Attack and barrier only answer in battle — ride with your charge.", NatureColor);
+                NaturePower campPower = NatureMath.SupportPower(el);
+                string campLabel = NatureMath.CampaignPowerLabel(campPower);
+                var campOptions = new List<InquiryElement>
+                {
+                    new InquiryElement(campPower, campLabel, null, true, ""),
+                };
+                string campTitle = $"The Living Ember — {NatureMath.ElementName(el)}";
+                string campBody  = "The land offers what it can on the march. Attacks only answer in the heat of battle.";
+                try
+                {
+                    MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                        campTitle, campBody, campOptions, true, 1, 1, "Invoke", "Close",
+                        chosen =>
+                        {
+                            if (chosen == null || chosen.Count == 0) return;
+                            var power = (NaturePower)chosen[0].Identifier;
+                            if (NatureCharge.Release() == NatureElement.None) return;
+                            NatureEffects.Execute(power, null, false);
+                        },
+                        null, "", false), false, true);
+                }
+                catch
+                {
+                    if (NatureCharge.Release() == NatureElement.None) return;
+                    NatureEffects.Execute(campPower, null, false);
+                }
                 return;
             }
 

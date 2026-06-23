@@ -192,10 +192,12 @@ namespace AshAndEmber
                 "thirty seconds. Moving interrupts the gathering."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · CAST — While holding Left Ctrl and carrying a charge:  Attack " +
-                "(left mouse) looses the element's ATTACK,  Block (right mouse) calls its SUPPORT. " +
+                "LIVING EMBER · CAST (in battle) — While holding Left Ctrl and carrying a charge:  " +
+                "Attack (left mouse) looses the element's ATTACK,  Block (right mouse) calls its BARRIER. " +
                 "Each cast spends the charge. Gamepad: hold R3 to gather, Right Trigger = attack, " +
-                "Left Trigger = support."), true);
+                "Left Trigger = barrier. On the campaign map open the litany (Shift+X) to spend your " +
+                "charge on the element's MARCH POWER instead — attacks need enemies, but the land " +
+                "still answers in other ways."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · THE FOUR ELEMENTS — The land decides, not you: " +
@@ -216,9 +218,14 @@ namespace AshAndEmber
 
             AddLog(new TextObject(
                 "LIVING EMBER · ON THE CAMPAIGN MAP — Halt in open country; standing still a few " +
-                "hours lets the land fill a charge of the local element. Both attack and barrier " +
-                "only answer in the heat of battle — carry your charge into the fight. " +
-                "The litany window (Shift+X / RB+L3) shows the element you hold."), true);
+                "hours lets the land fill a charge of the local element. Open the litany (Shift+X / " +
+                "RB+L3) to spend it on that element's MARCH POWER. Attacks only answer in battle, " +
+                "but the four march powers work anywhere: " +
+                "WIND — Windward (+15 morale, the breeze steadies your soldiers). " +
+                "EARTH — Root-Mend (closes up to 5 wounds, the land draws the hurt out). " +
+                "WATER — Still Waters (heals 3 wounded and lifts hearts +8 morale). " +
+                "STORM — Thunder's Edge (+20 morale, the charge of the sky fills your ranks). " +
+                "NPC seers who walk this path draw on the land daily in the same way."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +

@@ -193,8 +193,7 @@ namespace AshAndEmber
         public const float StormwallDamage = 18f;    // per 0.4 s tick ≈ 45 dps
 
         // ── Naming ──────────────────────────────────────────────────────────────
-        public static string PowerName(NaturePower p)
-        {
+        public static string PowerName(NaturePower p)        {
             switch (p)
             {
                 case NaturePower.Gale:        return "Gale";
@@ -218,6 +217,19 @@ namespace AshAndEmber
                 case NatureElement.Water: return "Water";
                 case NatureElement.Storm: return "Storm";
                 default:                  return "None";
+            }
+        }
+
+        // Short label for the campaign-map menu entry (one per support power).
+        public static string CampaignPowerLabel(NaturePower p)
+        {
+            switch (p)
+            {
+                case NaturePower.Windwall:  return "Windward — the breeze steadies your soldiers";
+                case NaturePower.Thornwall: return "Root-Mend — the earth closes wounded flesh";
+                case NaturePower.Mistwall:  return "Still Waters — mist soothes wounds and lifts hearts";
+                case NaturePower.Stormwall: return "Thunder's Edge — the storm's charge fills your ranks";
+                default:                    return "";
             }
         }
     }
