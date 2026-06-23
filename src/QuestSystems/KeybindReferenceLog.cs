@@ -225,8 +225,8 @@ namespace AshAndEmber
                 "the column advances several leagues toward it. If not, the wind goes ahead and comes " +
                 "back with word of enemies within reach. +10 morale. BUT supplies scatter in the gust " +
                 "(~15 food lost). " +
-                "EARTH — Root-Mend: the forest floor opens its larder (40 grain, 10 meat) and closes " +
-                "8 wounds. BUT the roots take a tithe from the nearest living vessel — you lose 15 HP. " +
+                "EARTH — Root-Mend: the roots go deep and swell the hearth of the nearest village " +
+                "(+50 hearth). BUT the roots take a tithe from the nearest living vessel — you lose 15 HP. " +
                 "WATER — Still Waters: you must stand on water — a river, shore, or coast. A current " +
                 "runs beneath your feet and shows you every harbour at once; pick one and the water " +
                 "carries the whole column there. BUT soldiers arrive cold and unsure of where they are " +

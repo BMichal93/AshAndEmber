@@ -316,31 +316,42 @@ namespace AshAndEmber
             return $"The wind stirs the column.{costLine} (+10 morale)";
         }
 
-        // Earth — the forest floor opens its larder; roots mend and provisions emerge.
-        // UPSIDE:  40 grain + 10 meat, 8 wounded healed.
+        // Earth — the deep roots find the nearest village and swell its hearth.
+        // UPSIDE:  nearest village gains +50 hearth (prosperity).
         // DOWNSIDE: Hero loses 15 HP — the roots take from the nearest living vessel.
         private static string CampaignRootMend(MobileParty party, bool isPlayer)
         {
-            int healed = HealWounded(party, isPlayer ? 8 : 6);
             try { party.RecentEventsMorale += 8f; } catch { }
             if (!isPlayer)
-                return healed > 0
-                    ? $"The earth provides: {healed} healed (+8 morale)."
-                    : "The earth stirs and steadies the march (+8 morale).";
+                return "The earth stirs and steadies the march (+8 morale).";
 
-            int grain = 0, meat = 0;
+            // Find the nearest village settlement.
+            Settlement nearest = null;
             try
             {
-                var grainItem = MBObjectManager.Instance?.GetObject<ItemObject>("grain");
-                if (grainItem != null) { party.ItemRoster.AddToCounts(grainItem, 40); grain = 40; }
+                Vec2 pos = party.GetPosition2D;
+                float best = float.MaxValue;
+                foreach (var s in Settlement.All)
+                {
+                    if (s == null || !s.IsVillage || s.Village == null) continue;
+                    float d = (s.GetPosition2D - pos).LengthSquared;
+                    if (d < best) { best = d; nearest = s; }
+                }
             }
             catch { }
-            try
+
+            int hearthGain = 0;
+            string villageName = "";
+            if (nearest != null)
             {
-                var meatItem = MBObjectManager.Instance?.GetObject<ItemObject>("meat");
-                if (meatItem != null) { party.ItemRoster.AddToCounts(meatItem, 10); meat = 10; }
+                try
+                {
+                    villageName = nearest.Name?.ToString() ?? "";
+                    nearest.Village.Hearth += 50f;
+                    hearthGain = 50;
+                }
+                catch { }
             }
-            catch { }
 
             // The tithe: roots draw from the most alive thing nearby.
             int hpDrained = 0;
@@ -355,14 +366,11 @@ namespace AshAndEmber
             }
             catch { }
 
-            string foodLine = (grain > 0 || meat > 0)
-                ? $" The cooks are staring: {(grain > 0 ? $"{grain} grain" : "")}" +
-                  $"{(grain > 0 && meat > 0 ? ", " : "")}{(meat > 0 ? $"{meat} meat" : "")}."
-                : "";
             string titeLine = hpDrained > 0 ? $" [{hpDrained} HP taken as tithe]" : "";
-            return healed > 0
-                ? $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} {healed} wound{(healed > 1 ? "s have" : " has")} closed. The roots drink from you last.{titeLine} (+8 morale)"
-                : $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} The roots drink from you last.{titeLine} (+8 morale)";
+            string hearthLine = hearthGain > 0
+                ? $" The village of {villageName} will know a prosperous season."
+                : "";
+            return $"The roots go deep and give what they find.{hearthLine} The earth takes its share from you in return.{titeLine} (+8 morale)";
         }
 
         // Water — the sea-current carries the column to any coastal port.
