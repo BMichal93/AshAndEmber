@@ -1,10 +1,9 @@
 // =============================================================================
 // ASH AND EMBER — Miracles/MiracleCatalog.cs
 //
-// Static definitions for the ten miracles — five of Grace (golden light) and
-// five of Cold (blue). Pure data; no TaleWorlds types. The sequence string
-// mirrors the MiracleMath constants so the input handler and the menu can both
-// show the same notation to the player.
+// Static definitions for the six Grace miracles (golden light). Pure data;
+// no TaleWorlds types. The sequence string mirrors the MiracleMath constants
+// so the input handler and the menu can both show the same notation to the player.
 // =============================================================================
 
 using System.Collections.Generic;
@@ -21,13 +20,6 @@ namespace AshAndEmber
         SacredFlame     = 3,
         AegisOfFaith    = 4,
         CleansingRite   = 5,
-        // Cold miracles
-        AshenCurse      = 10,
-        Dreadmending    = 11,
-        DreadPresence   = 12,
-        FrostBrand      = 13,
-        ShadowShroud    = 14,
-        PaleRigor       = 15,
     }
 
     public struct MiracleDef
@@ -105,60 +97,10 @@ namespace AshAndEmber
                 Flavour = "You say nothing. The light does not require words. What the cold laid upon them simply lifts.",
                 UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.OneVirtue,
                 Sequence = MiracleMath.SeqCleansingRite },
-
-            // ── Cold Miracles ──────────────────────────────────────────────────
-            new MiracleDef {
-                Type = MiracleType.AshenCurse, IsGrace = false,
-                Name = "Ashen Curse",
-                Effect = "Cold dark light tears at all nearby enemies — the stone's anger given form.",
-                Flavour = "You feel it leave you and go looking for something to break. It is not particular about what.",
-                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.AllVirtues,
-                Sequence = MiracleMath.SeqAshenCurse },
-
-            new MiracleDef {
-                Type = MiracleType.Dreadmending, IsGrace = false,
-                Name = "Dreadmending",
-                Effect = "Life bleeds from those nearby and flows into you — the cold keeps its own accounts.",
-                Flavour = "It heals. You try not to think about where the warmth came from.",
-                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.None,
-                Sequence = MiracleMath.SeqDreadmending },
-
-            new MiracleDef {
-                Type = MiracleType.DreadPresence, IsGrace = false,
-                Name = "Dread Presence",
-                Effect = "Something steps into the air around you — nearby enemies flinch, slow, and step back.",
-                Flavour = "The men who face you don't run. They simply stop advancing. Then they back up. Then they run.",
-                UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.OneVirtue,
-                Sequence = MiracleMath.SeqDreadPresence },
-
-            new MiracleDef {
-                Type = MiracleType.FrostBrand, IsGrace = false,
-                Name = "Frost Brand",
-                Effect = "Each blow from your weapon leaves a chill — the struck slow and stumble.",
-                Flavour = "The cold is patient. It does not need to hurt you quickly.",
-                UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.OneVirtue,
-                Sequence = MiracleMath.SeqFrostBrand },
-
-            new MiracleDef {
-                Type = MiracleType.ShadowShroud, IsGrace = false,
-                Name = "Shadow Shroud",
-                Effect = "Darkness clings to you — the blows that reach you find less of you there.",
-                Flavour = "The cold wraps around you like a coat. What passes through it is less than what entered.",
-                UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
-                Sequence = MiracleMath.SeqShadowShroud },
-
-            new MiracleDef {
-                Type = MiracleType.PaleRigor, IsGrace = false,
-                Name = "Pale Rigor",
-                Effect = "Absolute cold seizes every enemy within reach — they cannot move or act for a few dreadful seconds.",
-                Flavour = "The cold does not negotiate. It does not ask for surrender. It simply seizes, all at once, completely.",
-                UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
-                Sequence = MiracleMath.SeqPaleRigor },
         };
 
-        public static IReadOnlyList<MiracleDef> All   => _defs;
-        public static IEnumerable<MiracleDef> GraceAll => _defs.Where(d => d.IsGrace);
-        public static IEnumerable<MiracleDef> ColdAll  => _defs.Where(d => !d.IsGrace);
+        public static IReadOnlyList<MiracleDef> All    => _defs;
+        public static IEnumerable<MiracleDef> GraceAll => _defs;
 
         public static MiracleDef Get(MiracleType type) => _defs.First(d => d.Type == type);
 

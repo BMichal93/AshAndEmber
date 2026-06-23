@@ -864,24 +864,6 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(0, MiracleMath.GraceGain(-2, -2, -2));
         }
 
-        [Test]
-        public void MiracleMath_ColdGain_NoTraits_ReturnsZero()
-        {
-            Assert.AreEqual(0, MiracleMath.ColdGain(0, 0, 0));
-        }
-
-        [Test]
-        public void MiracleMath_ColdGain_AllTraitsFullyNegative_ReturnsFour()
-        {
-            Assert.AreEqual(4, MiracleMath.ColdGain(-2, -2, -2));
-        }
-
-        [Test]
-        public void MiracleMath_ColdGain_PositiveTraits_ReturnsZero()
-        {
-            Assert.AreEqual(0, MiracleMath.ColdGain(2, 2, 2));
-        }
-
         // ── NatureMath ────────────────────────────────────────────────────────
 
         [Test]
