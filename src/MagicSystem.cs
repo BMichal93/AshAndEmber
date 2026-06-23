@@ -431,9 +431,8 @@ namespace AshAndEmber
             // Alchemy combat buffs/afflictions (berserk bonus, stone-skin, enfeeblement).
             try { AlchemyEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             try { MiracleEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
-            // Nature Bulwark resist: OnAgentHit fires after damage is applied and the
-            // blow is read-only, so we heal back the mitigated portion to realise the
-            // resistance against real weapon hits.
+            // Nature resistance (reserved for future barrier talents): OnAgentHit fires after
+            // damage is applied; heal back the mitigated portion against real weapon hits.
             try
             {
                 if (affectedAgent != null && affectedAgent.IsActive()

@@ -88,14 +88,14 @@ namespace AshAndEmber
             Vec3 pos = caster.Position;
             switch (power)
             {
-                case NaturePower.Gale:        BattleGale(caster, pos, team);        break;
-                case NaturePower.Tailwind:    BattleTailwind(caster, pos, team);    break;
-                case NaturePower.Entangle:    BattleEntangle(caster, pos, team);    break;
-                case NaturePower.Bulwark:     BattleBulwark(caster, pos, team);     break;
-                case NaturePower.Torrent:     BattleTorrent(caster, pos, team);     break;
-                case NaturePower.Renewal:     BattleRenewal(caster, pos, team);     break;
-                case NaturePower.ThunderClap: BattleThunderClap(caster, pos, team); break;
-                case NaturePower.Stormstep:   BattleStormstep(caster);             break;
+                case NaturePower.Gale:        BattleGale(caster, pos, team);                              break;
+                case NaturePower.Windwall:    BattleBarrier(caster, pos, team, NatureElement.Wind);       break;
+                case NaturePower.Entangle:    BattleEntangle(caster, pos, team);                          break;
+                case NaturePower.Thornwall:   BattleBarrier(caster, pos, team, NatureElement.Earth);      break;
+                case NaturePower.Torrent:     BattleTorrent(caster, pos, team);                           break;
+                case NaturePower.Mistwall:    BattleBarrier(caster, pos, team, NatureElement.Water);      break;
+                case NaturePower.ThunderClap: BattleThunderClap(caster, pos, team);                       break;
+                case NaturePower.Stormwall:   BattleBarrier(caster, pos, team, NatureElement.Storm);      break;
             }
 
             // Living glow + element light bloom (the per-power shapes are spawned
@@ -121,15 +121,14 @@ namespace AshAndEmber
             });
         }
 
-        // Wind · Tailwind — speed to caster + nearby allies; trailing dust.
-        private static void BattleTailwind(Agent caster, Vec3 pos, Team team)
+        // All barrier powers — place an elemental wall in front of the caster.
+        private static void BattleBarrier(Agent caster, Vec3 pos, Team team, NatureElement el)
         {
-            ApplySpeedToken(caster, NatureMath.TailwindMult, NatureMath.TailwindSec);
-            ForEachAllyInRadius(pos, NatureMath.TailwindRadius, caster, team, ally =>
-            {
-                ApplySpeedToken(ally, NatureMath.TailwindMult, NatureMath.TailwindSec);
-                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Wind, 1.2f); } catch { }
-            });
+            try { SpellEffects.SpawnNatureBarrier(pos, caster.LookDirection, el, team); } catch { }
+            bool isPlayer = false;
+            try { isPlayer = Agent.Main != null && caster == Agent.Main; } catch { }
+            if (isPlayer)
+                Msg($"{NatureMath.PowerName(NatureMath.SupportPower(el))} — the land rises before you.", NatureColor);
         }
 
         // Earth · Entangle — roots erupt in an AoE: damage + immobilise; root ring.
@@ -146,17 +145,6 @@ namespace AshAndEmber
             ApplySpeedToken(caster, 0f, NatureMath.EntangleStaggerSec);
         }
 
-        // Earth · Bulwark — damage resistance to caster + nearby allies.
-        private static void BattleBulwark(Agent caster, Vec3 pos, Team team)
-        {
-            ApplyResistToken(caster, NatureMath.BulwarkResist, NatureMath.BulwarkSec);
-            ForEachAllyInRadius(pos, NatureMath.BulwarkRadius, caster, team, ally =>
-            {
-                ApplyResistToken(ally, NatureMath.BulwarkResist, NatureMath.BulwarkSec);
-                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Earth, 1.5f); } catch { }
-            });
-        }
-
         // Water · Torrent — forward cone: damage + knockback that breaks formation.
         private static void BattleTorrent(Agent caster, Vec3 pos, Team team)
         {
@@ -171,18 +159,6 @@ namespace AshAndEmber
                 ApplyDamage(enemy, caster, NatureMath.TorrentDamage, DamageTypes.Invalid);
                 try { enemy.TeleportToPosition(enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch { }
                 ApplySpeedToken(enemy, NatureMath.TorrentSlowMult, NatureMath.TorrentSlowSec);
-            });
-        }
-
-        // Water · Renewal — heal caster + nearby allies, lift morale.
-        private static void BattleRenewal(Agent caster, Vec3 pos, Team team)
-        {
-            try { caster.Health = Math.Min(caster.HealthLimit, caster.Health + NatureMath.RenewalSelfHp); } catch { }
-            ForEachAllyInRadius(pos, NatureMath.RenewalRadius, caster, team, ally =>
-            {
-                try { ally.Health = Math.Min(ally.HealthLimit, ally.Health + NatureMath.RenewalAllyHp); } catch { }
-                try { ally.SetMorale(Math.Min(100f, ally.GetMorale() + NatureMath.RenewalMorale)); } catch { }
-                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Water, 1.6f); } catch { }
             });
         }
 
@@ -207,20 +183,6 @@ namespace AshAndEmber
                 try { SpellEffects.SpawnNatureBurst(chain.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 0.9f); } catch { }
                 chains++;
             });
-        }
-
-        // Storm · Stormstep — dash forward with a brief speed burst; dust trail.
-        private static void BattleStormstep(Agent caster)
-        {
-            try
-            {
-                Vec3 fwd  = caster.LookDirection.NormalizedCopy();
-                Vec3 dest = caster.Position + fwd * NatureMath.StormstepDist;
-                try { SpellEffects.SpawnNatureLine(caster.Position, dest, NatureElement.Storm, 1.0f); } catch { }
-                caster.TeleportToPosition(dest);
-                ApplySpeedToken(caster, 1.5f, NatureMath.StormstepBurstSec);
-            }
-            catch { }
         }
 
         // Element light bloom: Wind pale-white, Earth green, Water blue, Storm flash.
@@ -251,77 +213,11 @@ namespace AshAndEmber
         }
 
         // ── Campaign effects ────────────────────────────────────────────────────
-        // Support powers help the column; attack powers have no map use.
+        // Barriers need the heat of battle; all powers are now battle-only.
         private static bool ExecuteCampaign(NaturePower power)
         {
-            switch (power)
-            {
-                case NaturePower.Renewal:   CampaignRenewal();  return true;
-                case NaturePower.Tailwind:  CampaignTailwind(); return true;
-                case NaturePower.Bulwark:   CampaignBulwark();  return true;
-                case NaturePower.Stormstep: CampaignStormstep();return true;
-                default:
-                    Msg($"{NatureMath.PowerName(power)} — this power only stirs in conflict.", NatureColor);
-                    return false;
-            }
-        }
-
-        private static void CampaignRenewal()
-        {
-            try
-            {
-                var roster = MobileParty.MainParty?.MemberRoster;
-                if (roster != null)
-                {
-                    int healed = 0;
-                    foreach (var row in roster.GetTroopRoster().ToList())
-                    {
-                        if (row.WoundedNumber <= 0) continue;
-                        int recover = Math.Min(row.WoundedNumber, 6);
-                        roster.AddToCounts(row.Character, 0, false, -recover);
-                        healed += recover;
-                    }
-                    if (healed > 0) Msg($"Renewal — {healed} wounded soldiers recover.", NatureColor);
-                }
-                try { MobileParty.MainParty.RecentEventsMorale += 20f; } catch { }
-            }
-            catch { }
-        }
-
-        private static void CampaignTailwind()
-        {
-            try { MobileParty.MainParty.RecentEventsMorale += 25f;
-                  Msg("Tailwind — your column marches with lighter feet.", NatureColor); } catch { }
-        }
-
-        private static void CampaignBulwark()
-        {
-            // The forest mends the column — a modest restoration of the wounded.
-            try
-            {
-                var roster = MobileParty.MainParty?.MemberRoster;
-                if (roster != null)
-                {
-                    int healed = 0;
-                    foreach (var row in roster.GetTroopRoster().ToList())
-                    {
-                        if (row.WoundedNumber <= 0) continue;
-                        int recover = Math.Min(row.WoundedNumber, 4);
-                        roster.AddToCounts(row.Character, 0, false, -recover);
-                        healed += recover;
-                    }
-                    Msg(healed > 0
-                        ? $"Bulwark — the land knits {healed} of your wounded whole again."
-                        : "Bulwark — the ground braces beneath you.", NatureColor);
-                }
-            }
-            catch { }
-        }
-
-        private static void CampaignStormstep()
-        {
-            try { MobileParty.MainParty.RecentEventsMorale += 15f;
-                  Msg("Stormstep — a charge in the air; the march quickens.", NatureColor); } catch { }
+            Msg($"{NatureMath.PowerName(power)} — barriers only rise in the heat of battle. Carry your charge into conflict.", NatureColor);
+            return false;
         }
 
         // ── Tick ────────────────────────────────────────────────────────────────
@@ -387,7 +283,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void ApplySpeedToken(Agent agent, float mult, float seconds)
+        internal static void ApplySpeedToken(Agent agent, float mult, float seconds)
         {
             if (agent == null || !agent.IsActive()) return;
             try { agent.SetMaximumSpeedLimit(mult == 0f ? 0f : 10f * mult, false); } catch { }

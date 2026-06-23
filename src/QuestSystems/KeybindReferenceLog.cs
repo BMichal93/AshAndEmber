@@ -204,18 +204,21 @@ namespace AshAndEmber
                 "a random element."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · THE POWERS — WIND: Gale (Attack — a ring of wind, knockback + " +
-                "damage) · Tailwind (Block — haste for you and allies). EARTH: Entangle (Attack — " +
-                "roots that hold foes fast and wound them) · Bulwark (Block — heavy damage resistance). " +
-                "WATER: Torrent (Attack — a cone that scatters and breaks formations) · Renewal " +
-                "(Block — heal). STORM: Thunderclap (Attack — a bolt that chains between foes) · " +
-                "Stormstep (Block — a sudden dash)."), true);
+                "LIVING EMBER · THE POWERS — WIND: Gale (Attack — a ring of wind, knockback + damage) · " +
+                "Windwall (Block — a howling wall that hurls foes back). " +
+                "EARTH: Entangle (Attack — roots that hold foes fast and wound them) · " +
+                "Thornwall (Block — erupting thorns: roots and bleeds all who press against it). " +
+                "WATER: Torrent (Attack — a cone that scatters and breaks formations) · " +
+                "Mistwall (Block — a churning water curtain that pushes and slows). " +
+                "STORM: Thunderclap (Attack — a bolt that chains between foes) · " +
+                "Stormwall (Block — a crackling lightning field that sears all who enter). " +
+                "All barriers last several seconds and pulse every heartbeat; NPCs who walk the living path raise them in defence."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · ON THE CAMPAIGN MAP — Halt in open country; standing still a few " +
-                "hours lets the land fill a charge of the local element. Spend it through the litany " +
-                "window (Shift+X / RB+L3): Wind eases the march, Earth and Water mend your wounded, " +
-                "Storm quickens the column."), true);
+                "hours lets the land fill a charge of the local element. Both attack and barrier " +
+                "only answer in the heat of battle — carry your charge into the fight. " +
+                "The litany window (Shift+X / RB+L3) shows the element you hold."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +

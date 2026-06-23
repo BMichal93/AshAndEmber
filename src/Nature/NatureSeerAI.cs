@@ -95,7 +95,7 @@ namespace AshAndEmber
                 if (_battleElements == null || _battleElements.Length == 0) return;
                 NatureElement el = _battleElements[_rng.Next(_battleElements.Length)];
 
-                // Preference: a support power when low on HP, otherwise random.
+                // Preference: a barrier when low on HP (defensive), otherwise random.
                 bool lowHp = agent.Health < agent.HealthLimit * 0.40f;
                 NaturePower power = lowHp
                     ? NatureMath.SupportPower(el)

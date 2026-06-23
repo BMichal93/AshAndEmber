@@ -143,21 +143,27 @@ namespace AshAndEmber
                 return;
             }
 
-            NatureElement el  = NatureCharge.CurrentElement;
-            NaturePower    sup = NatureMath.SupportPower(el);
-            NaturePower    atk = NatureMath.AttackPower(el);
+            NatureElement el = NatureCharge.CurrentElement;
+
+            // Barriers and attacks both need battle; on the map just inform the player.
+            if (!inBattle)
+            {
+                Msg($"You carry {NatureMath.ElementName(el)}. " +
+                    "Attack and barrier only answer in battle — ride with your charge.", NatureColor);
+                return;
+            }
+
+            NaturePower atk = NatureMath.AttackPower(el);
+            NaturePower sup = NatureMath.SupportPower(el);
 
             var options = new List<InquiryElement>
             {
-                new InquiryElement(sup, $"{NatureMath.PowerName(sup)} — support", null, true, ""),
+                new InquiryElement(atk, $"{NatureMath.PowerName(atk)} — attack", null, true, ""),
+                new InquiryElement(sup, $"{NatureMath.PowerName(sup)} — barrier", null, true, ""),
             };
-            if (inBattle)
-                options.Add(new InquiryElement(atk, $"{NatureMath.PowerName(atk)} — attack", null, true, ""));
 
             string title = $"The Living Ember — {NatureMath.ElementName(el)}";
-            string body  = inBattle
-                ? "Spend your charge. (In battle you may also cast directly: hold Ctrl, then Attack or Block.)"
-                : "Spend your charge on the land's gift.";
+            string body  = "Spend your charge. (Hold Ctrl, then Attack or Block to cast directly.)";
 
             try
             {
@@ -168,15 +174,15 @@ namespace AshAndEmber
                         if (chosen == null || chosen.Count == 0) return;
                         var power = (NaturePower)chosen[0].Identifier;
                         if (NatureCharge.Release() == NatureElement.None) return;
-                        NatureEffects.Execute(power, inBattle ? Agent.Main : null, inBattle);
+                        NatureEffects.Execute(power, Agent.Main, inBattle);
                     },
                     null, "", false), false, true);
             }
             catch
             {
-                // Fallback: spend the charge on the support power.
+                // Fallback: spend the charge on the attack power.
                 if (NatureCharge.Release() == NatureElement.None) return;
-                NatureEffects.Execute(sup, inBattle ? Agent.Main : null, inBattle);
+                NatureEffects.Execute(atk, Agent.Main, inBattle);
             }
         }
 
@@ -204,7 +210,7 @@ namespace AshAndEmber
             string held = NatureCharge.HasCharge
                 ? $" — holding {NatureMath.ElementName(NatureCharge.CurrentElement)}"
                 : "";
-            Msg($"[ {names}{held} ]  (stand still: gather · Attack / Block: cast)", NatureColor);
+            Msg($"[ {names}{held} ]  (stand still: gather · Attack: force · Block: barrier)", NatureColor);
         }
 
         private static readonly Color NatureColor = new Color(0.35f, 0.75f, 0.35f);

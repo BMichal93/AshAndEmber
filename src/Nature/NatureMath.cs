@@ -2,7 +2,7 @@
 // ASH AND EMBER — Nature/NatureMath.cs
 //
 // Pure numeric logic for The Living Ember — no TaleWorlds types, fully testable.
-// Simplified to FOUR elements, each with one attack and one support power, drawn
+// Simplified to FOUR elements, each with one attack and one barrier power, drawn
 // from the combat environment:
 //   Wind  — mountains, steppes, hills
 //   Earth — forests
@@ -25,22 +25,22 @@ namespace AshAndEmber
         Storm = 4,   // open plain and desert sky — charge and sudden violence
     }
 
-    // Eight powers: an attack and a support for each element.
+    // Eight powers: an attack and a barrier for each element.
     public enum NaturePower
     {
         None = 0,
         // Wind
-        Gale       = 1,   // attack  — 360° knockback + damage
-        Tailwind   = 2,   // support — speed for you and allies
+        Gale      = 1,   // attack  — 360° knockback + damage
+        Windwall  = 2,   // barrier — wall of howling wind that hurls foes back
         // Earth
-        Entangle   = 3,   // attack  — roots immobilise + damage
-        Bulwark    = 4,   // support — damage resistance
+        Entangle  = 3,   // attack  — roots immobilise + damage
+        Thornwall = 4,   // barrier — erupting thorns: root + bleed
         // Water
-        Torrent    = 5,   // attack  — forward cone, knockback (breaks formation)
-        Renewal    = 6,   // support — heal you and allies
+        Torrent   = 5,   // attack  — forward cone, knockback (breaks formation)
+        Mistwall  = 6,   // barrier — churning water curtain: push + slow
         // Storm
-        ThunderClap = 7,  // attack  — bolt + chain
-        Stormstep   = 8,  // support — dash / speed burst
+        ThunderClap = 7, // attack  — bolt + chain
+        Stormwall   = 8, // barrier — crackling lightning field: push + damage
     }
 
     public static class NatureMath
@@ -102,10 +102,10 @@ namespace AshAndEmber
         {
             switch (el)
             {
-                case NatureElement.Wind:  return NaturePower.Tailwind;
-                case NatureElement.Earth: return NaturePower.Bulwark;
-                case NatureElement.Water: return NaturePower.Renewal;
-                case NatureElement.Storm: return NaturePower.Stormstep;
+                case NatureElement.Wind:  return NaturePower.Windwall;
+                case NatureElement.Earth: return NaturePower.Thornwall;
+                case NatureElement.Water: return NaturePower.Mistwall;
+                case NatureElement.Storm: return NaturePower.Stormwall;
                 default:                  return NaturePower.None;
             }
         }
@@ -119,13 +119,13 @@ namespace AshAndEmber
             switch (power)
             {
                 case NaturePower.Gale:
-                case NaturePower.Tailwind:    return NatureElement.Wind;
+                case NaturePower.Windwall:    return NatureElement.Wind;
                 case NaturePower.Entangle:
-                case NaturePower.Bulwark:     return NatureElement.Earth;
+                case NaturePower.Thornwall:   return NatureElement.Earth;
                 case NaturePower.Torrent:
-                case NaturePower.Renewal:     return NatureElement.Water;
+                case NaturePower.Mistwall:    return NatureElement.Water;
                 case NaturePower.ThunderClap:
-                case NaturePower.Stormstep:   return NatureElement.Storm;
+                case NaturePower.Stormwall:   return NatureElement.Storm;
                 default:                      return NatureElement.None;
             }
         }
@@ -145,21 +145,11 @@ namespace AshAndEmber
         public const float GaleKnockback  = 4f;
         public const float GaleSlowMult   = 0.80f;
         public const float GaleSlowSec    = 5f;
-        // Wind · Tailwind — speed for caster + allies
-        public const float TailwindMult   = 1.35f;
-        public const float TailwindSec    = 15f;
-        public const float TailwindRadius = 8f;
-
         // Earth · Entangle — roots immobilise + damage
         public const float EntangleRadius   = 6f;
         public const float EntangleDamage   = 40f;
         public const float EntangleRootSec  = 4f;
         public const float EntangleStaggerSec = 0.4f;  // brief caster pause
-
-        // Earth · Bulwark — damage resistance (caster + nearby allies)
-        public const float BulwarkResist  = 0.40f;
-        public const float BulwarkSec     = 12f;
-        public const float BulwarkRadius  = 6f;
 
         // Water · Torrent — forward cone, damage + knockback (breaks formation)
         public const float TorrentRange     = 9f;
@@ -169,12 +159,6 @@ namespace AshAndEmber
         public const float TorrentSlowMult  = 0.70f;
         public const float TorrentSlowSec   = 5f;
 
-        // Water · Renewal — heal caster + allies
-        public const float RenewalSelfHp  = 30f;
-        public const float RenewalAllyHp  = 22f;
-        public const float RenewalMorale  = 15f;
-        public const float RenewalRadius  = 10f;
-
         // Storm · ThunderClap — bolt + chain
         public const float ThunderRange       = 9f;
         public const float ThunderDamage      = 65f;
@@ -183,9 +167,30 @@ namespace AshAndEmber
         public const float ThunderChainRadius = 6f;
         public const float ThunderStunSec     = 1.5f;
 
-        // Storm · Stormstep — dash forward + brief speed
-        public const float StormstepDist     = 6f;
-        public const float StormstepBurstSec = 0.4f;
+        // ── Barrier (shared) ────────────────────────────────────────────────────
+        public const float BarrierDuration     = 7f;    // seconds the wall persists
+        public const float BarrierForwardDist  = 3.0f;  // metres ahead of the caster
+        public const float BarrierNodeSpacing  = 2.0f;  // metres between nodes
+        public const float BarrierNodeRadius   = 2.0f;  // engagement radius per node
+        public const int   BarrierNodeCount    = 5;     // nodes across the wall (8 m wide)
+        public const float BarrierTickInterval = 0.4f;  // visual + repulsion pulse rate
+
+        // Wind · Windwall — pure repulsion
+        public const float WindwallPush = 3.5f;
+
+        // Earth · Thornwall — push + brief root + damage-per-tick
+        public const float ThornwallPush    = 0.8f;
+        public const float ThornwallDamage  = 8f;    // per 0.4 s tick ≈ 20 dps
+        public const float ThornwallRootSec = 0.6f;
+
+        // Water · Mistwall — push + slow
+        public const float MistwallPush     = 2.5f;
+        public const float MistwallSlowMult = 0.45f;
+        public const float MistwallSlowSec  = 1.8f;
+
+        // Storm · Stormwall — push + damage-per-tick
+        public const float StormwallPush   = 2.0f;
+        public const float StormwallDamage = 18f;    // per 0.4 s tick ≈ 45 dps
 
         // ── Naming ──────────────────────────────────────────────────────────────
         public static string PowerName(NaturePower p)
@@ -193,13 +198,13 @@ namespace AshAndEmber
             switch (p)
             {
                 case NaturePower.Gale:        return "Gale";
-                case NaturePower.Tailwind:    return "Tailwind";
+                case NaturePower.Windwall:    return "Windwall";
                 case NaturePower.Entangle:    return "Entangle";
-                case NaturePower.Bulwark:     return "Bulwark";
+                case NaturePower.Thornwall:   return "Thornwall";
                 case NaturePower.Torrent:     return "Torrent";
-                case NaturePower.Renewal:     return "Renewal";
+                case NaturePower.Mistwall:    return "Mistwall";
                 case NaturePower.ThunderClap: return "Thunderclap";
-                case NaturePower.Stormstep:   return "Stormstep";
+                case NaturePower.Stormwall:   return "Stormwall";
                 default:                      return "None";
             }
         }
