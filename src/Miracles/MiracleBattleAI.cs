@@ -1,12 +1,10 @@
 // =============================================================================
 // ASH AND EMBER — Miracles/MiracleBattleAI.cs
 //
-// Lets NPC heroes and priest troops invoke miracles in battle. Grace lords
-// (high Honor + Mercy) and Cold lords (low Honor + Mercy) both have access to
-// their respective miracle set. Priest detection uses a name prefix — troops
-// whose character name begins with "Priest" count as priests and get a higher
-// use-chance. NPCs never spend the player's Grace/Cold; they draw from an
-// unlimited divine (or diabolic) wellspring.
+// Lets NPC heroes and priest troops invoke Grace miracles in battle. Grace lords
+// (high Honor + Mercy) and Grace priests draw from an unlimited divine wellspring
+// — they never spend the player's Grace. Dark lords express themselves through
+// the Dark Gift system (DarkGiftBattleEffects), not Cold miracles.
 // =============================================================================
 
 using System;
@@ -62,23 +60,16 @@ namespace AshAndEmber
                     bool isPriest = IsPriest(a);
                     Hero hero = HeroOf(a);
 
-                    // Gate: hero AND their traits, or priest troops.
                     bool isGraceLord = isPriest
                         ? IsGracePriest(a)
                         : (hero != null && IsGraceLord(hero));
-                    bool isColdLord = isPriest
-                        ? IsColdPriest(a)
-                        : (hero != null && IsColdLord(hero));
 
-                    if (!isGraceLord && !isColdLord) continue;
+                    if (!isGraceLord) continue;
 
                     double chance = MiracleMath.NpcBattleUseChance(isPriest);
                     if (_rng.NextDouble() >= chance) continue;
 
-                    MiracleType type = isGraceLord
-                        ? ChooseGraceMiracle(a)
-                        : ChooseColdMiracle(a);
-
+                    MiracleType type = ChooseGraceMiracle(a);
                     MiracleEffects.ApplyBattleMiracle(a, type, announce: true);
                     _cooldowns[a] = AgentCooldown;
                     AnnounceEnemy(a, hero, type);
@@ -99,19 +90,6 @@ namespace AshAndEmber
                 MiracleType.LightOfGuidance, MiracleType.SacredFlame,
                 MiracleType.AegisOfFaith,    MiracleType.RadiantMending,
                 MiracleType.CleansingRite,
-            };
-            return set[_rng.Next(set.Length)];
-        }
-
-        private static MiracleType ChooseColdMiracle(Agent a)
-        {
-            try { if (a.Health < a.HealthLimit * 0.40f) return MiracleType.Dreadmending; } catch { }
-
-            var set = new[]
-            {
-                MiracleType.AshenCurse,    MiracleType.DreadPresence,
-                MiracleType.FrostBrand,    MiracleType.ShadowShroud,
-                MiracleType.Dreadmending,  MiracleType.PaleRigor,
             };
             return set[_rng.Next(set.Length)];
         }
@@ -137,8 +115,6 @@ namespace AshAndEmber
             try
             {
                 string name = a.Character?.Name?.ToString() ?? "";
-                // "Priest" anywhere in the name — covers "Priest of the Flame"
-                // and "Ashen Priest" alike.
                 return name.IndexOf("Priest", StringComparison.OrdinalIgnoreCase) >= 0;
             }
             catch { return false; }
@@ -150,43 +126,20 @@ namespace AshAndEmber
             {
                 string name = a.Character?.Name?.ToString() ?? "";
                 // Grace priests: Priest of the Flame, Sanctuary Priest, etc.
+                // Ashen Priests and Dark Priests use Dark Gifts, not Grace miracles.
                 return name.IndexOf("Ashen", StringComparison.OrdinalIgnoreCase) < 0
-                    && name.IndexOf("Cold",  StringComparison.OrdinalIgnoreCase) < 0
                     && name.IndexOf("Dark",  StringComparison.OrdinalIgnoreCase) < 0;
             }
             catch { return true; }
-        }
-
-        private static bool IsColdPriest(Agent a)
-        {
-            try
-            {
-                string name = a.Character?.Name?.ToString() ?? "";
-                return name.IndexOf("Ashen", StringComparison.OrdinalIgnoreCase) >= 0
-                    || name.IndexOf("Cold",  StringComparison.OrdinalIgnoreCase) >= 0
-                    || name.IndexOf("Dark",  StringComparison.OrdinalIgnoreCase) >= 0;
-            }
-            catch { return false; }
         }
 
         private static bool IsGraceLord(Hero hero)
         {
             try
             {
-                int honor      = hero.GetTraitLevel(DefaultTraits.Honor);
-                int mercy      = hero.GetTraitLevel(DefaultTraits.Mercy);
-                return honor >= 1 && mercy >= 1;
-            }
-            catch { return false; }
-        }
-
-        private static bool IsColdLord(Hero hero)
-        {
-            try
-            {
                 int honor = hero.GetTraitLevel(DefaultTraits.Honor);
                 int mercy = hero.GetTraitLevel(DefaultTraits.Mercy);
-                return honor <= -1 && mercy <= -1;
+                return honor >= 1 && mercy >= 1;
             }
             catch { return false; }
         }

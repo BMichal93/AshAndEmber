@@ -1,10 +1,13 @@
 // =============================================================================
 // ASH AND EMBER — Miracles/MiracleCampaignBehavior.cs
 //
-// Serializes Grace/Cold counters (MIRACLE_Grace / MIRACLE_Cold save keys) and
-// drives daily NPC miracle use on the campaign map. Grace lords with strong
-// virtue simulate Radiant Mending or Guidance on their parties; Cold lords
-// simulate Dreadmending or Dread Presence on nearby enemies.
+// Serializes the Grace counter (MIRACLE_Grace save key) and drives daily NPC
+// Grace miracle use on the campaign map. Grace lords with strong virtue simulate
+// Radiant Mending or Guidance on their parties. Dark lords now use the Dark
+// Gift system instead — Cold miracle NPC AI has been retired.
+//
+// MIRACLE_Cold is read as a dummy on load for backward compatibility with saves
+// that pre-date the removal of player Cold (altars now grant Dark Gifts).
 // =============================================================================
 
 using System;
@@ -29,7 +32,7 @@ namespace AshAndEmber
         public override void SyncData(IDataStore store)
         {
             try { store.SyncData("MIRACLE_Grace", ref MiracleInventory._grace); } catch { }
-            try { store.SyncData("MIRACLE_Cold",  ref MiracleInventory._cold);  } catch { }
+            try { int dummy = 0; store.SyncData("MIRACLE_Cold", ref dummy); } catch { } // Cold removed
         }
 
         public static void ResetForNewGame() => MiracleInventory.ResetForNewGame();
@@ -69,19 +72,6 @@ namespace AshAndEmber
                         }
                         catch { }
                     }
-                    else if (sum <= -3 && _rng.NextDouble() < chance)
-                    {
-                        // Cold miracle on campaign
-                        MiracleType type = ColdCampaignChoice(hero);
-                        try
-                        {
-                            string result = MiracleEffects.ApplyCampaignMiracle(hero, hero.PartyBelongedTo, type);
-                            if (!string.IsNullOrEmpty(result) && _rng.NextDouble() < 0.20)
-                                InformationManager.DisplayMessage(new InformationMessage(
-                                    $"{hero.Name} — {result}", new Color(0.35f, 0.50f, 0.85f)));
-                        }
-                        catch { }
-                    }
                 }
             }
             catch { }
@@ -100,11 +90,6 @@ namespace AshAndEmber
             }
             catch { }
             return MiracleType.LightOfGuidance;
-        }
-
-        private static MiracleType ColdCampaignChoice(Hero hero)
-        {
-            return _rng.Next(2) == 0 ? MiracleType.DreadPresence : MiracleType.Dreadmending;
         }
 
         private static bool IsPriest(Hero hero)
