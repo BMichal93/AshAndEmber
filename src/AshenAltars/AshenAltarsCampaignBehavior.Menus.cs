@@ -146,8 +146,8 @@ namespace AshAndEmber
                             bool qualifies  = DarkGiftSystem.PlayerQualifies();
                             int  owned      = DarkGiftSystem.TotalOwned;
                             int  discount   = GetWhisperDiscount();
-                            int  pCost      = Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount);
-                            int  lCost      = DarkGiftCosts.GetNextLordCost(owned);
+                            int  pCost      = TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount));
+                            int  lCost      = TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned));
                             string costStr  = lCost > 0
                                 ? $"{pCost} prisoners + {lCost} lord(s)"
                                 : $"{pCost} prisoners";
@@ -223,8 +223,8 @@ namespace AshAndEmber
                                 bool canBuy   = DarkGiftSystem.CanBuyGift(capturedGift);
                                 int  owned    = DarkGiftSystem.TotalOwned;
                                 int  discount = GetWhisperDiscount();
-                                int  pCost    = Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount);
-                                int  lCost    = DarkGiftCosts.GetNextLordCost(owned);
+                                int  pCost    = TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount));
+                                int  lCost    = TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned));
                                 string costStr = lCost > 0
                                     ? $"{pCost}p + {lCost}L"
                                     : $"{pCost}p";

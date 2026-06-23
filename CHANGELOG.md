@@ -6,6 +6,13 @@
 
 ---
 
+## v0.23.11
+
+### Vlandia → Templar (character-creation card)
+- **The Vlandian culture card now reads "Templars" on the character-creation screen.** The card caches its name when built, so the text/language overrides never reached it; a new, strictly-bounded runtime pass now finds the live culture card and rewrites its name and description directly. Fully guarded — if it can't find the card it simply leaves the vanilla text, never crashing character creation.
+
+---
+
 ## v0.23.10
 
 ### Nature magic — blended terrain elements

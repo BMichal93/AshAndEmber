@@ -151,8 +151,9 @@ namespace AshAndEmber
             }
 
             int owned = TotalOwned;
-            int pCost = Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - prisonerDiscount);
-            int lCost = DarkGiftCosts.GetNextLordCost(owned);
+            // Templar culture (The Order's Price): dark gifts cost twice as much.
+            int pCost = TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - prisonerDiscount));
+            int lCost = TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned));
 
             if (!HasSufficientSacrifice(pCost, lCost, out errorMsg))
                 return false;

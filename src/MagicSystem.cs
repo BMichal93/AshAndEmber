@@ -108,7 +108,12 @@ namespace AshAndEmber
                 || st is TaleWorlds.CampaignSystem.CharacterCreationContent.CharacterCreationState
                 || st is VideoPlaybackState;
             if (preGame)
+            {
                 try { AshenCitySystem.ApplyTempleCultureTexts(); } catch { }
+                // The character-creation culture cards cache their name when built, so
+                // the text override above never reaches them — rename the card directly.
+                try { TempleCultureCardFixer.TickTryFix(); } catch { }
+            }
         }
 
         public override void OnMissionBehaviorInitialize(Mission mission)

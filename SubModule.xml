@@ -2,7 +2,7 @@
 <Module>
     <Name value="Ash and Ember"/>
     <Id value="AshAndEmber"/>
-    <Version value="v0.23.10.0"/>
+    <Version value="v0.23.11.0"/>
     <SingleplayerModule value="true"/>
     <MultiplayerModule value="false"/>
     <DependedModules>
