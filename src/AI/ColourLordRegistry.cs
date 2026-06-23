@@ -387,12 +387,6 @@ namespace AshAndEmber
             _campaignCooldowns.Remove(hero.StringId);
         }
 
-        // ── Legacy no-op stubs (called by old code paths that are being phased out) ─
-        public static void FlushAnnouncements() { }
-        public static void FlushDeferredPrismInquiry() { }
-        public static void FlushDeferredKills() { }
-        public static void CheckRespawnTimers() { }
-
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
         {
