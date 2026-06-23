@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -270,44 +271,120 @@ namespace AshAndEmber
                 : "The wind steadies the march (+25 morale).";
         }
 
-        // Earth — roots erupt and coil around every wound in the column; the land closes them all.
-        // Player: heals ALL wounded. Morale +12 (the soldiers saw it happen).
+        // Earth — the forest floor opens; root-provisions emerge and wounds are mended.
+        // Player: grants 40 grain + 10 meat (the earth's larder), heals 8 wounded, morale +8.
         private static string CampaignRootMend(MobileParty party, bool isPlayer)
         {
-            int healed = HealWounded(party, isPlayer ? int.MaxValue : 10);
-            try { party.RecentEventsMorale += 12f; } catch { }
+            int healed = HealWounded(party, isPlayer ? 8 : 6);
+            try { party.RecentEventsMorale += 8f; } catch { }
             if (isPlayer)
             {
-                return healed > 0
-                    ? $"The ground shudders. Root-threads, thin as hair and countless, push through the soil and coil around the wounded where they sit. They tighten once. When they pull back, {healed} wound{(healed > 1 ? "s have" : " has")} closed. The earth remembers what a body should be. (+12 morale)"
-                    : "The ground shudders. Root-threads push through the soil, searching — but there is nothing to mend. The land offers what it finds. (+12 morale)";
-            }
-            return healed > 0
-                ? $"The earth closes {healed} wound{(healed > 1 ? "s" : "")} (+12 morale)."
-                : "The earth stirs but finds no wounds to close (+12 morale).";
-        }
-
-        // Water — luminous mist drifts through the column, soothing wounds and fever alike.
-        // Player: heals hero to full HP, heals 15 wounded, morale +15.
-        private static string CampaignStillWaters(MobileParty party, bool isPlayer)
-        {
-            int healed = HealWounded(party, isPlayer ? 15 : 6);
-            try { party.RecentEventsMorale += 15f; } catch { }
-            if (isPlayer)
-            {
+                int grain = 0, meat = 0;
                 try
                 {
-                    var h = Hero.MainHero;
-                    if (h != null) h.HitPoints = h.MaxHitPoints;
+                    var grainItem = MBObjectManager.Instance?.GetObject<ItemObject>("grain");
+                    if (grainItem != null) { party.ItemRoster.AddToCounts(grainItem, 40); grain = 40; }
                 }
                 catch { }
+                try
+                {
+                    var meatItem = MBObjectManager.Instance?.GetObject<ItemObject>("meat");
+                    if (meatItem != null) { party.ItemRoster.AddToCounts(meatItem, 10); meat = 10; }
+                }
+                catch { }
+                string foodLine = (grain > 0 || meat > 0)
+                    ? $" The cooks are staring: {(grain > 0 ? $"{grain} grain" : "")}{(grain > 0 && meat > 0 ? ", " : "")}{(meat > 0 ? $"{meat} cuts of meat" : "")} — left by no living hand."
+                    : "";
                 return healed > 0
-                    ? $"Mist rises from the ground — cold, faintly luminous, smelling of deep water. It drifts through the column like a held breath and where it passes, fever breaks and wounds stop bleeding. {healed} of the wounded are on their feet. You breathe it in and the ache leaves you. (+15 morale, hero made whole)"
-                    : "Mist rises from the ground — cold, faintly luminous, smelling of deep water. It drifts through the column and where it passes, tired shoulders straighten. You breathe it in and the ache leaves you. (+15 morale, hero made whole)";
+                    ? $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} {healed} wound{(healed > 1 ? "s have" : " has")} closed while the land worked. (+8 morale)"
+                    : $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} (+8 morale)";
             }
             return healed > 0
-                ? $"Cool mist passes through the march; {healed} healed (+15 morale)."
-                : "Cool mist passes through the march (+15 morale).";
+                ? $"The earth provides: {healed} healed (+8 morale)."
+                : "The earth stirs and the march is steadied (+8 morale).";
+        }
+
+        // Water — the underground current shows a path; player is carried to a nearby settlement.
+        // Requires a town within ~32 map units. Falls back to healing if nothing is reachable.
+        // Returns "" — the inquiry (or fallback Msg) handles all player messaging directly.
+        private static string CampaignStillWaters(MobileParty party, bool isPlayer)
+        {
+            if (!isPlayer)
+            {
+                int healed = HealWounded(party, 6);
+                try { party.RecentEventsMorale += 12f; } catch { }
+                return healed > 0
+                    ? $"Cool mist passes through the march; {healed} healed (+12 morale)."
+                    : "Cool mist passes through the march (+12 morale).";
+            }
+
+            // Find reachable towns and let the player choose where the current takes them.
+            List<Settlement> nearby = null;
+            try
+            {
+                Vec2 pos = party.GetPosition2D;
+                nearby = Settlement.All
+                    .Where(s => s.IsTown && s.Town != null)
+                    .Select(s => (s, dist: (s.GetPosition2D - pos).Length))
+                    .Where(t => t.dist > 1f && t.dist < 32f)
+                    .OrderBy(t => t.dist)
+                    .Take(5)
+                    .Select(t => t.s)
+                    .ToList();
+            }
+            catch { }
+
+            if (nearby == null || nearby.Count == 0)
+            {
+                // No waterway leads anywhere close: partial effect instead.
+                int healed = HealWounded(party, 10);
+                try { party.RecentEventsMorale += 12f; } catch { }
+                Msg("The water stirs but finds no path from here. It soothes what it can."
+                    + (healed > 0 ? $" {healed} wounds close." : "") + " (+12 morale)", NatureColor);
+                return "";
+            }
+
+            var options = nearby
+                .Select(s => new InquiryElement(s, s.Name.ToString(), null, true, ""))
+                .ToList();
+
+            try
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "Still Waters — the current shows a path",
+                    "The water in the ground stirs. A current runs beneath your feet and for a moment " +
+                    "you see — as in a still pool — the roads between here and there. Where do you go?",
+                    options, true, 1, 1, "Ride the current", "Stay",
+                    chosen =>
+                    {
+                        if (chosen == null || chosen.Count == 0) return;
+                        var dest = (Settlement)chosen[0].Identifier;
+                        try
+                        {
+                            var main = MobileParty.MainParty;
+                            main.Position = dest.GatePosition;
+                            try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                        }
+                        catch { }
+                        Msg($"The current carries you. You arrive at {dest.Name} before the mist has fully lifted.", NatureColor);
+                    },
+                    _ => Msg("The current stills. You chose not to follow it. Your charge is spent.", NatureColor),
+                    "", false), false, true);
+            }
+            catch
+            {
+                // Inquiry failed: carry to nearest.
+                var dest = nearby[0];
+                try
+                {
+                    var main = MobileParty.MainParty;
+                    main.Position = dest.GatePosition;
+                    try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                }
+                catch { }
+                Msg($"The current carries you to {dest.Name}.", NatureColor);
+            }
+            return "";
         }
 
         // Storm — lightning cracks the sky three times; the thunder enters the soldiers' chests.

@@ -219,17 +219,20 @@ namespace AshAndEmber
             AddLog(new TextObject(
                 "LIVING EMBER · ON THE CAMPAIGN MAP — Halt in open country; standing still a few " +
                 "hours lets the land fill a charge of the local element. Open the litany (Shift+X / " +
-                "RB+L3) to spend it on that element's MARCH POWER — all four work anywhere on the march: " +
-                "WIND — Windward: high air tears through the column, sealing wounds and lifting hearts; " +
-                "your own body is restored (+25 morale, 8 healed, hero restored). " +
-                "EARTH — Root-Mend: root-threads erupt from the earth and close EVERY wound in the " +
-                "column — none left behind (+12 morale, all wounded healed). " +
-                "WATER — Still Waters: luminous mist drifts through the march, breaking fever and " +
-                "mending the deep hurts; the hero is made whole (+15 morale, 15 healed, hero to full). " +
-                "STORM — Thunder's Edge: three bolts crack the sky and the thunder enters your " +
-                "soldiers' chests; nearby enemies on the map lose heart (+40 morale, enemies shaken). " +
-                "NPC seers who walk this path draw on the land daily in the same way, favouring " +
-                "Root-Mend when their column carries many wounded."), true);
+                "RB+L3) to spend it on that element's MARCH POWER. Each does something the raw numbers " +
+                "do not capture: " +
+                "WIND — Windward: cold air tears through the column, banners rip sideways, wounds seal, " +
+                "your body is lighter (+25 morale, 8 healed, hero restored). " +
+                "EARTH — Root-Mend: the forest floor opens and root-threads bring up what the earth has " +
+                "stored — grain, meat, things left by no living hand. Wounds close while the land works " +
+                "(40 grain, 10 meat, 8 healed, +8 morale). " +
+                "WATER — Still Waters: the underground current shows you the road. A pool of nearby " +
+                "towns opens; choose one and the water carries you there. Too far from any waterway " +
+                "and the mist heals what it can instead. " +
+                "STORM — Thunder's Edge: three bolts crack the sky. Soldiers roar. Nearby enemy " +
+                "parties on the map feel it and falter (+40 morale, enemies shaken). " +
+                "NPC seers draw on the land daily in the same way, favouring Root-Mend when their " +
+                "column carries many wounded."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +
