@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
@@ -88,14 +89,14 @@ namespace AshAndEmber
             Vec3 pos = caster.Position;
             switch (power)
             {
-                case NaturePower.Gale:        BattleGale(caster, pos, team);        break;
-                case NaturePower.Tailwind:    BattleTailwind(caster, pos, team);    break;
-                case NaturePower.Entangle:    BattleEntangle(caster, pos, team);    break;
-                case NaturePower.Bulwark:     BattleBulwark(caster, pos, team);     break;
-                case NaturePower.Torrent:     BattleTorrent(caster, pos, team);     break;
-                case NaturePower.Renewal:     BattleRenewal(caster, pos, team);     break;
-                case NaturePower.ThunderClap: BattleThunderClap(caster, pos, team); break;
-                case NaturePower.Stormstep:   BattleStormstep(caster);             break;
+                case NaturePower.Gale:        BattleGale(caster, pos, team);                              break;
+                case NaturePower.Windwall:    BattleBarrier(caster, pos, team, NatureElement.Wind);       break;
+                case NaturePower.Entangle:    BattleEntangle(caster, pos, team);                          break;
+                case NaturePower.Thornwall:   BattleBarrier(caster, pos, team, NatureElement.Earth);      break;
+                case NaturePower.Torrent:     BattleTorrent(caster, pos, team);                           break;
+                case NaturePower.Mistwall:    BattleBarrier(caster, pos, team, NatureElement.Water);      break;
+                case NaturePower.ThunderClap: BattleThunderClap(caster, pos, team);                       break;
+                case NaturePower.Stormwall:   BattleBarrier(caster, pos, team, NatureElement.Storm);      break;
             }
 
             // Living glow + element light bloom (the per-power shapes are spawned
@@ -121,15 +122,14 @@ namespace AshAndEmber
             });
         }
 
-        // Wind · Tailwind — speed to caster + nearby allies; trailing dust.
-        private static void BattleTailwind(Agent caster, Vec3 pos, Team team)
+        // All barrier powers — place an elemental wall in front of the caster.
+        private static void BattleBarrier(Agent caster, Vec3 pos, Team team, NatureElement el)
         {
-            ApplySpeedToken(caster, NatureMath.TailwindMult, NatureMath.TailwindSec);
-            ForEachAllyInRadius(pos, NatureMath.TailwindRadius, caster, team, ally =>
-            {
-                ApplySpeedToken(ally, NatureMath.TailwindMult, NatureMath.TailwindSec);
-                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Wind, 1.2f); } catch { }
-            });
+            try { SpellEffects.SpawnNatureBarrier(pos, caster.LookDirection, el, team); } catch { }
+            bool isPlayer = false;
+            try { isPlayer = Agent.Main != null && caster == Agent.Main; } catch { }
+            if (isPlayer)
+                Msg($"{NatureMath.PowerName(NatureMath.SupportPower(el))} — the land rises before you.", NatureColor);
         }
 
         // Earth · Entangle — roots erupt in an AoE: damage + immobilise; root ring.
@@ -146,17 +146,6 @@ namespace AshAndEmber
             ApplySpeedToken(caster, 0f, NatureMath.EntangleStaggerSec);
         }
 
-        // Earth · Bulwark — damage resistance to caster + nearby allies.
-        private static void BattleBulwark(Agent caster, Vec3 pos, Team team)
-        {
-            ApplyResistToken(caster, NatureMath.BulwarkResist, NatureMath.BulwarkSec);
-            ForEachAllyInRadius(pos, NatureMath.BulwarkRadius, caster, team, ally =>
-            {
-                ApplyResistToken(ally, NatureMath.BulwarkResist, NatureMath.BulwarkSec);
-                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Earth, 1.5f); } catch { }
-            });
-        }
-
         // Water · Torrent — forward cone: damage + knockback that breaks formation.
         private static void BattleTorrent(Agent caster, Vec3 pos, Team team)
         {
@@ -171,18 +160,6 @@ namespace AshAndEmber
                 ApplyDamage(enemy, caster, NatureMath.TorrentDamage, DamageTypes.Invalid);
                 try { enemy.TeleportToPosition(enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch { }
                 ApplySpeedToken(enemy, NatureMath.TorrentSlowMult, NatureMath.TorrentSlowSec);
-            });
-        }
-
-        // Water · Renewal — heal caster + nearby allies, lift morale.
-        private static void BattleRenewal(Agent caster, Vec3 pos, Team team)
-        {
-            try { caster.Health = Math.Min(caster.HealthLimit, caster.Health + NatureMath.RenewalSelfHp); } catch { }
-            ForEachAllyInRadius(pos, NatureMath.RenewalRadius, caster, team, ally =>
-            {
-                try { ally.Health = Math.Min(ally.HealthLimit, ally.Health + NatureMath.RenewalAllyHp); } catch { }
-                try { ally.SetMorale(Math.Min(100f, ally.GetMorale() + NatureMath.RenewalMorale)); } catch { }
-                try { SpellEffects.SpawnNatureBurst(ally.Position, NatureElement.Water, 1.6f); } catch { }
             });
         }
 
@@ -207,20 +184,6 @@ namespace AshAndEmber
                 try { SpellEffects.SpawnNatureBurst(chain.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 0.9f); } catch { }
                 chains++;
             });
-        }
-
-        // Storm · Stormstep — dash forward with a brief speed burst; dust trail.
-        private static void BattleStormstep(Agent caster)
-        {
-            try
-            {
-                Vec3 fwd  = caster.LookDirection.NormalizedCopy();
-                Vec3 dest = caster.Position + fwd * NatureMath.StormstepDist;
-                try { SpellEffects.SpawnNatureLine(caster.Position, dest, NatureElement.Storm, 1.0f); } catch { }
-                caster.TeleportToPosition(dest);
-                ApplySpeedToken(caster, 1.5f, NatureMath.StormstepBurstSec);
-            }
-            catch { }
         }
 
         // Element light bloom: Wind pale-white, Earth green, Water blue, Storm flash.
@@ -251,77 +214,384 @@ namespace AshAndEmber
         }
 
         // ── Campaign effects ────────────────────────────────────────────────────
-        // Support powers help the column; attack powers have no map use.
         private static bool ExecuteCampaign(NaturePower power)
         {
+            if (NatureMath.IsAttack(power))
+            {
+                Msg($"{NatureMath.PowerName(power)} — this force needs enemies. Carry your charge into battle.", NatureColor);
+                return false;
+            }
+            try
+            {
+                var party = MobileParty.MainParty;
+                if (party == null) return false;
+                string result = ApplyCampaignEffect(power, party);
+                if (!string.IsNullOrEmpty(result)) Msg(result, NatureColor);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // Public so NPC daily tick and player path share the same effect logic.
+        public static string ApplyCampaignEffect(NaturePower power, MobileParty party)
+        {
+            if (party == null) return "";
+            bool isMain = false;
+            try { isMain = party.IsMainParty; } catch { }
             switch (power)
             {
-                case NaturePower.Renewal:   CampaignRenewal();  return true;
-                case NaturePower.Tailwind:  CampaignTailwind(); return true;
-                case NaturePower.Bulwark:   CampaignBulwark();  return true;
-                case NaturePower.Stormstep: CampaignStormstep();return true;
-                default:
-                    Msg($"{NatureMath.PowerName(power)} — this power only stirs in conflict.", NatureColor);
-                    return false;
+                case NaturePower.Windwall:  return CampaignWindward(party, isMain);
+                case NaturePower.Thornwall: return CampaignRootMend(party, isMain);
+                case NaturePower.Mistwall:  return CampaignStillWaters(party, isMain);
+                case NaturePower.Stormwall: return CampaignThundersEdge(party, isMain);
+                default:                    return "";
             }
         }
 
-        private static void CampaignRenewal()
+        // Wind — fills the banners and pushes the column forward along the road.
+        // UPSIDE:  advances party ~6 map units toward their current target settlement.
+        //          If no target is set, scouts hostile parties within 50 units instead.
+        // DOWNSIDE: ~15 food scatters in the gust.
+        private static string CampaignWindward(MobileParty party, bool isPlayer)
+        {
+            try { party.RecentEventsMorale += 10f; } catch { }
+            if (!isPlayer)
+                return "The wind steadies the march (+10 morale).";
+
+            int foodLost = RemoveFoodFromRoster(party, 15);
+            string costLine = foodLost > 0 ? $" [{foodLost} food scattered]" : "";
+
+            // Try to push the party toward their current target settlement.
+            bool advanced = false;
+            try
+            {
+                Settlement target = null;
+                try { target = MobileParty.MainParty.TargetSettlement; } catch { }
+                if (target != null)
+                {
+                    Vec2 cur  = party.GetPosition2D;
+                    Vec2 dest = target.GetPosition2D;
+                    Vec2 diff = dest - cur;
+                    float len = diff.Length;
+                    if (len > 1f)
+                    {
+                        Vec2 dir    = diff * (1f / len);
+                        float push  = Math.Min(6f, len * 0.4f);  // never overshoot
+                        Vec2 newPos = cur + dir * push;
+                        party.Position = new CampaignVec2(newPos.x, newPos.y);
+                        advanced = true;
+                        return $"The wind fills the column's banners and presses the march forward — " +
+                               $"several leagues closer to {target.Name}, and the road seems shorter.{costLine} (+10 morale)";
+                    }
+                }
+            }
+            catch { }
+
+            // No movement target: scout the horizon instead.
+            if (!advanced)
+            {
+                string scouted = "";
+                try
+                {
+                    Vec2 pos = party.GetPosition2D;
+                    var pf = Hero.MainHero?.MapFaction;
+                    var enemies = MobileParty.All
+                        .Where(mp => mp != null && mp.IsActive && !mp.IsMainParty
+                            && mp.MapFaction != null && pf != null
+                            && mp.MapFaction.IsAtWarWith(pf))
+                        .Select(mp => (mp, dist: (mp.GetPosition2D - pos).Length))
+                        .Where(t => t.dist < 50f)
+                        .OrderBy(t => t.dist)
+                        .Take(5)
+                        .ToList();
+                    scouted = enemies.Count > 0
+                        ? " The wind returns with word: " +
+                          string.Join("; ", enemies.Select(t =>
+                              $"{t.mp.Name} (~{t.mp.Party.MemberRoster.TotalManCount} men)")) + "."
+                        : " The wind finds no enemies within reach.";
+                }
+                catch { }
+                return $"The wind goes out ahead and comes back knowing things.{scouted}{costLine} (+10 morale)";
+            }
+            return $"The wind stirs the column.{costLine} (+10 morale)";
+        }
+
+        // Earth — the deep roots find the nearest village and swell its hearth.
+        // UPSIDE:  nearest village gains +50 hearth (prosperity).
+        // DOWNSIDE: Hero loses 15 HP — the roots take from the nearest living vessel.
+        private static string CampaignRootMend(MobileParty party, bool isPlayer)
+        {
+            try { party.RecentEventsMorale += 8f; } catch { }
+            if (!isPlayer)
+                return "The earth stirs and steadies the march (+8 morale).";
+
+            // Find the nearest village settlement.
+            Settlement nearest = null;
+            try
+            {
+                Vec2 pos = party.GetPosition2D;
+                float best = float.MaxValue;
+                foreach (var s in Settlement.All)
+                {
+                    if (s == null || !s.IsVillage || s.Village == null) continue;
+                    float d = (s.GetPosition2D - pos).LengthSquared;
+                    if (d < best) { best = d; nearest = s; }
+                }
+            }
+            catch { }
+
+            int hearthGain = 0;
+            string villageName = "";
+            if (nearest != null)
+            {
+                try
+                {
+                    villageName = nearest.Name?.ToString() ?? "";
+                    nearest.Village.Hearth += 50f;
+                    hearthGain = 50;
+                }
+                catch { }
+            }
+
+            // The tithe: roots draw from the most alive thing nearby.
+            int hpDrained = 0;
+            try
+            {
+                var h = Hero.MainHero;
+                if (h != null)
+                {
+                    hpDrained = Math.Min(15, h.HitPoints - 5);   // never kill
+                    if (hpDrained > 0) h.HitPoints -= hpDrained;
+                }
+            }
+            catch { }
+
+            string titeLine = hpDrained > 0 ? $" [{hpDrained} HP taken as tithe]" : "";
+            string hearthLine = hearthGain > 0
+                ? $" The village of {villageName} will know a prosperous season."
+                : "";
+            return $"The roots go deep and give what they find.{hearthLine} The earth takes its share from you in return.{titeLine} (+8 morale)";
+        }
+
+        // Water — the sea-current carries the column to any coastal port.
+        // REQUIRES: standing on water-adjacent terrain (river, shore, lake, coast).
+        //           Only coastal port towns appear as destinations.
+        // UPSIDE:   instant travel to any harbour in the world.
+        // DOWNSIDE: -20 morale on arrival — soldiers wake cold and uncertain.
+        // Returns "" — inquiry handles messaging directly.
+        private static string CampaignStillWaters(MobileParty party, bool isPlayer)
+        {
+            if (!isPlayer)
+            {
+                int healed = HealWounded(party, 6);
+                try { party.RecentEventsMorale += 10f; } catch { }
+                return healed > 0
+                    ? $"Cool mist passes through the march; {healed} healed (+10 morale)."
+                    : "Cool mist passes through the march (+10 morale).";
+            }
+
+            // Gate: must be on water-adjacent terrain.
+            bool nearWater = false;
+            try
+            {
+                var terrain = Campaign.Current.MapSceneWrapper?.GetTerrainTypeAtPosition(party.Position);
+                if (terrain.HasValue)
+                {
+                    string t = terrain.Value.ToString();
+                    nearWater = t == "Water" || t == "ShallowRiver" || t == "River"
+                             || t == "Lake"  || t == "Shore"       || t == "Swamp"
+                             || t == "Wetland" || t == "Arctic";
+                }
+            }
+            catch { }
+
+            if (!nearWater)
+            {
+                Msg("Still Waters answers only where the land opens to water. " +
+                    "Stand on a river, shore, or coast and try again.", NatureColor);
+                return "";
+            }
+
+            // Find all resolved coastal port towns.
+            List<Settlement> ports = null;
+            try
+            {
+                Vec2 cur = party.GetPosition2D;
+                ports = Settlement.All
+                    .Where(s => s.IsTown && s.Town != null
+                        && SeaCampaignBehavior.IsCoastalTown(s.Name?.ToString()?.Trim())
+                        && (s.GetPosition2D - cur).Length > 2f)
+                    .OrderBy(s => (s.GetPosition2D - cur).Length)
+                    .ToList();
+            }
+            catch { }
+
+            if (ports == null || ports.Count == 0)
+            {
+                Msg("The current stirs but finds no harbour it recognises. " +
+                    "The sea lanes may not have opened yet.", NatureColor);
+                return "";
+            }
+
+            var options = ports
+                .Select(s => new InquiryElement(s, s.Name.ToString(), null, true, ""))
+                .ToList();
+
+            try
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "Still Waters — the sea knows the way",
+                    "A current runs beneath your feet — cold, purposeful, tasting of salt. " +
+                    "For a moment you see every harbour at once, as in a still pool. " +
+                    "The water will carry you there. It will not be gentle.\n\n" +
+                    "Your soldiers will arrive cold and unsure of where they are. [-20 morale on arrival]",
+                    options, true, 1, 1, "Ride the current", "Stay",
+                    chosen =>
+                    {
+                        if (chosen == null || chosen.Count == 0) return;
+                        var dest = (Settlement)chosen[0].Identifier;
+                        try
+                        {
+                            var main = MobileParty.MainParty;
+                            main.Position = dest.GatePosition;
+                            try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                        }
+                        catch { }
+                        try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
+                        Msg($"The current delivers you to the harbour at {dest.Name}. " +
+                            "Not all are sure how far they have come. [-20 morale]", NatureColor);
+                    },
+                    _ => Msg("The current stills. You chose not to follow it. Your charge is spent.", NatureColor),
+                    "", false), false, true);
+            }
+            catch
+            {
+                var dest = ports[0];
+                try
+                {
+                    var main = MobileParty.MainParty;
+                    main.Position = dest.GatePosition;
+                    try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                }
+                catch { }
+                try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
+                Msg($"The current carries you to {dest.Name}. [-20 morale]", NatureColor);
+            }
+            return "";
+        }
+
+        // Storm — three bolts crack the sky; roars from your men, fear in the enemy.
+        // UPSIDE:  +35 morale, nearby hostile parties lose 20 morale.
+        // DOWNSIDE: 2–3 of your weakest soldiers are struck and wounded.
+        private static string CampaignThundersEdge(MobileParty party, bool isPlayer)
+        {
+            try { party.RecentEventsMorale += isPlayer ? 35f : 20f; } catch { }
+            if (!isPlayer)
+                return "The storm fills the march with iron courage (+20 morale).";
+
+            DemoralizeNearbyEnemies(20f, 18f);
+
+            // The storm does not ask which side you fight for.
+            int struck = WoundWeakestTroops(party, 2 + _rng.Next(2));
+
+            string strikeLine = struck > 0
+                ? $" The lightning does not sort its targets — {struck} of your own lie smoking. [-{struck} troops wounded]"
+                : "";
+            return $"Three bolts strike the earth within thirty paces. The air turns iron with ozone. Your soldiers roar. Nearby enemies falter.{strikeLine} (+35 morale, enemies shaken)";
+        }
+
+        private static void DemoralizeNearbyEnemies(float moraleDrain, float mapRadius)
         {
             try
             {
-                var roster = MobileParty.MainParty?.MemberRoster;
-                if (roster != null)
+                Vec2 centre = MobileParty.MainParty?.GetPosition2D ?? Vec2.Zero;
+                var playerFaction = Hero.MainHero?.MapFaction;
+                if (playerFaction == null) return;
+                foreach (MobileParty mp in MobileParty.All.ToList())
                 {
-                    int healed = 0;
-                    foreach (var row in roster.GetTroopRoster().ToList())
-                    {
-                        if (row.WoundedNumber <= 0) continue;
-                        int recover = Math.Min(row.WoundedNumber, 6);
-                        roster.AddToCounts(row.Character, 0, false, -recover);
-                        healed += recover;
-                    }
-                    if (healed > 0) Msg($"Renewal — {healed} wounded soldiers recover.", NatureColor);
+                    if (mp == null || !mp.IsActive || mp.IsMainParty) continue;
+                    bool hostile = false;
+                    try { hostile = mp.MapFaction != null && mp.MapFaction.IsAtWarWith(playerFaction); } catch { continue; }
+                    if (!hostile) continue;
+                    if ((mp.GetPosition2D - centre).Length > mapRadius) continue;
+                    try { mp.RecentEventsMorale -= moraleDrain; } catch { }
                 }
-                try { MobileParty.MainParty.RecentEventsMorale += 20f; } catch { }
             }
             catch { }
         }
 
-        private static void CampaignTailwind()
-        {
-            try { MobileParty.MainParty.RecentEventsMorale += 25f;
-                  Msg("Tailwind — your column marches with lighter feet.", NatureColor); } catch { }
-        }
+        // Food item string IDs used in Bannerlord's base game.
+        private static readonly string[] _foodIds =
+            { "grain", "meat", "fish", "vegetables", "cheese", "bread", "dried_meat", "oil", "beer", "wine" };
 
-        private static void CampaignBulwark()
+        private static int RemoveFoodFromRoster(MobileParty party, int amount)
         {
-            // The forest mends the column — a modest restoration of the wounded.
+            int removed = 0;
             try
             {
-                var roster = MobileParty.MainParty?.MemberRoster;
-                if (roster != null)
+                int remaining = amount;
+                foreach (string id in _foodIds)
                 {
-                    int healed = 0;
-                    foreach (var row in roster.GetTroopRoster().ToList())
-                    {
-                        if (row.WoundedNumber <= 0) continue;
-                        int recover = Math.Min(row.WoundedNumber, 4);
-                        roster.AddToCounts(row.Character, 0, false, -recover);
-                        healed += recover;
-                    }
-                    Msg(healed > 0
-                        ? $"Bulwark — the land knits {healed} of your wounded whole again."
-                        : "Bulwark — the ground braces beneath you.", NatureColor);
+                    if (remaining <= 0) break;
+                    var item = MBObjectManager.Instance?.GetObject<ItemObject>(id);
+                    if (item == null) continue;
+                    int have = 0;
+                    try { have = party.ItemRoster.GetItemNumber(item); } catch { continue; }
+                    if (have <= 0) continue;
+                    int toRemove = Math.Min(have, remaining);
+                    party.ItemRoster.AddToCounts(item, -toRemove);
+                    removed   += toRemove;
+                    remaining -= toRemove;
                 }
             }
             catch { }
+            return removed;
         }
 
-        private static void CampaignStormstep()
+        // Wounds the N weakest non-hero troops in the party. Returns actual count wounded.
+        private static int WoundWeakestTroops(MobileParty party, int count)
         {
-            try { MobileParty.MainParty.RecentEventsMorale += 15f;
-                  Msg("Stormstep — a charge in the air; the march quickens.", NatureColor); } catch { }
+            int wounded = 0;
+            try
+            {
+                var roster = party.MemberRoster;
+                int remaining = count;
+                foreach (var elem in roster.GetTroopRoster()
+                    .Where(e => e.Character != null && !e.Character.IsHero
+                                && e.Number > e.WoundedNumber)
+                    .OrderBy(e => e.Character.Tier)
+                    .ToList())
+                {
+                    if (remaining <= 0) break;
+                    int toWound = Math.Min(remaining, elem.Number - elem.WoundedNumber);
+                    try { roster.AddToCounts(elem.Character, 0, false, toWound, 0); } catch { continue; }
+                    wounded   += toWound;
+                    remaining -= toWound;
+                }
+            }
+            catch { }
+            return wounded;
+        }
+
+        private static int HealWounded(MobileParty party, int count)
+        {
+            int healed = 0;
+            try
+            {
+                var roster = party.MemberRoster;
+                int remaining = count;
+                foreach (var elem in roster.GetTroopRoster().ToList())
+                {
+                    if (remaining <= 0) break;
+                    if (elem.WoundedNumber <= 0) continue;
+                    int toHeal = Math.Min(elem.WoundedNumber, remaining);
+                    roster.AddToCounts(elem.Character, 0, false, -toHeal, 0);
+                    healed   += toHeal;
+                    remaining -= toHeal;
+                }
+            }
+            catch { }
+            return healed;
         }
 
         // ── Tick ────────────────────────────────────────────────────────────────
@@ -387,7 +657,7 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void ApplySpeedToken(Agent agent, float mult, float seconds)
+        internal static void ApplySpeedToken(Agent agent, float mult, float seconds)
         {
             if (agent == null || !agent.IsActive()) return;
             try { agent.SetMaximumSpeedLimit(mult == 0f ? 0f : 10f * mult, false); } catch { }

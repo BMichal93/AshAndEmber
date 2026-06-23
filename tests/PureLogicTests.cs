@@ -902,13 +902,13 @@ namespace AshAndEmber.Tests
             var pairs = new[]
             {
                 (NaturePower.Gale,        NatureElement.Wind),
-                (NaturePower.Tailwind,    NatureElement.Wind),
+                (NaturePower.Windwall,    NatureElement.Wind),
                 (NaturePower.Entangle,    NatureElement.Earth),
-                (NaturePower.Bulwark,     NatureElement.Earth),
+                (NaturePower.Thornwall,   NatureElement.Earth),
                 (NaturePower.Torrent,     NatureElement.Water),
-                (NaturePower.Renewal,     NatureElement.Water),
+                (NaturePower.Mistwall,    NatureElement.Water),
                 (NaturePower.ThunderClap, NatureElement.Storm),
-                (NaturePower.Stormstep,   NatureElement.Storm),
+                (NaturePower.Stormwall,   NatureElement.Storm),
             };
             foreach (var (power, expected) in pairs)
                 Assert.AreEqual(expected, NatureMath.ElementOf(power),
@@ -937,8 +937,8 @@ namespace AshAndEmber.Tests
             for (int i = 0; i < 20; i++)
             {
                 var p = NatureMath.RandomPower(NatureElement.Earth, rng);
-                Assert.IsTrue(p == NaturePower.Entangle || p == NaturePower.Bulwark,
-                    $"Earth random power must be Entangle or Bulwark, got {p}.");
+                Assert.IsTrue(p == NaturePower.Entangle || p == NaturePower.Thornwall,
+                    $"Earth random power must be Entangle or Thornwall, got {p}.");
             }
         }
 

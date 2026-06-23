@@ -192,10 +192,12 @@ namespace AshAndEmber
                 "thirty seconds. Moving interrupts the gathering."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · CAST — While holding Left Ctrl and carrying a charge:  Attack " +
-                "(left mouse) looses the element's ATTACK,  Block (right mouse) calls its SUPPORT. " +
+                "LIVING EMBER · CAST (in battle) — While holding Left Ctrl and carrying a charge:  " +
+                "Attack (left mouse) looses the element's ATTACK,  Block (right mouse) calls its BARRIER. " +
                 "Each cast spends the charge. Gamepad: hold R3 to gather, Right Trigger = attack, " +
-                "Left Trigger = support."), true);
+                "Left Trigger = barrier. On the campaign map open the litany (Shift+X) to spend your " +
+                "charge on the element's MARCH POWER instead — attacks need enemies, but the land " +
+                "still answers in other ways."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · THE FOUR ELEMENTS — The land decides, not you: " +
@@ -204,18 +206,36 @@ namespace AshAndEmber
                 "a random element."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · THE POWERS — WIND: Gale (Attack — a ring of wind, knockback + " +
-                "damage) · Tailwind (Block — haste for you and allies). EARTH: Entangle (Attack — " +
-                "roots that hold foes fast and wound them) · Bulwark (Block — heavy damage resistance). " +
-                "WATER: Torrent (Attack — a cone that scatters and breaks formations) · Renewal " +
-                "(Block — heal). STORM: Thunderclap (Attack — a bolt that chains between foes) · " +
-                "Stormstep (Block — a sudden dash)."), true);
+                "LIVING EMBER · THE POWERS — WIND: Gale (Attack — a ring of wind, knockback + damage) · " +
+                "Windwall (Block — a howling wall that hurls foes back). " +
+                "EARTH: Entangle (Attack — roots that hold foes fast and wound them) · " +
+                "Thornwall (Block — erupting thorns: roots and bleeds all who press against it). " +
+                "WATER: Torrent (Attack — a cone that scatters and breaks formations) · " +
+                "Mistwall (Block — a churning water curtain that pushes and slows). " +
+                "STORM: Thunderclap (Attack — a bolt that chains between foes) · " +
+                "Stormwall (Block — a crackling lightning field that sears all who enter). " +
+                "All barriers last several seconds and pulse every heartbeat; NPCs who walk the living path raise them in defence."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · ON THE CAMPAIGN MAP — Halt in open country; standing still a few " +
-                "hours lets the land fill a charge of the local element. Spend it through the litany " +
-                "window (Shift+X / RB+L3): Wind eases the march, Earth and Water mend your wounded, " +
-                "Storm quickens the column."), true);
+                "hours lets the land fill a charge of the local element. Open the litany (Shift+X / " +
+                "RB+L3) to spend it on that element's MARCH POWER. Each has a real cost — the land " +
+                "gives nothing for free. " +
+                "WIND — Windward: the wind presses the march forward — if you have a destination set, " +
+                "the column advances several leagues toward it. If not, the wind goes ahead and comes " +
+                "back with word of enemies within reach. +10 morale. BUT supplies scatter in the gust " +
+                "(~15 food lost). " +
+                "EARTH — Root-Mend: the roots go deep and swell the hearth of the nearest village " +
+                "(+50 hearth). BUT the roots take a tithe from the nearest living vessel — you lose 15 HP. " +
+                "WATER — Still Waters: you must stand on water — a river, shore, or coast. A current " +
+                "runs beneath your feet and shows you every harbour at once; pick one and the water " +
+                "carries the whole column there. BUT soldiers arrive cold and unsure of where they are " +
+                "(-20 morale on arrival). Only coastal harbour towns appear as destinations. " +
+                "STORM — Thunder's Edge: three bolts crack the sky and your soldiers roar; nearby " +
+                "enemies on the map falter (-20 morale to them). +35 morale. BUT the lightning does " +
+                "not ask which side you fight for — 2-3 of your weakest soldiers are struck and wounded. " +
+                "NPC seers draw on the land daily in the same way, favouring Root-Mend when their " +
+                "column carries many wounded."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +

@@ -113,6 +113,34 @@ namespace AshAndEmber
         {
             // Campaign charges come from standing still (see OnHourlyTick).
 
+            // NPC Nature Seers draw on the land once a day when the chance fires.
+            try
+            {
+                NatureElement[] allEls = { NatureElement.Wind, NatureElement.Earth,
+                                           NatureElement.Water, NatureElement.Storm };
+                foreach (Hero hero in Hero.AllAliveHeroes.ToList())
+                {
+                    if (hero == Hero.MainHero || hero.PartyBelongedTo == null) continue;
+                    if (!NatureSeerRegistry.IsNatureSeer(hero)) continue;
+                    if (_rng.NextDouble() >= NatureMath.NpcDailyUseChance()) continue;
+
+                    // Prefer Earth Root-Mend when their party has many wounded.
+                    int wounded = 0;
+                    try { wounded = hero.PartyBelongedTo.MemberRoster
+                            .GetTroopRoster().Sum(e => e.WoundedNumber); } catch { }
+                    NatureElement el = allEls[_rng.Next(allEls.Length)];
+                    NaturePower power = wounded > 3
+                        ? NatureMath.SupportPower(NatureElement.Earth)
+                        : NatureMath.SupportPower(el);
+
+                    string msg = NatureEffects.ApplyCampaignEffect(power, hero.PartyBelongedTo);
+                    if (!string.IsNullOrEmpty(msg) && _rng.NextDouble() < 0.20)
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"{hero.Name}: {msg}", new Color(0.35f, 0.75f, 0.35f)));
+                }
+            }
+            catch { }
+
             // Tick hermit cooldowns
             foreach (string key in _hermitCooldowns.Keys.ToList())
             {

@@ -490,6 +490,13 @@ namespace AshAndEmber
                         break;
                     }
 
+                    case "nature_barrier_wind":
+                    case "nature_barrier_earth":
+                    case "nature_barrier_water":
+                    case "nature_barrier_storm":
+                        TickNatureBarrierNode(e);
+                        break;
+
                     case "spell_dirge":
                     {
                         SpawnTempFireParticle(e.Position, 1.5f);
@@ -511,6 +518,173 @@ namespace AshAndEmber
                     }
                 }
                 } catch { } // guard: Mission.Agents modified during switch case
+            }
+        }
+
+        // ── Nature barriers ──────────────────────────────────────────────────────
+        // Spawns a wall of BarrierNodeCount nodes perpendicular to the caster's
+        // forward. Each node holds two persistent particle columns (low + high) and a
+        // coloured point light for its full duration; repulsion and elemental effects
+        // pulse at BarrierTickInterval for as long as the wall stands.
+        public static void SpawnNatureBarrier(Vec3 pos, Vec3 lookDir, NatureElement el, Team casterTeam)
+        {
+            // Flatten to the horizontal plane.
+            Vec3 fwd = new Vec3(lookDir.x, lookDir.y, 0f);
+            float fLen = (float)Math.Sqrt(fwd.x * fwd.x + fwd.y * fwd.y);
+            if (fLen < 0.01f) fwd = new Vec3(1f, 0f, 0f);
+            else { fwd.x /= fLen; fwd.y /= fLen; }
+            Vec3 right = new Vec3(-fwd.y, fwd.x, 0f);
+
+            string   id      = BarrierNodeId(el);
+            Vec3     rgb     = NatureBarrierLightRgb(el);
+            string[] pNames  = NatureParticleNames(el);
+            float    dur     = NatureMath.BarrierDuration;
+            float    spacing = NatureMath.BarrierNodeSpacing;
+            float    fwdD    = NatureMath.BarrierForwardDist;
+            float    nodeR   = NatureMath.BarrierNodeRadius;
+            int      count   = NatureMath.BarrierNodeCount;
+
+            RemoveAreaEffect(id);
+
+            for (int i = 0; i < count; i++)
+            {
+                float lateral = (i - (count - 1) * 0.5f) * spacing;
+                Vec3  nodePos = pos + fwd * fwdD + right * lateral;
+                nodePos.z = pos.z;
+
+                // Lower particle column (ground level).
+                GameEntity partLow = null;
+                foreach (string name in pNames)
+                {
+                    partLow = SpawnParticleEntity(nodePos + new Vec3(0f, 0f, 0.25f), name);
+                    if (partLow != null) break;
+                }
+
+                // Upper particle column for a taller, more imposing wall.
+                GameEntity partHigh = null;
+                foreach (string name in pNames)
+                {
+                    partHigh = SpawnParticleEntity(nodePos + new Vec3(0f, 0f, 1.1f), name);
+                    if (partHigh != null) break;
+                }
+
+                var node = new AreaEffect
+                {
+                    Id           = id,
+                    School       = ColorSchool.Nature,
+                    Position     = nodePos,
+                    Radius       = nodeR,
+                    TickInterval = NatureMath.BarrierTickInterval,
+                    TickTimer    = NatureMath.BarrierTickInterval,
+                    Remaining    = dur,
+                    CasterTeam   = casterTeam,
+                };
+                node.LightEntity  = partLow;                                                          // lower particle
+                node.LightEntity2 = partHigh;                                                         // upper particle
+                node.LightEntity3 = SpawnAreaLightRaw(nodePos + new Vec3(0f, 0f, 0.8f), rgb, 5f);    // glow column
+                _areaEffects.Add(node);
+            }
+        }
+
+        private static void TickNatureBarrierNode(AreaEffect e)
+        {
+            NatureElement el = BarrierNodeElement(e.Id);
+
+            // Animated burst on each pulse so the wall feels alive and churning.
+            try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 0.3f), el, 0.5f); } catch { }
+            try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 1.0f), el, 0.4f); } catch { }
+            if (el == NatureElement.Storm)
+                try { SpawnTempLightWhite(e.Position + new Vec3(0f, 0f, 1.2f), 4f, 0.25f); } catch { }
+
+            if (Mission.Current == null) return;
+            float r2 = e.Radius * e.Radius;
+            foreach (Agent a in Mission.Current.Agents.ToList())
+            {
+                if (!a.IsActive() || a.IsMount || a.Health <= 0f) continue;
+                if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                if ((a.Position - e.Position).LengthSquared > r2) continue;
+
+                try
+                {
+                    Vec3 away = a.Position - e.Position;
+                    if (away.Length < 0.01f)
+                        away = new Vec3((float)(_rng.NextDouble() - 0.5), (float)(_rng.NextDouble() - 0.5), 0f);
+                    away = away.NormalizedCopy();
+                    away.z = 0f;
+
+                    switch (el)
+                    {
+                        case NatureElement.Wind:
+                            // Pure repulsion — powerful, instantaneous gust.
+                            a.TeleportToPosition(a.Position + away * NatureMath.WindwallPush);
+                            try { SpawnNatureBurst(a.Position, NatureElement.Wind, 0.4f); } catch { }
+                            break;
+
+                        case NatureElement.Earth:
+                            // Brief push into thorns + root + bleed.
+                            a.TeleportToPosition(a.Position + away * NatureMath.ThornwallPush);
+                            NatureEffects.ApplySpeedToken(a, 0f, NatureMath.ThornwallRootSec);
+                            float tDmg = NatureMath.ThornwallDamage;
+                            if (a.Health <= tDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
+                            else a.Health -= tDmg;
+                            try { SpawnNatureBurst(a.Position, NatureElement.Earth, 0.4f); } catch { }
+                            break;
+
+                        case NatureElement.Water:
+                            // Churning push + lingering slow.
+                            a.TeleportToPosition(a.Position + away * NatureMath.MistwallPush);
+                            NatureEffects.ApplySpeedToken(a, NatureMath.MistwallSlowMult, NatureMath.MistwallSlowSec);
+                            try { SpawnNatureBurst(a.Position, NatureElement.Water, 0.4f); } catch { }
+                            break;
+
+                        case NatureElement.Storm:
+                            // Lightning discharge — push + arc damage.
+                            a.TeleportToPosition(a.Position + away * NatureMath.StormwallPush);
+                            float sDmg = NatureMath.StormwallDamage;
+                            if (a.Health <= sDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
+                            else a.Health -= sDmg;
+                            try { SpawnTempLightWhite(a.Position + new Vec3(0f, 0f, 0.6f), 4f, 0.2f); } catch { }
+                            try { SpawnNatureBurst(a.Position, NatureElement.Storm, 0.4f); } catch { }
+                            break;
+                    }
+                }
+                catch { }
+            }
+        }
+
+        private static string BarrierNodeId(NatureElement el)
+        {
+            switch (el)
+            {
+                case NatureElement.Wind:  return "nature_barrier_wind";
+                case NatureElement.Earth: return "nature_barrier_earth";
+                case NatureElement.Water: return "nature_barrier_water";
+                case NatureElement.Storm: return "nature_barrier_storm";
+                default: return "nature_barrier_wind";
+            }
+        }
+
+        private static NatureElement BarrierNodeElement(string id)
+        {
+            switch (id)
+            {
+                case "nature_barrier_wind":  return NatureElement.Wind;
+                case "nature_barrier_earth": return NatureElement.Earth;
+                case "nature_barrier_water": return NatureElement.Water;
+                case "nature_barrier_storm": return NatureElement.Storm;
+                default: return NatureElement.Wind;
+            }
+        }
+
+        private static Vec3 NatureBarrierLightRgb(NatureElement el)
+        {
+            switch (el)
+            {
+                case NatureElement.Wind:  return new Vec3(0.88f, 0.92f, 1.00f); // pale white-blue
+                case NatureElement.Earth: return new Vec3(0.12f, 0.85f, 0.12f); // bright green
+                case NatureElement.Water: return new Vec3(0.20f, 0.60f, 1.00f); // deep blue
+                case NatureElement.Storm: return new Vec3(1.00f, 1.00f, 1.00f); // stark white
+                default: return new Vec3(0.88f, 0.92f, 1.00f);
             }
         }
 
