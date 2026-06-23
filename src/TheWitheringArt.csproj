@@ -162,8 +162,6 @@
     <Compile Include="AI\BanditMageAI.cs"/>
     <Compile Include="AI\ColourLordRegistry.cs"/>
     <Compile Include="AI\ColourLordAI.cs"/>
-    <Compile Include="AI\BlightSystem.cs"/>
-    <Compile Include="AI\ColourUnitRegistry.cs"/>
     <Compile Include="AI\AshenCitySystem.cs"/>
     <Compile Include="AI\AshenCitySystem.Setup.cs"/>
     <Compile Include="AI\AshenCitySystem.Maintenance.cs"/>
@@ -258,7 +256,6 @@
     <Compile Include="Visual\AreaEffects.Aftermath.cs"/>
     <Compile Include="Visual\GlowSystem.cs"/>
     <Compile Include="Visual\MoveSystem.cs"/>
-    <Compile Include="Visual\NamePrefixes.cs"/>
     <Compile Include="Visual\AshenSceneTone.cs"/>
     <Compile Include="Visual\AshenVisuals.cs"/>
     <Compile Include="Visual\BattleWhispers.cs"/>

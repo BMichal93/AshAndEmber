@@ -106,9 +106,6 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Siege check ────────────────────────────────────────────────────────
-        public static void IssueChargeToOwnFormations(Agent caster) { }
-
         // ── Battle command ─────────────────────────────────────────────────────
         public enum BattleCommandKind { Halt, Enrage, Dismount, StopArrows }
 

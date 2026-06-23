@@ -249,7 +249,5 @@ namespace AshAndEmber
             }
             foreach (int idx in _expiredHaltKeys) _haltedAgents.Remove(idx);
         }
-
-        public static void TickRandomUnitMagic(float dt) { }
     }
 }
