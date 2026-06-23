@@ -37,11 +37,13 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, float> _shadowShroud  = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _dreadPresence = new Dictionary<Agent, float>();
         // Aegis of Faith: seconds remaining on the absorption aura, keyed by bearer.
-        private static readonly Dictionary<Agent, float> _aegis         = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _aegis           = new Dictionary<Agent, float>();
         // Pale Rigor: seconds until the freeze lifts, keyed by affected enemy.
-        private static readonly Dictionary<Agent, float> _paleRigor     = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _paleRigor       = new Dictionary<Agent, float>();
         // Light of Guidance: seconds remaining on the speed surge, keyed by ally.
-        private static readonly Dictionary<Agent, float> _guidance      = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _guidance        = new Dictionary<Agent, float>();
+        // FrostBrand: chill timer on each victim (separate from DreadPresence so the two don't overwrite each other).
+        private static readonly Dictionary<Agent, float> _frostBrandChill = new Dictionary<Agent, float>();
 
         public static bool HasSacredFlame(Agent a)  => a != null && _sacredFlame.TryGetValue(a, out float t)  && t > 0f;
         public static bool HasFrostBrand(Agent a)   => a != null && _frostBrand.TryGetValue(a, out float t)   && t > 0f;
@@ -57,13 +59,15 @@ namespace AshAndEmber
             _aegis.Clear();
             _paleRigor.Clear();
             _guidance.Clear();
+            _frostBrandChill.Clear();
         }
 
         // Removes all hostile movement/morale effects from an agent (for Cleansing Rite).
         public static void PurgeHostileEffects(Agent a)
         {
             if (a == null) return;
-            if (_dreadPresence.Remove(a) || _paleRigor.Remove(a))
+            bool hadSlow = _dreadPresence.Remove(a) | _paleRigor.Remove(a) | _frostBrandChill.Remove(a);
+            if (hadSlow)
                 try { a.SetMaximumSpeedLimit(1f, true); } catch { }
         }
 
@@ -227,6 +231,10 @@ namespace AshAndEmber
             {
                 try { a.SetMaximumSpeedLimit(1f, true); } catch { }
             });
+            DecayAndExpire(_frostBrandChill, dt, a =>
+            {
+                try { a.SetMaximumSpeedLimit(1f, true); } catch { }
+            });
             DecayAndExpire(_aegis, dt, null);
             DecayAndExpire(_guidance, dt, a =>
             {
@@ -248,7 +256,7 @@ namespace AshAndEmber
                 // Frost Brand: each hit leaves a chill on the victim.
                 if (HasFrostBrand(affector) && affector != affected)
                 {
-                    _dreadPresence[affected] = MiracleMath.FrostBrandChillSec;
+                    _frostBrandChill[affected] = MiracleMath.FrostBrandChillSec;
                     try { affected.SetMaximumSpeedLimit(MiracleMath.FrostBrandSpeedMult, true); } catch { }
                     try { SpellEffects.BeginAgentGlow(affected, ColorSchool.Ashen, MiracleMath.FrostBrandChillSec); } catch { }
                 }
