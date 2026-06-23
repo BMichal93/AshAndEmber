@@ -18,7 +18,7 @@ namespace AshAndEmber
 {
     internal static class TempleCulture
     {
-        // The player chose the Templar (Vlandian) culture at character creation.
+        // The player chose the Templar (Vlandian) culture at character creation. //KEYWORD HERE WE STOPPED
         public static bool IsPlayerTemplar
         {
             get { try { return Hero.MainHero?.Culture?.StringId == "vlandia"; } catch { return false; } }
