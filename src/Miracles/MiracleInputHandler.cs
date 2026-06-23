@@ -99,12 +99,10 @@ namespace AshAndEmber
             bool holdKb  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
             // Controller: hold RBumper alone (not with LBumper which is spells).
             bool holdPad = rbHeld;
-            // Only the faithful (Grace) or the cold-touched react to the Ctrl modifier.
-            // Without either, holding Ctrl must do nothing — no focus light, no buffer —
-            // so it does not bleed into Nature's casting (which shares the modifier) or
-            // glow for a hero who carries no miracles at all.
-            bool holding = (holdKb || holdPad)
-                        && (MiracleInventory.HasGrace || MiracleInventory.HasCold);
+            // Only heroes carrying Grace react to the Ctrl modifier.
+            // Without Grace, holding Ctrl must do nothing — no focus light, no buffer —
+            // so it does not bleed into Nature's casting or glow for heroes with no miracles.
+            bool holding = (holdKb || holdPad) && MiracleInventory.HasGrace;
 
             if (holding)
             {
@@ -113,12 +111,7 @@ namespace AshAndEmber
                     try
                     {
                         if (Agent.Main != null)
-                        {
-                            ColorSchool focusSchool = MiracleInventory.HasGrace
-                                ? ColorSchool.Yellow
-                                : ColorSchool.Ashen;
-                            SpellEffects.BeginFocusVisual(Agent.Main, focusSchool);
-                        }
+                            SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Yellow);
                     }
                     catch { }
                 }
@@ -145,16 +138,13 @@ namespace AshAndEmber
                     _prevLUp = lUp; _prevLDown = lDown; _prevLLeft = lLeft; _prevLRight = lRight;
                 }
 
-                // Show buffer with remaining placeholder underscores.
+                // Show buffer with remaining placeholder underscores (gold — Grace only).
                 string display = _seqBuffer + new string('_', MiracleMath.SequenceLength - _seqBuffer.Length);
                 if (display != _lastDisplay)
                 {
                     _lastDisplay = display;
                     InformationManager.DisplayMessage(new InformationMessage(
-                        "[ " + display + " ]",
-                        new Color(MiracleInventory.HasGrace ? 0.95f : 0.35f,
-                                  MiracleInventory.HasGrace ? 0.82f : 0.55f,
-                                  MiracleInventory.HasGrace ? 0.35f : 0.90f)));
+                        "[ " + display + " ]", new Color(0.95f, 0.82f, 0.35f)));
                 }
             }
             else if (_wasHolding)
@@ -177,9 +167,9 @@ namespace AshAndEmber
         {
             if (_seqBuffer.Length == 0) return;
 
-            if (!MiracleInventory.HasGrace && !MiracleInventory.HasCold)
+            if (!MiracleInventory.HasGrace)
             {
-                Fizzle("You carry neither Grace nor Cold.");
+                Fizzle("You carry no Grace. Pray at a Sanctuary first.");
                 return;
             }
 
@@ -200,8 +190,7 @@ namespace AshAndEmber
 
         private static void SpendAndFizzle(string msg)
         {
-            if (MiracleInventory.HasGrace) MiracleInventory.SpendGrace();
-            else if (MiracleInventory.HasCold) MiracleInventory.SpendCold();
+            MiracleInventory.SpendGrace();
             Fizzle(msg);
         }
 
@@ -239,10 +228,10 @@ namespace AshAndEmber
                 return;
             }
 
-            if (!MiracleInventory.HasGrace && !MiracleInventory.HasCold)
+            if (!MiracleInventory.HasGrace)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "You carry neither Grace nor Cold. Visit a Sanctuary or Ashen Altar.",
+                    "You carry no Grace. Pray at a Sanctuary first.",
                     new Color(0.7f, 0.7f, 0.7f)));
                 return;
             }
@@ -266,14 +255,11 @@ namespace AshAndEmber
             try { inBattle = Mission.Current != null; } catch { }
 
             var elements = new List<InquiryElement>();
-            var source   = MiracleInventory.HasGrace ? MiracleCatalog.GraceAll : MiracleCatalog.ColdAll;
 
-            foreach (var def in source)
+            foreach (var def in MiracleCatalog.GraceAll)
             {
-                bool gateMet = def.IsGrace
-                    ? MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity)
-                    : MiracleMath.MeetsColdGate(def.Gate, honor, mercy, generosity);
-                bool usable = (inBattle ? def.UsableInBattle : def.UsableOnMap) && gateMet;
+                bool gateMet = MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity);
+                bool usable  = (inBattle ? def.UsableInBattle : def.UsableOnMap) && gateMet;
 
                 // Show the actual battle key combo (Ctrl + W/A/S/D), the place it can
                 // be used, and any virtue gate — all on the always-visible label.
@@ -285,14 +271,11 @@ namespace AshAndEmber
                 elements.Add(new InquiryElement(def.Type, label, null, usable, hint));
             }
 
-            string counter = MiracleInventory.HasGrace
-                ? $"Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}"
-                : $"Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap}";
-            string title = $"Miracles  [{counter}]";
+            string title = $"Miracles  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
             string body  = inBattle
-                ? "Choose a miracle to invoke now. Each costs 1 point. " +
+                ? "Choose a miracle to invoke now. Each costs 1 Grace. " +
                   "In battle you may also cast by holding Ctrl and tracing the keys shown."
-                : "Choose a miracle to invoke. Each costs 1 point. " +
+                : "Choose a miracle to invoke. Each costs 1 Grace. " +
                   "The keys shown are the battle sequence: hold Ctrl and press them in order.";
 
             try

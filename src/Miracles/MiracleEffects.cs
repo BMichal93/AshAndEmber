@@ -102,42 +102,29 @@ namespace AshAndEmber
             }
             catch { }
 
-            if (def.IsGrace)
+            // Only Grace miracles are available to the player. Cold miracles are
+            // NPC-only — ApplyBattleMiracle is called directly for them, bypassing this path.
+            if (!MiracleInventory.HasGrace)
             {
-                if (!MiracleInventory.HasGrace)
-                {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "You carry no Grace. Pray at a Sanctuary first.", GraceColor));
-                    return false;
-                }
-                if (!MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity))
-                {
-                    MiracleInventory.SpendGrace(); // mistake costs all the same
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{def.Name} — the light does not answer. Your virtue is not enough. [Grace spent]",
-                        GraceColor));
-                    return false;
-                }
-                MiracleInventory.SpendGrace();
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "You carry no Grace. Pray at a Sanctuary first.", GraceColor));
+                return false;
             }
-            else
+            if (!def.IsGrace)
             {
-                if (!MiracleInventory.HasCold)
-                {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "You carry no Cold. Kneel at an Ashen Altar first.", ColdColor));
-                    return false;
-                }
-                if (!MiracleMath.MeetsColdGate(def.Gate, honor, mercy, generosity))
-                {
-                    MiracleInventory.SpendCold();
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{def.Name} — the cold does not stir. You are too virtuous for this. [Cold spent]",
-                        ColdColor));
-                    return false;
-                }
-                MiracleInventory.SpendCold();
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{def.Name} — that miracle is not yours to call.", GraceColor));
+                return false;
             }
+            if (!MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity))
+            {
+                MiracleInventory.SpendGrace(); // gate failure still costs Grace
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{def.Name} — the light does not answer. Your virtue is not enough. [Grace spent]",
+                    GraceColor));
+                return false;
+            }
+            MiracleInventory.SpendGrace();
 
             if (inMission)
             {

@@ -32,9 +32,7 @@ namespace AshAndEmber
                         try
                         {
                             if (!HasSanctuary(Settlement.CurrentSettlement)) return false;
-                            string graceNote = MiracleInventory.HasCold
-                                ? "  [Cold: the flame is wary]"
-                                : $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
+                            string graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
                             MBTextManager.SetTextVariable("SANCT_ENTER_TEXT", "Visit the Sanctuary" + graceNote);
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
                             args.IsEnabled = true;
@@ -58,11 +56,7 @@ namespace AshAndEmber
                         int protRem = CampaignMapEvents.ProtectedDaysRemaining;
                         string protNote = protRem > 0 ? $"  [Warding Seal: {protRem} day(s) remaining]" : "";
 
-                        string graceNote;
-                        if (MiracleInventory.HasCold)
-                            graceNote = $"  [Cold: {MiracleInventory.Cold}/{MiracleMath.GraceColdCap} — the flame recoils from the cold within you]";
-                        else
-                            graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
+                        string graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
 
                         string interNote = "";
                         int sinceAltar = today - AshenAltarsCampaignBehavior._lastAltarUseDay;
@@ -89,21 +83,19 @@ namespace AshAndEmber
                         {
                             int today = CurrentCampaignDay();
                             bool onCooldown = (today - _lastPrayerDay) < MiracleMath.PrayerCooldownDays;
-                            bool blockedByCold = MiracleInventory.Cold > 0 || DarkGiftSystem.HasAnyGift;
+                            bool blockedByDark = DarkGiftSystem.HasAnyGift;
                             bool atCap = MiracleInventory.Grace >= MiracleMath.GraceColdCap;
 
                             string suffix = "";
-                            if (DarkGiftSystem.HasAnyGift)
+                            if (blockedByDark)
                             { args.IsEnabled = false; suffix = "  [The darkness in you repels the flame]"; }
-                            else if (blockedByCold)
-                            { args.IsEnabled = false; suffix = "  [Cold within you — the flame will not answer]"; }
                             else if (atCap)
                             { args.IsEnabled = false; suffix = "  [Grace is full — cast a miracle first]"; }
                             else if (onCooldown)
                             { args.IsEnabled = false; suffix = $"  [On cooldown: {MiracleMath.PrayerCooldownDays - (today - _lastPrayerDay)} day(s)]"; }
 
                             string reagentNote = "";
-                            if (!blockedByCold && !atCap && !onCooldown)
+                            if (!blockedByDark && !atCap && !onCooldown)
                             {
                                 int reduc = ReagentSystem.SanctuaryCooldownReduction();
                                 if (reduc > 0)
@@ -116,7 +108,7 @@ namespace AshAndEmber
                             }
 
                             string coldNote = "";
-                            if (!blockedByCold && MageKnowledge.IsMage)
+                            if (!blockedByDark && MageKnowledge.IsMage)
                             {
                                 int wt = MageKnowledge.WhisperTier;
                                 if (wt >= 3) coldNote = "  [the cold dims the flame: −2 Grace]";
@@ -287,8 +279,6 @@ namespace AshAndEmber
                 msg = $"The flame answers. You kneel until your knees ache and the candles burn lower. " +
                       $"{gained} Grace received. [{MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]\n\n" +
                       $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}{scaleLine}";
-            else if (MiracleInventory.Cold > 0)
-                msg = "The cold within you snuffs the flame before it answers. Spend your Cold first.";
             else if (MiracleInventory.Grace >= MiracleMath.GraceColdCap)
                 msg = "The flame burns, but has nothing more to give you today. Your Grace is full.";
             else

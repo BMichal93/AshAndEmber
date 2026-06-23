@@ -1,10 +1,13 @@
 // =============================================================================
 // ASH AND EMBER — Miracles/MiracleCampaignBehavior.cs
 //
-// Serializes Grace/Cold counters (MIRACLE_Grace / MIRACLE_Cold save keys) and
-// drives daily NPC miracle use on the campaign map. Grace lords with strong
-// virtue simulate Radiant Mending or Guidance on their parties; Cold lords
-// simulate Dreadmending or Dread Presence on nearby enemies.
+// Serializes the Grace counter (MIRACLE_Grace save key) and drives daily NPC
+// miracle use on the campaign map. Grace lords with strong virtue simulate
+// Radiant Mending or Guidance on their parties; Cold lords simulate
+// Dreadmending or Dread Presence on nearby enemies.
+//
+// MIRACLE_Cold is read as a dummy on load for backward compatibility with saves
+// that pre-date the removal of player Cold (altars now grant Dark Gifts).
 // =============================================================================
 
 using System;
@@ -29,7 +32,7 @@ namespace AshAndEmber
         public override void SyncData(IDataStore store)
         {
             try { store.SyncData("MIRACLE_Grace", ref MiracleInventory._grace); } catch { }
-            try { store.SyncData("MIRACLE_Cold",  ref MiracleInventory._cold);  } catch { }
+            try { int dummy = 0; store.SyncData("MIRACLE_Cold", ref dummy); } catch { } // Cold removed
         }
 
         public static void ResetForNewGame() => MiracleInventory.ResetForNewGame();
