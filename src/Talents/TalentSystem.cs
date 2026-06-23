@@ -402,88 +402,88 @@ namespace AshAndEmber
             // TalentId values are kept for save compatibility.
             new TalentDef
             {
-                Id = TalentId.Gracebound, Category = TalentCategory.Rite, FocusCost = 2, Name = "Gracebound",
+                Id = TalentId.Gracebound, Category = TalentCategory.Rite, FocusCost = 0, Name = "Gracebound",
                 Lore = "Devotion worn smooth becomes a channel rather than a struggle. You no longer reach for the warmth — it is already moving through you, into the wounded beside you, into the ward overhead, into the courage of those who march in your shadow.",
                 MechanicDesc = "Class (2 focus points). The full discipline of the Sanctuary. Grants The Keeping Flame (each prayer heals a quarter of your wounded and holds a morale floor of 30), Unbroken Ward (a 21-day warding seal that grants daily morale and cheaper battle casts while it holds), and Ember Covenant (cheaper prayer, double Grace, and a quiet daily heal while Grace runs high)."
             },
             new TalentDef
             {
-                Id = TalentId.AshenAlchemist, Category = TalentCategory.Rite, FocusCost = 2, Name = "Ashen Alchemist",
+                Id = TalentId.AshenAlchemist, Category = TalentCategory.Rite, FocusCost = 0, Name = "Ashen Alchemist",
                 Lore = "The satchel was always larger than it looked, the brew always more willing than it seemed. A practised hand finishes confidently, carries more than it counts, and salvages what a clumsier one would spill into ruin.",
                 MechanicDesc = "Class (2 focus points). The full discipline of the Lab. Grants The Steadier Hand (+15% brew success, no misleading reads, a chance of a second vial), The Deeper Satchel (+4 capacity, flat 150-denar brews, a chance the field vial refills), and Volatile Harvest (salvage tainted vials, lash a nearby enemy on the save, and soften backfires)."
             },
             // ── Sanctuary Rites ──────────────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.KeepingFlame, Category = TalentCategory.Rite, FocusCost = 1, Name = "The Keeping Flame",
+                Id = TalentId.KeepingFlame, Category = TalentCategory.Rite, FocusCost = 0, Name = "The Keeping Flame",
                 Lore = "To open yourself as a vessel is to open a channel wider than your own body. What the fire pours through you reaches the ones beside you — the wounded, the afraid, the ones whose fire was dimming. You cannot direct it; you can only stay open and trust the warmth to find what needs it most.",
                 MechanicDesc = "Rite. Each prayer heals 25% of wounded troops and grants your column +20 morale from shared warmth. Daily, your party's morale cannot fall below 30 — the Keeping Flame holds a floor of courage in the ones who march beside you."
             },
             new TalentDef
             {
-                Id = TalentId.UnbrokenWard, Category = TalentCategory.Rite, FocusCost = 1, Name = "Unbroken Ward",
+                Id = TalentId.UnbrokenWard, Category = TalentCategory.Rite, FocusCost = 0, Name = "Unbroken Ward",
                 Lore = "The fuller form of the warding sinks deeper into the earth and the air, leaves less of a seam at the edges. The grey things find the seal and do not try the same approach twice. Meanwhile those who march beneath it feel a warmth they cannot name, and their courage does not drain as fast.",
                 MechanicDesc = "Rite. The Warding Seal lasts 21 days instead of 14. While the ward holds: your party gains +10 morale each day, and each battle spell costs 2 fewer aging days (minimum 1). The ward makes the fire cheaper to spend while it burns."
             },
             new TalentDef
             {
-                Id = TalentId.EmberCovenant, Category = TalentCategory.Rite, FocusCost = 1, Name = "Ember Covenant",
+                Id = TalentId.EmberCovenant, Category = TalentCategory.Rite, FocusCost = 0, Name = "Ember Covenant",
                 Lore = "Devotion is its own fuel — the rite does not need to reach as deep when the channel has been worn smooth by repetition. And what you carry comes back to you in the breathing: the Grace you hold does not sit still, it moves, it circulates, it mends what it finds. Quietly. While you sleep.",
                 MechanicDesc = "Rite. Prayer costs 8 HP instead of 12, and yields twice the Grace. While you carry any Grace: +5 morale each day. When Grace exceeds half your cap, the warmth quietly heals one wounded soldier per troop type each dawn."
             },
             // ── Alchemy Rites ─────────────────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.SteadierHand, Category = TalentCategory.Rite, FocusCost = 1, Name = "The Steadier Hand",
+                Id = TalentId.SteadierHand, Category = TalentCategory.Rite, FocusCost = 0, Name = "The Steadier Hand",
                 Lore = "Most who spoil a brew do so in the final measure. You have learned to finish confidently — and the confident finish is its own catalyst. Sometimes the brew that should have been one becomes two, as though the formula agreed it was not done yet.",
                 MechanicDesc = "Rite. Brewing success chance increases by 15%. Misleading read results are replaced with Unknown — the hand that seals it may doubt, but it will not lie. On a clean brew, 20% chance the formula yields a second vial at no additional cost."
             },
             new TalentDef
             {
-                Id = TalentId.DeeperSatchel, Category = TalentCategory.Rite, FocusCost = 1, Name = "The Deeper Satchel",
+                Id = TalentId.DeeperSatchel, Category = TalentCategory.Rite, FocusCost = 0, Name = "The Deeper Satchel",
                 Lore = "The satchel was always larger than it looked. A practised hand arranges rather than counts — the vials nest, the heat distributes, the seams of the old leather know where to give. And sometimes, when the vial rises to the lips, the hand reaches back and finds it is somehow still there.",
                 MechanicDesc = "Rite. Satchel capacity increases by 4. Ingredient costs drop to a flat 150 denars per brew. When you drink a clean elixir in the field, 25% chance the satchel refills with one clean vial of the same kind — you reach in and find it was not gone after all."
             },
             new TalentDef
             {
-                Id = TalentId.VolatileHarvest, Category = TalentCategory.Rite, FocusCost = 1, Name = "Volatile Harvest",
+                Id = TalentId.VolatileHarvest, Category = TalentCategory.Rite, FocusCost = 0, Name = "Volatile Harvest",
                 Lore = "A ruined brew is not always a waste. The instincts of a careful hand find what set true before the rest turned. It takes nerve to drink something that smells like failure. And when the good part surfaces unexpectedly, the volatile remainder does not vanish quietly — it needs somewhere to go.",
                 MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the clean effect. In battle, the volatile remnant lashes the nearest enemy for 25 fire damage on a salvage. When a backfire does land, 30% of the self-wound is returned as a partial heal — not all of the ruin reaches you."
             },
             // ── Nature — The Living Ember ─────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.NatureLivingRoot, Category = TalentCategory.Rite, FocusCost = 1, Name = "Living Root",
+                Id = TalentId.NatureLivingRoot, Category = TalentCategory.Rite, FocusCost = 0, Name = "Living Root",
                 Lore = "The root-voice speaks twice when you know how to listen. The land does not give more than it is asked for — but a patient hand, reaching twice, finds what a hasty one misses.",
                 MechanicDesc = "Rite. You may hold two elemental charges at once instead of one. Passive charge accumulation on the campaign map rolls twice each day."
             },
             new TalentDef
             {
-                Id = TalentId.NatureStillDraw, Category = TalentCategory.Rite, FocusCost = 1, Name = "Still Draw",
+                Id = TalentId.NatureStillDraw, Category = TalentCategory.Rite, FocusCost = 0, Name = "Still Draw",
                 Lore = "The river does not charge you for what it offers when you are still. Motion is cost. Stillness is the oldest prayer the land knows.",
                 MechanicDesc = "Rite. Drawing elemental charge in combat costs no HP when you are stationary. Move, and the land asks its price."
             },
             new TalentDef
             {
-                Id = TalentId.NatureOpenGrip, Category = TalentCategory.Rite, FocusCost = 1, Name = "Open Grip",
+                Id = TalentId.NatureOpenGrip, Category = TalentCategory.Rite, FocusCost = 0, Name = "Open Grip",
                 Lore = "The steppe does not take back a gift. What the land gives, it means you to have — for as long as you carry it. Open the hand, not wide, just open, and what the world gives you will stay.",
                 MechanicDesc = "Rite. Held elemental charges no longer expire. What you draw in battle stays in your hands until you use it or leave the field."
             },
             new TalentDef
             {
-                Id = TalentId.Wildsworn, Category = TalentCategory.Rite, FocusCost = 2, Name = "Wildsworn",
+                Id = TalentId.Wildsworn, Category = TalentCategory.Rite, FocusCost = 0, Name = "Wildsworn",
                 Lore = "You have listened long enough that the listening has changed you. The root-voice, the river's patience, the open hand of the wind — you carry all three, and the land knows you for what you are.",
                 MechanicDesc = "Class (2 focus points). The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (free draw while stationary), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
             },
             new TalentDef
             {
-                Id = TalentId.NatureDeepEarth, Category = TalentCategory.Rite, FocusCost = 1, Name = "Deep Earth",
+                Id = TalentId.NatureDeepEarth, Category = TalentCategory.Rite, FocusCost = 0, Name = "Deep Earth",
                 Lore = "Stone is slow to speak, but it does not stay silent. Those who wait long enough beside an old wall or a mountain face come to hear the root-voice through the rock as clearly as through open soil. The muffling is a failure of patience, not a failure of the land.",
                 MechanicDesc = "Rite. Drawing elemental charge inside a siege or walled city no longer triggers the stone-muffling cooldown. The land speaks through stone as freely as through soil."
             },
             new TalentDef
             {
-                Id = TalentId.NatureDawnCall, Category = TalentCategory.Rite, FocusCost = 1, Name = "Dawn Call",
+                Id = TalentId.NatureDawnCall, Category = TalentCategory.Rite, FocusCost = 0, Name = "Dawn Call",
                 Lore = "The desert is loudest at dawn. Most people miss it. The angle of the light, the shift of the cold, the moment when dark ground releases what it held through the night — if you are open enough when it happens, the living world gives without being asked.",
                 MechanicDesc = "Rite. The land offers an elemental charge each dawn without fail. The 1-in-3 chance of passive accumulation on the campaign map becomes a certainty."
             },
