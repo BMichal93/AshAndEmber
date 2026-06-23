@@ -71,10 +71,42 @@ namespace AshAndEmber
             TalentId.Heartfire, TalentId.Pyrelord, TalentId.Ashbinder,
         };
 
+        // Per-discipline escalating pools — independent of fire paths and each other.
+        private static readonly TalentId[] _graceTalentIds =
+        {
+            TalentId.Gracebound, TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant,
+        };
+
+        private static readonly TalentId[] _alchemyTalentIds =
+        {
+            TalentId.AshenAlchemist, TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest,
+        };
+
+        private static readonly TalentId[] _natureTalentIds =
+        {
+            TalentId.Wildsworn, TalentId.NatureLivingRoot, TalentId.NatureStillDraw,
+            TalentId.NatureOpenGrip, TalentId.NatureDeepEarth, TalentId.NatureDawnCall,
+        };
+
         public static int GetNextPathCost()
         {
             int owned = _firePathIds.Count(id => _purchased.Contains(id));
             return owned + 1;
+        }
+
+        public static int GetNextDisciplineCost(TalentId[] pool)
+        {
+            int owned = pool.Count(id => _purchased.Contains(id));
+            return owned + 1;
+        }
+
+        private static bool TryGetDisciplinePool(TalentId id, out TalentId[] pool)
+        {
+            if (Array.IndexOf(_graceTalentIds,   id) >= 0) { pool = _graceTalentIds;   return true; }
+            if (Array.IndexOf(_alchemyTalentIds, id) >= 0) { pool = _alchemyTalentIds; return true; }
+            if (Array.IndexOf(_natureTalentIds,  id) >= 0) { pool = _natureTalentIds;  return true; }
+            pool = null;
+            return false;
         }
 
         // A talent is owned if it was purchased directly (legacy single-talent
@@ -162,6 +194,8 @@ namespace AshAndEmber
             int cost;
             if (defCheck?.Category == TalentCategory.Class && defCheck.FocusCost == 0)
                 cost = GetNextPathCost();
+            else if (TryGetDisciplinePool(id, out var disciplinePool))
+                cost = GetNextDisciplineCost(disciplinePool);
             else
                 cost = defCheck?.FocusCost > 0 ? defCheck.FocusCost : PurchaseCost();
 
