@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TaleWorlds.Core;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
@@ -31,6 +32,8 @@ namespace AshAndEmber
         private static bool _wasHolding = false;
         private static bool _prevAtk, _prevBlk, _prevPadAtk, _prevPadBlk;
         private const float StillSpeed = 0.3f;   // below this the caster counts as still
+        private static float _blockReminder = 0f;             // throttle for "why can't I channel" hints
+        private const float BlockReminderInterval = 2.5f;
 
         public static void ResetInputState()
         {
@@ -68,6 +71,7 @@ namespace AshAndEmber
                 // Channel: stand still, hands empty, armour light → fill a charge.
                 if (!NatureCharge.IsFull && CanChannel(inMission))
                 {
+                    _blockReminder = 0f;
                     if (NatureCharge.ChannelTick(dt, inMission))
                         Msg($"A charge of {NatureMath.ElementName(NatureCharge.CurrentElement)} gathers — " +
                             $"Attack looses its force, Block calls its grace.", NatureColor);
@@ -75,6 +79,21 @@ namespace AshAndEmber
                 else
                 {
                     NatureCharge.ResetFill();
+                    // Tell the player WHY the land will not answer, rather than
+                    // failing silently. Throttled so it informs without spamming.
+                    if (!NatureCharge.IsFull)
+                    {
+                        string reason = ChannelBlockReason(inMission);
+                        if (reason != null)
+                        {
+                            _blockReminder -= dt;
+                            if (_blockReminder <= 0f)
+                            {
+                                Msg(reason, NatureColor);
+                                _blockReminder = BlockReminderInterval;
+                            }
+                        }
+                    }
                 }
 
                 // Cast: Attack (left mouse) / Block (right mouse).
@@ -106,18 +125,26 @@ namespace AshAndEmber
 
         // Channelling requires standing still; in battle also empty hands + light armour.
         private static bool CanChannel(bool inMission)
+            => ChannelBlockReason(inMission) == null;
+
+        // Returns null when channelling is allowed, otherwise a short reason the
+        // player can act on (sheathe weapon / shed armour / stand still).
+        private static string ChannelBlockReason(bool inMission)
         {
-            if (!inMission) return true;   // map handled separately (Part 4)
+            if (!inMission) return null;   // map handled separately (Part 4)
             try
             {
                 Agent c = Agent.Main;
-                if (c == null) return false;
-                if (c.GetCurrentVelocity().Length >= StillSpeed) return false;
-                if (!SpellEffects.HasFreeHand(c)) return false;
-                if (NatureEffects.ArmourTooHeavy(c)) return false;
-                return true;
+                if (c == null) return "The land cannot reach you here.";
+                if (c.GetCurrentVelocity().Length >= StillSpeed)
+                    return "The land answers only the still — stop moving to gather a charge.";
+                if (!SpellEffects.HasFreeHand(c))
+                    return "Your hands are full of steel. Sheathe your weapon (X) to draw from the land.";
+                if (NatureEffects.ArmourTooHeavy(c))
+                    return "Too much iron weighs you down — the living current cannot pass through heavy armour.";
+                return null;
             }
-            catch { return false; }
+            catch { return null; }
         }
 
         // The Living Ember window — reached through the miracle key (Shift+X / RB+L3).
@@ -152,7 +179,7 @@ namespace AshAndEmber
                 string campLabel = NatureMath.CampaignPowerLabel(campPower);
                 var campOptions = new List<InquiryElement>
                 {
-                    new InquiryElement(campPower, campLabel, null, true, ""),
+                    new InquiryElement(campPower, campLabel, null, true, NatureMath.CampaignPowerHint(campPower)),
                 };
                 string campTitle = $"The Living Ember — {NatureMath.ElementName(el)}";
                 string campBody  = "The land offers what it can on the march. Attacks only answer in the heat of battle.";
@@ -228,9 +255,13 @@ namespace AshAndEmber
         {
             NatureElement[] els = NatureCharge.PeekTerrainElements(inMission);
             if (els == null || els.Length == 0) return;
-            string names = els.Length > 1
-                ? "mixed ground (random)"
-                : NatureMath.ElementName(els[0]);
+            string names;
+            if (els.Length == 1)
+                names = NatureMath.ElementName(els[0]);
+            else if (els.Length >= 4)
+                names = "any element (random)";
+            else
+                names = string.Join(" / ", els.Select(NatureMath.ElementName)) + " (random)";
             string held = NatureCharge.HasCharge
                 ? $" — holding {NatureMath.ElementName(NatureCharge.CurrentElement)}"
                 : "";

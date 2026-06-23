@@ -14,6 +14,7 @@ using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
+using TaleWorlds.ObjectSystem;
 
 namespace AshAndEmber
 {
@@ -109,6 +110,7 @@ namespace AshAndEmber
         private static void BattleGale(Agent caster, Vec3 pos, Team team)
         {
             try { SpellEffects.SpawnNatureRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f, 1.6f); } catch { }
+            try { SpawnEruptionRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f); } catch { }
             ForEachEnemyInRadius(pos, NatureMath.GaleRadius, team, enemy =>
             {
                 ApplyDamage(enemy, caster, NatureMath.GaleDamage, DamageTypes.Invalid);
@@ -136,6 +138,7 @@ namespace AshAndEmber
         private static void BattleEntangle(Agent caster, Vec3 pos, Team team)
         {
             try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f, 2.5f); } catch { }
+            try { SpawnEruptionRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f); } catch { }
             ForEachEnemyInRadius(pos, NatureMath.EntangleRadius, team, enemy =>
             {
                 ApplyDamage(enemy, caster, NatureMath.EntangleDamage, DamageTypes.Blunt);
@@ -152,6 +155,7 @@ namespace AshAndEmber
             Vec3 fwd = caster.LookDirection.NormalizedCopy();
             float halfAngle = NatureMath.TorrentAngleDeg * 0.5f * (float)(Math.PI / 180.0);
             try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.TorrentRange, NatureElement.Water, 2.0f); } catch { }
+            try { SpawnEruptionCone(pos, fwd, NatureElement.Water, NatureMath.TorrentRange); } catch { }
 
             ForEachEnemyInRadius(pos, NatureMath.TorrentRange, team, enemy =>
             {
@@ -184,6 +188,39 @@ namespace AshAndEmber
                 try { SpellEffects.SpawnNatureBurst(chain.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 0.9f); } catch { }
                 chains++;
             });
+        }
+
+        // Bright eruption lighting for an AoE attack: a ring of element-coloured
+        // light bursts plus a central flash, so the strike visibly erupts outward
+        // rather than only flashing one-shot debris. Lights are guaranteed to render.
+        private static void SpawnEruptionRing(Vec3 pos, NatureElement el, float radius)
+        {
+            Vec3 rgb = SpellEffects.NatureElementRgb(el);
+            SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.0f), rgb, radius + 6f, 0.45f); // central flash
+            int n = 10;
+            for (int i = 0; i < n; i++)
+            {
+                double a = Math.PI * 2.0 / n * i;
+                Vec3 lp = pos + new Vec3((float)Math.Cos(a) * radius, (float)Math.Sin(a) * radius, 0.8f);
+                SpellEffects.SpawnTempLightRgb(lp, rgb, 4.5f, 0.6f);
+                try { SpellEffects.SpawnNatureBurst(lp, el, 0.7f); } catch { }
+            }
+        }
+
+        // Bright eruption lighting for a forward cone attack: a line of element-
+        // coloured light bursts running out along the strike direction.
+        private static void SpawnEruptionCone(Vec3 pos, Vec3 fwd, NatureElement el, float range)
+        {
+            Vec3 rgb = SpellEffects.NatureElementRgb(el);
+            SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.0f), rgb, 10f, 0.45f); // muzzle flash
+            int steps = 5;
+            for (int i = 1; i <= steps; i++)
+            {
+                float t = (float)i / steps;
+                Vec3 lp = pos + fwd * (range * t) + new Vec3(0f, 0f, 0.8f);
+                SpellEffects.SpawnTempLightRgb(lp, rgb, 4.5f, 0.6f);
+                try { SpellEffects.SpawnNatureBurst(lp, el, 0.7f); } catch { }
+            }
         }
 
         // Element light bloom: Wind pale-white, Earth green, Water blue, Storm flash.
@@ -278,7 +315,7 @@ namespace AshAndEmber
                         Vec2 dir    = diff * (1f / len);
                         float push  = Math.Min(6f, len * 0.4f);  // never overshoot
                         Vec2 newPos = cur + dir * push;
-                        party.Position = new CampaignVec2(newPos.x, newPos.y);
+                        party.Position = new CampaignVec2(newPos, true);
                         advanced = true;
                         return $"The wind fills the column's banners and presses the march forward — " +
                                $"several leagues closer to {target.Name}, and the road seems shorter.{costLine} (+10 morale)";

@@ -232,9 +232,10 @@ namespace AshAndEmber
                         try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
                     }
                     try { ReassignImperialSettlements(); } catch { }
-                    // Greet every new ruler — mage or not — with the controls codex.
-                    // Spells, miracles and the alchemy satchel all share this one manual.
-                    MageKnowledge._deferredInquiry = MageKnowledge.ShowControlsCodex;
+                    // Greet every new ruler with a brief pointer to the journal — the
+                    // full controls manual now lives there ("Notes for the Adventurer"),
+                    // so we no longer dump the whole codex on them at the start.
+                    MageKnowledge._deferredInquiry = MageKnowledge.ShowControlsPointer;
                 },
                 _ =>
                 {

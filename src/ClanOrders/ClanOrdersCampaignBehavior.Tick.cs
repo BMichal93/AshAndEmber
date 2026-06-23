@@ -162,8 +162,8 @@ namespace AshAndEmber
 
                 float orderedStr = 0f;
                 float targetStr  = 0f;
-                try { orderedStr = party.Party?.TotalStrength ?? 0f; } catch { }
-                try { targetStr  = target.PartyBelongedTo?.Party?.TotalStrength ?? 0f; } catch { }
+                try { orderedStr = party?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
+                try { targetStr  = target.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
 
                 float ratio      = orderedStr > 0f ? orderedStr / Math.Max(1f, targetStr) : 0.5f;
                 int   successPct = (int)Math.Min(85f, Math.Max(10f, ratio * 65f));

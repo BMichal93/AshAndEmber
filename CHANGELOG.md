@@ -4,6 +4,84 @@
 
 ## Unreleased
 
+---
+
+## v0.23.10
+
+### Nature magic — blended terrain elements
+- **Transitional terrains now offer one of two fitting elements**, rolled per charge, instead of a single fixed element or a fully-random four-way roll: Steppe/Dune → Wind or Storm, Plain/RuralArea → Earth or Storm, Snow/Beach → Water or Wind, Swamp/Fording → Water or Earth, Canyon/Cliff → Earth or Wind. Iconic terrains stay pure (Forest → Earth, Mountain → Wind, open water → Water, Desert → Storm); unknown ground still rolls any of the four.
+- Corrected the terrain lookup to use the real `TerrainType` names (the old list referenced names like Hill/Shore/Arctic/Meadow that the engine never emits).
+- The channel hint now names the available element(s) — e.g. "Wind / Storm (random)" — instead of a vague "mixed ground".
+
+---
+
+## v0.23.9
+
+### Controller hints
+- **Miracle menu now shows the controller sequence too.** Each miracle's hover hint lists both the keyboard chord (hold Ctrl + W/A/S/D) and the controller chord (hold RB + flick the left stick ↑/←/→/↓), and the window body mentions the controller path. The actual input already supported the controller — only the on-screen hint was keyboard-only. (Spells, Alchemy, and Nature already read the controller; Dark Gifts are passive with no input.)
+
+---
+
+## v0.23.8
+
+### UI / UX
+- **Nature draw now tells you why it won't channel.** Holding Ctrl with a weapon drawn, in heavy armour, or while moving now shows a specific reason ("Sheathe your weapon…", "Too much iron…", "stop moving…") instead of failing silently.
+- **Grace miracle tooltips explain why an option is greyed out** — wrong context (battle vs. map) or insufficient virtue (with the requirement), shown at the top of the hover hint.
+- **Nature campaign-map spell buttons fit now** — the long sentence labels were shortened to a name + a few words, with the full effect/cost moved to the hover tooltip.
+- **New-game manual is now a short pointer.** Instead of dumping the full controls codex, the start popup points to the journal entry "Notes for the Adventurer," where the gestures live permanently.
+
+### Vlandia → Templar (attempt)
+- Enriched the English `language_data.xml` to mirror Native's attributes, in another attempt to make the Vlandian culture read as "Templars" on the character-creation card. (Pending in-game confirmation.)
+
+---
+
+## v0.23.7
+
+### Nature magic visuals
+- **Attack spells now visibly erupt.** Gale and Entangle throw a ring of bright element-coloured light bursts; Torrent throws a forward cone of them. Previously the strikes used one-shot debris particles that flashed too briefly to read as an eruption (the damage always applied — it was purely visual). Applies to NPC casters too (shared cast path).
+- **Barrier walls (Thornwall etc.) hold a stronger, lasting glow.** Each wall node now pulses a coloured light every tick and carries a wider glow column, so the wall stays clearly visible for its full 7-second duration instead of fading after the initial puff.
+
+---
+
+## v0.23.6
+
+### Loading screen (black title card, safely)
+- The ASH & EMBER black card now covers all loading screens — including the map↔battle transition — via an additive overlay driven by the engine's loading-window flag. This is NOT a prefab override (that approach wedged the boot), it never covers the main menu, and a hard time cap guarantees it can never block the game.
+
+---
+
+## v0.23.5
+
+### Boot fix (root cause)
+- **Removed `GUI/Prefabs/LoadingWindow.xml`.** This file shared the name of Native's loading-window prefab, so the engine swapped in a static black ASH & EMBER card for its loading screen. On boot that card covered the menu and never tore down, blocking the game. Deleting the override restores the vanilla loading screen.
+- Re-enabled the C# title-card overlays (opening splash, lore intro, on-load card), which were never the problem — they are restored exactly as before.
+
+---
+
+## v0.23.3
+
+### Boot fix
+- **Disabled all custom title-card overlays** (opening splash, lore intro, loading-screen card). On some installs they failed to tear down and left a black ASH & EMBER card stuck over the main menu, blocking the game at boot. The game now boots straight to the vanilla menu.
+
+---
+
+## v0.23.2
+
+### Loading screen
+- **Fix:** disabled the ASH & EMBER loading-screen overlay entirely — it could persist over the main menu after the first load and block access to it. Loads now show the vanilla Bannerlord screen; the one-time opening title card on the menu is unaffected.
+
+---
+
+## v0.23.1
+
+### Loading screen
+- The black **ASH & EMBER** title card now also covers the map↔battle transition loading screen (the splash art), not just save loads — driven by the engine's own loading-window flag.
+- **Fix:** the title card could stick on screen after a load finished and block access to the menu. It now tears down reliably (removed from whichever screen holds it) and has a hard safety cap so it can never wedge the game.
+
+---
+
+## v0.23
+
 ### Mage Classes (talent tree simplification)
 - **The talent tree is now a class tree.** Instead of buying dozens of single talents one focus point at a time, a mage now picks **Classes** — each costs 2 focus points and grants a themed bundle of the older talents at once.
 - **Seven combat/spell classes:** *Dark Mage* (life-eater: Ember, Reap, Wither, Extinguish), *Seer* (foresight: Clairvoyance, Tempered, Fade, Unsettle), *Battle-Sworn* (war-caster: Warcast, Flashfire, Pale Comet, Widened Blast), *Ward-Keeper* (shields: Ashveil, Cinder Shell, Reflect, Warden's Ring), *Heartfire* (healer: Hearthlight, Kindle, Dirge), *Pyrelord* (ruin: Immolate, Scatter, Sunder, Ashstorm), and *Ashbinder* (control: Smoulder, Kinship, Resonance).

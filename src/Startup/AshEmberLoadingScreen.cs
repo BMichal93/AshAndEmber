@@ -1,26 +1,40 @@
 // =============================================================================
 // ASH AND EMBER — Startup/AshEmberLoadingScreen.cs
 // Shows the ASH & EMBER black title card OVER the engine's loading screen for the
-// duration of any load (save load, entering/leaving battle, etc.). It reuses the
+// duration of any load (save load, boot, entering/leaving battle). It reuses the
 // same black-on-gold prefab as the opening splash, so no new art is needed.
 //
-// This is purely additive: the layer is laid on TOP of the normal loading window.
-// If anything fails (no top screen, missing prefab, engine change) it degrades to
-// a no-op and the vanilla loading screen simply shows through — it never breaks a
-// load. Driven from MainSubModule.OnApplicationTick.
+// IMPORTANT: this is an additive overlay laid on TOP of the loading window — it does
+// NOT replace the engine's loading prefab. (A GUI/Prefabs/LoadingWindow.xml override
+// previously did that and wedged the boot, because the engine rendered a static card
+// it could not dismiss. Never reintroduce that file.)
+//
+// Safety: the overlay is never shown over the main menu (InitialState), and a hard
+// time cap force-hides it if a loading signal ever sticks, so it can NEVER block the
+// game. If anything fails it degrades to a no-op and the vanilla screen shows through.
+// Driven from MainSubModule.OnApplicationTick.
 // =============================================================================
 
 using System;
 using TaleWorlds.Core;
+using TaleWorlds.Engine;
 using TaleWorlds.Engine.GauntletUI;
 using TaleWorlds.Library;
+using TaleWorlds.MountAndBlade;
 using TaleWorlds.ScreenSystem;
 
 namespace AshAndEmber
 {
     internal static class AshEmberLoadingScreen
     {
-        private static bool _active;
+        // Hard safety cap. If a loading signal sticks on, force-hide after this many
+        // seconds and stay down until it genuinely clears — so the card can never
+        // wedge the game. Real loads finish well under this.
+        private const float MaxHoldSeconds = 40f;
+
+        private static bool  _active;
+        private static float _shownElapsed;
+        private static bool  _suppressUntilClear;
 
         private static GauntletLayer           _layer;
         private static ScreenBase              _hostScreen;
@@ -32,8 +46,24 @@ namespace AshAndEmber
             try
             {
                 bool loading = IsLoading();
-                if (loading && !_active)      Show();
-                else if (!loading && _active) Hide();
+
+                if (!loading)
+                {
+                    _suppressUntilClear = false;   // load cleared — re-arm
+                    if (_active) Hide();
+                    return;
+                }
+
+                if (_suppressUntilClear) return;   // force-hidden this load; stay down
+
+                if (!_active) { Show(); _shownElapsed = 0f; return; }
+
+                _shownElapsed += dt;
+                if (_shownElapsed >= MaxHoldSeconds)
+                {
+                    Hide();
+                    _suppressUntilClear = true;
+                }
             }
             catch
             {
@@ -41,18 +71,26 @@ namespace AshAndEmber
             }
         }
 
-        // True while a loading game-state is active. Matched by type-name so it
-        // covers GameLoadingState and any other *Loading* state without needing a
-        // hard reference to each one.
+        // True while the game is loading and it is safe to cover the screen. The
+        // engine's own loading-window flag covers map<->battle transitions and save
+        // loads; the state-name check additionally catches the boot GameLoadingState.
+        // The main menu (InitialState) is explicitly excluded so the card can never
+        // sit on top of the menu and block it.
         private static bool IsLoading()
         {
             try
             {
                 var state = GameStateManager.Current?.ActiveState;
-                if (state == null) return false;
-                return state.GetType().Name.IndexOf("Loading", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (state is InitialState) return false;
+
+                try { if (LoadingWindow.IsLoadingWindowActive) return true; } catch { }
+
+                if (state != null &&
+                    state.GetType().Name.IndexOf("Loading", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
             }
-            catch { return false; }
+            catch { }
+            return false;
         }
 
         private static void Show()
@@ -60,8 +98,7 @@ namespace AshAndEmber
             _hostScreen = ScreenManager.TopScreen;
             if (_hostScreen == null) return;
 
-            // Reuse the splash prefab; a blank subtitle keeps it quiet during loads.
-            _vm    = new AshEmberSplashVM { Subtitle = "" };
+            _vm    = new AshEmberSplashVM { Subtitle = "Kindle the Inner Fire" };
             _layer = new GauntletLayer("AshEmberLoading", 6000, false);  // above the loading window
             _movie = _layer.LoadMovie("AshEmberSplash", _vm);
             _hostScreen.AddLayer(_layer);
@@ -70,13 +107,20 @@ namespace AshAndEmber
 
         private static void Hide()
         {
-            _active = false;
-            try
+            _active       = false;
+            _shownElapsed = 0f;
+            if (_layer != null)
             {
-                if (_hostScreen != null && _layer != null && _hostScreen.HasLayer(_layer))
-                    _hostScreen.RemoveLayer(_layer);
+                // Remove from the screen we added to, and from the current top screen
+                // in case the stack changed mid-load — whichever still holds it.
+                try { if (_hostScreen != null && _hostScreen.HasLayer(_layer)) _hostScreen.RemoveLayer(_layer); } catch { }
+                try
+                {
+                    var top = ScreenManager.TopScreen;
+                    if (top != null && top != _hostScreen && top.HasLayer(_layer)) top.RemoveLayer(_layer);
+                }
+                catch { }
             }
-            catch { }
             try { _layer?.ReleaseMovie(_movie); } catch { }
             _layer      = null;
             _hostScreen = null;

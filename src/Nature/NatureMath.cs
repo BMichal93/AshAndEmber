@@ -61,20 +61,30 @@ namespace AshAndEmber
         // Bannerlord TerrainType name → element. Matched by .ToString() so enum
         // integer drift does not break the lookup. Unknown / mixed ground returns
         // all four, so the draw is random.
+        // Terrain → the element(s) the land offers. Iconic terrains give ONE element
+        // (the same all battle); transitional/blended terrains give TWO, and each
+        // charge rolls one or the other; truly unknown ground falls back to any of
+        // the four. Names are TaleWorlds.Core.TerrainType values.
         public static NatureElement[] TerrainElements(string terrainTypeName)
         {
             switch (terrainTypeName ?? "")
             {
+                // ── Pure: one element the whole battle ──────────────────────────
                 case "Forest":                                  return _earth;
-                case "Mountain": case "Hill": case "Hills":
-                case "Steppe":                                  return _wind;
-                case "Water": case "ShallowRiver": case "River":
-                case "Lake":   case "Shore":
-                case "Snow":   case "Arctic":
-                case "Swamp":  case "Wetland":                  return _water;
-                case "Desert": case "Plain":
-                case "Meadow": case "Grassland":                return _storm;
-                default:                                        return _mixed;  // random
+                case "Mountain":                                return _wind;
+                case "Water": case "River": case "Lake":
+                case "NonNavigableRiver":
+                case "CoastalSea": case "OpenSea":              return _water;
+                case "Desert":                                  return _storm;
+
+                // ── Blended: each charge is randomly one of the two ─────────────
+                case "Steppe": case "Dune":     return _windStorm;   // open, wind-swept, storm-prone
+                case "Plain":  case "RuralArea": return _earthStorm; // grass under open sky
+                case "Snow":   case "Beach":    return _waterWind;   // cold surf and sea-wind
+                case "Swamp":  case "Fording":  return _waterEarth;  // mud and root
+                case "Canyon": case "Cliff":    return _earthWind;   // stone and the wind through it
+
+                default:                                        return _mixed;  // unknown: any of the four
             }
         }
 
@@ -82,6 +92,12 @@ namespace AshAndEmber
         private static readonly NatureElement[] _earth = { NatureElement.Earth };
         private static readonly NatureElement[] _water = { NatureElement.Water };
         private static readonly NatureElement[] _storm = { NatureElement.Storm };
+        // Two-element blends — the land offers one or the other, rolled per charge.
+        private static readonly NatureElement[] _windStorm  = { NatureElement.Wind,  NatureElement.Storm };
+        private static readonly NatureElement[] _earthStorm = { NatureElement.Earth, NatureElement.Storm };
+        private static readonly NatureElement[] _waterWind  = { NatureElement.Water, NatureElement.Wind  };
+        private static readonly NatureElement[] _waterEarth = { NatureElement.Water, NatureElement.Earth };
+        private static readonly NatureElement[] _earthWind  = { NatureElement.Earth, NatureElement.Wind  };
         private static readonly NatureElement[] _mixed =
             { NatureElement.Wind, NatureElement.Earth, NatureElement.Water, NatureElement.Storm };
 
@@ -221,14 +237,29 @@ namespace AshAndEmber
         }
 
         // Short label for the campaign-map menu entry (one per support power).
+        // Short button label — just the name and a few words, so it fits the option
+        // row. The full effect and cost live in CampaignPowerHint (the hover tooltip).
         public static string CampaignPowerLabel(NaturePower p)
         {
             switch (p)
             {
-                case NaturePower.Windwall:  return "Windward — the wind presses the march forward [advances column toward destination; costs food]";
-                case NaturePower.Thornwall: return "Root-Mend — the roots go deep and give to the land [nearest village gains +50 hearth; costs hero HP]";
-                case NaturePower.Mistwall:  return "Still Waters — the sea carries you to any harbour [requires water terrain; -20 morale on arrival]";
-                case NaturePower.Stormwall: return "Thunder's Edge — the storm does not ask sides [morale surge; own troops may be struck]";
+                case NaturePower.Windwall:  return "Windward — speed the march";
+                case NaturePower.Thornwall: return "Root-Mend — bless a village";
+                case NaturePower.Mistwall:  return "Still Waters — sea-carry to a harbour";
+                case NaturePower.Stormwall: return "Thunder's Edge — a storm of courage";
+                default:                    return "";
+            }
+        }
+
+        // Full description for the option's hover tooltip.
+        public static string CampaignPowerHint(NaturePower p)
+        {
+            switch (p)
+            {
+                case NaturePower.Windwall:  return "The wind presses the march forward — advances your column toward its destination. Costs food.";
+                case NaturePower.Thornwall: return "The roots go deep and give to the land — the nearest village gains +50 hearth. Costs hero HP.";
+                case NaturePower.Mistwall:  return "The sea carries you to any harbour. Requires water terrain; your soldiers arrive cold (-20 morale).";
+                case NaturePower.Stormwall: return "The storm does not ask sides — a surge of morale, but your own troops may be struck.";
                 default:                    return "";
             }
         }

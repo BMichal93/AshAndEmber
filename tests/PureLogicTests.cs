@@ -159,10 +159,11 @@ namespace AshAndEmber.Tests
         [Test]
         public void TalentSystem_EveryClass_HasCorrectFocusCost()
         {
-            // Fire paths (Category.Class) use the escalating cost curve, marked by
-            // FocusCost 0. Discipline classes bought at ritual sites (Category.Rite)
-            // cost a fixed 2 fp. BattleSworn is kept in ClassMembers for save
-            // compatibility only and intentionally has no TalentDef.
+            // Both fire paths (Category.Class) and discipline classes bought at
+            // ritual sites (Category.Rite) use an escalating cost curve, marked by
+            // FocusCost 0 — fire paths via GetNextPathCost, disciplines via the
+            // per-discipline GetNextDisciplineCost pools. BattleSworn is kept in
+            // ClassMembers for save compatibility only and has no TalentDef.
             foreach (var classId in TalentSystem.ClassMembers.Keys)
             {
                 var def = TalentSystem.All.FirstOrDefault(d => d.Id == classId);
@@ -172,12 +173,8 @@ namespace AshAndEmber.Tests
                     continue;
                 }
                 Assert.IsNotNull(def, $"Class {classId} has no TalentDef.");
-                if (def.Category == TalentCategory.Class)
-                    Assert.AreEqual(0, def.FocusCost,
-                        $"Fire-path {classId} should use the escalating cost curve (FocusCost 0).");
-                else
-                    Assert.AreEqual(2, def.FocusCost,
-                        $"Discipline class {classId} should cost 2 focus points.");
+                Assert.AreEqual(0, def.FocusCost,
+                    $"Class {classId} should use an escalating cost curve (FocusCost 0).");
             }
         }
 
@@ -875,14 +872,32 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void NatureMath_TerrainElements_KnownTerrains_MapAsExpected()
+        public void NatureMath_TerrainElements_PureTerrains_MapToSingleElement()
         {
-            Assert.AreEqual(NatureElement.Wind,  NatureMath.TerrainElements("Mountain")[0]);
-            Assert.AreEqual(NatureElement.Wind,  NatureMath.TerrainElements("Steppe")[0]);
-            Assert.AreEqual(NatureElement.Water, NatureMath.TerrainElements("River")[0]);
-            Assert.AreEqual(NatureElement.Water, NatureMath.TerrainElements("Snow")[0]);
-            Assert.AreEqual(NatureElement.Storm, NatureMath.TerrainElements("Desert")[0]);
-            Assert.AreEqual(NatureElement.Storm, NatureMath.TerrainElements("Plain")[0]);
+            // Iconic terrains give exactly one element for the whole battle.
+            Assert.AreEqual(new[] { NatureElement.Wind },  NatureMath.TerrainElements("Mountain"));
+            Assert.AreEqual(new[] { NatureElement.Water }, NatureMath.TerrainElements("River"));
+            Assert.AreEqual(new[] { NatureElement.Water }, NatureMath.TerrainElements("OpenSea"));
+            Assert.AreEqual(new[] { NatureElement.Storm }, NatureMath.TerrainElements("Desert"));
+            Assert.AreEqual(new[] { NatureElement.Earth }, NatureMath.TerrainElements("Forest"));
+        }
+
+        [Test]
+        public void NatureMath_TerrainElements_BlendedTerrains_OfferTwoElements()
+        {
+            // Transitional terrains offer one of two fitting elements (rolled per charge).
+            void AssertBlend(string terrain, NatureElement a, NatureElement b)
+            {
+                var els = NatureMath.TerrainElements(terrain);
+                Assert.AreEqual(2, els.Length, $"{terrain} should offer two elements.");
+                CollectionAssert.Contains(els, a, $"{terrain} should include {a}.");
+                CollectionAssert.Contains(els, b, $"{terrain} should include {b}.");
+            }
+            AssertBlend("Steppe", NatureElement.Wind,  NatureElement.Storm);
+            AssertBlend("Plain",  NatureElement.Earth, NatureElement.Storm);
+            AssertBlend("Snow",   NatureElement.Water, NatureElement.Wind);
+            AssertBlend("Swamp",  NatureElement.Water, NatureElement.Earth);
+            AssertBlend("Canyon", NatureElement.Earth, NatureElement.Wind);
         }
 
         [Test]

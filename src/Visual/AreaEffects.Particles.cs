@@ -581,7 +581,7 @@ namespace AshAndEmber
                 };
                 node.LightEntity  = partLow;                                                          // lower particle
                 node.LightEntity2 = partHigh;                                                         // upper particle
-                node.LightEntity3 = SpawnAreaLightRaw(nodePos + new Vec3(0f, 0f, 0.8f), rgb, 5f);    // glow column
+                node.LightEntity3 = SpawnAreaLightRaw(nodePos + new Vec3(0f, 0f, 0.8f), rgb, 8f);    // glow column
                 _areaEffects.Add(node);
             }
         }
@@ -593,6 +593,9 @@ namespace AshAndEmber
             // Animated burst on each pulse so the wall feels alive and churning.
             try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 0.3f), el, 0.5f); } catch { }
             try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 1.0f), el, 0.4f); } catch { }
+            // Coloured light pulse each tick so the wall keeps a strong, visible glow
+            // for its whole duration (the debris particles alone read as too brief).
+            try { SpawnTempLightRgb(e.Position + new Vec3(0f, 0f, 1.0f), NatureBarrierLightRgb(el), 6f, NatureMath.BarrierTickInterval + 0.1f); } catch { }
             if (el == NatureElement.Storm)
                 try { SpawnTempLightWhite(e.Position + new Vec3(0f, 0f, 1.2f), 4f, 0.25f); } catch { }
 
@@ -675,6 +678,11 @@ namespace AshAndEmber
                 default: return NatureElement.Wind;
             }
         }
+
+        // Public accessor so the Nature combat code can light its attack shapes in
+        // the matching element colour (the raw debris particles are one-shot and
+        // flash too briefly to read as an eruption — bright lights carry the shape).
+        internal static Vec3 NatureElementRgb(NatureElement el) => NatureBarrierLightRgb(el);
 
         private static Vec3 NatureBarrierLightRgb(NatureElement el)
         {

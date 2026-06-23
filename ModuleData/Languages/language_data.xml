@@ -5,6 +5,6 @@
   (here: the Vlandian culture name/description shown on the character-creation
   card and in the encyclopedia) without touching any game files.
 -->
-<LanguageData id="English">
+<LanguageData id="English" name="English" subtitle_extension="en-GB" supported_iso="en-GB,en-US,en,eng,en-us,en-gb,en-au,en-bz,en-ca,en-ie,en-jm,en-nz,en-za,en-tt" text_processor="TaleWorlds.Localization.TextProcessor.LanguageProcessors.EnglishTextProcessor" under_development="false">
 	<LanguageFile xml_path="std_temple_strings_xml.xml" />
 </LanguageData>

@@ -404,13 +404,13 @@ namespace AshAndEmber
             {
                 Id = TalentId.Gracebound, Category = TalentCategory.Rite, FocusCost = 0, Name = "Gracebound",
                 Lore = "Devotion worn smooth becomes a channel rather than a struggle. You no longer reach for the warmth — it is already moving through you, into the wounded beside you, into the ward overhead, into the courage of those who march in your shadow.",
-                MechanicDesc = "Class (2 focus points). The full discipline of the Sanctuary. Grants The Keeping Flame (each prayer heals a quarter of your wounded and holds a morale floor of 30), Unbroken Ward (a 21-day warding seal that grants daily morale and cheaper battle casts while it holds), and Ember Covenant (cheaper prayer, double Grace, and a quiet daily heal while Grace runs high)."
+                MechanicDesc = "A discipline class. The full discipline of the Sanctuary. Grants The Keeping Flame (each prayer heals a quarter of your wounded and holds a morale floor of 30), Unbroken Ward (a 21-day warding seal that grants daily morale and cheaper battle casts while it holds), and Ember Covenant (cheaper prayer, double Grace, and a quiet daily heal while Grace runs high)."
             },
             new TalentDef
             {
                 Id = TalentId.AshenAlchemist, Category = TalentCategory.Rite, FocusCost = 0, Name = "Ashen Alchemist",
                 Lore = "The satchel was always larger than it looked, the brew always more willing than it seemed. A practised hand finishes confidently, carries more than it counts, and salvages what a clumsier one would spill into ruin.",
-                MechanicDesc = "Class (2 focus points). The full discipline of the Lab. Grants The Steadier Hand (+15% brew success, no misleading reads, a chance of a second vial), The Deeper Satchel (+4 capacity, flat 150-denar brews, a chance the field vial refills), and Volatile Harvest (salvage tainted vials, lash a nearby enemy on the save, and soften backfires)."
+                MechanicDesc = "A discipline class. The full discipline of the Lab. Grants The Steadier Hand (+15% brew success, no misleading reads, a chance of a second vial), The Deeper Satchel (+4 capacity, flat 150-denar brews, a chance the field vial refills), and Volatile Harvest (salvage tainted vials, lash a nearby enemy on the save, and soften backfires)."
             },
             // ── Sanctuary Rites ──────────────────────────────────────────────────
             new TalentDef
@@ -473,7 +473,7 @@ namespace AshAndEmber
             {
                 Id = TalentId.Wildsworn, Category = TalentCategory.Rite, FocusCost = 0, Name = "Wildsworn",
                 Lore = "You have listened long enough that the listening has changed you. The root-voice, the river's patience, the open hand of the wind — you carry all three, and the land knows you for what you are.",
-                MechanicDesc = "Class (2 focus points). The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (free draw while stationary), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
+                MechanicDesc = "A discipline class. The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (free draw while stationary), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
             },
             new TalentDef
             {

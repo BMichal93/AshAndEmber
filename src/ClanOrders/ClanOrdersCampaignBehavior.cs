@@ -16,6 +16,7 @@ using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -103,6 +104,17 @@ namespace AshAndEmber
                 _orderTargetIds.RemoveAt(idx);
             }
             catch { }
+        }
+
+        // Clears stale order state when a campaign starts, so orders from a
+        // previously-played campaign in the same process don't bleed into a new
+        // game (party StringIds can collide across campaigns). On loading an
+        // existing save, SyncData repopulates these lists immediately afterward.
+        internal static void ResetForNewGame()
+        {
+            _orderPartyIds  = new List<string>();
+            _orderTypes     = new List<string>();
+            _orderTargetIds = new List<string>();
         }
     }
 }

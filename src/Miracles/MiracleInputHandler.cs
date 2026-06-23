@@ -264,19 +264,38 @@ namespace AshAndEmber
                 // Show the actual battle key combo (Ctrl + W/A/S/D), the place it can
                 // be used, and any virtue gate — all on the always-visible label.
                 string keys  = SequenceToKeys(def.Sequence);
+                string stick = SequenceToStick(def.Sequence);
                 string gate  = string.IsNullOrEmpty(def.GateNote) ? "" : "  " + def.GateNote;
                 string label = $"{def.Name}   [Ctrl + {keys}]   ({def.Context}){gate}";
-                // Full description lives in the hover hint.
-                string hint  = $"{def.Effect}\n\n{def.Flavour}";
+                // Both input methods live in the hover hint so controller players
+                // see the stick sequence too, not just the keyboard keys on the label.
+                string controls = $"Keyboard: hold Ctrl + {keys}\nController: hold RB + flick left stick {stick}";
+                string hint  = $"{controls}\n\n{def.Effect}\n\n{def.Flavour}";
+                // When greyed out, lead the hint with WHY it cannot be invoked.
+                if (!usable)
+                {
+                    string why;
+                    if (inBattle && !def.UsableInBattle)
+                        why = "Cannot be invoked in battle — this miracle answers only on the campaign map.";
+                    else if (!inBattle && !def.UsableOnMap)
+                        why = "Cannot be invoked here — this miracle answers only in battle.";
+                    else if (!gateMet)
+                        why = $"Your virtue is not yet enough to be heard. Requires {(string.IsNullOrEmpty(def.GateNote) ? "greater virtue" : def.GateNote.Trim())}.";
+                    else
+                        why = "Unavailable right now.";
+                    hint = $"✗  {why}\n\n{hint}";
+                }
                 elements.Add(new InquiryElement(def.Type, label, null, usable, hint));
             }
 
             string title = $"Miracles  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
             string body  = inBattle
                 ? "Choose a miracle to invoke now. Each costs 1 Grace. " +
-                  "In battle you may also cast by holding Ctrl and tracing the keys shown."
+                  "In battle you may also cast by holding Ctrl and tracing the keys shown " +
+                  "(controller: hold RB and flick the left stick in the same directions)."
                 : "Choose a miracle to invoke. Each costs 1 Grace. " +
-                  "The keys shown are the battle sequence: hold Ctrl and press them in order.";
+                  "The keys shown are the battle sequence: hold Ctrl and press them in order " +
+                  "(controller: hold RB and flick the left stick the same way).";
 
             try
             {
@@ -312,6 +331,27 @@ namespace AshAndEmber
                     case 'R': sb.Append('D'); break;
                     case 'D': sb.Append('S'); break;
                     default:  sb.Append(c);   break;
+                }
+                sb.Append(' ');
+            }
+            return sb.ToString().TrimEnd();
+        }
+
+        // The same sequence as left-stick directions, for controller players. U/L/R/D
+        // map to the cardinal flicks ↑/←/→/↓ — the keyboard and stick orders match.
+        private static string SequenceToStick(string seq)
+        {
+            if (string.IsNullOrEmpty(seq)) return "";
+            var sb = new System.Text.StringBuilder(seq.Length * 2);
+            foreach (char c in seq)
+            {
+                switch (c)
+                {
+                    case 'U': sb.Append('↑'); break; // ↑
+                    case 'L': sb.Append('←'); break; // ←
+                    case 'R': sb.Append('→'); break; // →
+                    case 'D': sb.Append('↓'); break; // ↓
+                    default:  sb.Append(c);        break;
                 }
                 sb.Append(' ');
             }

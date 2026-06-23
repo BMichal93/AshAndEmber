@@ -180,6 +180,19 @@ namespace AshAndEmber
                 body, true, false, "I will remember.", "", null, null), true, true);
         }
 
+        // A short pointer shown at campaign start instead of the full codex above —
+        // the gestures now live permanently in the journal ("Notes for the
+        // Adventurer"), so a brief nudge there is less intrusive than the manual.
+        public static void ShowControlsPointer()
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Disciplines of Hand and Voice",
+                "Every gesture you will need — spells, miracles, the alchemist's satchel and the living ember — "
+                + "is recorded in your journal under \"Notes for the Adventurer.\"\n\n"
+                + "Open your journal whenever the craft slips your mind.",
+                true, false, "I will remember.", "", null, null), true, true);
+        }
+
         // ── Campaign cast menu ────────────────────────────────────────────────
 
         internal static void ShowCampaignCastMenu()
@@ -347,7 +360,7 @@ namespace AshAndEmber
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 $"Rites — {systemName}",
-                "Rites transform your mastery of this discipline. Each costs 2 focus points.",
+                "Rites transform your mastery of this discipline. The focus cost is shown beside each.",
                 elements, true, 0, 1,
                 "Learn", "Close",
                 chosen =>

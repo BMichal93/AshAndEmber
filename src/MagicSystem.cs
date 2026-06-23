@@ -83,6 +83,7 @@ namespace AshAndEmber
                 try { SchemeSystem.Initialize();              } catch { }
                 try { ExchangeCampaignBehavior.ResetState();  } catch { }
                 try { SeaCampaignBehavior.ResetForNewGame();  } catch { }
+                try { ClanOrdersCampaignBehavior.ResetForNewGame(); } catch { }
             }
         }
 

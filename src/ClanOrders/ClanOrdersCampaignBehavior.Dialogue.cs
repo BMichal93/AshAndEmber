@@ -399,7 +399,7 @@ namespace AshAndEmber
             {
                 MobileParty orderedParty = FindOrderLeaderParty();
                 float orderedStrength = 0f;
-                try { orderedStrength = orderedParty?.Party?.TotalStrength ?? 0f; } catch { }
+                try { orderedStrength = orderedParty?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
 
                 var lords = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive && !h.IsChild && !h.IsPrisoner
@@ -422,7 +422,7 @@ namespace AshAndEmber
                 var elements = lords.Select(h =>
                 {
                     float targetStr = 0f;
-                    try { targetStr = h.PartyBelongedTo?.Party?.TotalStrength ?? 0f; } catch { }
+                    try { targetStr = h.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
                     bool risky = orderedStrength > 0f && targetStr > orderedStrength * 1.5f;
 
                     string label = $"{h.Name}  [{h.Clan?.Name}]{(risky ? "  [RISKY]" : "")}";
@@ -458,8 +458,8 @@ namespace AshAndEmber
 
                 float orderedStr = 0f;
                 float targetStr  = 0f;
-                try { orderedStr = party.Party?.TotalStrength ?? 0f; } catch { }
-                try { targetStr  = target.PartyBelongedTo?.Party?.TotalStrength ?? 0f; } catch { }
+                try { orderedStr = party?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
+                try { targetStr  = target.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
 
                 bool isRisky = orderedStr > 0f && targetStr > orderedStr * 1.5f;
 
