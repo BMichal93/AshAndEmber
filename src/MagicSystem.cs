@@ -77,6 +77,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new AshenRuinCampaignBehavior());
                 campaignStarter.AddBehavior(new MiracleCampaignBehavior());
                 campaignStarter.AddBehavior(new NatureCampaignBehavior());
+                campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { SchemeSystem.Initialize();              } catch { }
