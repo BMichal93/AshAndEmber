@@ -168,6 +168,20 @@ namespace AshAndEmber
                     }
                 }
                 catch { }
+
+                // Ctrl+Shift+F12 — debug grant: 100 fp, all dark gifts, max grace,
+                // all nature talents, one of each elixir. Nature must be granted before
+                // dark gifts because GrantGift clears grace as a side effect.
+                try
+                {
+                    if (TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftControl)
+                     && TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftShift)
+                     && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.F12))
+                    {
+                        DebugGrantAll();
+                    }
+                }
+                catch { }
             }
             catch { }
         }
@@ -233,6 +247,63 @@ namespace AshAndEmber
                 }
             }
             catch { }
+        }
+
+        private static void DebugGrantAll()
+        {
+            var hero = Hero.MainHero;
+            if (hero == null) return;
+
+            // 1. Nature magic — must come before dark gifts because GrantGift clears grace.
+            try
+            {
+                TalentSystem.GrantFree(TalentId.NatureLivingRoot, hero);
+                TalentSystem.GrantFree(TalentId.NatureStillDraw,  hero);
+                TalentSystem.GrantFree(TalentId.NatureOpenGrip,   hero);
+                TalentSystem.GrantFree(TalentId.Wildsworn,        hero);
+                TalentSystem.GrantFree(TalentId.NatureDeepEarth,  hero);
+                TalentSystem.GrantFree(TalentId.NatureDawnCall,   hero);
+            }
+            catch { }
+
+            // 2. All Dark Gifts (DarkSpirit stacks to 3, grant it three times).
+            try
+            {
+                foreach (DarkGiftId gift in Enum.GetValues(typeof(DarkGiftId)))
+                {
+                    if (gift == DarkGiftId.DarkSpirit)
+                    {
+                        DarkGiftSystem.GrantGift(DarkGiftId.DarkSpirit);
+                        DarkGiftSystem.GrantGift(DarkGiftId.DarkSpirit);
+                        DarkGiftSystem.GrantGift(DarkGiftId.DarkSpirit);
+                    }
+                    else
+                    {
+                        DarkGiftSystem.GrantGift(gift);
+                    }
+                }
+            }
+            catch { }
+
+            // 3. Max grace — set directly because dark gifts would otherwise block AddGrace.
+            try { MiracleInventory._grace = MiracleMath.GraceColdCap; } catch { }
+
+            // 4. 100 focus points.
+            try { hero.HeroDeveloper.UnspentFocusPoints += 100; } catch { }
+
+            // 5. One of each elixir — bypass capacity so all 12 types are available.
+            try
+            {
+                foreach (ElixirType type in Enum.GetValues(typeof(ElixirType)))
+                {
+                    AlchemyInventory._types.Add((int)type);
+                    AlchemyInventory._tainted.Add(false);
+                }
+            }
+            catch { }
+
+            MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
+                "[DEBUG] Granted: 100 focus points, all Dark Gifts, max Grace, all Nature talents, one of each elixir."));
         }
     }
 
