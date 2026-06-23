@@ -51,6 +51,10 @@ namespace AshAndEmber
             "Argoron", "Jalmarys",                         // outlying
         };
 
+        // Used by the Living Ember Water power to find coastal destinations.
+        internal static bool IsCoastalTown(string townName)
+            => townName != null && System.Array.IndexOf(PortTownNames, townName) >= 0;
+
         private static readonly List<Settlement> _ports = new List<Settlement>();
         private static readonly Random _rng = new Random();
 

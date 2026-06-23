@@ -248,46 +248,72 @@ namespace AshAndEmber
             }
         }
 
-        // Wind — scouts ahead; the wind goes out and comes back knowing things.
-        // UPSIDE:  +15 morale + lists nearest enemy parties within 50 map units.
-        // DOWNSIDE: 20 food lost — supplies scatter in the sudden gust.
+        // Wind — fills the banners and pushes the column forward along the road.
+        // UPSIDE:  advances party ~6 map units toward their current target settlement.
+        //          If no target is set, scouts hostile parties within 50 units instead.
+        // DOWNSIDE: ~15 food scatters in the gust.
         private static string CampaignWindward(MobileParty party, bool isPlayer)
         {
-            try { party.RecentEventsMorale += 15f; } catch { }
+            try { party.RecentEventsMorale += 10f; } catch { }
             if (!isPlayer)
-                return "The wind steadies the march (+15 morale).";
+                return "The wind steadies the march (+10 morale).";
 
-            int foodLost = RemoveFoodFromRoster(party, 20);
+            int foodLost = RemoveFoodFromRoster(party, 15);
+            string costLine = foodLost > 0 ? $" [{foodLost} food scattered]" : "";
 
-            // Scout nearby hostile parties.
-            string scouted = "";
+            // Try to push the party toward their current target settlement.
+            bool advanced = false;
             try
             {
-                Vec2 pos = party.GetPosition2D;
-                var playerFaction = Hero.MainHero?.MapFaction;
-                var enemies = MobileParty.All
-                    .Where(mp => mp != null && mp.IsActive && !mp.IsMainParty
-                        && mp.MapFaction != null && playerFaction != null
-                        && mp.MapFaction.IsAtWarWith(playerFaction))
-                    .Select(mp => (mp, dist: (mp.GetPosition2D - pos).Length))
-                    .Where(t => t.dist < 50f)
-                    .OrderBy(t => t.dist)
-                    .Take(5)
-                    .ToList();
-
-                if (enemies.Count > 0)
+                Settlement target = null;
+                try { target = MobileParty.MainParty.TargetSettlement; } catch { }
+                if (target != null)
                 {
-                    var lines = enemies.Select(t =>
-                        $"{t.mp.Name} (~{t.mp.Party.MemberRoster.TotalManCount} men, {(int)t.dist} leagues away)");
-                    scouted = " The wind returns with word: " + string.Join("; ", lines) + ".";
+                    Vec2 cur  = party.GetPosition2D;
+                    Vec2 dest = target.GetPosition2D;
+                    Vec2 diff = dest - cur;
+                    float len = diff.Length;
+                    if (len > 1f)
+                    {
+                        Vec2 dir    = diff * (1f / len);
+                        float push  = Math.Min(6f, len * 0.4f);  // never overshoot
+                        Vec2 newPos = cur + dir * push;
+                        party.Position = new CampaignVec2(newPos.x, newPos.y);
+                        advanced = true;
+                        return $"The wind fills the column's banners and presses the march forward — " +
+                               $"several leagues closer to {target.Name}, and the road seems shorter.{costLine} (+10 morale)";
+                    }
                 }
-                else
-                    scouted = " The wind finds no enemies within reach.";
             }
             catch { }
 
-            string costLine = foodLost > 0 ? $" [{foodLost} food scattered]" : "";
-            return $"The wind goes out ahead and comes back knowing things.{scouted}{costLine} (+15 morale)";
+            // No movement target: scout the horizon instead.
+            if (!advanced)
+            {
+                string scouted = "";
+                try
+                {
+                    Vec2 pos = party.GetPosition2D;
+                    var pf = Hero.MainHero?.MapFaction;
+                    var enemies = MobileParty.All
+                        .Where(mp => mp != null && mp.IsActive && !mp.IsMainParty
+                            && mp.MapFaction != null && pf != null
+                            && mp.MapFaction.IsAtWarWith(pf))
+                        .Select(mp => (mp, dist: (mp.GetPosition2D - pos).Length))
+                        .Where(t => t.dist < 50f)
+                        .OrderBy(t => t.dist)
+                        .Take(5)
+                        .ToList();
+                    scouted = enemies.Count > 0
+                        ? " The wind returns with word: " +
+                          string.Join("; ", enemies.Select(t =>
+                              $"{t.mp.Name} (~{t.mp.Party.MemberRoster.TotalManCount} men)")) + "."
+                        : " The wind finds no enemies within reach.";
+                }
+                catch { }
+                return $"The wind goes out ahead and comes back knowing things.{scouted}{costLine} (+10 morale)";
+            }
+            return $"The wind stirs the column.{costLine} (+10 morale)";
         }
 
         // Earth — the forest floor opens its larder; roots mend and provisions emerge.
@@ -339,10 +365,12 @@ namespace AshAndEmber
                 : $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} The roots drink from you last.{titeLine} (+8 morale)";
         }
 
-        // Water — the underground current shows a path; party is carried to a nearby town.
-        // UPSIDE:  Instant travel to any town within ~32 map units.
-        // DOWNSIDE: -20 morale on arrival — soldiers wake in an unfamiliar place, cold and unsure.
-        // Returns "" — inquiry and fallback handle messaging.
+        // Water — the sea-current carries the column to any coastal port.
+        // REQUIRES: standing on water-adjacent terrain (river, shore, lake, coast).
+        //           Only coastal port towns appear as destinations.
+        // UPSIDE:   instant travel to any harbour in the world.
+        // DOWNSIDE: -20 morale on arrival — soldiers wake cold and uncertain.
+        // Returns "" — inquiry handles messaging directly.
         private static string CampaignStillWaters(MobileParty party, bool isPlayer)
         {
             if (!isPlayer)
@@ -354,41 +382,61 @@ namespace AshAndEmber
                     : "Cool mist passes through the march (+10 morale).";
             }
 
-            List<Settlement> nearby = null;
+            // Gate: must be on water-adjacent terrain.
+            bool nearWater = false;
             try
             {
-                Vec2 pos = party.GetPosition2D;
-                nearby = Settlement.All
-                    .Where(s => s.IsTown && s.Town != null)
-                    .Select(s => (s, dist: (s.GetPosition2D - pos).Length))
-                    .Where(t => t.dist > 1f && t.dist < 32f)
-                    .OrderBy(t => t.dist)
-                    .Take(5)
-                    .Select(t => t.s)
+                var terrain = Campaign.Current.MapSceneWrapper?.GetTerrainTypeAtPosition(party.Position);
+                if (terrain.HasValue)
+                {
+                    string t = terrain.Value.ToString();
+                    nearWater = t == "Water" || t == "ShallowRiver" || t == "River"
+                             || t == "Lake"  || t == "Shore"       || t == "Swamp"
+                             || t == "Wetland" || t == "Arctic";
+                }
+            }
+            catch { }
+
+            if (!nearWater)
+            {
+                Msg("Still Waters answers only where the land opens to water. " +
+                    "Stand on a river, shore, or coast and try again.", NatureColor);
+                return "";
+            }
+
+            // Find all resolved coastal port towns.
+            List<Settlement> ports = null;
+            try
+            {
+                Vec2 cur = party.GetPosition2D;
+                ports = Settlement.All
+                    .Where(s => s.IsTown && s.Town != null
+                        && SeaCampaignBehavior.IsCoastalTown(s.Name?.ToString()?.Trim())
+                        && (s.GetPosition2D - cur).Length > 2f)
+                    .OrderBy(s => (s.GetPosition2D - cur).Length)
                     .ToList();
             }
             catch { }
 
-            if (nearby == null || nearby.Count == 0)
+            if (ports == null || ports.Count == 0)
             {
-                int healed = HealWounded(party, 8);
-                try { party.RecentEventsMorale += 10f; } catch { }
-                Msg("The water stirs but finds no path from here. It soothes what it can."
-                    + (healed > 0 ? $" {healed} wounds close." : "") + " (+10 morale)", NatureColor);
+                Msg("The current stirs but finds no harbour it recognises. " +
+                    "The sea lanes may not have opened yet.", NatureColor);
                 return "";
             }
 
-            var options = nearby
+            var options = ports
                 .Select(s => new InquiryElement(s, s.Name.ToString(), null, true, ""))
                 .ToList();
 
             try
             {
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                    "Still Waters — the current shows a path",
-                    "The water in the ground stirs. A current runs beneath your feet and for a moment " +
-                    "you see — as in a still pool — the roads between here and there. Where do you go?\n\n" +
-                    "The current is not gentle. Your soldiers will arrive unsettled. [-20 morale on arrival]",
+                    "Still Waters — the sea knows the way",
+                    "A current runs beneath your feet — cold, purposeful, tasting of salt. " +
+                    "For a moment you see every harbour at once, as in a still pool. " +
+                    "The water will carry you there. It will not be gentle.\n\n" +
+                    "Your soldiers will arrive cold and unsure of where they are. [-20 morale on arrival]",
                     options, true, 1, 1, "Ride the current", "Stay",
                     chosen =>
                     {
@@ -402,14 +450,15 @@ namespace AshAndEmber
                         }
                         catch { }
                         try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
-                        Msg($"The current delivers you to {dest.Name}. Not all are sure where they are. [-20 morale]", NatureColor);
+                        Msg($"The current delivers you to the harbour at {dest.Name}. " +
+                            "Not all are sure how far they have come. [-20 morale]", NatureColor);
                     },
                     _ => Msg("The current stills. You chose not to follow it. Your charge is spent.", NatureColor),
                     "", false), false, true);
             }
             catch
             {
-                var dest = nearby[0];
+                var dest = ports[0];
                 try
                 {
                     var main = MobileParty.MainParty;
