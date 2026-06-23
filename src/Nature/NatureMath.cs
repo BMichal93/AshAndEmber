@@ -225,10 +225,10 @@ namespace AshAndEmber
         {
             switch (p)
             {
-                case NaturePower.Windwall:  return "Windward — the high wind answers";
-                case NaturePower.Thornwall: return "Root-Mend — the earth opens its larder";
-                case NaturePower.Mistwall:  return "Still Waters — the current shows a path";
-                case NaturePower.Stormwall: return "Thunder's Edge — the storm sees your need";
+                case NaturePower.Windwall:  return "Windward — the wind goes ahead, but it takes a price [scouts enemies; costs ~20 food]";
+                case NaturePower.Thornwall: return "Root-Mend — the earth feeds and mends, but takes a tithe [provisions + heal; costs hero HP]";
+                case NaturePower.Mistwall:  return "Still Waters — the current shows a road, but the march arrives unsettled [teleport; -20 morale]";
+                case NaturePower.Stormwall: return "Thunder's Edge — the storm does not ask sides [morale surge; own troops may be struck]";
                 default:                    return "";
             }
         }

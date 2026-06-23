@@ -248,77 +248,112 @@ namespace AshAndEmber
             }
         }
 
-        // Wind — a column of high air tears through the march; wounds seal, hearts lift.
-        // Player: also restores the hero's body. Morale +25, heal 8 wounded.
+        // Wind — scouts ahead; the wind goes out and comes back knowing things.
+        // UPSIDE:  +15 morale + lists nearest enemy parties within 50 map units.
+        // DOWNSIDE: 20 food lost — supplies scatter in the sudden gust.
         private static string CampaignWindward(MobileParty party, bool isPlayer)
         {
-            try { party.RecentEventsMorale += 25f; } catch { }
-            int healed = HealWounded(party, isPlayer ? 8 : 4);
-            if (isPlayer)
+            try { party.RecentEventsMorale += 15f; } catch { }
+            if (!isPlayer)
+                return "The wind steadies the march (+15 morale).";
+
+            int foodLost = RemoveFoodFromRoster(party, 20);
+
+            // Scout nearby hostile parties.
+            string scouted = "";
+            try
             {
-                try
+                Vec2 pos = party.GetPosition2D;
+                var playerFaction = Hero.MainHero?.MapFaction;
+                var enemies = MobileParty.All
+                    .Where(mp => mp != null && mp.IsActive && !mp.IsMainParty
+                        && mp.MapFaction != null && playerFaction != null
+                        && mp.MapFaction.IsAtWarWith(playerFaction))
+                    .Select(mp => (mp, dist: (mp.GetPosition2D - pos).Length))
+                    .Where(t => t.dist < 50f)
+                    .OrderBy(t => t.dist)
+                    .Take(5)
+                    .ToList();
+
+                if (enemies.Count > 0)
                 {
-                    var h = Hero.MainHero;
-                    if (h != null) h.HitPoints = Math.Min(h.HitPoints + 45, h.MaxHitPoints);
+                    var lines = enemies.Select(t =>
+                        $"{t.mp.Name} (~{t.mp.Party.MemberRoster.TotalManCount} men, {(int)t.dist} leagues away)");
+                    scouted = " The wind returns with word: " + string.Join("; ", lines) + ".";
                 }
-                catch { }
-                return healed > 0
-                    ? $"The world draws a breath. Cold air, tasting of altitude and stone, tears through the column — banners rip sideways, dust lifts in spirals, and when the gust passes your body is lighter and {healed} of the wounded have risen. (+25 morale, hero restored)"
-                    : "The world draws a breath. Cold air, tasting of altitude and stone, tears through the column — banners rip sideways, dust lifts in spirals, and when it passes your body is lighter. (+25 morale, hero restored)";
+                else
+                    scouted = " The wind finds no enemies within reach.";
             }
-            return healed > 0
-                ? $"The wind steadies the march (+25 morale, {healed} healed)."
-                : "The wind steadies the march (+25 morale).";
+            catch { }
+
+            string costLine = foodLost > 0 ? $" [{foodLost} food scattered]" : "";
+            return $"The wind goes out ahead and comes back knowing things.{scouted}{costLine} (+15 morale)";
         }
 
-        // Earth — the forest floor opens; root-provisions emerge and wounds are mended.
-        // Player: grants 40 grain + 10 meat (the earth's larder), heals 8 wounded, morale +8.
+        // Earth — the forest floor opens its larder; roots mend and provisions emerge.
+        // UPSIDE:  40 grain + 10 meat, 8 wounded healed.
+        // DOWNSIDE: Hero loses 15 HP — the roots take from the nearest living vessel.
         private static string CampaignRootMend(MobileParty party, bool isPlayer)
         {
             int healed = HealWounded(party, isPlayer ? 8 : 6);
             try { party.RecentEventsMorale += 8f; } catch { }
-            if (isPlayer)
-            {
-                int grain = 0, meat = 0;
-                try
-                {
-                    var grainItem = MBObjectManager.Instance?.GetObject<ItemObject>("grain");
-                    if (grainItem != null) { party.ItemRoster.AddToCounts(grainItem, 40); grain = 40; }
-                }
-                catch { }
-                try
-                {
-                    var meatItem = MBObjectManager.Instance?.GetObject<ItemObject>("meat");
-                    if (meatItem != null) { party.ItemRoster.AddToCounts(meatItem, 10); meat = 10; }
-                }
-                catch { }
-                string foodLine = (grain > 0 || meat > 0)
-                    ? $" The cooks are staring: {(grain > 0 ? $"{grain} grain" : "")}{(grain > 0 && meat > 0 ? ", " : "")}{(meat > 0 ? $"{meat} cuts of meat" : "")} — left by no living hand."
-                    : "";
+            if (!isPlayer)
                 return healed > 0
-                    ? $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} {healed} wound{(healed > 1 ? "s have" : " has")} closed while the land worked. (+8 morale)"
-                    : $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} (+8 morale)";
+                    ? $"The earth provides: {healed} healed (+8 morale)."
+                    : "The earth stirs and steadies the march (+8 morale).";
+
+            int grain = 0, meat = 0;
+            try
+            {
+                var grainItem = MBObjectManager.Instance?.GetObject<ItemObject>("grain");
+                if (grainItem != null) { party.ItemRoster.AddToCounts(grainItem, 40); grain = 40; }
             }
+            catch { }
+            try
+            {
+                var meatItem = MBObjectManager.Instance?.GetObject<ItemObject>("meat");
+                if (meatItem != null) { party.ItemRoster.AddToCounts(meatItem, 10); meat = 10; }
+            }
+            catch { }
+
+            // The tithe: roots draw from the most alive thing nearby.
+            int hpDrained = 0;
+            try
+            {
+                var h = Hero.MainHero;
+                if (h != null)
+                {
+                    hpDrained = Math.Min(15, h.HitPoints - 5);   // never kill
+                    if (hpDrained > 0) h.HitPoints -= hpDrained;
+                }
+            }
+            catch { }
+
+            string foodLine = (grain > 0 || meat > 0)
+                ? $" The cooks are staring: {(grain > 0 ? $"{grain} grain" : "")}" +
+                  $"{(grain > 0 && meat > 0 ? ", " : "")}{(meat > 0 ? $"{meat} meat" : "")}."
+                : "";
+            string titeLine = hpDrained > 0 ? $" [{hpDrained} HP taken as tithe]" : "";
             return healed > 0
-                ? $"The earth provides: {healed} healed (+8 morale)."
-                : "The earth stirs and the march is steadied (+8 morale).";
+                ? $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} {healed} wound{(healed > 1 ? "s have" : " has")} closed. The roots drink from you last.{titeLine} (+8 morale)"
+                : $"The forest floor shifts. Root-threads bring up what the earth has stored.{foodLine} The roots drink from you last.{titeLine} (+8 morale)";
         }
 
-        // Water — the underground current shows a path; player is carried to a nearby settlement.
-        // Requires a town within ~32 map units. Falls back to healing if nothing is reachable.
-        // Returns "" — the inquiry (or fallback Msg) handles all player messaging directly.
+        // Water — the underground current shows a path; party is carried to a nearby town.
+        // UPSIDE:  Instant travel to any town within ~32 map units.
+        // DOWNSIDE: -20 morale on arrival — soldiers wake in an unfamiliar place, cold and unsure.
+        // Returns "" — inquiry and fallback handle messaging.
         private static string CampaignStillWaters(MobileParty party, bool isPlayer)
         {
             if (!isPlayer)
             {
                 int healed = HealWounded(party, 6);
-                try { party.RecentEventsMorale += 12f; } catch { }
+                try { party.RecentEventsMorale += 10f; } catch { }
                 return healed > 0
-                    ? $"Cool mist passes through the march; {healed} healed (+12 morale)."
-                    : "Cool mist passes through the march (+12 morale).";
+                    ? $"Cool mist passes through the march; {healed} healed (+10 morale)."
+                    : "Cool mist passes through the march (+10 morale).";
             }
 
-            // Find reachable towns and let the player choose where the current takes them.
             List<Settlement> nearby = null;
             try
             {
@@ -336,11 +371,10 @@ namespace AshAndEmber
 
             if (nearby == null || nearby.Count == 0)
             {
-                // No waterway leads anywhere close: partial effect instead.
-                int healed = HealWounded(party, 10);
-                try { party.RecentEventsMorale += 12f; } catch { }
+                int healed = HealWounded(party, 8);
+                try { party.RecentEventsMorale += 10f; } catch { }
                 Msg("The water stirs but finds no path from here. It soothes what it can."
-                    + (healed > 0 ? $" {healed} wounds close." : "") + " (+12 morale)", NatureColor);
+                    + (healed > 0 ? $" {healed} wounds close." : "") + " (+10 morale)", NatureColor);
                 return "";
             }
 
@@ -353,7 +387,8 @@ namespace AshAndEmber
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "Still Waters — the current shows a path",
                     "The water in the ground stirs. A current runs beneath your feet and for a moment " +
-                    "you see — as in a still pool — the roads between here and there. Where do you go?",
+                    "you see — as in a still pool — the roads between here and there. Where do you go?\n\n" +
+                    "The current is not gentle. Your soldiers will arrive unsettled. [-20 morale on arrival]",
                     options, true, 1, 1, "Ride the current", "Stay",
                     chosen =>
                     {
@@ -366,14 +401,14 @@ namespace AshAndEmber
                             try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
                         }
                         catch { }
-                        Msg($"The current carries you. You arrive at {dest.Name} before the mist has fully lifted.", NatureColor);
+                        try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
+                        Msg($"The current delivers you to {dest.Name}. Not all are sure where they are. [-20 morale]", NatureColor);
                     },
                     _ => Msg("The current stills. You chose not to follow it. Your charge is spent.", NatureColor),
                     "", false), false, true);
             }
             catch
             {
-                // Inquiry failed: carry to nearest.
                 var dest = nearby[0];
                 try
                 {
@@ -382,22 +417,30 @@ namespace AshAndEmber
                     try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
                 }
                 catch { }
-                Msg($"The current carries you to {dest.Name}.", NatureColor);
+                try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
+                Msg($"The current carries you to {dest.Name}. [-20 morale]", NatureColor);
             }
             return "";
         }
 
-        // Storm — lightning cracks the sky three times; the thunder enters the soldiers' chests.
-        // Player: morale +40, nearby enemy parties lose 20 morale (the sky is not subtle).
+        // Storm — three bolts crack the sky; roars from your men, fear in the enemy.
+        // UPSIDE:  +35 morale, nearby hostile parties lose 20 morale.
+        // DOWNSIDE: 2–3 of your weakest soldiers are struck and wounded.
         private static string CampaignThundersEdge(MobileParty party, bool isPlayer)
         {
-            try { party.RecentEventsMorale += isPlayer ? 40f : 25f; } catch { }
-            if (isPlayer)
-            {
-                DemoralizeNearbyEnemies(20f, 18f);
-                return "Three bolts strike the earth within thirty paces — crack, crack, crack — the sound is not thunder but something you feel in your sternum. The air turns sharp with ozone. Your soldiers stand rigid for one second. Then they roar, every one of them, and the sound carries. Nearby enemies falter. (+40 morale, enemies shaken)";
-            }
-            return "The storm fills the march with iron courage (+25 morale).";
+            try { party.RecentEventsMorale += isPlayer ? 35f : 20f; } catch { }
+            if (!isPlayer)
+                return "The storm fills the march with iron courage (+20 morale).";
+
+            DemoralizeNearbyEnemies(20f, 18f);
+
+            // The storm does not ask which side you fight for.
+            int struck = WoundWeakestTroops(party, 2 + _rng.Next(2));
+
+            string strikeLine = struck > 0
+                ? $" The lightning does not sort its targets — {struck} of your own lie smoking. [-{struck} troops wounded]"
+                : "";
+            return $"Three bolts strike the earth within thirty paces. The air turns iron with ozone. Your soldiers roar. Nearby enemies falter.{strikeLine} (+35 morale, enemies shaken)";
         }
 
         private static void DemoralizeNearbyEnemies(float moraleDrain, float mapRadius)
@@ -418,6 +461,59 @@ namespace AshAndEmber
                 }
             }
             catch { }
+        }
+
+        // Food item string IDs used in Bannerlord's base game.
+        private static readonly string[] _foodIds =
+            { "grain", "meat", "fish", "vegetables", "cheese", "bread", "dried_meat", "oil", "beer", "wine" };
+
+        private static int RemoveFoodFromRoster(MobileParty party, int amount)
+        {
+            int removed = 0;
+            try
+            {
+                int remaining = amount;
+                foreach (string id in _foodIds)
+                {
+                    if (remaining <= 0) break;
+                    var item = MBObjectManager.Instance?.GetObject<ItemObject>(id);
+                    if (item == null) continue;
+                    int have = 0;
+                    try { have = party.ItemRoster.GetItemNumber(item); } catch { continue; }
+                    if (have <= 0) continue;
+                    int toRemove = Math.Min(have, remaining);
+                    party.ItemRoster.AddToCounts(item, -toRemove);
+                    removed   += toRemove;
+                    remaining -= toRemove;
+                }
+            }
+            catch { }
+            return removed;
+        }
+
+        // Wounds the N weakest non-hero troops in the party. Returns actual count wounded.
+        private static int WoundWeakestTroops(MobileParty party, int count)
+        {
+            int wounded = 0;
+            try
+            {
+                var roster = party.MemberRoster;
+                int remaining = count;
+                foreach (var elem in roster.GetTroopRoster()
+                    .Where(e => e.Character != null && !e.Character.IsHero
+                                && e.Number > e.WoundedNumber)
+                    .OrderBy(e => e.Character.Tier)
+                    .ToList())
+                {
+                    if (remaining <= 0) break;
+                    int toWound = Math.Min(remaining, elem.Number - elem.WoundedNumber);
+                    try { roster.AddToCounts(elem.Character, 0, false, toWound, 0); } catch { continue; }
+                    wounded   += toWound;
+                    remaining -= toWound;
+                }
+            }
+            catch { }
+            return wounded;
         }
 
         private static int HealWounded(MobileParty party, int count)
