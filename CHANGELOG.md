@@ -4,6 +4,14 @@
 
 ## Unreleased
 
+### Bug fixes
+- **"Broken Will" can no longer turn on your own throne.** The event that drives a kingdom mad and raises its banners against all of Calradia could pick the player's own faction — contrary to its own stated safeguard — forcing you to war with every realm at once. It now always spares your kingdom.
+- **The Branded no longer swallows the week's omens.** For commanders who walk no fire-path, the rite could quietly claim the weekly portent slot and fall silent, starving the world of every other event for a fortnight. Its eligibility is now weighed before the slot is spent.
+- **Ashen ruin guards stop multiplying on reload.** Each time a save was loaded, a fresh warband was conjured at every ruin, piling up without end. The wardens now honour their respawn rest and hold their numbers.
+- **Sanctuary prayer keeps its silence between answers.** A potent reagent (Frozen Amber) could erase the prayer cooldown entirely, letting Grace be wrung from the flame the same day. At least one day must now pass between supplications.
+- **The cold cannot unmake an Ashen lord's fire.** The mage-population balancer could strip a permanent Ashen lord of their casting while leaving them Ashen in name — they are now exempt from the cull.
+- **An apprentice can no longer fall to the shadow unseen.** If another popup was pending, the corruption was latched in silently and the "continue or dismiss" choice was never offered. The choice is now always presented.
+
 ---
 
 ## v0.23.11
