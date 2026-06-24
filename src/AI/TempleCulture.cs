@@ -37,8 +37,12 @@ namespace AshAndEmber
         public static float NatureChannelSeconds(float baseSeconds)
             => IsPlayerTemplar ? baseSeconds + ExtraNatureChannelSeconds : baseSeconds;
 
-        // ── Oath of the Vigil (daily morale bonus) ────────────────────────────
-        public const int DailyMoraleBonus = 4;
+        // ── Oath of the Vigil (daily morale floor) ───────────────────────────
+        // Keeps RecentEventsMorale at or above this soft floor for all clan parties.
+        // Only fills when below the threshold — decays naturally above it, so the
+        // net effect is a standing ~+10 on recent-events morale, consistent in scale
+        // with what other in-game events (paid wages, food variety) contribute.
+        public const float VigilMoraleFloor = 10f;
 
         // ── Daily tick — called from MagicCampaignBehavior.OnDailyTick ────────
         public static void DailyTick()
@@ -54,7 +58,9 @@ namespace AshAndEmber
                     new Color(0.90f, 0.82f, 0.42f)));
             }
 
-            // Oath of the Vigil: drilled faith holds all Templar columns together.
+            // Oath of the Vigil: drilled faith keeps the column steady.
+            // Acts as a soft floor — only fills when recent-events morale has fallen
+            // below VigilMoraleFloor, rather than stacking on top each day.
             try
             {
                 var playerClan = Clan.PlayerClan;
@@ -64,7 +70,12 @@ namespace AshAndEmber
                     {
                         if (party == null || !party.IsActive) continue;
                         if (party.LeaderHero?.Clan != playerClan) continue;
-                        try { party.RecentEventsMorale += DailyMoraleBonus; } catch { }
+                        try
+                        {
+                            if (party.RecentEventsMorale < VigilMoraleFloor)
+                                party.RecentEventsMorale = VigilMoraleFloor;
+                        }
+                        catch { }
                     }
                 }
             }
