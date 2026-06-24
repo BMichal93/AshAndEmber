@@ -108,6 +108,54 @@ namespace AshAndEmber
             return Math.Max(0.10, Math.Min(0.90, 0.50 - resistance * 0.10));
         }
 
+        // ── Settlement civilian executions ────────────────────────────────────
+        // Every day, non-lord women and children in Ashen-owned cities and castles
+        // each face a 50% chance of execution. At most one kill per daily call to
+        // avoid cascading KillCharacterAction on the same tick.
+        public static void ExecuteSettlementCivilians()
+        {
+            if (_ashenClanIds.Count == 0) return;
+            try
+            {
+                foreach (Settlement settlement in Settlement.All.ToList())
+                {
+                    try
+                    {
+                        if (!settlement.IsTown && !settlement.IsCastle) continue;
+
+                        bool ownedByAshen = settlement.MapFaction?.StringId == AshenKingdomId
+                                         || _ashenClanIds.Contains(settlement.OwnerClan?.StringId);
+                        if (!ownedByAshen) continue;
+
+                        Hero executor = settlement.OwnerClan?.Leader
+                                     ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
+                                            h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
+                                            _ashenClanIds.Contains(h.Clan?.StringId));
+                        if (executor == null) continue;
+
+                        foreach (Hero notable in settlement.Notables.ToList())
+                        {
+                            try
+                            {
+                                if (!notable.IsAlive) continue;
+                                if (!notable.IsFemale && !notable.IsChild) continue;
+                                if (_rng.NextDouble() >= 0.50) continue;
+
+                                try { KillCharacterAction.ApplyByExecution(notable, executor); } catch { }
+                                InformationManager.DisplayMessage(new InformationMessage(
+                                    $"The cold does not spare the harmless. {notable.Name} of {settlement.Name} is gone.",
+                                    new Color(0.55f, 0.25f, 0.25f)));
+                                return; // one per daily tick
+                            }
+                            catch { }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
         // ── Player capture prompt ─────────────────────────────────────────────
         private static void ShowAshenCapturePrompt(Hero captor)
         {

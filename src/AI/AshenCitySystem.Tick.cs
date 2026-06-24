@@ -73,6 +73,7 @@ namespace AshAndEmber
             RefillHeroGold();
             MaintainAshenTownHealth();
             MaintainCriminalStatus();
+            ExecuteSettlementCivilians();
 
             // Settlement recovery — every RecoveryInterval days, max 1 change per tick
             if (_recoveryThrottle == 0)
