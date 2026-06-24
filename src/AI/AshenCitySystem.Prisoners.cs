@@ -21,10 +21,13 @@ namespace AshAndEmber
     public partial class AshenCitySystem
     {
         // ── Prisoner fate ─────────────────────────────────────────────────────
-        // Each cycle: 60% chance the Ashen leave a prisoner alone (normal captivity).
-        // The remaining 40% triggers an ultimatum — join the cold or be executed.
+        // Each cycle: 70% chance the Ashen leave a prisoner alone (normal captivity).
+        // The remaining 30% triggers an ultimatum — join the cold or be executed.
         //   Player: queues a deferred choice dialog (join Ashen vs permanent death).
-        //   NPC lords: auto-resolved — 50% yield and become Ashen, 50% refuse and die.
+        //   NPC lords: auto-resolved by personality.
+        //     Honorable (Honor >= 1) and Daring (Valor >= 1) prefer death.
+        //     Devious (Honor <= -1) and Cowardly (Valor <= -1) prefer yielding.
+        //     Yield probability = clamp(50% − (honor+valor)×10%, 10%, 90%).
         // At most 1 heavy action (kill/release/convert) per call to avoid cascading
         // KillCharacterAction calls on a single daily tick.
         public static void ExecuteAshenPrisoners()
@@ -49,8 +52,8 @@ namespace AshAndEmber
                             captorParty.MapFaction?.StringId == AshenKingdomId;
                         if (!captorIsAshen) continue;
 
-                        // 60% chance: the Ashen leave this prisoner to languish — for now.
-                        if (_rng.NextDouble() >= 0.40) continue;
+                        // 70% chance: the Ashen leave this prisoner to languish — for now.
+                        if (_rng.NextDouble() >= 0.30) continue;
 
                         if (isPlayer)
                         {
@@ -62,14 +65,13 @@ namespace AshAndEmber
                             continue;
                         }
 
-                        // NPC lord: the Ashen force the ultimatum — join or die.
-                        // 50% yield to the cold, 50% refuse and are executed.
+                        // NPC lord: auto-resolve by personality.
                         Hero executor = captorParty.LeaderHero
                                      ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
                                             h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
                                             _ashenClanIds.Contains(h.Clan?.StringId));
 
-                        if (_rng.NextDouble() < 0.50)
+                        if (_rng.NextDouble() < AshenYieldChance(hero))
                         {
                             try { ColourLordRegistry.SetAshen(hero, true); } catch { }
                             try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
@@ -92,6 +94,18 @@ namespace AshAndEmber
                 }
             }
             catch { }
+        }
+
+        // Yield probability for an NPC lord facing the Ashen ultimatum.
+        // Honor and Valor each push away from yielding; their negatives pull toward it.
+        // Range is clamped to [10%, 90%] so no outcome is ever impossible.
+        private static double AshenYieldChance(Hero hero)
+        {
+            int honor = 0, valor = 0;
+            try { honor = hero.GetTraitLevel(DefaultTraits.Honor);  } catch { }
+            try { valor = hero.GetTraitLevel(DefaultTraits.Valor);  } catch { }
+            int resistance = honor + valor; // −4 (both devious+cowardly) … +4 (both honorable+daring)
+            return Math.Max(0.10, Math.Min(0.90, 0.50 - resistance * 0.10));
         }
 
         // ── Player capture prompt ─────────────────────────────────────────────
