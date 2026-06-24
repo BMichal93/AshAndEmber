@@ -125,10 +125,15 @@ namespace AshAndEmber
 
         private static void ShowCorruptionEvent()
         {
+            // Guard BEFORE latching corruption: if a popup is already pending we
+            // must retry next tick. Latching _rivalCorrupted first would suppress
+            // the retry (DailyTick only calls this while !_rivalCorrupted), so the
+            // player would never see the Continue/Dismiss choice and the apprentice
+            // would corrupt without consent.
+            if (MageKnowledge._deferredInquiry != null) return;
             _rivalCorrupted = true; // tentatively mark; player can clear by dismissing
 
             string apprenticeName = GetApprenticeName();
-            if (MageKnowledge._deferredInquiry != null) return; // don't clobber
 
             MageKnowledge._deferredInquiry = () =>
             {
