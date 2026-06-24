@@ -72,11 +72,17 @@ namespace AshAndEmber
 
                 string kingdomName = kingdom.Name?.ToString() ?? "the realm";
 
+                bool isFatwaTemple = IsTempleFaction(kingdom);
+                bool isFatwaTribes = IsTribes(kingdom);
+
                 if (targets.Count == 0)
                 {
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Mage Fatwa — fear of the fire and ash swept {kingdomName} like a fever. " +
-                        $"Torches were lit. Doors were barred. The mages stayed hidden long enough for the mood to break."));
+                    string noKillMsg = isFatwaTemple
+                        ? $"The Inquisitor's Writ — the Templar Inquisition of {kingdomName} raised a writ against the fire-touched. The accused sealed their doors and let the order's fury burn itself out. No blood was spilled — this time."
+                        : isFatwaTribes
+                        ? $"Mage Fatwa — the shamans of {kingdomName} named the fire-touched as cursed by the grey wind. The accused rode to the edge of the steppe and waited. The elders' anger cooled before they could follow."
+                        : $"Mage Fatwa — fear of the fire and ash swept {kingdomName} like a fever. Torches were lit. Doors were barred. The mages stayed hidden long enough for the mood to break.";
+                    MBInformationManager.AddQuickInformation(new TextObject(noKillMsg));
                     return;
                 }
 
@@ -95,10 +101,12 @@ namespace AshAndEmber
                     : killed.Count == 2 ? $"{killed[0]} and {killed[1]}"
                     : $"{killed[0]}, {killed[1]}, and {killed.Count - 2} others";
 
-                MBInformationManager.AddQuickInformation(new TextObject(
-                    $"Mage Fatwa — a preacher in {kingdomName} declared that the fire-touched were an abomination. " +
-                    $"The crowd agreed. {nameList} did not survive the week. " +
-                    $"The mob does not need to understand what it fears — only that it fears it."));
+                string fatwaMsg = isFatwaTemple
+                    ? $"The Inquisitor's Writ — the Templar Inquisition of {kingdomName} declared the fire-touched an abomination against the Light's covenant. There was no mob. There was only the writ, the guard, and the door. {nameList} did not survive the chapter-room. The Temple does not need a crowd to be thorough."
+                    : isFatwaTribes
+                    ? $"Mage Fatwa — the shamans of {kingdomName} called the fire-touched cursed by the grey wind. The clans agreed without much persuading. {nameList} did not survive the week. Fear in the steppe spreads faster than fire, and the shamans know exactly how to light it."
+                    : $"Mage Fatwa — a preacher in {kingdomName} declared that the fire-touched were an abomination. The crowd agreed. {nameList} did not survive the week. The mob does not need to understand what it fears — only that it fears it.";
+                MBInformationManager.AddQuickInformation(new TextObject(fatwaMsg));
             }
             catch { }
         }
@@ -138,10 +146,14 @@ namespace AshAndEmber
                 }
 
                 if (spawned > 0)
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Peasant Unrest — The people of {kingdom.Name} have had enough. " +
-                        $"Three ragged bands broke from the fields near {anchor.Name} last night, " +
-                        $"carrying scythes and old iron. No lord called them — no lord can stop them easily."));
+                {
+                    string unrestMsg = IsTempleFaction(kingdom)
+                        ? $"Unrest in the Faithful — The lowest ranks of {kingdom.Name}'s faithful have broken from the tithe-roads near {anchor.Name}. Lay brothers and penitents who expected protection and received silence. They carry pilgrim staves and repurposed tools. No prior spoke for them. No prior can easily stop them."
+                        : IsTribes(kingdom)
+                        ? $"The Dispossessed Ride — Outriders and dispossessed clansmen of {kingdom.Name} have left the herds near {anchor.Name}, riding without a Khan's banner. Three bands, furious and aimless. The steppe does not keep the angry still for long."
+                        : $"Peasant Unrest — The people of {kingdom.Name} have had enough. Three ragged bands broke from the fields near {anchor.Name} last night, carrying scythes and old iron. No lord called them — no lord can stop them easily.";
+                    MBInformationManager.AddQuickInformation(new TextObject(unrestMsg));
+                }
             }
             catch { }
         }
@@ -163,6 +175,7 @@ namespace AshAndEmber
                 var kingdoms = Kingdom.All
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
+                             && IsFactionConspireEligible(k)
                              && k.Leader != null
                              && k.Clans.Count(c => c != null && !c.IsEliminated) >= 3)
                     .ToList();
@@ -194,14 +207,19 @@ namespace AshAndEmber
                 bool   hasBoth   = lord2 != null && lord2.IsAlive;
                 bool   playerIn  = Hero.MainHero?.Clan?.Kingdom == kingdom;
 
+                bool isWolfTemple = IsTempleFaction(kingdom);
+                bool isWolfTribes = IsTribes(kingdom);
+
                 if (!playerIn)
                 {
                     var victim = minorLords[_rng.Next(minorLords.Count)];
                     try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch { }
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"A Wolf in Sheep's Clothing — {victim.Name} of {kingdomName} was accused " +
-                        $"of serving the Ashen. The verdict arrived before they could speak. " +
-                        $"Their family maintains innocence. The court did not ask."));
+                    string worldNotif = isWolfTemple
+                        ? $"A Wolf in Sheep's Clothing — {victim.Name} of {kingdomName} was denounced before the tribunal as an Ashen sympathiser. The Inquisitor's writ arrived before they could answer the charge. Their family maintains their faith. The tribunal did not ask."
+                        : isWolfTribes
+                        ? $"A Wolf in Sheep's Clothing — {victim.Name} of {kingdomName} was accused by the clan shamans of carrying the grey-wind curse. The verdict was declared at the fire-circle before dawn. Their kin insist on innocence. The elders had already decided."
+                        : $"A Wolf in Sheep's Clothing — {victim.Name} of {kingdomName} was accused of serving the Ashen. The verdict arrived before they could speak. Their family maintains innocence. The court did not ask.";
+                    MBInformationManager.AddQuickInformation(new TextObject(worldNotif));
                     return;
                 }
 
@@ -215,44 +233,53 @@ namespace AshAndEmber
                     {
                         string clName = Hero.MainHero?.Clan?.Name?.ToString() ?? "your clan";
                         try { ChangeKingdomAction.ApplyByLeaveKingdom(Hero.MainHero.Clan, false); } catch { }
-                        MBInformationManager.AddQuickInformation(new TextObject(
-                            $"A Wolf in Sheep's Clothing — The whispers of {kingdomName} found {clName}. " +
-                            $"There was no real trial. {rulerName} signed the expulsion before midday. " +
-                            $"You are cast out. Your Charm softened the odds — this time it was not enough."));
+                        string castOutMsg = isWolfTemple
+                            ? $"A Wolf in Sheep's Clothing — The Inquisitor's eye fell on {clName}. There was no proper trial; the writ of expulsion was signed before you could address the altar. You are cast out. Your Charm softened the odds — this time, the Temple's fear was stronger."
+                            : isWolfTribes
+                            ? $"A Wolf in Sheep's Clothing — The shamans of {kingdomName} named {clName}. The elders' fire-circle did not invite you to speak. You are driven from the camp. Your Charm was not enough to turn the spirits' accusation."
+                            : $"A Wolf in Sheep's Clothing — The whispers of {kingdomName} found {clName}. There was no real trial. {rulerName} signed the expulsion before midday. You are cast out. Your Charm softened the odds — this time it was not enough.";
+                        MBInformationManager.AddQuickInformation(new TextObject(castOutMsg));
                     }
                     else
                     {
                         var victim = minorLords[_rng.Next(minorLords.Count)];
                         try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch { }
-                        MBInformationManager.AddQuickInformation(new TextObject(
-                            $"A Wolf in Sheep's Clothing — {kingdomName}'s court needed an answer. " +
-                            $"{victim.Name} gave them one by existing. Executed before sunset; " +
-                            $"guilt neither proven nor questioned."));
+                        string scapeMsg = isWolfTemple
+                            ? $"A Wolf in Sheep's Clothing — The tribunal of {kingdomName} needed a name. {victim.Name} gave them one by existing. Condemned before sunset; their faith neither proven nor questioned."
+                            : isWolfTribes
+                            ? $"A Wolf in Sheep's Clothing — The elders of {kingdomName} needed the grey-wind curse to land somewhere. {victim.Name} was in the wrong place at the fire-circle. Gone before sunrise; guilt neither spoken nor answered."
+                            : $"A Wolf in Sheep's Clothing — {kingdomName}'s court needed an answer. {victim.Name} gave them one by existing. Executed before sunset; guilt neither proven nor questioned.";
+                        MBInformationManager.AddQuickInformation(new TextObject(scapeMsg));
                     }
                     return;
                 }
 
                 // Tier ≥ 4: four choices
+                string accuseLabel1 = isWolfTemple ? $"Name {lord1Name} — they carry the Ashen mark." : isWolfTribes ? $"Name {lord1Name} — they carry the grey-wind curse." : $"Accuse {lord1Name} — they are the traitor.";
+                string accuseLabel2 = hasBoth
+                    ? (isWolfTemple ? $"Name {lord2Name} — they carry the Ashen mark." : isWolfTribes ? $"Name {lord2Name} — they carry the grey-wind curse." : $"Accuse {lord2Name} — they are the traitor.")
+                    : (isWolfTemple ? "Let the Inquisition choose." : isWolfTribes ? "Let the elders decide." : "Let the court choose.");
+                string silenceLabel = isWolfTemple ? "Keep silent. Let the tribunal decide." : isWolfTribes ? "Say nothing. Let the fire-circle judge." : "Say nothing. Let the court decide.";
+                string innocentLabel = isWolfTemple ? "Vouch for their faith. The evidence was planted." : isWolfTribes ? "Speak for them. The spirits do not lie so easily." : "Suggest both are innocent. The evidence doesn't hold.";
+
                 var elems = new List<InquiryElement>
                 {
-                    new InquiryElement("a", $"Accuse {lord1Name} — they are the traitor.", null, true,
+                    new InquiryElement("a", accuseLabel1, null, true,
                         $"{lord1Name} is executed. +10 with {rulerName}."),
-                    new InquiryElement("b",
-                        hasBoth ? $"Accuse {lord2Name} — they are the traitor." : "Let the court choose.",
-                        null, true,
-                        hasBoth ? $"{lord2Name} is executed. +10 with {rulerName}."
-                                : "A random lord is chosen. No relation effects."),
-                    new InquiryElement("c", "Say nothing. Let the court decide.", null, true,
+                    new InquiryElement("b", accuseLabel2, null, true,
+                        hasBoth ? $"{lord2Name} is executed. +10 with {rulerName}." : "A random lord is chosen. No relation effects."),
+                    new InquiryElement("c", silenceLabel, null, true,
                         "One is executed at random. No relation effects."),
-                    new InquiryElement("d", "Suggest both are innocent. The evidence doesn't hold.", null, true,
+                    new InquiryElement("d", innocentLabel, null, true,
                         $"+100 with the accused. 33% chance one was truly a traitor — if so, −10 with {rulerName}."),
                 };
 
-                string body =
-                    $"The court of {kingdomName} is alive with whispers. " +
-                    $"{lord1Name}" + (hasBoth ? $" and {lord2Name} are" : " is") +
-                    $" accused of serving the Ashen. The evidence is thin. The mood is not.\n\n" +
-                    $"{rulerName} turns to you. At your clan's standing, your voice carries weight.";
+                string bodyOpening = isWolfTemple
+                    ? $"The Inquisition of {kingdomName} has named names. {lord1Name}" + (hasBoth ? $" and {lord2Name} are" : " is") + $" accused of bearing the Ashen mark. The evidence is an interpreter's word and a cold hearthstone. The mood in the chapter house is not."
+                    : isWolfTribes
+                    ? $"The fire-circle of {kingdomName} has spoken. {lord1Name}" + (hasBoth ? $" and {lord2Name} are" : " is") + $" accused of riding with the grey wind. The spirits' evidence is whispered, not seen. But the clans believe what they fear."
+                    : $"The court of {kingdomName} is alive with whispers. {lord1Name}" + (hasBoth ? $" and {lord2Name} are" : " is") + $" accused of serving the Ashen. The evidence is thin. The mood is not.";
+                string body = $"{bodyOpening}\n\n{rulerName} turns to you. At your clan's standing, your voice carries weight.";
 
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "A Wolf in Sheep's Clothing",
@@ -268,10 +295,14 @@ namespace AshAndEmber
                                     if (ruler?.IsAlive == true && Hero.MainHero != null)
                                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
                                             Hero.MainHero, ruler, +10, false); } catch { }
-                                    MBInformationManager.AddQuickInformation(new TextObject(
-                                        $"A Wolf in Sheep's Clothing — You named {lord1Name}. " +
-                                        $"The court accepted it. The execution was before dusk. " +
-                                        $"{rulerName} nodded in your direction."));
+                                    {
+                                        string aMsg = isWolfTemple
+                                            ? $"A Wolf in Sheep's Clothing — You named {lord1Name} before the tribunal. The Inquisition accepted it. The writ was sealed before dusk. {rulerName} acknowledged you with a nod."
+                                            : isWolfTribes
+                                            ? $"A Wolf in Sheep's Clothing — You named {lord1Name} at the fire-circle. The elders accepted it without debate. They were gone before sunrise. {rulerName} remembered your voice."
+                                            : $"A Wolf in Sheep's Clothing — You named {lord1Name}. The court accepted it. The execution was before dusk. {rulerName} nodded in your direction.";
+                                        MBInformationManager.AddQuickInformation(new TextObject(aMsg));
+                                    }
                                     break;
                                 case "b":
                                     if (hasBoth)
@@ -280,28 +311,35 @@ namespace AshAndEmber
                                         if (ruler?.IsAlive == true && Hero.MainHero != null)
                                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
                                                 Hero.MainHero, ruler, +10, false); } catch { }
-                                        MBInformationManager.AddQuickInformation(new TextObject(
-                                            $"A Wolf in Sheep's Clothing — You named {lord2Name}. " +
-                                            $"The court accepted it without debate. " +
-                                            $"You bought goodwill, and you know exactly what that cost."));
+                                        string bBothMsg = isWolfTemple
+                                            ? $"A Wolf in Sheep's Clothing — You named {lord2Name}. The Inquisition accepted it without discussion. You bought standing in the chapter house, and you know exactly what that cost."
+                                            : isWolfTribes
+                                            ? $"A Wolf in Sheep's Clothing — You named {lord2Name} to the elders. The fire-circle agreed without a second voice. You earned the Khan's regard. You know what was paid for it."
+                                            : $"A Wolf in Sheep's Clothing — You named {lord2Name}. The court accepted it without debate. You bought goodwill, and you know exactly what that cost.";
+                                        MBInformationManager.AddQuickInformation(new TextObject(bBothMsg));
                                     }
                                     else
                                     {
                                         var v = minorLords[_rng.Next(minorLords.Count)];
                                         try { KillCharacterAction.ApplyByMurder(v, null, false); } catch { }
-                                        MBInformationManager.AddQuickInformation(new TextObject(
-                                            $"A Wolf in Sheep's Clothing — The court chose. " +
-                                            $"{v.Name} did not survive the night."));
+                                        string bChooseMsg = isWolfTemple
+                                            ? $"A Wolf in Sheep's Clothing — The Inquisition chose their own answer. {v.Name} did not survive the night."
+                                            : isWolfTribes
+                                            ? $"A Wolf in Sheep's Clothing — The elders chose at the fire-circle. {v.Name} did not see the next dawn."
+                                            : $"A Wolf in Sheep's Clothing — The court chose. {v.Name} did not survive the night.";
+                                        MBInformationManager.AddQuickInformation(new TextObject(bChooseMsg));
                                     }
                                     break;
                                 case "c":
                                 {
                                     var v = minorLords[_rng.Next(minorLords.Count)];
                                     try { KillCharacterAction.ApplyByMurder(v, null, false); } catch { }
-                                    MBInformationManager.AddQuickInformation(new TextObject(
-                                        $"A Wolf in Sheep's Clothing — You said nothing. " +
-                                        $"The court chose its own answer. {v.Name} did not survive the night. " +
-                                        $"You kept your hands clean. Someone's blood was on them regardless."));
+                                    string cMsg = isWolfTemple
+                                        ? $"A Wolf in Sheep's Clothing — You kept silent before the tribunal. The Inquisition chose its own answer. {v.Name} did not survive the chapter-room. Your hands stay clean. Their blood does not."
+                                        : isWolfTribes
+                                        ? $"A Wolf in Sheep's Clothing — You said nothing at the fire-circle. The elders decided. {v.Name} did not see the next sunrise. The grey-wind curse needed somewhere to land."
+                                        : $"A Wolf in Sheep's Clothing — You said nothing. The court chose its own answer. {v.Name} did not survive the night. You kept your hands clean. Someone's blood was on them regardless.";
+                                    MBInformationManager.AddQuickInformation(new TextObject(cMsg));
                                     break;
                                 }
                                 case "d":
@@ -324,19 +362,21 @@ namespace AshAndEmber
                                         if (ruler?.IsAlive == true && Hero.MainHero != null)
                                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
                                                 Hero.MainHero, ruler, -10, false); } catch { }
-                                        MBInformationManager.AddQuickInformation(new TextObject(
-                                            $"A Wolf in Sheep's Clothing — You spoke for their innocence and were believed. " +
-                                            $"Three days later, {traitor.Name} vanished from their chambers, " +
-                                            $"found among the Ashen — grey-eyed and cold. The accusation was true. " +
-                                            $"{rulerName} did not forget that you vouched for them."));
+                                        string dTrueMsg = isWolfTemple
+                                            ? $"A Wolf in Sheep's Clothing — You vouched for their faith and were believed. Three days later, {traitor.Name} was found at the edge of the Ashen lands — grey-eyed and cold. The accusation was true. {rulerName} has not forgotten that you spoke for them."
+                                            : isWolfTribes
+                                            ? $"A Wolf in Sheep's Clothing — You spoke for them at the fire-circle and were heard. Three nights later, {traitor.Name} rode out of camp and did not return — found among the Ashen, grey-eyed and silent. The curse was real. {rulerName} did not forget."
+                                            : $"A Wolf in Sheep's Clothing — You spoke for their innocence and were believed. Three days later, {traitor.Name} vanished from their chambers, found among the Ashen — grey-eyed and cold. The accusation was true. {rulerName} did not forget that you vouched for them.";
+                                        MBInformationManager.AddQuickInformation(new TextObject(dTrueMsg));
                                     }
                                     else
                                     {
-                                        MBInformationManager.AddQuickInformation(new TextObject(
-                                            $"A Wolf in Sheep's Clothing — You spoke for their innocence. " +
-                                            $"The court, grudgingly, accepted it. The accused remember. " +
-                                            $"Whether the accusation had merit, neither you nor anyone else " +
-                                            $"will ever be entirely certain."));
+                                        string dFalseMsg = isWolfTemple
+                                            ? $"A Wolf in Sheep's Clothing — You vouched for their faith. The tribunal, reluctantly, accepted it. The accused remember your name. Whether the accusation had merit, neither you nor the Inquisition will ever be entirely certain."
+                                            : isWolfTribes
+                                            ? $"A Wolf in Sheep's Clothing — You spoke for them before the elders. The fire-circle, grudgingly, let it rest. The accused remember. Whether the grey-wind curse was real, the steppe will not say."
+                                            : $"A Wolf in Sheep's Clothing — You spoke for their innocence. The court, grudgingly, accepted it. The accused remember. Whether the accusation had merit, neither you nor anyone else will ever be entirely certain.";
+                                        MBInformationManager.AddQuickInformation(new TextObject(dFalseMsg));
                                     }
                                     break;
                                 }
