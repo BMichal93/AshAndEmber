@@ -56,10 +56,13 @@ namespace AshAndEmber
         public const float RimeSlowMult    = 0.70f; // 70 % of normal speed (30 % slow)
         public const float RimeDurationSec = 5f;
 
-        // ── Veilstone — speed surge (ally speed) ─────────────────────────────
-        public const float VeilRadius      = 5f;
-        public const float VeilSpeedMult   = 1.20f; // 20 % speed boost
-        public const float VeilDurationSec = 5f;
+        // ── Veilstone — veil grasp (single random enemy in extended range) ──────
+        // The veil reaches out and locks onto one random enemy; reliable but
+        // unpredictable in who it targets. Range is wider than AoE crystals.
+        public const float VeilRange       = 12f;
+        public const float VeilDamage      = 60f;
+        public const float VeilSlowMult    = 0.75f; // 25 % slow
+        public const float VeilDurationSec = 4f;
 
         // ── Stormcrystal — thunder clap (AoE damage + morale drain) ──────────
         public const float StormRadius      = 4f;

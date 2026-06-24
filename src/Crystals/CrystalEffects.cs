@@ -38,10 +38,10 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, Charge> _pendingCharge
             = new Dictionary<Agent, Charge>();
 
-        // ── Active slow / speed buffs (keyed by agent, value = seconds left) ──
-        private static readonly Dictionary<Agent, float> _rimeSlow  = new Dictionary<Agent, float>();
-        private static readonly Dictionary<Agent, float> _veilSpeed = new Dictionary<Agent, float>();
-        private static readonly Dictionary<Agent, float> _duskSlow  = new Dictionary<Agent, float>();
+        // ── Active slows (keyed by agent, value = seconds left) ──────────────
+        private static readonly Dictionary<Agent, float> _rimeSlow = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _veilSlow = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _duskSlow = new Dictionary<Agent, float>();
 
         // ── State management ──────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ namespace AshAndEmber
         {
             _pendingCharge.Clear();
             _rimeSlow.Clear();
-            _veilSpeed.Clear();
+            _veilSlow.Clear();
             _duskSlow.Clear();
         }
 
@@ -140,17 +140,17 @@ namespace AshAndEmber
                 else _rimeSlow[kvp.Key] = left;
             }
 
-            // Expire Veilstone speed.
-            foreach (var kvp in _veilSpeed.ToList())
+            // Expire Veilstone slow.
+            foreach (var kvp in _veilSlow.ToList())
             {
                 float left = kvp.Value - dt;
                 if (left <= 0f || !kvp.Key.IsActive())
                 {
-                    _veilSpeed.Remove(kvp.Key);
+                    _veilSlow.Remove(kvp.Key);
                     if (kvp.Key.IsActive())
-                        try { kvp.Key.SetMaximumSpeedLimit(1f, true); } catch { }
+                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch { }
                 }
-                else _veilSpeed[kvp.Key] = left;
+                else _veilSlow[kvp.Key] = left;
             }
 
             // Expire Duskstone slow.
@@ -290,33 +290,39 @@ namespace AshAndEmber
         {
             Vec3 pos;
             try { pos = caster.Position; } catch { return; }
-            float r = solarFlare ? CrystalMath.SolarFlareRadius(CrystalMath.VeilRadius) : CrystalMath.VeilRadius;
+            float r  = solarFlare ? CrystalMath.SolarFlareRadius(CrystalMath.VeilRange) : CrystalMath.VeilRange;
             float r2 = r * r;
-            int surged = 0;
 
-            // Apply to caster first.
-            _veilSpeed[caster] = CrystalMath.VeilDurationSec;
-            try { caster.SetMaximumSpeedLimit(CrystalMath.VeilSpeedMult, true); } catch { }
-
+            // Collect all enemies in range, pick one at random.
+            var candidates = new System.Collections.Generic.List<Agent>();
             try
             {
                 foreach (Agent a in Mission.Current.Agents.ToList())
                 {
-                    if (a == caster || !a.IsActive() || a.IsMount) continue;
-                    if (caster.Team == null || a.Team != caster.Team) continue;
+                    if (!a.IsActive() || a.IsMount || a == caster) continue;
+                    if (caster.Team != null && a.Team == caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
-                    if (dx * dx + dy * dy > r2) continue;
-                    _veilSpeed[a] = CrystalMath.VeilDurationSec;
-                    try { a.SetMaximumSpeedLimit(CrystalMath.VeilSpeedMult, true); } catch { }
-                    surged++;
+                    if (dx * dx + dy * dy <= r2) candidates.Add(a);
                 }
             }
             catch { }
 
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Purple, 2f); } catch { }
-            int veilPct = (int)((CrystalMath.VeilSpeedMult - 1f) * 100f);
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Purple, 1.5f); } catch { }
+
+            if (candidates.Count == 0)
+            {
+                Announce(caster, "Veilstone — the veil finds nothing to grasp.", ColorSchool.Purple);
+                return;
+            }
+
+            var target = candidates[_rng.Next(candidates.Count)];
+            try { SpellEffects.DamageAgent(target, CrystalMath.VeilDamage, ColorSchool.Purple, caster); } catch { }
+            _veilSlow[target] = CrystalMath.VeilDurationSec;
+            try { target.SetMaximumSpeedLimit(CrystalMath.VeilSlowMult, false); } catch { }
+
+            int slowPct = (int)((1f - CrystalMath.VeilSlowMult) * 100f);
             Announce(caster,
-                $"Veilstone — veil weave (+{veilPct} % speed for self and {surged} allies, {(int)CrystalMath.VeilDurationSec} s).",
+                $"Veilstone — veil grasp ({target.Name} struck for {(int)CrystalMath.VeilDamage} HP, {slowPct} % slow for {(int)CrystalMath.VeilDurationSec} s).",
                 ColorSchool.Purple);
         }
 

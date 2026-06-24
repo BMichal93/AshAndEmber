@@ -17,7 +17,7 @@ namespace AshAndEmber
         Sunstone     = 0, // warmth pulse — heal self + nearby allies
         Embershard   = 1, // shard burst  — AoE fire damage
         Rimeshard    = 2, // frost pulse  — slow nearby enemies
-        Veilstone    = 3, // speed surge  — boost nearby allies
+        Veilstone    = 3, // veil grasp   — strikes one random enemy at range
         Stormcrystal = 4, // thunder clap — AoE damage + morale drain
         Duskstone    = 5, // despair wave — morale drain + slow
     }
@@ -56,7 +56,7 @@ namespace AshAndEmber
                 TradeGoodId = "spice",
                 Name        = "Embershard",
                 GlowColor   = ColorSchool.Red,
-                EffectDesc  = "Shard burst: deals 30 fire damage to all enemies within 5 m.",
+                EffectDesc  = "Shard burst: deals 35 fire damage to all enemies within 5 m.",
                 Lore        = "The lattice grew too tight. The crystal holds more light than its structure can bear, "
                             + "and when the inner fire of its bearer meets that surplus, the whole thing detonates. "
                             + "Brief. Bright. Not particularly concerned with what is nearby.",
@@ -68,7 +68,7 @@ namespace AshAndEmber
                 TradeGoodId = "salt",
                 Name        = "Rimeshard",
                 GlowColor   = ColorSchool.Blue,
-                EffectDesc  = "Frost pulse: slows all enemies within 5 m by 40 % for 5 seconds.",
+                EffectDesc  = "Frost pulse: slows all enemies within 5 m by 30 % for 5 seconds.",
                 Lore        = "This one grew in a cold vein — too deep, too dark for proper sunlight. "
                             + "It learned to hold cold instead. What it releases is not warmth but its absence: "
                             + "a stillness that settles over everything nearby and makes motion feel like argument.",
@@ -80,9 +80,10 @@ namespace AshAndEmber
                 TradeGoodId = "linen_cloth",
                 Name        = "Veilstone",
                 GlowColor   = ColorSchool.Purple,
-                EffectDesc  = "Veil weave: grants you and nearby allies 15 % speed for 4 seconds (5 m radius).",
+                EffectDesc  = "Veil grasp: reaches out to one random enemy within 12 m — deals 60 HP and slows them by 25 % for 4 s.",
                 Lore        = "Its surface is never quite still — something moves inside it at the threshold of sight. "
-                            + "In the moment of release, those caught in its field move as if the air has stepped aside for them.",
+                            + "It does not release energy outward. It reaches. "
+                            + "You will not know which of them it chooses until it has already chosen.",
             },
             new CrystalDef
             {
@@ -91,7 +92,7 @@ namespace AshAndEmber
                 TradeGoodId = "iron",
                 Name        = "Stormcrystal",
                 GlowColor   = ColorSchool.Orange,
-                EffectDesc  = "Thunder clap: deals 35 damage and drains 20 morale from all enemies within 4 m.",
+                EffectDesc  = "Thunder clap: deals 35 damage and drains 15 morale from all enemies within 4 m.",
                 Lore        = "Grown around a vein of iron ore, it learned to channel something the iron carried — "
                             + "a charge, a potential, a tension that cannot hold. "
                             + "The sound it makes on release has been described as the sky being knocked off its course.",
@@ -103,7 +104,7 @@ namespace AshAndEmber
                 TradeGoodId = "grain",
                 Name        = "Duskstone",
                 GlowColor   = ColorSchool.Ashen,
-                EffectDesc  = "Despair wave: drains 25 morale and slows enemies within 6 m by 20 % for 5 seconds.",
+                EffectDesc  = "Despair wave: drains 18 morale and slows enemies within 5 m by 20 % for 5 seconds.",
                 Lore        = "It looks like ash pressed into glass. It grew in the penumbra of underground caverns "
                             + "where sunlight arrives only as rumour. "
                             + "What it releases is not warmth but the memory of its absence: a grey weight that settles on the will.",
