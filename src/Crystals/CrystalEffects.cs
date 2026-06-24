@@ -277,8 +277,9 @@ namespace AshAndEmber
             catch { }
 
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Blue, 1.5f); } catch { }
+            int rimePct = (int)((1f - CrystalMath.RimeSlowMult) * 100f);
             Announce(caster, slowed > 0
-                ? $"Rimeshard — frost pulse ({slowed} enemies stilled, 40 % slow for {(int)CrystalMath.RimeDurationSec} s)."
+                ? $"Rimeshard — frost pulse ({slowed} enemies stilled, {rimePct} % slow for {(int)CrystalMath.RimeDurationSec} s)."
                 : "Rimeshard — frost pulse (no enemies in range).",
                 ColorSchool.Blue);
         }
@@ -313,8 +314,9 @@ namespace AshAndEmber
             catch { }
 
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Purple, 2f); } catch { }
+            int veilPct = (int)((CrystalMath.VeilSpeedMult - 1f) * 100f);
             Announce(caster,
-                $"Veilstone — veil weave (+15 % speed for self and {surged} allies, {(int)CrystalMath.VeilDurationSec} s).",
+                $"Veilstone — veil weave (+{veilPct} % speed for self and {surged} allies, {(int)CrystalMath.VeilDurationSec} s).",
                 ColorSchool.Purple);
         }
 
@@ -375,8 +377,9 @@ namespace AshAndEmber
             catch { }
 
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Ashen, 2f); } catch { }
+            int duskSlowPct = (int)((1f - CrystalMath.DuskSlowMult) * 100f);
             Announce(caster, drained > 0
-                ? $"Duskstone — despair wave ({drained} enemies: −{(int)CrystalMath.DuskMoraleDrain} morale, 20 % slow for {(int)CrystalMath.DuskDurationSec} s)."
+                ? $"Duskstone — despair wave ({drained} enemies: −{(int)CrystalMath.DuskMoraleDrain} morale, {duskSlowPct} % slow for {(int)CrystalMath.DuskDurationSec} s)."
                 : "Duskstone — despair wave (no enemies in range).",
                 ColorSchool.Ashen);
         }

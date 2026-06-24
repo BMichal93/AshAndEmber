@@ -49,26 +49,26 @@ namespace AshAndEmber
 
         // ── Embershard — shard burst (AoE fire damage) ────────────────────────
         public const float EmberRadius = 5f;
-        public const float EmberDamage = 30f;
+        public const float EmberDamage = 35f;
 
         // ── Rimeshard — frost pulse (enemy slow) ─────────────────────────────
         public const float RimeRadius      = 5f;
-        public const float RimeSlowMult    = 0.60f; // 60 % of normal speed (40 % slow)
+        public const float RimeSlowMult    = 0.70f; // 70 % of normal speed (30 % slow)
         public const float RimeDurationSec = 5f;
 
-        // ── Veilstone — speed surge (ally speed / morale) ─────────────────────
+        // ── Veilstone — speed surge (ally speed) ─────────────────────────────
         public const float VeilRadius      = 5f;
-        public const float VeilSpeedMult   = 1.15f; // 15 % speed boost
-        public const float VeilDurationSec = 4f;
+        public const float VeilSpeedMult   = 1.20f; // 20 % speed boost
+        public const float VeilDurationSec = 5f;
 
         // ── Stormcrystal — thunder clap (AoE damage + morale drain) ──────────
         public const float StormRadius      = 4f;
         public const float StormDamage      = 35f;
-        public const float StormMoraleDrain = 20f;
+        public const float StormMoraleDrain = 15f;
 
         // ── Duskstone — despair wave (morale drain + slow) ────────────────────
-        public const float DuskRadius      = 6f;
-        public const float DuskMoraleDrain = 25f;
+        public const float DuskRadius      = 5f;
+        public const float DuskMoraleDrain = 18f;
         public const float DuskSlowMult    = 0.80f; // 80 % of normal speed (20 % slow)
         public const float DuskDurationSec = 5f;
 
