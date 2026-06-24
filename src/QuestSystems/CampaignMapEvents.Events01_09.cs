@@ -389,7 +389,7 @@ namespace AshAndEmber
                 string darkenedMsg = IsTempleFaction(kingdom)
                     ? $"Darkened Roads — {destroyed} supply train{(destroyed != 1 ? "s" : "")} and pilgrim convoy{(destroyed != 1 ? "s" : "")} vanish on the holy roads of {kingdom.Name}. The tithe-carts do not arrive. The temple gates close early. " + (spawned > 0 ? "Something grey moves in the silence left behind." : "The pilgrims' road is cold and still.")
                     : IsTribes(kingdom)
-                    ? $"Darkened Roads — {destroyed} caravan{(destroyed != 1 ? "s" : "")} vanish on the great steppe-routes of {kingdom.Name}. The trade-riders do not return. The clan-markets fall quiet. " + (spawned > 0 ? "Ashen shapes follow the old trade-lanes east." : "The wind off the steppe carries only silence.")
+                    ? $"Darkened Roads — {destroyed} tribute-column{(destroyed != 1 ? "s" : "")} vanish on the steppe-roads of {kingdom.Name}. Tribute-riders do not return. The war-camp waits for gold and grain that will not arrive. " + (spawned > 0 ? "Ashen shapes follow the tribute-lanes east." : "The tribute roads are cold and empty.")
                     : $"Darkened Roads — {destroyed} caravan{(destroyed != 1 ? "s" : "")} vanish on the roads of {kingdom.Name}. Trade dies. Prosperity crumbles. " + (spawned > 0 ? "Ashen shapes move where merchants once walked." : "The roads fall silent and cold.");
                 MBInformationManager.AddQuickInformation(new TextObject(darkenedMsg));
             }
@@ -459,10 +459,10 @@ namespace AshAndEmber
                     string plotSetup = isTemple
                         ? $"A sacred oath has been broken in secret — {expelledName} has readied the chalice. {leaderName} will not survive tonight's Vespers. They are asking if you will stand with the Light they serve."
                         : isTribes
-                        ? $"Riders crossed the war-camp boundary after dark — sworn brothers with blades beneath their cloaks. {expelledName} has broken the blood-compact. The Khan will not see tomorrow's sun rise. They have sent a rider to you."
+                        ? $"Riders crossed the war-camp boundary after dark — sworn brothers with blades beneath their cloaks. {expelledName} has broken the blood-pact. The God-King will not see tomorrow's sun rise. They have sent a rider to you."
                         : $"Word has reached you in the dark — {expelledName} is moving against {leaderName} of {kingdomName}. The wine is already prepared. They are asking if you stand with them.";
                     string backLabel = isTemple ? $"Stand with {expelledName}" : isTribes ? $"Ride with {expelledName}" : $"Back {expelledName}";
-                    string warnLabel = isTemple ? $"Warn the High Templar" : isTribes ? $"Warn the Khan" : $"Warn {leaderName}";
+                    string warnLabel = isTemple ? $"Warn the High Templar" : isTribes ? $"Warn the God-King" : $"Warn {leaderName}";
 
                     string body = $"{plotSetup}\n\n"
                         + $"{backLabel}: +50 relations with {expelledName}, −100 with {oldRulerName}.\n"
@@ -485,7 +485,7 @@ namespace AshAndEmber
                                 string msg = IsTempleFaction(kingdom)
                                     ? $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive Vespers. You played your part in silence. {expelledName} was gone before the bells rang — grateful and gone. {oldRulerName} will know who raised the chalice."
                                     : IsTribes(kingdom)
-                                    ? $"Seeds of Betrayal — {leaderName} of {kingdomName} did not ride out at dawn. You were there when it was decided. {expelledName} scattered with the morning wind — grateful and gone. {oldRulerName} will know whose banner rode beside them."
+                                    ? $"Seeds of Betrayal — {leaderName} of {kingdomName} did not ride out at dawn. You were there when the blood-pact broke. {expelledName} scattered before the Vanguard could be raised — grateful and gone. {oldRulerName} will know whose banner rode beside them."
                                     : $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive the feast. You were part of it. {expelledName} fled before dawn — grateful, and gone. {oldRulerName} will know who held the blade.";
                                 MBInformationManager.AddQuickInformation(new TextObject(msg));
                             }
@@ -502,7 +502,7 @@ namespace AshAndEmber
                                     string msg = IsTempleFaction(kingdom)
                                         ? $"Seeds of Betrayal — your warning reached {leaderName} in time. The rite was altered; {expelledName}'s move collapsed before it could be made. {oldRulerName} owes you a debt the Temple does not speak of lightly. {expelledName} will not forget your name."
                                         : IsTribes(kingdom)
-                                        ? $"Seeds of Betrayal — your rider reached the Khan in time. {expelledName}'s blood-compact was broken before it could be sealed. {oldRulerName} owes you a warrior's debt. {expelledName} will not forget."
+                                        ? $"Seeds of Betrayal — your rider reached the God-King in time. {expelledName}'s blood-pact was broken before it could be sealed. {oldRulerName} owes you a warrior's debt. {expelledName} will not forget."
                                         : $"Seeds of Betrayal — your warning reached {leaderName} in time. The feast was cancelled. {expelledName}'s plot collapsed in daylight. {oldRulerName} owes you something, whether or not they say so. {expelledName} will not forget your name.";
                                     MBInformationManager.AddQuickInformation(new TextObject(msg));
                                 }
@@ -515,7 +515,7 @@ namespace AshAndEmber
                                     string msg = IsTempleFaction(kingdom)
                                         ? $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive despite your warning. {expelledName} moved before your word could reach the altar. {oldRulerName} remembers who tried. {expelledName} remembers too."
                                         : IsTribes(kingdom)
-                                        ? $"Seeds of Betrayal — {leaderName} of {kingdomName} was already dead when your rider arrived. {expelledName} had struck before the camp fires were lit. {oldRulerName} remembers who sent the warning. {expelledName} remembers too."
+                                        ? $"Seeds of Betrayal — {leaderName} of {kingdomName} was already dead when your rider arrived. {expelledName} had struck before the war-tent opened for the day. {oldRulerName} remembers who sent the warning. {expelledName} remembers too."
                                         : $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive despite your warning. {expelledName} moved before the word could spread. {oldRulerName} remembers who tried. {expelledName} remembers too.";
                                     MBInformationManager.AddQuickInformation(new TextObject(msg));
                                 }
@@ -532,7 +532,7 @@ namespace AshAndEmber
                     string worldMsg = IsTempleFaction(kingdom)
                         ? $"Seeds of Betrayal — {leaderName} of {kingdomName} was found cold before morning prayer. The chalice had been prepared in secret. {expelledName} vanished before the bells, their insignia stripped from the chapel wall. The covenant endures — but something under it has shifted."
                         : IsTribes(kingdom)
-                        ? $"Seeds of Betrayal — {leaderName} of {kingdomName} did not ride out at dawn. The blood-compact was broken in the dark. {expelledName} rode east before the war-camp woke, their standard abandoned in the dust. A new Khan will rise. The steppe does not mourn long."
+                        ? $"Seeds of Betrayal — {leaderName} of {kingdomName} did not ride out at dawn. The blood-pact was broken in the dark. {expelledName} rode east before the war-camp woke, their standard abandoned in the dust. The divine fire passes by blood. The God-King's succession has already begun."
                         : $"Seeds of Betrayal — {leaderName} of {kingdomName} did not survive the feast. The wine was poisoned. The doors were barred. {expelledName} fled before dawn, their banners cut from the hall. Someone will sit the seat they left empty. Someone always does.";
                     MBInformationManager.AddQuickInformation(new TextObject(worldMsg));
                 }

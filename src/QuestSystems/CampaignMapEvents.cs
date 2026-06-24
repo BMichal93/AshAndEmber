@@ -171,7 +171,7 @@ namespace AshAndEmber
         private const string TempleKingdomId = "vlandia";   // The Holy Temple
         private const string TribesKingdomId = "khuzait";   // Tribes of the East
 
-        // Temple and Tribes are tight, oath-bound cultures — internal conspiracies are rare.
+        // The Temple's faithful are oath-bound; the Tribes fear the God-King's fire — conspiracies are rare in both.
         // These factions are eligible for conspiracy events only ~15% of the time.
         private const float UnifiedConspireWeight = 0.15f;
 

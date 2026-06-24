@@ -223,7 +223,7 @@ namespace AshAndEmber
                     string bodySetup = isTemple
                         ? $"{tyrantName} of {kingdomName} has called the high lords before the altar — and means to condemn them as apostates and heretics. {condemnedNames} are on the list. {defectorName} has already left the temple before dawn."
                         : isTribes
-                        ? $"{tyrantName} of {kingdomName} has summoned the clan chiefs to the great war-tent — and means not to let them leave standing. {condemnedNames} are marked. {defectorName} rode out before the summons arrived."
+                        ? $"{tyrantName} of {kingdomName} has summoned the war-chiefs to the great war-tent — and means not to let them leave standing. {condemnedNames} are marked. {defectorName} rode out before the summons arrived."
                         : $"{tyrantName} of {kingdomName} has called the high lords to feast — and means to keep them there permanently. {condemnedNames} are condemned. {defectorName} has already fled.";
                     string supportLabel = isTemple ? $"Stand with the Inquisition" : isTribes ? $"Ride with {tyrantName}" : $"Support {tyrantName}";
 
@@ -410,11 +410,11 @@ namespace AshAndEmber
                 {
                     bool isTemple = IsTempleFaction(kingdom);
                     bool isTribes = IsTribes(kingdom);
-                    string sealLabel = isTemple ? "the Covenant Seal" : isTribes ? "the Khan's blood-claim" : $"the seal of {kingName}";
+                    string sealLabel = isTemple ? "the Covenant Seal" : isTribes ? "the God-King's blood-right" : $"the seal of {kingName}";
                     string moveDesc = isTemple
                         ? $"{newName} is moving to claim {sealLabel} of {kingName} from {oldName}. The transfer of the Covenant Seal is not done in open daylight. Word has reached you — they are asking where your allegiance rests."
                         : isTribes
-                        ? $"{newName} is moving to claim {sealLabel} of {kingName} over {oldName}. The clans watch which banner rises at dawn. Your name has weight in the east."
+                        ? $"{newName} is moving to claim {sealLabel} of {kingName} over {oldName}. The tribesmen watch which banner rises under the divine fire. Your name has weight in the east."
                         : $"{newName} is moving to seize the seal of {kingName} from {oldName}. Word has reached you — and they are waiting to see which way your clan stands.";
 
                     string body = $"{moveDesc}\n\n"
@@ -437,7 +437,7 @@ namespace AshAndEmber
                                 string succMsg = IsTempleFaction(kingdom)
                                     ? $"Stolen Heirloom — you backed {newName}'s move. The Covenant Seal of {kingName} passed to new hands before morning prayer. {oldName} knows exactly where you stood."
                                     : IsTribes(kingdom)
-                                    ? $"Stolen Heirloom — you rode with {newName}. The Khan's claim of {kingName} passed at dawn. {oldName} knows which banner you raised."
+                                    ? $"Stolen Heirloom — you rode with {newName}. The God-King's blood-right of {kingName} passed before dawn. {oldName} knows which banner you raised."
                                     : $"Stolen Heirloom — you backed {newName}'s move. The seal of {kingName} changed hands. {oldName} knows exactly where you stood.";
                                 MBInformationManager.AddQuickInformation(new TextObject(succMsg));
                             }
@@ -454,7 +454,7 @@ namespace AshAndEmber
                                     string stopMsg = IsTempleFaction(kingdom)
                                         ? $"Stolen Heirloom — your opposition reached the right ears. {newName}'s claim to the Covenant Seal of {kingName} collapsed before it was presented. {oldName} holds it still. {newName} has not forgotten your part in this."
                                         : IsTribes(kingdom)
-                                        ? $"Stolen Heirloom — your riders reached the clan elders in time. {newName}'s claim to {kingName} was rejected by the council. The blood-right stays with {oldName}. {newName} will not forget."
+                                        ? $"Stolen Heirloom — your riders reached the war-chiefs in time. {newName}'s claim to {kingName} was rejected. The blood-right stays with {oldName}. {newName} will not forget."
                                         : $"Stolen Heirloom — your opposition was enough. {newName}'s move collapsed before it landed. {kingName} stays in {oldName}'s hands. {newName} has not forgotten your part in it.";
                                     MBInformationManager.AddQuickInformation(new TextObject(stopMsg));
                                 }
@@ -464,7 +464,7 @@ namespace AshAndEmber
                                     string failMsg = IsTempleFaction(kingdom)
                                         ? $"Stolen Heirloom — despite your opposition, {newName} pressed the claim. The Covenant Seal of {kingName} is in their hands now. {oldName} is grateful, though without power. {newName} will not forget your name."
                                         : IsTribes(kingdom)
-                                        ? $"Stolen Heirloom — despite your opposition, {newName} rode ahead. The blood-claim of {kingName} is theirs now. {oldName} remembers who stood with them. {newName} will not forget your name."
+                                        ? $"Stolen Heirloom — despite your opposition, {newName} rode ahead. The blood-right of {kingName} is theirs now. {oldName} remembers who stood with them. {newName} will not forget your name."
                                         : $"Stolen Heirloom — despite your opposition, {newName} pressed ahead. The seal of {kingName} is in their hands now. {oldName} is grateful, though powerless. {newName} will not forget your name.";
                                     MBInformationManager.AddQuickInformation(new TextObject(failMsg));
                                 }
@@ -479,7 +479,7 @@ namespace AshAndEmber
                     string worldMsg = IsTempleFaction(kingdom)
                         ? $"Stolen Heirloom — the Covenant Seal of {kingName} passed to new hands in the dark. {newName} holds it now. {oldName} held it at dusk. The transfer was quiet. The Temple's faithful will not know who arranged it for some time."
                         : IsTribes(kingdom)
-                        ? $"Stolen Heirloom — the Khan's blood-claim of {kingName} changed at dawn without a battle. {newName} raised their banner where {oldName}'s had flown. The clans watched. The steppe does not care who flies the standard — only who keeps it."
+                        ? $"Stolen Heirloom — the God-King's blood-right of {kingName} changed hands without a battle. {newName} raised their banner where {oldName}'s had flown. The tribesmen watched. The steppe does not care who flies the standard — only who keeps it."
                         : $"Stolen Heirloom — the signet ring of {kingName} changed hands in the night. {newName} holds the seal now. {oldName} held it at sundown. No swords were drawn. That may be the most frightening part.";
                     MBInformationManager.AddQuickInformation(new TextObject(worldMsg));
                 }
@@ -699,7 +699,7 @@ namespace AshAndEmber
             string gotMsg = IsTempleFaction(kingdom)
                 ? $"Game of Thrones — When {kingName}'s High Templar fell, the covenant that held the order together fell with them. {nameList} broke from the Temple before a new one could be named — they took their charters and walked out the gates. {newLeader} inherits the altar, and a much smaller faithful. [{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]"
                 : IsTribes(kingdom)
-                ? $"Game of Thrones — When {kingName}'s Khan fell, the blood-compact that held the clans together dissolved. {nameList} raised their own banners and rode for open steppe with everything they could carry. {newLeader} inherits the war-tent — and a much smaller horde. [{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]"
+                ? $"Game of Thrones — When {kingName}'s God-King fell, the blood-pact that held the tribes together dissolved. {nameList} raised their own banners and rode for open steppe with everything they could carry. {newLeader} inherits the war-tent — and a much smaller horde. [{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]"
                 : $"Game of Thrones — When {kingName}'s lord fell, the wolves came out from behind their smiles. The court had been held together by one will. Without it, {nameList} raised their own banners and walked out the gate with everything they owned. {newLeader} inherits a throne — and a much smaller kingdom. What was one realm is now many ambitions. [{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]";
             MBInformationManager.AddQuickInformation(new TextObject(gotMsg));
         }
