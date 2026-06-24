@@ -163,8 +163,11 @@ namespace AshAndEmber
                 + "  In battle            Hold Left Ctrl …     (hold RB)\n"
                 + "    then type the six-mark sequence shown for the miracle, and release.\n\n"
                 + "── CRYSTALS ─────────────────────────────────────────\n"
-                + "  Equip a Suncrystal in a weapon slot. By day, attack with it\n"
-                + "  to charge and unleash its focused light. Ineffective at night.\n\n"
+                + "  Equip a crystal in a weapon slot (Sunstone, Embershard, Rimeshard,\n"
+                + "  Veilstone, Stormcrystal, Duskstone). Strike with it between 06:00\n"
+                + "  and 20:00 to charge for 2 s then unleash the effect. 10 % burndown\n"
+                + "  chance per use. Chambers in Sargot, Marunath, Ortysia, Revyl,\n"
+                + "  Husn Fulq, Dunglanys, Tyal, Epicrotea.\n\n"
                 + "── THE LIVING EMBER — the land's own fire ───────────\n"
                 + "  (For those attuned to the living world, not the inner fire.)\n"
                 + "  Gather a charge     Hold Left Ctrl + stand still   (hold R3, stand still)\n"
@@ -187,7 +190,7 @@ namespace AshAndEmber
         {
             InformationManager.ShowInquiry(new InquiryData(
                 "The Disciplines of Hand and Voice",
-                "Every gesture you will need — spells, miracles, suncrystals and the living ember — "
+                "Every gesture you will need — spells, miracles, crystals and the living ember — "
                 + "is recorded in your journal under \"Notes for the Adventurer.\"\n\n"
                 + "Open your journal whenever the craft slips your mind.",
                 true, false, "I will remember.", "", null, null), true, true);
@@ -335,7 +338,7 @@ namespace AshAndEmber
             ), false, true);
         }
 
-        // ── Rite talent menu (shown by Altar / Sanctuary / Alchemy lab) ─────────
+        // ── Rite talent menu (shown by Altar / Sanctuary / Crystalline Chamber) ──
 
         public static void ShowRiteTalentMenu(string systemName, IEnumerable<TalentId> talentIds)
         {
