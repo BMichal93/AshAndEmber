@@ -8,6 +8,10 @@
 
   Mesh: vanilla "pebble_a" used as placeholder visual. A custom crystal mesh
   can replace it by editing the mesh="" attribute without changing any code.
+
+  Prices are intentionally high (1100–2000) — these are rare mineral formations,
+  available for purchase only in Crystalline Chamber towns, restocked weekly
+  with one of each type. The formation craft route offers them at material cost.
 -->
 <Items>
 
@@ -17,7 +21,7 @@
         mesh="pebble_a"
         Type="OneHandedWeapon"
         weight="0.3"
-        value="700"
+        value="1500"
         using_tableau_cache_system="false">
     <ItemComponent>
       <Weapon weapon_class="Mace"
@@ -37,7 +41,7 @@
         mesh="pebble_a"
         Type="OneHandedWeapon"
         weight="0.3"
-        value="750"
+        value="1800"
         using_tableau_cache_system="false">
     <ItemComponent>
       <Weapon weapon_class="Mace"
@@ -57,7 +61,7 @@
         mesh="pebble_a"
         Type="OneHandedWeapon"
         weight="0.3"
-        value="700"
+        value="1500"
         using_tableau_cache_system="false">
     <ItemComponent>
       <Weapon weapon_class="Mace"
@@ -77,7 +81,7 @@
         mesh="pebble_a"
         Type="OneHandedWeapon"
         weight="0.3"
-        value="750"
+        value="1700"
         using_tableau_cache_system="false">
     <ItemComponent>
       <Weapon weapon_class="Mace"
@@ -97,7 +101,7 @@
         mesh="pebble_a"
         Type="OneHandedWeapon"
         weight="0.3"
-        value="800"
+        value="2000"
         using_tableau_cache_system="false">
     <ItemComponent>
       <Weapon weapon_class="Mace"
@@ -117,7 +121,7 @@
         mesh="pebble_a"
         Type="OneHandedWeapon"
         weight="0.3"
-        value="700"
+        value="1600"
         using_tableau_cache_system="false">
     <ItemComponent>
       <Weapon weapon_class="Mace"

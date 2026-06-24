@@ -79,6 +79,11 @@ namespace AshAndEmber
         public const int SilverOreCost  = 1;
         public const int TradeGoodCost  = 1;
 
+        // ── Shop stock ────────────────────────────────────────────────────────
+        // Each Crystalline Chamber town keeps this many of each crystal type.
+        // Restocked weekly; purchased crystals won't reappear until the next tick.
+        public const int ShopStockPerType = 1;
+
         // SolarFlare (+25 % AoE radius multiplier) applies to burst-type crystals.
         public static float SolarFlareRadius(float baseRadius) => baseRadius * 1.25f;
     }

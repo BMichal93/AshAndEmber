@@ -45,6 +45,7 @@ namespace AshAndEmber
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.OnHeroCreated.AddNonSerializedListener(this, OnHeroCreated);
+            CampaignEvents.WeeklyTickEvent.AddNonSerializedListener(this, OnWeeklyTick);
         }
 
         // Crystals are real items in the world — no campaign keys to save.
@@ -57,6 +58,36 @@ namespace AshAndEmber
         private static void OnSessionLaunched(CampaignGameStarter starter)
         {
             try { RegisterCrystalMenus(starter); } catch { }
+            try { RestockChamberTownShops(); }     catch { }
+        }
+
+        private static void OnWeeklyTick()
+        {
+            try { RestockChamberTownShops(); } catch { }
+        }
+
+        // Ensures each Crystalline Chamber town carries one of every crystal type
+        // for sale. Called on load and weekly so stock recovers after purchases.
+        internal static void RestockChamberTownShops()
+        {
+            foreach (var s in Settlement.All)
+            {
+                if (!HasCrystallineChamber(s)) continue;
+                try
+                {
+                    var roster = s.Town?.GetItemRoster();
+                    if (roster == null) continue;
+                    foreach (var def in CrystalCatalog.All)
+                    {
+                        var item = MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
+                        if (item == null) continue;
+                        int have = roster.GetItemNumber(item);
+                        if (have < CrystalMath.ShopStockPerType)
+                            roster.AddToCounts(item, CrystalMath.ShopStockPerType - have);
+                    }
+                }
+                catch { }
+            }
         }
 
         // ── Lord seeding ──────────────────────────────────────────────────────
