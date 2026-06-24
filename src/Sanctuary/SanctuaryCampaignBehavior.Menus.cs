@@ -263,12 +263,17 @@ namespace AshAndEmber
             }
             catch { }
 
-            _lastPrayerDay       = CurrentCampaignDay() - cooldownReduction;
+            // Cap the reagent reduction so at least one day always passes. A full
+            // reduction (Frozen Amber grants 3, equal to PrayerCooldownDays) would
+            // back-date _lastPrayerDay far enough to clear the gate entirely,
+            // allowing same-day repeated Grace farming with a reagent stock.
+            int cappedReduction  = Math.Min(cooldownReduction, MiracleMath.PrayerCooldownDays - 1);
+            _lastPrayerDay       = CurrentCampaignDay() - cappedReduction;
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
 
-            string reagentLine = cooldownReduction > 0
-                ? $"\n\nA reagent was consumed, reducing the next cooldown by {cooldownReduction} day(s)."
+            string reagentLine = cappedReduction > 0
+                ? $"\n\nA reagent was consumed, reducing the next cooldown by {cappedReduction} day(s)."
                 : "";
             string scaleLine = agingReclaim > 0
                 ? "\n\nA Sea Serpent Scale crumbles in the candle smoke. The fire burns one day younger."
