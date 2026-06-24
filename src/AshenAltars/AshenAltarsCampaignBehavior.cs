@@ -145,10 +145,16 @@ namespace AshAndEmber
             try
             {
                 string name = s.Name?.ToString() ?? "";
-                return FixedAltarCities.Any(city =>
-                    name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0)
+                // Fixed Ashen altars + dynamically rolled Aserai/Empire ones
+                if (FixedAltarCities.Any(city =>
+                        name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0)
                     || AshenQuestSystem.IsWastelandCity(s.StringId)
-                    || _dynamicAltarIds.Contains(s.StringId);
+                    || _dynamicAltarIds.Contains(s.StringId))
+                    return true;
+
+                // Every town held by the Tribes of the East has a Dark Altar —
+                // the God-King's blood-pacts run through each city he claims.
+                return s.OwnerClan?.Kingdom?.StringId == "khuzait";
             }
             catch { return false; }
         }

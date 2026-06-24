@@ -75,6 +75,9 @@ namespace AshAndEmber
                         {
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsTown) return false;
+                            // Tribes of the East have no organised exchange — only tribute and blood.
+                            if (s.OwnerClan?.Kingdom?.StringId == TribalKingdomBehavior.KhuzaitId)
+                                return false;
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
 
                             int cd = 0;

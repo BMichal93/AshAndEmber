@@ -109,6 +109,7 @@ namespace AshAndEmber
                 NatureCampaignBehavior.ResetForNewGame();
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
+                TribalKingdomBehavior.ResetForNewGame();
                 CrystallinesCampaignBehavior.EstablishForNewCampaign();
                 // The opening lore now plays as a cinematic before character creation
                 // (see AshEmberLoreIntro), so here we go straight to the Gift prompt.

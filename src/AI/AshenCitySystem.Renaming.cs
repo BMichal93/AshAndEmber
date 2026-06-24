@@ -243,6 +243,118 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Tribes of the East kingdom rename ──────────────────────────────────
+        // The Khuzait Khanate IS the Tribes of the East. Kingdom names revert to
+        // their XML values on every session load, so this runs on the first daily
+        // tick each session alongside the Holy Temple rename.
+        public static void RenameTribesKingdom()
+        {
+            try
+            {
+                var khuzait = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "khuzait" && !k.IsEliminated);
+                if (khuzait == null) return;
+
+                _nameField?.SetValue(khuzait, new TextObject("Tribes of the East"));
+
+                SetKingdomField(khuzait,
+                    new[] { "_informalName", "<InformalName>k__BackingField" },
+                    new TextObject("Tribes"));
+                SetKingdomField(khuzait,
+                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new TextObject("God-King"));
+
+                RenameTribalCulture();
+            }
+            catch { }
+        }
+
+        // Renames the khuzait culture object to "Tribal" so character backgrounds
+        // and the encyclopedia read correctly. Called from RenameTribesKingdom and
+        // from ApplyTribalCultureTexts (which runs before the campaign exists).
+        public static void RenameTribalCulture()
+        {
+            try
+            {
+                var khuzaitCulture = MBObjectManager.Instance?.GetObject<CultureObject>("khuzait");
+                if (khuzaitCulture != null)
+                    _nameField?.SetValue(khuzaitCulture, new TextObject("Tribal"));
+            }
+            catch { }
+        }
+
+        // ── Character-creation culture card text override for Tribes ───────────
+        // Works identically to ApplyTempleCultureTexts but for the khuzait culture.
+        public static bool ApplyTribalCultureTexts()
+        {
+            try
+            {
+                RenameTribalCulture();
+
+                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                var mgr = mgrField?.GetValue(null) as GameTextManager;
+                if (mgr == null) return false;
+
+                SetCultureVariation(mgr, "str_culture_rich_name", "khuzait", "Tribes of the East");
+                SetCultureVariation(mgr, "str_culture_description", "khuzait",
+                    "They came from the eastern steppe — a hundred warring clans who forgot how to stop fighting " +
+                    "until the God-King put his hand on the sky and turned three chieftains to ash. " +
+                    "The rest knelt. Now the Tribes ride as one, not because they love their king, " +
+                    "but because they love war, and he alone has shown them how to win it. " +
+                    "He wields fire the way other men wield iron. He does not negotiate. " +
+                    "He takes wives from every city his horsemen put to tribute. " +
+                    "He is watching the Empire bleed itself empty, and he is patient. " +
+                    "The Tribes do not seek peace. They seek the next horizon.");
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // ── Khuzait troop rename ───────────────────────────────────────────────
+        // Renames all vanilla Khuzait troops from "Khuzait X" to "Tribal X", with
+        // specific overrides for key units. Idempotent: already-renamed names are
+        // left unchanged. Called once per session alongside the kingdom rename.
+        private static readonly Dictionary<string, string> _tribalTroopOverrides =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Khuzait Nomad",        "Tribesman"             },
+            { "Khuzait Khan's Guard", "God-King's Vanguard"   },
+            { "Khuzait Raider",       "Tribal Ravager"        },
+        };
+
+        public static void RenameKhuzaitTroops()
+        {
+            try
+            {
+                var nameField = _characterNameField ?? _nameField;
+                if (nameField == null) return;
+
+                foreach (var ch in MBObjectManager.Instance
+                             ?.GetObjectTypeList<CharacterObject>()
+                             ?? Enumerable.Empty<CharacterObject>())
+                {
+                    try
+                    {
+                        if (ch == null) continue;
+                        if (!(ch.StringId?.StartsWith("khuzait_", StringComparison.OrdinalIgnoreCase) ?? false))
+                            continue;
+
+                        string current = ch.Name?.ToString() ?? "";
+                        if (!current.StartsWith("Khuzait ", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        string newName;
+                        if (!_tribalTroopOverrides.TryGetValue(current, out newName))
+                            newName = "Tribal " + current.Substring("Khuzait ".Length);
+
+                        nameField.SetValue(ch, new TextObject(newName));
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
         private static void SetKingdomField(Kingdom kingdom, string[] candidates, TextObject value)
         {
             foreach (var fieldName in candidates)

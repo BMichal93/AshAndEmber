@@ -73,7 +73,8 @@ namespace AshAndEmber
                 try { AshenRuinSystem.DailyTick(); } catch { }
                 try { ApprenticeSystem.DailyTick(); } catch { }
                 try { AmbientRemarks.DailyTick(); } catch { }
-                try { TempleCulture.DailyTick(); } catch { }
+                try { TempleCulture.DailyTick();  } catch { }
+                try { TribalCulture.DailyTick(); } catch { }
                 _dayCounter++;
                 if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
             }
@@ -158,7 +159,8 @@ namespace AshAndEmber
                 // Must run after aging so _battleCasts still holds data during ApplyNpcBattleAging.
                 try { ColourLordAI.FlushBattleCasts(); } catch { }
                 try { ApplyNpcBattleMoraleBonus(mapEvent); } catch { }
-                try { CheckReapRaidYield(mapEvent); } catch { }
+                try { CheckReapRaidYield(mapEvent);           } catch { }
+                try { TribalCulture.CheckRaidBonus(mapEvent); } catch { }
                 try { SettlementEncounters.OnMapEventEnded(mapEvent); } catch { }
                 try { DragonQuestSystem.OnMapEventEnded(mapEvent); } catch { }
                 // Refresh snapshot so battle-captured prisoners don't count as discards
