@@ -133,6 +133,9 @@ namespace AshAndEmber
                                             _ashenClanIds.Contains(h.Clan?.StringId));
                         if (executor == null) continue;
 
+                        bool playerSettlement = MageKnowledge.IsAshen
+                                             && settlement.OwnerClan == Hero.MainHero?.Clan;
+
                         foreach (Hero notable in settlement.Notables.ToList())
                         {
                             try
@@ -141,10 +144,24 @@ namespace AshAndEmber
                                 if (!notable.IsFemale && !notable.IsChild) continue;
                                 if (_rng.NextDouble() >= 0.50) continue;
 
+                                string notableName    = notable.Name?.ToString() ?? "someone";
+                                string settlementName = settlement.Name?.ToString() ?? "your hold";
+
                                 try { KillCharacterAction.ApplyByExecution(notable, executor); } catch { }
-                                InformationManager.DisplayMessage(new InformationMessage(
-                                    $"The cold does not spare the harmless. {notable.Name} of {settlement.Name} is gone.",
-                                    new Color(0.55f, 0.25f, 0.25f)));
+
+                                if (playerSettlement)
+                                {
+                                    if (MageKnowledge._deferredInquiry == null)
+                                        MageKnowledge._deferredInquiry =
+                                            () => ShowPlayerCivilianExecutionPopup(notableName, settlementName);
+                                }
+                                else
+                                {
+                                    InformationManager.DisplayMessage(new InformationMessage(
+                                        $"The cold does not spare the harmless. {notableName} of {settlementName} is gone.",
+                                        new Color(0.55f, 0.25f, 0.25f)));
+                                }
+
                                 return; // one per daily tick
                             }
                             catch { }
@@ -154,6 +171,25 @@ namespace AshAndEmber
                 }
             }
             catch { }
+        }
+
+        // ── Player Ashen atrocity popup ───────────────────────────────────────
+        private static void ShowPlayerCivilianExecutionPopup(string notableName, string settlementName)
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Grey Work",
+
+                $"You did not give the order. You did not have to.\n\n" +
+                $"{notableName} of {settlementName} was found at dawn. Still. " +
+                "Not as an act of cruelty — as a matter of course. " +
+                "The cold knows what you are now, and it acts accordingly.\n\n" +
+                "This is what you became. You are still here.\n" +
+                "Something that was purely yours is no longer.",
+
+                true, false,
+                "It is done.", "",
+                () => { }, null
+            ), true, true);
         }
 
         // ── Player capture prompt ─────────────────────────────────────────────
