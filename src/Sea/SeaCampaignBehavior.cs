@@ -70,7 +70,7 @@ namespace AshAndEmber
                 ["Pravend"]  = "Once a royal harbour, now Imperial. The merchants with ambition and the agents with patience still come — what flies above the keep changes; the need to trade does not.",
                 ["Jaculan"]  = "A fishing port that outgrew its origins. Half the boats work nets; the other half would rather not say what they haul.",
                 ["Ostican"]  = "Faded guild colours on every warehouse wall. This harbor lived through a siege and has charged accordingly for everything since.",
-                ["Charas"]   = "The Empire's westernmost harbour. Vlandian arches frame Imperial columns in the old quarters — the city changed hands before the fragmentation, and the waterfront learned long ago to look seaward rather than inland for its fortunes.",
+                ["Charas"]   = "The Empire's westernmost harbour. Templar arches frame Imperial columns in the old quarters — the city changed hands before the fragmentation, and the waterfront learned long ago to look seaward rather than inland for its fortunes.",
                 ["Ortysia"]  = "Marble columns at the harbor mouth — Imperial pretension on a working quay. The longshoremen have ignored the columns for three generations and plan to continue.",
                 ["Zeonica"]  = "Everything moves with Imperial precision here: timed, logged, taxed. A captain unfamiliar with the forms can wait three days before the harbormaster speaks to them.",
                 ["Poros"]    = "The siege-walls run to the waterline. Even the harbor bristles. Poros has been taken twice by sea and built its walls with the anger of both defeats.",

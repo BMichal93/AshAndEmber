@@ -28,20 +28,21 @@ namespace AshAndEmber
     {
         private const BindingFlags F = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        private const string TempleName  = "Templars";
+        private const string TempleName  = "The Holy Temple";
         private const string TempleDesc  =
-            "The Templars are a holy order founded to stand against the Ashen and the eternal cold they "
-            + "carry. Where lesser folk let their inner fire gutter, the Templars keep it burning as a sacred "
-            + "trust. Descended from western lords who once served the Empire, they have bound throne to altar "
-            + "and meet the grey march with disciplined lances and unbending faith.\n\n"
+            "Once they were lords of the western marches, bound to no altar and no god but conquest. "
+            + "When the grey march first came down from the north, the Empire turned east and left them to "
+            + "face it alone. They held. In the silence that followed, they made a covenant with the fire "
+            + "inside them — not as weapon, but as vow. The Templars are what that vow became.\n\n"
+            + "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.\n\n"
             + "SPECIAL FEATS\n"
-            + "Dawn's Grace — The faithful are never left wanting. Should your Grace run dry, "
-            + "each dawn the Light restores a measure of it. (+1 Grace at the start of each day, if empty)\n\n"
-            + "Oath of the Vigil — Bound by sacred vow, your devotion steadies those who follow. "
-            + "The order's discipline holds where lesser courage breaks. (+4 party morale each day)\n\n"
-            + "THE ORDER'S PRICE — The Templars abhor the cold and the old pagan ways. "
-            + "Dark gifts demand twice their price, and the living ember answers your hand a heartbeat slower. "
-            + "(Dark Gift costs ×2; Nature channelling takes +1 second)";
+            + "Dawn's Grace — The Light does not abandon the faithful. Should your Grace run dry, "
+            + "each dawn restores a measure of it. (+1 Grace at dawn, if empty)\n\n"
+            + "Oath of the Vigil — Bound by sacred vow, your discipline steadies those who follow. "
+            + "The Order holds where others break. (+4 party morale per day)\n\n"
+            + "The Order's Price — The Templars abhor the cold and the pagan ways that welcome it. "
+            + "Dark gifts demand twice their cost, and the living ember answers your hand a breath slower. "
+            + "(Dark Gift costs ×2; Nature channelling +1 second)";
 
         private static object _lastScreen;
         private static bool   _doneThisScreen;
