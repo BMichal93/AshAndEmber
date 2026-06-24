@@ -94,19 +94,6 @@ namespace AshAndEmber
                             else if (onCooldown)
                             { args.IsEnabled = false; suffix = $"  [On cooldown: {MiracleMath.PrayerCooldownDays - (today - _lastPrayerDay)} day(s)]"; }
 
-                            string reagentNote = "";
-                            if (!blockedByDark && !atCap && !onCooldown)
-                            {
-                                int reduc = ReagentSystem.SanctuaryCooldownReduction();
-                                if (reduc > 0)
-                                {
-                                    string rn = ReagentSystem.FriendlyName(ReagentSystem.BestForContext(isSanctuary: true));
-                                    reagentNote = $"  [{rn} available: −{reduc} day cooldown]";
-                                }
-                                if (ReagentSystem.HasAny(ReagentSystem.SeaSerpentScale))
-                                    reagentNote += $"  [Sea Serpent Scale: −{ReagentSystem.ScaleAgingReclaim} day aging]";
-                            }
-
                             string coldNote = "";
                             if (!blockedByDark && MageKnowledge.IsMage)
                             {
@@ -117,7 +104,7 @@ namespace AshAndEmber
 
                             int prayHpCost = TalentSystem.Has(TalentId.EmberCovenant) ? 8 : 12;
                             MBTextManager.SetTextVariable("SANCT_GRACE_TEXT",
-                                $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{coldNote}{reagentNote}");
+                                $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{coldNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -243,27 +230,7 @@ namespace AshAndEmber
                 catch { }
             }
 
-            int cooldownReduction = 0;
-            try
-            {
-                cooldownReduction = ReagentSystem.SanctuaryCooldownReduction();
-                ReagentSystem.ConsumeForSanctuary();
-            }
-            catch { }
-
-            int agingReclaim = 0;
-            try
-            {
-                if (ReagentSystem.HasAny(ReagentSystem.SeaSerpentScale))
-                {
-                    ReagentSystem.ConsumeScale();
-                    agingReclaim = ReagentSystem.ScaleAgingReclaim;
-                    AgingSystem.RejuvenateHero(hero, agingReclaim);
-                }
-            }
-            catch { }
-
-            _lastPrayerDay       = CurrentCampaignDay() - cooldownReduction;
+            _lastPrayerDay       = CurrentCampaignDay();
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
 

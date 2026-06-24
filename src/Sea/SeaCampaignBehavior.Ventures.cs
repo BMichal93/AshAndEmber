@@ -107,29 +107,6 @@ namespace AshAndEmber
                 if (v.DaysLeft > 0) continue;
                 _ventures.RemoveAt(i);
 
-                // Reagent cargo returns a magical ingredient, not gold
-                if (v.IsReagent)
-                {
-                    float failChance = v.FailureChance > 0f ? v.FailureChance : 0.15f;
-                    int   qty        = v.ReagentQty    > 0  ? v.ReagentQty    : 1;
-                    bool reagentLost = _rng.NextDouble() < failChance;
-                    if (!reagentLost && !string.IsNullOrEmpty(v.ReagentType))
-                    {
-                        ReagentSystem.Add(v.ReagentType, qty);
-                        string qtyNote = qty > 1 ? $" ×{qty}" : "";
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"Your factor returns with a cache of {ReagentSystem.FriendlyName(v.ReagentType)}{qtyNote}. The harbour air smells faintly of something old.",
-                            new Color(0.7f, 0.55f, 0.85f)));
-                    }
-                    else
-                    {
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"Your reagent factor never returned from {v.DestName}. The sea keeps its secrets.",
-                            new Color(0.85f, 0.45f, 0.35f)));
-                    }
-                    continue;
-                }
-
                 var outcome = SeaMath.ResolveVenture(v.Invested, v.Distance, v.Blessed,
                                                      _rng.NextDouble(), _rng.NextDouble());
                 if (outcome.Payout > 0)

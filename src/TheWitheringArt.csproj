@@ -208,13 +208,12 @@
     <Compile Include="Sea\SeaCampaignBehavior.Harbors.cs"/>
     <Compile Include="Sea\SeaCampaignBehavior.Voyage.cs"/>
     <Compile Include="Sea\SeaCampaignBehavior.Ventures.cs"/>
-    <Compile Include="Alchemy\AlchemyMath.cs"/>
-    <Compile Include="Alchemy\AlchemyCatalog.cs"/>
-    <Compile Include="Alchemy\AlchemyInventory.cs"/>
-    <Compile Include="Alchemy\AlchemyEffects.cs"/>
-    <Compile Include="Alchemy\AlchemyBattleAI.cs"/>
-    <Compile Include="Alchemy\AlchemyCampaignBehavior.cs"/>
-    <Compile Include="Alchemy\AlchemyInputHandler.cs"/>
+    <Compile Include="Crystals\CrystalMath.cs"/>
+    <Compile Include="Crystals\CrystalCatalog.cs"/>
+    <Compile Include="Crystals\CrystalEffects.cs"/>
+    <Compile Include="Crystals\CrystalBattleAI.cs"/>
+    <Compile Include="Crystals\CrystallinesCampaignBehavior.cs"/>
+    <Compile Include="Crystals\CrystallinesCampaignBehavior.Menus.cs"/>
     <Compile Include="Miracles\MiracleMath.cs"/>
     <Compile Include="Miracles\MiracleCatalog.cs"/>
     <Compile Include="Miracles\MiracleInventory.cs"/>
@@ -237,7 +236,6 @@
     <Compile Include="Tavern\TavernCampaignBehavior.Outcomes.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Helpers.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Rumors.cs"/>
-    <Compile Include="Reagents\ReagentSystem.cs"/>
     <Compile Include="AshenRuins\AshenRuinDefs.cs"/>
     <Compile Include="AshenRuins\AshenRuinSystem.cs"/>
     <Compile Include="AshenRuins\AshenRuinMenus.cs"/>

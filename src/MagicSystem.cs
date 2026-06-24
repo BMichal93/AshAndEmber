@@ -44,9 +44,6 @@ namespace AshAndEmber
             try { SpellEffects.ClearMagicMemory();           } catch { }
             try { SpellEffects.ClearDarkGiftsBattleState();  } catch { }
             try { MagicInputHandler.ResetInputState();        } catch { }
-            try { AlchemyEffects.ClearBattleState();          } catch { }
-            try { AlchemyBattleAI.Reset();               } catch { }
-            try { AlchemyInputHandler.ResetInputState(); } catch { }
             try { MiracleEffects.ClearBattleState();     } catch { }
             try { MiracleBattleAI.Reset();               } catch { }
             try { MiracleInputHandler.ResetInputState(); } catch { }
@@ -71,7 +68,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());
                 campaignStarter.AddBehavior(new AshenAltarsCampaignBehavior());
                 campaignStarter.AddBehavior(new SeaCampaignBehavior());
-                campaignStarter.AddBehavior(new AlchemyCampaignBehavior());
+                campaignStarter.AddBehavior(new CrystallinesCampaignBehavior());
                 campaignStarter.AddBehavior(new ExchangeCampaignBehavior());
                 campaignStarter.AddBehavior(new TavernCampaignBehavior());
                 campaignStarter.AddBehavior(new AshenRuinCampaignBehavior());
@@ -144,7 +141,6 @@ namespace AshAndEmber
             {
                 if (Campaign.Current == null || Mission.Current != null) return;
                 try { MagicInputHandler.Tick(inMission: false); } catch { }
-                try { AlchemyInputHandler.Tick(inMission: false); } catch { }
                 try { MiracleInputHandler.Tick(inMission: false); } catch { }
                 try { NatureInputHandler.Tick(inMission: false);  } catch { }
                 try { ActiveEffectManager.MapTick(dt); } catch { }
@@ -299,19 +295,8 @@ namespace AshAndEmber
             // 4. 100 focus points.
             try { hero.HeroDeveloper.UnspentFocusPoints += 100; } catch { }
 
-            // 5. One of each elixir — bypass capacity so all 12 types are available.
-            try
-            {
-                foreach (ElixirType type in Enum.GetValues(typeof(ElixirType)))
-                {
-                    AlchemyInventory._types.Add((int)type);
-                    AlchemyInventory._tainted.Add(false);
-                }
-            }
-            catch { }
-
             MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
-                "[DEBUG] Granted: 100 focus points, all Dark Gifts, max Grace, all Nature talents, one of each elixir."));
+                "[DEBUG] Granted: 100 focus points, all Dark Gifts, max Grace, all Nature talents."));
         }
     }
 
@@ -329,12 +314,11 @@ namespace AshAndEmber
             if (mission == null || mission.CurrentState != Mission.State.Continuing) return;
 
             MagicInputHandler.Tick(inMission: true);
-            AlchemyInputHandler.Tick(inMission: true);
+            CrystalEffects.MissionTick(dt);
+            CrystalBattleAI.MissionTick(dt);
             MiracleInputHandler.Tick(inMission: true);
             NatureInputHandler.Tick(inMission: true, dt);
             NatureChargeBar.Tick(dt);
-            AlchemyEffects.MissionTick(dt);
-            AlchemyBattleAI.MissionTick(dt);
             MiracleEffects.MissionTick(dt);
             MiracleBattleAI.MissionTick(dt);
             NatureEffects.MissionTick(dt);
@@ -397,9 +381,8 @@ namespace AshAndEmber
             try { AgingSystem.ClearKnockdowns();           } catch { }
             try { ActiveEffectManager.ClearMissionEffects(); } catch { }
             try { MagicInputHandler.ResetInputState();       } catch { }
-            try { AlchemyEffects.ClearBattleState();          } catch { }
-            try { AlchemyBattleAI.Reset();                    } catch { }
-            try { AlchemyInputHandler.ResetInputState();      } catch { }
+            try { CrystalEffects.ClearBattleState();           } catch { }
+            try { CrystalBattleAI.Reset();                    } catch { }
             try { NatureEffects.ClearBattleState();           } catch { }
             try { NatureCharge.ClearForMission();             } catch { }
             try { NatureChargeBar.Reset();                    } catch { }
@@ -436,9 +419,8 @@ namespace AshAndEmber
             // Dark Gifts: passive on-hit effects for attacker and defender.
             try { SpellEffects.ApplyDarkGiftAttackEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
             try { SpellEffects.ApplyDarkGiftDefenseEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
-            // Alchemy combat buffs/afflictions (berserk bonus, stone-skin, enfeeblement).
-            try { AlchemyEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             try { MiracleEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            try { CrystalEffects.OnCrystalHit(affectedAgent, affectorAgent, affectorWeapon, blow.InflictedDamage); } catch { }
             // Nature resistance (reserved for future barrier talents): OnAgentHit fires after
             // damage is applied; heal back the mitigated portion against real weapon hits.
             try

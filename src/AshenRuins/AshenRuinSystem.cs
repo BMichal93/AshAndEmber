@@ -896,13 +896,6 @@ namespace AshAndEmber
                         new Color(0.45f, 0.35f, 0.65f)));
                     break;
 
-                case RewardType.ReagentCache:
-                    int qty = Math.Max(1, (int)(reward.ReagentQty * split));
-                    ReagentSystem.Add(reward.ReagentType, qty);
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{header}", new Color(0.7f, 0.55f, 0.85f)));
-                    break;
-
                 case RewardType.FocusPoints:
                     int fp = Math.Max(1, (int)(reward.Points * split));
                     try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += fp; } catch { }
