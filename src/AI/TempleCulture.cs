@@ -12,6 +12,7 @@
 // All effects are gated on the player having chosen the Templar (vlandia) culture.
 // =============================================================================
 
+using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
@@ -53,12 +54,19 @@ namespace AshAndEmber
                     new Color(0.90f, 0.82f, 0.42f)));
             }
 
-            // Oath of the Vigil: drilled faith holds the column together.
+            // Oath of the Vigil: drilled faith holds all Templar columns together.
             try
             {
-                var party = MobileParty.MainParty;
-                if (party != null)
-                    party.RecentEventsMorale += DailyMoraleBonus;
+                var playerClan = Clan.PlayerClan;
+                if (playerClan != null)
+                {
+                    foreach (var party in MobileParty.All.ToList())
+                    {
+                        if (party == null || !party.IsActive) continue;
+                        if (party.LeaderHero?.Clan != playerClan) continue;
+                        try { party.RecentEventsMorale += DailyMoraleBonus; } catch { }
+                    }
+                }
             }
             catch { }
         }
