@@ -111,6 +111,9 @@ namespace AshAndEmber
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
                 TribalKingdomBehavior.ResetForNewGame();
                 CrystallinesCampaignBehavior.EstablishForNewCampaign();
+                // Apply any character-creation backstory boon AFTER the resets above,
+                // so it is not wiped (the pick was recorded during creation).
+                CreationBackstoryRework.ApplyPendingBoons();
                 // The opening lore now plays as a cinematic before character creation
                 // (see AshEmberLoreIntro), so here we go straight to the Gift prompt.
                 MageKnowledge._deferredInquiry = ShowGiftPrompt;
@@ -120,7 +123,6 @@ namespace AshAndEmber
 
         private void ShowGiftPrompt()
         {
-            int heroHonor = Hero.MainHero?.GetTraitLevel(DefaultTraits.Honor) ?? 0;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "The Gift",
                 "As a child, you sometimes sensed things others could not — warmth ebbing from the wounded, the weight behind dying eyes. Do you feel it still?",
@@ -128,14 +130,6 @@ namespace AshAndEmber
                 {
                     new InquiryElement("yes", "I feel it still.", null, true,
                         "The fire stirs in you. Press Alt+X/LB+RB to open your grimoire."),
-                    new InquiryElement("faith", "I devoted myself to faith. The fire became a prayer.", null,
-                        heroHonor >= 1,
-                        heroHonor >= 1
-                            ? "Your piety turned the gift to prayer. You walk the path of miracles, not spells, and begin with 5 Grace."
-                            : "Only those who walk an honourable path may speak of sacred devotion. [Requires: Honourable]"),
-                    new InquiryElement("dark_rites", "I bargained with the dark, and it marked me.", null,
-                        true,
-                        "An altar's bargain was struck before you ever knew it. You begin bearing one random Dark Gift — a permanent, passive boon — and the bargain has already turned you Devious and Merciless, so its power is yours at once. The darkness bars you from Grace and from Nature. Seek a Dark Altar to buy more or renounce them."),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
                     new InquiryElement("living_ember", "The world beneath me has always been louder than the fire.", null, true,
@@ -148,11 +142,7 @@ namespace AshAndEmber
                 "",
                 chosen =>
                 {
-                    bool isFaith       = chosen?.Any(e => e.Identifier is string s && s == "faith")        == true;
-                    bool isDarkRites   = chosen?.Any(e => e.Identifier is string s && s == "dark_rites")   == true;
                     bool isLivingEmber = chosen?.Any(e => e.Identifier is string s && s == "living_ember") == true;
-                    // Faith and dark rites walk the miracle path (Grace / Cold) — they are NOT
-                    // mages and cannot shape spells, so they never enter the spellcasting focus.
                     // Living Ember is exclusive with both Inner Fire and Miracles.
                     bool isMage      = chosen?.Any(e => e.Identifier is string s && s == "yes")        == true;
                     bool isAshen     = chosen?.Any(e => e.Identifier is string s && s == "ashen")      == true;
@@ -165,32 +155,6 @@ namespace AshAndEmber
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The cold settled in you long ago. The world will see it before you speak.",
                             new Color(0.3f, 0.35f, 0.7f)));
-                    }
-                    else if (isFaith)
-                    {
-                        MiracleInventory.AddGrace(5);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "The fire in you became a sacred flame. Five measures of Grace kindle within you.",
-                            new Color(0.9f, 0.8f, 0.4f)));
-                    }
-                    else if (isDarkRites)
-                    {
-                        // The bargain itself turns you to darkness, so the gift is active at once.
-                        try
-                        {
-                            var h = Hero.MainHero;
-                            if (h != null)
-                            {
-                                if (h.GetTraitLevel(DefaultTraits.Mercy) > -1) h.SetTraitLevel(DefaultTraits.Mercy, -1);
-                                if (h.GetTraitLevel(DefaultTraits.Honor) > -1) h.SetTraitLevel(DefaultTraits.Honor, -1);
-                            }
-                        }
-                        catch { }
-                        DarkGiftId gift = DarkGiftSystem.GrantRandomGift();
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"The altar's mark was on you from the first. You are turned Merciless and Devious, and bear the Dark Gift of {DarkGiftSystem.GetGiftName(gift)}. " +
-                            "It bars you from Grace and from Nature.",
-                            new Color(0.55f, 0.25f, 0.6f)));
                     }
                     else if (isLivingEmber)
                     {

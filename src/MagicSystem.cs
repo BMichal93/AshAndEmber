@@ -76,6 +76,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new NatureCampaignBehavior());
                 campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
                 campaignStarter.AddBehavior(new TribalKingdomBehavior());
+                campaignStarter.AddBehavior(new CreationBackstoryRework());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { TempleDialogue.Register(campaignStarter);   } catch { }
