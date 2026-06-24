@@ -175,6 +175,7 @@ namespace AshAndEmber
                 var kingdoms = Kingdom.All
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
+                             && IsFactionConspireEligible(k)
                              && k.Leader != null && k.Leader != Hero.MainHero
                              && k.RulingClan != null
                              && k.Clans.Any(c => c != null && !c.IsEliminated
@@ -211,24 +212,30 @@ namespace AshAndEmber
 
                 if (playerQualifies)
                 {
+                    bool isTemple = IsTempleFaction(kingdom);
+                    bool isTribes = IsTribes(kingdom);
                     var executedClans = condemned.Where(c => c != defector).ToList();
                     string condemnedNames = executedClans.Count == 0 ? "the high lords"
                         : executedClans.Count <= 2
                             ? string.Join(" and ", executedClans.Select(c => c.Name?.ToString() ?? "a house"))
                             : (executedClans[0].Name?.ToString() ?? "a house") + " and others";
 
-                    string body =
-                        $"{tyrantName} of {kingdomName} has called the high lords to feast — " +
-                        $"and means to keep them there permanently. " +
-                        $"{condemnedNames} are condemned. {defectorName} has already fled.\n\n" +
-                        $"Support the purge: +100 relations with {tyrantName}, −50 with all condemned clans.\n" +
-                        $"Defy the tyrant: 33% chance of being added to the execution list.";
+                    string bodySetup = isTemple
+                        ? $"{tyrantName} of {kingdomName} has called the high lords before the altar — and means to condemn them as apostates and heretics. {condemnedNames} are on the list. {defectorName} has already left the temple before dawn."
+                        : isTribes
+                        ? $"{tyrantName} of {kingdomName} has summoned the war-chiefs to the great war-tent — and means not to let them leave standing. {condemnedNames} are marked. {defectorName} rode out before the summons arrived."
+                        : $"{tyrantName} of {kingdomName} has called the high lords to feast — and means to keep them there permanently. {condemnedNames} are condemned. {defectorName} has already fled.";
+                    string supportLabel = isTemple ? $"Stand with the Inquisition" : isTribes ? $"Ride with {tyrantName}" : $"Support {tyrantName}";
+
+                    string body = $"{bodySetup}\n\n"
+                        + $"{supportLabel}: +100 relations with {tyrantName}, −50 with all condemned clans.\n"
+                        + $"Defy the tyrant: 33% chance of being added to the execution list.";
 
                     InformationManager.ShowInquiry(new InquiryData(
                         "Tyranny",
                         body,
                         true, true,
-                        $"Support {tyrantName}",
+                        supportLabel,
                         "Defy the tyrant",
                         () =>
                         {
@@ -258,10 +265,12 @@ namespace AshAndEmber
                                 string exList = executed.Count == 0 ? "none"
                                     : executed.Count <= 3 ? string.Join(", ", executed)
                                     : $"{executed[0]}, {executed[1]}, and {executed.Count - 2} others";
-                                MBInformationManager.AddQuickInformation(new TextObject(
-                                    $"Tyranny — you stood with {tyrantName}. {exList} did not leave the feast. " +
-                                    $"{defectorName} read the invitation and chose the road. " +
-                                    $"The tyrant's gratitude is real. The hatred of the condemned will outlast them."));
+                                string suppMsg = IsTempleFaction(kingdom)
+                                    ? $"Tyranny — you stood with {tyrantName}'s judgment. {exList} were condemned as heretics before morning prayer. {defectorName} read the writ and chose exile. The Inquisition's gratitude is a quiet thing. The hatred of the condemned will outlast them."
+                                    : IsTribes(kingdom)
+                                    ? $"Tyranny — you rode with {tyrantName}. {exList} did not leave the war-tent. {defectorName} read the signs and rode east before it happened. The Khan's gratitude is worth having. The blood-debt of the condemned will not be forgotten."
+                                    : $"Tyranny — you stood with {tyrantName}. {exList} did not leave the feast. {defectorName} read the invitation and chose the road. The tyrant's gratitude is real. The hatred of the condemned will outlast them.";
+                                MBInformationManager.AddQuickInformation(new TextObject(suppMsg));
                             }
                             catch { }
                         },
@@ -286,9 +295,12 @@ namespace AshAndEmber
 
                                 if (_rng.NextDouble() < 0.33)
                                 {
-                                    MBInformationManager.AddQuickInformation(new TextObject(
-                                        $"Tyranny — you defied {tyrantName}. They added your name to the list. " +
-                                        $"The blade found you before dawn."));
+                                    string deathMsg = IsTempleFaction(kingdom)
+                                        ? $"Tyranny — you defied {tyrantName}'s Inquisition. They added your name to the list of apostates. The temple guards came before dawn."
+                                        : IsTribes(kingdom)
+                                        ? $"Tyranny — you defied {tyrantName} in the war-tent. They added your name before the wind could carry a warning. The Khan's riders found you."
+                                        : $"Tyranny — you defied {tyrantName}. They added your name to the list. The blade found you before dawn.";
+                                    MBInformationManager.AddQuickInformation(new TextObject(deathMsg));
                                     try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
                                 }
                                 else
@@ -296,9 +308,12 @@ namespace AshAndEmber
                                     string exList = executed.Count == 0 ? "none"
                                         : executed.Count <= 3 ? string.Join(", ", executed)
                                         : $"{executed[0]}, {executed[1]}, and {executed.Count - 2} others";
-                                    MBInformationManager.AddQuickInformation(new TextObject(
-                                        $"Tyranny — you defied {tyrantName}. The purge happened anyway — {exList} before dawn. " +
-                                        $"Your defiance was noted. For now, the blade did not find you."));
+                                    string defMsg = IsTempleFaction(kingdom)
+                                        ? $"Tyranny — you defied {tyrantName}'s judgment. The Inquisition moved anyway — {exList} before morning prayer. Your defiance was noted. For now, the writ did not carry your name."
+                                        : IsTribes(kingdom)
+                                        ? $"Tyranny — you defied {tyrantName} before the clans. The purge happened anyway — {exList} before the next dawn. Your courage was seen. The blade did not find you this time."
+                                        : $"Tyranny — you defied {tyrantName}. The purge happened anyway — {exList} before dawn. Your defiance was noted. For now, the blade did not find you.";
+                                    MBInformationManager.AddQuickInformation(new TextObject(defMsg));
                                 }
                             }
                             catch { }
@@ -325,11 +340,12 @@ namespace AshAndEmber
                     string exList2 = executed.Count == 0 ? "none"
                         : executed.Count <= 3 ? string.Join(", ", executed)
                         : $"{executed[0]}, {executed[1]}, and {executed.Count - 2} others";
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Tyranny — {tyrantName} of {kingdomName} called their great lords to feast " +
-                        $"and did not let them leave. {exList2} — dead before dawn. " +
-                        $"{defectorName} read the invitation and chose the road instead. " +
-                        $"The throne room is emptier now. The ruling clan's influence is the price of what happened here."));
+                    string worldMsg = IsTempleFaction(kingdom)
+                        ? $"Tyranny — {tyrantName} of {kingdomName} convened the holy tribunal and did not let the accused speak. {exList2} — condemned as apostates before morning prayer. {defectorName} read the writ and chose exile before it was served. The temple is quieter now, and colder."
+                        : IsTribes(kingdom)
+                        ? $"Tyranny — {tyrantName} of {kingdomName} called the clan chiefs into the great war-tent and would not let them leave standing. {exList2} — gone before the next dawn. {defectorName} read the signs and rode east. The steppe absorbs these things. It does not forget them."
+                        : $"Tyranny — {tyrantName} of {kingdomName} called their great lords to feast and did not let them leave. {exList2} — dead before dawn. {defectorName} read the invitation and chose the road instead. The throne room is emptier now. The ruling clan's influence is the price of what happened here.";
+                    MBInformationManager.AddQuickInformation(new TextObject(worldMsg));
                 }
             }
             catch { }
@@ -362,6 +378,7 @@ namespace AshAndEmber
                 var kingdoms = Kingdom.All
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
+                             && IsFactionConspireEligible(k)
                              && k.RulingClan != null
                              && k.Clans.Count(c => c != null && !c.IsEliminated) >= 2)
                     .ToList();
@@ -391,11 +408,18 @@ namespace AshAndEmber
 
                 if (playerQualifies)
                 {
-                    string body =
-                        $"{newName} is moving to seize the seal of {kingName} from {oldName}. " +
-                        $"Word has reached you — and they are waiting to see which way your clan stands.\n\n" +
-                        $"Back the seizure: +50 relations with {newName}, −100 with {oldName}.\n" +
-                        $"Stand with {oldName}: −100 with {newName}, +20 with {oldName}, 33% chance the coup fails.";
+                    bool isTemple = IsTempleFaction(kingdom);
+                    bool isTribes = IsTribes(kingdom);
+                    string sealLabel = isTemple ? "the Covenant Seal" : isTribes ? "the God-King's blood-right" : $"the seal of {kingName}";
+                    string moveDesc = isTemple
+                        ? $"{newName} is moving to claim {sealLabel} of {kingName} from {oldName}. The transfer of the Covenant Seal is not done in open daylight. Word has reached you — they are asking where your allegiance rests."
+                        : isTribes
+                        ? $"{newName} is moving to claim {sealLabel} of {kingName} over {oldName}. The tribesmen watch which banner rises under the divine fire. Your name has weight in the east."
+                        : $"{newName} is moving to seize the seal of {kingName} from {oldName}. Word has reached you — and they are waiting to see which way your clan stands.";
+
+                    string body = $"{moveDesc}\n\n"
+                        + $"Back the seizure: +50 relations with {newName}, −100 with {oldName}.\n"
+                        + $"Stand with {oldName}: −100 with {newName}, +20 with {oldName}, 33% chance the coup fails.";
 
                     InformationManager.ShowInquiry(new InquiryData(
                         "Stolen Heirloom",
@@ -410,9 +434,12 @@ namespace AshAndEmber
                                 try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
                                 PlayerRelationWithClan(usurper,  +50);
                                 PlayerRelationWithClan(oldRuler, -100);
-                                MBInformationManager.AddQuickInformation(new TextObject(
-                                    $"Stolen Heirloom — you backed {newName}'s move. The seal of {kingName} changed hands. " +
-                                    $"{oldName} knows exactly where you stood."));
+                                string succMsg = IsTempleFaction(kingdom)
+                                    ? $"Stolen Heirloom — you backed {newName}'s move. The Covenant Seal of {kingName} passed to new hands before morning prayer. {oldName} knows exactly where you stood."
+                                    : IsTribes(kingdom)
+                                    ? $"Stolen Heirloom — you rode with {newName}. The God-King's blood-right of {kingName} passed before dawn. {oldName} knows which banner you raised."
+                                    : $"Stolen Heirloom — you backed {newName}'s move. The seal of {kingName} changed hands. {oldName} knows exactly where you stood.";
+                                MBInformationManager.AddQuickInformation(new TextObject(succMsg));
                             }
                             catch { }
                         },
@@ -424,17 +451,22 @@ namespace AshAndEmber
                                 PlayerRelationWithClan(oldRuler, +20);
                                 if (_rng.NextDouble() < 0.33)
                                 {
-                                    MBInformationManager.AddQuickInformation(new TextObject(
-                                        $"Stolen Heirloom — your opposition was enough. {newName}'s move collapsed before it landed. " +
-                                        $"{kingName} stays in {oldName}'s hands. {newName} has not forgotten your part in it."));
+                                    string stopMsg = IsTempleFaction(kingdom)
+                                        ? $"Stolen Heirloom — your opposition reached the right ears. {newName}'s claim to the Covenant Seal of {kingName} collapsed before it was presented. {oldName} holds it still. {newName} has not forgotten your part in this."
+                                        : IsTribes(kingdom)
+                                        ? $"Stolen Heirloom — your riders reached the war-chiefs in time. {newName}'s claim to {kingName} was rejected. The blood-right stays with {oldName}. {newName} will not forget."
+                                        : $"Stolen Heirloom — your opposition was enough. {newName}'s move collapsed before it landed. {kingName} stays in {oldName}'s hands. {newName} has not forgotten your part in it.";
+                                    MBInformationManager.AddQuickInformation(new TextObject(stopMsg));
                                 }
                                 else
                                 {
                                     try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
-                                    MBInformationManager.AddQuickInformation(new TextObject(
-                                        $"Stolen Heirloom — despite your opposition, {newName} pressed ahead. " +
-                                        $"The seal of {kingName} is in their hands now. {oldName} is grateful, though powerless. " +
-                                        $"{newName} will not forget your name."));
+                                    string failMsg = IsTempleFaction(kingdom)
+                                        ? $"Stolen Heirloom — despite your opposition, {newName} pressed the claim. The Covenant Seal of {kingName} is in their hands now. {oldName} is grateful, though without power. {newName} will not forget your name."
+                                        : IsTribes(kingdom)
+                                        ? $"Stolen Heirloom — despite your opposition, {newName} rode ahead. The blood-right of {kingName} is theirs now. {oldName} remembers who stood with them. {newName} will not forget your name."
+                                        : $"Stolen Heirloom — despite your opposition, {newName} pressed ahead. The seal of {kingName} is in their hands now. {oldName} is grateful, though powerless. {newName} will not forget your name.";
+                                    MBInformationManager.AddQuickInformation(new TextObject(failMsg));
                                 }
                             }
                             catch { }
@@ -444,10 +476,12 @@ namespace AshAndEmber
                 else
                 {
                     try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
-                    MBInformationManager.AddQuickInformation(new TextObject(
-                        $"Stolen Heirloom — the signet ring of {kingName} changed hands in the night. " +
-                        $"{newName} holds the seal now. {oldName} held it at sundown. " +
-                        $"No swords were drawn. That may be the most frightening part."));
+                    string worldMsg = IsTempleFaction(kingdom)
+                        ? $"Stolen Heirloom — the Covenant Seal of {kingName} passed to new hands in the dark. {newName} holds it now. {oldName} held it at dusk. The transfer was quiet. The Temple's faithful will not know who arranged it for some time."
+                        : IsTribes(kingdom)
+                        ? $"Stolen Heirloom — the God-King's blood-right of {kingName} changed hands without a battle. {newName} raised their banner where {oldName}'s had flown. The tribesmen watched. The steppe does not care who flies the standard — only who keeps it."
+                        : $"Stolen Heirloom — the signet ring of {kingName} changed hands in the night. {newName} holds the seal now. {oldName} held it at sundown. No swords were drawn. That may be the most frightening part.";
+                    MBInformationManager.AddQuickInformation(new TextObject(worldMsg));
                 }
             }
             catch { }
@@ -662,13 +696,12 @@ namespace AshAndEmber
                 ? string.Join(", ", expelled)
                 : $"{expelled[0]}, {expelled[1]}, and {expelled.Count - 2} others";
 
-            MBInformationManager.AddQuickInformation(new TextObject(
-                $"Game of Thrones — When {kingName}'s lord fell, the wolves came out from behind their smiles. " +
-                $"The court had been held together by one will. Without it, {nameList} " +
-                $"raised their own banners and walked out the gate with everything they owned. " +
-                $"{newLeader} inherits a throne — and a much smaller kingdom. " +
-                $"What was one realm is now many ambitions. " +
-                $"[{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]"));
+            string gotMsg = IsTempleFaction(kingdom)
+                ? $"Game of Thrones — When {kingName}'s High Templar fell, the covenant that held the order together fell with them. {nameList} broke from the Temple before a new one could be named — they took their charters and walked out the gates. {newLeader} inherits the altar, and a much smaller faithful. [{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]"
+                : IsTribes(kingdom)
+                ? $"Game of Thrones — When {kingName}'s God-King fell, the blood-pact that held the tribes together dissolved. {nameList} raised their own banners and rode for open steppe with everything they could carry. {newLeader} inherits the war-tent — and a much smaller horde. [{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]"
+                : $"Game of Thrones — When {kingName}'s lord fell, the wolves came out from behind their smiles. The court had been held together by one will. Without it, {nameList} raised their own banners and walked out the gate with everything they owned. {newLeader} inherits a throne — and a much smaller kingdom. What was one realm is now many ambitions. [{expelled.Count} clan{(expelled.Count != 1 ? "s" : "")} left and became independent.]";
+            MBInformationManager.AddQuickInformation(new TextObject(gotMsg));
         }
 
     }

@@ -167,7 +167,13 @@ namespace AshAndEmber
         // Long Night: duration in campaign days
         public const int LongNightDuration = 7;
 
-        private const string AshenKingdomId = "ashen_kingdom";
+        private const string AshenKingdomId  = "ashen_kingdom";
+        private const string TempleKingdomId = "vlandia";   // The Holy Temple
+        private const string TribesKingdomId = "khuzait";   // Tribes of the East
+
+        // The Temple's faithful are oath-bound; the Tribes fear the God-King's fire — conspiracies are rare in both.
+        // These factions are eligible for conspiracy events only ~15% of the time.
+        private const float UnifiedConspireWeight = 0.15f;
 
         // Broken Will: max times the event can fire per campaign, and earliest campaign day
         public const int BrokenWillMaxFires = 2;
@@ -225,6 +231,15 @@ namespace AshAndEmber
         /// Called by SpellEffects.GetCampaignLightLevel() to force Dark.
         public static bool IsLongNight() => _longNightDaysRemaining > 0;
 
+        private static bool IsTempleFaction(Kingdom k) => k?.StringId == TempleKingdomId;
+        private static bool IsTribes(Kingdom k)        => k?.StringId == TribesKingdomId;
+
+        // Returns false ~85% of the time for Temple / Tribes so internal conspiracies
+        // are rare for these tightly unified factions.
+        private static bool IsFactionConspireEligible(Kingdom k) =>
+            (k.StringId != TempleKingdomId && k.StringId != TribesKingdomId)
+            || _rng.NextDouble() < UnifiedConspireWeight;
+
         private static void RecordScar(string id, int type)
         {
             int existing = _scarredIds.IndexOf(id);
@@ -257,6 +272,9 @@ namespace AshAndEmber
             if (kingdom == null || kingdom.IsEliminated) return;
             if (kingdom.StringId == AshenKingdomId) return;         // Ashen never fracture
             if (Hero.MainHero?.Clan?.Kingdom == kingdom) return;    // never fracture the player's faction
+            // Unified cultures have strong succession traditions — courts don't splinter on a leader's death
+            if ((kingdom.StringId == TempleKingdomId || kingdom.StringId == TribesKingdomId)
+                && _rng.NextDouble() >= UnifiedConspireWeight) return;
             if (DragonQuestSystem.WorldRekindled) return;
             if (kingdom.Clans.Count(c => c != null && !c.IsEliminated) < GoTMinClans) return;
             if (_rng.NextDouble() >= ChanceGameOfThrones) return;
