@@ -21,20 +21,27 @@ namespace AshAndEmber
     public partial class AshenCitySystem
     {
         // ── Prisoner fate ─────────────────────────────────────────────────────
-        // For the player: queue a deferred choice (join Ashen vs die).
-        // For NPC lords: 20% become Ashen, 40% flee, 40% executed.
+        // Each cycle: 70% chance the Ashen leave a prisoner alone (normal captivity).
+        // The remaining 30% triggers an ultimatum — join the cold or be executed.
+        //   Player: queues a deferred choice dialog (join Ashen vs permanent death).
+        //   NPC lords: auto-resolved by personality.
+        //     Honorable (Honor >= 1) and Daring (Valor >= 1) prefer death.
+        //     Devious (Honor <= -1) and Cowardly (Valor <= -1) prefer yielding.
+        //     Yield probability = clamp(50% − (honor+valor)×10%, 10%, 90%).
+        // At most 1 heavy action (kill/release/convert) per call to avoid cascading
+        // KillCharacterAction calls on a single daily tick.
         public static void ExecuteAshenPrisoners()
         {
             if (_ashenClanIds.Count == 0) return;
-            // At most 1 heavy action (kill/release/convert) per call to avoid
-            // cascading KillCharacterAction calls on a single daily tick.
             try
             {
                 foreach (Hero hero in Hero.AllAliveHeroes.ToList())
                 {
                     try
                     {
-                        if (!hero.IsPrisoner || !hero.IsLord || hero.IsChild) continue;
+                        bool isPlayer = hero == Hero.MainHero;
+                        if (!hero.IsPrisoner || hero.IsChild) continue;
+                        if (!isPlayer && !hero.IsLord) continue;
 
                         var captorParty = hero.PartyBelongedToAsPrisoner;
                         if (captorParty == null) continue;
@@ -45,7 +52,10 @@ namespace AshAndEmber
                             captorParty.MapFaction?.StringId == AshenKingdomId;
                         if (!captorIsAshen) continue;
 
-                        if (hero == Hero.MainHero)
+                        // 70% chance: the Ashen leave this prisoner to languish — for now.
+                        if (_rng.NextDouble() >= 0.30) continue;
+
+                        if (isPlayer)
                         {
                             if (MageKnowledge._deferredInquiry == null)
                             {
@@ -55,28 +65,107 @@ namespace AshAndEmber
                             continue;
                         }
 
-                        // NPC lord: roll fate
-                        double roll = _rng.NextDouble();
-                        if (roll < 0.20)
+                        // NPC lord: auto-resolve by personality.
+                        Hero executor = captorParty.LeaderHero
+                                     ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
+                                            h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
+                                            _ashenClanIds.Contains(h.Clan?.StringId));
+
+                        if (_rng.NextDouble() < AshenYieldChance(hero))
                         {
                             try { ColourLordRegistry.SetAshen(hero, true); } catch { }
                             try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
-                        }
-                        else if (roll < 0.60)
-                        {
-                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} has taken the cold. They walk free — and Ashen.",
+                                new Color(0.38f, 0.50f, 0.75f)));
                         }
                         else
                         {
-                            Hero executor = captorParty.LeaderHero
-                                         ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
-                                                h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
-                                                _ashenClanIds.Contains(h.Clan?.StringId));
                             if (executor == null) continue;
                             try { KillCharacterAction.ApplyByExecution(hero, executor); } catch { }
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} refused the cold. The Ashen gave them the ending they chose.",
+                                new Color(0.55f, 0.30f, 0.30f)));
                         }
 
                         return; // one action per tick — process remaining on next call
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        // Yield probability for an NPC lord facing the Ashen ultimatum.
+        // Honor and Valor each push away from yielding; their negatives pull toward it.
+        // Range is clamped to [10%, 90%] so no outcome is ever impossible.
+        private static double AshenYieldChance(Hero hero)
+        {
+            int honor = 0, valor = 0;
+            try { honor = hero.GetTraitLevel(DefaultTraits.Honor);  } catch { }
+            try { valor = hero.GetTraitLevel(DefaultTraits.Valor);  } catch { }
+            int resistance = honor + valor; // −4 (both devious+cowardly) … +4 (both honorable+daring)
+            return Math.Max(0.10, Math.Min(0.90, 0.50 - resistance * 0.10));
+        }
+
+        // ── Settlement civilian executions ────────────────────────────────────
+        // Every day, non-lord women and children in Ashen-owned cities and castles
+        // each face a 50% chance of execution. At most one kill per daily call to
+        // avoid cascading KillCharacterAction on the same tick.
+        public static void ExecuteSettlementCivilians()
+        {
+            if (_ashenClanIds.Count == 0) return;
+            try
+            {
+                foreach (Settlement settlement in Settlement.All.ToList())
+                {
+                    try
+                    {
+                        if (!settlement.IsTown && !settlement.IsCastle) continue;
+
+                        bool ownedByAshen = settlement.MapFaction?.StringId == AshenKingdomId
+                                         || _ashenClanIds.Contains(settlement.OwnerClan?.StringId);
+                        if (!ownedByAshen) continue;
+
+                        Hero executor = settlement.OwnerClan?.Leader
+                                     ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
+                                            h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
+                                            _ashenClanIds.Contains(h.Clan?.StringId));
+                        if (executor == null) continue;
+
+                        bool playerSettlement = MageKnowledge.IsAshen
+                                             && settlement.OwnerClan == Hero.MainHero?.Clan;
+
+                        foreach (Hero notable in settlement.Notables.ToList())
+                        {
+                            try
+                            {
+                                if (!notable.IsAlive) continue;
+                                if (!notable.IsFemale && !notable.IsChild) continue;
+                                if (_rng.NextDouble() >= 0.50) continue;
+
+                                string notableName    = notable.Name?.ToString() ?? "someone";
+                                string settlementName = settlement.Name?.ToString() ?? "your hold";
+
+                                try { KillCharacterAction.ApplyByExecution(notable, executor); } catch { }
+
+                                if (playerSettlement)
+                                {
+                                    InformationManager.DisplayMessage(new InformationMessage(
+                                        $"The cold does not distinguish. {notableName} of {settlementName} is gone — by your hand, or by your shadow.",
+                                        new Color(0.65f, 0.20f, 0.20f)));
+                                }
+                                else
+                                {
+                                    InformationManager.DisplayMessage(new InformationMessage(
+                                        $"The cold does not spare the harmless. {notableName} of {settlementName} is gone.",
+                                        new Color(0.55f, 0.25f, 0.25f)));
+                                }
+
+                                return; // one per daily tick
+                            }
+                            catch { }
+                        }
                     }
                     catch { }
                 }
