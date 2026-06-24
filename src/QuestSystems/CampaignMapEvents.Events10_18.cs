@@ -223,7 +223,7 @@ namespace AshAndEmber
                     string bodySetup = isTemple
                         ? $"{tyrantName} of {kingdomName} has called the high lords before the altar — and means to condemn them as apostates and heretics. {condemnedNames} are on the list. {defectorName} has already left the temple before dawn."
                         : isTribes
-                        ? $"{tyrantName} of {kingdomName} has summoned the clan chiefs to the great war-tent — and means to bleed them before the blood-moon sets. {condemnedNames} are marked. {defectorName} rode out before the summons arrived."
+                        ? $"{tyrantName} of {kingdomName} has summoned the clan chiefs to the great war-tent — and means not to let them leave standing. {condemnedNames} are marked. {defectorName} rode out before the summons arrived."
                         : $"{tyrantName} of {kingdomName} has called the high lords to feast — and means to keep them there permanently. {condemnedNames} are condemned. {defectorName} has already fled.";
                     string supportLabel = isTemple ? $"Stand with the Inquisition" : isTribes ? $"Ride with {tyrantName}" : $"Support {tyrantName}";
 
@@ -268,7 +268,7 @@ namespace AshAndEmber
                                 string suppMsg = IsTempleFaction(kingdom)
                                     ? $"Tyranny — you stood with {tyrantName}'s judgment. {exList} were condemned as heretics before morning prayer. {defectorName} read the writ and chose exile. The Inquisition's gratitude is a quiet thing. The hatred of the condemned will outlast them."
                                     : IsTribes(kingdom)
-                                    ? $"Tyranny — you rode with {tyrantName}. {exList} did not leave the war-tent. {defectorName} read the fires and rode east before it happened. The Khan's gratitude is worth having. The blood-debt of the condemned will not be forgotten."
+                                    ? $"Tyranny — you rode with {tyrantName}. {exList} did not leave the war-tent. {defectorName} read the signs and rode east before it happened. The Khan's gratitude is worth having. The blood-debt of the condemned will not be forgotten."
                                     : $"Tyranny — you stood with {tyrantName}. {exList} did not leave the feast. {defectorName} read the invitation and chose the road. The tyrant's gratitude is real. The hatred of the condemned will outlast them.";
                                 MBInformationManager.AddQuickInformation(new TextObject(suppMsg));
                             }
@@ -298,7 +298,7 @@ namespace AshAndEmber
                                     string deathMsg = IsTempleFaction(kingdom)
                                         ? $"Tyranny — you defied {tyrantName}'s Inquisition. They added your name to the list of apostates. The temple guards came before dawn."
                                         : IsTribes(kingdom)
-                                        ? $"Tyranny — you defied {tyrantName} in the war-tent. They added your name to the blood-list before the embers cooled. The Khan's riders found you."
+                                        ? $"Tyranny — you defied {tyrantName} in the war-tent. They added your name before the wind could carry a warning. The Khan's riders found you."
                                         : $"Tyranny — you defied {tyrantName}. They added your name to the list. The blade found you before dawn.";
                                     MBInformationManager.AddQuickInformation(new TextObject(deathMsg));
                                     try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
@@ -311,7 +311,7 @@ namespace AshAndEmber
                                     string defMsg = IsTempleFaction(kingdom)
                                         ? $"Tyranny — you defied {tyrantName}'s judgment. The Inquisition moved anyway — {exList} before morning prayer. Your defiance was noted. For now, the writ did not carry your name."
                                         : IsTribes(kingdom)
-                                        ? $"Tyranny — you defied {tyrantName} before the clans. The blood-purge happened anyway — {exList} before the blood-moon set. Your courage was seen. The blade did not find you this time."
+                                        ? $"Tyranny — you defied {tyrantName} before the clans. The purge happened anyway — {exList} before the next dawn. Your courage was seen. The blade did not find you this time."
                                         : $"Tyranny — you defied {tyrantName}. The purge happened anyway — {exList} before dawn. Your defiance was noted. For now, the blade did not find you.";
                                     MBInformationManager.AddQuickInformation(new TextObject(defMsg));
                                 }
@@ -343,7 +343,7 @@ namespace AshAndEmber
                     string worldMsg = IsTempleFaction(kingdom)
                         ? $"Tyranny — {tyrantName} of {kingdomName} convened the holy tribunal and did not let the accused speak. {exList2} — condemned as apostates before morning prayer. {defectorName} read the writ and chose exile before it was served. The temple is quieter now, and colder."
                         : IsTribes(kingdom)
-                        ? $"Tyranny — {tyrantName} of {kingdomName} called the clan chiefs into the great war-tent and would not let them leave standing. {exList2} — gone before the blood-moon set. {defectorName} read the fires and rode east. The steppe absorbs these things. It does not forget them."
+                        ? $"Tyranny — {tyrantName} of {kingdomName} called the clan chiefs into the great war-tent and would not let them leave standing. {exList2} — gone before the next dawn. {defectorName} read the signs and rode east. The steppe absorbs these things. It does not forget them."
                         : $"Tyranny — {tyrantName} of {kingdomName} called their great lords to feast and did not let them leave. {exList2} — dead before dawn. {defectorName} read the invitation and chose the road instead. The throne room is emptier now. The ruling clan's influence is the price of what happened here.";
                     MBInformationManager.AddQuickInformation(new TextObject(worldMsg));
                 }
