@@ -34,9 +34,10 @@ namespace AshAndEmber
             // must run on both new games and reloads.
             if (!_settlementsRenamed)
             {
-                try { RenameAshenSettlements();     } catch { }
-                try { RenameHolyTempleKingdom();    } catch { }
-                try { RenameVlandianTroops();        } catch { }
+                try { RenameAshenSettlements();          } catch { }
+                try { RenameHolyTempleKingdom();         } catch { }
+                try { RenameVlandianTroops();             } catch { }
+                try { TempleCulture.SetupTempleKingdom(); } catch { }
                 _settlementsRenamed = true;
             }
 
