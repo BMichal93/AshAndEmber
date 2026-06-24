@@ -12,6 +12,8 @@
 //   Wives of Conquest  — each conquered town adds a woman to the God-King's
 //                        household (capped at TribalWifeMax).
 //   Endless War        — any peace involving the Tribes is immediately reversed.
+//   Blood Succession   — on the God-King's death, the oldest living son inherits.
+//   Self-Immolation    — a captured God-King sets himself ablaze rather than submit.
 //   Free Recruitment   — Tribal player can recruit tier-1 tribesmen at no cost
 //                        from Tribal towns (7-day cooldown per town).
 // =============================================================================
@@ -65,8 +67,10 @@ namespace AshAndEmber
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+            CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
             CampaignEvents.WeeklyTickEvent.AddNonSerializedListener(this, OnWeeklyTick);
             CampaignEvents.MakePeace.AddNonSerializedListener(this, OnMakePeace);
+            CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
         }
 
         public override void SyncData(IDataStore store)
@@ -106,6 +110,12 @@ namespace AshAndEmber
             try { RegisterMenus(starter); } catch { }
         }
 
+        // ── Daily tick ─────────────────────────────────────────────────────────
+        private static void OnDailyTick()
+        {
+            try { CheckGodKingCapture(); } catch { }
+        }
+
         // ── Weekly tick ────────────────────────────────────────────────────────
         private static void OnWeeklyTick()
         {
@@ -114,6 +124,13 @@ namespace AshAndEmber
             try { MaintainGodKingInfluence(); } catch { }
             try { CapLordInfluence();         } catch { }
             try { CheckConquestWives();       } catch { }
+        }
+
+        // ── Hero killed — God-King succession ─────────────────────────────────
+        private static void OnHeroKilled(Hero victim, Hero killer,
+            KillCharacterAction.KillCharacterActionDetail detail, bool showNotification)
+        {
+            try { EnforceGodKingSuccession(victim); } catch { }
         }
 
         // ── No Quarter ────────────────────────────────────────────────────────
@@ -141,6 +158,70 @@ namespace AshAndEmber
                     InformationManager.DisplayMessage(new InformationMessage(
                         "No Quarter — the God-King's word burns through any treaty. The war endures.",
                         new Color(0.85f, 0.35f, 0.15f)));
+            }
+            catch { }
+        }
+
+        // ── Self-Immolation — God-King dies rather than be taken prisoner ────────
+        // Checked daily: if the God-King is a prisoner, he immediately sets himself
+        // ablaze. Capture is not a fate the divine fire permits.
+        private static void CheckGodKingCapture()
+        {
+            try
+            {
+                var khuzait = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == KhuzaitId && !k.IsEliminated);
+                if (khuzait == null) return;
+
+                var godKing = khuzait.Leader;
+                if (godKing == null || !godKing.IsAlive || !godKing.IsPrisoner) return;
+
+                try { KillCharacterAction.ApplyByMurder(godKing, null, false); } catch { }
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "The God-King would not kneel. He set himself ablaze before his captors could savour the victory.",
+                    new Color(0.85f, 0.35f, 0.15f)));
+            }
+            catch { }
+        }
+
+        // ── Blood Succession — oldest son inherits the divine fire ────────────
+        // Fires on HeroKilledEvent. If the dead hero was the ruling clan's leader,
+        // the oldest living male child (or oldest male clan member) is installed as
+        // the new head. SetupGodKing() will re-apply the Pyrelord gifts next week.
+        private static void EnforceGodKingSuccession(Hero deadHero)
+        {
+            try
+            {
+                var khuzait = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == KhuzaitId && !k.IsEliminated);
+                if (khuzait == null) return;
+
+                var rulingClan = khuzait.RulingClan;
+                if (rulingClan == null || rulingClan.Leader != deadHero) return;
+
+                // Prefer oldest biological son; fall back to oldest male clan member.
+                Hero heir = Hero.AllAliveHeroes
+                    .Where(h => h.IsAlive && !h.IsChild && h.IsMale
+                             && h.Clan == rulingClan && h != deadHero
+                             && h.Father?.StringId == deadHero.StringId)
+                    .OrderByDescending(h => h.Age)
+                    .FirstOrDefault();
+
+                if (heir == null)
+                    heir = Hero.AllAliveHeroes
+                        .Where(h => h.IsAlive && !h.IsChild && h.IsMale
+                                 && h.Clan == rulingClan && h != deadHero)
+                        .OrderByDescending(h => h.Age)
+                        .FirstOrDefault();
+
+                if (heir == null) return;
+
+                try { ChangeClanLeaderAction.ApplyWithSelectedNewLeader(rulingClan, heir); } catch { }
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"The God-King is dead. His heir {heir.Name} rises — the divine fire passes to new hands.",
+                    new Color(0.85f, 0.45f, 0.2f)));
             }
             catch { }
         }
