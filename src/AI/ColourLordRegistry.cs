@@ -123,6 +123,23 @@ namespace AshAndEmber
             _lordTalents.TryGetValue(hero.StringId, out var list) &&
             list.Contains((int)id);
 
+        /// Registers the God-King (Tribes of the East ruler) as a Pyrelord mage.
+        /// Not Ashen — he is fire and conquest, not cold ruin.
+        public static void SetGodKing(Hero hero)
+        {
+            if (hero == null) return;
+            _mageIds.Add(hero.StringId);
+            _lordTalents[hero.StringId] = new List<int>
+            {
+                (int)TalentId.Extinguish,
+                (int)TalentId.Scatter,
+                (int)TalentId.Immolate,
+                (int)TalentId.Sunder,
+                (int)TalentId.BreakWills,
+                (int)TalentId.Smoulder,
+            };
+        }
+
         /// Registers the false emperor as mage+Ashen with the full arsenal.
         /// Skips clan movement and appearance change — he wears the emperor's face.
         public static void SetFalseEmperor(Hero hero)

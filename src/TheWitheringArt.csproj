@@ -171,6 +171,7 @@
     <Compile Include="AI\AshenCitySystem.Renaming.cs"/>
     <Compile Include="AI\AshenCitySystem.Persistence.cs"/>
     <Compile Include="AI\TempleCulture.cs"/>
+    <Compile Include="AI\TribalCulture.cs"/>
     <Compile Include="AI\TempleCultureCardFixer.cs"/>
     <Compile Include="AI\AshenDiplomacyModel.cs"/>
     <Compile Include="AI\AshenDialogue.cs"/>
@@ -265,6 +266,7 @@
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.cs"/>
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.Tick.cs"/>
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.Dialogue.cs"/>
+    <Compile Include="Tribes\TribalKingdomBehavior.cs"/>
   </ItemGroup>
 
   <!-- Auto-copy DLL into the game's Modules folder after every successful build. -->

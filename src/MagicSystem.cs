@@ -75,6 +75,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new MiracleCampaignBehavior());
                 campaignStarter.AddBehavior(new NatureCampaignBehavior());
                 campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
+                campaignStarter.AddBehavior(new TribalKingdomBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { TempleDialogue.Register(campaignStarter);   } catch { }
@@ -92,7 +93,8 @@ namespace AshAndEmber
         public override void OnGameInitializationFinished(Game game)
         {
             base.OnGameInitializationFinished(game);
-            try { AshenCitySystem.ApplyTempleCultureTexts(); } catch { }
+            try { AshenCitySystem.ApplyTempleCultureTexts();  } catch { }
+            try { AshenCitySystem.ApplyTribalCultureTexts(); } catch { }
         }
 
         // Re-applies the Templar culture text while still in the menu / intro-video /
@@ -107,7 +109,8 @@ namespace AshAndEmber
                 || st is VideoPlaybackState;
             if (preGame)
             {
-                try { AshenCitySystem.ApplyTempleCultureTexts(); } catch { }
+                try { AshenCitySystem.ApplyTempleCultureTexts();  } catch { }
+                try { AshenCitySystem.ApplyTribalCultureTexts();  } catch { }
                 // The character-creation culture cards cache their name when built, so
                 // the text override above never reaches them — rename the card directly.
                 try { TempleCultureCardFixer.TickTryFix(); } catch { }
