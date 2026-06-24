@@ -1,7 +1,7 @@
 // =============================================================================
 // ASH AND EMBER — QuestSystems/KeybindReferenceLog.cs
 // A permanent, never-completing Journal entry that records every control the mod
-// adds — spellcasting, the grimoire, miracles, alchemy, and the Living Ember
+// adds — spellcasting, the grimoire, miracles, crystals, and the Living Ember
 // (nature). Created once per campaign (new or existing save), re-linked on load,
 // and rewritten in place when the listed controls change between builds. Pure
 // reference: no goals, no progress, no events.
@@ -177,8 +177,19 @@ namespace AshAndEmber
                 "cannot yet invoke, so check there to see what your character has earned."), true);
 
             AddLog(new TextObject(
-                "ALCHEMY — Ctrl + X opens your satchel, in the field or in the thick of battle. " +
-                "Gamepad: RB + R3."), true);
+                "CRYSTALS — Six mineral formations, each focused on a different light. " +
+                "Equip one in a weapon slot (Sunstone, Embershard, Rimeshard, Veilstone, " +
+                "Stormcrystal, Duskstone). Strike with it during daylight (06:00–20:00) to " +
+                "begin a 2-second charge — a coloured glow will rise around you — then the " +
+                "effect fires in an area. Each activation carries a 10 % chance to shatter the crystal. " +
+                "Crystals are useless at night. No key binding required: simply equip and attack."), true);
+
+            AddLog(new TextObject(
+                "CRYSTALS · WHERE TO FIND THEM — Crystalline Chambers operate in eight towns: " +
+                "Sargot, Marunath, Ortysia, Revyl, Husn Fulq, Dunglanys, Tyal, and Epicrotea. " +
+                "Visit the Chamber to form a crystal from Silver Ore and one trade good " +
+                "(chance scales with Medicine + Engineering). Crystals are also sold at those " +
+                "towns' markets (expensive, restocked weekly) and can be looted from lords who carry them."), true);
 
             AddLog(new TextObject(
                 "THE LIVING EMBER — the art of those attuned to the living world rather than the " +
