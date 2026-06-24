@@ -264,7 +264,14 @@ namespace AshAndEmber
                 else if (pct > UpperBound)
                 {
                     int excess = mageLords - (int)(allLords.Count * TargetFraction);
-                    var mages = allLords.Where(h => _mageIds.Contains(h.StringId)).ToList();
+                    // Exclude Ashen lords from the trim set. They are registered in
+                    // _mageIds too (MarkClanAshen adds both), but they are permanent
+                    // and must keep their casting ability. Removing one from _mageIds
+                    // would make IsColourLord false and silently stop them casting in
+                    // battle and on the map while they remained diplomatically Ashen.
+                    // (DailyMapCast already applies this same _ashenIds exclusion.)
+                    var mages = allLords.Where(h => _mageIds.Contains(h.StringId)
+                                                 && !_ashenIds.Contains(h.StringId)).ToList();
                     Shuffle(mages);
                     for (int i = 0; i < excess && i < mages.Count; i++)
                     {
