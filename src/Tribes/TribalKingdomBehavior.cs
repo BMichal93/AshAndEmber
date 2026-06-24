@@ -202,7 +202,7 @@ namespace AshAndEmber
 
                 // Prefer oldest biological son; fall back to oldest male clan member.
                 Hero heir = Hero.AllAliveHeroes
-                    .Where(h => h.IsAlive && !h.IsChild && h.IsMale
+                    .Where(h => h.IsAlive && !h.IsChild && !h.IsFemale
                              && h.Clan == rulingClan && h != deadHero
                              && h.Father?.StringId == deadHero.StringId)
                     .OrderByDescending(h => h.Age)
@@ -210,7 +210,7 @@ namespace AshAndEmber
 
                 if (heir == null)
                     heir = Hero.AllAliveHeroes
-                        .Where(h => h.IsAlive && !h.IsChild && h.IsMale
+                        .Where(h => h.IsAlive && !h.IsChild && !h.IsFemale
                                  && h.Clan == rulingClan && h != deadHero)
                         .OrderByDescending(h => h.Age)
                         .FirstOrDefault();

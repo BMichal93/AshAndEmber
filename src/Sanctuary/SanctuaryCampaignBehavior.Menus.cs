@@ -234,18 +234,11 @@ namespace AshAndEmber
             _lastSanctuaryUseDay = CurrentCampaignDay();
             _sanctuaryUseCount++;
 
-            string reagentLine = cooldownReduction > 0
-                ? $"\n\nA reagent was consumed, reducing the next cooldown by {cooldownReduction} day(s)."
-                : "";
-            string scaleLine = agingReclaim > 0
-                ? "\n\nA Sea Serpent Scale crumbles in the candle smoke. The fire burns one day younger."
-                : "";
-
             string msg;
             if (gained > 0)
                 msg = $"The flame answers. You kneel until your knees ache and the candles burn lower. " +
                       $"{gained} Grace received. [{MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]\n\n" +
-                      $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.{reagentLine}{scaleLine}";
+                      $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.";
             else if (MiracleInventory.Grace >= MiracleMath.GraceColdCap)
                 msg = "The flame burns, but has nothing more to give you today. Your Grace is full.";
             else

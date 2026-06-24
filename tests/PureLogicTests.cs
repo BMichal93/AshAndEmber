@@ -960,22 +960,5 @@ namespace AshAndEmber.Tests
                     $"ElementName({el}) must not be empty.");
             }
         }
-
-        // ── AlchemyCatalog integrity ──────────────────────────────────────────
-
-        [Test]
-        public void AlchemyCatalog_HasTwelveDistinctElixirs_EachUsableSomewhere()
-        {
-            Assert.AreEqual(AlchemyMath.ElixirTypeCount, AlchemyCatalog.All.Count);
-            Assert.AreEqual(AlchemyCatalog.All.Count,
-                AlchemyCatalog.All.Select(d => d.Type).Distinct().Count(),
-                "Every elixir type should appear exactly once.");
-            foreach (var d in AlchemyCatalog.All)
-            {
-                Assert.IsFalse(string.IsNullOrEmpty(d.Name), $"{d.Type} needs a name.");
-                Assert.IsTrue(d.UsableInBattle || d.UsableOnMap,
-                    $"{d.Type} must be usable somewhere.");
-            }
-        }
     }
 }

@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -44,7 +45,7 @@ namespace AshAndEmber
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
-            CampaignEvents.OnHeroCreated.AddNonSerializedListener(this, OnHeroCreated);
+            CampaignEvents.HeroCreated.AddNonSerializedListener(this, OnHeroCreated);
             CampaignEvents.WeeklyTickEvent.AddNonSerializedListener(this, OnWeeklyTick);
         }
 
@@ -75,7 +76,7 @@ namespace AshAndEmber
                 if (!HasCrystallineChamber(s)) continue;
                 try
                 {
-                    var roster = s.Town?.GetItemRoster();
+                    var roster = s.ItemRoster;
                     if (roster == null) continue;
                     foreach (var def in CrystalCatalog.All)
                     {
@@ -210,11 +211,10 @@ namespace AshAndEmber
             int med = 0, eng = 0;
             try
             {
-                var skills = Hero.MainHero?.GetSkillValue;
-                if (skills != null)
+                if (Hero.MainHero != null)
                 {
-                    med = Hero.MainHero.GetSkillValue(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultSkills.Medicine);
-                    eng = Hero.MainHero.GetSkillValue(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultSkills.Engineering);
+                    med = Hero.MainHero.GetSkillValue(DefaultSkills.Medicine);
+                    eng = Hero.MainHero.GetSkillValue(DefaultSkills.Engineering);
                 }
             }
             catch { }
