@@ -71,6 +71,10 @@ namespace AshAndEmber
                 _ownershipInitDone = true;
             }
 
+            // Keep the cold confined to its set — hand back any ordinary town the
+            // Ashen have seized (e.g. frontier towns near Ostican).
+            ReleaseNonTargetSettlements();
+
             // Fast daily ops (idempotent, low cost)
             RefillGarrisons();
             RefillHeroGold();

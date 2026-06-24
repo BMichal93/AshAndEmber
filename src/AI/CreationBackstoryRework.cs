@@ -54,6 +54,8 @@ namespace AshAndEmber
 
         private static readonly FieldInfo TextField =
             typeof(NarrativeMenuOption).GetField("Text", FPub);
+        private static readonly FieldInfo DescField =
+            typeof(NarrativeMenuOption).GetField("DescriptionText", FPub);
         private static readonly FieldInfo ArgsGetterField =
             typeof(NarrativeMenuOption).GetField("_getNarrativeMenuOptionArgs", FPriv);
 
@@ -115,33 +117,67 @@ namespace AshAndEmber
 
         private static void RewriteMenus(CharacterCreationManager m)
         {
-            // Stage 1 — Family.
+            // Each Edit updates the option's label and its lore description. The
+            // skill/attribute/trait effects shown in the dedicated effect panel come
+            // from the option's args getter; for the two reworked options we replace
+            // that getter so the panel reflects the new grant. Effects that the panel
+            // cannot express (Grace, a Dark Gift) are noted in the description and
+            // granted post-reset in ApplyPendingBoons.
+
+            // ── Stage 1 — Family ─────────────────────────────────────────────
             // Khuzait: A noyan's kinsfolk → Apostles of the God-King (Dark Gift for Polearm).
-            ModifyOption(m, "narrative_parent_menu", KhuzaitApostleOptionId,
-                "Apostles of the God-King", ApostleArgs);
+            Edit(m, "narrative_parent_menu", KhuzaitApostleOptionId,
+                "Apostles of the God-King",
+                "Your family were sworn to the God-King's inner rites — the marked few who carry his fire in "
+                + "miniature and speak his word where his horsemen have not yet ridden. You were raised among "
+                + "them, and the dark took its measure of you before you were old enough to refuse it.\n\n"
+                + "(You will begin bearing one random Dark Gift.)",
+                ApostleArgs);
             // Vlandia: A baron's retainers → Lower-rank Templars (same bonus).
-            Rename(m, "narrative_parent_menu", "vlandia_retainer_option", "Lower-rank Templars");
+            Edit(m, "narrative_parent_menu", "vlandia_retainer_option",
+                "Lower-rank Templars",
+                "Your father served in the lower ranks of the Templar order — a sworn man-at-arms who rode "
+                + "under the banner and answered to the Lord Templars above him. He kept his oaths, drilled the "
+                + "village levy, and fought as an armoured knight when the Order called.");
             // Vlandia: Mercenaries → Footmen (same bonus).
-            Rename(m, "narrative_parent_menu", "vlandia_mercenary_option", "Footmen");
+            Edit(m, "narrative_parent_menu", "vlandia_mercenary_option",
+                "Footmen",
+                "Your family marched as common footmen in the Templar host — spear and crossbow, paid in coin "
+                + "and plunder, the rank and file who held the line while the knights broke it. Your mother "
+                + "followed the column from siege to siege, and you grew up in the wake of its campaigns.");
 
-            // Stage 3 — Adolescence.
+            // ── Stage 3 — Adolescence ────────────────────────────────────────
             // Khuzait (urban): studied with your private tutor → attended the religious school.
-            Rename(m, "narrative_education_menu", "education_tutor_option",
-                "attended the religious school.");
+            Edit(m, "narrative_education_menu", "education_tutor_option",
+                "attended the religious school.",
+                "While other children worked the herds, you were sent to the God-King's schoolmen, who drilled "
+                + "scripture, numbers, and the disciplines of the faithful into you by rote and by rod.");
             // Vlandia (urban): hung out with the gangs → denounced enemies of the faith.
-            Rename(m, "narrative_education_menu", "education_ganger_option",
-                "denounced enemies of the faith with your friends.");
+            Edit(m, "narrative_education_menu", "education_ganger_option",
+                "denounced enemies of the faith with your friends.",
+                "You and your fellows made a sport of rooting out heresy in the back streets — naming the "
+                + "lapsed, the foreign, and the merely unlucky to the Order's wardens. Some of it was zeal. "
+                + "Some of it was knowing whom to threaten, and when.");
 
-            // Stage 4 — Youth.
+            // ── Stage 4 — Youth ──────────────────────────────────────────────
             // Khuzait: a chieftain's servant → the God-King's bloodrider's servant.
-            Rename(m, "narrative_youth_menu", "youth_servant_first_option",
-                "were the God-King's bloodrider's servant.");
+            Edit(m, "narrative_youth_menu", "youth_servant_first_option",
+                "were the God-King's bloodrider's servant.",
+                "You waited on one of the God-King's bloodriders — his chosen lancers — fetching and scouting "
+                + "and listening at the edges of councils you were never meant to hear.");
             // Khuzait: an envoy's entourage → the Tribe's emissary.
-            Rename(m, "narrative_youth_menu", "youth_envoys_guard_first_option",
-                "served as the Tribe's emissary.");
+            Edit(m, "narrative_youth_menu", "youth_envoys_guard_first_option",
+                "served as the Tribe's emissary.",
+                "You rode ahead of the horde, carrying the God-King's terms to cities that still believed they "
+                + "could bargain. You learned to read a room full of frightened men — and to be gone before the "
+                + "knives came out.");
             // Vlandia: a baron's groom → a Lord Templar's squire (Grace + Honour for Charm).
-            ModifyOption(m, "narrative_youth_menu", VlandiaSquireOptionId,
-                "served as a Lord Templar's squire.", SquireArgs);
+            Edit(m, "narrative_youth_menu", VlandiaSquireOptionId,
+                "served as a Lord Templar's squire.",
+                "You served a Lord Templar as his squire — tending his arms and his horse, kneeling through the "
+                + "long vigils, and learning that the Order's strength is bought with discipline and faith.\n\n"
+                + "(You will begin with 3 Grace.)",
+                SquireArgs);
         }
 
         private static NarrativeMenuOption Find(CharacterCreationManager m, string menuId, string optionId)
@@ -153,26 +189,21 @@ namespace AshAndEmber
             return null;
         }
 
-        // Rename only — preserves the vanilla bonus and select/consequence logic.
-        private static void Rename(CharacterCreationManager m, string menuId, string optionId, string newText)
+        // Updates an option's label and description; optionally replaces its skill-effect
+        // getter (passed for the two reworked options, null for rename-only ones).
+        private static void Edit(CharacterCreationManager m, string menuId, string optionId,
+            string newText, string newDesc, GetNarrativeMenuOptionArgsDelegate argsGetter = null)
         {
             var o = Find(m, menuId, optionId);
             if (o == null) return;
             try { TextField?.SetValue(o, new TextObject(newText)); } catch { }
+            try { DescField?.SetValue(o, new TextObject(newDesc)); } catch { }
+            if (argsGetter != null)
+                try { ArgsGetterField?.SetValue(o, argsGetter); } catch { }
         }
 
-        // Rename and replace the skill-effect getter (used by the two reworks).
-        private static void ModifyOption(CharacterCreationManager m, string menuId, string optionId,
-            string newText, GetNarrativeMenuOptionArgsDelegate argsGetter)
-        {
-            var o = Find(m, menuId, optionId);
-            if (o == null) return;
-            try { TextField?.SetValue(o, new TextObject(newText)); } catch { }
-            try { ArgsGetterField?.SetValue(o, argsGetter); } catch { }
-        }
-
-        // Riding only (the dropped Polearm is replaced by a random Dark Gift,
-        // granted post-reset in ApplyPendingBoons); Endurance attribute unchanged.
+        // Riding only (the dropped Polearm is replaced by a random Dark Gift, granted
+        // post-reset in ApplyPendingBoons); Endurance attribute unchanged.
         private static void ApostleArgs(NarrativeMenuOptionArgs args)
         {
             args.SetAffectedSkills(new SkillObject[] { DefaultSkills.Riding });
@@ -181,20 +212,25 @@ namespace AshAndEmber
             args.SetLevelToAttribute(DefaultCharacterAttributes.Endurance, _attr);
         }
 
-        // Tactics only (the dropped Charm is replaced by +3 Grace and +1 Honour,
-        // granted post-reset in ApplyPendingBoons); Social attribute unchanged.
+        // Tactics + a point of Honour (both shown in the dedicated effect panel) in place
+        // of the dropped Charm; the +3 Grace cannot be expressed there and is granted
+        // post-reset in ApplyPendingBoons. Social attribute unchanged.
         private static void SquireArgs(NarrativeMenuOptionArgs args)
         {
             args.SetAffectedSkills(new SkillObject[] { DefaultSkills.Tactics });
             args.SetFocusToSkills(_focus);
             args.SetLevelToSkills(_skill);
             args.SetLevelToAttribute(DefaultCharacterAttributes.Social, _attr);
+            args.SetAffectedTraits(new TraitObject[] { DefaultTraits.Honor });
+            args.SetLevelToTraits(1);
         }
 
         // ── Boon application ─────────────────────────────────────────────────
 
         // Called from CampaignBehavior.OnNewGameCreated, AFTER the new-game static
-        // reset, so the grants survive into the campaign.
+        // reset, so the grants survive into the campaign. Only the effects that the
+        // creation effect panel cannot express live here — the Honour point is applied
+        // through the squire's args (and so survives on the hero already).
         public static void ApplyPendingBoons()
         {
             if (_pendingApostleDarkGift)
@@ -207,16 +243,6 @@ namespace AshAndEmber
             {
                 _pendingSquireBoon = false;
                 try { MiracleInventory.AddGrace(3); } catch { }
-                try
-                {
-                    var hero = Hero.MainHero;
-                    if (hero != null)
-                    {
-                        int cur = hero.GetTraitLevel(DefaultTraits.Honor);
-                        hero.SetTraitLevel(DefaultTraits.Honor, Math.Min(cur + 1, 2));
-                    }
-                }
-                catch { }
             }
         }
     }

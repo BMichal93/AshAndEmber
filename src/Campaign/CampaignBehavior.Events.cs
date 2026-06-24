@@ -123,6 +123,9 @@ namespace AshAndEmber
 
         private void ShowGiftPrompt()
         {
+            // Templars (Vlandia) walk the path of Grace; the Living Ember collides with it
+            // (both share the channel and are mutually exclusive), so the Order forbids it.
+            bool isTemplar = Hero.MainHero?.Culture?.StringId == "vlandia";
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "The Gift",
                 "As a child, you sometimes sensed things others could not — warmth ebbing from the wounded, the weight behind dying eyes. Do you feel it still?",
@@ -132,8 +135,11 @@ namespace AshAndEmber
                         "The fire stirs in you. Press Alt+X/LB+RB to open your grimoire."),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
-                    new InquiryElement("living_ember", "The world beneath me has always been louder than the fire.", null, true,
-                        "You hear the living land. Seek those in the old forests, the still rivers, the open steppe — those who still remember how to listen."),
+                    new InquiryElement("living_ember", "The world beneath me has always been louder than the fire.", null,
+                        !isTemplar,
+                        isTemplar
+                            ? "The Templars keep the inner fire as a sacred trust; the old earth-listening is forbidden to the Order, for it cannot share a soul with Grace. [Not for Templars]"
+                            : "You hear the living land. Seek those in the old forests, the still rivers, the open steppe — those who still remember how to listen."),
                     new InquiryElement("ashen", "The fire in me died long ago.", null, true,
                         "You are Ashen. You do not age. Each casting costs criminal standing instead of years. After your first working each day, further casts risk possession. You begin aligned with the Ashen."),
                 },

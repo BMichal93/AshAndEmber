@@ -259,6 +259,61 @@ namespace AshAndEmber
             CheckAshenExtinction();
         }
 
+        // ── Confinement guard ──────────────────────────────────────────────────
+        // The Ashen realm is EXACTLY the renamed target set — never any other town
+        // (see _targetSettlementNames). Nothing stops the permanently-warring Ashen
+        // from besieging and holding ordinary frontier towns next to their capital
+        // (e.g. Ocs Hall, Rovalt, Car Banseth, which sit a short ride from Ostican).
+        // This hands any such conquered, non-target settlement back to a defensible
+        // kingdom of its own culture so the cold cannot spread beyond its set.
+        private static void ReleaseNonTargetSettlements()
+        {
+            if (_ashenKingdom == null || _ashenKingdom.IsEliminated) return;
+            int released = 0;
+            try
+            {
+                foreach (var s in Settlement.All.ToList())
+                {
+                    if (released >= 2) break;            // at most a couple of handovers per day
+                    try
+                    {
+                        if (!(s.IsTown || s.IsCastle)) continue;           // villages follow their bound town
+                        if (s.MapFaction?.StringId != AshenKingdomId) continue;
+                        if (IsTargetSettlement(s)) continue;                // legitimately Ashen
+                        if (s.IsUnderSiege) continue;                       // wait out an active battle
+                        if (s.OwnerClan?.Leader == Hero.MainHero) continue; // never touch the player's fiefs
+
+                        Hero recipient = FindNonAshenLeaderForCulture(s.Culture);
+                        if (recipient == null) continue;
+
+                        ChangeOwnerOfSettlementAction.ApplyByDefault(recipient, s);
+                        if (s.Town != null) { s.Town.Loyalty = 100f; s.Town.Security = 100f; }
+                        MBInformationManager.AddQuickInformation(new TextObject(
+                            $"{s.Name} — the cold is driven back. The town returns to its own."));
+                        released++;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        // A non-Ashen kingdom leader to receive a released town — preferring one of the
+        // settlement's own culture so it returns to a faction that can hold it.
+        private static Hero FindNonAshenLeaderForCulture(CultureObject culture)
+        {
+            try
+            {
+                var k = Kingdom.All.FirstOrDefault(x => !x.IsEliminated
+                    && x.StringId != AshenKingdomId && x.Culture == culture && x.Leader != null);
+                if (k?.Leader != null) return k.Leader;
+                k = Kingdom.All.FirstOrDefault(x => !x.IsEliminated
+                    && x.StringId != AshenKingdomId && x.Leader != null);
+                return k?.Leader;
+            }
+            catch { return null; }
+        }
+
         // ── Ashen extinction guard ─────────────────────────────────────────────
         // If the Ashen have been completely dispossessed, assign one random
         // non-player town to them so they always maintain a foothold on the map.

@@ -143,11 +143,11 @@ namespace AshAndEmber
                 "Gamepad: LB + RB."), true);
 
             AddLog(new TextObject(
-                "MIRACLES — Shift + X opens the litany of Grace and Cold, on the map or in battle; " +
+                "MIRACLES — Shift + X opens the litany of Grace, on the map or in battle; " +
                 "each entry shows its battle keys and what it does. " +
                 "In battle you may also cast directly: hold Left Ctrl and trace the six-stroke sequence " +
-                "with W / A / S / D, then release. Gamepad: RB + L3. Each miracle spends 1 Grace or 1 " +
-                "Cold; replenish Grace at a Sanctuary, Cold at an Ashen Altar."), true);
+                "with W / A / S / D, then release. Gamepad: RB + L3. Each miracle spends 1 Grace; " +
+                "replenish Grace at a Sanctuary."), true);
 
             AddLog(new TextObject(
                 "MIRACLES OF GRACE (golden) — Repel the Ashen [W W W W D D]: scorch every Ashen near " +
@@ -159,17 +159,6 @@ namespace AshAndEmber
                 "(battle only). · Aegis of Faith [A A W W D D]: a golden ward grants more life than your " +
                 "body should hold (battle only). · Cleansing Rite [D W A D W W]: lift cold and dread from " +
                 "those around you."), true);
-
-            AddLog(new TextObject(
-                "MIRACLES OF COLD (blue) — Ashen Curse [S S S S A A]: cold dark light tears at all nearby " +
-                "enemies. · Dreadmending [S S W W D D]: drain enemy life into yourself. · Dread Presence " +
-                "[S A S A S D]: nearby enemies flinch, slow, and back away."), true);
-
-            AddLog(new TextObject(
-                "MIRACLES OF COLD (cont.) — Frost Brand [A A S D W W]: each blow you land chills and slows " +
-                "(battle only). · Shadow Shroud [D D S S A A]: darkness blunts the blows that reach you " +
-                "(battle only). · Pale Rigor [S S S A A A]: absolute cold freezes every enemy in reach for " +
-                "a few seconds (battle only)."), true);
 
             AddLog(new TextObject(
                 "MIRACLES · VIRTUE — Some rites are gated: an entry marked [some virtue] or [full virtue] " +
@@ -194,7 +183,7 @@ namespace AshAndEmber
             AddLog(new TextObject(
                 "THE LIVING EMBER — the art of those attuned to the living world rather than the " +
                 "inner fire. It shares the Left Ctrl key with miracles, but a hero walks only one " +
-                "of these paths: Grace, Cold, Nature, and the Dark Gifts are all mutually exclusive."), true);
+                "of these paths: Grace, Nature, and the Dark Gifts are all mutually exclusive."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · GATHER A CHARGE — Hold Left Ctrl and STAND STILL (both hands empty, " +
