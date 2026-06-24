@@ -121,6 +121,7 @@ namespace AshAndEmber
                 var candidates = Kingdom.All
                     .Where(k => !k.IsEliminated
                              && k.StringId != AshenKingdomId
+                             && k != Hero.MainHero?.Clan?.Kingdom   // never break the player's own faction
                              && !_brokenKingdomIds.Contains(k.StringId)
                              && k.Leader != null
                              && k.Clans.Count(c => c != null && !c.IsEliminated) >= 2)
