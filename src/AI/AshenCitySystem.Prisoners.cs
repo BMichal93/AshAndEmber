@@ -21,20 +21,24 @@ namespace AshAndEmber
     public partial class AshenCitySystem
     {
         // ── Prisoner fate ─────────────────────────────────────────────────────
-        // For the player: queue a deferred choice (join Ashen vs die).
-        // For NPC lords: 20% become Ashen, 40% flee, 40% executed.
+        // Each cycle: 60% chance the Ashen leave a prisoner alone (normal captivity).
+        // The remaining 40% triggers an ultimatum — join the cold or be executed.
+        //   Player: queues a deferred choice dialog (join Ashen vs permanent death).
+        //   NPC lords: auto-resolved — 50% yield and become Ashen, 50% refuse and die.
+        // At most 1 heavy action (kill/release/convert) per call to avoid cascading
+        // KillCharacterAction calls on a single daily tick.
         public static void ExecuteAshenPrisoners()
         {
             if (_ashenClanIds.Count == 0) return;
-            // At most 1 heavy action (kill/release/convert) per call to avoid
-            // cascading KillCharacterAction calls on a single daily tick.
             try
             {
                 foreach (Hero hero in Hero.AllAliveHeroes.ToList())
                 {
                     try
                     {
-                        if (!hero.IsPrisoner || !hero.IsLord || hero.IsChild) continue;
+                        bool isPlayer = hero == Hero.MainHero;
+                        if (!hero.IsPrisoner || hero.IsChild) continue;
+                        if (!isPlayer && !hero.IsLord) continue;
 
                         var captorParty = hero.PartyBelongedToAsPrisoner;
                         if (captorParty == null) continue;
@@ -45,7 +49,10 @@ namespace AshAndEmber
                             captorParty.MapFaction?.StringId == AshenKingdomId;
                         if (!captorIsAshen) continue;
 
-                        if (hero == Hero.MainHero)
+                        // 60% chance: the Ashen leave this prisoner to languish — for now.
+                        if (_rng.NextDouble() >= 0.40) continue;
+
+                        if (isPlayer)
                         {
                             if (MageKnowledge._deferredInquiry == null)
                             {
@@ -55,25 +62,28 @@ namespace AshAndEmber
                             continue;
                         }
 
-                        // NPC lord: roll fate
-                        double roll = _rng.NextDouble();
-                        if (roll < 0.20)
+                        // NPC lord: the Ashen force the ultimatum — join or die.
+                        // 50% yield to the cold, 50% refuse and are executed.
+                        Hero executor = captorParty.LeaderHero
+                                     ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
+                                            h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
+                                            _ashenClanIds.Contains(h.Clan?.StringId));
+
+                        if (_rng.NextDouble() < 0.50)
                         {
                             try { ColourLordRegistry.SetAshen(hero, true); } catch { }
                             try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
-                        }
-                        else if (roll < 0.60)
-                        {
-                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} has taken the cold. They walk free — and Ashen.",
+                                new Color(0.38f, 0.50f, 0.75f)));
                         }
                         else
                         {
-                            Hero executor = captorParty.LeaderHero
-                                         ?? Hero.AllAliveHeroes.FirstOrDefault(h =>
-                                                h.IsAlive && !h.IsDisabled && !h.IsPrisoner &&
-                                                _ashenClanIds.Contains(h.Clan?.StringId));
                             if (executor == null) continue;
                             try { KillCharacterAction.ApplyByExecution(hero, executor); } catch { }
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"{hero.Name} refused the cold. The Ashen gave them the ending they chose.",
+                                new Color(0.55f, 0.30f, 0.30f)));
                         }
 
                         return; // one action per tick — process remaining on next call
