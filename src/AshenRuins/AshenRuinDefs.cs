@@ -43,7 +43,6 @@ namespace AshAndEmber
         AgingReclaim,       // AgingSystem.RejuvenateHero(hero, Days)
         WhisperPurge,       // MageKnowledge.RemoveWhispers(Points)
         WhisperBrand,       // MageKnowledge.AddWhispers(Points)
-        ReagentCache,       // ReagentSystem.Add(ReagentType, Qty)
         FocusPoints,        // HeroDeveloper.UnspentFocusPoints += Points
         RenownBurst,        // Clan.Renown += Points
         LoreVision,         // deferred inquiry with lore text
@@ -65,8 +64,6 @@ namespace AshAndEmber
     {
         public RewardType Type;
         public int        Points;        // aging days / whispers / renown / fp
-        public string     ReagentType;   // for ReagentCache
-        public int        ReagentQty;
         public string     LoreText;      // for LoreVision
     }
 
@@ -89,8 +86,8 @@ namespace AshAndEmber
         private static RuinChallenge Ch(ChallengeType t, int p = 0) =>
             new RuinChallenge { Type = t, IntParam = p };
 
-        private static RuinReward Rew(RewardType t, int pts = 0, string rt = null, int rq = 0, string lore = null) =>
-            new RuinReward { Type = t, Points = pts, ReagentType = rt, ReagentQty = rq, LoreText = lore };
+        private static RuinReward Rew(RewardType t, int pts = 0, string lore = null) =>
+            new RuinReward { Type = t, Points = pts, LoreText = lore };
 
         public static readonly RuinDef[] All = new[]
         {
@@ -113,7 +110,7 @@ namespace AshAndEmber
                 EntryLore = "A terraced garden, long dead. The soil is grey and fine as flour. Something tended this place until very recently.",
                 Tier      = RuinTier.Easy,
                 Challenges = new[] { Ch(ChallengeType.BloodLock), Ch(ChallengeType.VisionChamber) },
-                MainReward    = Rew(RewardType.ReagentCache, 0, ReagentSystem.FrozenAmber, 1),
+                MainReward    = Rew(RewardType.FocusPoints, 1),
                 PartialReward = Rew(RewardType.RenownBurst, 10),
             },
             new RuinDef
@@ -166,8 +163,8 @@ namespace AshAndEmber
                 EntryLore = "The sand here is darkened in a perfect circle, thirty feet wide. Below the circle, hollow.",
                 Tier      = RuinTier.Standard,
                 Challenges = new[] { Ch(ChallengeType.SerpentNest), Ch(ChallengeType.AncientTrap), Ch(ChallengeType.AshenSentinel) },
-                MainReward    = Rew(RewardType.ReagentCache, 0, ReagentSystem.BrimstoneAsh, 3),
-                PartialReward = Rew(RewardType.ReagentCache, 0, ReagentSystem.BrimstoneAsh, 1),
+                MainReward    = Rew(RewardType.AgingReclaim, 7),
+                PartialReward = Rew(RewardType.AgingReclaim, 3),
             },
             new RuinDef
             {
@@ -206,8 +203,8 @@ namespace AshAndEmber
                 EntryLore = "A cave behind a waterfall that should not exist this far from any river. Inside, the cave narrows to a room carved with intent.",
                 Tier      = RuinTier.Standard,
                 Challenges = new[] { Ch(ChallengeType.BloodLock), Ch(ChallengeType.AshenSentinel), Ch(ChallengeType.SpectralGuardian) },
-                MainReward    = Rew(RewardType.ReagentCache, 0, ReagentSystem.FrozenAmber, 2),
-                PartialReward = Rew(RewardType.ReagentCache, 0, ReagentSystem.FrozenAmber, 1),
+                MainReward    = Rew(RewardType.FocusPoints, 2),
+                PartialReward = Rew(RewardType.FocusPoints, 1),
             },
             new RuinDef
             {
@@ -226,8 +223,8 @@ namespace AshAndEmber
                 EntryLore = "A tidal cave accessible only at low tide. The walls are carved with serpents. They are not decorative.",
                 Tier      = RuinTier.Standard,
                 Challenges = new[] { Ch(ChallengeType.SerpentNest), Ch(ChallengeType.AncientTrap), Ch(ChallengeType.VisionChamber) },
-                MainReward    = Rew(RewardType.ReagentCache, 0, ReagentSystem.SeaSerpentScale, 2),
-                PartialReward = Rew(RewardType.ReagentCache, 0, ReagentSystem.SeaSerpentScale, 1),
+                MainReward    = Rew(RewardType.AgingReclaim, 10),
+                PartialReward = Rew(RewardType.AgingReclaim, 4),
             },
             new RuinDef
             {
@@ -236,7 +233,7 @@ namespace AshAndEmber
                 EntryLore = "A farmhouse built directly over a much older structure. The farmer left recently — the hearth is still warm.",
                 Tier      = RuinTier.Standard,
                 Challenges = new[] { Ch(ChallengeType.VoidWhisper), Ch(ChallengeType.RiddleGate), Ch(ChallengeType.VisionChamber) },
-                MainReward    = Rew(RewardType.LoreVision, 0, null, 0, "The oracle left a single phrase carved into the floor: 'The fire does not choose who carries it. It simply burns.' Below that, in a different hand: 'It lies.' You are unsettled for days afterward."),
+                MainReward    = Rew(RewardType.LoreVision, 0, "The oracle left a single phrase carved into the floor: 'The fire does not choose who carries it. It simply burns.' Below that, in a different hand: 'It lies.' You are unsettled for days afterward."),
                 PartialReward = Rew(RewardType.WhisperPurge, 10),
             },
             new RuinDef
@@ -289,7 +286,7 @@ namespace AshAndEmber
                 EntryLore = "A pit ten feet wide and fifty feet deep. At the bottom, a sealed door. The pit does not look dug. It looks opened.",
                 Tier      = RuinTier.Brutal,
                 Challenges = new[] { Ch(ChallengeType.VoidWhisper), Ch(ChallengeType.SealedMemory), Ch(ChallengeType.VisionChamber) },
-                MainReward    = Rew(RewardType.LoreVision, 0, null, 0,
+                MainReward    = Rew(RewardType.LoreVision, 0,
                     "The vision is not one of fire. It is one of cold — a calm, grey light spreading from horizon to horizon while the world holds very still. You wake with the sense that someone just looked at you through a keyhole. And then the sensation of warmth that follows, as if the fire inside you pressed back."),
                 PartialReward = Rew(RewardType.WhisperBrand, 8),
             },
@@ -408,7 +405,7 @@ namespace AshAndEmber
                     Ch(ChallengeType.BloodLock),
                 },
                 MainReward    = Rew(RewardType.AshenCrownFragment),
-                PartialReward = Rew(RewardType.ReagentCache, 0, ReagentSystem.SeaSerpentScale, 1),
+                PartialReward = Rew(RewardType.AgingReclaim, 5),
             },
         };
     }

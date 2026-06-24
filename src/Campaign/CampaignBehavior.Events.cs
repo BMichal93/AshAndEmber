@@ -103,14 +103,13 @@ namespace AshAndEmber
                 AshenQuestSystem.ResetForNewGame();
                 BurningLabQuestSystem.ResetForNewGame();
                 EmberConclaveSystem.ResetForNewGame();
-                ReagentSystem.ResetForNewGame();
                 AshenRuinSystem.ResetForNewGame();
                 ApprenticeSystem.ResetForNewGame();
                 MiracleCampaignBehavior.ResetForNewGame();
                 NatureCampaignBehavior.ResetForNewGame();
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
-                AlchemyCampaignBehavior.EstablishForNewCampaign();
+                CrystallinesCampaignBehavior.EstablishForNewCampaign();
                 // The opening lore now plays as a cinematic before character creation
                 // (see AshEmberLoreIntro), so here we go straight to the Gift prompt.
                 MageKnowledge._deferredInquiry = ShowGiftPrompt;

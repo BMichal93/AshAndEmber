@@ -3,6 +3,7 @@
 // Mount & Blade II: Bannerlord Mod  v2.0
 // =============================================================================
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -757,88 +758,69 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(1000, SpeculationMath.TradeXp(1000, 10000));
         }
 
-        // ── AlchemyMath pure logic ────────────────────────────────────────────
+        // ── CrystalMath pure logic ────────────────────────────────────────────
 
         [Test]
-        public void AlchemyMath_CarryCapacity_EqualsIntelligence_MinOne()
+        public void CrystalMath_FormationOdds_FloorAtSixPercent()
         {
-            Assert.AreEqual(5, AlchemyMath.CarryCapacity(5));
-            Assert.AreEqual(1, AlchemyMath.CarryCapacity(0));
-            Assert.AreEqual(1, AlchemyMath.CarryCapacity(-3), "Capacity never drops below one.");
+            float odds = CrystalMath.FormationOdds(0, 0);
+            Assert.AreEqual(0.06f, odds, 0.001f, "Floor should be 6 % with no skill.");
         }
 
         [Test]
-        public void AlchemyMath_BrewSuccessChance_RisesWithSkill_AndClamps()
+        public void CrystalMath_FormationOdds_RisesWithCombinedSkill()
         {
-            float novice = AlchemyMath.BrewSuccessChance(0);
-            float master = AlchemyMath.BrewSuccessChance(300);
-            Assert.Greater(master, novice, "More Medicine should brew cleaner.");
-            Assert.GreaterOrEqual(novice, AlchemyMath.BrewChanceFloor);
-            Assert.LessOrEqual(master, AlchemyMath.BrewChanceCeil);
+            float low  = CrystalMath.FormationOdds(50, 50);   // combined 50
+            float high = CrystalMath.FormationOdds(150, 150); // combined 150
+            Assert.Greater(high, low, "More skill means better odds.");
         }
 
         [Test]
-        public void AlchemyMath_IsBrewSuccess_RespectsChanceThreshold()
+        public void CrystalMath_FormationOdds_CapsAtNinetyPercent()
         {
-            // A roll just under the chance succeeds; just over fails.
-            float c = AlchemyMath.BrewSuccessChance(100);
-            Assert.IsTrue(AlchemyMath.IsBrewSuccess(100, c - 0.01));
-            Assert.IsFalse(AlchemyMath.IsBrewSuccess(100, c + 0.01));
+            float odds = CrystalMath.FormationOdds(300, 300);
+            Assert.LessOrEqual(odds, 0.90f, "Odds must not exceed the 90 % ceiling.");
         }
 
         [Test]
-        public void AlchemyMath_PickBackfire_CoversAllEight_AndStaysInRange()
+        public void CrystalMath_FormationOddsWithPatience_AddsBonus()
         {
-            // Eight equally-weighted outcomes; each bucket spans 0.125.
-            Assert.AreEqual(AlchemyBackfire.SelfWound,          AlchemyMath.PickBackfire(0.00));
-            Assert.AreEqual(AlchemyBackfire.TroopBlast,          AlchemyMath.PickBackfire(0.13));
-            Assert.AreEqual(AlchemyBackfire.MoraleCollapse,      AlchemyMath.PickBackfire(0.26));
-            Assert.AreEqual(AlchemyBackfire.CreepingBlight,      AlchemyMath.PickBackfire(0.38));
-            Assert.AreEqual(AlchemyBackfire.Enfeeblement,        AlchemyMath.PickBackfire(0.51));
-            Assert.AreEqual(AlchemyBackfire.ScentOfBlood,        AlchemyMath.PickBackfire(0.63));
-            Assert.AreEqual(AlchemyBackfire.Petrification,       AlchemyMath.PickBackfire(0.76));
-            Assert.AreEqual(AlchemyBackfire.AlchemicCorruption,  AlchemyMath.PickBackfire(0.88));
-            // Boundary: a roll of exactly 1.0 must not overflow past the last value.
-            Assert.AreEqual(AlchemyBackfire.AlchemicCorruption,  AlchemyMath.PickBackfire(1.00));
+            float base_  = CrystalMath.FormationOdds(100, 100);
+            float talent = CrystalMath.FormationOddsWithPatience(100, 100);
+            Assert.AreEqual(Math.Min(0.90f, base_ + 0.20f), talent, 0.001f);
         }
 
         [Test]
-        public void AlchemyMath_NpcChances_FavourAserai_AndStayBounded()
+        public void CrystalMath_IsDaylight_TrueOnlyInWindow()
         {
-            Assert.Greater(AlchemyMath.NpcDailyBrewChance(50, true),
-                           AlchemyMath.NpcDailyBrewChance(50, false),
-                           "Aserai heroes brew more readily.");
-            Assert.LessOrEqual(AlchemyMath.NpcDailyBrewChance(10000, true),
-                               AlchemyMath.NpcBrewChanceCeil);
-            Assert.LessOrEqual(AlchemyMath.NpcBattleUseChance(10000, true),
-                               AlchemyMath.NpcBattleChanceCeil);
+            Assert.IsTrue(CrystalMath.IsDaylight(12f),  "Noon should be daylight.");
+            Assert.IsTrue(CrystalMath.IsDaylight(6f),   "06:00 is the dawn boundary.");
+            Assert.IsTrue(CrystalMath.IsDaylight(19.9f),"Just before 20:00 is still day.");
+            Assert.IsFalse(CrystalMath.IsDaylight(20f), "20:00 is outside the window.");
+            Assert.IsFalse(CrystalMath.IsDaylight(3f),  "Pre-dawn should be dark.");
         }
 
         [Test]
-        public void AlchemyMath_ReadBrew_LowRollKnows_HighRollMisleads_MiddleUnknown()
+        public void CrystalMath_IsDaylightExtended_BroaderWindow()
         {
-            // A roll inside the "know" band reads true.
-            Assert.AreEqual(BrewAppraisal.Correct, AlchemyMath.ReadBrew(5, 0.0));
-            // A roll at the very top of the range reads the opposite of the truth.
-            Assert.AreEqual(BrewAppraisal.Misleading, AlchemyMath.ReadBrew(5, 0.999));
-            // A roll between the two bands leaves the brewer guessing.
-            float know    = AlchemyMath.ReadTrueChance(5);
-            float mislead = AlchemyMath.MisreadChance(5);
-            double mid    = (know + (1.0 - mislead)) / 2.0;
-            Assert.AreEqual(BrewAppraisal.Unknown, AlchemyMath.ReadBrew(5, mid));
+            Assert.IsTrue(CrystalMath.IsDaylightExtended(4f),  "SolarFlare: 04:00 is active.");
+            Assert.IsTrue(CrystalMath.IsDaylightExtended(21.9f),"SolarFlare: just before 22:00 is active.");
+            Assert.IsFalse(CrystalMath.IsDaylightExtended(22f), "SolarFlare: 22:00 is outside window.");
+            Assert.IsFalse(CrystalMath.IsDaylightExtended(3.9f),"SolarFlare: 03:59 is outside window.");
         }
 
         [Test]
-        public void AlchemyMath_ReadBrew_SharpMind_KnowsMore_AndMisleadsLess()
+        public void CrystalMath_BurndownChance_IsTenPercent()
         {
-            Assert.Greater(AlchemyMath.ReadTrueChance(10), AlchemyMath.ReadTrueChance(0),
-                "More Intelligence reads true more often.");
-            Assert.Less(AlchemyMath.MisreadChance(10), AlchemyMath.MisreadChance(0),
-                "More Intelligence is misled less often.");
-            // The two bands must never overlap, at any attribute level.
-            for (int wit = 0; wit <= 12; wit++)
-                Assert.LessOrEqual(AlchemyMath.ReadTrueChance(wit) + AlchemyMath.MisreadChance(wit), 1.0f,
-                    $"Know and mislead bands overlap at Intelligence {wit}.");
+            Assert.AreEqual(0.10f, CrystalMath.BurndownChance, 0.0001f);
+        }
+
+        [Test]
+        public void CrystalMath_SolarFlareRadius_IncreasesBaseByTwentyFivePercent()
+        {
+            float r  = 5f;
+            float r2 = CrystalMath.SolarFlareRadius(r);
+            Assert.AreEqual(r * 1.25f, r2, 0.001f);
         }
 
         // ── MiracleMath gain scaling ──────────────────────────────────────────

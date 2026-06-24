@@ -60,7 +60,7 @@ namespace AshAndEmber
                 "  Hold Left Alt → shape with W A D S → press X to Break →\n" +
                 "  give power with W A D S → release Alt to loose it.\n" +
                 "  Watch [ U ▷ U ] build your formula; keep your hands free.\n" +
-                "  (Full gestures, miracles and satchel: your Codex of Hand and Voice.)\n\n" +
+                "  (Full gestures, miracles and crystals: your Codex of Hand and Voice.)\n\n" +
                 "── SHAPES  (before Break) ───────────────────────────\n" +
                 "  W / ↑  Blast    — cone of fire forward  (+2.5 m per W)\n" +
                 "  A / ←  Missile  — fire bolt that explodes  (+3 m range, +1 m blast per A)\n" +
@@ -162,9 +162,9 @@ namespace AshAndEmber
                 + "  On the field         Shift + X            (L3 + R3)\n"
                 + "  In battle            Hold Left Ctrl …     (hold RB)\n"
                 + "    then type the six-mark sequence shown for the miracle, and release.\n\n"
-                + "── ALCHEMY — the satchel ────────────────────────────\n"
-                + "  Open it anywhere, even mid-battle, to drink an elixir:\n"
-                + "  Open the satchel     Left Ctrl + X        (RB + R3)\n\n"
+                + "── CRYSTALS ─────────────────────────────────────────\n"
+                + "  Equip a Suncrystal in a weapon slot. By day, attack with it\n"
+                + "  to charge and unleash its focused light. Ineffective at night.\n\n"
                 + "── THE LIVING EMBER — the land's own fire ───────────\n"
                 + "  (For those attuned to the living world, not the inner fire.)\n"
                 + "  Gather a charge     Hold Left Ctrl + stand still   (hold R3, stand still)\n"
@@ -187,7 +187,7 @@ namespace AshAndEmber
         {
             InformationManager.ShowInquiry(new InquiryData(
                 "The Disciplines of Hand and Voice",
-                "Every gesture you will need — spells, miracles, the alchemist's satchel and the living ember — "
+                "Every gesture you will need — spells, miracles, suncrystals and the living ember — "
                 + "is recorded in your journal under \"Notes for the Adventurer.\"\n\n"
                 + "Open your journal whenever the craft slips your mind.",
                 true, false, "I will remember.", "", null, null), true, true);

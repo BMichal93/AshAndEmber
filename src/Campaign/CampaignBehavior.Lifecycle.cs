@@ -200,7 +200,6 @@ namespace AshAndEmber
             try { EmberConclaveSystem.Save(dataStore); } catch { }
             try { AgingSystem.Save(dataStore); } catch { }
             try { TempleCovenant.Save(dataStore); } catch { }
-            try { ReagentSystem.Save(dataStore); } catch { }
             try { AshenRuinSystem.Save(dataStore); } catch { }
             try { ApprenticeSystem.Save(dataStore); } catch { }
             if (!dataStore.IsSaving)

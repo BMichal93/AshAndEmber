@@ -89,9 +89,9 @@ namespace AshAndEmber
         UnbrokenWard    = 53, // Rite — 21-day ward; +10 morale/day; -2 aging while active
         EmberCovenant   = 54, // Rite — 8 HP cost; double Grace; daily troop heal; +5 morale
         // ── Alchemy Rites ─────────────────────────────────────────────────────────
-        SteadierHand    = 55, // Rite — +15% brew; no mislead; 20% double-brew on success
-        DeeperSatchel   = 56, // Rite — +4 capacity; flat 150g; 25% field refill
-        VolatileHarvest = 57, // Rite — 40% salvage; volatile burst; 30% harm reduction
+        PatientGrowth   = 55, // Rite — +20% formation success; 15% double-grow on success
+        ExpandedPouch   = 56, // Rite — +2 crystal carry capacity; Silver Ore refunded on failure
+        SolarFlare      = 57, // Rite — crystals active at dusk/dawn; +25% burst radius
         // ── Classes (talent packs — 2 FP each; bundle the older single talents) ──
         DarkMage        = 58, // Class — life-eater path
         Seer            = 59, // Class — foresight path
@@ -103,7 +103,7 @@ namespace AshAndEmber
         // ── Discipline classes (rite packs — 2 FP each; bundle the 9 rites) ──────
         Coldsworn       = 65, // Class — Ashen Altar (Cold) rites
         Gracebound      = 66, // Class — Sanctuary (Grace) rites
-        AshenAlchemist  = 67, // Class — Alchemy rites
+        Crystalseeker   = 67, // Class — Crystalline rites
         // ── Nature — The Living Ember ────────────────────────────────────────
         NatureLivingRoot = 68, // Rite — charge capacity ×2; passive gain doubled
         NatureStillDraw  = 69, // Rite — no HP draw cost while stationary in combat
@@ -408,9 +408,9 @@ namespace AshAndEmber
             },
             new TalentDef
             {
-                Id = TalentId.AshenAlchemist, Category = TalentCategory.Rite, FocusCost = 0, Name = "Ashen Alchemist",
-                Lore = "The satchel was always larger than it looked, the brew always more willing than it seemed. A practised hand finishes confidently, carries more than it counts, and salvages what a clumsier one would spill into ruin.",
-                MechanicDesc = "A discipline class. The full discipline of the Lab. Grants The Steadier Hand (+15% brew success, no misleading reads, a chance of a second vial), The Deeper Satchel (+4 capacity, flat 150-denar brews, a chance the field vial refills), and Volatile Harvest (salvage tainted vials, lash a nearby enemy on the save, and soften backfires)."
+                Id = TalentId.Crystalseeker, Category = TalentCategory.Rite, FocusCost = 0, Name = "Crystalseeker",
+                Lore = "Most who pass through a Crystalline Chamber see stone and shadow. You see the lattice — the slow geometry of sunlight becoming substance. A patient hand grows better, carries more, and draws power from hours others call too late or too early.",
+                MechanicDesc = "A discipline class. The full discipline of the Crystalline Chamber. Grants Patient Growth (+20% crystal formation, 15% chance of a second crystal at no cost), Expanded Pouch (+2 carry capacity, Silver Ore refunded on formation failure), and Solar Flare (crystals activate at dusk and dawn, burst radius +25%)."
             },
             // ── Sanctuary Rites ──────────────────────────────────────────────────
             new TalentDef
@@ -431,24 +431,24 @@ namespace AshAndEmber
                 Lore = "Devotion is its own fuel — the rite does not need to reach as deep when the channel has been worn smooth by repetition. And what you carry comes back to you in the breathing: the Grace you hold does not sit still, it moves, it circulates, it mends what it finds. Quietly. While you sleep.",
                 MechanicDesc = "Rite. Prayer costs 8 HP instead of 12, and yields twice the Grace. While you carry any Grace: +5 morale each day. When Grace exceeds half your cap, the warmth quietly heals one wounded soldier per troop type each dawn."
             },
-            // ── Alchemy Rites ─────────────────────────────────────────────────────
+            // ── Crystal Rites ─────────────────────────────────────────────────────
             new TalentDef
             {
-                Id = TalentId.SteadierHand, Category = TalentCategory.Rite, FocusCost = 0, Name = "The Steadier Hand",
-                Lore = "Most who spoil a brew do so in the final measure. You have learned to finish confidently — and the confident finish is its own catalyst. Sometimes the brew that should have been one becomes two, as though the formula agreed it was not done yet.",
-                MechanicDesc = "Rite. Brewing success chance increases by 15%. Misleading read results are replaced with Unknown — the hand that seals it may doubt, but it will not lie. On a clean brew, 20% chance the formula yields a second vial at no additional cost."
+                Id = TalentId.PatientGrowth, Category = TalentCategory.Rite, FocusCost = 0, Name = "Patient Growth",
+                Lore = "The crystal does not hurry. Neither does the hand that guides it. You have learned to hold the lattice steady through the final stage — the one where lesser attempts crack and spill. Sometimes the mineral keeps giving after you believe it spent.",
+                MechanicDesc = "Rite. Crystal formation success chance increases by 20%. On a successful formation, 15% chance the chamber yields a second crystal of the same type at no additional cost."
             },
             new TalentDef
             {
-                Id = TalentId.DeeperSatchel, Category = TalentCategory.Rite, FocusCost = 0, Name = "The Deeper Satchel",
-                Lore = "The satchel was always larger than it looked. A practised hand arranges rather than counts — the vials nest, the heat distributes, the seams of the old leather know where to give. And sometimes, when the vial rises to the lips, the hand reaches back and finds it is somehow still there.",
-                MechanicDesc = "Rite. Satchel capacity increases by 4. Ingredient costs drop to a flat 150 denars per brew. When you drink a clean elixir in the field, 25% chance the satchel refills with one clean vial of the same kind — you reach in and find it was not gone after all."
+                Id = TalentId.ExpandedPouch, Category = TalentCategory.Rite, FocusCost = 0, Name = "Expanded Pouch",
+                Lore = "The pouch was always larger than it looked. A careful arrangement of wrapping and weight lets the crystals nest without grinding each other dull. And when the lattice fails — when the mineral fractures instead of setting — a practiced hand recovers what it can.",
+                MechanicDesc = "Rite. You may carry 2 additional crystals. When a crystal fails to form, the Silver Ore used in the attempt is refunded to your party's inventory."
             },
             new TalentDef
             {
-                Id = TalentId.VolatileHarvest, Category = TalentCategory.Rite, FocusCost = 0, Name = "Volatile Harvest",
-                Lore = "A ruined brew is not always a waste. The instincts of a careful hand find what set true before the rest turned. It takes nerve to drink something that smells like failure. And when the good part surfaces unexpectedly, the volatile remainder does not vanish quietly — it needs somewhere to go.",
-                MechanicDesc = "Rite. When a tainted vial would backfire: 40% chance to salvage it and yield the clean effect. In battle, the volatile remnant lashes the nearest enemy for 25 fire damage on a salvage. When a backfire does land, 30% of the self-wound is returned as a partial heal — not all of the ruin reaches you."
+                Id = TalentId.SolarFlare, Category = TalentCategory.Rite, FocusCost = 0, Name = "Solar Flare",
+                Lore = "The angle of light at dusk is different — lower, longer, richer in color. You learned to read it. At the edge of day, when others would pocket their crystals and wait for morning, yours still hold enough sun to speak.",
+                MechanicDesc = "Rite. Crystals may be activated during dusk and dawn hours (04:00–22:00) in addition to full daylight. Area-of-effect crystal bursts are 25% wider."
             },
             // ── Nature — The Living Ember ─────────────────────────────────────────
             new TalentDef
@@ -511,7 +511,7 @@ namespace AshAndEmber
                 // Coldsworn retired — Dark Altars now grant Dark Gifts directly.
                 // [TalentId.Coldsworn] intentionally absent.
                 [TalentId.Gracebound]     = new[] { TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant },
-                [TalentId.AshenAlchemist] = new[] { TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest },
+                [TalentId.Crystalseeker] = new[] { TalentId.PatientGrowth, TalentId.ExpandedPouch, TalentId.SolarFlare },
                 [TalentId.Wildsworn]      = new[] { TalentId.NatureLivingRoot, TalentId.NatureStillDraw, TalentId.NatureOpenGrip },
             };
 

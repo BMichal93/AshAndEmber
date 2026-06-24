@@ -217,30 +217,6 @@ namespace AshAndEmber
             }
             catch { }
 
-            // ── Commission a reagent cargo (mages only) ─────────────────────
-            try
-            {
-                starter.AddGameMenuOption("sea_harbor", "sea_reagent", "{SEA_REAGENT_TEXT}",
-                    args =>
-                    {
-                        try
-                        {
-                            if (!MageKnowledge.IsMage) return false;
-                            bool inFlight  = _ventures.Any(v => v.IsReagent);
-                            bool canAfford = Hero.MainHero.Gold >= SeaMath.ReagentCargoTiers[0].Cost;
-                            args.IsEnabled = !inFlight && canAfford;
-                            string note    = inFlight ? "  [expedition already at sea]" : "";
-                            MBTextManager.SetTextVariable("SEA_REAGENT_TEXT", "Commission a reagent cargo" + note);
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
-                            return true;
-                        }
-                        catch { return false; }
-                    },
-                    args => ShowReagentCargoTierPicker(),
-                    false, -1, false);
-            }
-            catch { }
-
             // ── Leave ───────────────────────────────────────────────────────
             try
             {
@@ -368,63 +344,5 @@ namespace AshAndEmber
             try { return MobileParty.MainParty.MemberRoster.TotalManCount; } catch { return 1; }
         }
 
-        private static void ShowReagentCargoTierPicker()
-        {
-            try
-            {
-                var here = Settlement.CurrentSettlement;
-                if (here == null) return;
-                string reagentType = ReagentSystem.RandomReagentForPort(here);
-                string reagentName = ReagentSystem.FriendlyName(reagentType);
-
-                string[] tierLabels = { "Send a lone peddler", "Hire a proper factor", "Charter an armed merchant", "Commission a warded convoy" };
-                var options = new List<InquiryElement>();
-                for (int i = 0; i < SeaMath.ReagentCargoTiers.Length; i++)
-                {
-                    var tier = SeaMath.ReagentCargoTiers[i];
-                    bool canAfford = Hero.MainHero.Gold >= tier.Cost;
-                    int failPct    = (int)(tier.FailureChance * 100f);
-                    string qtyNote = tier.Qty > 1 ? $" ×{tier.Qty}" : "";
-                    string hint    = canAfford
-                        ? $"{failPct}% chance the factor never returns. On success: {reagentName}{qtyNote}."
-                        : "Your purse cannot cover this commission.";
-                    options.Add(new InquiryElement(i, $"{tierLabels[i]}  ({tier.Cost} denars)", null, canAfford, hint));
-                }
-
-                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                    $"Reagent Cargo — {reagentName}",
-                    "The port's sources can supply this ingredient. More coin buys a better-armed factor and steeper odds of seeing him return.",
-                    options, true, 1, 1, "Commission", "Never mind",
-                    chosen =>
-                    {
-                        try
-                        {
-                            if (!(chosen?[0]?.Identifier is int idx)) return;
-                            var tier = SeaMath.ReagentCargoTiers[idx];
-                            if (Hero.MainHero.Gold < tier.Cost) return;
-                            GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, tier.Cost, true);
-                            float dist = _ports.Count > 1 ? PortDistance(here, _ports.First(p => p != here)) : 10f;
-                            _ventures.Add(new Venture
-                            {
-                                DestName      = here.Name?.ToString() ?? "this port",
-                                DaysLeft      = SeaMath.ReagentExpeditionDaysMin + _rng.Next(SeaMath.ReagentExpeditionDaysRand),
-                                Invested      = tier.Cost,
-                                Blessed       = false,
-                                Distance      = dist,
-                                IsReagent     = true,
-                                ReagentType   = reagentType,
-                                FailureChance = tier.FailureChance,
-                                ReagentQty    = tier.Qty,
-                            });
-                            MBInformationManager.AddQuickInformation(new TextObject(
-                                $"A factor departs to source {reagentName}. Expected back in a few days."));
-                            try { GameMenu.SwitchToMenu("sea_harbor"); } catch { }
-                        }
-                        catch { }
-                    },
-                    null, "", false), false, true);
-            }
-            catch { }
-        }
     }
 }

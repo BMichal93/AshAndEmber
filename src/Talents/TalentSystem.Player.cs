@@ -77,9 +77,9 @@ namespace AshAndEmber
             TalentId.Gracebound, TalentId.KeepingFlame, TalentId.UnbrokenWard, TalentId.EmberCovenant,
         };
 
-        private static readonly TalentId[] _alchemyTalentIds =
+        private static readonly TalentId[] _crystalTalentIds =
         {
-            TalentId.AshenAlchemist, TalentId.SteadierHand, TalentId.DeeperSatchel, TalentId.VolatileHarvest,
+            TalentId.Crystalseeker, TalentId.PatientGrowth, TalentId.ExpandedPouch, TalentId.SolarFlare,
         };
 
         private static readonly TalentId[] _natureTalentIds =
@@ -103,7 +103,7 @@ namespace AshAndEmber
         private static bool TryGetDisciplinePool(TalentId id, out TalentId[] pool)
         {
             if (Array.IndexOf(_graceTalentIds,   id) >= 0) { pool = _graceTalentIds;   return true; }
-            if (Array.IndexOf(_alchemyTalentIds, id) >= 0) { pool = _alchemyTalentIds; return true; }
+            if (Array.IndexOf(_crystalTalentIds, id) >= 0) { pool = _crystalTalentIds; return true; }
             if (Array.IndexOf(_natureTalentIds,  id) >= 0) { pool = _natureTalentIds;  return true; }
             pool = null;
             return false;
