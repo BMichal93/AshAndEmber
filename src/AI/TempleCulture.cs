@@ -12,8 +12,11 @@
 // All effects are gated on the player having chosen the Templar (vlandia) culture.
 // =============================================================================
 
+using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 
@@ -43,6 +46,78 @@ namespace AshAndEmber
         // net effect is a standing ~+10 on recent-events morale, consistent in scale
         // with what other in-game events (paid wages, food variety) contribute.
         public const float VigilMoraleFloor = 10f;
+
+        // ── Templar Kingdom Setup — called once per session ───────────────────
+        // A holy order is small and elite. Trims Vlandia to TempleMaxClans so
+        // it fields fewer clans than any other faction. Also ensures every Temple
+        // lord carries at least one Grace (Honor ≥ 1 and Mercy ≥ 1) so they can
+        // invoke miracles in battle.
+        private const int TempleMaxClans = 4;
+
+        public static void SetupTempleKingdom()
+        {
+            TrimTempleClans();
+            EnsureTemplarGrace();
+        }
+
+        private static void TrimTempleClans()
+        {
+            try
+            {
+                var vlandia = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "vlandia" && !k.IsEliminated);
+                if (vlandia == null) return;
+
+                var ordered = vlandia.Clans
+                    .Where(c => !c.IsEliminated && c != Clan.PlayerClan)
+                    .OrderByDescending(c => c.Renown)
+                    .ToList();
+
+                if (ordered.Count <= TempleMaxClans) return;
+
+                // Ruling clan is always kept; fill remaining slots from the top.
+                var toKeep = new List<Clan>();
+                var ruling = vlandia.RulingClan;
+                if (ruling != null && !ruling.IsEliminated) toKeep.Add(ruling);
+
+                foreach (var c in ordered)
+                {
+                    if (toKeep.Count >= TempleMaxClans) break;
+                    if (!toKeep.Contains(c)) toKeep.Add(c);
+                }
+
+                foreach (var c in ordered.Where(c => !toKeep.Contains(c)))
+                    try { ChangeKingdomAction.ApplyByLeaveKingdom(c, false); } catch { }
+            }
+            catch { }
+        }
+
+        private static void EnsureTemplarGrace()
+        {
+            try
+            {
+                var vlandia = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "vlandia" && !k.IsEliminated);
+                if (vlandia == null) return;
+
+                foreach (var clan in vlandia.Clans.ToList())
+                {
+                    foreach (var hero in clan.Heroes.ToList())
+                    {
+                        if (hero == null || !hero.IsAlive || hero.IsDisabled || hero == Hero.MainHero) continue;
+                        try
+                        {
+                            if (hero.GetTraitLevel(DefaultTraits.Honor) < 1)
+                                hero.SetTraitLevel(DefaultTraits.Honor, 1);
+                            if (hero.GetTraitLevel(DefaultTraits.Mercy) < 1)
+                                hero.SetTraitLevel(DefaultTraits.Mercy, 1);
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+        }
 
         // ── Daily tick — called from MagicCampaignBehavior.OnDailyTick ────────
         public static void DailyTick()
