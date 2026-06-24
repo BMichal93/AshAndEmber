@@ -35,6 +35,10 @@ namespace AshAndEmber
         // ── Capacity / talents ──────────────────────────────────────────────────
         private static int Capacity => TalentSystem.Has(TalentId.NatureLivingRoot) ? 2 : 1;
 
+        // Effective channel fill threshold (Templar penalty adds 1 s).
+        private static float EffectiveChannelFillSeconds
+            => TempleCulture.NatureChannelSeconds(NatureMath.ChannelFillSeconds);
+
         // Channel speed multiplier from talents (faster fill).
         private static float FillRate
         {
@@ -58,8 +62,8 @@ namespace AshAndEmber
 
         // 0..1 fill toward the next charge — for the channel bar (Part 3).
         public static float FillProgress01 =>
-            NatureMath.ChannelFillSeconds <= 0f ? 1f
-            : Math.Min(1f, _fill / NatureMath.ChannelFillSeconds);
+            EffectiveChannelFillSeconds <= 0f ? 1f
+            : Math.Min(1f, _fill / EffectiveChannelFillSeconds);
 
         public static bool IsChannelling => _fill > 0f && !IsFull;
 
@@ -125,7 +129,7 @@ namespace AshAndEmber
             if (DarkGiftSystem.HasAnyGift) { _fill = 0f; return false; }
 
             _fill += dt * FillRate;
-            if (_fill < NatureMath.ChannelFillSeconds) return false;
+            if (_fill < EffectiveChannelFillSeconds) return false;
 
             _fill = 0f;
             NatureElement[] pool = GetCurrentTerrainElements(inMission);

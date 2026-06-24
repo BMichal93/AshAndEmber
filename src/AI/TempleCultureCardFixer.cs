@@ -33,7 +33,15 @@ namespace AshAndEmber
             "The Templars are a holy order founded to stand against the Ashen and the eternal cold they "
             + "carry. Where lesser folk let their inner fire gutter, the Templars keep it burning as a sacred "
             + "trust. Descended from western lords who once served the Empire, they have bound throne to altar "
-            + "and meet the grey march with disciplined lances and unbending faith.";
+            + "and meet the grey march with disciplined lances and unbending faith.\n\n"
+            + "SPECIAL FEATS\n"
+            + "Dawn's Grace — The faithful are never left wanting. Should your Grace run dry, "
+            + "each dawn the Light restores a measure of it. (+1 Grace at the start of each day, if empty)\n\n"
+            + "Oath of the Vigil — Bound by sacred vow, your devotion steadies those who follow. "
+            + "The order's discipline holds where lesser courage breaks. (+4 party morale each day)\n\n"
+            + "THE ORDER'S PRICE — The Templars abhor the cold and the old pagan ways. "
+            + "Dark gifts demand twice their price, and the living ember answers your hand a heartbeat slower. "
+            + "(Dark Gift costs ×2; Nature channelling takes +1 second)";
 
         private static object _lastScreen;
         private static bool   _doneThisScreen;
