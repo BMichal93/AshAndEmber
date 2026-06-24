@@ -218,13 +218,13 @@ namespace AshAndEmber
                 var mgr = mgrField?.GetValue(null) as GameTextManager;
                 if (mgr == null) return false;
 
-                SetCultureVariation(mgr, "str_culture_rich_name", "vlandia", "Templars");
+                SetCultureVariation(mgr, "str_culture_rich_name", "vlandia", "The Holy Temple");
                 SetCultureVariation(mgr, "str_culture_description", "vlandia",
-                    "The Templars are a holy order founded to stand against the Ashen and the " +
-                    "eternal cold they carry. Where lesser folk let their inner fire gutter, the " +
-                    "Templars keep it burning as a sacred trust. Descended from western lords who " +
-                    "once served the Empire, they have bound throne to altar and meet the grey " +
-                    "march with disciplined lances and unbending faith.");
+                    "Once they were lords of the western marches, bound to no altar and no god but conquest. " +
+                    "When the grey march first came down from the north, the Empire turned east and left them " +
+                    "to face it alone. They held. In the silence that followed, they made a covenant with the " +
+                    "fire inside them — not as weapon, but as vow. The Templars are what that vow became. " +
+                    "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.");
                 return true;
             }
             catch { return false; }
@@ -255,6 +255,59 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+        }
+
+        // ── Vlandian troop rename ─────────────────────────────────────────────
+        // Renames all vanilla Vlandian troops so they read "Templar X" rather
+        // than "Vlandian X". BasicCharacterObject has its own _name field that
+        // shadows MBObjectBase._name; we prefer that one and fall back to the
+        // base field. Idempotent: already-renamed names are left unchanged.
+        // Called once per session alongside the kingdom rename.
+        //
+        // Specific overrides give a handful of units more evocative Templar names;
+        // everything else gets a simple "Vlandian" → "Templar" substitution.
+        private static readonly FieldInfo _characterNameField =
+            typeof(TaleWorlds.Core.BasicCharacterObject).GetField(
+                "_name", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly System.Collections.Generic.Dictionary<string, string> _troopNameOverrides =
+            new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Vlandian Recruit",       "Templar Initiate"   },
+            { "Vlandian Sharpshooter",  "Templar Marksman"   },
+            { "Vlandian Banner Knight", "Templar Champion"   },
+        };
+
+        public static void RenameVlandianTroops()
+        {
+            try
+            {
+                var nameField = _characterNameField ?? _nameField;
+                if (nameField == null) return;
+
+                foreach (var ch in MBObjectManager.Instance
+                             ?.GetObjectTypeList<CharacterObject>()
+                             ?? Enumerable.Empty<CharacterObject>())
+                {
+                    try
+                    {
+                        if (ch == null) continue;
+                        if (!(ch.StringId?.StartsWith("vlandian_", StringComparison.OrdinalIgnoreCase) ?? false))
+                            continue;
+
+                        string current = ch.Name?.ToString() ?? "";
+                        if (!current.StartsWith("Vlandian ", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        string newName;
+                        if (!_troopNameOverrides.TryGetValue(current, out newName))
+                            newName = "Templar " + current.Substring("Vlandian ".Length);
+
+                        nameField.SetValue(ch, new TextObject(newName));
+                    }
+                    catch { }
+                }
+            }
+            catch { }
         }
     }
 }

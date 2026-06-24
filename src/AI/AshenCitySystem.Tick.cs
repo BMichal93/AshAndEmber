@@ -36,6 +36,7 @@ namespace AshAndEmber
             {
                 try { RenameAshenSettlements();     } catch { }
                 try { RenameHolyTempleKingdom();    } catch { }
+                try { RenameVlandianTroops();        } catch { }
                 _settlementsRenamed = true;
             }
 
