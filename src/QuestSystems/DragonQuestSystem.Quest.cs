@@ -79,6 +79,73 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Succession contact (fires when the main hero changes mid-quest) ──
+        private static void ShowSuccessionContact()
+        {
+            try
+            {
+                // Recreate the quest log under the new hero before showing the popup,
+                // so the journal reflects the new bearer from this moment forward.
+                try
+                {
+                    _questLog = new DragonQuestLog();
+                    _questLog.StartQuest();
+                    _questLog.LogStarted();
+                    _questLog.UpdateProgress(_lordsSlain, _mageLordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount);
+                }
+                catch { }
+
+                string ordinal = GetOrdinal(_generation);
+                bool firstHandoff = _generation == 2;
+
+                string title = firstHandoff ? "The Burden Passes" : "The Burden Passes Again";
+
+                string body = firstHandoff
+                    ? "A rider in grey finds you before the week is out. Different face. Same robe.\n\n" +
+                      "\"You are the second to carry this. We have been watching the clan's fire for some time — " +
+                      "longer than the one before you knew.\"\n\n" +
+                      "She does not wait for you to ask how she found you.\n\n" +
+                      "\"What they gathered does not die with them. Embers do not recognise mortality as a reason to move. " +
+                      "The cold embers, the warm embers, everything accumulated across those battles — " +
+                      "it has been yours since the moment their fire went out. " +
+                      "You have been carrying it without feeling the weight.\n\n" +
+                      "The plan does not change. The altar is patient. It has waited longer than your line has existed.\n\n" +
+                      "If you are their blood, the fire already knows you. " +
+                      "The embers recognise the same current.\n\n" +
+                      "The letters will continue. The riders will find you as they found them. " +
+                      "What they started, you carry forward.\"\n\n" +
+                      "— The Order of the Last Flame"
+                    : $"A rider in grey. You have seen this before, or your family has — it amounts to the same thing.\n\n" +
+                      $"\"The {ordinal} bearer. The Temple has counted all of them.\"\n\n" +
+                      "She does not elaborate. The brevity is its own message — " +
+                      "the Order has watched this burden change hands enough times " +
+                      "that ceremony has worn away and only fact remains.\n\n" +
+                      "\"The count stands. The embers are yours. The altar waits.\n\n" +
+                      "The cycle does not care whose hands hold what it needs — only that those hands hold it. " +
+                      "You are those hands now.\"\n\n" +
+                      "She leaves without ceremony.\n\n" +
+                      "— The Order";
+
+                InformationManager.ShowInquiry(new InquiryData(
+                    title,
+                    body,
+                    true, false,
+                    "I carry it.",
+                    "",
+                    () =>
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            firstHandoff
+                                ? "The burden passes. The embers do not mourn."
+                                : $"The {ordinal} bearer takes up the count. The altar is still waiting.",
+                            new Color(0.70f, 0.55f, 0.35f)));
+                    },
+                    () => { }
+                ), true, true);
+            }
+            catch { }
+        }
+
         // ── Ashen lord stories (one per kill, in order) ───────────────────────
         private static void ShowLordStory(int storyIndex)
         {

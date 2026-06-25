@@ -59,8 +59,8 @@ namespace AshAndEmber
         public const int TargetMageLordsSlain  = 5;  // non-Ashen mage lords (warm embers)
         public const int TargetCitiesTaken     = 3;
         public const int TargetRuinsCleared    = 4;
-        private const int FinalChoiceMinDay     = 150;   // absolute day floor
-        private const int FinalChoiceMinContact = 180;   // days after first contact
+        private const int FinalChoiceMinDay     = 300;   // absolute day floor
+        private const int FinalChoiceMinContact = 730;   // days after first contact (two years)
         private const string AshenKingdomId  = "ashen_kingdom";
 
         // ── State ─────────────────────────────────────────────────────────────
@@ -72,9 +72,14 @@ namespace AshAndEmber
         private static int  _mageStoryPhase  = 0;  // 0-3: mage lord stories shown (first 3 kills)
         private static int  _letterPhase  = 0;  // 0-6: how many Temple letters sent
         private static int  _endingPhase  = 0;  // 0-4: ending sequence progress
-        private static bool _worldBound   = false;
-        private static int  _contactDay   = -1;
-        private static int  _coldTownTarget = 0;  // total towns to conquer for the cold quest
+        private static bool _worldBound            = false;
+        private static int  _contactDay            = -1;
+        private static int  _generation            = 1;    // how many main heroes have carried this
+        private static bool _pendingSuccessionPopup = false;
+        private static int  _coldTownTarget        = 0;
+
+        // Not saved — initialised at session start to detect mid-session succession.
+        private static string _lastMainHeroId = null;
         internal static DragonQuestLog      _questLog     = null;
         internal static EternalColdQuestLog _coldQuestLog = null;
 
@@ -188,6 +193,17 @@ namespace AshAndEmber
             if (_worldBound) return;
             if (BurningLabQuestSystem.WitheringFired) return;
 
+            // Succession check — must run before any popup logic.
+            try { CheckSuccession(); } catch { }
+
+            // Queue succession popup before anything else if it's pending.
+            if (_pendingSuccessionPopup && MageKnowledge._deferredInquiry == null)
+            {
+                _pendingSuccessionPopup = false;
+                MageKnowledge._deferredInquiry = ShowSuccessionContact;
+                return;
+            }
+
             // The cold has claimed the player. The Temple's path dies; a colder
             // ambition takes its place.
             if (MageKnowledge.IsAshen) { TurnToCold(); return; }
@@ -254,6 +270,51 @@ namespace AshAndEmber
             {
                 MageKnowledge._deferredInquiry = ShowFinalPrompt;
             }
+        }
+
+        // ── Succession detection ──────────────────────────────────────────────
+        // Called every daily tick. Detects when Hero.MainHero has changed
+        // (old age or battle death) and flags a pending succession popup if the
+        // quest is active. Progress (embers, kills, phase) persists unchanged —
+        // the fire inherits through the bloodline.
+        private static void CheckSuccession()
+        {
+            string currentId = Hero.MainHero?.StringId;
+            if (currentId == null) return;
+
+            if (_lastMainHeroId == null)
+            {
+                _lastMainHeroId = currentId;
+                return;
+            }
+
+            if (currentId == _lastMainHeroId) return;
+
+            // Main hero changed — succession happened.
+            _lastMainHeroId = currentId;
+
+            bool questCarried = _phase == PhaseContacted
+                             || _phase == PhaseActive
+                             || _phase == PhaseAllDone;
+            if (!questCarried) return;
+
+            _generation++;
+
+            // Orphan the old quest log (its QuestGiver hero is now dead).
+            // The engine will clean it up; a new one is created after the popup.
+            _questLog = null;
+
+            _pendingSuccessionPopup = true;
+        }
+
+        internal static string GetOrdinal(int n)
+        {
+            if (n == 1) return "first";
+            if (n == 2) return "second";
+            if (n == 3) return "third";
+            if (n == 4) return "fourth";
+            if (n == 5) return "fifth";
+            return $"{n}th";
         }
 
         private static void TrackSettlements()
@@ -480,6 +541,13 @@ namespace AshAndEmber
                 "You walked away from the Binding. The Temple accepted it. " +
                 "The world turns as it always has. The cycle continues."));
             CompleteQuestWithFail();
+        }
+
+        internal void LogHandoff(int generation)
+        {
+            AddLog(new TextObject(
+                $"The fire passes. This was the {DragonQuestSystem.GetOrdinal(generation - 1)} " +
+                "bearer of the burden. The embers do not mourn."));
         }
 
         internal void LogColdConversion()
