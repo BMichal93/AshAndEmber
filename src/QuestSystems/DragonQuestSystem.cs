@@ -55,18 +55,21 @@ namespace AshAndEmber
         private const int PhaseColdDone   = 7; // cold conquest complete — everything is conquered
 
         // ── Tuning ────────────────────────────────────────────────────────────
-        public const int TargetLordsSlain   = 5;
-        public const int TargetCitiesTaken  = 3;
-        public const int TargetRuinsCleared = 4;
+        public const int TargetLordsSlain      = 6;  // Ashen lords (cold embers)
+        public const int TargetMageLordsSlain  = 5;  // non-Ashen mage lords (warm embers)
+        public const int TargetCitiesTaken     = 3;
+        public const int TargetRuinsCleared    = 4;
         private const int FinalChoiceMinDay     = 150;   // absolute day floor
         private const int FinalChoiceMinContact = 180;   // days after first contact
         private const string AshenKingdomId  = "ashen_kingdom";
 
         // ── State ─────────────────────────────────────────────────────────────
         private static int  _phase        = PhaseIdle;
-        private static int  _lordsSlain   = 0;
-        private static int  _citiesTaken  = 0;
-        private static int  _storyPhase   = 0;  // 0-5: how many lord stories shown
+        private static int  _lordsSlain      = 0;  // Ashen lords killed
+        private static int  _mageLordsSlain  = 0;  // non-Ashen mage lords killed
+        private static int  _citiesTaken     = 0;
+        private static int  _storyPhase      = 0;  // 0-6: Ashen lord stories shown
+        private static int  _mageStoryPhase  = 0;  // 0-3: mage lord stories shown (first 3 kills)
         private static int  _letterPhase  = 0;  // 0-6: how many Temple letters sent
         private static int  _endingPhase  = 0;  // 0-4: ending sequence progress
         private static bool _worldBound   = false;
@@ -80,11 +83,12 @@ namespace AshAndEmber
         private static readonly Random          _rng                  = new Random();
 
         // ── Public accessors ──────────────────────────────────────────────────
-        public static bool IsActive       => _phase == PhaseActive || _phase == PhaseAllDone;
-        public static bool IsDone         => _phase == PhaseAccepted || _phase == PhaseRefused;
-        public static bool WorldRekindled => _worldBound;  // consumed by CampaignMapEvents, ColourLordRegistry, AshenCitySystem
-        public static int  LordsSlain     => _lordsSlain;
-        public static int  CitiesTaken    => _citiesTaken;
+        public static bool IsActive        => _phase == PhaseActive || _phase == PhaseAllDone;
+        public static bool IsDone          => _phase == PhaseAccepted || _phase == PhaseRefused;
+        public static bool WorldRekindled  => _worldBound;  // consumed by CampaignMapEvents, ColourLordRegistry, AshenCitySystem
+        public static int  LordsSlain      => _lordsSlain;
+        public static int  MageLordsSlain  => _mageLordsSlain;
+        public static int  CitiesTaken     => _citiesTaken;
 
         private static int Today()
         {
@@ -104,7 +108,9 @@ namespace AshAndEmber
             bool idle   = _phase == PhaseIdle;
             bool active = _phase == PhaseActive || _phase == PhaseAllDone;
             if (!idle && !active) return;                       // Contacted/finished: nothing to do
-            if (active && _lordsSlain >= TargetLordsSlain) return;
+            bool ashenDone = active && _lordsSlain >= TargetLordsSlain;
+            bool mageDone  = active && _mageLordsSlain >= TargetMageLordsSlain;
+            if (ashenDone && mageDone) return;
 
             try
             {
@@ -121,18 +127,20 @@ namespace AshAndEmber
                 var enemySide = playerAttacker ? mapEvent.DefenderSide : mapEvent.AttackerSide;
                 if (enemySide == null) return;
 
-                // Ashen lords who fell on the losing side of this battle.
-                int ashenKilled = 0;
+                int ashenKilled    = 0;
+                int mageLordKilled = 0;
                 foreach (var meparty in enemySide.Parties.ToList())
                 {
                     Hero leader = meparty?.Party?.LeaderHero;
                     if (leader == null || leader.IsAlive) continue;
-                    if (!ColourLordRegistry.IsAshenLord(leader)) continue;
-                    ashenKilled++;
+                    if (ColourLordRegistry.IsAshenLord(leader))
+                        ashenKilled++;
+                    else if (ColourLordRegistry.IsColourLord(leader))
+                        mageLordKilled++;
                 }
-                if (ashenKilled <= 0) return;
+                if (ashenKilled <= 0 && mageLordKilled <= 0) return;
 
-                if (idle)
+                if (idle && ashenKilled > 0)
                 {
                     // First Ashen lord defeated — the Temple takes notice. Open to
                     // any non-Ashen player, mage or not (the Ashen gate is above).
@@ -145,14 +153,24 @@ namespace AshAndEmber
                     return;
                 }
 
-                // Active / AllDone: tally kills toward the objective, capped.
+                // Active / AllDone: tally Ashen kills toward the cold-ember objective.
                 for (int i = 0; i < ashenKilled && _lordsSlain < TargetLordsSlain; i++)
                 {
                     _lordsSlain++;
                     try { _questLog?.LogLordSlain(_lordsSlain); } catch { }
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"An Ashen lord falls. The cold retreats where you go. [{_lordsSlain}/{TargetLordsSlain}]",
+                        $"An Ashen lord falls. Their cold ember passes to you. [{_lordsSlain}/{TargetLordsSlain}]",
                         new Color(0.70f, 0.55f, 0.35f)));
+                }
+
+                // Tally non-Ashen mage lord kills toward the warm-ember objective.
+                for (int i = 0; i < mageLordKilled && _mageLordsSlain < TargetMageLordsSlain; i++)
+                {
+                    _mageLordsSlain++;
+                    try { _questLog?.LogMageLordSlain(_mageLordsSlain); } catch { }
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"A mage lord's fire is spent. Their warm ember is yours. [{_mageLordsSlain}/{TargetMageLordsSlain}]",
+                        new Color(0.80f, 0.70f, 0.40f)));
                 }
             }
             catch { }
@@ -189,12 +207,13 @@ namespace AshAndEmber
             try { TrackSettlements(); } catch { }
 
             // Update journal objectives
-            try { _questLog?.UpdateProgress(_lordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount); } catch { }
+            try { _questLog?.UpdateProgress(_lordsSlain, _mageLordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount); } catch { }
 
-            // Transition to AllDone when objectives complete
+            // Transition to AllDone when all objectives complete
             if (_phase == PhaseActive
-                && _lordsSlain  >= TargetLordsSlain
-                && _citiesTaken >= TargetCitiesTaken
+                && _lordsSlain      >= TargetLordsSlain
+                && _mageLordsSlain  >= TargetMageLordsSlain
+                && _citiesTaken     >= TargetCitiesTaken
                 && AshenRuinSystem.ClearedCount >= TargetRuinsCleared)
             {
                 _phase = PhaseAllDone;
@@ -204,7 +223,7 @@ namespace AshAndEmber
                     new Color(0.75f, 0.55f, 0.3f)));
             }
 
-            // Queue pending lord story — one at a time, after each kill
+            // Queue pending Ashen lord story — one at a time, after each kill
             if (_storyPhase < _lordsSlain && MageKnowledge._deferredInquiry == null)
             {
                 int storyIdx = _storyPhase;
@@ -213,7 +232,17 @@ namespace AshAndEmber
                 return;
             }
 
-            // Queue Temple letters once lord stories for that tier are shown
+            // Queue pending mage lord stories — first 3 kills each get a vignette
+            int mageStoriesExpected = Math.Min(_mageLordsSlain, 3);
+            if (_mageStoryPhase < mageStoriesExpected && MageKnowledge._deferredInquiry == null)
+            {
+                int storyIdx = _mageStoryPhase;
+                _mageStoryPhase++;
+                MageKnowledge._deferredInquiry = () => ShowMageLordStory(storyIdx);
+                return;
+            }
+
+            // Queue Temple letters once all pending stories have been shown
             try { CheckLetterDelivery(); } catch { }
 
             // Final prompt: all done, all 6 letters sent, time gates met
@@ -258,7 +287,8 @@ namespace AshAndEmber
         {
             if (_letterPhase >= 6) return;
             if (MageKnowledge._deferredInquiry != null) return;
-            if (_storyPhase < _lordsSlain) return;  // let the story queue drain first
+            if (_storyPhase < _lordsSlain) return;  // let Ashen story queue drain first
+            if (_mageStoryPhase < Math.Min(_mageLordsSlain, 3)) return;  // let mage story queue drain
 
             bool shouldSend = false;
             switch (_letterPhase)
@@ -266,9 +296,11 @@ namespace AshAndEmber
                 case 0: shouldSend = _contactDay > 0 && Today() - _contactDay >= 14; break;
                 case 1: shouldSend = _lordsSlain >= 1 && _storyPhase >= 1; break;
                 case 2: shouldSend = _lordsSlain >= 2 && _storyPhase >= 2; break;
-                case 3: shouldSend = _lordsSlain >= 3 && _storyPhase >= 3; break;
+                // Letter 3 arrives after the first warm ember — gates on first mage lord kill + story shown.
+                case 3: shouldSend = _mageLordsSlain >= 1 && _mageStoryPhase >= 1; break;
                 case 4: shouldSend = _lordsSlain >= 4 && _storyPhase >= 4; break;
-                case 5: shouldSend = _lordsSlain >= 5 && _storyPhase >= 5; break;
+                // Letter 5 is the altar summons — only fires when all objectives are complete.
+                case 5: shouldSend = _phase == PhaseAllDone; break;
             }
 
             if (!shouldSend) return;
@@ -371,31 +403,37 @@ namespace AshAndEmber
         protected override void SetDialogs() { }
 
         private JournalLog _objLords;
+        private JournalLog _objMageLords;
         private JournalLog _objCities;
         private JournalLog _objRuins;
 
         internal void LogStarted()
         {
             AddLog(new TextObject(
-                "The Temple has made contact. Their plan requires three things of you: " +
-                "silence five Ashen lords in battle, claim three Ashen strongholds for your clan, " +
+                "The Temple has made contact. Their plan requires four things of you: " +
+                "claim six cold embers from Ashen lords, claim five warm embers from mage lords in battle, " +
+                "take three Ashen strongholds for your clan, " +
                 "and read the darkness of four Ashen ruin sites. The letters will follow your progress."));
             EnsureObjectives();
         }
 
         private void EnsureObjectives()
         {
-            if (_objLords != null && _objCities != null && _objRuins != null) return;
-            if (JournalEntries != null && JournalEntries.Count >= 4)
+            if (_objLords != null && _objMageLords != null && _objCities != null && _objRuins != null) return;
+            if (JournalEntries != null && JournalEntries.Count >= 5)
             {
-                if (_objLords  == null) _objLords  = JournalEntries[1];
-                if (_objCities == null) _objCities = JournalEntries[2];
-                if (_objRuins  == null) _objRuins  = JournalEntries[3];
+                if (_objLords     == null) _objLords     = JournalEntries[1];
+                if (_objMageLords == null) _objMageLords = JournalEntries[2];
+                if (_objCities    == null) _objCities    = JournalEntries[3];
+                if (_objRuins     == null) _objRuins     = JournalEntries[4];
                 return;
             }
             _objLords = AddDiscreteLog(
-                new TextObject("Silence five Ashen lords in battle — lead the winning party."),
-                new TextObject("Ashen Lords"), 0, DragonQuestSystem.TargetLordsSlain, null, false);
+                new TextObject("Silence six Ashen lords in battle — claim their cold embers."),
+                new TextObject("Cold Embers"), 0, DragonQuestSystem.TargetLordsSlain, null, false);
+            _objMageLords = AddDiscreteLog(
+                new TextObject("Silence five mage lords in battle — claim their warm embers."),
+                new TextObject("Warm Embers"), 0, DragonQuestSystem.TargetMageLordsSlain, null, false);
             _objCities = AddDiscreteLog(
                 new TextObject("Claim three Ashen cities or castles for your clan."),
                 new TextObject("Ashen Strongholds"), 0, DragonQuestSystem.TargetCitiesTaken, null, false);
@@ -404,17 +442,22 @@ namespace AshAndEmber
                 new TextObject("Ruins Cleared"), 0, DragonQuestSystem.TargetRuinsCleared, null, false);
         }
 
-        internal void UpdateProgress(int lords, int cities, int ruins)
+        internal void UpdateProgress(int lords, int mageLords, int cities, int ruins)
         {
             EnsureObjectives();
-            try { _objLords?.UpdateCurrentProgress(Math.Min(lords,  DragonQuestSystem.TargetLordsSlain));   } catch { }
-            try { _objCities?.UpdateCurrentProgress(Math.Min(cities, DragonQuestSystem.TargetCitiesTaken)); } catch { }
-            try { _objRuins?.UpdateCurrentProgress(Math.Min(ruins,   DragonQuestSystem.TargetRuinsCleared)); } catch { }
+            try { _objLords?.UpdateCurrentProgress(Math.Min(lords,     DragonQuestSystem.TargetLordsSlain));     } catch { }
+            try { _objMageLords?.UpdateCurrentProgress(Math.Min(mageLords, DragonQuestSystem.TargetMageLordsSlain)); } catch { }
+            try { _objCities?.UpdateCurrentProgress(Math.Min(cities,   DragonQuestSystem.TargetCitiesTaken));   } catch { }
+            try { _objRuins?.UpdateCurrentProgress(Math.Min(ruins,     DragonQuestSystem.TargetRuinsCleared));  } catch { }
         }
 
         internal void LogLordSlain(int count) =>
             AddLog(new TextObject(
-                $"An Ashen lord silenced. [{count}/{DragonQuestSystem.TargetLordsSlain}]"));
+                $"An Ashen lord silenced — cold ember claimed. [{count}/{DragonQuestSystem.TargetLordsSlain}]"));
+
+        internal void LogMageLordSlain(int count) =>
+            AddLog(new TextObject(
+                $"A mage lord's fire spent — warm ember claimed. [{count}/{DragonQuestSystem.TargetMageLordsSlain}]"));
 
         internal void LogCityTaken(string name, int count) =>
             AddLog(new TextObject(
