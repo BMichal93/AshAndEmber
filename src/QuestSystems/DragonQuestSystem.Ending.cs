@@ -74,10 +74,11 @@ namespace AshAndEmber
                 return "\nThe Binding has fired. The grey retreats.\n" +
                        "The world has more time. So it has been for every cycle.\n";
 
-            string l = _lordsSlain  >= TargetLordsSlain   ? "✓" : $"{_lordsSlain}/{TargetLordsSlain}";
-            string c = _citiesTaken >= TargetCitiesTaken  ? "✓" : $"{_citiesTaken}/{TargetCitiesTaken}";
-            string r = AshenRuinSystem.ClearedCount >= TargetRuinsCleared
-                       ? "✓" : $"{AshenRuinSystem.ClearedCount}/{TargetRuinsCleared}";
+            string l  = _lordsSlain     >= TargetLordsSlain    ? "✓" : $"{_lordsSlain}/{TargetLordsSlain}";
+            string ml = _mageLordsSlain >= TargetMageLordsSlain ? "✓" : $"{_mageLordsSlain}/{TargetMageLordsSlain}";
+            string c  = _citiesTaken    >= TargetCitiesTaken   ? "✓" : $"{_citiesTaken}/{TargetCitiesTaken}";
+            string r  = AshenRuinSystem.ClearedCount >= TargetRuinsCleared
+                        ? "✓" : $"{AshenRuinSystem.ClearedCount}/{TargetRuinsCleared}";
 
             string status = _phase == PhaseAllDone
                 ? "\n  [All conditions met — the Temple's final letter waits.]\n"
@@ -88,9 +89,10 @@ namespace AshAndEmber
                 : "";
 
             return $"\nQuest: The Silence Between Fires\n" +
-                   $"  {l}  Ashen lords silenced   (need {TargetLordsSlain})\n" +
-                   $"  {c}  Strongholds claimed    (need {TargetCitiesTaken})\n" +
-                   $"  {r}  Ashen ruins cleared    (need {TargetRuinsCleared})\n" +
+                   $"  {l}   Cold embers claimed   (need {TargetLordsSlain})\n" +
+                   $"  {ml}  Warm embers claimed   (need {TargetMageLordsSlain})\n" +
+                   $"  {c}   Strongholds claimed   (need {TargetCitiesTaken})\n" +
+                   $"  {r}   Ashen ruins cleared   (need {TargetRuinsCleared})\n" +
                    letters +
                    status;
         }

@@ -1,6 +1,6 @@
 // =============================================================================
 // ASH AND EMBER — DragonQuestSystem.Quest.cs
-// Temple contact, lord stories, Temple letters, final prompt, ending sequence.
+// Temple contact, lord stories, mage lord stories, Temple letters, final prompt.
 // Partial of DragonQuestSystem (shared state lives in DragonQuestSystem.cs).
 // =============================================================================
 
@@ -36,9 +36,14 @@ namespace AshAndEmber
                     "She hands you a sealed letter without stopping. Her horse doesn't break stride. " +
                     "By the time you turn to ask, she is already through the gate.\n\n" +
                     "The letter has no header. It reads:\n\n" +
-                    "\"There is a plan. You have already started it without knowing it — " +
-                    "every Ashen lord you push back, every ruin you walk into, " +
-                    "every city you pull out of the grey march. Keep going. We will find you again.\"\n\n" +
+                    "\"Every mage of true power carries an ember at their core — " +
+                    "a dense knot of fire that accumulates over years of working. " +
+                    "Most never know it is there. When they fall, it does not disperse. " +
+                    "It moves to whoever was burning brightest nearby.\n\n" +
+                    "The Ashen carry cold embers. Those who kept their fire carry warm ones. " +
+                    "There is a ritual that needs both — in balance, in sufficient number. " +
+                    "You have already started collecting without knowing it.\n\n" +
+                    "Keep going. We will find you again.\"\n\n" +
                     "No signature.",
 
                     true, true,
@@ -53,9 +58,10 @@ namespace AshAndEmber
                             "Quest added: The Silence Between Fires.",
                             new Color(0.75f, 0.55f, 0.3f)));
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"Objectives: silence {TargetLordsSlain} Ashen lords  ·  " +
-                            $"claim {TargetCitiesTaken} Ashen strongholds  ·  " +
-                            $"clear {TargetRuinsCleared} Ashen ruins.",
+                            $"Objectives: claim {TargetLordsSlain} cold embers (Ashen lords)  ·  " +
+                            $"{TargetMageLordsSlain} warm embers (mage lords)  ·  " +
+                            $"{TargetCitiesTaken} Ashen strongholds  ·  " +
+                            $"{TargetRuinsCleared} Ashen ruins.",
                             new Color(0.65f, 0.50f, 0.25f)));
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Check progress in the Grimoire (Alt+X).",
@@ -73,26 +79,93 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Lord stories (one per kill, in order) ────────────────────────────
-        // storyIndex 0-4 maps to the five lord archetypes encountered in sequence.
+        // ── Succession contact (fires when the main hero changes mid-quest) ──
+        private static void ShowSuccessionContact()
+        {
+            try
+            {
+                // Recreate the quest log under the new hero before showing the popup,
+                // so the journal reflects the new bearer from this moment forward.
+                try
+                {
+                    _questLog = new DragonQuestLog();
+                    _questLog.StartQuest();
+                    _questLog.LogStarted();
+                    _questLog.UpdateProgress(_lordsSlain, _mageLordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount);
+                }
+                catch { }
+
+                string ordinal = GetOrdinal(_generation);
+                bool firstHandoff = _generation == 2;
+
+                string title = firstHandoff ? "The Burden Passes" : "The Burden Passes Again";
+
+                string body = firstHandoff
+                    ? "A rider in grey finds you before the week is out. Different face. Same robe.\n\n" +
+                      "\"You are the second to carry this. We have been watching the clan's fire for some time — " +
+                      "longer than the one before you knew.\"\n\n" +
+                      "She does not wait for you to ask how she found you.\n\n" +
+                      "\"What they gathered does not die with them. Embers do not recognise mortality as a reason to move. " +
+                      "The cold embers, the warm embers, everything accumulated across those battles — " +
+                      "it has been yours since the moment their fire went out. " +
+                      "You have been carrying it without feeling the weight.\n\n" +
+                      "The plan does not change. The altar is patient. It has waited longer than your line has existed.\n\n" +
+                      "If you are their blood, the fire already knows you. " +
+                      "The embers recognise the same current.\n\n" +
+                      "The letters will continue. The riders will find you as they found them. " +
+                      "What they started, you carry forward.\"\n\n" +
+                      "— The Order of the Last Flame"
+                    : $"A rider in grey. You have seen this before, or your family has — it amounts to the same thing.\n\n" +
+                      $"\"The {ordinal} bearer. The Temple has counted all of them.\"\n\n" +
+                      "She does not elaborate. The brevity is its own message — " +
+                      "the Order has watched this burden change hands enough times " +
+                      "that ceremony has worn away and only fact remains.\n\n" +
+                      "\"The count stands. The embers are yours. The altar waits.\n\n" +
+                      "The cycle does not care whose hands hold what it needs — only that those hands hold it. " +
+                      "You are those hands now.\"\n\n" +
+                      "She leaves without ceremony.\n\n" +
+                      "— The Order";
+
+                InformationManager.ShowInquiry(new InquiryData(
+                    title,
+                    body,
+                    true, false,
+                    "I carry it.",
+                    "",
+                    () =>
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            firstHandoff
+                                ? "The burden passes. The embers do not mourn."
+                                : $"The {ordinal} bearer takes up the count. The altar is still waiting.",
+                            new Color(0.70f, 0.55f, 0.35f)));
+                    },
+                    () => { }
+                ), true, true);
+            }
+            catch { }
+        }
+
+        // ── Ashen lord stories (one per kill, in order) ───────────────────────
         private static void ShowLordStory(int storyIndex)
         {
             try
             {
                 switch (storyIndex)
                 {
-                    case 0: ShowLordStory_Warden();  break;
-                    case 1: ShowLordStory_Scholar(); break;
-                    case 2: ShowLordStory_Father();  break;
-                    case 3: ShowLordStory_Tablets(); break;
-                    case 4: ShowLordStory_Letter();  break;
+                    case 0: ShowLordStory_Warden();    break;
+                    case 1: ShowLordStory_Scholar();   break;
+                    case 2: ShowLordStory_Father();    break;
+                    case 3: ShowLordStory_Tablets();   break;
+                    case 4: ShowLordStory_Candidate(); break;
+                    case 5: ShowLordStory_Letter();    break;
                     default: break;
                 }
             }
             catch { }
         }
 
-        // Story 1 — The Warden's Post (after 1st kill)
+        // Story 1 — The Warden's Post (after 1st Ashen kill)
         private static void ShowLordStory_Warden()
         {
             InformationManager.ShowInquiry(new InquiryData(
@@ -126,7 +199,7 @@ namespace AshAndEmber
             ), true, true);
         }
 
-        // Story 2 — The Scholar's Notes (after 2nd kill)
+        // Story 2 — The Scholar's Notes (after 2nd Ashen kill)
         private static void ShowLordStory_Scholar()
         {
             InformationManager.ShowInquiry(new InquiryData(
@@ -170,7 +243,7 @@ namespace AshAndEmber
             ), true, true);
         }
 
-        // Story 3 — The Father's Trail (after 3rd kill)
+        // Story 3 — The Father's Trail (after 3rd Ashen kill)
         private static void ShowLordStory_Father()
         {
             InformationManager.ShowInquiry(new InquiryData(
@@ -199,7 +272,7 @@ namespace AshAndEmber
             ), true, true);
         }
 
-        // Story 4 — The Founding Tablets (after 4th kill)
+        // Story 4 — The Founding Tablets (after 4th Ashen kill)
         private static void ShowLordStory_Tablets()
         {
             InformationManager.ShowInquiry(new InquiryData(
@@ -238,7 +311,47 @@ namespace AshAndEmber
             ), true, true);
         }
 
-        // Story 5 — The Last Lord's Letter (after 5th kill)
+        // Story 5 — The Temple Candidate (after 5th Ashen kill)
+        private static void ShowLordStory_Candidate()
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Seat That Went to Someone Else",
+
+                "Among the effects of the Ashen lord you just killed: Temple documents. Old ones.\n\n" +
+                "A candidate record — her name, her assessed fire-strength, the date she was offered " +
+                "a place in the Binding. And her refusal. Dated. Signed.\n\n" +
+                "A second invitation. Also refused.\n\n" +
+                "A third invitation, prepared but never sent. " +
+                "Below it, a conversion record. The dates match the gap between the second refusal " +
+                "and when the third invitation was drafted.\n\n" +
+                "The Temple rider who finds you before you leave the field looks at the documents " +
+                "for a long time and does not take them from you.\n\n" +
+                "\"She was supposed to be one of the eleven,\" she says finally. " +
+                "\"We gave her seat to someone else. We never told the current eleven where it came from.\"\n\n" +
+                "The cold ember you carry from this battle is different from the others. " +
+                "It has the faint warmth of something that was almost something else.",
+
+                true, true,
+                "What happened to the seat?",
+                "It doesn't change what she became.",
+
+                () =>
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The rider is quiet for a moment. \"Someone filled it. They do not know " +
+                        "the seat had a name on it before theirs.\"",
+                        new Color(0.65f, 0.50f, 0.35f)));
+                },
+                () =>
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The rider nods slowly. \"No. It doesn't.\"",
+                        new Color(0.55f, 0.50f, 0.55f)));
+                }
+            ), true, true);
+        }
+
+        // Story 6 — The Last Lord's Letter (after 6th and final Ashen kill)
         private static void ShowLordStory_Letter()
         {
             InformationManager.ShowInquiry(new InquiryData(
@@ -285,6 +398,134 @@ namespace AshAndEmber
             ), true, true);
         }
 
+        // ── Mage lord stories (first 3 kills, in order) ───────────────────────
+        private static void ShowMageLordStory(int storyIndex)
+        {
+            try
+            {
+                switch (storyIndex)
+                {
+                    case 0: ShowMageLordStory_Rider();        break;
+                    case 1: ShowMageLordStory_Cartographer(); break;
+                    case 2: ShowMageLordStory_Letter();       break;
+                    default: break;
+                }
+            }
+            catch { }
+        }
+
+        // Mage story 1 — The Rider Explains (after 1st mage lord kill)
+        private static void ShowMageLordStory_Rider()
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "What You Have Been Carrying",
+
+                "The battle is not yet cold when a Temple rider appears at the field edge.\n\n" +
+                "She does not ask about the fight. She asks you to hold out your hand.\n\n" +
+                "You feel something settle against your palm — invisible, faintly warm, " +
+                "the specific warmth of something that recently burned a great deal. " +
+                "She says:\n\n" +
+                "\"A warm ember. You have been carrying cold ones for months and may not have noticed. " +
+                "They announce themselves differently — grey weight, a heaviness that isn't quite physical. " +
+                "This one is warm. Brighter. You will feel the difference.\"\n\n" +
+                "She produces a small iron counting-vessel from her saddlebag and holds it open. " +
+                "Inside, a faint grey glow — cold embers, she explains, from the Ashen lords " +
+                "you have already killed. The vessel registers them. She notes the count.\n\n" +
+                "\"The Binding needs both in balance. You are doing what we needed " +
+                "without knowing it. Keep going.\"\n\n" +
+                "She rides away before you can ask who she is.",
+
+                true, true,
+                "What happens to the embers at the Altar?",
+                "I understand.",
+
+                () =>
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "\"They are given,\" she says without turning back. " +
+                        "\"That is all anyone has ever been able to say about it precisely.\"",
+                        new Color(0.75f, 0.65f, 0.40f)));
+                },
+                () => { }
+            ), true, true);
+        }
+
+        // Mage story 2 — The Cartographer's Map (after 2nd mage lord kill)
+        private static void ShowMageLordStory_Cartographer()
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Map He Made",
+
+                "Found among the mage lord's effects: a map. Not of roads or territories.\n\n" +
+                "Two kinds of marks, in grey and gold. Grey: Ashen lords, with dates beside each name. " +
+                "Every date you recognise. Every battle you led.\n\n" +
+                "Gold: mage lords. Some crossed out. Some crossed out in the last week. " +
+                "The marks converge — every line, grey and gold alike, " +
+                "drawing toward a single point on the map's edge. " +
+                "The High Altar site.\n\n" +
+                "The cartographer knew. He mapped the ember-flow the way you might map a river — " +
+                "following what it was drawn toward, tracing the current back to its source.\n\n" +
+                "Your name is not on the map. At the convergence point, where all the lines meet, " +
+                "there is only a small mark in a third colour the map's legend does not explain.\n\n" +
+                "The colour is the same as the Temple's seal.",
+
+                true, false,
+                "I have read this.",
+                "",
+                () =>
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The map goes into your kit. You are somewhere on it, even if you cannot see where.",
+                        new Color(0.65f, 0.55f, 0.40f)));
+                },
+                () => { }
+            ), true, true);
+        }
+
+        // Mage story 3 — The Letter He Left (after 3rd mage lord kill)
+        private static void ShowMageLordStory_Letter()
+        {
+            InformationManager.ShowInquiry(new InquiryData(
+                "The Letter He Left",
+
+                "The mage lord you killed was carrying a sealed letter.\n\n" +
+                "Addressed: *to whoever is collecting.*\n\n" +
+                "\"I have been watching the tally. I know what the Temple is building, " +
+                "and I have known for some years that I would be part of it " +
+                "whether I intended to be or not.\n\n" +
+                "I could not give what I carry willingly — not the way the Temple's eleven gave theirs, " +
+                "with ceremony and understanding. That kind of surrender requires a patience I never had. " +
+                "But I can give it to someone who earned it by fire. " +
+                "That is a different thing. It burns cleaner.\n\n" +
+                "If you are reading this, you have taken what I carried. " +
+                "The warm ember does not grieve. It only burns.\n\n" +
+                "Use it well. The cold has been patient for a very long time. " +
+                "It is almost time for something to be patient back.\"\n\n" +
+                "No signature. On the back, in a different hand and fresh ink:\n\n" +
+                "*He has always been on the list. He knew.*\n" +
+                "— The Order.",
+
+                true, true,
+                "He chose this.",
+                "He had no choice. None of us do.",
+
+                () =>
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "The letter goes into your kit alongside the cartographer's map. " +
+                        "You are building something, even if the Temple is the one who drew the plans.",
+                        new Color(0.70f, 0.60f, 0.40f)));
+                },
+                () =>
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You fold the letter and keep it anyway. Chosen or not, it matters that someone " +
+                        "understood what they were part of.",
+                        new Color(0.60f, 0.55f, 0.50f)));
+                }
+            ), true, true);
+        }
+
         // ── Temple letters (six, delivered on progress gates) ─────────────────
         private static void ShowTempleLetterByIndex(int idx)
         {
@@ -292,67 +533,90 @@ namespace AshAndEmber
             {
                 string[] titles =
                 {
-                    "The First Letter",           // 0 — 14 days after contact
-                    "The Second Letter",          // 1 — after 1st kill
-                    "The Third Letter",           // 2 — after 2nd kill
-                    "The Fourth Letter",          // 3 — after 3rd kill
-                    "The Fifth Letter",           // 4 — after 4th kill
-                    "The Sixth Letter",           // 5 — after 5th kill
+                    "The First Letter",    // 0 — 14 days after contact
+                    "The Second Letter",   // 1 — after 1st Ashen kill
+                    "The Third Letter",    // 2 — after 2nd Ashen kill
+                    "The Fourth Letter",   // 3 — after 1st mage lord kill
+                    "The Fifth Letter",    // 4 — after 4th Ashen kill
+                    "The Sixth Letter",    // 5 — all objectives met (PhaseAllDone)
                 };
                 string[] bodies =
                 {
-                    // Letter 0
-                    "\"A fire like yours reaches us even through the noise of the grey march. " +
-                    "We have been watching you. The Ashen lose ground where you go — for now, " +
-                    "which is longer than anyone else is managing.\n\n" +
-                    "Strike well. We have nothing yet to offer you except that when we do, we will. " +
-                    "Watch for our riders.\"\n\n" +
+                    // Letter 0 — introduces ember lore
+                    "\"Every mage of true power carries an ember at their core. " +
+                    "Most never know. Most die without ever learning what it becomes.\n\n" +
+                    "An ember is not a metaphor. It is a dense compression of fire-essence — " +
+                    "years of working, of casting, of carrying the gift, crystallised into something " +
+                    "that does not disperse when the body it lived in ceases to burn. " +
+                    "It moves. It goes to whoever was burning brightest nearby " +
+                    "when the fire went out.\n\n" +
+                    "You have been collecting them without knowing it. Cold ones from the Ashen march. " +
+                    "The Binding requires both kinds — cold and warm, in balance. " +
+                    "The tablets describe the ratio. We have been calculating it for two generations.\n\n" +
+                    "You are a collector now. You already were, the moment you led that first battle. " +
+                    "Strike well. We will write again.\"\n\n" +
                     "— The Order of the Last Flame",
 
-                    // Letter 1
+                    // Letter 1 — first cold ember, the warden's story
                     "\"The soldier at Aldscroft held the northern pass longer than any of the wars " +
                     "you have fought in lasted. We promised him relief. " +
                     "Our own campaigns kept us east. By the time we turned north, the warmth had run out.\n\n" +
-                    "Whatever he became, he became it waiting for us. " +
+                    "What you took from him in that battle was a cold ember — " +
+                    "thirty-one years of accumulated chill, compressed into something " +
+                    "that barely weighs anything and will not warm under flame.\n\n" +
                     "We are not telling you this to soften what you did. " +
-                    "We are telling you so you understand what the march is made of.\"\n\n" +
+                    "We are telling you so you understand what the march is made of. " +
+                    "And what the Binding will need to hold against it.\"\n\n" +
                     "— The Order",
 
-                    // Letter 2
+                    // Letter 2 — the scholar confirmed, cold embers burn clean in the Binding
                     "\"You may have found her notes. A scholar in our archives — " +
                     "we classified her correspondence eight years ago. She was not wrong. " +
-                    "We know this now. We burned the notes because we were not ready to know it.\n\n" +
+                    "We burned the notes because we were not ready to know it.\n\n" +
                     "The cold does not take people who have given up. " +
                     "It takes people who have seen clearly and found the warmth insufficient. " +
-                    "We cannot end the cycle. We can only change the terms. " +
-                    "There is a plan. We will tell you when you have earned it.\"\n\n" +
+                    "What it leaves behind is an ember that burns cold and precise and " +
+                    "completely without regret.\n\n" +
+                    "Those embers burn cleaner in the Binding than ours do. We have accepted that. " +
+                    "The ritual requires it — not as a punishment, not as a cost. " +
+                    "As a component. The cycle is not broken by warmth alone.\"\n\n" +
                     "— The Order",
 
-                    // Letter 3
-                    "\"The Temple was not built to defeat the Ashen. It was built to perform one act — " +
-                    "once each cycle, against the grey march — that interrupts it without ending it. " +
-                    "The founders knew the cycle would return. " +
-                    "The plan has always been the Binding.\n\n" +
-                    "We will tell you what that means when you have shown us you can receive it. " +
-                    "Two more to go. Hold the road.\"\n\n" +
+                    // Letter 3 — first warm ember, the difference between warm and cold
+                    "\"The first warm ember you have gathered is different from what we expected.\n\n" +
+                    "We have taken warm embers from those who gave them willingly before — " +
+                    "the Temple's own, over the decades, who chose this end knowing what it was for. " +
+                    "Those burn gold in our counting-vessels.\n\n" +
+                    "What you carry burns the same colour.\n\n" +
+                    "The warm embers from those who fell in battle — who did not choose this, " +
+                    "who were simply burning when they were ended — they burn differently in other hands. " +
+                    "In yours, they do not. We are still discussing what that means.\n\n" +
+                    "Keep gathering. We will have an answer before the altar is ready.\"\n\n" +
                     "— The Order",
 
-                    // Letter 4
-                    "\"The Binding. Twelve fires given at once, channeled through rites older than the Empire. " +
-                    "The cold retreats for a generation — two, perhaps. " +
-                    "The world builds. The fires accumulate. Someone is afraid again. The cycle turns.\n\n" +
-                    "The Temple rebuilt itself to be the twelve, this cycle. " +
-                    "We have eleven fires. We have been waiting for the twelfth.\n\n" +
-                    "You understand now why we have been watching your fire.\"\n\n" +
+                    // Letter 4 — the count, the twelve, the specific warmth required
+                    "\"We have enough cold embers. We have had enough for some time — " +
+                    "the march has been generous in that regard.\n\n" +
+                    "What the Binding has always needed that cycles past could not provide: " +
+                    "a warm fire that has been tested. That has walked through the cold and returned. " +
+                    "That has gathered both kinds of ember and is still burning.\n\n" +
+                    "The Temple's eleven have spent their lives in protected halls. " +
+                    "They are real fires. But they have not been where you have been.\n\n" +
+                    "The tablets describe a specific warmth required for the twelfth place in the Binding. " +
+                    "We have been looking for it for seventy years.\"\n\n" +
                     "— The Order",
 
-                    // Letter 5
-                    "\"Come to the High Altar. " +
-                    "There are things we have not told you about the Binding — " +
-                    "about what the cold contributes, about what the march is actually moving toward. " +
-                    "The last lord you killed may have told you some of it. They always do.\n\n" +
-                    "Some of what you find at the Altar will be difficult. " +
-                    "Come first. Hear it whole. Then decide.\n\n" +
+                    // Letter 5 — altar summons, come with what you carry
+                    "\"Come to the High Altar.\n\n" +
+                    "Bring what you carry — you will not need to produce it. " +
+                    "The Binding will find it. Cold embers and warm, " +
+                    "everything accumulated from the march and from those who kept their fire. " +
+                    "It is already part of you now. It has been since the first battle.\n\n" +
+                    "There are things we have not told you about what happens at the altar. " +
+                    "About what the cold brings when it arrives at the site. " +
+                    "About what it costs the Ashen, and why they keep coming anyway.\n\n" +
+                    "The last lord you killed knew. They always know, by the end. " +
+                    "Whatever they told you — hear us whole before you decide.\n\n" +
                     "You have earned the truth, not just the version that recruits.\"\n\n" +
                     "— The Order of the Last Flame",
                 };
@@ -383,19 +647,22 @@ namespace AshAndEmber
                     "The High Templar does not make it simple.\n\n" +
                     "\"The Binding needs twelve mage-fires. That much we told you. " +
                     "It also needs the cold fire the march carries — " +
-                    "both sides, balanced. " +
-                    "The Ashen move toward the ritual site the way the tide moves toward shore. " +
+                    "both sides, balanced. The embers you have gathered are already part of the ritual. " +
+                    "The Ashen move toward this site the way the tide moves toward shore. " +
                     "They come because something in the cold recognises what this is. " +
-                    "They are not victims of the Binding. They are participants.\"\n\n" +
+                    "They are not victims of the Binding. They are participants — " +
+                    "the cold fire answering the warm.\"\n\n" +
                     "She pauses. Eleven mages stand behind her, assembled over a century. " +
                     "All of them have agreed to this.\n\n" +
                     "\"The ritual will kill us. The Ashen who arrive will be consumed by it. " +
+                    "Every ember you have collected — cold and warm — will be spent in the moment. " +
                     "What is left will be a world with more time — " +
                     "a generation, perhaps two, before the next cycle begins. " +
                     "The grey retreats. The march stops. Somewhere the first new fire kindles " +
                     "that will not know what it cost.\"\n\n" +
                     "You think of the warden at his post. The scholar's sealed notes. " +
                     "The father circling a son he could not reach. " +
+                    "The cartographer's map with its unlabelled centre. " +
                     "The tablets sealed for the next twelve.\n\n" +
                     "\"There is no version of this that ends the cycle,\" the High Templar says. " +
                     "\"We are not offering you a solution. " +

@@ -21,11 +21,13 @@ namespace AshAndEmber
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
         {
-            store.SyncData("LDQ_Phase",       ref _phase);
-            store.SyncData("LDQ_LordsSlain",  ref _lordsSlain);
-            store.SyncData("LDQ_CitiesTaken", ref _citiesTaken);
-            store.SyncData("LDQ_StoryPhase",  ref _storyPhase);
-            store.SyncData("LDQ_LetterPhase", ref _letterPhase);
+            store.SyncData("LDQ_Phase",          ref _phase);
+            store.SyncData("LDQ_LordsSlain",     ref _lordsSlain);
+            store.SyncData("LDQ_MageLordsSlain", ref _mageLordsSlain);
+            store.SyncData("LDQ_CitiesTaken",    ref _citiesTaken);
+            store.SyncData("LDQ_StoryPhase",     ref _storyPhase);
+            store.SyncData("LDQ_MageStoryPhase", ref _mageStoryPhase);
+            store.SyncData("LDQ_LetterPhase",    ref _letterPhase);
             store.SyncData("LDQ_EndingPhase", ref _endingPhase);
             store.SyncData("LDQ_ContactDay",  ref _contactDay);
             store.SyncData("LDQ_ColdTarget",  ref _coldTownTarget);
@@ -33,6 +35,12 @@ namespace AshAndEmber
             int worldBoundInt = _worldBound ? 1 : 0;
             store.SyncData("LDQ_WorldBound",  ref worldBoundInt);
             _worldBound = worldBoundInt != 0;
+
+            store.SyncData("LDQ_Generation", ref _generation);
+
+            int pendingSuc = _pendingSuccessionPopup ? 1 : 0;
+            store.SyncData("LDQ_PendingSuc", ref pendingSuc);
+            _pendingSuccessionPopup = pendingSuc != 0;
 
             // Settlement tracking — persist so captures survive reload
             var everList     = _everAshenSettlements.ToList();
@@ -48,7 +56,7 @@ namespace AshAndEmber
             _questLog = new DragonQuestLog();
             _questLog.StartQuest();
             _questLog.LogStarted();
-            _questLog.UpdateProgress(_lordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount);
+            _questLog.UpdateProgress(_lordsSlain, _mageLordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount);
         }
 
         private static void EnsureColdQuestLog()
@@ -60,15 +68,20 @@ namespace AshAndEmber
 
         public static void ResetForNewGame()
         {
-            _phase        = PhaseIdle;
-            _lordsSlain   = 0;
-            _citiesTaken  = 0;
-            _storyPhase   = 0;
-            _letterPhase  = 0;
-            _endingPhase  = 0;
-            _worldBound   = false;
-            _contactDay   = -1;
-            _coldTownTarget = 0;
+            _phase                  = PhaseIdle;
+            _lordsSlain             = 0;
+            _mageLordsSlain         = 0;
+            _citiesTaken            = 0;
+            _storyPhase             = 0;
+            _mageStoryPhase         = 0;
+            _letterPhase            = 0;
+            _endingPhase            = 0;
+            _worldBound             = false;
+            _contactDay             = -1;
+            _generation             = 1;
+            _pendingSuccessionPopup = false;
+            _lastMainHeroId         = null;
+            _coldTownTarget         = 0;
             _questLog     = null;
             _coldQuestLog = null;
             _everAshenSettlements.Clear();
@@ -77,8 +90,10 @@ namespace AshAndEmber
 
         public static void OnGameStart()
         {
-            // If a world-bound save is loaded, downstream systems check WorldRekindled
-            // on their own daily ticks — nothing to initialise here.
+            // Anchor the succession tracker to whoever is the hero at session start.
+            // Succession is only detectable mid-session (not across save/load), so
+            // we just record the current hero and watch for changes from here.
+            _lastMainHeroId = null; // will be set on first DailyTick
         }
     }
 }
