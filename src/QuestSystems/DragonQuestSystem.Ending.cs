@@ -43,7 +43,7 @@ namespace AshAndEmber
                     "Not violent. Purposeful. Even the cold has a direction.\n\n" +
                     "For a moment you are aware of everything: the march stopping, the grey retreating, " +
                     "somewhere the first new fire kindling that will not know what it cost.\n\n" +
-                    "The High Templar was right. It is not a solution. It is more time.\n\n" +
+                    "They were right. It is not a solution. It is more time.\n\n" +
                     "You think: that is enough.\n\n" +
                     "Then you do not think anything.",
 
@@ -81,11 +81,11 @@ namespace AshAndEmber
                         ? "✓" : $"{AshenRuinSystem.ClearedCount}/{TargetRuinsCleared}";
 
             string status = _phase == PhaseAllDone
-                ? "\n  [All conditions met — the Temple's final letter waits.]\n"
+                ? "\n  [All conditions met — a final summons waits.]\n"
                 : "";
 
             string letters = _letterPhase > 0
-                ? $"\n  Temple correspondence received: {_letterPhase}/6\n"
+                ? $"\n  Messages from the Vigil: {_letterPhase}/6\n"
                 : "";
 
             return $"\nQuest: The Silence Between Fires\n" +

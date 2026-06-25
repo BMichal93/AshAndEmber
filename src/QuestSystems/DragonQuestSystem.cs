@@ -3,19 +3,18 @@
 // The Silence Between Fires — main campaign goal for non-Ashen players.
 //
 // Trigger  : Player defeats their first Ashen lord in battle (leading the
-//            winning side). That kill draws the Temple's eye and counts as the
-//            first of the five. No Temple membership required — contact alone
-//            is enough.
+//            winning side). That kill draws the attention of a mysterious figure
+//            and counts as the first of the six. No faction required.
 //
 // Sequence
-//   1. Temple contact — a grey-robed rider passes a letter; quest begins
+//   1. First contact — a spent figure at the battlefield speaks; quest begins
 //   2. Three military objectives (parallel, any order):
 //      · Kill 5 Ashen lords in battle (player leads winning party)
 //      · Capture 3 Ashen towns or castles (player's clan)
 //      · Clear 4 Ashen ruins (AshenRuinSystem.ClearedCount)
 //   3. Lord stories — 5 deferred encounters revealing who the dead lords were
 //      before the cold took them; fire one by one after each kill
-//   4. Temple letters — 6 dispatches on a progress-gated timer, building the
+//   4. The Vigil's marks — 6 messages on a progress-gated timer, building the
 //      context until the full truth is in the player's hands
 //   5. Final choice (no sooner than 180 days after contact, day ≥ 150):
 //      · Accept the Binding → ending sequence → player dies, Ashen crumble
@@ -235,7 +234,7 @@ namespace AshAndEmber
                 _phase = PhaseAllDone;
                 try { _questLog?.LogAllDone(); } catch { }
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "The Silence Between Fires — all conditions are met. A final letter from the Temple waits.",
+                    "The Silence Between Fires — all conditions are met. A final summons waits.",
                     new Color(0.75f, 0.55f, 0.3f)));
             }
 
@@ -471,10 +470,10 @@ namespace AshAndEmber
         internal void LogStarted()
         {
             AddLog(new TextObject(
-                "The Temple has made contact. Their plan requires four things of you: " +
-                "claim six cold embers from Ashen lords, claim five warm embers from mage lords in battle, " +
-                "take three Ashen strongholds for your clan, " +
-                "and read the darkness of four Ashen ruin sites. The letters will follow your progress."));
+                "A figure at the battlefield spoke of a Binding — a ritual requiring four things: " +
+                "six cold embers from Ashen lords, five warm embers from mage lords in battle, " +
+                "three Ashen strongholds taken for your clan, " +
+                "and four Ashen ruin sites read and understood. They will find you again when the count changes."));
             EnsureObjectives();
         }
 
@@ -526,7 +525,7 @@ namespace AshAndEmber
 
         internal void LogAllDone() =>
             AddLog(new TextObject(
-                "All three conditions are met. A final letter from the Temple waits. " +
+                "All conditions are met. A final summons has been left — words carved into the earth at camp. " +
                 "The choice draws close."));
 
         internal void LogComplete()
@@ -538,7 +537,7 @@ namespace AshAndEmber
         internal void LogRefused()
         {
             AddLog(new TextObject(
-                "You walked away from the Binding. The Temple accepted it. " +
+                "You walked away from the Binding. " +
                 "The world turns as it always has. The cycle continues."));
             CompleteQuestWithFail();
         }
@@ -553,8 +552,8 @@ namespace AshAndEmber
         internal void LogColdConversion()
         {
             AddLog(new TextObject(
-                "Your fire has gone out. The Temple's riders will not come again — " +
-                "you are no longer the kind of flame their plan was written for. " +
+                "Your fire has gone out. The figure will not come again — " +
+                "you are no longer the kind of flame the Binding was written for. " +
                 "Whatever they were building, you are now the thing it was meant to stop."));
             CompleteQuestWithFail();
         }

@@ -20,34 +20,38 @@ namespace AshAndEmber
 {
     public static partial class DragonQuestSystem
     {
-        // ── Temple contact (initial trigger) ──────────────────────────────────
+        // ── First contact (initial trigger) ───────────────────────────────────
         private static void ShowTempleContact()
         {
             try
             {
                 InformationManager.ShowInquiry(new InquiryData(
-                    "The Rider Without Colours",
+                    "The Figure on the Field",
 
-                    "A grey-robed rider falls into step beside you as you enter the market. " +
-                    "No banner. No Temple insignia. Just someone who knows where you are going " +
-                    "and matches your pace.\n\n" +
-                    "\"I have been asked to find you. Not to recruit you — " +
-                    "you are not the kind of fire that answers to a summons. To inform you.\"\n\n" +
-                    "She hands you a sealed letter without stopping. Her horse doesn't break stride. " +
-                    "By the time you turn to ask, she is already through the gate.\n\n" +
-                    "The letter has no header. It reads:\n\n" +
-                    "\"Every mage of true power carries an ember at their core — " +
-                    "a dense knot of fire that accumulates over years of working. " +
-                    "Most never know it is there. When they fall, it does not disperse. " +
-                    "It moves to whoever was burning brightest nearby.\n\n" +
-                    "The Ashen carry cold embers. Those who kept their fire carry warm ones. " +
-                    "There is a ritual that needs both — in balance, in sufficient number. " +
-                    "You have already started collecting without knowing it.\n\n" +
-                    "Keep going. We will find you again.\"\n\n" +
-                    "No signature.",
+                    "The battle is not yet cold. You are walking among the dead when you notice " +
+                    "someone who does not belong there — sitting upright, back against a fallen horse, " +
+                    "watching the last of the smoke.\n\n" +
+                    "Not wounded. Not Ashen either — there is no grey about them. " +
+                    "Just spent, the way a fire looks in its last minutes before the light gives out. " +
+                    "Old burn scars on their hands, healed long ago into white ridges.\n\n" +
+                    "They do not move until you are close.\n\n" +
+                    "\"I was wondering when you would come through,\" they say. Not quite to you. To the moment. " +
+                    "\"You killed one of the march's lords. A cold ember is already in you — " +
+                    "you probably cannot feel it yet. Most do not.\"\n\n" +
+                    "They look at their hands for a moment, then back at the field.\n\n" +
+                    "\"There is a Binding that needs doing. You have already begun collecting what it requires. " +
+                    "Cold embers from the march's lords. Warm ones from mages who kept their fire to the end. " +
+                    "You will need six cold, five warm — and three of their strongholds taken, " +
+                    "four of their ruin sites read and understood.\n\n" +
+                    "I will find you again when the count changes. I always do.\"\n\n" +
+                    "They stand. Very still when they do it, the way someone moves when they have " +
+                    "long since forgotten how to hurry.\n\n" +
+                    "They walk. Not toward anything visible. " +
+                    "By the time you think to call after them, they are gone.\n\n" +
+                    "You did not get their name. They did not offer it.",
 
                     true, true,
-                    "Keep going.",
+                    "I will keep going.",
                     "I want nothing to do with this.",
 
                     () =>
@@ -71,7 +75,7 @@ namespace AshAndEmber
                     {
                         _phase = PhaseRefused;
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The letter goes into the fire unread. Whatever they were offering dies with it.",
+                            "You walk away. Whatever they were waiting for, it will have to wait longer.",
                             new Color(0.5f, 0.5f, 0.55f)));
                     }
                 ), true, true);
@@ -101,30 +105,28 @@ namespace AshAndEmber
                 string title = firstHandoff ? "The Burden Passes" : "The Burden Passes Again";
 
                 string body = firstHandoff
-                    ? "A rider in grey finds you before the week is out. Different face. Same robe.\n\n" +
-                      "\"You are the second to carry this. We have been watching the clan's fire for some time — " +
-                      "longer than the one before you knew.\"\n\n" +
-                      "She does not wait for you to ask how she found you.\n\n" +
-                      "\"What they gathered does not die with them. Embers do not recognise mortality as a reason to move. " +
-                      "The cold embers, the warm embers, everything accumulated across those battles — " +
-                      "it has been yours since the moment their fire went out. " +
+                    ? "A figure at your campfire. You do not hear them arrive.\n\n" +
+                      "The same burn-scarred hands. The same stillness — the kind that comes from " +
+                      "having nothing left to be restless about.\n\n" +
+                      "\"Second bearer,\" they say. \"I counted the transition.\"\n\n" +
+                      "They do not explain how they found you. They do not seem to think it requires explanation.\n\n" +
+                      "\"Embers do not recognise mortality as a reason to move. " +
+                      "Everything your predecessor gathered — the cold, the warm, all of it — " +
+                      "has been yours since the moment their fire went out. " +
                       "You have been carrying it without feeling the weight.\n\n" +
-                      "The plan does not change. The altar is patient. It has waited longer than your line has existed.\n\n" +
-                      "If you are their blood, the fire already knows you. " +
-                      "The embers recognise the same current.\n\n" +
-                      "The letters will continue. The riders will find you as they found them. " +
-                      "What they started, you carry forward.\"\n\n" +
-                      "— The Order of the Last Flame"
-                    : $"A rider in grey. You have seen this before, or your family has — it amounts to the same thing.\n\n" +
-                      $"\"The {ordinal} bearer. The Temple has counted all of them.\"\n\n" +
-                      "She does not elaborate. The brevity is its own message — " +
-                      "the Order has watched this burden change hands enough times " +
+                      "The count stands. The altar is still there. " +
+                      "It has waited longer than your bloodline has existed.\n\n" +
+                      "I will find you as I found them. What they started, you carry forward.\"\n\n" +
+                      "They stand and walk into the dark without looking back.\n\n" +
+                      "You did not ask their name this time either."
+                    : $"A figure at your fire again. You are starting to recognise the stillness before you see the face.\n\n" +
+                      $"\"The {ordinal} bearer,\" they say. Nothing else for a moment.\n\n" +
+                      "The brevity is its own message. They have done this enough times " +
                       "that ceremony has worn away and only fact remains.\n\n" +
                       "\"The count stands. The embers are yours. The altar waits.\n\n" +
                       "The cycle does not care whose hands hold what it needs — only that those hands hold it. " +
                       "You are those hands now.\"\n\n" +
-                      "She leaves without ceremony.\n\n" +
-                      "— The Order";
+                      "They are gone before the fire shifts.";
 
                 InformationManager.ShowInquiry(new InquiryData(
                     title,
@@ -303,8 +305,8 @@ namespace AshAndEmber
                 () =>
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        "The Temple has always known what it was building toward. " +
-                        "The letters are starting to make sense.",
+                        "Someone has always known what this was building toward. " +
+                        "The marks they leave are starting to make sense.",
                         new Color(0.65f, 0.50f, 0.30f)));
                 },
                 () => { }
@@ -324,10 +326,10 @@ namespace AshAndEmber
                 "A third invitation, prepared but never sent. " +
                 "Below it, a conversion record. The dates match the gap between the second refusal " +
                 "and when the third invitation was drafted.\n\n" +
-                "The Temple rider who finds you before you leave the field looks at the documents " +
-                "for a long time and does not take them from you.\n\n" +
-                "\"She was supposed to be one of the eleven,\" she says finally. " +
-                "\"We gave her seat to someone else. We never told the current eleven where it came from.\"\n\n" +
+                "The figure you have seen before is already at the field's edge when you look up. " +
+                "They look at the documents for a long time and do not take them from you.\n\n" +
+                "\"She was supposed to be one of the eleven,\" they say finally. " +
+                "\"Her seat went to someone else. The eleven were never told where it came from.\"\n\n" +
                 "The cold ember you carry from this battle is different from the others. " +
                 "It has the faint warmth of something that was almost something else.",
 
@@ -371,7 +373,7 @@ namespace AshAndEmber
                 "drawn to something it recognises. " +
                 "We are not trying to destroy. We are trying to arrive.\n\n" +
                 "I am telling you this because you deserve to know what you are part of " +
-                "before the Temple finishes explaining it to you. " +
+                "before whoever guides you finishes explaining it. " +
                 "The last Binding used twelve mages and twelve of us. " +
                 "The twelve mages knew. The twelve of us did not.\n\n" +
                 "Now you do. Whether you proceed is your affair.\n\n" +
@@ -385,7 +387,7 @@ namespace AshAndEmber
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         "You sit with the letter for a long time. " +
-                        "The Temple's final message is waiting. You already know what it will say.",
+                        "The final summons is waiting. You already know what it will say.",
                         new Color(0.65f, 0.55f, 0.40f)));
                 },
                 () =>
@@ -420,20 +422,20 @@ namespace AshAndEmber
             InformationManager.ShowInquiry(new InquiryData(
                 "What You Have Been Carrying",
 
-                "The battle is not yet cold when a Temple rider appears at the field edge.\n\n" +
-                "She does not ask about the fight. She asks you to hold out your hand.\n\n" +
+                "The battle is not yet cold when you notice the figure standing at the field edge. " +
+                "The same stillness. The same burn-scarred hands.\n\n" +
+                "They do not ask about the fight. They ask you to hold out your hand.\n\n" +
                 "You feel something settle against your palm — invisible, faintly warm, " +
-                "the specific warmth of something that recently burned a great deal. " +
-                "She says:\n\n" +
+                "the specific warmth of something that recently burned a great deal.\n\n" +
                 "\"A warm ember. You have been carrying cold ones for months and may not have noticed. " +
-                "They announce themselves differently — grey weight, a heaviness that isn't quite physical. " +
+                "They announce themselves differently — grey weight, a heaviness that is not quite physical. " +
                 "This one is warm. Brighter. You will feel the difference.\"\n\n" +
-                "She produces a small iron counting-vessel from her saddlebag and holds it open. " +
-                "Inside, a faint grey glow — cold embers, she explains, from the Ashen lords " +
-                "you have already killed. The vessel registers them. She notes the count.\n\n" +
-                "\"The Binding needs both in balance. You are doing what we needed " +
+                "They produce a small iron vessel and hold it open. " +
+                "Inside, a faint grey glow — cold embers, they explain, from the Ashen lords " +
+                "you have already killed. The vessel registers them.\n\n" +
+                "\"The Binding needs both in balance. You are doing what was needed " +
                 "without knowing it. Keep going.\"\n\n" +
-                "She rides away before you can ask who she is.",
+                "They walk away before you can ask who they are.",
 
                 true, true,
                 "What happens to the embers at the Altar?",
@@ -513,7 +515,7 @@ namespace AshAndEmber
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The letter goes into your kit alongside the cartographer's map. " +
-                        "You are building something, even if the Temple is the one who drew the plans.",
+                        "You are building something. Someone else drew the plans long ago.",
                         new Color(0.70f, 0.60f, 0.40f)));
                 },
                 () =>
@@ -526,99 +528,103 @@ namespace AshAndEmber
             ), true, true);
         }
 
-        // ── Temple letters (six, delivered on progress gates) ─────────────────
+        // ── The Vigil's words (six, delivered on progress gates) ─────────────
+        // Presented as words found burned at camp, scratched into stone at ruin sites,
+        // or spoken by a figure glimpsed briefly at dusk — never formal letters.
         private static void ShowTempleLetterByIndex(int idx)
         {
             try
             {
                 string[] titles =
                 {
-                    "The First Letter",    // 0 — 14 days after contact
-                    "The Second Letter",   // 1 — after 1st Ashen kill
-                    "The Third Letter",    // 2 — after 2nd Ashen kill
-                    "The Fourth Letter",   // 3 — after 1st mage lord kill
-                    "The Fifth Letter",    // 4 — after 4th Ashen kill
-                    "The Sixth Letter",    // 5 — all objectives met (PhaseAllDone)
+                    "Words at the Campfire",      // 0 — 14 days after contact
+                    "Left at the Ruins",           // 1 — after 1st Ashen kill
+                    "Scratched Into the Stone",    // 2 — after 2nd Ashen kill
+                    "At the Field Edge",           // 3 — after 1st mage lord kill
+                    "A Figure at Dusk",            // 4 — after 4th Ashen kill
+                    "Come to the Altar",           // 5 — all objectives met (PhaseAllDone)
                 };
                 string[] bodies =
                 {
-                    // Letter 0 — introduces ember lore
+                    // 0 — ember lore, burned into the wood of the campfire surround
+                    "You find words burned into the wood of your fire surround. " +
+                    "Not carved — burned, letter by letter, as if by a careful fingertip.\n\n" +
                     "\"Every mage of true power carries an ember at their core. " +
-                    "Most never know. Most die without ever learning what it becomes.\n\n" +
+                    "Most never know. Most die without learning what it becomes.\n\n" +
                     "An ember is not a metaphor. It is a dense compression of fire-essence — " +
-                    "years of working, of casting, of carrying the gift, crystallised into something " +
-                    "that does not disperse when the body it lived in ceases to burn. " +
-                    "It moves. It goes to whoever was burning brightest nearby " +
-                    "when the fire went out.\n\n" +
+                    "years of working and casting and carrying the gift, crystallised into something " +
+                    "that does not disperse when the body it lived in stops burning. " +
+                    "It moves. It goes to whoever was burning brightest nearby.\n\n" +
                     "You have been collecting them without knowing it. Cold ones from the Ashen march. " +
-                    "The Binding requires both kinds — cold and warm, in balance. " +
-                    "The tablets describe the ratio. We have been calculating it for two generations.\n\n" +
-                    "You are a collector now. You already were, the moment you led that first battle. " +
-                    "Strike well. We will write again.\"\n\n" +
-                    "— The Order of the Last Flame",
+                    "The Binding requires both — cold and warm, in balance. " +
+                    "There are old tablets that describe the ratio. I have them memorised.\n\n" +
+                    "You are already a collector. You were, from the moment you led that first battle.\"",
 
-                    // Letter 1 — first cold ember, the warden's story
-                    "\"The soldier at Aldscroft held the northern pass longer than any of the wars " +
-                    "you have fought in lasted. We promised him relief. " +
-                    "Our own campaigns kept us east. By the time we turned north, the warmth had run out.\n\n" +
-                    "What you took from him in that battle was a cold ember — " +
-                    "thirty-one years of accumulated chill, compressed into something " +
-                    "that barely weighs anything and will not warm under flame.\n\n" +
-                    "We are not telling you this to soften what you did. " +
-                    "We are telling you so you understand what the march is made of. " +
-                    "And what the Binding will need to hold against it.\"\n\n" +
-                    "— The Order",
+                    // 1 — the warden's story, left at the site of the battle
+                    "Words scratched into a stone near the site of the battle. " +
+                    "Small, precise, unhurried — as if whoever left them had all the time in the world.\n\n" +
+                    "\"The lord you killed at the northern pass held that ground " +
+                    "longer than most of the wars you have fought in lasted. " +
+                    "He waited for relief. It kept being redirected. By the time anyone turned north, " +
+                    "the warmth had run out.\n\n" +
+                    "What you took from him was a cold ember — thirty-one years of accumulated chill, " +
+                    "compressed into something that barely weighs anything and will not warm under flame.\n\n" +
+                    "I am not telling you this to soften what you did. " +
+                    "I am telling you so you understand what the march is made of. " +
+                    "And what the Binding will need to hold against it.\"",
 
-                    // Letter 2 — the scholar confirmed, cold embers burn clean in the Binding
-                    "\"You may have found her notes. A scholar in our archives — " +
-                    "we classified her correspondence eight years ago. She was not wrong. " +
-                    "We burned the notes because we were not ready to know it.\n\n" +
+                    // 2 — the scholar, cold embers burn clean in the Binding
+                    "Words burned into the lintel of a ruin doorway, at eye level, " +
+                    "as if left for someone who knew to look.\n\n" +
+                    "\"You may have found her notes. " +
+                    "A scholar who spent years studying those who had turned — " +
+                    "looking for weakness, for failure. She found something else.\n\n" +
                     "The cold does not take people who have given up. " +
                     "It takes people who have seen clearly and found the warmth insufficient. " +
-                    "What it leaves behind is an ember that burns cold and precise and " +
-                    "completely without regret.\n\n" +
-                    "Those embers burn cleaner in the Binding than ours do. We have accepted that. " +
-                    "The ritual requires it — not as a punishment, not as a cost. " +
-                    "As a component. The cycle is not broken by warmth alone.\"\n\n" +
-                    "— The Order",
+                    "What it leaves behind burns cold and precise and completely without regret.\n\n" +
+                    "Those embers burn cleaner in the Binding than the warm ones do. " +
+                    "I have seen it. The ritual requires both — not as a cost. As a component. " +
+                    "The cycle is not broken by warmth alone.\"",
 
-                    // Letter 3 — first warm ember, the difference between warm and cold
-                    "\"The first warm ember you have gathered is different from what we expected.\n\n" +
-                    "We have taken warm embers from those who gave them willingly before — " +
-                    "the Temple's own, over the decades, who chose this end knowing what it was for. " +
-                    "Those burn gold in our counting-vessels.\n\n" +
-                    "What you carry burns the same colour.\n\n" +
-                    "The warm embers from those who fell in battle — who did not choose this, " +
-                    "who were simply burning when they were ended — they burn differently in other hands. " +
-                    "In yours, they do not. We are still discussing what that means.\n\n" +
-                    "Keep gathering. We will have an answer before the altar is ready.\"\n\n" +
-                    "— The Order",
+                    // 3 — first warm ember; The Vigil speaks briefly in person at the field edge
+                    "A figure at the field edge after the battle. You recognise the stillness " +
+                    "before you recognise the face.\n\n" +
+                    "They do not approach. They speak across the distance, and the words carry.\n\n" +
+                    "\"The warm ember you took from that mage lord is different from what I expected. " +
+                    "I have seen warm embers taken by force before — they burn unevenly, " +
+                    "resist the vessel. Yours does not.\n\n" +
+                    "I do not know what that means yet. I have been trying to work it out " +
+                    "since before you arrived.\n\n" +
+                    "Keep gathering. I will have an answer before the altar is ready.\"\n\n" +
+                    "By the time you cross the field toward them, they are already gone.",
 
-                    // Letter 4 — the count, the twelve, the specific warmth required
-                    "\"We have enough cold embers. We have had enough for some time — " +
+                    // 4 — the twelve, the specific warmth required; The Vigil at dusk
+                    "A figure at the edge of your camp at dusk — only there long enough " +
+                    "to say what they came to say.\n\n" +
+                    "\"There is enough cold fire. There has been for some time — " +
                     "the march has been generous in that regard.\n\n" +
-                    "What the Binding has always needed that cycles past could not provide: " +
+                    "What the Binding has always needed that past cycles could not provide: " +
                     "a warm fire that has been tested. That has walked through the cold and returned. " +
                     "That has gathered both kinds of ember and is still burning.\n\n" +
-                    "The Temple's eleven have spent their lives in protected halls. " +
+                    "The ritual needs twelve. Eleven have been assembled over many years — " +
+                    "people who kept their fire in protected places, never crossed what you have crossed. " +
                     "They are real fires. But they have not been where you have been.\n\n" +
-                    "The tablets describe a specific warmth required for the twelfth place in the Binding. " +
-                    "We have been looking for it for seventy years.\"\n\n" +
-                    "— The Order",
+                    "I have been looking for the twelfth for a very long time.\"\n\n" +
+                    "They walk into the dusk. You do not follow.",
 
-                    // Letter 5 — altar summons, come with what you carry
+                    // 5 — altar summons; words found carved into the earth near camp, unmistakable
+                    "Words carved into the earth beside where you slept — " +
+                    "too precise to be accidental, too deliberate to be anything other than a summons.\n\n" +
                     "\"Come to the High Altar.\n\n" +
-                    "Bring what you carry — you will not need to produce it. " +
-                    "The Binding will find it. Cold embers and warm, " +
-                    "everything accumulated from the march and from those who kept their fire. " +
-                    "It is already part of you now. It has been since the first battle.\n\n" +
-                    "There are things we have not told you about what happens at the altar. " +
+                    "You will not need to bring anything. The Binding will find what you carry — " +
+                    "the cold embers and the warm, everything accumulated since the first battle. " +
+                    "It is already part of you. It has been since the beginning.\n\n" +
+                    "There are things I have not told you. About what happens at the altar. " +
                     "About what the cold brings when it arrives at the site. " +
                     "About what it costs the Ashen, and why they keep coming anyway.\n\n" +
                     "The last lord you killed knew. They always know, by the end. " +
-                    "Whatever they told you — hear us whole before you decide.\n\n" +
-                    "You have earned the truth, not just the version that recruits.\"\n\n" +
-                    "— The Order of the Last Flame",
+                    "Whatever they told you — hear me whole before you decide.\n\n" +
+                    "You have earned the truth, not just the version that recruits.\"",
                 };
 
                 if (idx < 0 || idx >= titles.Length) return;
@@ -644,30 +650,37 @@ namespace AshAndEmber
                 InformationManager.ShowInquiry(new InquiryData(
                     "The High Altar",
 
-                    "The High Templar does not make it simple.\n\n" +
-                    "\"The Binding needs twelve mage-fires. That much we told you. " +
-                    "It also needs the cold fire the march carries — " +
-                    "both sides, balanced. The embers you have gathered are already part of the ritual. " +
-                    "The Ashen move toward this site the way the tide moves toward shore. " +
+                    "They are already at the altar when you arrive. The figure you have been following " +
+                    "across all of this — sitting on the altar steps, the same stillness, " +
+                    "the same burn-scarred hands resting on their knees.\n\n" +
+                    "Eleven others stand nearby. Not soldiers. Mages, by the look of them — " +
+                    "old fires, assembled over years. They do not speak.\n\n" +
+                    "\"The Binding needs twelve mage-fires,\" the figure says. Not to the eleven. To you. " +
+                    "\"You already know that part. What I have not told you: " +
+                    "it also needs the cold fire the march carries. Both sides, balanced. " +
+                    "The embers you have gathered are already part of the ritual — " +
+                    "they have been since the first battle. The Ashen move toward this site " +
+                    "the way the tide moves toward shore. " +
                     "They come because something in the cold recognises what this is. " +
-                    "They are not victims of the Binding. They are participants — " +
-                    "the cold fire answering the warm.\"\n\n" +
-                    "She pauses. Eleven mages stand behind her, assembled over a century. " +
-                    "All of them have agreed to this.\n\n" +
+                    "They are not victims. They are participants. The cold fire answering the warm.\"\n\n" +
+                    "They stand. The same slow, deliberate movement.\n\n" +
                     "\"The ritual will kill us. The Ashen who arrive will be consumed by it. " +
-                    "Every ember you have collected — cold and warm — will be spent in the moment. " +
-                    "What is left will be a world with more time — " +
-                    "a generation, perhaps two, before the next cycle begins. " +
-                    "The grey retreats. The march stops. Somewhere the first new fire kindles " +
-                    "that will not know what it cost.\"\n\n" +
+                    "Every ember — cold and warm — will be spent in the moment. " +
+                    "What remains is a world with more time. " +
+                    "A generation, perhaps two, before the next cycle begins. " +
+                    "The grey retreats. The march stops. " +
+                    "Somewhere the first new fire kindles that will not know what it cost.\"\n\n" +
                     "You think of the warden at his post. The scholar's sealed notes. " +
                     "The father circling a son he could not reach. " +
                     "The cartographer's map with its unlabelled centre. " +
                     "The tablets sealed for the next twelve.\n\n" +
-                    "\"There is no version of this that ends the cycle,\" the High Templar says. " +
-                    "\"We are not offering you a solution. " +
-                    "We are offering you an interruption. " +
-                    "If that is not enough, tell me now. I will not argue with you.\"\n\n" +
+                    "\"I have done this before,\" they say quietly. " +
+                    "\"The last time, the twelfth did not come. The ritual failed. " +
+                    "The cycle continued. I have been here since.\"\n\n" +
+                    "They look at you with eyes the colour of old ash.\n\n" +
+                    "\"There is no version of this that ends the cycle. " +
+                    "We are not offering a solution. We are offering an interruption. " +
+                    "If that is not enough — say so now. I will not argue with you.\"\n\n" +
                     "(Choosing to proceed ENDS YOUR CAMPAIGN — your hero dies as part of the Binding. " +
                     "Refusing closes the quest forever; the campaign continues.)",
 
@@ -689,9 +702,9 @@ namespace AshAndEmber
                         _phase = PhaseRefused;
                         try { _questLog?.LogRefused(); } catch { }
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The High Templar accepts it without recrimination. " +
-                            "\"The last one said the same. We will find another way, or we will not.\" " +
-                            "You are free to go. The cycle continues.",
+                            "They accept it without recrimination. " +
+                            "\"The last twelfth said the same. The cycle continued. It always does.\" " +
+                            "You are free to go.",
                             new Color(0.55f, 0.55f, 0.60f)));
                     }
                 ), true, true);
