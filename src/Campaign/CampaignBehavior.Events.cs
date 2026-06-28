@@ -107,7 +107,12 @@ namespace AshAndEmber
                 ApprenticeSystem.ResetForNewGame();
                 MiracleCampaignBehavior.ResetForNewGame();
                 NatureCampaignBehavior.ResetForNewGame();
+                // Clear the previous campaign's static state BEFORE re-establishing,
+                // or a new game started in the same session inherits the old game's
+                // sanctuaries/altars and cooldowns (static-leak bug class).
+                SanctuaryCampaignBehavior.ResetForNewGame();
                 SanctuaryCampaignBehavior.EstablishForNewCampaign();
+                AshenAltarsCampaignBehavior.ResetForNewGame();
                 AshenAltarsCampaignBehavior.EstablishForNewCampaign();
                 TribalKingdomBehavior.ResetForNewGame();
                 CrystallinesCampaignBehavior.EstablishForNewCampaign();
