@@ -31,6 +31,7 @@ namespace AshAndEmber
     {
         private static bool _wasHolding = false;
         private static bool _prevAtk, _prevBlk, _prevPadAtk, _prevPadBlk;
+        private static bool _prevPadUp, _prevPadDown, _prevPadLeft, _prevPadRight;
         private const float StillSpeed = 0.3f;   // below this the caster counts as still
         private static float _blockReminder = 0f;             // throttle for "why can't I channel" hints
         private const float BlockReminderInterval = 2.5f;
@@ -39,6 +40,7 @@ namespace AshAndEmber
         {
             _wasHolding = false;
             _prevAtk = _prevBlk = _prevPadAtk = _prevPadBlk = false;
+            _prevPadUp = _prevPadDown = _prevPadLeft = _prevPadRight = false;
         }
 
         public static void Tick(bool inMission, float dt = 0f)
@@ -68,13 +70,21 @@ namespace AshAndEmber
                     _wasHolding = true;
                 }
 
-                // Channel: stand still, hands empty, armour light → fill a charge.
-                if (!NatureCharge.IsFull && CanChannel(inMission))
+                // Choose the element to draw — trace a direction (W=Wind, S=Earth,
+                // A=Water, D=Storm), or flick the left stick on a pad.
+                ReadElementSelection(holdKb, holdPad);
+
+                // Channel: stand still, hands empty, armour light, an element chosen
+                // → fill a charge of that element.
+                if (!NatureCharge.IsFull && NatureCharge.HasSelection && CanChannel(inMission))
                 {
                     _blockReminder = 0f;
                     if (NatureCharge.ChannelTick(dt, inMission))
+                    {
                         Msg($"A charge of {NatureMath.ElementName(NatureCharge.CurrentElement)} gathers — " +
                             $"Attack looses its force, Block calls its grace.", NatureColor);
+                        ApplyGatherSour();
+                    }
                 }
                 else
                 {
@@ -83,7 +93,9 @@ namespace AshAndEmber
                     // failing silently. Throttled so it informs without spamming.
                     if (!NatureCharge.IsFull)
                     {
-                        string reason = ChannelBlockReason(inMission);
+                        string reason = !NatureCharge.HasSelection
+                            ? "Choose an element to draw —  W: Wind · S: Earth · A: Water · D: Storm."
+                            : ChannelBlockReason(inMission);
                         if (reason != null)
                         {
                             _blockReminder -= dt;
@@ -121,6 +133,44 @@ namespace AshAndEmber
                 NatureCharge.ResetFill();
                 try { if (inMission && Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch { }
             }
+        }
+
+        // Read the direction that draws an element. Keyboard taps (edge-detected)
+        // and left-stick flicks both choose; the choice persists until changed.
+        private static void ReadElementSelection(bool holdKb, bool holdPad)
+        {
+            if (holdKb)
+            {
+                if      (Input.IsKeyPressed(InputKey.W)) NatureCharge.SelectElement(NatureElement.Wind);
+                else if (Input.IsKeyPressed(InputKey.S)) NatureCharge.SelectElement(NatureElement.Earth);
+                else if (Input.IsKeyPressed(InputKey.A)) NatureCharge.SelectElement(NatureElement.Water);
+                else if (Input.IsKeyPressed(InputKey.D)) NatureCharge.SelectElement(NatureElement.Storm);
+            }
+            if (holdPad)
+            {
+                bool up    = Input.IsKeyDown(InputKey.ControllerLStickUp);
+                bool down  = Input.IsKeyDown(InputKey.ControllerLStickDown);
+                bool left  = Input.IsKeyDown(InputKey.ControllerLStickLeft);
+                bool right = Input.IsKeyDown(InputKey.ControllerLStickRight);
+                if (up    && !_prevPadUp)    NatureCharge.SelectElement(NatureElement.Wind);
+                if (down  && !_prevPadDown)  NatureCharge.SelectElement(NatureElement.Earth);
+                if (left  && !_prevPadLeft)  NatureCharge.SelectElement(NatureElement.Water);
+                if (right && !_prevPadRight) NatureCharge.SelectElement(NatureElement.Storm);
+                _prevPadUp = up; _prevPadDown = down; _prevPadLeft = left; _prevPadRight = right;
+            }
+        }
+
+        // If the last gather drew from an exhausted land, it may have soured — the
+        // land bites back in one of many forms.
+        private static void ApplyGatherSour()
+        {
+            try
+            {
+                var outcome = NatureCharge.LastGatherOutcome;
+                if (!outcome.Soured) return;
+                NatureBacklash.ApplyBattle(Agent.Main, announce: true);
+            }
+            catch { }
         }
 
         // Channelling requires standing still; in battle also empty hands + light armour.
@@ -163,10 +213,14 @@ namespace AshAndEmber
 
             if (!NatureCharge.HasCharge)
             {
-                Msg(inBattle
-                    ? "You carry no charge. Stand still and focus (hold Ctrl) to gather one from the land."
-                    : "You carry no charge. Halt in open country and let the land fill your hands over a few hours.",
-                    NatureColor);
+                if (inBattle)
+                {
+                    Msg("You carry no charge. Hold Ctrl, trace an element (W/S/A/D), then stand still to gather it.",
+                        NatureColor);
+                    return;
+                }
+                // On the map, the litany is where you choose which element to draw.
+                ShowElementChoice();
                 return;
             }
 
@@ -237,6 +291,43 @@ namespace AshAndEmber
             }
         }
 
+        // Map-side element choice: pick what you will draw, then halt to gather it.
+        private static void ShowElementChoice()
+        {
+            NatureElement[] favoured = NatureCharge.PeekTerrainElements(false);
+            var favSet = favoured != null ? new HashSet<NatureElement>(favoured) : new HashSet<NatureElement>();
+            bool unfamiliar = favoured == null || favoured.Length >= 4;
+
+            var options = new List<InquiryElement>();
+            foreach (NatureElement el in new[] { NatureElement.Wind, NatureElement.Earth, NatureElement.Water, NatureElement.Storm })
+            {
+                string tag = unfamiliar ? "" : (favSet.Contains(el) ? "  (the land here favours it — a gentle draw)" : "  (against this land — a costly draw)");
+                options.Add(new InquiryElement(el, $"{NatureMath.ElementName(el)} [{NatureMath.KeyForElement(el)}]{tag}", null, true, ""));
+            }
+
+            try
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "The Living Ember — what will you draw?",
+                    "Choose the element you mean to call from the land. Then halt in open country " +
+                    "and let it fill your hands over a few hours. What the land favours costs it little; " +
+                    "what it does not costs it dearly.",
+                    options, true, 1, 1, "Attune", "Close",
+                    chosen =>
+                    {
+                        if (chosen == null || chosen.Count == 0) return;
+                        var el = (NatureElement)chosen[0].Identifier;
+                        NatureCharge.SelectElement(el);
+                        Msg($"You set your hands to draw {NatureMath.ElementName(el)}. Halt and stand still to gather it.", NatureColor);
+                    },
+                    null, "", false), false, true);
+            }
+            catch
+            {
+                Msg("Choose an element to draw, then halt to gather it.", NatureColor);
+            }
+        }
+
         private static void TryCast(bool inMission, bool attack)
         {
             if (!NatureCharge.HasCharge)
@@ -253,19 +344,19 @@ namespace AshAndEmber
 
         private static void ShowHint(bool inMission)
         {
-            NatureElement[] els = NatureCharge.PeekTerrainElements(inMission);
-            if (els == null || els.Length == 0) return;
-            string names;
-            if (els.Length == 1)
-                names = NatureMath.ElementName(els[0]);
-            else if (els.Length >= 4)
-                names = "any element (random)";
-            else
-                names = string.Join(" / ", els.Select(NatureMath.ElementName)) + " (random)";
+            // Which elements this ground favours (a cheaper draw on the land).
+            NatureElement[] favoured = NatureCharge.PeekTerrainElements(inMission);
+            string favourLine = "";
+            if (favoured != null && favoured.Length > 0 && favoured.Length < 4)
+                favourLine = " · favoured here: " + string.Join("/", favoured.Select(NatureMath.ElementName));
+
+            string chosen = NatureCharge.HasSelection
+                ? $"drawing {NatureMath.ElementName(NatureCharge.SelectedElement)}"
+                : "choose: W Wind · S Earth · A Water · D Storm";
             string held = NatureCharge.HasCharge
                 ? $" — holding {NatureMath.ElementName(NatureCharge.CurrentElement)}"
                 : "";
-            Msg($"[ {names}{held} ]  (stand still: gather · Attack: force · Block: barrier)", NatureColor);
+            Msg($"[ {chosen}{held} ]  (stand still: gather · Attack: force · Block: barrier{favourLine})", NatureColor);
         }
 
         private static readonly Color NatureColor = new Color(0.35f, 0.75f, 0.35f);

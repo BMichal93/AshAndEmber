@@ -179,7 +179,7 @@ The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Da
 
 ## The Living Ember
 
-A second discipline, separate from the Inner Fire. Those who hear the living land — root, river, stone, and sky — may draw elemental charges from the terrain beneath them and release them as natural forces.
+A second discipline, separate from the Inner Fire. Those who hear the living land — root, river, stone, and sky — **choose** an element, draw it from the world around them, and release it as a natural force. Drawing is never free: every working spends the **living energy** of the place it is fought over, and a land stripped bare turns on those who force it.
 
 ### Choosing this path
 
@@ -187,28 +187,48 @@ At the gift prompt at campaign start, select **"The world beneath me has always 
 
 ### Controls
 
-You gather a charge by **standing still and focusing**, then spend it with your **Attack** or **Block**. The focus key is shared with miracles (Grace, Cold, Nature and the Dark Gifts are all mutually exclusive).
+You **choose** an element by tracing a direction while focused, gather a charge of it by **standing still**, then spend it with your **Attack** or **Block**. The focus key is shared with miracles (Grace, Cold, Nature and the Dark Gifts are all mutually exclusive).
 
 | Action | Keyboard | Gamepad |
 |--------|----------|---------|
-| Gather a charge | Hold **Left Ctrl** and **stand still** | Hold **R3** and stand still |
+| Choose element | Hold **Left Ctrl**, trace **W**/**S**/**A**/**D** | Hold **R3**, flick left stick |
+| Gather the charge | …then **stand still** | …then stand still |
 | Cast attack | Hold **Left Ctrl** + **Attack** (left mouse) | Hold **R3** + **Right Trigger** |
 | Cast support | Hold **Left Ctrl** + **Block** (right mouse) | Hold **R3** + **Left Trigger** |
-| Campaign map | Stand still ~4 hours to gather; cast via the litany window (**Shift+X** / RB+L3) | — |
+| Campaign map | Choose element in the litany (**Shift+X** / RB+L3); stand still ~4 hours to gather; cast via the litany | — |
 
-A bar appears while you channel, coloured by the element, filling over ~6 seconds; the charge then lasts ~30 seconds. **Requirements (battle):** both hands empty (no weapon or shield) and armour weight ≤ 25.
+A bar appears while you channel, coloured by your chosen element, filling over ~6 seconds; the charge then lasts ~30 seconds. **Requirements (battle):** both hands empty (no weapon or shield) and armour weight ≤ 25.
 
-### Terrain and elements
+### Choosing the element
 
-The charge is the element of the ground you stand on — you don't choose it. Mixed or unfamiliar terrain gives a random element.
+You pick which element to draw — the land no longer decides. Trace a direction:
 
-| Terrain | Element |
-|---------|---------|
+| Direction | Element |
+|-----------|---------|
+| **W** (Up) | **Wind** |
+| **S** (Down) | **Earth** |
+| **A** (Left) | **Water** |
+| **D** (Right) | **Storm** |
+
+### Living energy — terrain and cost
+
+Terrain no longer dictates which element answers; it dictates how dearly the draw **costs the land**. Every battlefield and stretch of country holds a hidden reserve of living energy, sized by how much grows there. Each terrain *favours* certain elements — drawing a favoured element spends little of the reserve; drawing against the land spends far more.
+
+| Terrain | Favours (cheap to draw) |
+|---------|-------------------------|
 | Mountain, Hills, Steppe | **Wind** |
 | Forest | **Earth** |
 | River, Lake, Shore, Snow, Wetland | **Water** |
 | Desert, Plains, Meadow | **Storm** |
-| (other / mixed) | random |
+| (other / mixed) | none in particular (neutral cost) |
+
+**The reserve.** You are never shown the number, but the land warns you as it thins — at the **half**, the **quarter**, and when it runs **dry**. Both nature draws *and* Inner Fire casts spend it, for the player **and every NPC mage** alike. Forest brims (~120); desert holds almost nothing (~15). Left in peace, a place mends ~6% of its capacity per day. The reserves are saved with your campaign and persist across battles fought in the same region.
+
+**Drawn past empty, the land bites back — but only at nature casters.** A nature draw on exhausted ground **bleeds the hearth of the nearest village** and has a ~35% chance to **sour**. The souring takes many forms — in battle: a raw recoil, dead briars that root you, a hollowing that saps your speed, a gout of grey ash, or a slow wither; on the march: a blood-tithe, blighted (spoiled) food, a contagious despair (morale loss), or a creeping fever that wounds the weakest. Player and NPC nature casters draw from the same palette.
+
+**Inner Fire is immune to this** — fire does not commune with the land, it only burns it. A fire mage is never bitten back, but every fire cast still strips the local reserve, leaving the ground dangerous for any nature caster who draws there. In practice this makes the Living Ember **harder and riskier to use on a battlefield crowded with fire-mages** — they scorch the reserve dry, and the land takes its anger out on you, not them.
+
+**The Old Green.** Any tavern offers a land-attuned hero a pouch of rare weeds (150 denars). Smoking it costs **−10% of your health** and a few drowsy hours, but for **24 hours** each nature draw has a **30% chance to cost the land nothing at all** — you are, briefly, part of it. A way to draw hard without killing the ground beneath you.
 
 ### Powers
 
@@ -232,6 +252,8 @@ Three hermits scatter across the old lands. Each teaches one rite and is a one-t
 | **Gwydion the Root-Listener** | Battanian towns | Living Root |
 | **Birna of the Still Water** | Sturgian towns | Still Draw |
 | **Bekh the Open Hand** | Khuzait towns | Open Grip |
+| **Tiryn of the High Root** | Marunath (village menu, always) | Deep Earth |
+| **Faruk the Patient** | Aserai villages | Dawn Call |
 
 Hermits do not appear for an Inner Fire mage.
 
@@ -239,16 +261,16 @@ Hermits do not appear for an Inner Fire mage.
 
 | Talent | Effect |
 |--------|--------|
-| **Living Root** | Charge capacity ×2 — hold two charges at once. |
-| **Still Draw** | The channel bar fills faster. |
-| **Deep Earth** | The channel bar fills faster (stacks with Still Draw). |
+| **Living Root** | Charge capacity ×2 — hold two charges (two elements) at once. |
+| **Still Draw** | The channel bar fills twice as fast. |
+| **Deep Earth** | You draw gently — each charge spends only **half** the land's living energy. |
 | **Open Grip** | Held charges no longer fade. |
-| **Dawn Call** | On the campaign map the land fills your charge after fewer hours of standing still. |
-| **Wildsworn** | Class talent — bundles the core nature talents for 2 focus points. |
+| **Dawn Call** | On the campaign map the land fills your chosen charge an hour sooner. |
+| **Wildsworn** | Class talent — bundles Living Root, Still Draw and Open Grip for 2 focus points. |
 
 ### Nature seers (NPC)
 
-Some lords and companions carry attunement to the living world. In battle they draw and release nature charges independently. Seeded at campaign start by culture: Battanian lords (~20%), Sturgian lords (~15%), Khuzait lords (~10%), others (~3%).
+Some lords and companions carry attunement to the living world. In battle they draw and release nature charges independently — and their draws spend the battlefield's living energy exactly as yours do, so a place can be exhausted by either side. A seer who draws from drained ground risks the same souring recoil. Seeded at campaign start by culture: Battanian lords (~20%), Sturgian lords (~15%), Khuzait lords (~10%), others (~3%).
 
 Two unit types appear rarely in warbands:
 - **Battanian Forest Listener** — melee nature seer in Battanian parties

@@ -2,8 +2,11 @@
 // ASH AND EMBER — Crystals/CrystallinesCampaignBehavior.cs
 //
 // Campaign layer for the crystal system:
-//   • Crystalline Chambers in 8 towns — formation menu (Silver Ore + trade good)
-//   • OnHeroCreated — 5 % flat chance to seed a crystal into a lord's equipment
+//   • Crystalline Chambers in 8 towns — formation menu (Silver Ore + trade good),
+//     open to any visitor (no magical path required)
+//   • EstablishForNewCampaign — one-time 5 % seed across lords alive at game start
+//   • OnHeroCreated — 5 % flat chance to seed a crystal into a new lord's equipment
+//   • Weekly/session shop restock so the 8 towns always carry every crystal
 //   • SyncData — nothing to persist (crystals are real items in inventories)
 //
 // Formation menu flow:
@@ -52,7 +55,26 @@ namespace AshAndEmber
         // Crystals are real items in the world — no campaign keys to save.
         public override void SyncData(IDataStore store) { }
 
-        public static void EstablishForNewCampaign() { }
+        // One-time seeding of the lords that already exist at campaign start. The
+        // HeroCreated hook only fires for heroes spawned/born AFTER the campaign
+        // begins, so without this pass no crystal would be carried by any NPC until
+        // a new generation grew up. Mirrors the per-creation 5 % chance.
+        public static void EstablishForNewCampaign()
+        {
+            try
+            {
+                var lords = Hero.AllAliveHeroes
+                    .Where(h => h != null && h != Hero.MainHero && h.IsAlive
+                             && (h.IsLord || h.IsMinorFactionHero))
+                    .ToList();
+                foreach (var hero in lords)
+                {
+                    if (_rng.NextDouble() >= CrystalMath.LordSeedChance) continue;
+                    try { SeedCrystalOnHero(hero); } catch { }
+                }
+            }
+            catch { }
+        }
 
         // ── Session start ─────────────────────────────────────────────────────
 
@@ -98,26 +120,26 @@ namespace AshAndEmber
             if (hero == null || hero == Hero.MainHero) return;
             if (!hero.IsLord && !hero.IsMinorFactionHero) return;
             if (_rng.NextDouble() >= CrystalMath.LordSeedChance) return;
+            try { SeedCrystalOnHero(hero); } catch { }
+        }
 
-            try
+        // Gives a hero a random crystal in a free battle-equipment weapon slot.
+        private static void SeedCrystalOnHero(Hero hero)
+        {
+            if (hero == null) return;
+            var defs = CrystalCatalog.All;
+            var def  = defs[_rng.Next(defs.Count)];
+            var item = MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
+            if (item == null) return;
+
+            for (int i = 0; i < 4; i++)
             {
-                // Pick a random crystal.
-                var defs = CrystalCatalog.All;
-                var def  = defs[_rng.Next(defs.Count)];
-                var item = MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
-                if (item == null) return;
-
-                // Find a free weapon slot in the hero's battle equipment.
-                for (int i = 0; i < 4; i++)
+                if (hero.BattleEquipment[(EquipmentIndex)i].IsEmpty)
                 {
-                    if (hero.BattleEquipment[(EquipmentIndex)i].IsEmpty)
-                    {
-                        hero.BattleEquipment[(EquipmentIndex)i] = new EquipmentElement(item);
-                        break;
-                    }
+                    hero.BattleEquipment[(EquipmentIndex)i] = new EquipmentElement(item);
+                    break;
                 }
             }
-            catch { }
         }
 
         // ── Chamber check helper ──────────────────────────────────────────────

@@ -39,6 +39,7 @@ namespace AshAndEmber
         private static float  _soberHoursTotal   = 0f;
         private static float  _soberHoursElapsed = 0f;
         private static bool   _soberDone         = false;
+        private static bool   _weedRest          = false; // the drowse after smoking the green
 
         private static readonly Random _rng = new Random();
 
@@ -70,6 +71,7 @@ namespace AshAndEmber
             _soberHoursTotal   = 0f;
             _soberHoursElapsed = 0f;
             _soberDone         = false;
+            _weedRest          = false;
         }
     }
 }

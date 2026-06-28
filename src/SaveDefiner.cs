@@ -37,6 +37,15 @@ namespace AshAndEmber
             AddClassDefinition(typeof(BurningLabQCLog),     5);
             AddClassDefinition(typeof(KeybindReferenceLog), 6);
             AddClassDefinition(typeof(EternalColdQuestLog), 7);
+
+            // Ember Conclave quest logs. Each is a live QuestBase added to the
+            // QuestManager when the Conclave fires; without these definitions the
+            // save could not be written once the quest started.
+            AddClassDefinition(typeof(EmberConclaveMainLog),      8);
+            AddClassDefinition(typeof(EmberConclaveEliminateLog), 9);
+            AddClassDefinition(typeof(EmberConclaveVisitLog),     10);
+            AddClassDefinition(typeof(EmberConclaveRuinLog),      11);
+            AddClassDefinition(typeof(EmberConclaveProtectLog),   12);
         }
     }
 }

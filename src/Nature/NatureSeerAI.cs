@@ -101,6 +101,19 @@ namespace AshAndEmber
                     ? NatureMath.SupportPower(el)
                     : NatureMath.RandomPower(el, _rng);
 
+                // An NPC seer's draw spends the battlefield's living energy just as
+                // the player's does — and an exhausted land may sour on them too.
+                try
+                {
+                    if (MobileParty.MainParty != null)
+                    {
+                        var outcome = LivingEnergy.DrawNature(MobileParty.MainParty.GetPosition2D, el, announce: true);
+                        if (outcome.Soured)
+                            NatureBacklash.ApplyBattle(agent, announce: false);
+                    }
+                }
+                catch { }
+
                 SpellEffects.FlashFocusAura(agent, ColorSchool.Nature);
                 NatureEffects.ExecuteNpc(power, agent, agent.Team);
             }

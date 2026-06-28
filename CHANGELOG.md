@@ -6,6 +6,69 @@
 
 ---
 
+## v0.24.0
+
+### The Living Ember, reforged — you choose the element, and the land can die
+- **You now choose which element to draw.** While focused (hold **Left Ctrl**), trace a direction to draw that element — **W = Wind · S = Earth · A = Water · D = Storm** (left stick on a pad), then stand still to gather the charge. The land no longer decides the element for you. On the campaign map, choose the element in the litany (**Shift+X**) before standing still to gather.
+- **Living energy — every battlefield and stretch of country now holds a finite, hidden reserve of living warmth**, sized by how much grows there (a forest brims; a desert holds almost nothing). The reserve persists in your save, is shared by everyone who fights over that ground, and slowly heals when left in peace.
+  - **Every nature draw _and_ every Inner Fire cast spends it** — for the player **and every NPC mage** alike.
+  - You are never shown the number, but the land warns you as it thins: at the **half**, the **quarter**, and when it runs **dry**.
+  - **Drawn past empty, the land turns on those who draw from it:** each further *nature* draw **bleeds the hearth of the nearest village**, and has a ~35% chance to **sour** — recoiling on the nature caster (≈22 damage; the working twists). NPC nature seers suffer the same.
+  - **Inner Fire is immune to the backlash.** Fire burns the land rather than communing with it: a fire cast still strips the local reserve (leaving the ground exhausted and dangerous), but the land can never recoil on the fire mage. The point is to make the Living Ember harder and riskier to use on a battlefield full of fire-mages — not to punish fire.
+  - **The backlash now takes many forms.** Forcing an exhausted land no longer means one flat recoil — in battle it may bite back as raw recoil, dead briars that root you, a hollowing that saps your speed, a gout of grey ash, or a slow wither; on the march as a blood-tithe, blighted (spoiled) provisions, a contagious despair (morale), or a creeping marsh-fever that wounds the weakest. Player and NPC nature casters draw from the same palette.
+- **The Old Green — a tavern option for the land-attuned.** Any tavern now offers Nature-attuned heroes a pouch of rare weeds (150 denars). Smoking it costs you **−10% of your health** and a few drowsy hours, but for **24 hours** every nature draw has a **30% chance to cost the land nothing at all** — the living world counts you, briefly, as one of its own. Saved with the campaign.
+- **Terrain now governs _cost_, not choice.** Each land favours certain elements (Wind on mountains/steppes, Earth in forest, Water by water, Storm on open plain/desert). Drawing a favoured element spends little of the reserve; drawing against the land (water in a desert, say) spends far more.
+- **Talents brought in line with the new system:**
+  - **Still Draw** — the channel bar now fills **twice as fast** (was an unimplemented HP-cost reduction).
+  - **Deep Earth** — now **halves the living energy** each of your draws spends, sparing the land (was an unimplemented siege cooldown).
+  - **Living Root**, **Open Grip**, **Dawn Call**, and **Wildsworn** descriptions corrected to match what they actually do.
+- Journal ("Notes for the Adventurer") and README rewritten to teach the new draw, the four direction keys, and the living-energy economy.
+
+### Crystals — chambers and stock now actually reach everyone
+- **Crystalline Chambers now appear for any visitor.** The "Visit the Crystalline Chamber" town option was gated behind being an Inner Fire mage, so Nature/Grace/non-magic players never saw it — even though crystals need no magical path to form or use. The gate is removed; the chamber shows in all eight towns (Sargot, Marunath, Ortysia, Revyl, Husn Fulq, Dunglanys, Tyal, Epicrotea) regardless of path.
+- **NPC lords now actually carry crystals.** `EstablishForNewCampaign` was an empty stub, and the only seeding hook (`OnHeroCreated`) fires solely for heroes spawned *after* a campaign begins — so no lord alive at game start ever carried one. New campaigns now seed ~5 % of existing lords with a crystal in a free weapon slot, mirroring the per-creation chance. (Town markets already restock every crystal weekly, so the player side was working.)
+
+### Fixes
+- **Custom Ashen units no longer spawn with the infant ("baby") body.** The Rising battle event built its reinforcement agents without explicit body properties, so they defaulted to age 0 and rendered as babies. The spawn now generates proper adult body properties and equipment from the troop template before building the agent.
+- **The Ember Conclave quest can be saved again.** Its five journal quest logs were `QuestBase` subclasses that were never registered with the save definer; once the Conclave fired, the live quest could not be serialized and the save broke. All five log types are now registered (`EmberConclaveMainLog`, `…EliminateLog`, `…VisitLog`, `…RuinLog`, `…ProtectLog`).
+
+---
+
+## v0.23.13
+
+### Two new Grace miracles
+- **Pyre of Judgement** (hold Ctrl + D-D-W-W-S-S in battle) — a pillar of consecrated fire falls where you are looking, searing **every** enemy beneath it (not only the Ashen) and hurling the survivors from the light. Grace's first true ranged smite; battle-only, requires full virtue.
+- **Hallowed Ground** (hold Ctrl + A-A-D-D-W-W in battle) — consecrates the earth around you, **warding you and nearby allies against all magic** for 10 seconds (enemy spells and Dark Gifts cannot touch the warded) and closing some of their wounds. Battle-only, requires some virtue.
+- Grace lords and priests may now invoke either miracle in battle, drawing from their own divine wellspring.
+
+### Fixes
+- **The culture card's feats panel now actually shows the Templar / Tribal feats.** The v0.23.12 attempt skipped its own replacement whenever the native feat count matched ours (both cultures have exactly three), so the card kept displaying the vanilla Vlandian/Khuzait bonuses. The feats are now relabelled on the culture's own feat objects (which the panel reads directly), so the swap is reliable and survives the view-model rebuilding itself. Gameplay effect amounts are untouched — only the displayed feat text changes.
+
+---
+
+## v0.23.12
+
+### Character creation — Templar & Tribal backstories
+- **Reworked culture-specific backstory options** for the Templar (Vlandia) and Tribal (Khuzait) cultures, with new lore-matching names and descriptions:
+  - *Tribal* — "A noyan's kinsfolk" → **Apostles of the God-King** (the Polearm grant is replaced by one random **Dark Gift**); "studied with your private tutor" → **attended the religious school**; "a chieftain's servant" → **the God-King's bloodrider's servant**; "an envoy's entourage" → **the Tribe's emissary**.
+  - *Templar* — "A baron's retainers" → **Lower-rank Templars**; "Mercenaries" → **Footmen**; "hung out with the gangs" → **denounced enemies of the faith with your friends**; "a baron's groom" → **a Lord Templar's squire** (the Charm grant is replaced by **+3 Grace and +1 Honour**).
+- Backstory option effects now show in Bannerlord's **dedicated effect panel** (skills, attribute, and the squire's Honour) rather than being read from the description; Grace / Dark Gift, which the panel cannot express, are noted in the description and granted as the campaign begins.
+
+### Character creation — culture cards
+- **The Khuzait culture card now reads "Tribes of the East"** on the character-creation screen (matching the existing Templar rename), with its own lore description.
+- **Cultural feats moved into Bannerlord's dedicated feats panel** for both renamed cultures (Dawn's Grace / Oath of the Vigil / The Order's Price; War Fever / Spoils of the Raid / No Quarter), instead of being listed inside the description text.
+
+### The Gift prompt
+- **Removed the Grace ("I devoted myself to faith") and Dark Gift ("I bargained with the dark") choices** from the opening gift prompt. Both paths remain reachable in play (Grace at Sanctuaries and the new squire backstory; Dark Gifts at Dark Altars and the new apostle backstory).
+- **Templars (Vlandia) can no longer choose the Living Ember (Nature) path** — it collides with the Order's Grace, which they already carry. The option is disabled for them with an in-fiction explanation.
+
+### Fixes
+- **The Ashen no longer spread to ordinary frontier towns.** Towns the Ashen seize that are not part of their designated set (e.g. Rovalt, Ocs Hall, Car Banseth, which sit a short ride from the Ashen capital) are now handed back to a defensible kingdom of their own culture, enforcing the long-standing rule that the Ashen realm is exactly its renamed set.
+- Corrected a settlement assignment that referenced a non-existent Northern Empire id (`empire_n`).
+- **The journal no longer references Cold miracles**, which players cannot use (Cold became an NPC-only effect when Dark Altars switched to permanent Dark Gifts).
+
+---
+
 ## v0.23.11
 
 ### Vlandia → Templar (character-creation card)

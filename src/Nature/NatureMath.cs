@@ -2,13 +2,15 @@
 // ASH AND EMBER — Nature/NatureMath.cs
 //
 // Pure numeric logic for The Living Ember — no TaleWorlds types, fully testable.
-// Simplified to FOUR elements, each with one attack and one barrier power, drawn
-// from the combat environment:
-//   Wind  — mountains, steppes, hills
-//   Earth — forests
-//   Water — rivers, shores, lakes, rain, snow, wetland
-//   Storm — deserts, open plains
-//   (mixed / unknown ground gives a random element)
+// FOUR elements, each with one attack and one barrier power. The caster DRAWS the
+// element they want by tracing a direction while focused (W=Wind, S=Earth,
+// A=Water, D=Storm); the land no longer decides which element answers.
+//
+// Terrain still matters, but for COST rather than choice: each land favours
+// certain elements (Wind on mountains/steppes, Earth in forest, Water by water,
+// Storm on open plain/desert). Drawing a favoured element spends less of the
+// place's living energy; drawing against the land spends far more. See
+// LivingEnergyMath for the energy economy.
 // =============================================================================
 
 using System;
@@ -58,13 +60,13 @@ namespace AshAndEmber
         public const float ArmourWeightCap = 25f;
 
         // ── Terrain mapping ─────────────────────────────────────────────────────
-        // Bannerlord TerrainType name → element. Matched by .ToString() so enum
-        // integer drift does not break the lookup. Unknown / mixed ground returns
-        // all four, so the draw is random.
-        // Terrain → the element(s) the land offers. Iconic terrains give ONE element
-        // (the same all battle); transitional/blended terrains give TWO, and each
-        // charge rolls one or the other; truly unknown ground falls back to any of
-        // the four. Names are TaleWorlds.Core.TerrainType values.
+        // Bannerlord TerrainType name → the element(s) the land FAVOURS. Matched by
+        // .ToString() so enum integer drift does not break the lookup. Iconic
+        // terrains favour ONE element; transitional/blended terrains favour TWO;
+        // truly unknown ground favours none in particular (all four → neutral cost).
+        // Drawing a favoured element here is cheap; drawing an unfavoured one drains
+        // the land hard (see LivingEnergyMath.MatchFactor). Names are
+        // TaleWorlds.Core.TerrainType values.
         public static NatureElement[] TerrainElements(string terrainTypeName)
         {
             switch (terrainTypeName ?? "")
@@ -100,6 +102,37 @@ namespace AshAndEmber
         private static readonly NatureElement[] _earthWind  = { NatureElement.Earth, NatureElement.Wind  };
         private static readonly NatureElement[] _mixed =
             { NatureElement.Wind, NatureElement.Earth, NatureElement.Water, NatureElement.Storm };
+
+        // ── Element selection ────────────────────────────────────────────────────
+        // The caster DRAWS the element by tracing a direction while focused, rather
+        // than taking whatever the ground offers. The land no longer decides which
+        // element answers — only how dearly it costs (see LivingEnergyMath).
+        //   W (Up)    → Wind     S (Down)  → Earth
+        //   A (Left)  → Water    D (Right) → Storm
+        public static NatureElement ElementForKey(string dir)
+        {
+            switch ((dir ?? "").ToUpperInvariant())
+            {
+                case "W": case "U": case "UP":    return NatureElement.Wind;
+                case "S": case "D2": case "DOWN": return NatureElement.Earth;
+                case "A": case "L": case "LEFT":  return NatureElement.Water;
+                case "D": case "R": case "RIGHT": return NatureElement.Storm;
+                default:                          return NatureElement.None;
+            }
+        }
+
+        // The W/A/S/D key that draws an element — for hints and the journal.
+        public static string KeyForElement(NatureElement el)
+        {
+            switch (el)
+            {
+                case NatureElement.Wind:  return "W";
+                case NatureElement.Earth: return "S";
+                case NatureElement.Water: return "A";
+                case NatureElement.Storm: return "D";
+                default:                  return "?";
+            }
+        }
 
         // ── Power lookups ───────────────────────────────────────────────────────
         public static NaturePower AttackPower(NatureElement el)

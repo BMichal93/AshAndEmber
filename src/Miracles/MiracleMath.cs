@@ -29,6 +29,8 @@ namespace AshAndEmber
         public const string SeqSacredFlame     = "UURRDL";
         public const string SeqAegisOfFaith    = "LLUURR";
         public const string SeqCleansingRite   = "RULRUU";
+        public const string SeqPyreJudgement   = "RRUUDD";
+        public const string SeqHallowedGround  = "LLRRUU";
 
         public const int SequenceLength = 6;
 
@@ -45,6 +47,8 @@ namespace AshAndEmber
                 case SeqSacredFlame:     type = MiracleType.SacredFlame;     return true;
                 case SeqAegisOfFaith:    type = MiracleType.AegisOfFaith;    return true;
                 case SeqCleansingRite:   type = MiracleType.CleansingRite;   return true;
+                case SeqPyreJudgement:   type = MiracleType.PyreOfJudgement; return true;
+                case SeqHallowedGround:  type = MiracleType.HallowedGround;  return true;
                 default:                                                      return false;
             }
         }
@@ -96,5 +100,14 @@ namespace AshAndEmber
 
         public const float CleansingRiteRadius = 8f;
         public const float CleansingRiteDamage = 30f;
+
+        // Pyre of Judgement: a pillar of consecrated fire dropped ahead of the caster.
+        public const float PyreJudgementReach  = 8f;   // metres ahead the pillar falls
+        public const float PyreJudgementRadius = 6f;   // blast radius at the impact point
+        public const float PyreJudgementDamage = 60f;  // HP seared from each enemy struck
+
+        // Hallowed Ground: wards caster + nearby allies against all magic, then mends them.
+        public const float HallowedGroundRadius   = 8f;
+        public const float HallowedGroundHealFrac = 0.15f;
     }
 }

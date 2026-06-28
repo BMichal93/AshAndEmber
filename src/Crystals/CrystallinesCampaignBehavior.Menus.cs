@@ -44,8 +44,9 @@ namespace AshAndEmber
                     {
                         try
                         {
+                            // The Chamber serves anyone — crystals need no magical path,
+                            // only Silver Ore, the right trade good, and a steady hand.
                             if (!HasCrystallineChamber(Settlement.CurrentSettlement)) return false;
-                            if (!MageKnowledge.IsMage) return false;
                             MBTextManager.SetTextVariable("CRYSTAL_CHAMBER_TEXT", "Visit the Crystalline Chamber");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
                             args.IsEnabled = true;

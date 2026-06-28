@@ -455,13 +455,13 @@ namespace AshAndEmber
             {
                 Id = TalentId.NatureLivingRoot, Category = TalentCategory.Rite, FocusCost = 0, Name = "Living Root",
                 Lore = "The root-voice speaks twice when you know how to listen. The land does not give more than it is asked for — but a patient hand, reaching twice, finds what a hasty one misses.",
-                MechanicDesc = "Rite. You may hold two elemental charges at once instead of one. Passive charge accumulation on the campaign map rolls twice each day."
+                MechanicDesc = "Rite. You may hold two elemental charges at once instead of one — draw two elements and carry both into the fight."
             },
             new TalentDef
             {
                 Id = TalentId.NatureStillDraw, Category = TalentCategory.Rite, FocusCost = 0, Name = "Still Draw",
                 Lore = "The river does not charge you for what it offers when you are still. Motion is cost. Stillness is the oldest prayer the land knows.",
-                MechanicDesc = "Rite. Drawing elemental charge in combat costs no HP when you are stationary. Move, and the land asks its price."
+                MechanicDesc = "Rite. The channelling bar fills twice as fast — you draw a chosen element from the land in half the time."
             },
             new TalentDef
             {
@@ -473,19 +473,19 @@ namespace AshAndEmber
             {
                 Id = TalentId.Wildsworn, Category = TalentCategory.Rite, FocusCost = 0, Name = "Wildsworn",
                 Lore = "You have listened long enough that the listening has changed you. The root-voice, the river's patience, the open hand of the wind — you carry all three, and the land knows you for what you are.",
-                MechanicDesc = "A discipline class. The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (free draw while stationary), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
+                MechanicDesc = "A discipline class. The full discipline of The Living Ember. Grants Living Root (hold two charges), Still Draw (the channel fills twice as fast), and Open Grip (charges never expire). A hermit who taught you one of these will not begrudge you the others."
             },
             new TalentDef
             {
                 Id = TalentId.NatureDeepEarth, Category = TalentCategory.Rite, FocusCost = 0, Name = "Deep Earth",
-                Lore = "Stone is slow to speak, but it does not stay silent. Those who wait long enough beside an old wall or a mountain face come to hear the root-voice through the rock as clearly as through open soil. The muffling is a failure of patience, not a failure of the land.",
-                MechanicDesc = "Rite. Drawing elemental charge inside a siege or walled city no longer triggers the stone-muffling cooldown. The land speaks through stone as freely as through soil."
+                Lore = "Stone is slow to speak, but it does not stay silent. Those who wait long enough beside an old wall or a mountain face learn to take from the deep, patient reserves the hasty never reach — and to take gently, so the living world above is barely touched.",
+                MechanicDesc = "Rite. You draw from the land's deep reserves: every charge you gather spends only HALF the living energy it would otherwise cost, sparing the place you fight over."
             },
             new TalentDef
             {
                 Id = TalentId.NatureDawnCall, Category = TalentCategory.Rite, FocusCost = 0, Name = "Dawn Call",
                 Lore = "The desert is loudest at dawn. Most people miss it. The angle of the light, the shift of the cold, the moment when dark ground releases what it held through the night — if you are open enough when it happens, the living world gives without being asked.",
-                MechanicDesc = "Rite. The land offers an elemental charge each dawn without fail. The 1-in-3 chance of passive accumulation on the campaign map becomes a certainty."
+                MechanicDesc = "Rite. The land yields more readily on the march — standing still draws your chosen element's charge a full hour sooner than it otherwise would."
             },
         };
 

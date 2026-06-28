@@ -186,10 +186,12 @@ namespace AshAndEmber
                 "of these paths: Grace, Nature, and the Dark Gifts are all mutually exclusive."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · GATHER A CHARGE — Hold Left Ctrl and STAND STILL (both hands empty, " +
-                "armour weight ≤ 25). A bar fills over about six seconds, coloured by the element of " +
-                "the ground beneath you; when it completes you hold one charge, which lasts about " +
-                "thirty seconds. Moving interrupts the gathering."), true);
+                "LIVING EMBER · DRAW AN ELEMENT — Hold Left Ctrl and CHOOSE what to draw by tracing a " +
+                "direction:  W = Wind · S = Earth · A = Water · D = Storm  (left stick on a pad). Then " +
+                "STAND STILL (both hands empty, armour weight ≤ 25) and a bar fills over about six " +
+                "seconds, coloured by your chosen element; when it completes you hold one charge, which " +
+                "lasts about thirty seconds. Moving interrupts the gathering. The land no longer decides " +
+                "the element — you do."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · CAST (in battle) — While holding Left Ctrl and carrying a charge:  " +
@@ -200,10 +202,30 @@ namespace AshAndEmber
                 "still answers in other ways."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · THE FOUR ELEMENTS — The land decides, not you: " +
-                "WIND on mountains, hills and steppes; EARTH in forests; WATER by rivers, shores, " +
-                "rain and snow; STORM on open plains and deserts. Mixed or unfamiliar ground gives " +
-                "a random element."), true);
+                "LIVING EMBER · THE FOUR ELEMENTS — You choose the element (W Wind · S Earth · A Water · " +
+                "D Storm). The land no longer decides WHICH element answers — only how dearly it costs. " +
+                "Each terrain FAVOURS certain elements: WIND on mountains, hills and steppes; EARTH in " +
+                "forests; WATER by rivers, shores, rain and snow; STORM on open plains and deserts. " +
+                "Drawing a favoured element spends little of the place's living energy; drawing against " +
+                "the land (water in a desert, say) spends far more."), true);
+
+            AddLog(new TextObject(
+                "LIVING EMBER · THE LIVING ENERGY — Every battlefield and every stretch of country holds " +
+                "a hidden reserve of living warmth, set by how much grows there (a forest brims; a desert " +
+                "holds almost nothing). EVERY draw of nature magic AND every cast of Inner Fire — yours " +
+                "or any NPC mage's — spends some of it. You are never told the exact figure, but the land " +
+                "warns you as it thins: at the half, at the quarter, and when it runs dry. Drained past " +
+                "empty, the land turns on those who DRAW from it: each further nature draw bleeds the " +
+                "hearth of the nearest village, and may SOUR — recoiling on the nature caster (damage; a " +
+                "working twists). Inner Fire does not commune with the land, only burns it — a fire mage " +
+                "is never bitten back, but their casting still strips the ground bare, which is precisely " +
+                "what makes the living world treacherous to draw from on a battlefield full of fire. " +
+                "The souring takes many shapes — dead briars that root you, a hollowing weakness, a flare " +
+                "of grey ash, a slow wither; on the march, spoiled stores, a creeping fever, or a " +
+                "contagious despair. Left in peace, a place heals a little each day. THE OLD GREEN: a " +
+                "tavern will sell the land-attuned a pouch of rare weeds — smoke it to lose a tenth of " +
+                "your health and a few drowsy hours, but for a day a third of your draws will cost the " +
+                "land nothing at all."), true);
 
             AddLog(new TextObject(
                 "LIVING EMBER · THE POWERS — WIND: Gale (Attack — a ring of wind, knockback + damage) · " +
@@ -217,9 +239,11 @@ namespace AshAndEmber
                 "All barriers last several seconds and pulse every heartbeat; NPCs who walk the living path raise them in defence."), true);
 
             AddLog(new TextObject(
-                "LIVING EMBER · ON THE CAMPAIGN MAP — Halt in open country; standing still a few " +
-                "hours lets the land fill a charge of the local element. Open the litany (Shift+X / " +
-                "RB+L3) to spend it on that element's MARCH POWER. Each has a real cost — the land " +
+                "LIVING EMBER · ON THE CAMPAIGN MAP — First open the litany (Shift+X / RB+L3) to CHOOSE " +
+                "which element to draw; the window shows whether the ground you stand on favours it (a " +
+                "gentle draw) or not (a costly one). Then halt in open country — standing still a few " +
+                "hours fills a charge of your chosen element. Open the litany again to spend it on that " +
+                "element's MARCH POWER. Each has a real cost — the land " +
                 "gives nothing for free. " +
                 "WIND — Windward: the wind presses the march forward — if you have a destination set, " +
                 "the column advances several leagues toward it. If not, the wind goes ahead and comes " +
@@ -239,10 +263,12 @@ namespace AshAndEmber
 
             AddLog(new TextObject(
                 "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +
-                "Living Root: hold two charges. Open Grip: your charge never fades. " +
-                "Still Draw / Deep Earth: the bar fills faster. Dawn Call: the land gives more " +
-                "readily on the march. Hermits in Battania, Sturgia, and the Khuzait steppe teach " +
-                "those who come ready — empty-handed and lightly armoured."), true);
+                "Living Root: hold two charges (draw two elements at once). Still Draw: the bar fills " +
+                "twice as fast. Open Grip: your charge never fades. Deep Earth: you draw gently — each " +
+                "charge spends only HALF the land's living energy. Dawn Call: the land yields its charge " +
+                "an hour sooner on the march. Hermits in Battania, Sturgia, the Khuzait steppe, the " +
+                "mountain retreat of Marunath, and the Aserai fringe teach those who come ready — " +
+                "empty-handed and lightly armoured."), true);
 
             AddLog(new TextObject(
                 "THE DARK GIFTS — Permanent boons bought at a Dark Altar (in the Empire and the " +

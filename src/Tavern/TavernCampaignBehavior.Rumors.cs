@@ -317,6 +317,65 @@ namespace AshAndEmber
             }
         }
 
+        // ── The old green (rare nature weeds) ─────────────────────────────────
+        internal static int WeedCost() => 150;
+
+        // Smoke the rare weeds: it leaves you tired (−10% of your health) but for a
+        // day the living world counts you as one of its own — each nature draw has a
+        // 30% chance to cost the land nothing. Then you drowse a few hours.
+        internal static void SmokeNatureWeeds()
+        {
+            int cost = WeedCost();
+            if ((Hero.MainHero?.Gold ?? 0) < cost)
+            {
+                Msg("You haven't the coin for a pouch of the old green.", BadColor);
+                return;
+            }
+            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch { }
+
+            // The toll on the body: ten percent of your full health, never lethal.
+            int hpLoss = 0;
+            try
+            {
+                var h = Hero.MainHero;
+                if (h != null)
+                {
+                    hpLoss = Math.Max(1, (int)(h.MaxHitPoints * 0.10f));
+                    h.HitPoints = Math.Max(1, h.HitPoints - hpLoss);
+                }
+            }
+            catch { }
+
+            // The gift: a day's communion with the living world.
+            try { NatureKnowledge.GrantWeedBlessing(24.0); } catch { }
+
+            // …and the drowse. A few tired hours pass (reuses the wait menu).
+            _weedRest          = true;
+            _soberHoursTotal   = 5f + _rng.Next(3);   // 5-7 hours
+            _soberHoursElapsed = 0f;
+            _soberDone         = false;
+
+            try
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "The Old Green",
+                    "The pouch holds dried leaves the colour of deep moss, threaded with pale root and a flower " +
+                    "you have no name for. The keeper sells it without meeting your eye.\n\n" +
+                    "You smoke it slow by the fire. The smoke is bitter, then sweet, then nothing. The room recedes. " +
+                    "Your limbs grow heavy and far away — but underneath the heaviness something opens, and for the " +
+                    "first time you feel the land breathing under the floorboards, under the town, going down and " +
+                    "down. You are tired. You are also, briefly, part of it all.\n\n" +
+                    $"[−{hpLoss} health · for one day, 30% of your nature draws cost the land nothing]",
+                    true, false, "Let it take you.", "",
+                    () => { try { GameMenu.SwitchToMenu("ldm_tavern_sober_up"); } catch { } },
+                    null));
+            }
+            catch
+            {
+                try { GameMenu.SwitchToMenu("ldm_tavern_sober_up"); } catch { }
+            }
+        }
+
         private static readonly string[] _eveningBanter = {
             "A soldier at the next table is teaching a younger one to play cards. The younger one is better and pretending not to be.",
             "The innkeeper's wife is singing in the back room. No one mentions it. Everyone is listening.",

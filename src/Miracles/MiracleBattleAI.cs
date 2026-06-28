@@ -89,7 +89,8 @@ namespace AshAndEmber
             {
                 MiracleType.LightOfGuidance, MiracleType.SacredFlame,
                 MiracleType.AegisOfFaith,    MiracleType.RadiantMending,
-                MiracleType.CleansingRite,
+                MiracleType.CleansingRite,   MiracleType.PyreOfJudgement,
+                MiracleType.HallowedGround,
             };
             return set[_rng.Next(set.Length)];
         }

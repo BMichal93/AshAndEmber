@@ -138,6 +138,8 @@ namespace AshAndEmber
                 case MiracleType.SacredFlame:     BattleSacredFlame(a, announce);     break;
                 case MiracleType.AegisOfFaith:    BattleAegis(a, announce);           break;
                 case MiracleType.CleansingRite:   BattleCleansingRite(a, announce);   break;
+                case MiracleType.PyreOfJudgement: BattlePyreJudgement(a, announce);   break;
+                case MiracleType.HallowedGround:  BattleHallowedGround(a, announce);  break;
             }
         }
 
@@ -153,6 +155,8 @@ namespace AshAndEmber
                 case MiracleType.AegisOfFaith:    return "The Aegis of Faith calls for a battlefield.";
                 case MiracleType.SacredFlame:     return "Sacred Flame calls for a battlefield.";
                 case MiracleType.CleansingRite:   return CampaignCleansingRite(hero, party);
+                case MiracleType.PyreOfJudgement: return "The Pyre of Judgement calls for a battlefield.";
+                case MiracleType.HallowedGround:  return "Hallowed Ground calls for a battlefield.";
                 default:                          return null;
             }
         }
@@ -334,6 +338,81 @@ namespace AshAndEmber
                         ? $"unleashes the Cleansing Rite — {parts}."
                         : "unleashes the Cleansing Rite — the flame burns through the air.");
             }
+        }
+
+        private static void BattlePyreJudgement(Agent caster, bool announce)
+        {
+            Vec3 pos, fwd;
+            try { pos = caster.Position; fwd = caster.LookDirection; } catch { return; }
+
+            // Drop the pillar on the ground ahead of where the caster is looking.
+            Vec3 fwdH = new Vec3(fwd.x, fwd.y, 0f);
+            if (fwdH.Length > 0.01f) fwdH = fwdH.NormalizedCopy(); else fwdH = new Vec3(0f, 1f, 0f);
+            Vec3 impact = new Vec3(
+                pos.x + fwdH.x * MiracleMath.PyreJudgementReach,
+                pos.y + fwdH.y * MiracleMath.PyreJudgementReach,
+                pos.z);
+
+            try { SpellEffects.SpawnExplosionParticle(impact, 2f); } catch { }
+            try { SpellEffects.SpawnBigFireParticle(impact, 2.5f); } catch { }
+
+            float r2 = MiracleMath.PyreJudgementRadius * MiracleMath.PyreJudgementRadius;
+            int hit = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == caster || !a.IsActive() || a.IsMount) continue;
+                    if (caster.Team != null && a.Team == caster.Team) continue;
+                    float dx = a.Position.x - impact.x, dy = a.Position.y - impact.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    if (SpellEffects.IsWarded(a)) continue;
+                    try { SpellEffects.DamageAgent(a, MiracleMath.PyreJudgementDamage, ColorSchool.Yellow, caster); } catch { }
+                    try { SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Yellow, 4f); } catch { }
+                    hit++;
+                }
+            }
+            catch { }
+
+            // Survivors are hurled from the light.
+            try { SpellEffects.ScatterEnemies(impact, MiracleMath.PyreJudgementRadius, caster.Team); } catch { }
+            try { SpellEffects.RecordMagicCast(impact); } catch { }
+
+            if (announce)
+                Log(caster, hit > 0
+                    ? $"calls the Pyre of Judgement — a pillar of fire falls and {hit} {(hit == 1 ? "enemy is" : "enemies are")} cast from the light."
+                    : "calls the Pyre of Judgement — the pillar falls upon empty ground.");
+        }
+
+        private static void BattleHallowedGround(Agent caster, bool announce)
+        {
+            // Ward the caster and nearby allies against all magic (reuses the shared
+            // ward system that enemy spells and Dark Gifts check), then mend them.
+            try { SpellEffects.ExecuteWardFromAgent(caster, MiracleMath.HallowedGroundRadius); } catch { }
+            try { SpellEffects.HealAgent(caster, SafeLimit(caster) * MiracleMath.HallowedGroundHealFrac); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 10f); } catch { }
+
+            Vec3 pos;
+            try { pos = caster.Position; } catch { if (announce) Log(caster, "consecrates the ground — the light wards you."); return; }
+            float r2 = MiracleMath.HallowedGroundRadius * MiracleMath.HallowedGroundRadius;
+            int warded = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == caster || !a.IsActive() || a.IsMount) continue;
+                    if (caster.Team == null || a.Team != caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    try { SpellEffects.HealAgent(a, SafeLimit(a) * MiracleMath.HallowedGroundHealFrac); } catch { }
+                    warded++;
+                }
+            }
+            catch { }
+            if (announce)
+                Log(caster, warded > 0
+                    ? $"consecrates the ground — {warded} {(warded == 1 ? "ally stands" : "allies stand")} warded against all magic for 10 seconds."
+                    : "consecrates the ground — no magic can touch you for 10 seconds.");
         }
 
         // ── Grace campaign implementations ────────────────────────────────────

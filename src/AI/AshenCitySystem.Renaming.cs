@@ -225,6 +225,7 @@ namespace AshAndEmber
                     "to face it alone. They held. In the silence that followed, they made a covenant with the " +
                     "fire inside them — not as weapon, but as vow. The Templars are what that vow became. " +
                     "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.");
+                RelabelCulturalFeats("vlandia", _templeFeats, ref _templeFeatsRelabeled);
                 return true;
             }
             catch { return false; }
@@ -306,9 +307,72 @@ namespace AshAndEmber
                     "He takes wives from every city his horsemen put to tribute. " +
                     "He is watching the Empire bleed itself empty, and he is patient. " +
                     "The Tribes do not seek peace. They seek the next horizon.");
+                RelabelCulturalFeats("khuzait", _tribalFeats, ref _tribalFeatsRelabeled);
                 return true;
             }
             catch { return false; }
+        }
+
+        // ── Cultural feats (character-creation card) ───────────────────────────
+        // The culture card's feats panel reads each FeatObject.Description directly
+        // (via Culture.GetCulturalFeats), so the only reliable way to show OUR feats
+        // there is to relabel the culture's own feats — not to rewrite the view-model,
+        // which rebuilds itself from these objects. Vlandia and Khuzait each have
+        // exactly two positive feats and one negative, matching our sets, so we map
+        // by sign. Effect amounts are left intact; only the displayed text changes.
+        // Each entry is { positive, positive, negative } in display order.
+        private static readonly string[] _templeFeats =
+        {
+            "Dawn's Grace — Should your Grace run dry, each dawn the Light restores a measure of it. (+1 Grace at dawn, if empty)",
+            "Oath of the Vigil — Your sworn discipline steadies those who follow. (+4 party morale per day)",
+            "The Order's Price — Dark gifts demand twice their cost, and the living ember answers your hand a breath slower. (Dark Gift ×2 cost; Nature channelling +1s)",
+        };
+        private static readonly string[] _tribalFeats =
+        {
+            "War Fever — The Tribes ride to war as if born to it; your clan's parties never lose heart. (party morale floor +15)",
+            "Spoils of the Raid — A village put to the torch yields more than the usual plunder. (+50–150 gold per raid)",
+            "No Quarter — The God-King's word burns through any treaty; your wars do not end in peace.",
+        };
+        private static bool _templeFeatsRelabeled;
+        private static bool _tribalFeatsRelabeled;
+
+        // Relabels a culture's feat descriptions: positives in order, then the negative.
+        private static void RelabelCulturalFeats(string cultureId, string[] feats, ref bool done)
+        {
+            if (done) return;
+            try
+            {
+                var culture = MBObjectManager.Instance?.GetObject<CultureObject>(cultureId);
+                if (culture == null) return;
+
+                var field = typeof(CultureObject).GetField("_cultureFeats",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                if (!(field?.GetValue(culture) is System.Collections.IEnumerable list)) return;
+
+                // Split our texts into the positive set and the single negative.
+                var positives = feats.Take(feats.Length - 1).ToArray();
+                string negative = feats[feats.Length - 1];
+
+                int posIdx = 0;
+                bool any = false;
+                foreach (var f in list)
+                {
+                    if (f == null) continue;
+                    var ft = f.GetType();
+                    bool isPositive = (bool)(ft.GetProperty("IsPositive")?.GetValue(f) ?? true);
+                    float bonus     = (float)(ft.GetProperty("EffectBonus")?.GetValue(f) ?? 0f);
+                    object incType  = ft.GetProperty("IncrementType")?.GetValue(f);
+                    string name     = (ft.GetProperty("Name")?.GetValue(f) as TextObject)?.ToString() ?? "";
+                    string desc     = isPositive
+                        ? (posIdx < positives.Length ? positives[posIdx++] : positives[positives.Length - 1])
+                        : negative;
+                    // FeatObject.Initialize(name, description, effectBonus, isPositive, incrementType)
+                    ft.GetMethod("Initialize")?.Invoke(f, new[] { name, desc, (object)bonus, isPositive, incType });
+                    any = true;
+                }
+                if (any) done = true;
+            }
+            catch { }
         }
 
         // ── Khuzait troop rename ───────────────────────────────────────────────

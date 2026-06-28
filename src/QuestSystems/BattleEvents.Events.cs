@@ -327,10 +327,21 @@ namespace AshAndEmber
                         }
                         catch { }
 
+                        // An AgentBuildData with no explicit equipment/body properties
+                        // spawns with default BodyProperties (age 0) — which renders as
+                        // the infant/"baby" model. Generate proper adult body properties
+                        // from the troop so the spawn always looks like a grown warrior.
+                        int seed = _rng.Next();
+                        Equipment equipment = troop.FirstBattleEquipment ?? troop.Equipment;
+                        BodyProperties body = troop.GetBodyProperties(equipment, seed);
+
                         var origin    = new BasicBattleAgentOrigin(troop);
                         var agentData = new AgentBuildData(origin)
                             .Team(_ashenTeam)
                             .Controller(AgentControllerType.AI)
+                            .Equipment(equipment)
+                            .BodyProperties(body)
+                            .Age((int)body.Age)
                             .ClothingColor1(AshenVisuals.ClothAshGrey)
                             .ClothingColor2(AshenVisuals.ClothColdBlue)
                             .InitialPosition(in pos)

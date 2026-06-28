@@ -176,7 +176,7 @@ The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Da
 
 ## The Living Ember
 
-A second discipline, separate from the Inner Fire. Those who hear the living land — root, river, stone, and sky — may draw elemental charges from the terrain beneath them and release them as natural forces.
+A second discipline, separate from the Inner Fire. Those who hear the living land — root, river, stone, and sky — **choose** an element, draw it from the world around them, and release it as a natural force. Drawing is never free: every working spends the **living energy** of the place it is fought over, and a land stripped bare turns on those who force it.
 
 ### Choosing this path
 
@@ -184,31 +184,30 @@ At the gift prompt at campaign start, select **"The world beneath me has always 
 
 ### Controls
 
+The focus key is **Left Ctrl** (shared with miracles — the paths are mutually exclusive).
+
 | Action | Keyboard | Gamepad |
 |--------|----------|---------|
-| Draw a charge from the land | Hold **Right Alt** + **S** | Hold **R3**, L-stick **Down** |
-| Release and cast | Hold **Right Alt** + **W** | Hold **R3**, L-stick **Up** |
+| Choose element | Hold **Left Ctrl**, trace **W** Wind / **S** Earth / **A** Water / **D** Storm | Hold **R3**, flick left stick |
+| Gather the charge | …then **stand still** (~6 s; bar fills) | …then stand still |
+| Cast attack | Hold **Left Ctrl** + **Attack** (left mouse) | Hold **R3** + **Right Trigger** |
+| Cast support | Hold **Left Ctrl** + **Block** (right mouse) | Hold **R3** + **Left Trigger** |
+| Campaign map | Choose element + cast via the litany (**Shift+X**); stand still ~4 h to gather | — |
 
-**Requirements:** Both hands must be empty (no weapon or shield). Armour weight must not exceed 25.
+**Requirements (battle):** Both hands empty (no weapon or shield); armour weight ≤ 25.
 
-### Terrain, elements, and draw cost
+### Living energy — terrain and cost
 
-The charge you draw is shaped by the ground you stand on. Hybrid terrain gives a random element from those listed.
+You pick which element to draw — the land no longer decides. Terrain instead sets how dearly the draw **costs the land**. Every battlefield and stretch of country holds a hidden reserve of living energy, sized by how much grows there (forest brims; desert holds almost nothing). Each terrain *favours* certain elements — drawing a favoured element is cheap, drawing against the land is costly.
 
-| Terrain | Element | HP draw cost |
-|---------|---------|-------------|
-| Forest | Verdant | **Free** |
-| Meadow, Grassland | Verdant or Wind | Free / 10 HP |
-| Mountain | Stone | 12 HP |
-| Swamp, Wetland | Stone or Water | 12 / 10 HP |
-| Hill, Hills | Stone or Wind | 12 / 10 HP |
-| Water, River, Lake | Water | 10 HP |
-| Shore | Water or Wind | 10 HP |
-| Plain | Wind | 10 HP |
-| Snow, Arctic | Frost | 14 HP |
-| Steppe | Storm or Wind | 13 / 10 HP |
-| Desert | Storm | 13 HP |
-| (other) | Wind | 10 HP |
+| Direction → Element | Favoured terrain (cheap draw) |
+|---------------------|-------------------------------|
+| **W** → Wind | Mountain, Hills, Steppe |
+| **S** → Earth | Forest |
+| **A** → Water | River, Lake, Shore, Snow, Wetland |
+| **D** → Storm | Desert, Plains, Meadow |
+
+Both nature draws *and* Inner Fire casts spend the reserve, for the player **and every NPC mage**. You are warned as it thins — at the half, the quarter, and when it runs dry. Left in peace, a place mends a little each day; reserves are saved with the campaign. Drained past empty, the land **bites back only at nature casters** — a nature draw on dead ground bleeds the nearest village's hearth and may **sour** (≈22 damage recoil). **Inner Fire is immune** (it burns the land rather than communing with it), but fire casts still strip the reserve — which is what makes the Living Ember risky to use where fire-mages fight.
 
 ### Powers
 

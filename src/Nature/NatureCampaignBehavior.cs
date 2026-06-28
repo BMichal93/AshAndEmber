@@ -76,10 +76,26 @@ namespace AshAndEmber
 
                 if (_stillHours >= needed && !NatureCharge.IsFull)
                 {
-                    if (NatureCharge.GrantCampaignCharge())
+                    if (!NatureCharge.HasSelection)
+                    {
+                        // Nothing chosen to draw — nudge the player toward the litany.
                         InformationManager.DisplayMessage(new InformationMessage(
-                            "The land has filled your hands — a charge waits. Open the litany (Shift+X) to spend it.",
+                            "You have stood still long enough to draw — but you have not chosen an element. " +
+                            "Open the litany (Shift+X) to choose what to call from the land.",
                             new Color(0.4f, 0.75f, 0.4f)));
+                        _stillHours = 0;
+                        return;
+                    }
+                    if (NatureCharge.GrantCampaignCharge(NatureCharge.SelectedElement))
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"The land fills your hands with {NatureMath.ElementName(NatureCharge.SelectedElement)} — " +
+                            "a charge waits. Open the litany (Shift+X) to spend it.",
+                            new Color(0.4f, 0.75f, 0.4f)));
+                        // Drawing from exhausted country bites back on the march, too.
+                        if (NatureCharge.LastGatherOutcome.Soured)
+                            NatureBacklash.ApplyMap(MobileParty.MainParty, Hero.MainHero, announce: true);
+                    }
                     _stillHours = 0;
                 }
             }
@@ -95,12 +111,14 @@ namespace AshAndEmber
         {
             try { NatureKnowledge.Save(store);              } catch { }
             try { NatureSeerRegistry.Save(store);           } catch { }
+            try { LivingEnergy.Save(store);                 } catch { }
         }
 
         public static void ResetForNewGame()
         {
             NatureKnowledge.ResetForNewGame();
             NatureSeerRegistry.ResetForNewGame();
+            LivingEnergy.ResetForNewGame();
         }
 
         public static void EstablishForNewCampaign()
@@ -112,6 +130,9 @@ namespace AshAndEmber
         private void OnDailyTick()
         {
             // Campaign charges come from standing still (see OnHourlyTick).
+
+            // The living world mends a little each day it is left in peace.
+            try { LivingEnergy.DailyRegen(); } catch { }
 
             // NPC Nature Seers draw on the land once a day when the chance fires.
             try
@@ -132,6 +153,17 @@ namespace AshAndEmber
                     NaturePower power = wounded > 3
                         ? NatureMath.SupportPower(NatureElement.Earth)
                         : NatureMath.SupportPower(el);
+
+                    // An NPC seer's draw spends the living energy where they stand,
+                    // silently (it is far from the player). A drained land may sour.
+                    try
+                    {
+                        var drawEl = NatureMath.ElementOf(power);
+                        var outcome = LivingEnergy.DrawNature(hero.PartyBelongedTo.GetPosition2D, drawEl, announce: false);
+                        if (outcome.Soured)
+                            NatureBacklash.ApplyMap(hero.PartyBelongedTo, hero, announce: false);
+                    }
+                    catch { }
 
                     string msg = NatureEffects.ApplyCampaignEffect(power, hero.PartyBelongedTo);
                     if (!string.IsNullOrEmpty(msg) && _rng.NextDouble() < 0.20)

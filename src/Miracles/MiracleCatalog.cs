@@ -20,6 +20,8 @@ namespace AshAndEmber
         SacredFlame     = 3,
         AegisOfFaith    = 4,
         CleansingRite   = 5,
+        PyreOfJudgement = 6,
+        HallowedGround  = 7,
     }
 
     public struct MiracleDef
@@ -97,6 +99,22 @@ namespace AshAndEmber
                 Flavour = "You say nothing. The light does not require words. What the cold laid upon them simply lifts.",
                 UsableInBattle = true, UsableOnMap = true, Gate = MiracleGate.OneVirtue,
                 Sequence = MiracleMath.SeqCleansingRite },
+
+            new MiracleDef {
+                Type = MiracleType.PyreOfJudgement, IsGrace = true,
+                Name = "Pyre of Judgement",
+                Effect = "A pillar of consecrated fire falls where your eyes are fixed — searing all who stand beneath it and hurling them from the light.",
+                Flavour = "There is no mercy in the verdict and no appeal from the sentence. The light has looked upon them, and found them wanting.",
+                UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.AllVirtues,
+                Sequence = MiracleMath.SeqPyreJudgement },
+
+            new MiracleDef {
+                Type = MiracleType.HallowedGround, IsGrace = true,
+                Name = "Hallowed Ground",
+                Effect = "The earth around you is consecrated — neither cold nor curse can touch those who stand within the light, and their wounds begin to close.",
+                Flavour = "Draw the circle. Speak the old words. Within it, the dark is only dark — it has no hands here.",
+                UsableInBattle = true, UsableOnMap = false, Gate = MiracleGate.OneVirtue,
+                Sequence = MiracleMath.SeqHallowedGround },
         };
 
         public static IReadOnlyList<MiracleDef> All    => _defs;

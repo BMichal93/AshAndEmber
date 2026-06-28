@@ -843,6 +843,33 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(0, MiracleMath.GraceGain(-2, -2, -2));
         }
 
+        [Test]
+        public void MiracleMath_TryMatchSequence_NewMiracles_Resolve()
+        {
+            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqPyreJudgement, out var pyre));
+            Assert.AreEqual(MiracleType.PyreOfJudgement, pyre);
+            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqHallowedGround, out var hallowed));
+            Assert.AreEqual(MiracleType.HallowedGround, hallowed);
+        }
+
+        [Test]
+        public void MiracleCatalog_AllSequences_AreUnique()
+        {
+            var seqs = MiracleCatalog.All.Select(d => d.Sequence).ToList();
+            Assert.AreEqual(seqs.Count, seqs.Distinct().Count(), "Two miracles share an input sequence.");
+        }
+
+        [Test]
+        public void MiracleCatalog_EverySequence_RoundTripsToItsMiracle()
+        {
+            foreach (var def in MiracleCatalog.All)
+            {
+                Assert.AreEqual(MiracleMath.SequenceLength, def.Sequence.Length, $"{def.Name} has a non-6-char sequence.");
+                Assert.IsTrue(MiracleMath.TryMatchSequence(def.Sequence, out var t), $"{def.Name} sequence does not match.");
+                Assert.AreEqual(def.Type, t, $"{def.Name} sequence resolves to the wrong miracle.");
+            }
+        }
+
         // ── NatureMath ────────────────────────────────────────────────────────
 
         [Test]
@@ -959,6 +986,128 @@ namespace AshAndEmber.Tests
                 Assert.IsFalse(string.IsNullOrEmpty(NatureMath.ElementName(el)),
                     $"ElementName({el}) must not be empty.");
             }
+        }
+
+        // ── NatureMath · element selection (W=Wind, S=Earth, A=Water, D=Storm) ──
+        [Test]
+        public void NatureMath_ElementForKey_MapsDirectionsToElements()
+        {
+            Assert.AreEqual(NatureElement.Wind,  NatureMath.ElementForKey("W"));
+            Assert.AreEqual(NatureElement.Earth, NatureMath.ElementForKey("S"));
+            Assert.AreEqual(NatureElement.Water, NatureMath.ElementForKey("A"));
+            Assert.AreEqual(NatureElement.Storm, NatureMath.ElementForKey("D"));
+            Assert.AreEqual(NatureElement.None,  NatureMath.ElementForKey("Q"));
+        }
+
+        [Test]
+        public void NatureMath_KeyForElement_RoundTripsWithElementForKey()
+        {
+            foreach (NatureElement el in new[]
+                { NatureElement.Wind, NatureElement.Earth, NatureElement.Water, NatureElement.Storm })
+                Assert.AreEqual(el, NatureMath.ElementForKey(NatureMath.KeyForElement(el)),
+                    $"KeyForElement/ElementForKey must round-trip for {el}.");
+        }
+
+        // ── LivingEnergyMath · capacity ────────────────────────────────────────
+        [Test]
+        public void LivingEnergyMath_AreaCapacity_ForestRichestDesertPoorest()
+        {
+            float forest = LivingEnergyMath.AreaCapacity("Forest");
+            float desert = LivingEnergyMath.AreaCapacity("Desert");
+            float plain  = LivingEnergyMath.AreaCapacity("Plain");
+            Assert.Greater(forest, plain,  "Forest should hold more living energy than open plain.");
+            Assert.Greater(plain,  desert, "Plain should hold more living energy than desert.");
+            Assert.AreEqual(60f, LivingEnergyMath.AreaCapacity("SomethingUnknown"), 0.001f);
+        }
+
+        // ── LivingEnergyMath · match factor ────────────────────────────────────
+        [Test]
+        public void LivingEnergyMath_MatchFactor_FavouredCheapMismatchedDear()
+        {
+            // Wind on a mountain (favoured) is cheap; water on a mountain is dear.
+            Assert.AreEqual(LivingEnergyMath.MatchedFactor,
+                LivingEnergyMath.MatchFactor(NatureElement.Wind, "Mountain"), 0.001f);
+            Assert.AreEqual(LivingEnergyMath.MismatchedFactor,
+                LivingEnergyMath.MatchFactor(NatureElement.Water, "Desert"), 0.001f);
+            // Steppe favours Wind OR Storm (blended) — both cheap.
+            Assert.AreEqual(LivingEnergyMath.MatchedFactor,
+                LivingEnergyMath.MatchFactor(NatureElement.Wind,  "Steppe"), 0.001f);
+            Assert.AreEqual(LivingEnergyMath.MatchedFactor,
+                LivingEnergyMath.MatchFactor(NatureElement.Storm, "Steppe"), 0.001f);
+            // Unknown ground is neutral; fire (None) is always neutral.
+            Assert.AreEqual(LivingEnergyMath.NeutralFactor,
+                LivingEnergyMath.MatchFactor(NatureElement.Water, "MysteryLand"), 0.001f);
+            Assert.AreEqual(LivingEnergyMath.NeutralFactor,
+                LivingEnergyMath.MatchFactor(NatureElement.None, "Forest"), 0.001f);
+        }
+
+        [Test]
+        public void LivingEnergyMath_NatureDrain_ScalesWithMatch()
+        {
+            float cheap = LivingEnergyMath.NatureDrain(NatureElement.Wind,  "Mountain");
+            float dear  = LivingEnergyMath.NatureDrain(NatureElement.Water, "Mountain");
+            Assert.Greater(dear, cheap, "Drawing against the land must cost more than a favoured draw.");
+            Assert.AreEqual(LivingEnergyMath.NatureDrawBase * LivingEnergyMath.MatchedFactor, cheap, 0.001f);
+        }
+
+        [Test]
+        public void LivingEnergyMath_FireDrain_ScalesWithStrokesAndFloorsAtOne()
+        {
+            float terrain = LivingEnergyMath.FireDrain(4, "Forest");   // neutral (element-blind)
+            Assert.AreEqual(4 * LivingEnergyMath.FireDrawPerInput, terrain, 0.001f);
+            // A zero/garbage stroke count still spends at least one stroke's worth.
+            Assert.AreEqual(LivingEnergyMath.FireDrawPerInput, LivingEnergyMath.FireDrain(0, "Forest"), 0.001f);
+        }
+
+        // ── LivingEnergyMath · thresholds ──────────────────────────────────────
+        [Test]
+        public void LivingEnergyMath_LevelOf_BandsByFraction()
+        {
+            Assert.AreEqual(EnergyOmen.None,    LivingEnergyMath.LevelOf(0.80f));
+            Assert.AreEqual(EnergyOmen.Half,    LivingEnergyMath.LevelOf(0.50f));
+            Assert.AreEqual(EnergyOmen.Quarter, LivingEnergyMath.LevelOf(0.20f));
+            Assert.AreEqual(EnergyOmen.Empty,   LivingEnergyMath.LevelOf(0.0f));
+            Assert.AreEqual(EnergyOmen.Empty,   LivingEnergyMath.LevelOf(-0.3f));
+        }
+
+        [Test]
+        public void LivingEnergyMath_OmenCrossed_AnnouncesEachBandOnceGoingDown()
+        {
+            // Crossing 0.6 → 0.4 enters the Half band for the first time.
+            Assert.AreEqual(EnergyOmen.Half,
+                LivingEnergyMath.OmenCrossed(0.6f, 0.4f, EnergyOmen.None));
+            // Already announced Half: staying in the Half band says nothing more.
+            Assert.AreEqual(EnergyOmen.None,
+                LivingEnergyMath.OmenCrossed(0.45f, 0.30f, EnergyOmen.Half));
+            // Dropping further into the Quarter band announces again.
+            Assert.AreEqual(EnergyOmen.Quarter,
+                LivingEnergyMath.OmenCrossed(0.30f, 0.20f, EnergyOmen.Half));
+            // Energy recovering (afterFraction up) never announces.
+            Assert.AreEqual(EnergyOmen.None,
+                LivingEnergyMath.OmenCrossed(0.20f, 0.40f, EnergyOmen.Quarter));
+        }
+
+        [Test]
+        public void LivingEnergyMath_DailyRegen_AtLeastOnePerDay()
+        {
+            Assert.GreaterOrEqual(LivingEnergyMath.DailyRegen(120f),
+                LivingEnergyMath.DailyRegen(15f), "Richer land regrows at least as fast.");
+            Assert.GreaterOrEqual(LivingEnergyMath.DailyRegen(5f), 1f, "Regen floors at one per day.");
+        }
+
+        [Test]
+        public void LivingEnergyMath_Fraction_HandlesZeroCapacity()
+        {
+            Assert.AreEqual(0f, LivingEnergyMath.Fraction(10f, 0f), 0.001f);
+            Assert.AreEqual(0.5f, LivingEnergyMath.Fraction(30f, 60f), 0.001f);
+        }
+
+        [Test]
+        public void LivingEnergyMath_WeedFreeDrawChance_IsAProbability()
+        {
+            Assert.Greater(LivingEnergyMath.WeedFreeDrawChance, 0f);
+            Assert.Less(LivingEnergyMath.WeedFreeDrawChance, 1f);
+            Assert.AreEqual(0.30f, LivingEnergyMath.WeedFreeDrawChance, 0.001f);
         }
     }
 }

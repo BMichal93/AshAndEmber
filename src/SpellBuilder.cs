@@ -253,6 +253,10 @@ namespace AshAndEmber
             {
                 SpellEffects.ResetImmolateKill();
                 SpellEffects.AddCastHeat(cast.AgingDays(TalentSystem.Has(TalentId.BattleMage)));
+                // Inner Fire pulls from the same living warmth the land holds: every
+                // working spends the local area's energy, and an exhausted land may
+                // sour the casting back on the mage.
+                TrySpendLivingEnergyForFire(cast.TotalInputs);
                 int multi = cast.BlastCount + cast.MissileCount + cast.BarrierCount + cast.BurstCount;
 
                 if (multi == 0)
@@ -299,6 +303,22 @@ namespace AshAndEmber
                 return anyFired;
             }
             return false;
+        }
+
+        // Spend the local area's living energy for a fire working. Inner Fire burns
+        // the land but does not commune with it, so the land cannot recoil on the
+        // mage — the only consequence is that the place is left exhausted for any
+        // nature caster who draws there afterward. Fully guarded — a failure here
+        // must never block a cast.
+        private static void TrySpendLivingEnergyForFire(int totalInputs)
+        {
+            try
+            {
+                var party = TaleWorlds.CampaignSystem.Party.MobileParty.MainParty;
+                if (party == null) return;
+                LivingEnergy.DrawFire(party.GetPosition2D, totalInputs, announce: true);
+            }
+            catch { }
         }
     }
 }

@@ -38,7 +38,6 @@ namespace AshAndEmber
             public string Id;
             public string Name;
             public string Desc;
-            public (bool positive, string text)[] Feats;
         }
 
         private static readonly CultureCard[] Cards =
@@ -53,12 +52,6 @@ namespace AshAndEmber
                     + "face it alone. They held. In the silence that followed, they made a covenant with the fire "
                     + "inside them — not as weapon, but as vow. The Templars are what that vow became.\n\n"
                     + "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.",
-                Feats = new (bool, string)[]
-                {
-                    (true,  "Dawn's Grace — Should your Grace run dry, each dawn the Light restores a measure of it. (+1 Grace at dawn, if empty)"),
-                    (true,  "Oath of the Vigil — Your sworn discipline steadies those who follow. (+4 party morale per day)"),
-                    (false, "The Order's Price — Dark gifts demand twice their cost, and the living ember answers your hand a breath slower. (Dark Gift ×2 cost; Nature channelling +1s)"),
-                },
             },
             new CultureCard
             {
@@ -71,12 +64,6 @@ namespace AshAndEmber
                     + "he alone has shown them how to win it. He wields fire the way other men wield iron. He does not "
                     + "negotiate. He takes wives from every city his horsemen put to tribute. He is watching the Empire "
                     + "bleed itself empty, and he is patient. The Tribes do not seek peace. They seek the next horizon.",
-                Feats = new (bool, string)[]
-                {
-                    (true,  "War Fever — The Tribes ride to war as if born to it; your clan's parties never lose heart. (party morale floor +15)"),
-                    (true,  "Spoils of the Raid — A village put to the torch yields more than the usual plunder. (+50–150 gold per raid)"),
-                    (false, "No Quarter — The God-King's word burns through any treaty; your wars do not end in peace."),
-                },
             },
         };
 
@@ -178,7 +165,9 @@ namespace AshAndEmber
                 SetStringProp(vm, type, "NameText",          card.Name);
                 SetStringProp(vm, type, "ShortenedNameText", card.Name);
                 SetStringProp(vm, type, "DescriptionText",   card.Desc);
-                SetFeats(vm, type, card.Feats);
+                // The feats panel reads each culture FeatObject directly; those are
+                // relabelled at the data level (AshenCitySystem.RelabelCulturalFeats),
+                // so there is nothing to rewrite on the view-model here.
                 pending.Remove(id);
             }
             catch { }
@@ -187,38 +176,6 @@ namespace AshAndEmber
         private static void SetStringProp(object vm, Type type, string prop, string value)
         {
             try { type.GetProperty(prop, F)?.SetValue(vm, value); } catch { }
-        }
-
-        // Replaces the dedicated feats list with our cultural feats. Done by reflection
-        // because the mod does not reference the ViewModelCollection assembly that
-        // declares CharacterCreationCultureFeatVM / the MBBindingList element type.
-        private static void SetFeats(object vm, Type type, (bool positive, string text)[] feats)
-        {
-            try
-            {
-                var listObj = type.GetProperty("Feats", F)?.GetValue(vm);
-                if (listObj == null) return;
-                Type listType = listObj.GetType();
-                Type featVmType = listType.IsGenericType ? listType.GetGenericArguments()[0] : null;
-                if (featVmType == null) return;
-
-                // Idempotent: skip if the list already holds our feats (avoids rebuilding
-                // and re-firing change events on every throttled pass).
-                var countProp = listType.GetProperty("Count");
-                if (countProp?.GetValue(listObj) is int n && n == feats.Length) return;
-
-                var clear = listType.GetMethod("Clear");
-                var add   = listType.GetMethod("Add", new[] { featVmType });
-                if (clear == null || add == null) return;
-
-                clear.Invoke(listObj, null);
-                foreach (var f in feats)
-                {
-                    object featVm = Activator.CreateInstance(featVmType, new object[] { f.positive, f.text });
-                    add.Invoke(listObj, new[] { featVm });
-                }
-            }
-            catch { }
         }
 
         // Reference-identity comparer (.NET Framework 4.7.2 has no built-in one).

@@ -256,6 +256,34 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Smoke the rare weeds — only the land-attuned have any use for them.
+            try
+            {
+                starter.AddGameMenuOption("ldm_tavern_menu", "ldm_tavern_weeds",
+                    "{TAVERN_WEEDS_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            if (!NatureKnowledge.IsAttuned) return false;
+                            int cost = WeedCost();
+                            bool canAfford = (Hero.MainHero?.Gold ?? 0) >= cost;
+                            if (!canAfford) args.IsEnabled = false;
+                            string held = NatureKnowledge.WeedBlessingActive ? "  [communion already upon you]" : "";
+                            MBTextManager.SetTextVariable("TAVERN_WEEDS_TEXT",
+                                canAfford
+                                    ? $"Buy a pouch of the old green and smoke it ({cost} denars){held}"
+                                    : $"Buy a pouch of the old green and smoke it ({cost} denars)  [not enough coin]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        }
+                        catch { return false; }
+                        return true;
+                    },
+                    args => { try { SmokeNatureWeeds(); } catch { } },
+                    false, -1, false);
+            }
+            catch { }
+
             // Leave
             try
             {
@@ -414,9 +442,12 @@ namespace AshAndEmber
             try
             {
                 int left = Math.Max(0, (int)(_soberHoursTotal - _soberHoursElapsed));
-                MBTextManager.SetTextVariable("TAVERN_SOBER_TEXT",
-                    $"The floor of the common room. Straw, boots, and the smell of spilled ale. " +
-                    $"You are not dying, but it feels that way. About {left} hour(s) before you can stand without the room spinning.");
+                string text = _weedRest
+                    ? "A bench near the fire, or near enough. The green smoke has you. Sounds arrive late and meaning later. " +
+                      $"You are not asleep and not awake — somewhere the land keeps. About {left} hour(s) before your limbs are your own again."
+                    : "The floor of the common room. Straw, boots, and the smell of spilled ale. " +
+                      $"You are not dying, but it feels that way. About {left} hour(s) before you can stand without the room spinning.";
+                MBTextManager.SetTextVariable("TAVERN_SOBER_TEXT", text);
             }
             catch { }
         }
@@ -547,6 +578,23 @@ namespace AshAndEmber
         {
             if (_soberDone) return;
             _soberDone = true;
+
+            // The weed drowse wakes differently — no purse-cutting, just the slow,
+            // heavy return, with the communion now settled into you.
+            if (_weedRest)
+            {
+                _weedRest = false;
+                try
+                {
+                    Msg("You come back to yourself slow and heavy-limbed, ears ringing with a green quiet. " +
+                        "The land hums faintly under everything now — and will, until tomorrow.", DimColor);
+                    ResetSessionState();
+                    try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { }
+                }
+                catch { }
+                return;
+            }
+
             try
             {
                 // Small chance of being robbed
