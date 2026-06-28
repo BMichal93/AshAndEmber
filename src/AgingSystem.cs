@@ -40,6 +40,8 @@ namespace AshAndEmber
             // Ashen do not age — the cold preserves what remains
             if (hero == Hero.MainHero && MageKnowledge.IsAshen) return;
             if (hero != Hero.MainHero && ColourLordRegistry.IsAshenLord(hero)) return;
+            // Aelisar's covenant — the Vessel bears no aging cost from fire
+            if (hero == Hero.MainHero && DragonQuestSystem.IsEmperorMerged) return;
             try
             {
                 if (hero == Hero.MainHero) _ledgerDaysSpent += days;
