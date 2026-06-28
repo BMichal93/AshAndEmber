@@ -40,6 +40,12 @@ namespace AshAndEmber
         private static float  _soberHoursElapsed = 0f;
         private static bool   _soberDone         = false;
 
+        private static float  _innStayHoursTotal   = 8f;
+        private static float  _innStayHoursElapsed = 0f;
+        private static bool   _innStayDone         = false;
+        private static string _innStayLine1        = "";
+        private static string _innStayLine2        = "";
+
         private static readonly Random _rng = new Random();
 
         private static readonly Color GoodColor = new Color(0.56f, 0.93f, 0.56f);
@@ -70,6 +76,11 @@ namespace AshAndEmber
             _soberHoursTotal   = 0f;
             _soberHoursElapsed = 0f;
             _soberDone         = false;
+            _innStayHoursTotal   = 8f;
+            _innStayHoursElapsed = 0f;
+            _innStayDone         = false;
+            _innStayLine1        = "";
+            _innStayLine2        = "";
         }
     }
 }

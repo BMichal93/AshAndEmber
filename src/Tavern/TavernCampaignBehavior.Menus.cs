@@ -76,6 +76,7 @@ namespace AshAndEmber
             RegisterDiceMenus(starter);
             RegisterResultMenu(starter);
             RegisterSoberUpMenu(starter);
+            RegisterInnStayMenu(starter);
         }
 
         // Reliable access from the town menu — the tavernkeeper dialogue line is a
@@ -541,6 +542,96 @@ namespace AshAndEmber
         private static int DiceSmallBet()  => Math.Max(25,  DiceMaxBet() / 4);
         private static int DiceMediumBet() => Math.Max(100, DiceMaxBet() / 2);
         private static int DiceLargeBet()  => DiceMaxBet();
+
+        // ── Inn stay wait menu ────────────────────────────────────────────────
+        private static void RegisterInnStayMenu(CampaignGameStarter starter)
+        {
+            try
+            {
+                starter.AddWaitGameMenu("ldm_inn_stay_menu", "{INN_STAY_TEXT}",
+                    new OnInitDelegate(InnStayOnInit),
+                    new OnConditionDelegate(InnStayOnCondition),
+                    new OnConsequenceDelegate(InnStayOnConsequence),
+                    new OnTickDelegate(InnStayOnTick),
+                    GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
+                    GameMenu.MenuOverlayType.None, 0f, GameMenu.MenuFlags.None, null);
+            }
+            catch { }
+        }
+
+        private static void InnStayOnInit(MenuCallbackArgs args)
+        {
+            try
+            {
+                UpdateInnStayText();
+                args.MenuContext.GameMenu.StartWait();
+                args.MenuContext.GameMenu.SetTargetedWaitingTimeAndInitialProgress(
+                    Math.Max(1f, _innStayHoursTotal), 0f);
+            }
+            catch { }
+        }
+
+        private static bool InnStayOnCondition(MenuCallbackArgs args) => true;
+
+        private static void InnStayOnConsequence(MenuCallbackArgs args)
+        {
+            try
+            {
+                if (!_innStayDone)
+                {
+                    float remaining = _innStayHoursTotal - _innStayHoursElapsed;
+                    if (remaining <= 0.01f) { FinishInnStay(); return; }
+                    args.MenuContext.GameMenu.StartWait();
+                    args.MenuContext.GameMenu.SetTargetedWaitingTimeAndInitialProgress(
+                        Math.Max(1f, remaining), 0f);
+                }
+            }
+            catch { try { FinishInnStay(); } catch { } }
+        }
+
+        private static void InnStayOnTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            try
+            {
+                if (_innStayDone) return;
+                _innStayHoursElapsed += (float)dt.ToHours;
+                UpdateInnStayText();
+                try
+                {
+                    args.MenuContext.GameMenu.SetProgressOfWaitingInMenu(
+                        Math.Min(1f, _innStayHoursElapsed / Math.Max(1f, _innStayHoursTotal)));
+                }
+                catch { }
+                if (_innStayHoursElapsed >= _innStayHoursTotal)
+                    FinishInnStay();
+            }
+            catch { }
+        }
+
+        private static void UpdateInnStayText()
+        {
+            try
+            {
+                int left = Math.Max(0, (int)(_innStayHoursTotal - _innStayHoursElapsed));
+                string inn = Settlement.CurrentSettlement?.Name?.ToString() ?? "the inn";
+                MBTextManager.SetTextVariable("INN_STAY_TEXT",
+                    $"{_innStayLine1}\n\n{_innStayLine2}\n\nAbout {left} hour(s) of evening remain at {inn}.");
+            }
+            catch { }
+        }
+
+        private static void FinishInnStay()
+        {
+            if (_innStayDone) return;
+            _innStayDone = true;
+            try
+            {
+                AddMorale(5f);
+                Msg("The party rests well. A full evening of warmth and company does its work. (+5 morale)", GoodColor);
+                try { GameMenu.ExitToLast(); } catch { }
+            }
+            catch { }
+        }
 
         // ── Sober-up wait menu ────────────────────────────────────────────────
         private static void WakeUp()
