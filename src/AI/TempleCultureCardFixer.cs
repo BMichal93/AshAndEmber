@@ -32,12 +32,17 @@ namespace AshAndEmber
         private const BindingFlags F = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         // One renamed card per culture: display name, lore (feat-free), and the
-        // cultural feats to show in the dedicated feats panel (positive first).
+        // cultural feats shown in the dedicated feats panel. Feats are listed
+        // { positive, positive, negative } in display order, mirroring
+        // AshenCitySystem._templeFeats / _tribalFeats — the engine builds the card's
+        // feat view-models (and CACHES their description strings) from the culture's
+        // FeatObjects, so relabelling the data is not enough; we rewrite the bound VM.
         private sealed class CultureCard
         {
-            public string Id;
-            public string Name;
-            public string Desc;
+            public string   Id;
+            public string   Name;
+            public string   Desc;
+            public string[] Feats;
         }
 
         private static readonly CultureCard[] Cards =
@@ -52,6 +57,12 @@ namespace AshAndEmber
                     + "face it alone. They held. In the silence that followed, they made a covenant with the fire "
                     + "inside them — not as weapon, but as vow. The Templars are what that vow became.\n\n"
                     + "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.",
+                Feats = new[]
+                {
+                    "Dawn's Grace — Should your Grace run dry, each dawn the Light restores a measure of it. (+1 Grace at dawn, if empty)",
+                    "Oath of the Vigil — Your sworn discipline steadies those who follow. (+4 party morale per day)",
+                    "The Order's Price — Dark gifts demand twice their cost, and the living ember answers your hand a breath slower. (Dark Gift ×2 cost; Nature channelling +1s)",
+                },
             },
             new CultureCard
             {
@@ -64,12 +75,21 @@ namespace AshAndEmber
                     + "he alone has shown them how to win it. He wields fire the way other men wield iron. He does not "
                     + "negotiate. He takes wives from every city his horsemen put to tribute. He is watching the Empire "
                     + "bleed itself empty, and he is patient. The Tribes do not seek peace. They seek the next horizon.",
+                Feats = new[]
+                {
+                    "War Fever — The Tribes ride to war as if born to it; your clan's parties never lose heart. (party morale floor +15)",
+                    "Spoils of the Raid — A village put to the torch yields more than the usual plunder. (+50–150 gold per raid)",
+                    "No Quarter — The God-King's word burns through any treaty; your wars do not end in peace.",
+                },
             },
         };
 
         private static object _lastScreen;
         private static bool   _doneThisScreen;
         private static int    _throttle;
+        // The culture-stage view-model found during the current walk, used to gate
+        // "Next" until every renamed card reads its corrected name/feats.
+        private static object _stageVmThisPass;
 
         // Called from the pre-game application tick. Cheap until the character-creation
         // screen is up; runs the bounded walk on a throttle and stops once it has
@@ -96,8 +116,24 @@ namespace AshAndEmber
                 var pending = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var c in Cards) pending.Add(c.Id);
 
+                _stageVmThisPass = null;
                 Walk(screen, visited, 0, ref budget, pending);
-                if (pending.Count == 0) _doneThisScreen = true;
+
+                // Gate the stage while any card still shows its stale (vanilla) text:
+                // the rename lands a few frames after the screen is built, and we do
+                // not want the player committing to a faction reading "Vlandians".
+                // Once every card is corrected we release the gate (restoring the
+                // engine's own selection-driven state) and stop interfering.
+                if (pending.Count == 0)
+                {
+                    SetCanAdvanceFromSelection(_stageVmThisPass);
+                    _doneThisScreen = true;
+                }
+                else
+                {
+                    SetStageBool(_stageVmThisPass, "CanAdvance", false);
+                }
+                _stageVmThisPass = null;
             }
             catch { }
         }
@@ -109,6 +145,11 @@ namespace AshAndEmber
             if (type.IsPrimitive || type.IsEnum || obj is string) return;
             if (!visited.Add(obj)) return;
             budget--;
+
+            // Remember the stage VM so we can gate "Next" after the walk; keep
+            // descending through it to reach the culture cards it owns.
+            if (type.Name == "CharacterCreationCultureStageVM")
+                _stageVmThisPass = obj;
 
             if (type.Name == "CharacterCreationCultureVM")
             {
@@ -165,9 +206,11 @@ namespace AshAndEmber
                 SetStringProp(vm, type, "NameText",          card.Name);
                 SetStringProp(vm, type, "ShortenedNameText", card.Name);
                 SetStringProp(vm, type, "DescriptionText",   card.Desc);
-                // The feats panel reads each culture FeatObject directly; those are
-                // relabelled at the data level (AshenCitySystem.RelabelCulturalFeats),
-                // so there is nothing to rewrite on the view-model here.
+                // The card caches each feat's description string into its Feats VM list
+                // when built, so relabelling the FeatObject data alone never reaches the
+                // panel — rewrite the bound list here too. Match by sign, positives in
+                // order then the single negative, mirroring RelabelCulturalFeats.
+                RewriteFeats(vm, type, card.Feats);
                 pending.Remove(id);
             }
             catch { }
@@ -176,6 +219,54 @@ namespace AshAndEmber
         private static void SetStringProp(object vm, Type type, string prop, string value)
         {
             try { type.GetProperty(prop, F)?.SetValue(vm, value); } catch { }
+        }
+
+        // Rewrites the card's bound feat descriptions: positives in order, then the
+        // single negative. feats is { positive, …, negative } in display order.
+        private static void RewriteFeats(object vm, Type type, string[] feats)
+        {
+            if (feats == null || feats.Length == 0) return;
+            try
+            {
+                if (!(type.GetProperty("Feats", F)?.GetValue(vm) is IEnumerable list)) return;
+
+                int lastPositive = feats.Length - 1;   // entries [0..lastPositive) are positive
+                string negative  = feats[feats.Length - 1];
+                int posIdx = 0;
+
+                foreach (var feat in list)
+                {
+                    if (feat == null) continue;
+                    var ft = feat.GetType();
+                    bool isPositive = (bool)(ft.GetProperty("IsPositive", F)?.GetValue(feat) ?? true);
+                    string desc = isPositive
+                        ? (posIdx < lastPositive ? feats[posIdx++] : feats[Math.Max(0, lastPositive - 1)])
+                        : negative;
+                    try { ft.GetProperty("Description", F)?.SetValue(feat, desc); } catch { }
+                }
+            }
+            catch { }
+        }
+
+        // Sets a bool property on the stage VM (used to gate "Next"); no-op if absent.
+        private static void SetStageBool(object stageVm, string prop, bool value)
+        {
+            if (stageVm == null) return;
+            try { stageVm.GetType().GetProperty(prop, F)?.SetValue(stageVm, value); } catch { }
+        }
+
+        // Releases the gate: restore CanAdvance to whatever the player's current
+        // selection implies, so the engine's normal state takes over again.
+        private static void SetCanAdvanceFromSelection(object stageVm)
+        {
+            if (stageVm == null) return;
+            try
+            {
+                var t = stageVm.GetType();
+                bool anySelected = (bool)(t.GetProperty("AnyItemSelected", F)?.GetValue(stageVm) ?? false);
+                t.GetProperty("CanAdvance", F)?.SetValue(stageVm, anySelected);
+            }
+            catch { }
         }
 
         // Reference-identity comparer (.NET Framework 4.7.2 has no built-in one).
