@@ -290,31 +290,15 @@ namespace AshAndEmber
                 return;
             }
             try { Hero.MainHero?.ChangeHeroGold(-cost); } catch { }
-            AddMorale(5f);
 
-            // Two banter lines from a shuffled pool
             var pool = _eveningBanter.OrderBy(_ => _rng.Next()).ToList();
-            string line1 = pool.Count > 0 ? pool[0] : "The fire in the hearth holds the dark at bay.";
-            string line2 = pool.Count > 1 ? pool[1] : "The common room is warm.";
+            _innStayLine1 = pool.Count > 0 ? pool[0] : "The fire in the hearth holds the dark at bay.";
+            _innStayLine2 = pool.Count > 1 ? pool[1] : "The common room is warm.";
+            _innStayHoursTotal   = 8f;
+            _innStayHoursElapsed = 0f;
+            _innStayDone         = false;
 
-            string inn = Settlement.CurrentSettlement?.Name?.ToString() ?? "the tavern";
-
-            try
-            {
-                InformationManager.ShowInquiry(new InquiryData(
-                    $"An Evening at {inn}",
-                    $"{line1}\n\n{line2}\n\n[+5 party morale]",
-                    true, false,
-                    "Good night.",
-                    "",
-                    () => { try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { } },
-                    null
-                ));
-            }
-            catch
-            {
-                try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { }
-            }
+            try { GameMenu.SwitchToMenu("ldm_inn_stay_menu"); } catch { }
         }
 
         // ── The old green (rare nature weeds) ─────────────────────────────────

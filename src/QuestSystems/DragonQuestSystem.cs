@@ -1,31 +1,35 @@
 // =============================================================================
 // ASH AND EMBER — DragonQuestSystem.cs
-// The Silence Between Fires — main campaign goal for non-Ashen players.
+// The Sundered Crown — campaign quest for non-Ashen players.
 //
 // Trigger  : Player defeats their first Ashen lord in battle (leading the
-//            winning side). That kill draws the Temple's eye and counts as the
-//            first of the five. No Temple membership required — contact alone
-//            is enough.
+//            winning side). A presence stirs — fragments of Aelisar Veth,
+//            the First Emperor, who shattered his soul into the Ashen cycle.
+//            The player is prompted once, then once more. Two refusals close
+//            the quest permanently.
 //
 // Sequence
-//   1. Temple contact — a grey-robed rider passes a letter; quest begins
-//   2. Three military objectives (parallel, any order):
-//      · Kill 5 Ashen lords in battle (player leads winning party)
-//      · Capture 3 Ashen towns or castles (player's clan)
-//      · Clear 4 Ashen ruins (AshenRuinSystem.ClearedCount)
-//   3. Lord stories — 5 deferred encounters revealing who the dead lords were
-//      before the cold took them; fire one by one after each kill
-//   4. Temple letters — 6 dispatches on a progress-gated timer, building the
-//      context until the full truth is in the player's hands
-//   5. Final choice (no sooner than 180 days after contact, day ≥ 150):
-//      · Accept the Binding → ending sequence → player dies, Ashen crumble
-//      · Refuse → quest closed; the world continues unchanged
+//   1. First contact — urgency felt after the 1st Ashen lord kill
+//      (accept or refuse; refused once = re-prompted on 2nd kill; refused twice = closed)
+//   2. Visions — haunt the player as more Ashen lords are killed; grow clearer
+//      and more vocal with each kill (up to 7)
+//   3. Three parallel objectives:
+//      · Kill 7 Ashen lords (player leads winning party)
+//      · Clear 3 predestined ruin sites (The Sunken Scriptorium, The Shattered
+//        Throne, The Dragon's Tomb)
+//      · Capture Tyal — the Heart of Winter
+//   4. Final choice (all objectives met):
+//      · Banish Aelisar — campaign continues unchanged
+//      · Become the Vessel — player gains fire magic; Aelisar's covenant bars aging
+//      · The Last Binding — spend everything to break the Ashen cycle (player dies)
 //
 // Save keys  (prefix LDQ_)
-//   LDQ_Phase, LDQ_LordsSlain, LDQ_CitiesTaken,
-//   LDQ_StoryPhase, LDQ_LetterPhase, LDQ_EndingPhase,
-//   LDQ_WorldBound, LDQ_ContactDay,
-//   LDQ_EverAshen, LDQ_CapturedAshen
+//   LDQ_Phase, LDQ_QuestVersion,
+//   LDQ_LordsSlain, LDQ_VisionPhase, LDQ_ContactDay,
+//   LDQ_HeartCaptured, LDQ_ContactRefusals,
+//   LDQ_EndingPhase, LDQ_WorldBound,
+//   LDQ_ColdTarget,
+//   LDQ_EverAshen (settlement tracking for cold quest path)
 // =============================================================================
 
 using System;
@@ -45,46 +49,56 @@ namespace AshAndEmber
     public static partial class DragonQuestSystem
     {
         // ── Quest phases ──────────────────────────────────────────────────────
-        private const int PhaseIdle      = 0;  // not triggered yet
-        private const int PhaseContacted = 1;  // Temple reached out, intro pending
-        private const int PhaseActive    = 2;  // objectives in progress
-        private const int PhaseAllDone   = 3;  // all three met; final prompt pending
-        private const int PhaseAccepted  = 4;  // Binding triggered, ending in progress
-        private const int PhaseRefused   = 5;  // player declined or never engaged
-        private const int PhaseColdActive = 6; // player turned Ashen; Temple path failed, cold conquest begins
-        private const int PhaseColdDone   = 7; // cold conquest complete — everything is conquered
+        private const int PhaseIdle              = 0;  // not triggered
+        private const int PhaseFirstContact      = 1;  // 1st lord killed; first prompt pending
+        private const int PhaseFirstRefused      = 2;  // refused once; re-prompt on 2nd lord kill
+        private const int PhasePermanentlyClosed = 3;  // refused twice — quest never starts
+        private const int PhaseActive            = 4;  // quest active, objectives in progress
+        private const int PhaseAllDone           = 5;  // all objectives met; final choice pending
+        private const int PhaseEndedBanish       = 6;  // player banished Aelisar; campaign normal
+        private const int PhaseEndedMerge        = 7;  // player became the Vessel
+        private const int PhaseEndedSacrifice    = 8;  // Last Binding fired; player dies, Ashen break
+        private const int PhaseColdActive        = 9;  // player turned Ashen; cold conquest begins
+        private const int PhaseColdDone          = 10; // cold conquest complete
 
         // ── Tuning ────────────────────────────────────────────────────────────
-        public const int TargetLordsSlain   = 5;
-        public const int TargetCitiesTaken  = 3;
-        public const int TargetRuinsCleared = 4;
-        private const int FinalChoiceMinDay     = 150;   // absolute day floor
-        private const int FinalChoiceMinContact = 180;   // days after first contact
-        private const string AshenKingdomId  = "ashen_kingdom";
+        public const int TargetLordsSlain = 7;
+        private const string AshenKingdomId = "ashen_kingdom";
+
+        // The three predestined ruins the player must clear
+        internal static readonly string[] DestinedRuinVillages =
+            { "Dravend", "Epis", "Myzea" };
+        internal static readonly string[] DestinedRuinNames =
+            { "The Sunken Scriptorium", "The Shattered Throne", "The Dragon's Tomb" };
 
         // ── State ─────────────────────────────────────────────────────────────
-        private static int  _phase        = PhaseIdle;
-        private static int  _lordsSlain   = 0;
-        private static int  _citiesTaken  = 0;
-        private static int  _storyPhase   = 0;  // 0-5: how many lord stories shown
-        private static int  _letterPhase  = 0;  // 0-6: how many Temple letters sent
-        private static int  _endingPhase  = 0;  // 0-4: ending sequence progress
-        private static bool _worldBound   = false;
-        private static int  _contactDay   = -1;
-        private static int  _coldTownTarget = 0;  // total towns to conquer for the cold quest
+        private static int  _phase            = PhaseIdle;
+        private static int  _lordsSlain       = 0;
+        private static int  _visionPhase      = 0;  // next vision index to queue (0-6)
+        private static int  _contactDay       = -1;
+        private static bool _heartCaptured    = false; // Tyal taken by player clan
+        private static int  _endingPhase      = 0;  // Sacrifice ending sequence step
+        private static bool _worldBound       = false; // true only for Sacrifice ending
+        private static int  _coldTownTarget   = 0;
+
+        private static int  _proximityCheckCooldown = 0;
+
         internal static DragonQuestLog      _questLog     = null;
         internal static EternalColdQuestLog _coldQuestLog = null;
 
         private static readonly HashSet<string> _everAshenSettlements = new HashSet<string>();
-        private static readonly HashSet<string> _capturedAshenCities  = new HashSet<string>();
         private static readonly Random          _rng                  = new Random();
 
         // ── Public accessors ──────────────────────────────────────────────────
-        public static bool IsActive       => _phase == PhaseActive || _phase == PhaseAllDone;
-        public static bool IsDone         => _phase == PhaseAccepted || _phase == PhaseRefused;
-        public static bool WorldRekindled => _worldBound;  // consumed by CampaignMapEvents, ColourLordRegistry, AshenCitySystem
-        public static int  LordsSlain     => _lordsSlain;
-        public static int  CitiesTaken    => _citiesTaken;
+        public static bool IsActive         => _phase == PhaseActive || _phase == PhaseAllDone;
+        public static bool IsDone           => _phase >= PhaseEndedBanish;
+        public static bool WorldRekindled   => _worldBound;
+        public static bool IsEmperorMerged  => _phase == PhaseEndedMerge;
+        public static int  LordsSlain       => _lordsSlain;
+
+        // Count of the 3 predestined ruins that have been cleared this campaign
+        public static int DestinedRuinsCleared =>
+            DestinedRuinVillages.Count(v => AshenRuinSystem.IsCleared(v));
 
         private static int Today()
         {
@@ -92,18 +106,16 @@ namespace AshAndEmber
         }
 
         // ── Called from CampaignBehavior.OnMapEventEnded ──────────────────────
-        // Two roles, by phase:
-        //   · Idle   — the player's first Ashen-lord kill triggers Temple contact
-        //              and counts as the first of the five.
-        //   · Active — each Ashen-lord kill counts toward the objective.
         public static void OnMapEventEnded(MapEvent mapEvent)
         {
             if (mapEvent == null) return;
             if (MageKnowledge.IsAshen) return;
 
-            bool idle   = _phase == PhaseIdle;
-            bool active = _phase == PhaseActive || _phase == PhaseAllDone;
-            if (!idle && !active) return;                       // Contacted/finished: nothing to do
+            bool idle         = _phase == PhaseIdle;
+            bool firstRefused = _phase == PhaseFirstRefused;
+            bool active       = _phase == PhaseActive || _phase == PhaseAllDone;
+
+            if (!idle && !firstRefused && !active) return;
             if (active && _lordsSlain >= TargetLordsSlain) return;
 
             try
@@ -121,38 +133,44 @@ namespace AshAndEmber
                 var enemySide = playerAttacker ? mapEvent.DefenderSide : mapEvent.AttackerSide;
                 if (enemySide == null) return;
 
-                // Ashen lords who fell on the losing side of this battle.
                 int ashenKilled = 0;
                 foreach (var meparty in enemySide.Parties.ToList())
                 {
                     Hero leader = meparty?.Party?.LeaderHero;
                     if (leader == null || leader.IsAlive) continue;
-                    if (!ColourLordRegistry.IsAshenLord(leader)) continue;
-                    ashenKilled++;
+                    if (ColourLordRegistry.IsAshenLord(leader))
+                        ashenKilled++;
                 }
                 if (ashenKilled <= 0) return;
 
                 if (idle)
                 {
-                    // First Ashen lord defeated — the Temple takes notice. Open to
-                    // any non-Ashen player, mage or not (the Ashen gate is above).
-                    _phase      = PhaseContacted;
+                    // First Ashen lord — the presence stirs
+                    _phase      = PhaseFirstContact;
                     _contactDay = Today();
-                    _lordsSlain = Math.Min(ashenKilled, TargetLordsSlain);  // the kill that drew their eye counts
+                    _lordsSlain = Math.Min(ashenKilled, 1);
                     if (MageKnowledge._deferredInquiry == null)
-                        MageKnowledge._deferredInquiry = ShowTempleContact;
-                    // else DailyTick re-queues the contact popup when the slot frees
+                        MageKnowledge._deferredInquiry = ShowFirstContact;
                     return;
                 }
 
-                // Active / AllDone: tally kills toward the objective, capped.
+                if (firstRefused)
+                {
+                    // Refused once; the second kill re-prompts with more urgency
+                    _lordsSlain = Math.Max(_lordsSlain, Math.Min(_lordsSlain + ashenKilled, 2));
+                    if (MageKnowledge._deferredInquiry == null)
+                        MageKnowledge._deferredInquiry = ShowSecondContact;
+                    return;
+                }
+
+                // Active: tally kills toward the 7-lord objective
                 for (int i = 0; i < ashenKilled && _lordsSlain < TargetLordsSlain; i++)
                 {
                     _lordsSlain++;
                     try { _questLog?.LogLordSlain(_lordsSlain); } catch { }
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"An Ashen lord falls. The cold retreats where you go. [{_lordsSlain}/{TargetLordsSlain}]",
-                        new Color(0.70f, 0.55f, 0.35f)));
+                        $"A shard of Aelisar returns to you. [{_lordsSlain}/{TargetLordsSlain} lords]",
+                        new Color(0.75f, 0.50f, 0.30f)));
                 }
             }
             catch { }
@@ -170,14 +188,12 @@ namespace AshAndEmber
             if (_worldBound) return;
             if (BurningLabQuestSystem.WitheringFired) return;
 
-            // The cold has claimed the player. The Temple's path dies; a colder
-            // ambition takes its place.
             if (MageKnowledge.IsAshen) { TurnToCold(); return; }
 
-            // Re-queue contact popup if somehow lost
-            if (_phase == PhaseContacted && MageKnowledge._deferredInquiry == null)
+            // Re-queue first contact prompt if the popup slot freed
+            if (_phase == PhaseFirstContact && MageKnowledge._deferredInquiry == null)
             {
-                MageKnowledge._deferredInquiry = ShowTempleContact;
+                MageKnowledge._deferredInquiry = ShowFirstContact;
                 return;
             }
 
@@ -185,121 +201,118 @@ namespace AshAndEmber
 
             if (_questLog == null) try { EnsureQuestLog(); } catch { }
 
-            // Track Ashen settlement history and new player captures
-            try { TrackSettlements(); } catch { }
+            // Track Heart of Winter capture
+            try { CheckHeartCapture(); } catch { }
+
+            // Proximity message
+            try { CheckProximityToAshenLord(); } catch { }
 
             // Update journal objectives
-            try { _questLog?.UpdateProgress(_lordsSlain, _citiesTaken, AshenRuinSystem.ClearedCount); } catch { }
+            try { _questLog?.UpdateProgress(_lordsSlain, DestinedRuinsCleared, _heartCaptured); } catch { }
 
-            // Transition to AllDone when objectives complete
+            // Transition to AllDone when every objective is met
             if (_phase == PhaseActive
-                && _lordsSlain  >= TargetLordsSlain
-                && _citiesTaken >= TargetCitiesTaken
-                && AshenRuinSystem.ClearedCount >= TargetRuinsCleared)
+                && _lordsSlain          >= TargetLordsSlain
+                && DestinedRuinsCleared >= 3
+                && _heartCaptured)
             {
                 _phase = PhaseAllDone;
                 try { _questLog?.LogAllDone(); } catch { }
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "The Silence Between Fires — all conditions are met. A final letter from the Temple waits.",
-                    new Color(0.75f, 0.55f, 0.3f)));
+                    "The Sundered Crown — all conditions are met. Aelisar speaks clearly now.",
+                    new Color(0.80f, 0.55f, 0.25f)));
             }
 
-            // Queue pending lord story — one at a time, after each kill
-            if (_storyPhase < _lordsSlain && MageKnowledge._deferredInquiry == null)
+            // Queue next vision (one per lord kill, triggered in DailyTick so they
+            // don't conflict with the map-event popup slot)
+            if (_visionPhase < _lordsSlain && MageKnowledge._deferredInquiry == null)
             {
-                int storyIdx = _storyPhase;
-                _storyPhase++;
-                MageKnowledge._deferredInquiry = () => ShowLordStory(storyIdx);
+                int idx = _visionPhase;
+                _visionPhase++;
+                MageKnowledge._deferredInquiry = () => ShowVision(idx);
                 return;
             }
 
-            // Queue Temple letters once lord stories for that tier are shown
-            try { CheckLetterDelivery(); } catch { }
-
-            // Final prompt: all done, all 6 letters sent, time gates met
+            // Final prompt once all done and all visions shown
             if (_phase == PhaseAllDone
-                && _letterPhase >= 6
-                && Today() >= FinalChoiceMinDay
-                && (_contactDay < 0 || Today() - _contactDay >= FinalChoiceMinContact)
+                && _visionPhase >= Math.Min(_lordsSlain, 6)
                 && MageKnowledge._deferredInquiry == null)
             {
                 MageKnowledge._deferredInquiry = ShowFinalPrompt;
             }
         }
 
-        private static void TrackSettlements()
+        // ── Heart of Winter capture detection ─────────────────────────────────
+        private static void CheckHeartCapture()
         {
+            if (_heartCaptured) return;
             var playerClan = Hero.MainHero?.Clan;
             if (playerClan == null) return;
 
-            foreach (Settlement s in Settlement.All)
-            {
-                if (!s.IsTown && !s.IsCastle) continue;
+            var tyal = Settlement.All.FirstOrDefault(s =>
+                s.IsTown &&
+                (s.Name?.ToString().IndexOf("Tyal", StringComparison.OrdinalIgnoreCase) >= 0
+                 || s.Name?.ToString().IndexOf("Heart of Winter", StringComparison.OrdinalIgnoreCase) >= 0));
+            if (tyal == null || tyal.OwnerClan != playerClan) return;
 
-                // Maintain a running set of settlements that have ever been Ashen
-                if (s.MapFaction?.StringId == AshenKingdomId)
-                    _everAshenSettlements.Add(s.StringId);
-
-                // Detect captures: settlement is now player's but was ever Ashen
-                if (_citiesTaken >= TargetCitiesTaken) continue;
-                if (s.OwnerClan != playerClan) continue;
-                if (!_everAshenSettlements.Contains(s.StringId)) continue;
-                if (!_capturedAshenCities.Add(s.StringId)) continue;
-
-                _citiesTaken++;
-                try { _questLog?.LogCityTaken(s.Name?.ToString() ?? "settlement", _citiesTaken); } catch { }
-                InformationManager.DisplayMessage(new InformationMessage(
-                    $"{s.Name} wrested from the grey march. [{_citiesTaken}/{TargetCitiesTaken}]",
-                    new Color(0.65f, 0.50f, 0.30f)));
-            }
+            _heartCaptured = true;
+            try { _questLog?.LogHeartCaptured(); } catch { }
+            InformationManager.DisplayMessage(new InformationMessage(
+                "The Heart of Winter is yours. Aelisar's voice sharpens — something here remembers him.",
+                new Color(0.70f, 0.60f, 0.80f)));
         }
 
-        private static void CheckLetterDelivery()
+        // ── Proximity message ─────────────────────────────────────────────────
+        private static void CheckProximityToAshenLord()
         {
-            if (_letterPhase >= 6) return;
-            if (MageKnowledge._deferredInquiry != null) return;
-            if (_storyPhase < _lordsSlain) return;  // let the story queue drain first
+            if (_proximityCheckCooldown > 0) { _proximityCheckCooldown--; return; }
+            _proximityCheckCooldown = 3 + _rng.Next(4);
 
-            bool shouldSend = false;
-            switch (_letterPhase)
+            Vec2 pos;
+            try { pos = MobileParty.MainParty.GetPosition2D; } catch { return; }
+
+            foreach (Hero h in Hero.AllAliveHeroes.ToList())
             {
-                case 0: shouldSend = _contactDay > 0 && Today() - _contactDay >= 14; break;
-                case 1: shouldSend = _lordsSlain >= 1 && _storyPhase >= 1; break;
-                case 2: shouldSend = _lordsSlain >= 2 && _storyPhase >= 2; break;
-                case 3: shouldSend = _lordsSlain >= 3 && _storyPhase >= 3; break;
-                case 4: shouldSend = _lordsSlain >= 4 && _storyPhase >= 4; break;
-                case 5: shouldSend = _lordsSlain >= 5 && _storyPhase >= 5; break;
+                if (!ColourLordRegistry.IsAshenLord(h)) continue;
+                var party = h.PartyBelongedTo;
+                if (party == null) continue;
+                Vec2 lPos;
+                try { lPos = party.GetPosition2D; } catch { continue; }
+                if ((lPos - pos).LengthSquared < 900f)
+                {
+                    string[] msgs =
+                    {
+                        "Something in you stirs — a shard is close. Aelisar grows urgent.",
+                        "The presence sharpens without warning. One of them is near.",
+                        "A cold pull, sudden and specific. A fragment, within reach.",
+                        "You feel the shape of him — incomplete, close. One of the grey carries what you need.",
+                    };
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        msgs[_rng.Next(msgs.Length)],
+                        new Color(0.75f, 0.45f, 0.25f)));
+                    break;
+                }
             }
-
-            if (!shouldSend) return;
-
-            int idx = _letterPhase;
-            _letterPhase++;
-            MageKnowledge._deferredInquiry = () => ShowTempleLetterByIndex(idx);
         }
 
         // ── Cold conversion (player turned Ashen) ─────────────────────────────
-        // Fails an in-progress Temple quest and replaces it with the cold conquest.
-        // Idle / already-ended states are left untouched: a never-started quest has
-        // nothing to fail, and the Ashen Hunger questline covers players who were
-        // Ashen from the outset.
         private static void TurnToCold()
         {
             if (_phase == PhaseColdActive) { TickColdQuest(); return; }
             if (_phase == PhaseColdDone)   return;
 
-            bool inProgress = _phase == PhaseContacted
+            bool inProgress = _phase == PhaseFirstContact
+                           || _phase == PhaseFirstRefused
                            || _phase == PhaseActive
                            || _phase == PhaseAllDone;
             if (!inProgress) return;
 
-            // The Temple's path dies the moment the player's fire goes out.
             try { _questLog?.LogColdConversion(); } catch { }
             _questLog = null;
 
             _phase = PhaseColdActive;
             try { StartColdQuest(); } catch { }
-            try { TickColdQuest();  } catch { }
+            try { TickColdQuest(); }  catch { }
         }
 
         private static void StartColdQuest()
@@ -315,7 +328,7 @@ namespace AshAndEmber
 
         private static void TickColdQuest()
         {
-            if (_coldQuestLog == null) { try { EnsureColdQuestLog(); } catch { } }
+            if (_coldQuestLog == null) try { EnsureColdQuestLog(); } catch { }
 
             int owned = CountTowns(out int total);
             if (_coldTownTarget <= 0) _coldTownTarget = total;
@@ -332,7 +345,6 @@ namespace AshAndEmber
             }
         }
 
-        // Counts towns owned by the player's faction; outputs the total town count.
         private static int CountTowns(out int total)
         {
             total = 0;
@@ -351,15 +363,25 @@ namespace AshAndEmber
             return owned;
         }
 
+        internal static string GetOrdinal(int n)
+        {
+            if (n == 1) return "first";
+            if (n == 2) return "second";
+            if (n == 3) return "third";
+            if (n == 4) return "fourth";
+            if (n == 5) return "fifth";
+            return $"{n}th";
+        }
     }
 
 
+    // ── Quest journal: The Sundered Crown ────────────────────────────────────
     public sealed class DragonQuestLog : QuestBase
     {
         public DragonQuestLog()
-            : base("ldm_dragon_quest", Hero.MainHero, CampaignTime.Never, 0) { }
+            : base("ldm_sundered_crown", Hero.MainHero, CampaignTime.Never, 0) { }
 
-        public override TextObject Title => new TextObject("The Silence Between Fires");
+        public override TextObject Title => new TextObject("The Sundered Crown");
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()
@@ -371,85 +393,96 @@ namespace AshAndEmber
         protected override void SetDialogs() { }
 
         private JournalLog _objLords;
-        private JournalLog _objCities;
-        private JournalLog _objRuins;
+        private JournalLog _objRuin1;
+        private JournalLog _objRuin2;
+        private JournalLog _objRuin3;
+        private JournalLog _objHeart;
 
         internal void LogStarted()
         {
             AddLog(new TextObject(
-                "The Temple has made contact. Their plan requires three things of you: " +
-                "silence five Ashen lords in battle, claim three Ashen strongholds for your clan, " +
-                "and read the darkness of four Ashen ruin sites. The letters will follow your progress."));
+                "A presence touched you on the battlefield — ancient and urgent. " +
+                "It is Aelisar Veth, the First Emperor, who shattered his soul into the Ashen cycle as a lock. " +
+                "Seven of his lords carry his fragments. Three ruins hold his pact. " +
+                "The Heart of Winter holds his purpose. Gather all of it."));
             EnsureObjectives();
         }
 
         private void EnsureObjectives()
         {
-            if (_objLords != null && _objCities != null && _objRuins != null) return;
-            if (JournalEntries != null && JournalEntries.Count >= 4)
+            if (_objLords != null && _objRuin1 != null && _objRuin2 != null
+                && _objRuin3 != null && _objHeart != null) return;
+
+            if (JournalEntries != null && JournalEntries.Count >= 6)
             {
-                if (_objLords  == null) _objLords  = JournalEntries[1];
-                if (_objCities == null) _objCities = JournalEntries[2];
-                if (_objRuins  == null) _objRuins  = JournalEntries[3];
+                if (_objLords == null) _objLords = JournalEntries[1];
+                if (_objRuin1 == null) _objRuin1 = JournalEntries[2];
+                if (_objRuin2 == null) _objRuin2 = JournalEntries[3];
+                if (_objRuin3 == null) _objRuin3 = JournalEntries[4];
+                if (_objHeart == null) _objHeart = JournalEntries[5];
                 return;
             }
+
             _objLords = AddDiscreteLog(
-                new TextObject("Silence five Ashen lords in battle — lead the winning party."),
-                new TextObject("Ashen Lords"), 0, DragonQuestSystem.TargetLordsSlain, null, false);
-            _objCities = AddDiscreteLog(
-                new TextObject("Claim three Ashen cities or castles for your clan."),
-                new TextObject("Ashen Strongholds"), 0, DragonQuestSystem.TargetCitiesTaken, null, false);
-            _objRuins = AddDiscreteLog(
-                new TextObject("Clear four Ashen ruin sites — read what was left there."),
-                new TextObject("Ruins Cleared"), 0, DragonQuestSystem.TargetRuinsCleared, null, false);
+                new TextObject("Silence seven Ashen lords in battle — each one releases a shard of Aelisar."),
+                new TextObject("Ashen Lords Silenced"), 0, DragonQuestSystem.TargetLordsSlain, null, false);
+            _objRuin1 = AddDiscreteLog(
+                new TextObject("Clear the Sunken Scriptorium (Dravend) — where the first covenant was written."),
+                new TextObject("Sunken Scriptorium"), 0, 1, null, false);
+            _objRuin2 = AddDiscreteLog(
+                new TextObject("Clear the Shattered Throne (Epis) — where Aelisar's power was centred."),
+                new TextObject("Shattered Throne"), 0, 1, null, false);
+            _objRuin3 = AddDiscreteLog(
+                new TextObject("Clear the Dragon's Tomb (Myzea) — where the original binding was made."),
+                new TextObject("Dragon's Tomb"), 0, 1, null, false);
+            _objHeart = AddDiscreteLog(
+                new TextObject("Capture Tyal — the Heart of Winter — for your clan."),
+                new TextObject("Heart of Winter"), 0, 1, null, false);
         }
 
-        internal void UpdateProgress(int lords, int cities, int ruins)
+        internal void UpdateProgress(int lords, int ruinsCleared, bool heartCaptured)
         {
             EnsureObjectives();
-            try { _objLords?.UpdateCurrentProgress(Math.Min(lords,  DragonQuestSystem.TargetLordsSlain));   } catch { }
-            try { _objCities?.UpdateCurrentProgress(Math.Min(cities, DragonQuestSystem.TargetCitiesTaken)); } catch { }
-            try { _objRuins?.UpdateCurrentProgress(Math.Min(ruins,   DragonQuestSystem.TargetRuinsCleared)); } catch { }
+            try { _objLords?.UpdateCurrentProgress(Math.Min(lords, DragonQuestSystem.TargetLordsSlain)); } catch { }
+            bool[] cleared =
+            {
+                AshenRuinSystem.IsCleared(DragonQuestSystem.DestinedRuinVillages[0]),
+                AshenRuinSystem.IsCleared(DragonQuestSystem.DestinedRuinVillages[1]),
+                AshenRuinSystem.IsCleared(DragonQuestSystem.DestinedRuinVillages[2]),
+            };
+            try { _objRuin1?.UpdateCurrentProgress(cleared[0] ? 1 : 0); } catch { }
+            try { _objRuin2?.UpdateCurrentProgress(cleared[1] ? 1 : 0); } catch { }
+            try { _objRuin3?.UpdateCurrentProgress(cleared[2] ? 1 : 0); } catch { }
+            try { _objHeart?.UpdateCurrentProgress(heartCaptured ? 1 : 0); } catch { }
         }
 
         internal void LogLordSlain(int count) =>
             AddLog(new TextObject(
-                $"An Ashen lord silenced. [{count}/{DragonQuestSystem.TargetLordsSlain}]"));
+                $"An Ashen lord silenced — a shard of Aelisar returns. [{count}/{DragonQuestSystem.TargetLordsSlain}]"));
 
-        internal void LogCityTaken(string name, int count) =>
+        internal void LogHeartCaptured() =>
             AddLog(new TextObject(
-                $"{name} claimed from the grey march. [{count}/{DragonQuestSystem.TargetCitiesTaken}]"));
+                "The Heart of Winter is taken. Aelisar's presence intensifies."));
 
         internal void LogAllDone() =>
             AddLog(new TextObject(
-                "All three conditions are met. A final letter from the Temple waits. " +
-                "The choice draws close."));
+                "All of it gathered. Aelisar speaks clearly now — and he has a question for you."));
 
-        internal void LogComplete()
-        {
-            AddLog(new TextObject("The Binding fires. The grey retreats. The world has more time."));
-            CompleteQuestWithSuccess();
-        }
-
-        internal void LogRefused()
-        {
-            AddLog(new TextObject(
-                "You walked away from the Binding. The Temple accepted it. " +
-                "The world turns as it always has. The cycle continues."));
-            CompleteQuestWithFail();
-        }
+        internal void LogComplete(string ending) =>
+            AddLog(new TextObject(ending));
 
         internal void LogColdConversion()
         {
             AddLog(new TextObject(
-                "Your fire has gone out. The Temple's riders will not come again — " +
-                "you are no longer the kind of flame their plan was written for. " +
-                "Whatever they were building, you are now the thing it was meant to stop."));
+                "Your fire has gone out. The presence of Aelisar Veth — " +
+                "who sacrificed himself to hold the cycle — recedes. " +
+                "You are now the thing he spent himself to stop. The quest is closed."));
             CompleteQuestWithFail();
         }
     }
 
 
+    // ── Quest journal: Bring the Eternal Cold ─────────────────────────────────
     public sealed class EternalColdQuestLog : QuestBase
     {
         public EternalColdQuestLog()
