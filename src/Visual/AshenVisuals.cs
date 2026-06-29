@@ -72,17 +72,19 @@ namespace AshAndEmber
         // All colour positions are empirical; the exact bit layout varies by
         // game version, so callers wrap application in try/catch.
 
-        // Hair: clear saturation, near-zero hue → ash-grey hair.
+        // Hair: light grey #D3D3D3 — two colour bytes encoded at bits 40–55.
+        private const ulong _ashenHairColour = 0x00D3D30000000000UL;
         public static ulong AshenHairKey(ulong keyPart4) =>
-            (keyPart4 & ~0x00FFFF0000000000UL) | 0x0000010000000000UL;
+            (keyPart4 & ~0x00FFFF0000000000UL) | _ashenHairColour;
 
         // Eyes: high saturation with a blue hue → cold pale-blue iris.
         public static ulong AshenEyeKey(ulong keyPart5) =>
             (keyPart5 & ~0x00FFFF0000000000UL) | 0x00E0AA0000000000UL;
 
-        // Skin: clearing the colour bytes approximates a pale grey/ashen tone.
+        // Skin: light grey #D3D3D3 (RGB 211,211,211) encoded in the three colour bytes.
+        private const ulong _ashenSkinColour = 0x000000D3D3D30000UL;
         public static ulong AshenSkinKey(ulong keyPart7) =>
-            keyPart7 & ~0x000000FFFFFF0000UL;
+            (keyPart7 & ~0x000000FFFFFF0000UL) | _ashenSkinColour;
 
         // An adult age floor for ashen agents. Some bandit/troop templates resolve
         // to a near-zero ("child") age at spawn; clamping here stops the ashen look
