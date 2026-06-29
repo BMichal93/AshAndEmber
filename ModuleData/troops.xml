@@ -268,7 +268,7 @@
   <NPCCharacter id="ashen_warrior"
                 name="{=ashen_warrior_name}Ashen Warrior"
                 age="25"
-                level="28"
+                level="20"
                 culture="Culture.khuzait"
                 default_group="Infantry"
                 occupation="Soldier"
@@ -297,10 +297,10 @@
       </EquipmentRoster>
     </Equipments>
     <skills>
-      <skill id="Athletics"  value="80"/>
-      <skill id="OneHanded"  value="100"/>
-      <skill id="TwoHanded"  value="65"/>
-      <skill id="Throwing"   value="55"/>
+      <skill id="Athletics"  value="70"/>
+      <skill id="OneHanded"  value="80"/>
+      <skill id="TwoHanded"  value="50"/>
+      <skill id="Throwing"   value="45"/>
     </skills>
     <upgrade_targets>
       <upgrade_target id="NPCCharacter.ashen_warden"/>
@@ -310,15 +310,15 @@
   <NPCCharacter id="ashen_warden"
                 name="{=ashen_warden_name}Ashen Warden"
                 age="25"
-                level="38"
+                level="24"
                 culture="Culture.khuzait"
                 default_group="Infantry"
                 occupation="Soldier"
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.3" build="0.4" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.9" build="1.0" key="001FFFFFFFFFFFFF"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.3" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.9" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -326,7 +326,7 @@
         <equipment slot="Item1" id="Item.round_shield"/>
         <equipment slot="Item2" id="Item.javelin"/>
         <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.sea_raider_armor"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
         <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
       </EquipmentRoster>
       <EquipmentRoster>
@@ -339,10 +339,10 @@
       </EquipmentRoster>
     </Equipments>
     <skills>
-      <skill id="Athletics"  value="90"/>
-      <skill id="OneHanded"  value="120"/>
-      <skill id="TwoHanded"  value="85"/>
-      <skill id="Throwing"   value="65"/>
+      <skill id="Athletics"  value="80"/>
+      <skill id="OneHanded"  value="100"/>
+      <skill id="TwoHanded"  value="70"/>
+      <skill id="Throwing"   value="55"/>
     </skills>
     <upgrade_targets>
       <upgrade_target id="NPCCharacter.ashen_revenant"/>
@@ -352,15 +352,15 @@
   <NPCCharacter id="ashen_revenant"
                 name="{=ashen_revenant_name}Ashen Revenant"
                 age="25"
-                level="50"
+                level="28"
                 culture="Culture.khuzait"
                 default_group="Infantry"
                 occupation="Soldier"
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.3" build="0.5" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="1.0" build="1.0" key="001FFFFFFFFFFFFF"/>
+      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.4" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="40.0" weight="0.9" build="1.0" key="001FFFFFFFFFFFFF"/>
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -368,7 +368,7 @@
         <equipment slot="Item1" id="Item.round_shield"/>
         <equipment slot="Item2" id="Item.javelin"/>
         <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.sea_raider_armor"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
         <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
       </EquipmentRoster>
       <EquipmentRoster>
@@ -376,15 +376,15 @@
         <equipment slot="Item1" id="Item.round_shield"/>
         <equipment slot="Item2" id="Item.javelin"/>
         <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.sea_raider_armor"/>
+        <equipment slot="Body"  id="Item.bandit_armor"/>
         <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
       </EquipmentRoster>
     </Equipments>
     <skills>
-      <skill id="Athletics"  value="110"/>
-      <skill id="OneHanded"  value="150"/>
-      <skill id="TwoHanded"  value="110"/>
-      <skill id="Throwing"   value="80"/>
+      <skill id="Athletics"  value="90"/>
+      <skill id="OneHanded"  value="120"/>
+      <skill id="TwoHanded"  value="90"/>
+      <skill id="Throwing"   value="70"/>
     </skills>
   </NPCCharacter>
 
