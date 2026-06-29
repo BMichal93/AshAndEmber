@@ -70,20 +70,23 @@ namespace AshAndEmber
             "The older kind — the one that binds soul to flesh, that keeps the living from the cold. " +
             "Mages have learned to reach into it. Some have learned to spend it.",
 
-            "Long ago, in the frozen north, certain lords stared into their own dying flames and refused the dark. " +
-            "So they did what no one had dared: they let the fire go out.\n\n" +
-            "The cold did not kill them.",
+            "For generations, the Temple of Ember stood as its sole keeper. " +
+            "Its priests mapped the fire in men's souls, named its schools, and forbade the deepest workings to all but the initiated. " +
+            "They called it stewardship.\n\n" +
+            "Others called it a leash.",
 
-            "They are the Ashen. They do not age. They do not grieve. They do not stop.\n\n" +
-            "And they have been waiting a very long time.",
+            "Beyond the eastern passes, where the Temple's writ never reached, the hill tribes burn differently. " +
+            "They do not study the fire — they feed it, wild and ungoverned, until it answers.\n\n" +
+            "The empire called them heretics. The empire is crumbling.",
 
-            "Now kingdoms crack. Emperors war over ruins. " +
-            "And in the silence between the battles, the cold is already whispering — " +
-            "and some mages have begun to whisper back.",
+            "Now the great empire fractures, its legions turned inward, its throne contested by ghosts. " +
+            "And in that silence, the Ashen march — lords who refused to die, who let their own fire go cold " +
+            "and rose from the chill unchanged. They have been patient. Centuries patient.\n\n" +
+            "Patience, at last, is done.",
 
             "Something in you has been listening.\n\n" +
-            "The fire knows. So does the cold.\n\n" +
-            "Both are waiting to learn which way you will burn.",
+            "The Temple wants you bound. The tribes want you burning. The Ashen want you gone.\n\n" +
+            "The fire already knows what you will choose. So does the cold.",
         };
 
         // Per-paragraph timing (seconds).
