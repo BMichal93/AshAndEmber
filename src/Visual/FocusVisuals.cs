@@ -25,8 +25,9 @@ namespace AshAndEmber
         private const float FocusParticleDuration  = FocusVisualInterval - 0.1f;
         private const float FocusLightRadius       = 9f;
 
-        private static readonly List<(Agent agent, ColorSchool school, float timer)> _focusVisuals
-            = new List<(Agent, ColorSchool, float)>();
+        // accumulated: total seconds held — used to grow the focus aura radius over time.
+        private static readonly List<(Agent agent, ColorSchool school, float timer, float accumulated)> _focusVisuals
+            = new List<(Agent, ColorSchool, float, float)>();
 
         // ── Public API ─────────────────────────────────────────────────────────
 
@@ -37,7 +38,7 @@ namespace AshAndEmber
             if (agent == null || !agent.IsActive()) return;
             int idx = _focusVisuals.FindIndex(x => x.agent == agent);
             if (idx >= 0) _focusVisuals.RemoveAt(idx);
-            _focusVisuals.Add((agent, school, 0f));
+            _focusVisuals.Add((agent, school, 0f, 0f));
         }
 
         // Stop the focus visual and immediately clear the contour glow.
@@ -57,21 +58,22 @@ namespace AshAndEmber
         {
             for (int i = _focusVisuals.Count - 1; i >= 0; i--)
             {
-                var (a, school, t) = _focusVisuals[i];
+                var (a, school, t, acc) = _focusVisuals[i];
                 if (a == null || !a.IsActive() || a.Health <= 0f)
                 {
                     _focusVisuals.RemoveAt(i);
                     continue;
                 }
-                float newT = t - dt;
+                float newT   = t - dt;
+                float newAcc = acc + dt;
                 if (newT <= 0f)
                 {
-                    PulseFocusVisual(a, school);
-                    _focusVisuals[i] = (a, school, FocusVisualInterval);
+                    PulseFocusVisual(a, school, newAcc);
+                    _focusVisuals[i] = (a, school, FocusVisualInterval, newAcc);
                 }
                 else
                 {
-                    _focusVisuals[i] = (a, school, newT);
+                    _focusVisuals[i] = (a, school, newT, newAcc);
                 }
             }
         }
@@ -90,7 +92,7 @@ namespace AshAndEmber
         // Clear all focus visuals — called on mission end.
         public static void ClearFocusVisuals()
         {
-            foreach (var (a, _, _) in _focusVisuals)
+            foreach (var (a, _, _, _) in _focusVisuals)
             {
                 if (a == null) continue;
                 try { a.AgentVisuals?.GetEntity()?.SetContourColor(null, false); } catch { }
@@ -102,13 +104,17 @@ namespace AshAndEmber
 
         // ── Internal ───────────────────────────────────────────────────────────
 
-        private static void PulseFocusVisual(Agent agent, ColorSchool school)
+        // accumulated: seconds the focus has been held — light radius grows 9→15m over 4.5 s.
+        private static void PulseFocusVisual(Agent agent, ColorSchool school, float accumulated = 0f)
         {
             Vec3 pos  = agent.Position;
-            Vec3 posM = pos + new Vec3(0f, 0f, 0.8f); // mid-body height for light
+            Vec3 posM = pos + new Vec3(0f, 0f, 0.8f);
+
+            float buildUp   = System.Math.Min(accumulated / 4.5f, 1f); // 0→1 over 4.5 s
+            float lightRadius = FocusLightRadius + buildUp * 6f;        // 9→15 m
 
             BeginAgentGlow(agent, school, FocusGlowDuration);
-            SpawnTempLight(posM, school, FocusLightRadius, FocusGlowDuration);
+            SpawnTempLight(posM, school, lightRadius, FocusGlowDuration);
 
             // Fire schools: add live flame particles at the caster's feet.
             bool isFire = school == ColorSchool.Red
