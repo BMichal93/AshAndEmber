@@ -418,6 +418,40 @@ namespace AshAndEmber
             catch { return false; }
         }
 
+        // ── Living-North identity restore (Northerner origin) ─────────────────
+        // The character-creation flow renames the sturgia culture to "Ashen" so the
+        // culture card presents the Ashen origin (see ApplyAshenFactionCultureTexts).
+        // A player who chose the basic Northerner origin keeps the unchanged northern
+        // identity instead, so we revert the culture name and blurb to "Northerner" —
+        // the umbrella the Ashen and the living North both descend from. Re-applied
+        // each session from the daily tick for Northerner-origin players, mirroring
+        // how the Ashen rename is re-applied (names revert to XML on load). The
+        // character sheet, encyclopedia, and troop culture then read "Northerner".
+        public static void RestoreNorthernerCultureIdentity()
+        {
+            try
+            {
+                var sturgiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
+                if (sturgiaCulture != null)
+                    _nameField?.SetValue(sturgiaCulture, new TextObject("Northerner"));
+
+                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                var mgr = mgrField?.GetValue(null) as GameTextManager;
+                if (mgr == null) return;
+
+                SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "Northerner");
+                SetCultureVariation(mgr, "str_culture_description", "sturgia",
+                    "A hard people of the frozen north, raised on long winters and longer feuds. " +
+                    "When the grey fire came down out of the dark, it took some of them and left the rest — " +
+                    "the Ashen and the living North are both their children. Those it did not take still " +
+                    "keep their names, their hearths, and their dead. They fight on foot with axe and shield, " +
+                    "they mourn what the cold stole from their kin, and they have learned to tell the living " +
+                    "from the Ashen by the warmth behind the eyes.");
+            }
+            catch { }
+        }
+
         private static readonly string[] _ashenFactionFeats =
         {
             "Cold Fire — The flame in you never went out; it only changed. You wield fire magic from the first day, its colour cold as ash. (Always Ashen — inner fire with cold-blue flame, no aging)",

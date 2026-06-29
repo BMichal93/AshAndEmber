@@ -121,7 +121,13 @@ namespace AshAndEmber
                 CreationBackstoryRework.ApplyPendingBoons();
                 // Ashen-origin players (Sturgian culture) skip the Gift prompt entirely —
                 // they are already Ashen; the fire settled in them long before the game begins.
-                bool isAshenOrigin = Hero.MainHero?.Culture?.StringId == "sturgia";
+                // A player who chose the basic Sturgian origin at creation opts out of that
+                // transformation: they stay a mortal Sturgian and walk the ordinary path.
+                bool isStrugian   = Hero.MainHero?.Culture?.StringId == "sturgia"
+                                    && CreationBackstoryRework.ChoseStrugianOrigin;
+                bool isAshenOrigin = Hero.MainHero?.Culture?.StringId == "sturgia" && !isStrugian;
+                if (isStrugian)
+                    try { AshenCitySystem.RestoreNorthernerCultureIdentity(); } catch { }
                 MageKnowledge._deferredInquiry = isAshenOrigin
                     ? (Action)ApplyAshenOriginAndStart
                     : ShowGiftPrompt;

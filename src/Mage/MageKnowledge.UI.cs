@@ -27,6 +27,11 @@ namespace AshAndEmber
         internal static void ApplyAshenAppearance(Hero hero)
         {
             if (hero == null) return;
+            // The player wears the cold look only while genuinely Ashen. A mortal
+            // Northerner (Sturgian origin who opted out of the Ashen) must never be
+            // given the grey skin and cold-blue eyes — every become-Ashen path sets
+            // IsAshen before calling here, so this guard only blocks erroneous calls.
+            if (hero == Hero.MainHero && !_isAshen) return;
             try
             {
                 var newBp = AshenVisuals.MakeAshenBodyProperties(hero.BodyProperties);

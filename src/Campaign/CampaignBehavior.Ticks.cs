@@ -75,6 +75,14 @@ namespace AshAndEmber
                 try { AmbientRemarks.DailyTick(); } catch { }
                 try { TempleCulture.DailyTick();  } catch { }
                 try { TribalCulture.DailyTick(); } catch { }
+                // Northerner-origin players keep the unchanged northern identity — the
+                // culture name reverts to "Ashen" on every session load, so restore it.
+                try
+                {
+                    if (Hero.MainHero?.Culture?.StringId == "sturgia" && !MageKnowledge.IsAshen)
+                        AshenCitySystem.RestoreNorthernerCultureIdentity();
+                }
+                catch { }
                 _dayCounter++;
                 if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch { }
             }

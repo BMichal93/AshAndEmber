@@ -57,10 +57,19 @@ namespace AshAndEmber
         private const string AshenForgottenAdulthoodId = "ashen_forgotten_adulthood";
         private const string AshenForgottenAgeId       = "ashen_forgotten_age";
 
+        // Origin opt-out: a basic, mortal Sturgian rather than the (default) Ashen.
+        private const string StrugianOriginId          = "strugian_origin";
+
         // Pending boons recorded at finalize, applied after the new-game reset.
         private static bool _pendingApostleDarkGift;
         private static bool _pendingSquireBoon;
         private static bool _pendingForgottenAge;
+
+        // True when the player chose the basic Sturgian origin during creation,
+        // opting out of the Sturgian culture's default Ashen transformation. Read by
+        // MagicCampaignBehavior at new-game time to route them down the ordinary path.
+        private static bool _pendingStrugianOrigin;
+        public static bool ChoseStrugianOrigin => _pendingStrugianOrigin;
 
         // The generic option grants (read from the live content so we stay in
         // sync with the engine's defaults rather than hard-coding 1/10/1).
@@ -91,6 +100,7 @@ namespace AshAndEmber
             _pendingApostleDarkGift = false;
             _pendingSquireBoon      = false;
             _pendingForgottenAge    = false;
+            _pendingStrugianOrigin  = false;
             try { manager.RegisterCharacterCreationContentHandler(this, 1000); } catch { }
         }
 
@@ -128,6 +138,7 @@ namespace AshAndEmber
                     if      (id == KhuzaitApostleOptionId)  _pendingApostleDarkGift = true;
                     else if (id == VlandiaSquireOptionId)   _pendingSquireBoon      = true;
                     else if (id == AshenForgottenAgeId)     _pendingForgottenAge    = true;
+                    else if (id == StrugianOriginId)        _pendingStrugianOrigin  = true;
                 }
             }
             catch { }
@@ -197,6 +208,47 @@ namespace AshAndEmber
                 DefaultCharacterAttributes.Social, DefaultSkills.Leadership);
 
             AddAshenForgottenAge(m);
+            InjectStrugianOriginOption(m);
+        }
+
+        // Adds the basic-Northerner origin option to the family stage for northern
+        // (Sturgian-culture) characters. The northern culture defaults to the Ashen
+        // transformation; choosing this option keeps the character a mortal Northerner
+        // — they age and die as men do, bear no Mark, remain among the living of
+        // Sturgia, and take the ordinary path to (or away from) the fire. Unlike the
+        // forgotten-past options it grants the skill level intact: a Northerner
+        // remembers exactly where their iron and their endurance came from.
+        private static void InjectStrugianOriginOption(CharacterCreationManager m)
+        {
+            var menu = m.GetNarrativeMenuWithId("narrative_parent_menu");
+            if (menu == null) return;
+            try
+            {
+                var option = new NarrativeMenuOption(
+                    StrugianOriginId,
+                    new TextObject("were Northerners of the unbroken North."),
+                    new TextObject(
+                        "The grey fire came down from the north and changed those it touched. Your people "
+                        + "were not among them. You remember your name, your kin, the smoke of your father's "
+                        + "hearth and the weight of the axe he set in your hands. You will age as men age, "
+                        + "bleed as men bleed, and fall when your years run out — and the lords of Calradia "
+                        + "will treat you as one of the living, not one of the Ashen.\n\n"
+                        + "(You begin as a mortal Northerner, not the Ashen: no inner fire is forced upon you, "
+                        + "you carry no Mark, and you are free to seek — or refuse — the fire as any other.)"),
+                    new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) =>
+                    {
+                        args.SetAffectedSkills(new[] { DefaultSkills.TwoHanded });
+                        args.SetFocusToSkills(_focus);
+                        args.SetLevelToSkills(_skill);
+                        args.SetLevelToAttribute(DefaultCharacterAttributes.Endurance, _attr);
+                    }),
+                    new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
+                        mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
+                    null,
+                    null);
+                menu.AddNarrativeMenuOption(option);
+            }
+            catch { }
         }
 
         // Adds a single forgotten-past option to the named menu, visible only for

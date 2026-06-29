@@ -4,6 +4,20 @@
 
 ## Unreleased
 
+---
+
+## v0.25.1
+
+### The grey look belongs to the Ashen alone
+- **A mortal Northerner can no longer be mistaken for the Ashen.** The cold appearance — grey skin, ash hair, cold-blue eyes — is now barred at the source for any character who is not truly Ashen, so a Sturgian who kept the living North stays warm-eyed until (and unless) they take the cold themselves. The Ashen start, the Northerner's ordinary Fire/Mortal/Nature choice, and the later paths to becoming Ashen (the Last Ember at a century's age, captivity, and the world's darker turns) are all unchanged.
+
+---
+
+## v0.25.0
+
+### A second northern start — walk as the living, not the Ashen
+- **New character-creation origin: the Northerners of the unbroken North.** Choosing the northern (Sturgian) culture no longer commits you to the Ashen. In the family stage of your backstory you may now declare that the grey fire never touched your people — you remain a **mortal Northerner**: you age and die as men do, you bear no Mark, you stay among the living of Sturgia, and you are free to seek (or refuse) the inner fire by the ordinary Gift as any other commander. The default northern origin is still the Ashen; this is the path for those who would face them rather than join them. With it, both northern powers — the Ashen and the living North — now stand at the start of every game.
+
 ### Bug fixes
 - **"Broken Will" can no longer turn on your own throne.** The event that drives a kingdom mad and raises its banners against all of Calradia could pick the player's own faction, forcing you to war with every realm at once. It now always spares your kingdom.
 - **The Branded no longer swallows the week's omens.** For commanders who walk no fire-path, the rite could quietly claim the weekly portent slot and fall silent, starving the world of every other event for a fortnight. Its eligibility is now weighed before the slot is spent.
