@@ -44,11 +44,12 @@ namespace AshAndEmber
             }
 
             // Decrement throttle counters (only when above zero)
-            if (_clanThrottle     > 0) _clanThrottle--;
-            if (_warThrottle      > 0) _warThrottle--;
-            if (_villageThrottle  > 0) _villageThrottle--;
-            if (_recoveryThrottle > 0) _recoveryThrottle--;
-            if (_prisonerThrottle > 0) _prisonerThrottle--;
+            if (_clanThrottle      > 0) _clanThrottle--;
+            if (_warThrottle       > 0) _warThrottle--;
+            if (_villageThrottle   > 0) _villageThrottle--;
+            if (_recoveryThrottle  > 0) _recoveryThrottle--;
+            if (_prisonerThrottle  > 0) _prisonerThrottle--;
+            if (_lordPartyThrottle > 0) _lordPartyThrottle--;
 
             // Clan kingdom enforcement — every ClanInterval days
             if (_clanThrottle == 0)
@@ -94,6 +95,13 @@ namespace AshAndEmber
             {
                 TickAshenVillages();
                 _villageThrottle = VillageInterval;
+            }
+
+            // Lord party composition — every LordPartyInterval days, one party per tick
+            if (_lordPartyThrottle == 0)
+            {
+                try { RefillAshenLordParties(); } catch { }
+                _lordPartyThrottle = LordPartyInterval;
             }
 
             // Prisoner fate — every PrisonerInterval days, max 1 action per tick

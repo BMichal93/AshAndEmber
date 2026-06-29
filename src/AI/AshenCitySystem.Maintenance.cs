@@ -93,16 +93,22 @@ namespace AshAndEmber
             garrison.MemberRoster.AddToCounts(troop, min - current);
         }
 
-        private static CharacterObject GetHighestTierTroop(CultureObject culture)
+        private static CharacterObject GetHighestTierTroop(CultureObject _)
         {
-            // Force Sturgian troops so all Ashen garrisons share the same unit theme as Tyal.
-            culture = MBObjectManager.Instance.GetObject<CultureObject>("sturgia") ?? culture;
-            if (culture == null) return null;
+            // Garrisons use the top Ashen garrison troop directly. Fallback to the
+            // Sturgian chain if the custom troop isn't registered yet (first load).
             try
             {
-                var troop = culture.EliteBasicTroop ?? culture.BasicTroop;
+                var ashen = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_revenant");
+                if (ashen != null) return ashen;
+            }
+            catch { }
+            try
+            {
+                var sturgia = MBObjectManager.Instance.GetObject<CultureObject>("sturgia");
+                if (sturgia == null) return null;
+                var troop = sturgia.EliteBasicTroop ?? sturgia.BasicTroop;
                 if (troop == null) return null;
-                // Walk the first upgrade path to reach max tier
                 for (int i = 0; i < 10; i++)
                 {
                     if (troop.UpgradeTargets == null || troop.UpgradeTargets.Length == 0) break;
@@ -111,6 +117,56 @@ namespace AshAndEmber
                 return troop;
             }
             catch { return null; }
+        }
+
+        // ── Lord party composition ─────────────────────────────────────────────
+        // Replaces Sturgian troops in Ashen lords' mobile parties with Ashen troops.
+        // Runs on a slow throttle; targets at most one party per call to avoid hitches.
+        // The mix is weighted toward the two mid-tier garrison troops so lord armies
+        // feel appropriately strong without being identical to garrisons (no revenants).
+        private static int _lordPartyRefillIndex = 0;
+
+        internal static void RefillAshenLordParties()
+        {
+            try
+            {
+                var warrior  = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_warrior");
+                var warden   = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_warden");
+                if (warrior == null || warden == null) return;
+
+                // Collect all active Ashen lord parties (heroes whose clan is Ashen).
+                var parties = MobileParty.All
+                    .Where(p => p != null && p.IsActive && p.LeaderHero != null
+                                && _ashenClanIds.Contains(p.LeaderHero.Clan?.StringId ?? "")
+                                && p != MobileParty.MainParty)
+                    .ToList();
+                if (parties.Count == 0) return;
+
+                // Process one party per call (round-robin) to spread the cost.
+                _lordPartyRefillIndex = _lordPartyRefillIndex % parties.Count;
+                var party = parties[_lordPartyRefillIndex++];
+
+                var roster = party.MemberRoster;
+                if (roster == null) return;
+
+                // Remove Sturgian troops.
+                var toRemove = roster.GetTroopRoster()
+                    .Where(e => e.Character?.StringId?.StartsWith("sturgian_",
+                        StringComparison.OrdinalIgnoreCase) == true)
+                    .ToList();
+                int sturgianCount = toRemove.Sum(e => e.Number);
+                foreach (var e in toRemove)
+                    try { roster.AddToCounts(e.Character, -e.Number); } catch { }
+
+                if (sturgianCount <= 0) return;
+
+                // Replace with Ashen troops: 60 % warrior, 40 % warden.
+                int wardenCount  = sturgianCount * 4 / 10;
+                int warriorCount = sturgianCount - wardenCount;
+                if (warriorCount > 0) roster.AddToCounts(warrior, warriorCount);
+                if (wardenCount  > 0) roster.AddToCounts(warden,  wardenCount);
+            }
+            catch { }
         }
 
         private static void RefillGarrisons()
