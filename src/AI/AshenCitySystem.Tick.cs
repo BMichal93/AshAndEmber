@@ -40,8 +40,6 @@ namespace AshAndEmber
                 try { TempleCulture.SetupTempleKingdom(); } catch { }
                 try { RenameTribesKingdom();              } catch { }
                 try { RenameKhuzaitTroops();              } catch { }
-                try { RenameAshenFactionKingdom();        } catch { }
-                try { RenameSturgianTroops();             } catch { }
                 _settlementsRenamed = true;
             }
 

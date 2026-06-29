@@ -172,7 +172,6 @@
     <Compile Include="AI\AshenCitySystem.Persistence.cs"/>
     <Compile Include="AI\TempleCulture.cs"/>
     <Compile Include="AI\TribalCulture.cs"/>
-    <Compile Include="AI\AshenFactionCulture.cs"/>
     <Compile Include="AI\TempleCultureCardFixer.cs"/>
     <Compile Include="AI\AshenDiplomacyModel.cs"/>
     <Compile Include="AI\AshenDialogue.cs"/>

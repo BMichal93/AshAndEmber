@@ -119,9 +119,62 @@ namespace AshAndEmber
                 // Apply any character-creation backstory boon AFTER the resets above,
                 // so it is not wiped (the pick was recorded during creation).
                 CreationBackstoryRework.ApplyPendingBoons();
-                // The opening lore now plays as a cinematic before character creation
-                // (see AshEmberLoreIntro), so here we go straight to the Gift prompt.
-                MageKnowledge._deferredInquiry = ShowGiftPrompt;
+                // Ashen-origin players (Sturgian culture) skip the Gift prompt entirely —
+                // they are already Ashen; the fire settled in them long before the game begins.
+                bool isAshenOrigin = Hero.MainHero?.Culture?.StringId == "sturgia";
+                MageKnowledge._deferredInquiry = isAshenOrigin
+                    ? (Action)ApplyAshenOriginAndStart
+                    : ShowGiftPrompt;
+            }
+            catch { }
+        }
+
+        // ── Ashen-origin start ────────────────────────────────────────────────
+        // Called instead of ShowGiftPrompt when the player chose the Sturgian
+        // (Ashen) origin at character creation. Applies full Ashen status without
+        // asking — they already know what they are.
+        private void ApplyAshenOriginAndStart()
+        {
+            try
+            {
+                MageKnowledge.SetMage(true);
+                MageKnowledge.SetAshen(true);
+                MageKnowledge.ApplyAshenAppearance(Hero.MainHero);
+
+                // Clan tier 2 from the start — Ashen are not fresh adventurers.
+                try
+                {
+                    var clan = Hero.MainHero?.Clan;
+                    if (clan != null && clan.Renown < 150f)
+                        clan.Renown = 150f;
+                }
+                catch { }
+
+                // Seed and initialise the Ashen kingdom, then join it.
+                try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                try { AshenCitySystem.Initialize();           } catch { }
+                try { AshenCitySystem.DailyTick();            } catch { }
+                try { AshenCitySystem.OnPlayerBecameAshen();  } catch { }
+
+                // Criminal in every non-Ashen kingdom — lords and guards already know.
+                try
+                {
+                    foreach (var k in Kingdom.All.ToList())
+                    {
+                        if (k.StringId == "ashen_kingdom" || k.IsEliminated) continue;
+                        ChangeCrimeRatingAction.Apply(k, 80f, false);
+                    }
+                }
+                catch { }
+
+                try { ReassignImperialSettlements(); } catch { }
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "You remember little of who you were. What remains is the cold, and the fire that will not die.",
+                    new Color(0.3f, 0.35f, 0.7f)));
+
+                _selectionDone = true;
+                MageKnowledge._deferredInquiry = MageKnowledge.ShowControlsPointer;
             }
             catch { }
         }
@@ -145,8 +198,6 @@ namespace AshAndEmber
                         isTemplar
                             ? "The Templars keep the inner fire as a sacred trust; the old earth-listening is forbidden to the Order, for it cannot share a soul with Grace. [Not for Templars]"
                             : "You hear the living land. Seek those in the old forests, the still rivers, the open steppe — those who still remember how to listen."),
-                    new InquiryElement("ashen", "The fire in me died long ago.", null, true,
-                        "You are Ashen. You do not age. Each casting costs criminal standing instead of years. After your first working each day, further casts risk possession. You begin aligned with the Ashen."),
                 },
                 false, 1, 1,
                 "Choose.",
@@ -154,20 +205,9 @@ namespace AshAndEmber
                 chosen =>
                 {
                     bool isLivingEmber = chosen?.Any(e => e.Identifier is string s && s == "living_ember") == true;
-                    // Living Ember is exclusive with both Inner Fire and Miracles.
-                    bool isMage      = chosen?.Any(e => e.Identifier is string s && s == "yes")        == true;
-                    bool isAshen     = chosen?.Any(e => e.Identifier is string s && s == "ashen")      == true;
-                    if (isAshen) isMage = true;
+                    bool isMage        = chosen?.Any(e => e.Identifier is string s && s == "yes")          == true;
                     MageKnowledge.SetMage(isMage);
-                    if (isAshen)
-                    {
-                        MageKnowledge.SetAshen(true);
-                        MageKnowledge.ApplyAshenAppearance(Hero.MainHero);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "The cold settled in you long ago. The world will see it before you speak.",
-                            new Color(0.3f, 0.35f, 0.7f)));
-                    }
-                    else if (isLivingEmber)
+                    if (isLivingEmber)
                     {
                         NatureKnowledge.SetAttuned(true);
                         try { NatureCampaignBehavior.EstablishForNewCampaign(); } catch { }
@@ -191,21 +231,6 @@ namespace AshAndEmber
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
                     try { AshenCitySystem.DailyTick(); } catch { }
-                    if (isAshen)
-                    {
-                        // Mark the player as a criminal in every non-Ashen kingdom so lords
-                        // and guards treat them as an enemy from the start.
-                        try
-                        {
-                            foreach (var k in TaleWorlds.CampaignSystem.Kingdom.All.ToList())
-                            {
-                                if (k.StringId == "ashen_kingdom" || k.IsEliminated) continue;
-                                TaleWorlds.CampaignSystem.Actions.ChangeCrimeRatingAction.Apply(k, 80f, false);
-                            }
-                        }
-                        catch { }
-                        try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
-                    }
                     try { ReassignImperialSettlements(); } catch { }
                     // Greet every new ruler with a brief pointer to the journal — the
                     // full controls manual now lives there ("Notes for the Adventurer"),
