@@ -66,26 +66,21 @@ namespace AshAndEmber
         // ShowLoreIntro pop-up; the wording is unchanged.
         private static readonly string[] Paragraphs =
         {
-            "All living things carry an Inner Fire. It is not warmth or light — " +
-            "it is the force that binds soul to body, that separates the living from the cold. " +
-            "Those who learn to feel it are called mages. Those who learn to spend it are called dangerous.",
+            "All living things carry an Inner Fire. " +
+            "It is the force that binds soul to flesh, that keeps the living from the cold. " +
+            "Those who learn to reach into it are called mages.",
 
-            "The Temple of Ember is the oldest institution in the known world. " +
-            "It does not command armies or collect taxes. It does not need to. " +
-            "Kings seek its blessing, mages seek its teaching, and the faithful seek its altars. " +
-            "What the Temple calls sacred, most of the world treats as sacred.",
+            "The empire that once held these lands together is fracturing. " +
+            "Three claimants. Three armies. The eastern Tribes, long kept behind the passes, " +
+            "have begun to move.",
 
-            "The empire is fracturing. Three claimants hold three portions of what was once a single realm, " +
-            "and none of them are close to winning. " +
-            "Into the chaos, the Tribes of the East have begun to press through the mountain passes — " +
-            "hard fighters, with their own fire and no patience for Temple doctrine.",
+            "But the greater danger comes from the north. " +
+            "Long ago, certain lords chose to extinguish their own Inner Fire rather than age and die. " +
+            "The cold took them. It did not kill them.\n\n" +
+            "They are called the Ashen. They do not tire. They do not stop. " +
+            "For centuries they kept to the wastes. Now they march.",
 
-            "The greater threat is older. The Ashen are lords who extinguished their own Inner Fire " +
-            "rather than let it burn out with age. They do not die. They do not tire. " +
-            "For centuries they kept to the northern wastes, patient in the way that only the immortal can be. " +
-            "They are patient no longer.",
-
-            "The world does not know what is coming. You might.",
+            "The fire in you has not yet gone out.\n\nWhat you do with it is yours to decide.",
         };
 
         // Per-paragraph timing (seconds).
