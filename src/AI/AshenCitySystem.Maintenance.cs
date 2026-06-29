@@ -86,26 +86,38 @@ namespace AshAndEmber
             int current = garrison.MemberRoster.TotalManCount;
             if (current >= min) return;
 
-            // Walk the first upgrade path to find the highest-tier troop
-            var troop = GetHighestTierTroop(settlement.Culture);
-            if (troop == null) return;
-
-            garrison.MemberRoster.AddToCounts(troop, min - current);
-        }
-
-        private static CharacterObject GetHighestTierTroop(CultureObject _)
-        {
-            // Garrisons use the top Ashen garrison troop directly. Fallback to the
-            // Sturgian chain if the custom troop isn't registered yet (first load).
+            // Mixed garrison: 50% warrior, 35% warden, 15% revenant.
             try
             {
-                var ashen = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_revenant");
-                if (ashen != null) return ashen;
+                var warrior  = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_warrior");
+                var warden   = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_warden");
+                var revenant = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_revenant");
+
+                int toAdd = min - current;
+                if (warrior != null && warden != null && revenant != null)
+                {
+                    int revenantCount = toAdd * 15 / 100;
+                    int wardenCount   = toAdd * 35 / 100;
+                    int warriorCount  = toAdd - wardenCount - revenantCount;
+                    if (warriorCount  > 0) garrison.MemberRoster.AddToCounts(warrior,  warriorCount);
+                    if (wardenCount   > 0) garrison.MemberRoster.AddToCounts(warden,   wardenCount);
+                    if (revenantCount > 0) garrison.MemberRoster.AddToCounts(revenant, revenantCount);
+                }
+                else
+                {
+                    // Fallback: fill with whatever top-tier Sturgian troop is available.
+                    var fallback = GetSturgianFallbackTroop();
+                    if (fallback != null) garrison.MemberRoster.AddToCounts(fallback, toAdd);
+                }
             }
             catch { }
+        }
+
+        private static CharacterObject GetSturgianFallbackTroop()
+        {
             try
             {
-                var sturgia = MBObjectManager.Instance.GetObject<CultureObject>("sturgia");
+                var sturgia = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
                 if (sturgia == null) return null;
                 var troop = sturgia.EliteBasicTroop ?? sturgia.BasicTroop;
                 if (troop == null) return null;
@@ -165,8 +177,8 @@ namespace AshAndEmber
                 int toAdd    = Math.Max(sturgianCount, shortage > 0 ? shortage : 0);
                 if (toAdd <= 0) return;
 
-                // Troop mix: slightly stronger than a normal lord — 45% warrior, 35% warden, 20% revenant.
-                int revenantCount = toAdd * 2 / 10;
+                // Troop mix: slightly stronger than a normal lord — 50% warrior, 35% warden, 15% revenant.
+                int revenantCount = toAdd * 15 / 100;
                 int wardenCount   = toAdd * 35 / 100;
                 int warriorCount  = toAdd - wardenCount - revenantCount;
                 if (warriorCount  > 0) roster.AddToCounts(warrior,  warriorCount);
