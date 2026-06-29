@@ -63,14 +63,18 @@ namespace AshAndEmber
 
         // Fills ka/kb with two non-Ashen kingdoms that are currently at peace
         // with each other and both have a living leader. Returns false if no
-        // such pair exists.
+        // such pair exists. The player's own kingdom is never picked — scripted
+        // incident-wars must not drag the player's faction into a war it had no
+        // part in, matching how Game of Thrones and Broken Will spare the player.
         private static bool TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)
         {
             ka = kb = null;
+            var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
             var pool = Kingdom.All
                 .Where(k => !k.IsEliminated
                          && k.StringId != AshenKingdomId
                          && k.StringId != "vlandia"   // Holy Temple fights only the Ashen
+                         && k != playerKingdom         // never force the player's faction into these wars
                          && k.Leader != null && k.Leader.IsAlive && !k.Leader.IsChild)
                 .ToList();
             if (pool.Count < 2) return false;

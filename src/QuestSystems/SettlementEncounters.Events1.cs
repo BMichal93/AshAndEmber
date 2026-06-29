@@ -721,7 +721,7 @@ namespace AshAndEmber
                             Msg("You draw. He does too, half a second slower, and his men scramble behind him. Whatever happens next happens in the open, in daylight, with witnesses.", BadColor);
                             break;
                         case "coin":
-                            ChangeGold(-30);
+                            if (!ChangeGold(-30)) break;
                             ChangeRelWithOwner(s, 2);
                             Msg("Thirty coin to the senior guard. He walks over, says three words. The retainer moves off — not happy, but moving. You ride out.", DimColor);
                             break;
@@ -1227,7 +1227,7 @@ namespace AshAndEmber
                             Msg("You seal the well yourself and dispatch a rider. The physician arrives two days later. By then one of the children has stabilised on the herb-woman's efforts and two are worse. The physician works through the night. All three survive but the delay cost something. The well was sealed in time to save the rest of the village. The river question was contained. This was the right choice given what you knew. It was not the best possible outcome.", DimColor);
                             break;
                         case "c":
-                            ChangeGold(-200);
+                            if (!ChangeGold(-200)) break;
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You leave what you have and your best reading of the symptoms. The herb-woman takes your supplies and your guess with the concentrated focus of someone filtering useful signal from educated approximation. She is better with the approximate information than with nothing. Two children stabilise by evening. The third is harder. She sits with the third child through the night. In the morning you will not know how it ended. You hope your guess was close enough.", DimColor);
                             break;
@@ -1332,7 +1332,7 @@ namespace AshAndEmber
                             }
                             break;
                         case "b":
-                            ChangeGold(-400);
+                            if (!ChangeGold(-400)) break;
                             ShiftTrait(DefaultTraits.Mercy, 1);
                             Msg("You step between them and pay the debt to the merchant directly, in coin, in front of the gate guard. The material cause disappears. The father watches the coin change hands with the expression of a man watching the thing he was willing to die for become solvable. He releases the knife. He does not thank you — the words he had ready were not for this outcome. The daughter is released that afternoon.", GoodColor);
                             break;

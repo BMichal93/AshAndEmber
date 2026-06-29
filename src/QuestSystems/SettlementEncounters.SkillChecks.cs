@@ -100,7 +100,7 @@ namespace AshAndEmber
                             _mothersPleaCountdown = 7;
                             break;
                         case "c":
-                            ChangeGold(-200);
+                            if (!ChangeGold(-200)) break;
                             ShiftTrait(DefaultTraits.Generosity, 1);
                             Msg("The coins may save the child if a healer is near. You do not look back.", GoldColor);
                             _mothersPleaPhase = 2;

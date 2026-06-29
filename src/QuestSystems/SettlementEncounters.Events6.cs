@@ -349,7 +349,7 @@ namespace AshAndEmber
                             _ashChildCountdown = 30;
                             break;
                         case "village":
-                            ChangeGold(-150);
+                            if (!ChangeGold(-150)) break;
                             Msg("The elders take the coins. They put her in an empty house and set a boy to watch the door. " +
                                 "She sits in the dark and does not look at them. Fourteen days later, word reaches you: " +
                                 "the house was locked from the outside. She was gone by morning. The frost-patterns were " +

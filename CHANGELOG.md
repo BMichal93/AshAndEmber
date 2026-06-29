@@ -6,6 +6,14 @@
 
 ---
 
+## v0.29.0
+
+### Event fixes
+- **A purse you don't have can no longer buy a favour.** Several settlement-encounter choices that cost coin granted their reward even when you couldn't pay — the bribe, the hired official, the freed prisoner, the saved children all happened for free, with only a "not enough gold" note. Those choices now fail honestly when your purse is short. (Penalties you suffer involuntarily — theft, fines, what the cold takes — are unchanged; you still can't lose coin you don't have.)
+- **Court intrigues no longer drag your own throne into someone else's war.** The scripted diplomatic incidents (a slighted envoy, torched border villages, a murdered emissary, and the like) could pick your own kingdom as one of the quarreling crowns and force you into a war you had no part in. They now always spare the player's faction, the same way the succession-crisis and "Broken Will" events already do.
+
+---
+
 ## v0.28.0
 
 ### The prayer is the casting
