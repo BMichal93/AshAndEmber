@@ -172,6 +172,13 @@ namespace AshAndEmber
         {
             try
             {
+                // Respect the respawn cooldown. SpawnInitialGuards runs on every
+                // OnSessionLaunched (including save loads), so without this gate a
+                // fresh ambush party was spawned at every ruin on each reload,
+                // stacking parties indefinitely on the campaign map.
+                int cdIdx = _guardCdKeys.IndexOf(def.VillageName);
+                if (cdIdx >= 0 && _guardCdDays[cdIdx] > 0) return;
+
                 var village = Settlement.All.FirstOrDefault(s =>
                     s != null && s.IsVillage &&
                     string.Equals(s.Name?.ToString()?.Trim(), def.VillageName, StringComparison.OrdinalIgnoreCase));
