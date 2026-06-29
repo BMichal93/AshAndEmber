@@ -90,6 +90,7 @@ namespace AshAndEmber
                         alliesHit++;
                     ApplyEffectsToAgent(a, cast, caster);
                     SpawnImpactBurst(a.Position, glowColor, 5f);
+                    BeginAgentGlow(a, glowColor, 2.5f);
                     affected++;
                 }
                 catch { }

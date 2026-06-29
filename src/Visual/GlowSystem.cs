@@ -132,7 +132,13 @@ namespace AshAndEmber
             if (_heatLightTimer > 0f) return;
             _heatLightTimer = HeatLightInterval;
             float radius = 3f + _innerFireHeat * 0.15f;
-            try { SpawnTempLight(Agent.Main.Position + new Vec3(0f, 0f, 1f), ColorSchool.Red, radius, HeatLightInterval + 0.1f); }
+            try
+            {
+                SpawnTempLight(Agent.Main.Position + new Vec3(0f, 0f, 1f), ColorSchool.Red, radius, HeatLightInterval + 0.1f);
+                // At high heat the caster's inner fire bleeds through — glow pulses with the ambient light.
+                if (_innerFireHeat >= 30f)
+                    BeginAgentGlow(Agent.Main, ColorSchool.Red, HeatLightInterval + 0.2f);
+            }
             catch { }
         }
 
@@ -148,6 +154,8 @@ namespace AshAndEmber
             try
             {
                 BeginAgentGlow(caster, school, 8.0f);
+                // Brief blinding flash at release, then the sustained glow settles in.
+                SpawnTempLight(caster.Position + new Vec3(0f, 0f, 1f), school, 28f, 0.35f);
                 SpawnTempLight(caster.Position, school, 18f, 7f);
                 TryCastSound(caster.Position, school);
                 TryCastAnimation(caster);
