@@ -68,7 +68,10 @@ namespace AshAndEmber
         {
             "All living things carry an Inner Fire. " +
             "It is the force that binds soul to flesh, that keeps the living from the cold. " +
-            "Those who learn to reach into it are called mages.",
+            "Those who learn to reach into it are called mages. " +
+            "The Temple of Ember has kept their doctrine for centuries — " +
+            "and taught that certain crystals, grown in the deep earth, can hold that fire " +
+            "and release it when the lattice breaks.",
 
             "The empire that once held these lands together is fracturing. " +
             "Three claimants. Three armies. The eastern Tribes, long kept behind the passes, " +
