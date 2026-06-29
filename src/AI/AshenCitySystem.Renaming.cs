@@ -375,6 +375,80 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── The Ashen kingdom rename ───────────────────────────────────────────
+        // Sturgia IS The Ashen. Kingdom names revert to XML on every session load,
+        // so this runs on the first daily tick each session alongside the others.
+        public static void RenameAshenFactionKingdom()
+        {
+            try
+            {
+                var sturgia = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "sturgia" && !k.IsEliminated);
+                if (sturgia == null) return;
+
+                _nameField?.SetValue(sturgia, new TextObject("The Ashen"));
+
+                SetKingdomField(sturgia,
+                    new[] { "_informalName", "<InformalName>k__BackingField" },
+                    new TextObject("Ashen"));
+                SetKingdomField(sturgia,
+                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new TextObject("Pale King"));
+
+                RenameAshenFactionCulture();
+            }
+            catch { }
+        }
+
+        // Renames the sturgia culture object to "Ashen" so character backgrounds
+        // and the encyclopedia read correctly. Called from RenameAshenFactionKingdom
+        // and from ApplyAshenFactionCultureTexts (which runs before the campaign exists).
+        public static void RenameAshenFactionCulture()
+        {
+            try
+            {
+                var sturgiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
+                if (sturgiaCulture != null)
+                    _nameField?.SetValue(sturgiaCulture, new TextObject("Ashen"));
+            }
+            catch { }
+        }
+
+        // ── Character-creation culture card text override for The Ashen ────────
+        // Works identically to ApplyTempleCultureTexts but for the sturgia culture.
+        public static bool ApplyAshenFactionCultureTexts()
+        {
+            try
+            {
+                RenameAshenFactionCulture();
+
+                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                var mgr = mgrField?.GetValue(null) as GameTextManager;
+                if (mgr == null) return false;
+
+                SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "The Ashen");
+                SetCultureVariation(mgr, "str_culture_description", "sturgia",
+                    "Once they ruled the cold north as warlords and woodcutters, taking what the long winter allowed. " +
+                    "Then the fire found them — not the clean fire of hearth or forge, but something older and without mercy. " +
+                    "Those it touched did not die. They changed. " +
+                    "The Ashen still hold their frozen shores and their longhouses, but the clans that follow the Pale King " +
+                    "are not wholly the men they were. They do not speak of what the fire took from them. " +
+                    "They speak only of what it gave.");
+                RelabelCulturalFeats("sturgia", _ashenFactionFeats, ref _ashenFactionFeatsRelabeled);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private static readonly string[] _ashenFactionFeats =
+        {
+            "Ashen Endurance — Warriors tempered by ruin ask little of their lord when the cold comes. (Reduced army wages in winter)",
+            "The Hard North — Villages already burned once do not burn so easily again. (Enemy looters deal less damage to villages)",
+            "The Grey Tithe — The Ashen do not count their coin; they count their enemies. (Settlements yield less tax income)",
+        };
+        private static bool _ashenFactionFeatsRelabeled;
+
         // ── Khuzait troop rename ───────────────────────────────────────────────
         // Renames all vanilla Khuzait troops from "Khuzait X" to "Tribal X", with
         // specific overrides for key units. Idempotent: already-renamed names are
@@ -431,6 +505,50 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+        }
+
+        // ── Sturgian troop rename ─────────────────────────────────────────────
+        // Renames all vanilla Sturgian troops from "Sturgian X" to "Ashen X", with
+        // specific overrides for key units. Idempotent: already-renamed names are
+        // left unchanged. Called once per session alongside the kingdom rename.
+        private static readonly Dictionary<string, string> _ashenFactionTroopOverrides =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Sturgian Recruit",       "Ashen Thrall"      },
+            { "Sturgian Berserker",     "Ashen Fury"        },
+            { "Sturgian Shock Troops",  "Ashen Revenants"   },
+        };
+
+        public static void RenameSturgianTroops()
+        {
+            try
+            {
+                var nameField = _characterNameField ?? _nameField;
+                if (nameField == null) return;
+
+                foreach (var ch in MBObjectManager.Instance
+                             ?.GetObjectTypeList<CharacterObject>()
+                             ?? Enumerable.Empty<CharacterObject>())
+                {
+                    try
+                    {
+                        if (ch == null) continue;
+                        if (!(ch.StringId?.StartsWith("sturgian_", StringComparison.OrdinalIgnoreCase) ?? false))
+                            continue;
+
+                        string current = ch.Name?.ToString() ?? "";
+                        if (!current.StartsWith("Sturgian ", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        string newName;
+                        if (!_ashenFactionTroopOverrides.TryGetValue(current, out newName))
+                            newName = "Ashen " + current.Substring("Sturgian ".Length);
+
+                        nameField.SetValue(ch, new TextObject(newName));
+                    }
+                    catch { }
+                }
+            }
+            catch { }
         }
 
         // ── Vlandian troop rename ─────────────────────────────────────────────
