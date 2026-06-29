@@ -82,6 +82,7 @@ namespace AshAndEmber
 
         private const int    MinGarrisonCity   = 500;
         private const int    MinGarrisonCastle = 300;
+        private const int    MinLordPartySize  = 120;
         private const int    MinHeroGold       = 150_000;
         private const string AshenKingdomId    = "ashen_kingdom";
 

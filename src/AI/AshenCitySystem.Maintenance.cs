@@ -132,7 +132,8 @@ namespace AshAndEmber
             {
                 var warrior  = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_warrior");
                 var warden   = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_warden");
-                if (warrior == null || warden == null) return;
+                var revenant = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_revenant");
+                if (warrior == null || warden == null || revenant == null) return;
 
                 // Collect all active Ashen lord parties (heroes whose clan is Ashen).
                 var parties = MobileParty.All
@@ -158,13 +159,19 @@ namespace AshAndEmber
                 foreach (var e in toRemove)
                     try { roster.AddToCounts(e.Character, -e.Number); } catch { }
 
-                if (sturgianCount <= 0) return;
+                // Enforce a minimum party size — top up if Sturgians were sparse or absent.
+                int current  = roster.TotalManCount;
+                int shortage = MinLordPartySize - current;
+                int toAdd    = Math.Max(sturgianCount, shortage > 0 ? shortage : 0);
+                if (toAdd <= 0) return;
 
-                // Replace with Ashen troops: 60 % warrior, 40 % warden.
-                int wardenCount  = sturgianCount * 4 / 10;
-                int warriorCount = sturgianCount - wardenCount;
-                if (warriorCount > 0) roster.AddToCounts(warrior, warriorCount);
-                if (wardenCount  > 0) roster.AddToCounts(warden,  wardenCount);
+                // Troop mix: slightly stronger than a normal lord — 45% warrior, 35% warden, 20% revenant.
+                int revenantCount = toAdd * 2 / 10;
+                int wardenCount   = toAdd * 35 / 100;
+                int warriorCount  = toAdd - wardenCount - revenantCount;
+                if (warriorCount  > 0) roster.AddToCounts(warrior,  warriorCount);
+                if (wardenCount   > 0) roster.AddToCounts(warden,   wardenCount);
+                if (revenantCount > 0) roster.AddToCounts(revenant, revenantCount);
             }
             catch { }
         }
