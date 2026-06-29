@@ -67,19 +67,22 @@ namespace AshAndEmber
         // Each counter decrements daily; the operation fires when it reaches 0
         // and is then reset to its interval. In Save() they are set to their
         // grace values so heavy actions never run on the first ticks after load.
-        private static int _warThrottle      = 0;  // DeclareWar  — every 5 days
-        private static int _clanThrottle     = 0;  // ClanKingdom — every 3 days
-        private static int _villageThrottle  = 0;  // Villages    — every 7 days
-        private static int _recoveryThrottle = 0;  // Settlement  — every 3 days
-        private static int _prisonerThrottle = 0;  // Prisoners   — every 2 days
-        private const  int WarInterval      = 5;
-        private const  int ClanInterval     = 3;
-        private const  int VillageInterval  = 7;
-        private const  int RecoveryInterval = 3;
-        private const  int PrisonerInterval = 2;
+        private static int _warThrottle       = 0;  // DeclareWar   — every 5 days
+        private static int _clanThrottle      = 0;  // ClanKingdom  — every 3 days
+        private static int _villageThrottle   = 0;  // Villages     — every 7 days
+        private static int _recoveryThrottle  = 0;  // Settlement   — every 3 days
+        private static int _prisonerThrottle  = 0;  // Prisoners    — every 2 days
+        private static int _lordPartyThrottle = 0;  // Lord parties — every 7 days
+        private const  int WarInterval        = 5;
+        private const  int ClanInterval       = 3;
+        private const  int VillageInterval    = 7;
+        private const  int RecoveryInterval   = 3;
+        private const  int PrisonerInterval   = 2;
+        private const  int LordPartyInterval  = 7;
 
         private const int    MinGarrisonCity   = 500;
         private const int    MinGarrisonCastle = 300;
+        private const int    MinLordPartySize  = 120;
         private const int    MinHeroGold       = 150_000;
         private const string AshenKingdomId    = "ashen_kingdom";
 

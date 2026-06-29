@@ -375,6 +375,57 @@ namespace AshAndEmber
             catch { }
         }
 
+        // ── Ashen origin culture rename (character creation only) ─────────────
+        // Renames the sturgian culture object to "Ashen" so the character-creation
+        // card reads "The Ashen" as the origin name. The Sturgia kingdom itself is
+        // left untouched — only the origin label changes.
+        public static void RenameAshenFactionCulture()
+        {
+            try
+            {
+                var sturgiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
+                if (sturgiaCulture != null)
+                    _nameField?.SetValue(sturgiaCulture, new TextObject("Ashen"));
+            }
+            catch { }
+        }
+
+        // ── Character-creation culture card text override for The Ashen ────────
+        // Works identically to ApplyTempleCultureTexts but for the sturgia culture.
+        public static bool ApplyAshenFactionCultureTexts()
+        {
+            try
+            {
+                RenameAshenFactionCulture();
+
+                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                var mgr = mgrField?.GetValue(null) as GameTextManager;
+                if (mgr == null) return false;
+
+                SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "The Ashen");
+                SetCultureVariation(mgr, "str_culture_description", "sturgia",
+                    "You remember little of what came before. A road, perhaps. A name someone used to call you. " +
+                    "The fire has been with you longer than any of it — cold now, colourless, not the fire " +
+                    "of warmth or faith but something that ran out of warmth a long time ago. " +
+                    "You are Ashen. You do not know when it happened or what it cost you. " +
+                    "What remains is the cold, the knowledge that you will not age, " +
+                    "and the certainty that every lord and guard who looks too long at your eyes " +
+                    "already knows something is wrong.");
+                RelabelCulturalFeats("sturgia", _ashenFactionFeats, ref _ashenFactionFeatsRelabeled);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private static readonly string[] _ashenFactionFeats =
+        {
+            "Cold Fire — The flame in you never went out; it only changed. You wield fire magic from the first day, its colour cold as ash. (Always Ashen — inner fire with cold-blue flame, no aging)",
+            "Unaging — You do not age. You do not die to time. Whatever the fire took, it kept you. (Immortal; each casting costs criminal standing instead of years)",
+            "Marked — Every lord and guard outside the Ashen sees it in your eyes before you speak. (Criminal rating 80 in all non-Ashen kingdoms from the start)",
+        };
+        private static bool _ashenFactionFeatsRelabeled;
+
         // ── Khuzait troop rename ───────────────────────────────────────────────
         // Renames all vanilla Khuzait troops from "Khuzait X" to "Tribal X", with
         // specific overrides for key units. Idempotent: already-renamed names are
