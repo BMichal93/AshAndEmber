@@ -66,27 +66,29 @@ namespace AshAndEmber
         // ShowLoreIntro pop-up; the wording is unchanged.
         private static readonly string[] Paragraphs =
         {
-            "Every living thing carries a fire. Not warmth. Not light. " +
-            "The older kind — the one that binds soul to flesh, that keeps the living from the cold. " +
-            "Mages have learned to reach into it. Some have learned to spend it.",
+            "All living things carry an Inner Fire. It is not warmth or light — " +
+            "it is the force that binds soul to body, that separates the living from the cold. " +
+            "Those who learn to feel it are called mages. Those who learn to spend it are called dangerous.",
 
-            "For generations, the Temple of Ember stood as its sole keeper. " +
-            "Its priests mapped the fire in men's souls, named its schools, and forbade the deepest workings to all but the initiated. " +
-            "They called it stewardship.\n\n" +
-            "Others called it a leash.",
+            "The Temple of Ember has governed the use of fire for three hundred years. " +
+            "Its scholars catalogued the schools of magic, trained the first court mages, " +
+            "and wrote the laws that still govern who may cast and what may be worked. " +
+            "Most kingdoms respect those laws. Most.",
 
-            "Beyond the eastern passes, where the Temple's writ never reached, the hill tribes burn differently. " +
-            "They do not study the fire — they feed it, wild and ungoverned, until it answers.\n\n" +
-            "The empire called them heretics. The empire is crumbling.",
+            "The Tribes of the East do not. Beyond the mountain passes the empire never fully held, " +
+            "they have practiced a rougher, older kind of fire — passed down through rites " +
+            "rather than texts, and answerable to no Temple canon. " +
+            "They are not unified, and they are not going away.",
 
-            "Now the great empire fractures, its legions turned inward, its throne contested by ghosts. " +
-            "And in that silence, the Ashen march — lords who refused to die, who let their own fire go cold " +
-            "and rose from the chill unchanged. They have been patient. Centuries patient.\n\n" +
-            "Patience, at last, is done.",
+            "The empire itself is fracturing. Three claimants hold three portions of it. " +
+            "Its roads are still the best in the world. Its armies are fighting each other.",
 
-            "Something in you has been listening.\n\n" +
-            "The Temple wants you bound. The tribes want you burning. The Ashen want you gone.\n\n" +
-            "The fire already knows what you will choose. So does the cold.",
+            "Into this, the Ashen have begun to move. They are lords — or were, long ago — " +
+            "who extinguished their own Inner Fire rather than let it burn out with age. " +
+            "They do not die. They do not tire. " +
+            "For centuries they kept to the northern wastes. That appears to be changing.",
+
+            "You are a mage. The rest of your story is your own to make.",
         };
 
         // Per-paragraph timing (seconds).
