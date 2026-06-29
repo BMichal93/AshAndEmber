@@ -12,6 +12,7 @@ using TaleWorlds.Core;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
+using TaleWorlds.ObjectSystem;
 
 namespace AshAndEmber
 {
@@ -180,8 +181,8 @@ namespace AshAndEmber
                 catch { }
 
                 // Ctrl+Shift+F12 — debug grant: 100 fp, all dark gifts, max grace,
-                // all nature talents, one of each elixir. Nature must be granted before
-                // dark gifts because GrantGift clears grace as a side effect.
+                // all nature talents, and one of each crystal. Nature must be granted
+                // before dark gifts because GrantGift clears grace as a side effect.
                 try
                 {
                     if (TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftControl)
@@ -301,8 +302,23 @@ namespace AshAndEmber
             // 4. 100 focus points.
             try { hero.HeroDeveloper.UnspentFocusPoints += 100; } catch { }
 
+            // 5. One of every crystal into the player party's inventory.
+            try
+            {
+                var roster = MobileParty.MainParty?.ItemRoster;
+                if (roster != null)
+                {
+                    foreach (var def in CrystalCatalog.All)
+                    {
+                        var item = MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
+                        if (item != null) roster.AddToCounts(item, 1);
+                    }
+                }
+            }
+            catch { }
+
             MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
-                "[DEBUG] Granted: 100 focus points, all Dark Gifts, max Grace, all Nature talents."));
+                "[DEBUG] Granted: 100 focus points, all Dark Gifts, max Grace, all Nature talents, all crystals."));
         }
     }
 
