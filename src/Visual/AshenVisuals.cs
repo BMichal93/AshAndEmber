@@ -80,9 +80,10 @@ namespace AshAndEmber
         public static ulong AshenEyeKey(ulong keyPart5) =>
             (keyPart5 & ~0x00FFFF0000000000UL) | 0x00E0AA0000000000UL;
 
-        // Skin: clearing the colour bytes approximates a pale grey/ashen tone.
+        // Skin: light grey #D3D3D3 (RGB 211,211,211) encoded in the three colour bytes.
+        private const ulong _ashenSkinColour = 0x000000D3D3D30000UL;
         public static ulong AshenSkinKey(ulong keyPart7) =>
-            keyPart7 & ~0x000000FFFFFF0000UL;
+            (keyPart7 & ~0x000000FFFFFF0000UL) | _ashenSkinColour;
 
         // An adult age floor for ashen agents. Some bandit/troop templates resolve
         // to a near-zero ("child") age at spawn; clamping here stops the ashen look

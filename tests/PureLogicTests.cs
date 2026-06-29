@@ -356,13 +356,13 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void AshenVisuals_SkinKey_ClearsColourBytesOnly()
+        public void AshenVisuals_SkinKey_SetsLightGreyD3D3D3()
         {
             ulong input  = 0xFFFFFFFFFFFFFFFFUL;
             ulong result = AshenVisuals.AshenSkinKey(input);
-            Assert.AreEqual(0UL, result & 0x000000FFFFFF0000UL,
-                "Skin colour bytes must be cleared (grey/ashen tone).");
-            Assert.AreEqual(input & ~0x000000FFFFFF0000UL, result,
+            Assert.AreEqual(0x000000D3D3D30000UL, result & 0x000000FFFFFF0000UL,
+                "Skin colour bytes must encode light grey #D3D3D3.");
+            Assert.AreEqual(input & ~0x000000FFFFFF0000UL, result & ~0x000000FFFFFF0000UL,
                 "All other bits must be preserved.");
         }
 
