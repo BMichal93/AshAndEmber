@@ -20,6 +20,26 @@ namespace AshAndEmber
 {
     public partial class AshenCitySystem
     {
+        // Applies the per-session display renames (Ashen settlements, Holy Temple
+        // and Tribes kingdoms, their troops) exactly once per session. Names come
+        // from game XML on every load, so this must run on both new games and
+        // reloads. Driven from OnSessionLaunched (so the map shows correct names the
+        // instant it loads) and again from the first DailyTick as a safety net for
+        // the case where the Ashen clans were not yet established at launch.
+        public static void EnsureSessionRenames()
+        {
+            if (_settlementsRenamed) return;
+            if (_ashenClanIds.Count == 0) return;          // clans not established yet
+            if (DragonQuestSystem.WorldRekindled) return;  // the Ashen no longer exist
+            try { RenameAshenSettlements();          } catch { }
+            try { RenameHolyTempleKingdom();         } catch { }
+            try { RenameVlandianTroops();             } catch { }
+            try { TempleCulture.SetupTempleKingdom(); } catch { }
+            try { RenameTribesKingdom();              } catch { }
+            try { RenameKhuzaitTroops();              } catch { }
+            _settlementsRenamed = true;
+        }
+
         // ── Daily tick ────────────────────────────────────────────────────────
         public static void DailyTick()
         {
@@ -30,18 +50,9 @@ namespace AshAndEmber
             EnsureKingdomAlive();
 
             // Apply Ashen settlement names and Holy Temple kingdom rename on first
-            // tick each session. Names come from game XML on every load so this
-            // must run on both new games and reloads.
-            if (!_settlementsRenamed)
-            {
-                try { RenameAshenSettlements();          } catch { }
-                try { RenameHolyTempleKingdom();         } catch { }
-                try { RenameVlandianTroops();             } catch { }
-                try { TempleCulture.SetupTempleKingdom(); } catch { }
-                try { RenameTribesKingdom();              } catch { }
-                try { RenameKhuzaitTroops();              } catch { }
-                _settlementsRenamed = true;
-            }
+            // tick each session (also driven earlier from OnSessionLaunched so the
+            // map shows the correct names the instant it loads — see EnsureSessionRenames).
+            EnsureSessionRenames();
 
             // Decrement throttle counters (only when above zero)
             if (_clanThrottle      > 0) _clanThrottle--;

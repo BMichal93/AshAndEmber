@@ -4,9 +4,9 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>AshAndEmber</AssemblyName>
     <RootNamespace>AshAndEmber</RootNamespace>
-    <Version>0.25.1.0</Version>
-    <AssemblyVersion>0.25.1.0</AssemblyVersion>
-    <FileVersion>0.25.1.0</FileVersion>
+    <Version>0.28.0.0</Version>
+    <AssemblyVersion>0.28.0.0</AssemblyVersion>
+    <FileVersion>0.28.0.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <Optimize>true</Optimize>
@@ -224,6 +224,7 @@
     <Compile Include="Miracles\MiracleBattleAI.cs"/>
     <Compile Include="Miracles\MiracleCampaignBehavior.cs"/>
     <Compile Include="Miracles\MiracleInputHandler.cs"/>
+    <Compile Include="Miracles\MiracleMinigame.cs"/>
     <Compile Include="Miracles\PriestTroops.cs"/>
     <Compile Include="Nature\NatureMath.cs"/>
     <Compile Include="Nature\LivingEnergyMath.cs"/>

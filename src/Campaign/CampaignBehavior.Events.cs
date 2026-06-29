@@ -84,6 +84,23 @@ namespace AshAndEmber
             try { SettlementEncounters.OnPartyLeftSettlement(party, settlement); } catch { }
         }
 
+        // ── Session launch ────────────────────────────────────────────────────
+        // Fires once each session, after the campaign is loaded and before the player
+        // can act. Applies the per-session display renames immediately so the map shows
+        // "The Holy Temple" / "Tribes of the East" / Ashen settlement names the instant
+        // it appears, rather than after the first in-game day ticks over.
+        //
+        // It deliberately does NOT call AshenCitySystem.Initialize(): on a reload the
+        // Ashen clans/settlements are already restored from the save (so the renames
+        // have what they need), and on a NEW game the Ashen kingdom is established by
+        // the deferred new-game flow. Creating the kingdom and moving city clans here,
+        // before the engine has finished building the new campaign world, caused those
+        // moves to be undone — the Ashen cities snapped back to Sturgia at game start.
+        private void OnSessionLaunched(CampaignGameStarter starter)
+        {
+            try { AshenCitySystem.EnsureSessionRenames(); } catch { }
+        }
+
         // ── New game prompt ───────────────────────────────────────────────────
         // Fires on OnCharacterCreationIsOver — once per new campaign, after the world
         // is fully built. This is the authoritative point to (re)establish systems
@@ -111,14 +128,18 @@ namespace AshAndEmber
                 // or a new game started in the same session inherits the old game's
                 // sanctuaries/altars and cooldowns (static-leak bug class).
                 SanctuaryCampaignBehavior.ResetForNewGame();
-                SanctuaryCampaignBehavior.EstablishForNewCampaign();
+                try { SanctuaryCampaignBehavior.EstablishForNewCampaign();   } catch { }
                 AshenAltarsCampaignBehavior.ResetForNewGame();
-                AshenAltarsCampaignBehavior.EstablishForNewCampaign();
+                try { AshenAltarsCampaignBehavior.EstablishForNewCampaign(); } catch { }
                 TribalKingdomBehavior.ResetForNewGame();
-                CrystallinesCampaignBehavior.EstablishForNewCampaign();
+                // Each establishment is individually guarded: a failure in one world
+                // system (e.g. crystal items missing from ModuleData) must never abort
+                // the rest of new-game setup — above all the Gift-prompt wiring below,
+                // without which the player can never choose their magic at all.
+                try { CrystallinesCampaignBehavior.EstablishForNewCampaign(); } catch { }
                 // Apply any character-creation backstory boon AFTER the resets above,
                 // so it is not wiped (the pick was recorded during creation).
-                CreationBackstoryRework.ApplyPendingBoons();
+                try { CreationBackstoryRework.ApplyPendingBoons(); } catch { }
                 // Ashen-origin players (Sturgian culture) skip the Gift prompt entirely —
                 // they are already Ashen; the fire settled in them long before the game begins.
                 // A player who chose the basic Sturgian origin at creation opts out of that
@@ -294,7 +315,7 @@ namespace AshAndEmber
                     try
                     {
                         var s = Settlement.Find(id);
-                        if (s != null) { ChangeOwnerOfSettlementAction.ApplyByDefault(northLeader, s); StabiliseSettlement(s); }
+                        if (s != null && !AshenCitySystem.IsAshenSettlement(s)) { ChangeOwnerOfSettlementAction.ApplyByDefault(northLeader, s); StabiliseSettlement(s); }
                     }
                     catch { }
             }
@@ -375,16 +396,22 @@ namespace AshAndEmber
             try { anchor = Settlement.All.FirstOrDefault(s => s.Name?.ToString() == settlementName); }
             catch { }
             if (anchor == null) return;
+            // Never strip an Ashen holding for an Empire — the cold realm keeps its
+            // own. (Matched by StringId, so it holds after the display rename too.)
+            if (AshenCitySystem.IsAshenSettlement(anchor)) return;
 
             // Transfer the anchor itself
             try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, anchor); StabiliseSettlement(anchor); } catch { }
 
-            // Transfer nearby castles within radius (skip villages — they belong to their bound town)
+            // Transfer nearby castles within radius (skip villages — they belong to their
+            // bound town; skip Ashen castles so the radius sweep cannot bleed the cold realm,
+            // e.g. the castles around The Ashen Crown that sit near the Northern border).
             try
             {
                 Vec2 anchorPos = anchor.GetPosition2D;
                 foreach (Settlement nearby in Settlement.All
                     .Where(s => s != anchor && s.IsCastle && !s.IsUnderSiege
+                             && !AshenCitySystem.IsAshenSettlement(s)
                              && (s.GetPosition2D - anchorPos).Length <= radius)
                     .ToList())
                 {

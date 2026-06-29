@@ -123,6 +123,60 @@ namespace AshAndEmber
             catch { return false; }
         }
 
+        // ── Hardening the heart (trait sacrifice) ──────────────────────────────
+        // The dark gifts answer only the Merciless or Devious. A player whose heart
+        // is still too warm can spill prisoners' blood at the altar to drive their
+        // Mercy down toward the cruelty the gifts demand — one step per offering.
+        public const int CrueltyPrisonerCost = 2;
+
+        // True while the heart can still be hardened further (Mercy above the floor).
+        public static bool CanHardenHeart()
+        {
+            try
+            {
+                var h = Hero.MainHero;
+                return h != null && h.GetTraitLevel(DefaultTraits.Mercy) > -2;
+            }
+            catch { return false; }
+        }
+
+        // Sacrifice CrueltyPrisonerCost prisoners to drop Mercy by one step (toward
+        // Merciless, which satisfies the dark-gift gate). Returns false with a reason
+        // when there are too few prisoners or the heart is already as cold as it goes.
+        public static bool TryHardenHeart(out string msg)
+        {
+            msg = "";
+            var h = Hero.MainHero;
+            if (h == null) { msg = "There is no one here for the altar to take from."; return false; }
+
+            int mercy = 0;
+            try { mercy = h.GetTraitLevel(DefaultTraits.Mercy); } catch { }
+            if (mercy <= -2)
+            {
+                msg = "Your heart is already as cold as the altar-stone. There is nothing warm left to give up.";
+                return false;
+            }
+
+            int soldiers = 0;
+            try
+            {
+                var party = TaleWorlds.CampaignSystem.Party.MobileParty.MainParty;
+                soldiers = party?.PrisonRoster?.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero).Sum(e => e.Number) ?? 0;
+            }
+            catch { }
+            if (soldiers < CrueltyPrisonerCost)
+            {
+                msg = $"The altar demands {CrueltyPrisonerCost} prisoners for this offering. You hold {soldiers}.";
+                return false;
+            }
+
+            ConsumeSacrifice(CrueltyPrisonerCost, 0);
+            try { h.SetTraitLevel(DefaultTraits.Mercy, mercy - 1); } catch { }
+            msg = "Their blood cools something in you. A measure of mercy bleeds away, and the cruelty the gifts hunger for settles in its place.";
+            return true;
+        }
+
         // ── Purchase / renounce ────────────────────────────────────────────────
 
         public static bool CanBuyGift(DarkGiftId gift)

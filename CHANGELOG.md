@@ -6,6 +6,50 @@
 
 ---
 
+## v0.28.0
+
+### The prayer is the casting
+- **Miracles on the campaign map are now spoken as prayers — a memory rite, the way fire magic is recalled.** Open the litany (**Shift+X**), choose a prayer, and the light shows you its three verses. Recall them truly when asked and the miracle answers in full; let the words scatter and the Grace is spent for nothing. (Battle is unchanged: there, prayers are still cast by tracing their sequence.)
+- **The four field prayers are written in the cadence of the old devotions** — deliverance for *Repel the Ashen* ("stand between me and the cold"), *Domine non sum dignus* for *Radiant Mending*, *Lead, kindly Light* for *Light of Guidance*, and *Cor mundum crea in me* for the *Cleansing Rite* — kept plain enough to remember, no harder than the fire-rites.
+
+---
+
+## v0.27.0
+
+### Prayers, shaped like spells
+- **Miracles are now cast by tracing their form — in battle and on the march alike.** Hold **Ctrl** and trace the prayer's sequence (controller: hold **RB** and flick the left stick), exactly as fire magic is shaped. There is no longer any menu-casting in battle; the battlefield answers the gesture alone.
+- **The miracle menu is a campaign-map convenience, and shows only what belongs there.** Opened with **Shift+X** (or RB + L3) on the map, it now lists only the prayers that answer on the march — battle-only miracles are no longer shown greyed-out among them. A prayer offered on the wrong ground fizzles (and still spends its Grace), just as a botched sequence always has.
+
+### Balance
+- **Fire no longer burns through your years so fast.** The aging cost of a battle spell was eased across the whole curve (geometric base 1.65 → 1.5): a full ten-input working now costs **38 days instead of 84**, and mid-sized castings roughly halve. The fire returns more for what it takes.
+
+### Fixes
+- **The Ashen keep their cities at game start.** A change in the previous version established the Ashen kingdom too early in world-creation, and the engine promptly undid it — the cold realm's cities snapped back to Sturgia the moment the game began. The realm is now left to form in its proper order, and holds.
+
+### A note on age
+- Reaching a great age through fire and *not* dying is intended: the reckoning — the Last Ember, where you choose to pass or to take the cold and become Ashen — comes at **100**, not before.
+
+---
+
+## v0.26.0
+
+### Crystals restored, and a fistful of fixes
+- **Crystals work again.** A packaging error shipped an empty item list, so no crystal ever existed in the world — none spawned, none could be granted, and the Crystalline trade was dead on arrival. The full crystal set is restored. *(If you build from source, note the module's ModuleData is now deployed alongside the DLL — the old process copied only the binary.)*
+- **A failure in one world-system can no longer swallow your magic.** New-game setup now guards each world establishment on its own, so a fault in one (the crystals, a sanctuary, an altar) can never abort the rest — above all the choice of your fire, without which no magic could be invoked at all.
+- **The Living Ember answers the right key on the march.** Reaching for the battle gesture (Ctrl + a direction) on the campaign map now points you to the litany — **Shift+X** — instead of failing in silence.
+- **The northern card reads true.** The character-creation culture card for the north now shows **The Ashen** with its proper rites and description, instead of the engine's bare "Sturgians".
+- **The Holy Temple and the Tribes of the East are named from the first breath.** Their banners and titles are now set the instant the map loads, rather than snapping into place after the first day passes.
+- **The Ashen Crown keeps its own.** The cold realm's city and the castles around it are no longer bled away to the Northern Empire at the start of the game by the empires' border sweep.
+
+### Balance & ritual
+- **"Call to the Tribes" is once a week, not once a town.** The God-King's champion could pull free tribesmen from every Tribal town in turn; the tribes now answer only once every seven days, wherever the call goes out.
+- **The Dark Altar will harden a warm heart.** A player whose nature is still too gentle for the dark gifts may now spill a prisoner's blood at the altar to drive their mercy toward the cruelty the gifts demand — one offering at a time.
+
+### Lore
+- **The opening myth leans on the fire, not the crystals.** The intro no longer foregrounds the crystals; they remain to be discovered, not recited.
+
+---
+
 ## v0.25.1
 
 ### The grey look belongs to the Ashen alone

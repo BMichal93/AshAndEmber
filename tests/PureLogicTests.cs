@@ -204,19 +204,19 @@ namespace AshAndEmber.Tests
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_SmallCast_LowCost()
         {
-            // Geometric round(1.65^(n−1)): 1→1, 2→2, 3→3 without BattleMage.
+            // Geometric round(1.5^(n−1)): 1→1, 2→2, 3→2 without BattleMage.
             Assert.AreEqual(1, AgingSystem.ComputeBattleAgingCost(1, false, NoAgeDiscount));
             Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(2, false, NoAgeDiscount));
-            Assert.AreEqual(3, AgingSystem.ComputeBattleAgingCost(3, false, NoAgeDiscount));
+            Assert.AreEqual(2, AgingSystem.ComputeBattleAgingCost(3, false, NoAgeDiscount));
         }
 
         [Test]
         public void AgingSystem_ComputeBattleAgingCost_LargeCast_ScalesGeometrically()
         {
-            // round(1.65^(n−1)): 4→4, 8→33, max 10→84 (cap).
-            Assert.AreEqual(4,  AgingSystem.ComputeBattleAgingCost(4, false, NoAgeDiscount));
-            Assert.AreEqual(33, AgingSystem.ComputeBattleAgingCost(8, false, NoAgeDiscount));
-            Assert.AreEqual(84, AgingSystem.ComputeBattleAgingCost(10, false, NoAgeDiscount));
+            // round(1.5^(n−1)): 4→3, 8→17, 10→38; the 84-day cap only guards huge input counts (20→84).
+            Assert.AreEqual(3,  AgingSystem.ComputeBattleAgingCost(4, false, NoAgeDiscount));
+            Assert.AreEqual(17, AgingSystem.ComputeBattleAgingCost(8, false, NoAgeDiscount));
+            Assert.AreEqual(38, AgingSystem.ComputeBattleAgingCost(10, false, NoAgeDiscount));
             Assert.AreEqual(84, AgingSystem.ComputeBattleAgingCost(20, false, NoAgeDiscount));
         }
 
@@ -224,11 +224,11 @@ namespace AshAndEmber.Tests
         public void AgingSystem_ComputeBattleAgingCost_BattleMage_MaxOf1DayOr25Pct()
         {
             // Tempered: reduction = max(1 flat day, 25% of cost). Minimum result 1 — never free.
-            // base 1.65: n=1→1, n=3→3, n=4→4, n=8→33.
+            // base 1.5: n=1→1, n=3→2, n=4→3, n=8→17.
             Assert.AreEqual(1,  AgingSystem.ComputeBattleAgingCost(1, true, NoAgeDiscount));  // base 1: 1-1=0 → floor 1
-            Assert.AreEqual(2,  AgingSystem.ComputeBattleAgingCost(3, true, NoAgeDiscount));  // base 3: 3-1=2
-            Assert.AreEqual(3,  AgingSystem.ComputeBattleAgingCost(4, true, NoAgeDiscount));  // base 4: 4-1=3
-            Assert.AreEqual(25, AgingSystem.ComputeBattleAgingCost(8, true, NoAgeDiscount));  // base 33: 33-8=25
+            Assert.AreEqual(1,  AgingSystem.ComputeBattleAgingCost(3, true, NoAgeDiscount));  // base 2: 2-1=1
+            Assert.AreEqual(2,  AgingSystem.ComputeBattleAgingCost(4, true, NoAgeDiscount));  // base 3: 3-1=2
+            Assert.AreEqual(13, AgingSystem.ComputeBattleAgingCost(8, true, NoAgeDiscount));  // base 17: 17-4=13
         }
 
         [Test]

@@ -95,8 +95,8 @@ The six purchasable fire paths (Reaper, Seer, Warden, Heartfire, Pyrelord, Ashbi
 |---|---|
 | Max form inputs per cast | 5 (reaching 5 auto-breaks to effect phase) |
 | Max effect inputs per cast | 5 |
-| Aging cost formula | round(1.65^(n−1)), capped at 84 days |
-| Aging cost at max (10 inputs) | 84 days |
+| Aging cost formula | round(1.5^(n−1)), capped at 84 days |
+| Aging cost at max (10 inputs) | 38 days |
 | Sear base damage per input | 35 HP + 1 m push |
 | Force base damage per input | 22 HP + 5% vulnerability 6 s |
 | Shred base damage per input | 22 HP + 12 morale drain |

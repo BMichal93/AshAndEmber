@@ -15,7 +15,8 @@
 //   Blood Succession   — on the God-King's death, the oldest living son inherits.
 //   Self-Immolation    — a captured God-King sets himself ablaze rather than submit.
 //   Free Recruitment   — Tribal player can recruit tier-1 tribesmen at no cost
-//                        from Tribal towns (7-day cooldown per town).
+//                        from Tribal towns (global 7-day cooldown — the tribes
+//                        answer the champion only once a week, not once per town).
 // =============================================================================
 
 using System;
@@ -52,6 +53,10 @@ namespace AshAndEmber
         // Session-only: settlement StringId → last day free recruits were taken.
         private static readonly Dictionary<string, int> _recruitCooldowns
             = new Dictionary<string, int>();
+        // Persisted: the day the Call to the Tribes was last answered, anywhere. This
+        // is a GLOBAL weekly cap — without it the player could hop between tribal towns
+        // and pull FreeRecruitCount fresh troops from each, every visit.
+        private static int _lastFreeRecruitDay = -1000;
 
         private static readonly Random _rng = new Random();
 
@@ -61,6 +66,7 @@ namespace AshAndEmber
             _processedSettlements.Clear();
             _initialSettlementsRecorded = false;
             _recruitCooldowns.Clear();
+            _lastFreeRecruitDay = -1000;
         }
 
         // ── CampaignBehaviorBase ───────────────────────────────────────────────
@@ -98,6 +104,8 @@ namespace AshAndEmber
             }
             catch { }
             try { store.SyncData("TRIBES_InitialRecorded", ref _initialSettlementsRecorded); }
+            catch { }
+            try { store.SyncData("TRIBES_LastFreeRecruitDay", ref _lastFreeRecruitDay); }
             catch { }
         }
 
@@ -383,11 +391,13 @@ namespace AshAndEmber
                             if (s.OwnerClan?.Kingdom?.StringId != KhuzaitId) return false;
 
                             int day = (int)CampaignTime.Now.ToDays;
-                            bool onCooldown = _recruitCooldowns.TryGetValue(s.StringId, out int last)
-                                && day - last < FreeRecruitCooldown;
+                            // Global weekly cap: the tribes answer the champion only once
+                            // a week, no matter which town the call goes out from.
+                            int sinceCall  = day - _lastFreeRecruitDay;
+                            bool onCooldown = sinceCall < FreeRecruitCooldown;
 
                             string status = onCooldown
-                                ? $"  [Ready in {FreeRecruitCooldown - (day - last)} day(s)]"
+                                ? $"  [The tribes have answered lately — ready in {FreeRecruitCooldown - sinceCall} day(s)]"
                                 : "  [Free — tribesmen answer your call]";
                             MBTextManager.SetTextVariable("TRIBAL_RECRUIT_TEXT",
                                 "Call to the Tribes" + status);
@@ -417,6 +427,7 @@ namespace AshAndEmber
                             }
 
                             _recruitCooldowns[s.StringId] = (int)CampaignTime.Now.ToDays;
+                            _lastFreeRecruitDay           = (int)CampaignTime.Now.ToDays;
                         }
                         catch { }
                     },

@@ -165,6 +165,49 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Harden-the-heart option — spill a prisoner's blood to earn the cruelty
+            // (Merciless) the gifts require, for players whose heart is still too warm.
+            try
+            {
+                starter.AddGameMenuOption("dark_altar_main", "dark_altar_harden", "{DARK_ALTAR_HARDEN_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            var h = Hero.MainHero;
+                            int mercy = 0, honor = 0;
+                            try { mercy = h?.GetTraitLevel(DefaultTraits.Mercy) ?? 0; } catch { }
+                            try { honor = h?.GetTraitLevel(DefaultTraits.Honor) ?? 0; } catch { }
+                            bool alreadyDark = mercy <= -1 || honor <= -1;
+                            bool canHarden   = DarkGiftSystem.CanHardenHeart();
+                            string note = !canHarden
+                                ? "  [Your heart is already cold enough]"
+                                : alreadyDark
+                                    ? $"  [the gifts already answer you — costs {DarkGiftSystem.CrueltyPrisonerCost} prisoners]"
+                                    : $"  [costs {DarkGiftSystem.CrueltyPrisonerCost} prisoners]";
+                            MBTextManager.SetTextVariable("DARK_ALTAR_HARDEN_TEXT",
+                                "Spill a prisoner's blood to harden your heart" + note);
+                            args.IsEnabled = canHarden;
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch { }
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            bool ok = DarkGiftSystem.TryHardenHeart(out string msg);
+                            if (!string.IsNullOrEmpty(msg))
+                                InformationManager.DisplayMessage(new InformationMessage(msg,
+                                    ok ? new Color(0.3f, 0.35f, 0.7f) : new Color(0.7f, 0.6f, 0.6f)));
+                            GameMenu.SwitchToMenu("dark_altar_main");
+                        }
+                        catch { }
+                    });
+            }
+            catch { }
+
             // Renounce gift option
             try
             {

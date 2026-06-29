@@ -1,23 +1,22 @@
 // =============================================================================
 // ASH AND EMBER — Miracles/MiracleInputHandler.cs
 //
-// TWO input modes for miracles:
-//
-// BATTLE — two paths:
+// BATTLE — the prayer SEQUENCE, shaped like a fire spell:
 //   Keyboard: hold Left Ctrl, press W/A/S/D (= U/L/R/D) to build a 6-character
-//   sequence, release Ctrl to cast. The buffer shows in the combat log.
-//   A wrong or incomplete sequence still spends 1 Grace or Cold.
+//   sequence, release Ctrl to cast. The buffer shows in the log. A wrong or
+//   incomplete sequence still spends 1 Grace.
+//   Controller: hold RB and flick the left stick 6 times in the same directions.
+//   There is NO menu in battle — the battlefield answers the gesture alone.
 //
-//   Controller: RB + L3 (Right Bumper held, Left Stick clicked) → opens the
-//   miracle selection menu. Or hold RB and flick the left stick 6 times for the
-//   sequence if you know it — but the menu is easier in the heat of battle.
-//
-// CAMPAIGN MAP — menu-based:
-//   Keyboard: Shift+X. Controller: RB + L3 (same as battle — consistent).
+// CAMPAIGN MAP — the litany + the rite (mirrors fire magic's map casting):
+//   Open the litany (Shift+X / RB + L3) — it lists ONLY the prayers that answer
+//   on the march — choose one, then recall its three-step rite (MiracleMinigame).
+//   Recall it truly and the light answers; let the words scatter and the Grace is
+//   spent for nothing.
 //
 // Left Ctrl does not conflict with spell input (which uses Left Alt / LB).
 // Ctrl+X triggers Alchemy — but only when X is pressed, not W/A/S/D.
-// RB + R3 is Alchemy; RB + L3 is Miracles — distinct thumbstick clicks.
+// RB + R3 is Alchemy; RB + L3 is the map miracle menu — distinct thumbstick clicks.
 // =============================================================================
 
 using System.Collections.Generic;
@@ -41,9 +40,8 @@ namespace AshAndEmber
         private static bool _prevShiftX  = false;
         private static bool _prevPadBoth = false;
 
-        // ── Controller stick edge-detect (battle) ──────────────────────────────
+        // ── Controller stick edge-detect ──────────────────────────────────────
         private static bool _prevLUp, _prevLDown, _prevLLeft, _prevLRight;
-        private static bool _prevPadMenu;
 
         public static void ResetInputState()
         {
@@ -52,74 +50,47 @@ namespace AshAndEmber
             _lastDisplay = "";
             _prevShiftX  = false;
             _prevPadBoth = false;
-            _prevPadMenu = false;
             _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
         }
 
         public static void Tick(bool inMission)
         {
             if (inMission)
-                TickBattle();
+                // Battle: cast directly by tracing the prayer's sequence (key combos).
+                TickSequence(inMission: true);
             else
-                TickCampaign();
+                // Campaign map: choose a prayer from the litany (Shift+X), then recall its
+                // rite — the memory minigame — exactly as fire magic is cast on the map.
+                TickCampaignMenu();
         }
 
-        // ── Battle: Ctrl + WASD 6-sequence ───────────────────────────────────
-        private static void TickBattle()
+        // ── Prayer sequence: Ctrl + W/A/S/D (or RB + left stick) ──────────────
+        // Hold the focus key, trace the miracle's sequence, release to cast. Works on
+        // the campaign map and in battle alike; the context only changes which miracle
+        // answers (a battle prayer fizzles on the map, and the reverse).
+        private static void TickSequence(bool inMission)
         {
-            // Controller shortcut: RB + L3 → menu (no sequence needed).
             bool rbHeld  = !Input.IsKeyDown(InputKey.ControllerLBumper)
                         &&  Input.IsKeyDown(InputKey.ControllerRBumper);
-            bool padMenu = rbHeld && Input.IsKeyPressed(InputKey.ControllerLThumb);
-            if (padMenu && !_prevPadMenu)
-            {
-                _seqBuffer   = "";
-                _wasHolding  = false;
-                _lastDisplay = "";
-                _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
-                ShowMiracleMenu();
-            }
-            _prevPadMenu = padMenu;
-
-            // Keyboard shortcut: Shift+X opens the miracle menu mid-battle — the same
-            // window the map uses, and consistent with Alt+X (grimoire) / Ctrl+X (satchel).
-            // Guarded against Ctrl/Alt so it never shadows the Ctrl sequence or spell focus.
-            bool shiftHeld = Input.IsKeyDown(InputKey.LeftShift) || Input.IsKeyDown(InputKey.RightShift);
-            bool ctrlHeld  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
-            bool altHeld   = Input.IsKeyDown(InputKey.LeftAlt);
-            bool shiftX    = shiftHeld && !ctrlHeld && !altHeld && Input.IsKeyPressed(InputKey.X);
-            if (shiftX && !_prevShiftX)
-            {
-                _prevShiftX = true;
-                ShowMiracleMenu();
-                return;
-            }
-            _prevShiftX = shiftX;
-
             bool holdKb  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
-            // Controller: hold RBumper alone (not with LBumper which is spells).
             bool holdPad = rbHeld;
-            // Only heroes carrying Grace react to the Ctrl modifier.
-            // Without Grace, holding Ctrl must do nothing — no focus light, no buffer —
-            // so it does not bleed into Nature's casting or glow for heroes with no miracles.
+            // Only heroes carrying Grace react to the focus modifier. Without Grace,
+            // holding Ctrl does nothing — no focus light, no buffer — so it never bleeds
+            // into Nature's casting or glows for heroes with no miracles.
             bool holding = (holdKb || holdPad) && MiracleInventory.HasGrace;
 
             if (holding)
             {
                 if (!_wasHolding)
                 {
-                    try
-                    {
-                        if (Agent.Main != null)
-                            SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Yellow);
-                    }
-                    catch { }
+                    try { if (inMission && Agent.Main != null)
+                            SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Yellow); } catch { }
                 }
                 _wasHolding = true;
 
                 if (holdKb)
                 {
-                    if (Input.IsKeyPressed(InputKey.W)) Append("U");
+                    if      (Input.IsKeyPressed(InputKey.W)) Append("U");
                     else if (Input.IsKeyPressed(InputKey.A)) Append("L");
                     else if (Input.IsKeyPressed(InputKey.D)) Append("R");
                     else if (Input.IsKeyPressed(InputKey.S)) Append("D");
@@ -152,8 +123,8 @@ namespace AshAndEmber
                 _wasHolding  = false;
                 _lastDisplay = "";
                 _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
-                try { SpellEffects.EndFocusVisual(Agent.Main); } catch { }
-                TryCastBattle();
+                try { if (inMission) SpellEffects.EndFocusVisual(Agent.Main); } catch { }
+                TryCastSequence(inMission);
                 _seqBuffer = "";
             }
         }
@@ -163,7 +134,7 @@ namespace AshAndEmber
             if (_seqBuffer.Length < MiracleMath.SequenceLength) _seqBuffer += dir;
         }
 
-        private static void TryCastBattle()
+        private static void TryCastSequence(bool inMission)
         {
             if (_seqBuffer.Length == 0) return;
 
@@ -185,7 +156,25 @@ namespace AshAndEmber
                 return;
             }
 
-            MiracleEffects.TryUseMiracle(type, inMission: true);
+            // A miracle answers only where it is meant to — the wrong ground still
+            // spends the Grace, as a botched battle sequence always has.
+            foreach (var def in MiracleCatalog.GraceAll)
+            {
+                if (def.Type != type) continue;
+                if (inMission && !def.UsableInBattle)
+                {
+                    SpendAndFizzle($"{def.Name} answers only on the open road, not amid the clash of battle.");
+                    return;
+                }
+                if (!inMission && !def.UsableOnMap)
+                {
+                    SpendAndFizzle($"{def.Name} answers only in the heat of battle.");
+                    return;
+                }
+                break;
+            }
+
+            MiracleEffects.TryUseMiracle(type, inMission);
         }
 
         private static void SpendAndFizzle(string msg)
@@ -197,8 +186,10 @@ namespace AshAndEmber
         private static void Fizzle(string msg) =>
             InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.6f, 0.6f, 0.6f)));
 
-        // ── Campaign: Shift+X (keyboard) or RB+L3 (controller) → menu ──────────
-        private static void TickCampaign()
+        // ── Campaign map menu: Shift+X (keyboard) or RB+L3 (controller) ────────
+        // A map-only convenience listing the prayers that answer on the march; the
+        // same prayers can also be cast directly with the Ctrl-sequence above.
+        private static void TickCampaignMenu()
         {
             bool shiftHeld = Input.IsKeyDown(InputKey.LeftShift) || Input.IsKeyDown(InputKey.RightShift);
             bool altHeld   = Input.IsKeyDown(InputKey.LeftAlt);
@@ -249,53 +240,35 @@ namespace AshAndEmber
             }
             catch { }
 
-            // The same window serves the map and the battlefield. In a mission we gate
-            // by battle-usability and invoke the battle effect; on the map, the reverse.
-            bool inBattle = false;
-            try { inBattle = Mission.Current != null; } catch { }
-
+            // This window is a campaign-map convenience only (the battle path is the
+            // Ctrl-sequence). So it lists ONLY the prayers that answer on the march —
+            // battle-only miracles are left off entirely rather than shown greyed.
             var elements = new List<InquiryElement>();
 
             foreach (var def in MiracleCatalog.GraceAll)
             {
-                bool gateMet = MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity);
-                bool usable  = (inBattle ? def.UsableInBattle : def.UsableOnMap) && gateMet;
+                if (!def.UsableOnMap) continue;   // map menu: skip battle-only prayers
 
-                // Show the actual battle key combo (Ctrl + W/A/S/D), the place it can
-                // be used, and any virtue gate — all on the always-visible label.
+                bool gateMet = MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity);
+
+                // Show the key combo (Ctrl + W/A/S/D) — the same gesture casts it directly —
+                // plus any virtue gate, on the always-visible label.
                 string keys  = SequenceToKeys(def.Sequence);
                 string stick = SequenceToStick(def.Sequence);
                 string gate  = string.IsNullOrEmpty(def.GateNote) ? "" : "  " + def.GateNote;
                 string label = $"{def.Name}   [Ctrl + {keys}]   ({def.Context}){gate}";
-                // Both input methods live in the hover hint so controller players
-                // see the stick sequence too, not just the keyboard keys on the label.
                 string controls = $"Keyboard: hold Ctrl + {keys}\nController: hold RB + flick left stick {stick}";
                 string hint  = $"{controls}\n\n{def.Effect}\n\n{def.Flavour}";
-                // When greyed out, lead the hint with WHY it cannot be invoked.
-                if (!usable)
-                {
-                    string why;
-                    if (inBattle && !def.UsableInBattle)
-                        why = "Cannot be invoked in battle — this miracle answers only on the campaign map.";
-                    else if (!inBattle && !def.UsableOnMap)
-                        why = "Cannot be invoked here — this miracle answers only in battle.";
-                    else if (!gateMet)
-                        why = $"Your virtue is not yet enough to be heard. Requires {(string.IsNullOrEmpty(def.GateNote) ? "greater virtue" : def.GateNote.Trim())}.";
-                    else
-                        why = "Unavailable right now.";
-                    hint = $"✗  {why}\n\n{hint}";
-                }
-                elements.Add(new InquiryElement(def.Type, label, null, usable, hint));
+                if (!gateMet)
+                    hint = $"✗  Your virtue is not yet enough to be heard. Requires "
+                         + $"{(string.IsNullOrEmpty(def.GateNote) ? "greater virtue" : def.GateNote.Trim())}.\n\n{hint}";
+                elements.Add(new InquiryElement(def.Type, label, null, gateMet, hint));
             }
 
             string title = $"Miracles  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
-            string body  = inBattle
-                ? "Choose a miracle to invoke now. Each costs 1 Grace. " +
-                  "In battle you may also cast by holding Ctrl and tracing the keys shown " +
-                  "(controller: hold RB and flick the left stick in the same directions)."
-                : "Choose a miracle to invoke. Each costs 1 Grace. " +
-                  "The keys shown are the battle sequence: hold Ctrl and press them in order " +
-                  "(controller: hold RB and flick the left stick the same way).";
+            string body  = "Choose a prayer to offer on the march. Each costs 1 Grace. " +
+                  "Recall its rite truly and the light answers in full; let the words " +
+                  "scatter and the Grace is spent for nothing.";
 
             try
             {
@@ -305,7 +278,9 @@ namespace AshAndEmber
                     {
                         if (chosen == null || chosen.Count == 0) return;
                         var type = (MiracleType)chosen[0].Identifier;
-                        MiracleEffects.TryUseMiracle(type, inMission: inBattle);
+                        // Cannot open an inquiry from inside this callback — defer to the next
+                        // layer flush, then run the prayer's memory-rite (mirrors fire magic).
+                        MageKnowledge._deferredInquiry = () => MiracleMinigame.Begin(type);
                     },
                     null, "", false), false, true);
             }

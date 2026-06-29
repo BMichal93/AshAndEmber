@@ -47,10 +47,20 @@ namespace AshAndEmber
         {
             if (!NatureKnowledge.IsAttuned) return;
             if (DarkGiftSystem.HasAnyGift) return;   // the darkness silences the living world
-            // On the campaign map, casting is done through the miracle window
-            // (ShowNatureMenu) and charges come from standing still for hours, so the
-            // direct hold-and-click input runs in battle only.
-            if (!inMission) return;
+            // On the campaign map, casting is done through the litany window
+            // (ShowNatureMenu, opened with Shift+X) and charges come from standing
+            // still for hours, so the direct hold-Ctrl gesture runs in battle only.
+            // If a player reaches for the battle gesture on the map (Ctrl + a
+            // direction), nudge them to the right key instead of failing silently.
+            if (!inMission)
+            {
+                bool ctrl = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
+                if (ctrl && !Input.IsKeyDown(InputKey.LeftAlt)
+                    && (Input.IsKeyPressed(InputKey.W) || Input.IsKeyPressed(InputKey.A)
+                     || Input.IsKeyPressed(InputKey.S) || Input.IsKeyPressed(InputKey.D)))
+                    Msg("On the march, the land answers the litany — press Shift+X to draw the Living Ember.", NatureColor);
+                return;
+            }
 
             bool leftAltHeld = Input.IsKeyDown(InputKey.LeftAlt);
             bool ctrlHeld    = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
