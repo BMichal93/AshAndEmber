@@ -6,6 +6,13 @@
 
 ---
 
+## v0.29.1
+
+### Critical fix
+- **You can start the game again.** On the culture-selection screen the "Next" button could stay disabled forever, even after the faction names corrected themselves — the renamed-card check waited on a card it could never tick off and held the gate shut. The gate now always releases (within a moment), so character creation can never trap you.
+
+---
+
 ## v0.29.0
 
 ### Event fixes

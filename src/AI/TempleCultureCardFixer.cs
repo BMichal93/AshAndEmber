@@ -108,6 +108,12 @@ namespace AshAndEmber
         private static object _lastScreen;
         private static bool   _doneThisScreen;
         private static int    _throttle;
+        // Failsafe: how many gating passes we will hold "Next" disabled before giving
+        // up and releasing it regardless. A card whose VM is never reachable by the
+        // walk (or whose name is corrected via the game-text path instead of the VM)
+        // would otherwise keep the gate shut forever and the player could never start.
+        private static int        _gateAttempts;
+        private const  int        MaxGateAttempts = 8;   // ≈ 1.5 s at the walk throttle
         // The culture-stage view-model found during the current walk, used to gate
         // "Next" until every renamed card reads its corrected name/feats.
         private static object _stageVmThisPass;
@@ -122,8 +128,8 @@ namespace AshAndEmber
                 object screen = null;
                 try { screen = TaleWorlds.ScreenSystem.ScreenManager.TopScreen; } catch { }
 
-                if (screen == null) { _lastScreen = null; _doneThisScreen = false; return; }
-                if (!ReferenceEquals(screen, _lastScreen)) { _lastScreen = screen; _doneThisScreen = false; }
+                if (screen == null) { _lastScreen = null; _doneThisScreen = false; _gateAttempts = 0; return; }
+                if (!ReferenceEquals(screen, _lastScreen)) { _lastScreen = screen; _doneThisScreen = false; _gateAttempts = 0; }
                 if (_doneThisScreen) return;
                 if (screen.GetType().Name.IndexOf("CharacterCreation", StringComparison.OrdinalIgnoreCase) < 0) return;
 
@@ -150,9 +156,17 @@ namespace AshAndEmber
                     SetCanAdvanceFromSelection(_stageVmThisPass);
                     _doneThisScreen = true;
                 }
-                else
+                else if (++_gateAttempts < MaxGateAttempts)
                 {
                     SetStageBool(_stageVmThisPass, "CanAdvance", false);
+                }
+                else
+                {
+                    // Some card never cleared this pass. Never trap the player on the
+                    // culture screen — release the gate and let the engine's own
+                    // selection-driven CanAdvance govern from here on.
+                    SetCanAdvanceFromSelection(_stageVmThisPass);
+                    _doneThisScreen = true;
                 }
                 _stageVmThisPass = null;
             }
