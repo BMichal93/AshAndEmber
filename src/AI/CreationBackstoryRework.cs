@@ -1,7 +1,7 @@
 // =============================================================================
 // ASH AND EMBER — AI/CreationBackstoryRework.cs
 // Reworks specific Sandbox character-creation backstory options for the
-// Templar (vlandia) and Tribal (khuzait) cultures.
+// Templar (vlandia), Tribal (khuzait), and Ashen (sturgia) cultures.
 //
 //   Most changes are thematic renames; the bonuses are left untouched.
 //   Two options change mechanically:
@@ -10,6 +10,13 @@
 //     • Vlandia "A baron's groom"   → "A Lord Templar's squire":
 //         the Charm skill grant is replaced by +3 Grace and +1 Honour.
 //
+//   Ashen (Sturgia) characters gain a unique "I don't remember my past" option
+//   on every backstory stage (parent, childhood, education, youth, adulthood)
+//   plus an "I don't know how old I am" age option (equivalent to age 40).
+//   Each forgotten-past option grants +1 attribute and +2 focus to a
+//   thematically fitting skill — no skill level, since the character has no
+//   memory of training for anything in particular.
+//
 // The vanilla backstory options live in the engine's generic
 // CharacterCreationCampaignBehavior. We register as an
 // ICharacterCreationContentHandler and rewrite the already-built narrative
@@ -17,12 +24,13 @@
 // reworked options, its skill-effect getter, are private/readonly — set by
 // reflection, matching the reflection-light style of TempleCultureCardFixer).
 //
-// The two special boons cannot be granted during character creation: the
-// engine runs OnCharacterCreationFinalize *before* the OnCharacterCreationIsOver
-// event, and our own new-game reset (CampaignBehavior.OnNewGameCreated →
-// MageKnowledge.ResetForNewGame) fires on that event and would wipe them. So we
-// only *record* the player's final pick at finalize, and apply the boon from
-// OnNewGameCreated, after the reset has run (see ApplyPendingBoons).
+// Special boons (Dark Gift, Grace, age override) cannot be granted during
+// character creation: the engine runs OnCharacterCreationFinalize *before* the
+// OnCharacterCreationIsOver event, and our own new-game reset
+// (CampaignBehavior.OnNewGameCreated → MageKnowledge.ResetForNewGame) fires on
+// that event and would wipe them. So we only *record* the player's final pick
+// at finalize, and apply the boon from OnNewGameCreated, after the reset has
+// run (see ApplyPendingBoons).
 // =============================================================================
 
 using System;
@@ -41,9 +49,18 @@ namespace AshAndEmber
         private const string KhuzaitApostleOptionId = "khuzait_retainer_option";
         private const string VlandiaSquireOptionId  = "youth_groom_option";
 
+        // Option ids injected for the Ashen (Sturgia) forgotten-past branch.
+        private const string AshenForgottenFamilyId    = "ashen_forgotten_family";
+        private const string AshenForgottenChildhoodId = "ashen_forgotten_childhood";
+        private const string AshenForgottenEducationId = "ashen_forgotten_education";
+        private const string AshenForgottenYouthId     = "ashen_forgotten_youth";
+        private const string AshenForgottenAdulthoodId = "ashen_forgotten_adulthood";
+        private const string AshenForgottenAgeId       = "ashen_forgotten_age";
+
         // Pending boons recorded at finalize, applied after the new-game reset.
         private static bool _pendingApostleDarkGift;
         private static bool _pendingSquireBoon;
+        private static bool _pendingForgottenAge;
 
         // The generic option grants (read from the live content so we stay in
         // sync with the engine's defaults rather than hard-coding 1/10/1).
@@ -73,6 +90,7 @@ namespace AshAndEmber
             // Clear any stale pending state from an abandoned creation this session.
             _pendingApostleDarkGift = false;
             _pendingSquireBoon      = false;
+            _pendingForgottenAge    = false;
             try { manager.RegisterCharacterCreationContentHandler(this, 1000); } catch { }
         }
 
@@ -92,6 +110,7 @@ namespace AshAndEmber
                     _attr  = content.AttributeLevelToAdd;
                 }
                 RewriteMenus(m);
+                InjectAshenForgottenPastOptions(m);
             }
             catch { }
         }
@@ -106,9 +125,133 @@ namespace AshAndEmber
                 foreach (var pair in m.SelectedOptions)
                 {
                     string id = pair.Value?.StringId;
-                    if (id == KhuzaitApostleOptionId)     _pendingApostleDarkGift = true;
-                    else if (id == VlandiaSquireOptionId) _pendingSquireBoon      = true;
+                    if      (id == KhuzaitApostleOptionId)  _pendingApostleDarkGift = true;
+                    else if (id == VlandiaSquireOptionId)   _pendingSquireBoon      = true;
+                    else if (id == AshenForgottenAgeId)     _pendingForgottenAge    = true;
                 }
+            }
+            catch { }
+        }
+
+        // ── Ashen forgotten-past injection ───────────────────────────────────
+
+        // Adds one "I don't remember" option to each narrative stage for Sturgia
+        // (Ashen) characters. Each grants +1 to a thematic attribute and +2 focus
+        // to a matching skill, but no skill level — the character has no memory of
+        // how they learned anything.
+        private static readonly string[] SturgiaSpecificOptionIds =
+        {
+            "sturgia_companion_option",
+            "sturgia_trader_option",
+            "sturgia_farmer_option",
+            "sturgia_artisan_option",
+        };
+
+        private static void InjectAshenForgottenPastOptions(CharacterCreationManager m)
+        {
+            // Strip the Sturgia-specific parent options — the Ashen have no known
+            // lineage; only the shared cross-culture options (and the forgotten-past
+            // option below) will remain available for this culture.
+            try
+            {
+                var parentMenu = m.GetNarrativeMenuWithId("narrative_parent_menu");
+                parentMenu?.CharacterCreationMenuOptions
+                    .RemoveAll(o => o != null && System.Array.IndexOf(SturgiaSpecificOptionIds, o.StringId) >= 0);
+            }
+            catch { }
+
+            AddAshenForgotten(m, "narrative_parent_menu", AshenForgottenFamilyId,
+                "came from nowhere.",
+                "You carry no name, no family crest, no memory of the faces that shaped you. There are "
+                + "flashes — cold mud, a fire going out, a hand that let go of yours — but nothing that "
+                + "would count as memory. You woke, at some point, knowing how to ride and how to bleed. "
+                + "Everything before that is ash.",
+                DefaultCharacterAttributes.Vigor, DefaultSkills.TwoHanded);
+
+            AddAshenForgotten(m, "narrative_childhood_menu", AshenForgottenChildhoodId,
+                "have no memory of those years.",
+                "There may have been games, or lessons, or a village that no longer stands. You cannot say. "
+                + "The years before you could truly think for yourself are a sealed room — and something "
+                + "behind the door does not want it opened.",
+                DefaultCharacterAttributes.Endurance, DefaultSkills.Athletics);
+
+            AddAshenForgotten(m, "narrative_education_menu", AshenForgottenEducationId,
+                "cannot say what you studied.",
+                "You know things you were never taught — at least, you cannot remember being taught them. "
+                + "They are simply there when you reach for them: the shape of terrain, the arithmetic of "
+                + "war, the weight of a silence in a room full of men with weapons.",
+                DefaultCharacterAttributes.Intelligence, DefaultSkills.Tactics);
+
+            AddAshenForgotten(m, "narrative_youth_menu", AshenForgottenYouthId,
+                "have no account of your younger years.",
+                "You did not serve. You did not follow. You were somewhere else, in ways you cannot explain "
+                + "to yourself, let alone to others. The scars you carry from those years have no stories "
+                + "attached to them. They are simply there.",
+                DefaultCharacterAttributes.Cunning, DefaultSkills.Scouting);
+
+            AddAshenForgotten(m, "narrative_adulthood_menu", AshenForgottenAdulthoodId,
+                "remember nothing you would speak of.",
+                "You can lead. You do not know when you learned to. Men follow your silences as readily as "
+                + "your orders, as if they sense something in you that you yourself cannot name — something "
+                + "old, and patient, and not entirely yours.",
+                DefaultCharacterAttributes.Social, DefaultSkills.Leadership);
+
+            AddAshenForgottenAge(m);
+        }
+
+        // Adds a single forgotten-past option to the named menu, visible only for
+        // Sturgia (Ashen) characters. Grants +1 to the given attribute and +2 focus
+        // to the given skill (no skill level).
+        private static void AddAshenForgotten(CharacterCreationManager m, string menuId,
+            string optionId, string label, string description,
+            CharacterAttribute attribute, SkillObject skill)
+        {
+            var menu = m.GetNarrativeMenuWithId(menuId);
+            if (menu == null) return;
+            try
+            {
+                var option = new NarrativeMenuOption(
+                    optionId,
+                    new TextObject(label),
+                    new TextObject(description),
+                    new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) =>
+                    {
+                        args.SetAffectedSkills(new[] { skill });
+                        args.SetFocusToSkills(2);
+                        args.SetLevelToAttribute(attribute, 1);
+                    }),
+                    new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
+                        mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
+                    null,
+                    null);
+                menu.AddNarrativeMenuOption(option);
+            }
+            catch { }
+        }
+
+        // Adds the "I don't know how old I am" age option for Ashen characters.
+        // No attribute or focus grant — the age itself (40) is the consequence,
+        // applied post-reset in ApplyPendingBoons to override the sandbox's default.
+        private static void AddAshenForgottenAge(CharacterCreationManager m)
+        {
+            var menu = m.GetNarrativeMenuWithId("narrative_age_selection_menu");
+            if (menu == null) return;
+            try
+            {
+                var option = new NarrativeMenuOption(
+                    AshenForgottenAgeId,
+                    new TextObject("I don't know how old I am."),
+                    new TextObject(
+                        "The years do not stack for you the way they do for others. You could be thirty, "
+                        + "or fifty, or something in between that the calendar cannot account for. You feel "
+                        + "old in ways the body does not show — and young in others, as though part of you "
+                        + "has not aged at all, or aged too fast, or never started."),
+                    new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) => { }),
+                    new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
+                        mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
+                    null,
+                    null);
+                menu.AddNarrativeMenuOption(option);
             }
             catch { }
         }
@@ -243,6 +386,14 @@ namespace AshAndEmber
             {
                 _pendingSquireBoon = false;
                 try { MiracleInventory.AddGrace(3); } catch { }
+            }
+
+            // Override whatever age the sandbox set — the Ashen character does not
+            // know how old they are; we place them at 40, the "middle-age" slot.
+            if (_pendingForgottenAge)
+            {
+                _pendingForgottenAge = false;
+                try { Hero.MainHero?.SetBirthDay(CampaignTime.YearsFromNow(-40f)); } catch { }
             }
         }
     }
