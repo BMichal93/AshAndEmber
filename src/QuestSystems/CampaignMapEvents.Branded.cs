@@ -31,11 +31,15 @@ namespace AshAndEmber
         //            (clan leaders have too much plot armour to dissolve cleanly mid-campaign).
         internal static void TryFireTheBranded()
         {
-            if (_rng.NextDouble() >= ChanceTheBranded) return;
-            if (!TryClaimWeeklySlot()) return;
+            // Cheap eligibility gates must run BEFORE claiming the weekly slot.
+            // If the slot were claimed first and then returned (the common non-mage
+            // case), the 14-day event cooldown would start with no event fired,
+            // silently suppressing all other world events for two weeks.
             if (!MageKnowledge.IsMage || MageKnowledge.IsAshen) return;
             if (Hero.MainHero == null) return;
             if (MageKnowledge._deferredInquiry != null) return;
+            if (_rng.NextDouble() >= ChanceTheBranded) return;
+            if (!TryClaimWeeklySlot()) return;
 
             try
             {
