@@ -10,10 +10,11 @@
 //     • Vlandia "A baron's groom"   → "A Lord Templar's squire":
 //         the Charm skill grant is replaced by +3 Grace and +1 Honour.
 //
-//   Ashen (Sturgia) characters gain a unique "I don't remember my past" option
-//   on every backstory stage (parent, childhood, education, youth, adulthood)
-//   plus an "I don't know how old I am" age option (equivalent to age 40).
-//   Each forgotten-past option grants +1 attribute and +2 focus to a
+//   Ashen (Sturgia) characters gain an additional "I don't remember my past"
+//   option on every backstory stage (parent, childhood, education, youth,
+//   adulthood) plus an "I don't know how old I am" age option (age 40).
+//   These sit alongside the original Sturgia vanilla options — both paths are
+//   available. Each forgotten-past option grants +1 attribute and +2 focus to a
 //   thematically fitting skill — no skill level, since the character has no
 //   memory of training for anything in particular.
 //
@@ -56,13 +57,6 @@ namespace AshAndEmber
         private const string AshenForgottenYouthId     = "ashen_forgotten_youth";
         private const string AshenForgottenAdulthoodId = "ashen_forgotten_adulthood";
         private const string AshenForgottenAgeId       = "ashen_forgotten_age";
-
-        // Option ids injected for the basic Strugian (warrior) branch.
-        private const string SturgianWarriorFamilyId    = "strugian_warrior_family";
-        private const string SturgianWarriorChildhoodId = "strugian_warrior_childhood";
-        private const string SturgianWarriorEducationId = "strugian_warrior_education";
-        private const string SturgianWarriorYouthId     = "strugian_warrior_youth";
-        private const string SturgianWarriorAdulthoodId = "strugian_warrior_adulthood";
 
         // Pending boons recorded at finalize, applied after the new-game reset.
         private static bool _pendingApostleDarkGift;
@@ -118,7 +112,6 @@ namespace AshAndEmber
                 }
                 RewriteMenus(m);
                 InjectAshenForgottenPastOptions(m);
-                InjectBasicSturgianOptions(m);
             }
             catch { }
         }
@@ -147,27 +140,8 @@ namespace AshAndEmber
         // (Ashen) characters. Each grants +1 to a thematic attribute and +2 focus
         // to a matching skill, but no skill level — the character has no memory of
         // how they learned anything.
-        private static readonly string[] SturgiaSpecificOptionIds =
-        {
-            "sturgia_companion_option",
-            "sturgia_trader_option",
-            "sturgia_farmer_option",
-            "sturgia_artisan_option",
-        };
-
         private static void InjectAshenForgottenPastOptions(CharacterCreationManager m)
         {
-            // Strip the Sturgia-specific parent options — the Ashen have no known
-            // lineage; only the shared cross-culture options (and the forgotten-past
-            // option below) will remain available for this culture.
-            try
-            {
-                var parentMenu = m.GetNarrativeMenuWithId("narrative_parent_menu");
-                parentMenu?.CharacterCreationMenuOptions
-                    .RemoveAll(o => o != null && System.Array.IndexOf(SturgiaSpecificOptionIds, o.StringId) >= 0);
-            }
-            catch { }
-
             AddAshenForgotten(m, "narrative_parent_menu", AshenForgottenFamilyId,
                 "came from nowhere.",
                 "You carry no name, no family crest, no memory of the faces that shaped you. There are "
@@ -255,85 +229,6 @@ namespace AshAndEmber
                         + "old in ways the body does not show — and young in others, as though part of you "
                         + "has not aged at all, or aged too fast, or never started."),
                     new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) => { }),
-                    new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
-                        mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
-                    null,
-                    null);
-                menu.AddNarrativeMenuOption(option);
-            }
-            catch { }
-        }
-
-        // ── Basic Strugian injection ─────────────────────────────────────────
-
-        // Adds a "born a Strugian" option to each narrative stage for Sturgia
-        // characters who remember exactly who they are. Each grants the standard
-        // engine attribute + focus + skill level bonuses for a warrior background.
-        private static void InjectBasicSturgianOptions(CharacterCreationManager m)
-        {
-            AddBasicSturgian(m, "narrative_parent_menu", SturgianWarriorFamilyId,
-                "were born to a warlord's household.",
-                "Your family served a Strugian warlord — not among the lowest levied spearmen, "
-                + "but in the inner ring: the household guards, the sword-companions, the men who "
-                + "ate at the same table and slept close enough to hear the boyar breathe. Violence "
-                + "was spoken about the way other families spoke of trade. You learned to hold a "
-                + "blade before you learned to write.",
-                DefaultCharacterAttributes.Vigor, DefaultSkills.TwoHanded);
-
-            AddBasicSturgian(m, "narrative_childhood_menu", SturgianWarriorChildhoodId,
-                "grew up fighting.",
-                "Your childhood was long on bruises and short on softness. The boys of the "
-                + "settlement settled everything with fists, staves, or the occasional blade — "
-                + "overseen, loosely, by men who thought toughness the only lesson worth teaching. "
-                + "You won more often than you lost. The losses taught you more.",
-                DefaultCharacterAttributes.Endurance, DefaultSkills.Athletics);
-
-            AddBasicSturgian(m, "narrative_education_menu", SturgianWarriorEducationId,
-                "were schooled in the arts of the warband.",
-                "Your education was tactical — not books and letters, but the reading of ground, "
-                + "the pacing of supply, the discipline of men who would rather eat and sleep than "
-                + "hold a line. A veteran drummed it into you with the patient weariness of someone "
-                + "who had learned it the hard way and intended you to learn it the easier one.",
-                DefaultCharacterAttributes.Intelligence, DefaultSkills.Tactics);
-
-            AddBasicSturgian(m, "narrative_youth_menu", SturgianWarriorYouthId,
-                "rode with a raiding party.",
-                "Before you were anyone's sworn sword, you rode with the summer parties — light, "
-                + "fast, unannounced. You learned the difference between a scout and a spy, how to "
-                + "find what was worth taking and what was worth leaving, and the arithmetic of "
-                + "coming home with fewer horses than you left with.",
-                DefaultCharacterAttributes.Cunning, DefaultSkills.Scouting);
-
-            AddBasicSturgian(m, "narrative_adulthood_menu", SturgianWarriorAdulthoodId,
-                "led men who followed because you were worth following.",
-                "You did not inherit command — you accumulated it. Men watched how you handled the "
-                + "hard moments and decided, one by one, that they would rather be behind you than "
-                + "in front of you. You learned that authority is not a rank but a reputation that "
-                + "requires constant upkeep.",
-                DefaultCharacterAttributes.Social, DefaultSkills.Leadership);
-        }
-
-        // Adds a single basic Strugian option to the named menu, visible only for
-        // Sturgia characters. Grants standard bonuses: +1 attribute, +focus, +skill level.
-        private static void AddBasicSturgian(CharacterCreationManager m, string menuId,
-            string optionId, string label, string description,
-            CharacterAttribute attribute, SkillObject skill)
-        {
-            var menu = m.GetNarrativeMenuWithId(menuId);
-            if (menu == null) return;
-            try
-            {
-                var option = new NarrativeMenuOption(
-                    optionId,
-                    new TextObject(label),
-                    new TextObject(description),
-                    new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) =>
-                    {
-                        args.SetAffectedSkills(new[] { skill });
-                        args.SetFocusToSkills(_focus);
-                        args.SetLevelToSkills(_skill);
-                        args.SetLevelToAttribute(attribute, _attr);
-                    }),
                     new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
                         mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
                     null,
