@@ -66,24 +66,24 @@ namespace AshAndEmber
         // ShowLoreIntro pop-up; the wording is unchanged.
         private static readonly string[] Paragraphs =
         {
-            "Every living thing carries a fire. Not warmth. Not light. " +
-            "The older kind — the one that binds soul to flesh, that keeps the living from the cold. " +
-            "Mages have learned to reach into it. Some have learned to spend it.",
+            "All living things carry an Inner Fire. " +
+            "It is the force that binds soul to flesh, that keeps the living from the cold. " +
+            "Those who learn to reach into it are called mages. " +
+            "The Temple of Ember has kept their doctrine for centuries — " +
+            "and taught that certain crystals, grown in the deep earth, can hold that fire " +
+            "and release it when the lattice breaks.",
 
-            "Long ago, in the frozen north, certain lords stared into their own dying flames and refused the dark. " +
-            "So they did what no one had dared: they let the fire go out.\n\n" +
-            "The cold did not kill them.",
+            "The empire that once held these lands together is fracturing. " +
+            "Three claimants. Three armies. The eastern Tribes, long kept behind the passes, " +
+            "have begun to move.",
 
-            "They are the Ashen. They do not age. They do not grieve. They do not stop.\n\n" +
-            "And they have been waiting a very long time.",
+            "But the greater danger comes from the north. " +
+            "Long ago, certain lords chose to extinguish their own Inner Fire rather than age and die. " +
+            "The cold took them. It did not kill them.\n\n" +
+            "They are called the Ashen. They do not tire. They do not stop. " +
+            "For centuries they kept to the wastes. Now they march.",
 
-            "Now kingdoms crack. Emperors war over ruins. " +
-            "And in the silence between the battles, the cold is already whispering — " +
-            "and some mages have begun to whisper back.",
-
-            "Something in you has been listening.\n\n" +
-            "The fire knows. So does the cold.\n\n" +
-            "Both are waiting to learn which way you will burn.",
+            "The fire in you has not yet gone out.\n\nWhat you do with it is yours to decide.",
         };
 
         // Per-paragraph timing (seconds).
