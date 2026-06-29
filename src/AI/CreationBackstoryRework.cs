@@ -139,8 +139,27 @@ namespace AshAndEmber
         // (Ashen) characters. Each grants +1 to a thematic attribute and +2 focus
         // to a matching skill, but no skill level — the character has no memory of
         // how they learned anything.
+        private static readonly string[] SturgiaSpecificOptionIds =
+        {
+            "sturgia_companion_option",
+            "sturgia_trader_option",
+            "sturgia_farmer_option",
+            "sturgia_artisan_option",
+        };
+
         private static void InjectAshenForgottenPastOptions(CharacterCreationManager m)
         {
+            // Strip the Sturgia-specific parent options — the Ashen have no known
+            // lineage; only the shared cross-culture options (and the forgotten-past
+            // option below) will remain available for this culture.
+            try
+            {
+                var parentMenu = m.GetNarrativeMenuWithId("narrative_parent_menu");
+                parentMenu?.CharacterCreationMenuOptions
+                    .RemoveAll(o => o != null && System.Array.IndexOf(SturgiaSpecificOptionIds, o.StringId) >= 0);
+            }
+            catch { }
+
             AddAshenForgotten(m, "narrative_parent_menu", AshenForgottenFamilyId,
                 "came from nowhere.",
                 "You carry no name, no family crest, no memory of the faces that shaped you. There are "
