@@ -107,16 +107,31 @@ namespace AshAndEmber
             "Ov Castle", "Mazhadan", "Mecalovea", "Rhesos",
         };
 
-        // True if a settlement is one of the renamed Ashen cities/castles (matched by
-        // vanilla name). The Ashen realm is exactly this set — never any other town.
+        // True if a settlement belongs to the Ashen realm — exactly the target set,
+        // never any other town. Settlements are RENAMED on session start (Amprela →
+        // "The Ashen Crown"), so a pure vanilla-name match wrongly fails for the
+        // realm's own renamed cities and they get handed away by the confinement
+        // guard. So we match three ways: the StringId is claimed in the clan map
+        // (rename-proof), the vanilla name, OR the Ashen rename it now carries.
         internal static bool IsTargetSettlement(Settlement s)
         {
             if (s == null) return false;
             try
             {
+                // Claimed Ashen (keyed by StringId — survives any display rename).
+                if (_settlementClanMap.ContainsKey(s.StringId)) return true;
+
                 string name = s.Name?.ToString() ?? "";
-                return _targetSettlementNames.Any(n =>
-                    name.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0);
+                if (_targetSettlementNames.Any(n =>
+                        name.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0))
+                    return true;
+
+                // The Ashen display name it was renamed to (town / castle tables).
+                if (_townRenames.Values.Any(v => name.Equals(v, StringComparison.OrdinalIgnoreCase))
+                 || _castleRenames.Values.Any(v => name.Equals(v, StringComparison.OrdinalIgnoreCase)))
+                    return true;
+
+                return false;
             }
             catch { return false; }
         }

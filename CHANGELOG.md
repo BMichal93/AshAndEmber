@@ -6,6 +6,32 @@
 
 ---
 
+## v0.30.1
+
+### Fix
+- **Nature roots and slows now actually hold.** When the drained land snared a caster ("dead briars… seize your legs"), or when Entangle/Thunderclap/Gale/Torrent slowed a foe, the message fired but movement was unaffected — the speed limit was set once and the engine wiped it the very next frame. The limit is now re-applied for the whole duration, so roots root and slows slow.
+
+---
+
+## v0.30.0
+
+### Crash fixes
+- **The Ashen "Came from nowhere" and "Northerners of the unbroken North" backstories no longer crash the game.** Those custom options were built without the select/consequence handlers the engine expects and threw the instant they were picked. They now carry proper (empty) handlers.
+- **Equipping a crystal no longer crashes.** The crystal items were defined without a collision body, a wield animation, or a valid weapon mesh — the game faulted the moment one was equipped. They are now built on a known-good one-handed weapon template.
+
+### World & creation fixes
+- **The Ashen keep the Ashen Crown — and their other cities.** The realm's confinement guard identified its own holdings by their original names, but the cities are renamed on session start ("Amprela" → "The Ashen Crown"), so the renamed cities looked like outside conquests and were slowly handed to neighbouring kingdoms. Ashen holdings are now recognised by identity, not by their (changed) name.
+- **Backstory flavour stays with its own culture.** Shared youth/education backstory options carried Tribal/Templar wording for every culture, so an Empire youth could read "served as the Tribe's emissary." The flavour now shows only for the matching culture, and the Templar Grace / God-King's Dark Gift those options grant are likewise culture-gated (no more Grace for a non-Templar who picks "groom").
+
+---
+
+## v0.29.2
+
+### Critical fix
+- **The faction names rename again — and "Next" still works.** The previous fix stopped the card-renamer too early, so on a slower-loading screen the cards never got corrected. The renamer now keeps working until the cards are fixed (however long the screen takes to build), while the "Next" button is only briefly held and then always freed.
+
+---
+
 ## v0.29.1
 
 ### Critical fix

@@ -22,9 +22,11 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
 
-        // Speed-limit tokens (agent index → remaining seconds).
-        private static readonly Dictionary<int, (float remaining, Agent agent)> _speedTokens
-            = new Dictionary<int, (float, Agent)>();
+        // Speed-limit tokens (agent index → remaining seconds + the absolute speed cap
+        // to RE-APPLY every frame; the engine recomputes each agent's limit each tick,
+        // so a one-shot SetMaximumSpeedLimit is wiped almost immediately).
+        private static readonly Dictionary<int, (float remaining, Agent agent, float speed)> _speedTokens
+            = new Dictionary<int, (float, Agent, float)>();
         // Damage-resistance tokens.
         private static readonly Dictionary<int, (float fraction, float remaining, Agent agent)> _resistTokens
             = new Dictionary<int, (float, float, Agent)>();
@@ -642,14 +644,20 @@ namespace AshAndEmber
         {
             foreach (int key in _speedTokens.Keys.ToList())
             {
-                var (remaining, agent) = _speedTokens[key];
+                var (remaining, agent, speed) = _speedTokens[key];
                 remaining -= dt;
                 if (remaining <= 0f || agent == null || !agent.IsActive())
                 {
                     try { agent?.SetMaximumSpeedLimit(10f, false); } catch { }
                     _speedTokens.Remove(key);
                 }
-                else _speedTokens[key] = (remaining, agent);
+                else
+                {
+                    // Re-apply each frame, or the engine's per-tick recompute wipes it
+                    // (a root would visibly "do nothing" despite the message firing).
+                    try { agent.SetMaximumSpeedLimit(speed, false); } catch { }
+                    _speedTokens[key] = (remaining, agent, speed);
+                }
             }
         }
 
@@ -676,7 +684,7 @@ namespace AshAndEmber
 
         public static void ClearBattleState()
         {
-            foreach (var (_, agent) in _speedTokens.Values)
+            foreach (var (_, agent, _) in _speedTokens.Values)
                 try { agent?.SetMaximumSpeedLimit(10f, false); } catch { }
             _speedTokens.Clear();
             _resistTokens.Clear();
@@ -697,8 +705,9 @@ namespace AshAndEmber
         internal static void ApplySpeedToken(Agent agent, float mult, float seconds)
         {
             if (agent == null || !agent.IsActive()) return;
-            try { agent.SetMaximumSpeedLimit(mult == 0f ? 0f : 10f * mult, false); } catch { }
-            _speedTokens[agent.Index] = (seconds, agent);
+            float speed = mult == 0f ? 0f : 10f * mult;
+            try { agent.SetMaximumSpeedLimit(speed, false); } catch { }
+            _speedTokens[agent.Index] = (seconds, agent, speed);
         }
 
         private static void ApplyResistToken(Agent agent, float fraction, float seconds)

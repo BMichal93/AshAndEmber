@@ -34,6 +34,7 @@
 // =============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterCreationContent;
@@ -75,6 +76,32 @@ namespace AshAndEmber
         // sync with the engine's defaults rather than hard-coding 1/10/1).
         private static int _focus = 1, _skill = 10, _attr = 1;
 
+        // The engine invokes a narrative option's OnSelect / OnConsequence when it is
+        // picked. Vanilla options always supply non-null delegates; passing null here
+        // throws a NullReferenceException the moment the player selects the option
+        // (it crashed "Came from nowhere" and the Northerner origin). Supply no-ops.
+        private static readonly NarrativeMenuOptionOnSelectDelegate _noopSelect =
+            new NarrativeMenuOptionOnSelectDelegate((CharacterCreationManager _) => { });
+        private static readonly NarrativeMenuOptionOnConsequenceDelegate _noopConsequence =
+            new NarrativeMenuOptionOnConsequenceDelegate((CharacterCreationManager _) => { });
+
+        // Stored at AfterInitializeContent so OnStageCompleted can read the LIVE
+        // selected culture (unknown when the menus are first built, before selection).
+        private static CharacterCreationManager _manager;
+
+        // Culture-flavoured renames of SHARED (cross-culture) narrative options. These
+        // options appear for every culture, so their flavour must only show for the
+        // matching culture — otherwise an Empire youth reads "the Tribe's emissary".
+        // We capture each option's vanilla text/desc/args, then on every stage
+        // transition restore vanilla or apply the flavour depending on the live pick.
+        private sealed class GatedRename
+        {
+            public string MenuId, OptionId, Culture;
+            public TextObject FlavText, FlavDesc, BaseText, BaseDesc;
+            public GetNarrativeMenuOptionArgsDelegate FlavArgs, BaseArgs;
+        }
+        private static readonly List<GatedRename> _gated = new List<GatedRename>();
+
         private const BindingFlags FPriv = BindingFlags.Instance | BindingFlags.NonPublic;
         private const BindingFlags FPub  = BindingFlags.Instance | BindingFlags.Public;
 
@@ -101,6 +128,8 @@ namespace AshAndEmber
             _pendingSquireBoon      = false;
             _pendingForgottenAge    = false;
             _pendingStrugianOrigin  = false;
+            _gated.Clear();
+            _manager = null;
             try { manager.RegisterCharacterCreationContentHandler(this, 1000); } catch { }
         }
 
@@ -119,24 +148,35 @@ namespace AshAndEmber
                     _skill = content.SkillLevelToAdd;
                     _attr  = content.AttributeLevelToAdd;
                 }
+                _manager = m;
                 RewriteMenus(m);
                 InjectAshenForgottenPastOptions(m);
+                ApplyGatedRenames();   // set initial state for the current (or no) selection
             }
             catch { }
         }
 
-        void ICharacterCreationContentHandler.OnStageCompleted(CharacterCreationStageBase stage) { }
+        // Culture is chosen partway through creation; re-evaluate the shared-option
+        // flavour each time a stage completes so it tracks the player's live pick.
+        void ICharacterCreationContentHandler.OnStageCompleted(CharacterCreationStageBase stage)
+        {
+            try { ApplyGatedRenames(); } catch { }
+        }
 
         void ICharacterCreationContentHandler.OnCharacterCreationFinalize(CharacterCreationManager m)
         {
             // Record the final pick only; the grant itself happens post-reset.
+            // The Apostle/Squire options are SHARED across cultures (their flavour is
+            // culture-gated), so their boons must be gated by culture too — otherwise an
+            // Empire character who picks the "groom" option would receive Templar Grace.
             try
             {
+                string sel = m?.CharacterCreationContent?.SelectedCulture?.StringId;
                 foreach (var pair in m.SelectedOptions)
                 {
                     string id = pair.Value?.StringId;
-                    if      (id == KhuzaitApostleOptionId)  _pendingApostleDarkGift = true;
-                    else if (id == VlandiaSquireOptionId)   _pendingSquireBoon      = true;
+                    if      (id == KhuzaitApostleOptionId && sel == "khuzait") _pendingApostleDarkGift = true;
+                    else if (id == VlandiaSquireOptionId  && sel == "vlandia") _pendingSquireBoon      = true;
                     else if (id == AshenForgottenAgeId)     _pendingForgottenAge    = true;
                     else if (id == StrugianOriginId)        _pendingStrugianOrigin  = true;
                 }
@@ -244,8 +284,8 @@ namespace AshAndEmber
                     }),
                     new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
                         mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
-                    null,
-                    null);
+                    _noopSelect,
+                    _noopConsequence);
                 menu.AddNarrativeMenuOption(option);
             }
             catch { }
@@ -274,8 +314,8 @@ namespace AshAndEmber
                     }),
                     new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
                         mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
-                    null,
-                    null);
+                    _noopSelect,
+                    _noopConsequence);
                 menu.AddNarrativeMenuOption(option);
             }
             catch { }
@@ -301,8 +341,8 @@ namespace AshAndEmber
                     new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) => { }),
                     new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
                         mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
-                    null,
-                    null);
+                    _noopSelect,
+                    _noopConsequence);
                 menu.AddNarrativeMenuOption(option);
             }
             catch { }
@@ -342,13 +382,16 @@ namespace AshAndEmber
                 + "followed the column from siege to siege, and you grew up in the wake of its campaigns.");
 
             // ── Stage 3 — Adolescence ────────────────────────────────────────
+            // These education/youth options are SHARED across cultures, so the flavour
+            // is culture-gated (see RegisterGatedRename) — only the matching culture
+            // sees it; everyone else keeps the vanilla wording.
             // Khuzait (urban): studied with your private tutor → attended the religious school.
-            Edit(m, "narrative_education_menu", "education_tutor_option",
+            RegisterGatedRename(m, "narrative_education_menu", "education_tutor_option", "khuzait",
                 "attended the religious school.",
                 "While other children worked the herds, you were sent to the God-King's schoolmen, who drilled "
                 + "scripture, numbers, and the disciplines of the faithful into you by rote and by rod.");
             // Vlandia (urban): hung out with the gangs → denounced enemies of the faith.
-            Edit(m, "narrative_education_menu", "education_ganger_option",
+            RegisterGatedRename(m, "narrative_education_menu", "education_ganger_option", "vlandia",
                 "denounced enemies of the faith with your friends.",
                 "You and your fellows made a sport of rooting out heresy in the back streets — naming the "
                 + "lapsed, the foreign, and the merely unlucky to the Order's wardens. Some of it was zeal. "
@@ -356,23 +399,65 @@ namespace AshAndEmber
 
             // ── Stage 4 — Youth ──────────────────────────────────────────────
             // Khuzait: a chieftain's servant → the God-King's bloodrider's servant.
-            Edit(m, "narrative_youth_menu", "youth_servant_first_option",
+            RegisterGatedRename(m, "narrative_youth_menu", "youth_servant_first_option", "khuzait",
                 "were the God-King's bloodrider's servant.",
                 "You waited on one of the God-King's bloodriders — his chosen lancers — fetching and scouting "
                 + "and listening at the edges of councils you were never meant to hear.");
             // Khuzait: an envoy's entourage → the Tribe's emissary.
-            Edit(m, "narrative_youth_menu", "youth_envoys_guard_first_option",
+            RegisterGatedRename(m, "narrative_youth_menu", "youth_envoys_guard_first_option", "khuzait",
                 "served as the Tribe's emissary.",
                 "You rode ahead of the horde, carrying the God-King's terms to cities that still believed they "
                 + "could bargain. You learned to read a room full of frightened men — and to be gone before the "
                 + "knives came out.");
             // Vlandia: a baron's groom → a Lord Templar's squire (Grace + Honour for Charm).
-            Edit(m, "narrative_youth_menu", VlandiaSquireOptionId,
+            RegisterGatedRename(m, "narrative_youth_menu", VlandiaSquireOptionId, "vlandia",
                 "served as a Lord Templar's squire.",
                 "You served a Lord Templar as his squire — tending his arms and his horse, kneeling through the "
                 + "long vigils, and learning that the Order's strength is bought with discipline and faith.\n\n"
                 + "(You will begin with 3 Grace.)",
-                SquireArgs);
+                new GetNarrativeMenuOptionArgsDelegate(SquireArgs));
+        }
+
+        // Registers a culture-gated rename of a shared narrative option: captures the
+        // vanilla text/description/args first, then ApplyGatedRenames swaps in the
+        // flavour only while the matching culture is selected.
+        private static void RegisterGatedRename(CharacterCreationManager m, string menuId, string optionId,
+            string culture, string flavText, string flavDesc, GetNarrativeMenuOptionArgsDelegate flavArgs = null)
+        {
+            var o = Find(m, menuId, optionId);
+            if (o == null) return;
+            try
+            {
+                _gated.Add(new GatedRename
+                {
+                    MenuId = menuId, OptionId = optionId, Culture = culture,
+                    FlavText = new TextObject(flavText), FlavDesc = new TextObject(flavDesc),
+                    BaseText = TextField?.GetValue(o) as TextObject,
+                    BaseDesc = DescField?.GetValue(o) as TextObject,
+                    FlavArgs = flavArgs,
+                    BaseArgs = ArgsGetterField?.GetValue(o) as GetNarrativeMenuOptionArgsDelegate,
+                });
+            }
+            catch { }
+        }
+
+        // Applies each gated rename's flavour when its culture is the live selection,
+        // and restores the vanilla wording/args otherwise.
+        private static void ApplyGatedRenames()
+        {
+            if (_manager == null || _gated.Count == 0) return;
+            string sel = null;
+            try { sel = _manager.CharacterCreationContent?.SelectedCulture?.StringId; } catch { }
+            foreach (var gr in _gated)
+            {
+                var o = Find(_manager, gr.MenuId, gr.OptionId);
+                if (o == null) continue;
+                bool match = sel == gr.Culture;
+                try { TextField?.SetValue(o, match ? gr.FlavText : gr.BaseText); } catch { }
+                try { DescField?.SetValue(o, match ? gr.FlavDesc : gr.BaseDesc); } catch { }
+                if (gr.FlavArgs != null)
+                    try { ArgsGetterField?.SetValue(o, match ? gr.FlavArgs : gr.BaseArgs); } catch { }
+            }
         }
 
         private static NarrativeMenuOption Find(CharacterCreationManager m, string menuId, string optionId)

@@ -153,20 +153,19 @@ namespace AshAndEmber
                 // engine's own selection-driven state) and stop interfering.
                 if (pending.Count == 0)
                 {
+                    // Every card corrected — release the gate and stop sweeping.
                     SetCanAdvanceFromSelection(_stageVmThisPass);
                     _doneThisScreen = true;
-                }
-                else if (++_gateAttempts < MaxGateAttempts)
-                {
-                    SetStageBool(_stageVmThisPass, "CanAdvance", false);
                 }
                 else
                 {
-                    // Some card never cleared this pass. Never trap the player on the
-                    // culture screen — release the gate and let the engine's own
-                    // selection-driven CanAdvance govern from here on.
-                    SetCanAdvanceFromSelection(_stageVmThisPass);
-                    _doneThisScreen = true;
+                    // Cards still pending — KEEP sweeping every pass (do not mark the
+                    // screen done): the culture view-models may not be reachable until
+                    // several frames after the screen is built, so the cosmetic rename
+                    // must keep retrying. But only HOLD "Next" for a short window, then
+                    // stop blocking so the player can never be trapped on this screen.
+                    if (++_gateAttempts < MaxGateAttempts)
+                        SetStageBool(_stageVmThisPass, "CanAdvance", false);
                 }
                 _stageVmThisPass = null;
             }
