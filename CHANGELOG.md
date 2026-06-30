@@ -6,6 +6,22 @@
 
 ---
 
+## v0.33.0
+
+### The Northmen
+- **Sturgia is now presented as the Northmen** — the same treatment as Vlandia → The Holy Temple and Khuzait → Tribes of the East. The culture reads "Northmen" on the character sheet, the encyclopedia, troop culture, and the character-creation card. They remain mechanically ordinary Sturgia — only the name and the blurb change.
+- **Their story is the war that never ends.** The culture description now tells of a hard northern folk who hold the cold edge of the world and stand in the gap against the Ashen pressing down out of the deeper north — "they do not expect to break the cold; they expect to hold the line."
+
+---
+
+## v0.32.0
+
+### Sturgia restored — the Ashen are a fate, not a starting point
+- **Sturgia is ordinary Sturgia again.** All of the character-creation rework tied to the northern culture is removed: the injected "forgotten-past" backstory options (which were crashing the game when picked), the "Northerner" opt-out, the culture-card rename to "The Ashen", and the renamed feats are all gone. Choosing the northern culture now behaves exactly like vanilla Sturgia.
+- **You no longer START as the Ashen.** Picking the northern culture once forced (or offered) full Ashen status from the first day. That start is removed entirely — every culture, Sturgia included, simply takes the ordinary Gift prompt and chooses its own path. The Ashen are now only ever something you *become* in play: the Last Ember at a century's age, captivity among them, or the cold's darker turns. (The Templar and Tribal culture reworks, and the Ashen kingdom in the world, are unchanged.)
+
+---
+
 ## v0.31.0
 
 ### Crystals

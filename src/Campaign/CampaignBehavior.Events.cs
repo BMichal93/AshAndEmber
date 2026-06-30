@@ -140,68 +140,11 @@ namespace AshAndEmber
                 // Apply any character-creation backstory boon AFTER the resets above,
                 // so it is not wiped (the pick was recorded during creation).
                 try { CreationBackstoryRework.ApplyPendingBoons(); } catch { }
-                // Ashen-origin players (Sturgian culture) skip the Gift prompt entirely —
-                // they are already Ashen; the fire settled in them long before the game begins.
-                // A player who chose the basic Sturgian origin at creation opts out of that
-                // transformation: they stay a mortal Sturgian and walk the ordinary path.
-                bool isStrugian   = Hero.MainHero?.Culture?.StringId == "sturgia"
-                                    && CreationBackstoryRework.ChoseStrugianOrigin;
-                bool isAshenOrigin = Hero.MainHero?.Culture?.StringId == "sturgia" && !isStrugian;
-                if (isStrugian)
-                    try { AshenCitySystem.RestoreNorthernerCultureIdentity(); } catch { }
-                MageKnowledge._deferredInquiry = isAshenOrigin
-                    ? (Action)ApplyAshenOriginAndStart
-                    : ShowGiftPrompt;
-            }
-            catch { }
-        }
-
-        // ── Ashen-origin start ────────────────────────────────────────────────
-        // Called instead of ShowGiftPrompt when the player chose the Sturgian
-        // (Ashen) origin at character creation. Applies full Ashen status without
-        // asking — they already know what they are.
-        private void ApplyAshenOriginAndStart()
-        {
-            try
-            {
-                MageKnowledge.SetMage(true);
-                MageKnowledge.SetAshen(true);
-                MageKnowledge.ApplyAshenAppearance(Hero.MainHero);
-
-                // Clan tier 2 from the start — Ashen are not fresh adventurers.
-                try
-                {
-                    var clan = Hero.MainHero?.Clan;
-                    if (clan != null && clan.Renown < 150f)
-                        clan.Renown = 150f;
-                }
-                catch { }
-
-                // Seed and initialise the Ashen kingdom, then join it.
-                try { ColourLordRegistry.SeedInitialLords(); } catch { }
-                try { AshenCitySystem.Initialize();           } catch { }
-                try { AshenCitySystem.DailyTick();            } catch { }
-                try { AshenCitySystem.OnPlayerBecameAshen();  } catch { }
-
-                // Criminal in every non-Ashen kingdom — lords and guards already know.
-                try
-                {
-                    foreach (var k in Kingdom.All.ToList())
-                    {
-                        if (k.StringId == "ashen_kingdom" || k.IsEliminated) continue;
-                        ChangeCrimeRatingAction.Apply(k, 80f, false);
-                    }
-                }
-                catch { }
-
-                try { ReassignImperialSettlements(); } catch { }
-
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "You remember little of who you were. What remains is the cold, and the fire that will not die.",
-                    new Color(0.3f, 0.35f, 0.7f)));
-
-                _selectionDone = true;
-                MageKnowledge._deferredInquiry = MageKnowledge.ShowControlsPointer;
+                // Every culture — Sturgian included — takes the ordinary path: the Gift
+                // prompt decides their magic. The Ashen are something you BECOME in play
+                // (the Last Ember at a century's age, captivity, the cold's darker turns),
+                // never a starting state.
+                MageKnowledge._deferredInquiry = ShowGiftPrompt;
             }
             catch { }
         }

@@ -375,90 +375,48 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Ashen origin culture rename (character creation only) ─────────────
-        // Renames the sturgian culture object to "Ashen" so the character-creation
-        // card reads "The Ashen" as the origin name. The Sturgia kingdom itself is
-        // left untouched — only the origin label changes.
-        public static void RenameAshenFactionCulture()
+        // ── Sturgia → the Northmen (culture rename) ───────────────────────────
+        // Renames the Sturgian culture object so the character sheet, encyclopedia,
+        // troop culture and creation card read "Northmen" — the same treatment as
+        // Vlandia → Templar and Khuzait → Tribes. Sturgia stays mechanically vanilla;
+        // only the label and the culture blurb change (no feat relabelling).
+        public static void RenameNorthmenCulture()
         {
             try
             {
                 var sturgiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
                 if (sturgiaCulture != null)
-                    _nameField?.SetValue(sturgiaCulture, new TextObject("Ashen"));
+                    _nameField?.SetValue(sturgiaCulture, new TextObject("Northmen"));
             }
             catch { }
         }
 
-        // ── Character-creation culture card text override for The Ashen ────────
-        // Works identically to ApplyTempleCultureTexts but for the sturgia culture.
-        public static bool ApplyAshenFactionCultureTexts()
+        // ── Character-creation culture card text override for the Northmen ─────
+        // Works identically to ApplyTempleCultureTexts / ApplyTribalCultureTexts.
+        public static bool ApplyNorthmenCultureTexts()
         {
             try
             {
-                RenameAshenFactionCulture();
+                RenameNorthmenCulture();
 
                 var mgrField = typeof(GameTexts).GetField("_gameTextManager",
                     BindingFlags.NonPublic | BindingFlags.Static);
                 var mgr = mgrField?.GetValue(null) as GameTextManager;
                 if (mgr == null) return false;
 
-                SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "The Ashen");
+                SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "Northmen");
                 SetCultureVariation(mgr, "str_culture_description", "sturgia",
-                    "You remember little of what came before. A road, perhaps. A name someone used to call you. " +
-                    "The fire has been with you longer than any of it — cold now, colourless, not the fire " +
-                    "of warmth or faith but something that ran out of warmth a long time ago. " +
-                    "You are Ashen. You do not know when it happened or what it cost you. " +
-                    "What remains is the cold, the knowledge that you will not age, " +
-                    "and the certainty that every lord and guard who looks too long at your eyes " +
-                    "already knows something is wrong.");
-                RelabelCulturalFeats("sturgia", _ashenFactionFeats, ref _ashenFactionFeatsRelabeled);
+                    "The Northmen hold the cold edge of the world, where the forest gives way to ice and the " +
+                    "winter nights run longest. They are a hard folk — raiders and shipwrights, sworn to oath, " +
+                    "blood-feud, and the long memory of their kings. But what truly shapes them is the war that " +
+                    "never ends. Out of the deeper north press the Ashen — the dead-cold lords who neither age " +
+                    "nor tire — and it falls to the Northmen to stand in the gap. Every hall keeps its watch-fires " +
+                    "burning; every child learns the axe before the plough. They do not expect to break the cold. " +
+                    "They expect to hold the line — one more winter, and the next.");
                 return true;
             }
             catch { return false; }
         }
-
-        // ── Living-North identity restore (Northerner origin) ─────────────────
-        // The character-creation flow renames the sturgia culture to "Ashen" so the
-        // culture card presents the Ashen origin (see ApplyAshenFactionCultureTexts).
-        // A player who chose the basic Northerner origin keeps the unchanged northern
-        // identity instead, so we revert the culture name and blurb to "Northerner" —
-        // the umbrella the Ashen and the living North both descend from. Re-applied
-        // each session from the daily tick for Northerner-origin players, mirroring
-        // how the Ashen rename is re-applied (names revert to XML on load). The
-        // character sheet, encyclopedia, and troop culture then read "Northerner".
-        public static void RestoreNorthernerCultureIdentity()
-        {
-            try
-            {
-                var sturgiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
-                if (sturgiaCulture != null)
-                    _nameField?.SetValue(sturgiaCulture, new TextObject("Northerner"));
-
-                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
-                    BindingFlags.NonPublic | BindingFlags.Static);
-                var mgr = mgrField?.GetValue(null) as GameTextManager;
-                if (mgr == null) return;
-
-                SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "Northerner");
-                SetCultureVariation(mgr, "str_culture_description", "sturgia",
-                    "A hard people of the frozen north, raised on long winters and longer feuds. " +
-                    "When the grey fire came down out of the dark, it took some of them and left the rest — " +
-                    "the Ashen and the living North are both their children. Those it did not take still " +
-                    "keep their names, their hearths, and their dead. They fight on foot with axe and shield, " +
-                    "they mourn what the cold stole from their kin, and they have learned to tell the living " +
-                    "from the Ashen by the warmth behind the eyes.");
-            }
-            catch { }
-        }
-
-        private static readonly string[] _ashenFactionFeats =
-        {
-            "Cold Fire — The flame in you never went out; it only changed. You wield fire magic from the first day, its colour cold as ash. (Always Ashen — inner fire with cold-blue flame, no aging)",
-            "Unaging — You do not age. You do not die to time. Whatever the fire took, it kept you. (Immortal; each casting costs criminal standing instead of years)",
-            "Marked — Every lord and guard outside the Ashen sees it in your eyes before you speak. (Criminal rating 80 in all non-Ashen kingdoms from the start)",
-        };
-        private static bool _ashenFactionFeatsRelabeled;
 
         // ── Khuzait troop rename ───────────────────────────────────────────────
         // Renames all vanilla Khuzait troops from "Khuzait X" to "Tribal X", with

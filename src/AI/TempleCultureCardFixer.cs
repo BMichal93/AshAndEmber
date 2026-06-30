@@ -82,26 +82,22 @@ namespace AshAndEmber
                     "No Quarter — The God-King's word burns through any treaty; your wars do not end in peace.",
                 },
             },
-            // Sturgia → The Ashen. Kept in sync with AshenCitySystem.ApplyAshenFactionCultureTexts
-            // and _ashenFactionFeats — the game-text override renames the data, this rewrites the
-            // already-built card VM so the selection screen reads "The Ashen", not "Sturgians".
+            // Sturgia → the Northmen. Name + blurb only; the feats are LEFT as vanilla
+            // Sturgian (empty list ⇒ RewriteFeats is a no-op), since the Northmen are
+            // mechanically ordinary Sturgia — only renamed.
             new CultureCard
             {
                 Id   = "sturgia",
-                Name = "The Ashen",
+                Name = "Northmen",
                 Desc =
-                    "You remember little of what came before. A road, perhaps. A name someone used to call you. "
-                    + "The fire has been with you longer than any of it — cold now, colourless, not the fire of "
-                    + "warmth or faith but something that ran out of warmth a long time ago. You are Ashen. You do "
-                    + "not know when it happened or what it cost you.\n\n"
-                    + "What remains is the cold, the knowledge that you will not age, and the certainty that every "
-                    + "lord and guard who looks too long at your eyes already knows something is wrong.",
-                Feats = new[]
-                {
-                    "Cold Fire — The flame in you never went out; it only changed. You wield fire magic from the first day, its colour cold as ash. (Always Ashen — inner fire with cold-blue flame, no aging)",
-                    "Unaging — You do not age. You do not die to time. Whatever the fire took, it kept you. (Immortal; each casting costs criminal standing instead of years)",
-                    "Marked — Every lord and guard outside the Ashen sees it in your eyes before you speak. (Criminal rating 80 in all non-Ashen kingdoms from the start)",
-                },
+                    "The Northmen hold the cold edge of the world, where the forest gives way to ice and the "
+                    + "winter nights run longest. They are a hard folk — raiders and shipwrights, sworn to oath, "
+                    + "blood-feud, and the long memory of their kings.\n\n"
+                    + "But what truly shapes them is the war that never ends. Out of the deeper north press the "
+                    + "Ashen — the dead-cold lords who neither age nor tire — and it falls to the Northmen to "
+                    + "stand in the gap. Every hall keeps its watch-fires burning; every child learns the axe "
+                    + "before the plough. They do not expect to break the cold. They expect to hold the line.",
+                Feats = new string[0],
             },
         };
 
