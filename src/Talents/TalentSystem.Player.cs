@@ -60,6 +60,15 @@ namespace AshAndEmber
             _dailyMapCastCount = 0;
         }
 
+        // Shared with the unified element map-spells (ElementSpellMinigame): every
+        // map working — fire or element — counts against the one daily toll so the
+        // escalating cost cannot be sidestepped by mixing systems.
+        public static void RegisterMapCast()
+        {
+            _dailyMapCastCount++;
+            try { AgingSystem.RecordMapCast(); } catch { }
+        }
+
         // ── Player talent tracking ─────────────────────────────────────────────
         private static readonly HashSet<TalentId> _purchased = new HashSet<TalentId>();
 

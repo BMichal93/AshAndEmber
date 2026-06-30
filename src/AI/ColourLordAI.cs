@@ -316,14 +316,79 @@ namespace AshAndEmber
             try { return hero.GetTraitLevel(DefaultTraits.Calculating) >= 2; } catch { return false; }
         }
 
+        // ── Unified elemental kit for non-Ashen mage lords ───────────────────────
+        // Fire is the basis and keeps its tuned blast/burst; the Ashen and the false
+        // emperor keep their cold-fire scaling. Every other mage lord wields ONE
+        // element (fixed by identity) and casts the same kit the player does, so the
+        // merged magic reads on the battlefield. The element's own visuals (including
+        // the Ashen cold mask) are applied inside ElementSpellEffects.
+        private static MagicElement ElementOf(Hero hero)
+        {
+            try
+            {
+                if (hero == null || ColourLordRegistry.IsAshenLord(hero)) return MagicElement.Fire;
+                int h = StableHash(hero.StringId ?? "");
+                return (MagicElement)(((h % 5) + 5) % 5);
+            }
+            catch { return MagicElement.Fire; }
+        }
+
+        private static int StableHash(string s)
+        {
+            unchecked { int hash = (int)2166136261; foreach (char c in s) { hash ^= c; hash *= 16777619; } return hash; }
+        }
+
+        // Routes a non-Ashen, non-Fire lord's cast through the element kit.
+        // Returns true when it handled the cast (caller should then return).
+        private static bool TryCastElement(Agent agent, Hero hero, CastForm form, int inputs)
+        {
+            var el = ElementOf(hero);
+            if (ColourLordRegistry.IsAshenLord(hero) || el == MagicElement.Fire) return false;
+            AnnounceEnemyCast(agent, hero, ElementBlurb(el, form));
+            SetCooldown(hero);
+            RecordCast(hero, inputs);
+            SpellEffects.QueueNpcCastWithWindup(agent, () =>
+            {
+                if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, agent);
+                else                          ElementSpellEffects.CastWall(el, agent);
+                try { SpellEffects.TryCastSound(agent.Position, ColorSchool.Nature); } catch { }
+                try { SpellEffects.TryCastAnimation(agent); } catch { }
+            });
+            return true;
+        }
+
+        private static string ElementBlurb(MagicElement el, CastForm form)
+        {
+            if (form == CastForm.Wall)
+            {
+                switch (el)
+                {
+                    case MagicElement.Wind:   return "raises a wall of wind.";
+                    case MagicElement.Earth:  return "raises a wall of stone.";
+                    case MagicElement.Water:  return "raises a barrier of mist.";
+                    case MagicElement.Spirit: return "raises a wall that heartens its own.";
+                    default:                  return "raises a wall of fire.";
+                }
+            }
+            switch (el)
+            {
+                case MagicElement.Wind:   return "looses a blast of wind.";
+                case MagicElement.Earth:  return "tears the earth upward.";
+                case MagicElement.Water:  return "hurls a slowing wave.";
+                case MagicElement.Spirit: return "strikes the mind with cold dread.";
+                default:                  return "shapes fire into a forward blade.";
+            }
+        }
+
         private static void CastBarrierWall(Agent agent, Hero hero)
         {
             try
             {
+                _pyreBarriersPlaced.Add(hero.StringId);
+                if (TryCastElement(agent, hero, CastForm.Wall, 6)) return;
                 AnnounceEnemyCast(agent, hero, "raises a wall of fire.");
                 SetCooldown(hero);
                 RecordCast(hero, 6); // 3 nodes + 3 damage inputs
-                _pyreBarriersPlaced.Add(hero.StringId);
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
                     SpellEffects.ExecuteNpcBarrier(agent, 3, 3, 0, agent.Team);
@@ -337,6 +402,7 @@ namespace AshAndEmber
         {
             try
             {
+                if (TryCastElement(agent, hero, CastForm.Attack, formCount + dmg + restore)) return;
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
                     ? (isAshen ? "cold fire tears forward." : "channels a devastating blast.")
@@ -357,6 +423,9 @@ namespace AshAndEmber
         {
             try
             {
+                // Restore-heavy bursts are self-heals — those stay element-agnostic
+                // (any mage can turn the fire inward). Offensive bursts go elemental.
+                if (restore < dmg && TryCastElement(agent, hero, CastForm.Attack, formCount + dmg + restore)) return;
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
                     ? (isAshen ? "tears the veil — cold fire erupts." : "channels a great eruption.")

@@ -111,36 +111,49 @@ namespace AshAndEmber
                 "What follows is set down so it is never forgotten."), true);
 
             AddLog(new TextObject(
-                "SPELLCASTING — Hold Left Alt and trace the Form with W / A / S / D (Up / Left / Right / Down). " +
-                "Press X to Break, then trace the Effect with W / A / S / D. Release Alt to loose the spell. " +
-                "Gamepad: hold LB, flick the left stick, click L3 to Break, release LB to cast."), true);
+                "MAGIC — Hold Left Alt to FOCUS (gamepad: hold LB). FIRE is loaded by default — the " +
+                "physical-and-spiritual root of the art. To draw another element you have LEARNED, tap " +
+                "W (Wind) · S (Earth) · A (Water) · D (Spirit) — gamepad: flick the left stick up / down / " +
+                "left / right. Stand STILL, with a hand free and your armour light, and the element " +
+                "gathers over about three seconds. Then ATTACK (left mouse / right trigger) looses its " +
+                "cone, or BLOCK (right mouse / left trigger) raises its wall. Release Alt to stop."), true);
 
             AddLog(new TextObject(
-                "THE FOUR STROKES — W (Up): Blast / Sear.  A (Left): Missile / Force.  " +
-                "D (Right): Barrier / Shred.  S (Down): Burst / Restore. " +
-                "Up to five strokes each side; the fifth Form stroke Breaks on its own."), true);
+                "MAGIC · THE FIVE ELEMENTS (in battle) — FIRE: a cone of fire / a wall of fire. " +
+                "WIND: a blast that hurls and slows / a wall of wind that turns arrows aside and bogs " +
+                "down all who cross. EARTH: a burst of rooting stone / a stone wall. WATER: a slowing " +
+                "wave / a barrier of mist. SPIRIT: strike fear into men and horses and shout a stray " +
+                "order into their ranks / a wall that heartens your own and mends them a little."), true);
 
             AddLog(new TextObject(
-                "INNER FIRE · THE FORMS (traced before Break) — W Blast: a cone, 2.5 m longer per " +
-                "stroke. A Missile: a projectile that flies and bursts (range and blast grow per " +
-                "stroke). D Barrier: a wall, one segment per stroke. S Burst: a ring centred on you, " +
-                "2.5 m wider per stroke. You may mix forms in one cast — they all loose together."), true);
+                "MAGIC · THE COST — Every cast burns YEARS of your life. The longer you DRAW before you " +
+                "loose it (up to about seven seconds), the LESS it ages you — a snatched, three-second " +
+                "cast costs the most. Cast outside battle and the toll is paid in campaign days instead, " +
+                "rising with each working in the same day. The Ashen pay not in years but in criminal " +
+                "standing. The NATURE discipline makes the patient, full draw cost almost nothing."), true);
 
             AddLog(new TextObject(
-                "INNER FIRE · THE EFFECTS (traced after Break, up to five) — W Sear: ~35 fire damage " +
-                "and a shove per stroke. A Force: ~22 damage and a lingering vulnerability. D Shred: " +
-                "~22 damage and morale loss. S Restore: ~15 healing and morale to allies (a Burst " +
-                "also mends you). Stack and mix freely — damage and restore in one breath if you wish."), true);
+                "MAGIC · LEARNING THE CRAFT — Fire is innate; everything else is learned. The elements " +
+                "Wind, Earth, Water and Spirit, and three DISCIPLINES — STEEL (cast with a weapon still " +
+                "in hand, and bear twice the armour) · BLOOD (taking a lord's head gives back the years " +
+                "the fire has burned) · NATURE (the slow draw costs far less) — are studied on the map " +
+                "with Left Alt + L, the Codex of the Inner Fire. Each costs one more focus point than the " +
+                "last. A TEACHER who carries a craft teaches it for one point less — seek out the " +
+                "attuned, those the land speaks through, and ask them."), true);
 
             AddLog(new TextObject(
-                "INNER FIRE · THE COST — Every cast spends years of your life: the more strokes in " +
-                "total (forms + effects), the steeper the aging, up to 84 days for the largest workings. " +
-                "Cast outside battle and the cost is paid in campaign days, rising with each casting in " +
-                "the same day. Talents soften the toll and unlock the Lost Forms."), true);
+                "MAGIC · IF YOU ARE ASHEN — the cold reshapes each element: Fire becomes COLD, Wind " +
+                "becomes STORM, Earth becomes ASH, Water becomes SNOW, Spirit becomes VOID. The workings " +
+                "are the same; only their colour and their price (criminal standing, never years) change."), true);
 
             AddLog(new TextObject(
-                "THE GRIMOIRE — Alt + X, before any Form is traced, opens your spellbook and quest record. " +
-                "Gamepad: LB + RB."), true);
+                "THE GRIMOIRE — Alt + X (gamepad: LB + RB) opens your spellbook and quest record. From it, " +
+                "choose Cast to work an element's CAMPAIGN-MAP spell through its memory-rite: Fire's " +
+                "Emberfall (fire rains on a hostile settlement), Wind's Scattering Gale (a hostile host " +
+                "thrown into disorder), Earth's Deeproot Blight (a hostile village's hearth withers), " +
+                "Water's Tidewash (your own column mended and heartened), and Spirit's Farsight (the " +
+                "currents of power — and the knives set behind your back — revealed). Recall the rite " +
+                "truly and the working answers in full."), true);
 
             AddLog(new TextObject(
                 "MIRACLES — Each of your PERSONALITY TRAITS grants two prayers once it stands at +1 or " +
@@ -183,94 +196,10 @@ namespace AshAndEmber
                 "towns' markets (expensive, restocked weekly) and can be looted from lords who carry them."), true);
 
             AddLog(new TextObject(
-                "THE LIVING EMBER — the art of those attuned to the living world rather than the " +
-                "inner fire. It shares the Left Ctrl key with miracles, but a hero walks only one " +
-                "of these paths: Grace, Nature, and the Dark Gifts are all mutually exclusive."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · DRAW AN ELEMENT — Hold Left Ctrl and CHOOSE what to draw by tracing a " +
-                "direction:  W = Wind · S = Earth · A = Water · D = Storm  (left stick on a pad). Then " +
-                "STAND STILL (both hands empty, armour weight ≤ 25) and a bar fills over about six " +
-                "seconds, coloured by your chosen element; when it completes you hold one charge, which " +
-                "lasts about thirty seconds. Moving interrupts the gathering. The land no longer decides " +
-                "the element — you do."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · CAST (in battle) — While holding Left Ctrl and carrying a charge:  " +
-                "Attack (left mouse) looses the element's ATTACK,  Block (right mouse) calls its BARRIER. " +
-                "Each cast spends the charge. Gamepad: hold R3 to gather, Right Trigger = attack, " +
-                "Left Trigger = barrier. On the campaign map open the litany (Shift+X) to spend your " +
-                "charge on the element's MARCH POWER instead — attacks need enemies, but the land " +
-                "still answers in other ways."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · THE FOUR ELEMENTS — You choose the element (W Wind · S Earth · A Water · " +
-                "D Storm). The land no longer decides WHICH element answers — only how dearly it costs. " +
-                "Each terrain FAVOURS certain elements: WIND on mountains, hills and steppes; EARTH in " +
-                "forests; WATER by rivers, shores, rain and snow; STORM on open plains and deserts. " +
-                "Drawing a favoured element spends little of the place's living energy; drawing against " +
-                "the land (water in a desert, say) spends far more."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · THE LIVING ENERGY — Every battlefield and every stretch of country holds " +
-                "a hidden reserve of living warmth, set by how much grows there (a forest brims; a desert " +
-                "holds almost nothing). EVERY draw of nature magic AND every cast of Inner Fire — yours " +
-                "or any NPC mage's — spends some of it. You are never told the exact figure, but the land " +
-                "warns you as it thins: at the half, at the quarter, and when it runs dry. Drained past " +
-                "empty, the land turns on those who DRAW from it: each further nature draw bleeds the " +
-                "hearth of the nearest village, and may SOUR — recoiling on the nature caster (damage; a " +
-                "working twists). Inner Fire does not commune with the land, only burns it — a fire mage " +
-                "is never bitten back, but their casting still strips the ground bare, which is precisely " +
-                "what makes the living world treacherous to draw from on a battlefield full of fire. " +
-                "The souring takes many shapes — dead briars that root you, a hollowing weakness, a flare " +
-                "of grey ash, a slow wither; on the march, spoiled stores, a creeping fever, or a " +
-                "contagious despair. Left in peace, a place heals a little each day. THE OLD GREEN: a " +
-                "tavern will sell the land-attuned a pouch of rare weeds — smoke it to lose a tenth of " +
-                "your health and a few drowsy hours, but for a day a third of your draws will cost the " +
-                "land nothing at all."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · THE POWERS — WIND: Gale (Attack — a ring of wind, knockback + damage) · " +
-                "Windwall (Block — a howling wall that hurls foes back). " +
-                "EARTH: Entangle (Attack — roots that hold foes fast and wound them) · " +
-                "Thornwall (Block — erupting thorns: roots and bleeds all who press against it). " +
-                "WATER: Torrent (Attack — a cone that scatters and breaks formations) · " +
-                "Mistwall (Block — a churning water curtain that pushes and slows). " +
-                "STORM: Thunderclap (Attack — a bolt that chains between foes) · " +
-                "Stormwall (Block — a crackling lightning field that sears all who enter). " +
-                "All barriers last several seconds and pulse every heartbeat; NPCs who walk the living path raise them in defence."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · ON THE CAMPAIGN MAP — First open the litany (Shift+X / RB+L3) to CHOOSE " +
-                "which element to draw; the window shows whether the ground you stand on favours it (a " +
-                "gentle draw) or not (a costly one). Then halt in open country — standing still a few " +
-                "hours fills a charge of your chosen element. Open the litany again to spend it on that " +
-                "element's MARCH POWER. Each has a real cost — the land " +
-                "gives nothing for free. " +
-                "WIND — Windward: the wind presses the march forward — if you have a destination set, " +
-                "the column advances several leagues toward it. If not, the wind goes ahead and comes " +
-                "back with word of enemies within reach. +10 morale. BUT supplies scatter in the gust " +
-                "(~15 food lost). " +
-                "EARTH — Root-Mend: the roots go deep and swell the hearth of the nearest village " +
-                "(+50 hearth). BUT the roots take a tithe from the nearest living vessel — you lose 15 HP. " +
-                "WATER — Still Waters: you must stand on water — a river, shore, or coast. A current " +
-                "runs beneath your feet and shows you every harbour at once; pick one and the water " +
-                "carries the whole column there. BUT soldiers arrive cold and unsure of where they are " +
-                "(-20 morale on arrival). Only coastal harbour towns appear as destinations. " +
-                "STORM — Thunder's Edge: three bolts crack the sky and your soldiers roar; nearby " +
-                "enemies on the map falter (-20 morale to them). +35 morale. BUT the lightning does " +
-                "not ask which side you fight for — 2-3 of your weakest soldiers are struck and wounded. " +
-                "NPC seers draw on the land daily in the same way, favouring Root-Mend when their " +
-                "column carries many wounded."), true);
-
-            AddLog(new TextObject(
-                "LIVING EMBER · DEEPER ATTUNEMENT — The hermits' teachings refine the art. " +
-                "Living Root: hold two charges (draw two elements at once). Still Draw: the bar fills " +
-                "twice as fast. Open Grip: your charge never fades. Deep Earth: you draw gently — each " +
-                "charge spends only HALF the land's living energy. Dawn Call: the land yields its charge " +
-                "an hour sooner on the march. Hermits in Battania, Sturgia, the Khuzait steppe, the " +
-                "mountain retreat of Marunath, and the Aserai fringe teach those who come ready — " +
-                "empty-handed and lightly armoured."), true);
+                "THE LIVING WORLD — what was once a separate art of the land is now woven into the one " +
+                "magic: its elements are the Wind, Earth and Water you learn (see MAGIC, above), and the " +
+                "seers attuned to the living world are now your TEACHERS — speak with them to learn the " +
+                "craft they carry for a focus point less than the lonely road would cost."), true);
 
             AddLog(new TextObject(
                 "THE DARK GIFTS — Permanent boons bought at a Dark Altar (in the Empire and the " +

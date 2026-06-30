@@ -93,6 +93,13 @@
   <ItemGroup>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="Magic\ElementMagicMath.cs"/>
+    <Compile Include="Magic\MageElementKnowledge.cs"/>
+    <Compile Include="Magic\ElementSpellEffects.cs"/>
+    <Compile Include="Magic\ElementMagicInput.cs"/>
+    <Compile Include="Magic\MagicLearning.cs"/>
+    <Compile Include="Magic\MagicTeacherDialogue.cs"/>
+    <Compile Include="Magic\ElementMapSpells.cs"/>
+    <Compile Include="Magic\ElementSpellMinigame.cs"/>
     <Compile Include="SaveDefiner.cs"/>
     <Compile Include="Startup\AshEmberSplash.cs"/>
     <Compile Include="Startup\AshEmberLoreIntro.cs"/>

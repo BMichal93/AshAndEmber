@@ -1,0 +1,210 @@
+// =============================================================================
+// ASH AND EMBER — Magic/ElementMagicInput.cs
+//
+// The unified elemental magic input, merging the old fire and nature handlers.
+//
+//   Hold FOCUS (Left Alt; gamepad Left Bumper). The loaded element is FIRE by
+//   default; tap W / S / A / D (or flick the left stick up / down / left / right)
+//   to load a learned element — Wind / Earth / Water / Spirit. Stand still and
+//   DRAW for at least ~3 s, then ATTACK (left mouse / right trigger) looses the
+//   element's cone, or BLOCK (right mouse / left trigger) raises its wall.
+//
+//   The longer you draw (up to ~7 s) the LESS it ages you; Harmony makes that
+//   patience pay far more. Casting needs a free hand and light armour — unless
+//   you know STEEL, which lets you cast with a weapon drawn and bears the weight.
+//   Aging "burns through" your years exactly like the old fire magic (the Ashen
+//   pay in criminal standing instead).
+//
+//   Battle only. On the campaign map, each element grants a prayer-style spell
+//   (cast through the litany / memory-rite, like the old fire map spells).
+// =============================================================================
+
+using System;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.Core;
+using TaleWorlds.InputSystem;
+using TaleWorlds.Library;
+using TaleWorlds.MountAndBlade;
+
+namespace AshAndEmber
+{
+    public static class ElementMagicInput
+    {
+        private static bool  _wasFocusing;
+        private static float _drawTime;            // seconds drawn since focus / last cast
+        private static bool  _prevAtk, _prevBlk;
+        private static bool  _prevPadUp, _prevPadDown, _prevPadLeft, _prevPadRight;
+        private static float _reminder;            // throttle for the "why can't I draw" hint
+        private const  float ReminderInterval = 2.0f;
+        private const  float StillSpeed       = 0.3f;
+        private static bool  _readyAnnounced;
+
+        public static bool InputSuppressed { get; private set; }
+
+        public static void ResetInputState()
+        {
+            _wasFocusing = false;
+            _drawTime = 0f;
+            _prevAtk = _prevBlk = false;
+            _prevPadUp = _prevPadDown = _prevPadLeft = _prevPadRight = false;
+            _reminder = 0f;
+            _readyAnnounced = false;
+            InputSuppressed = false;
+        }
+
+        public static void Tick(bool inMission, float dt = 0f)
+        {
+            // Combat casting only — the map grants each element its own litany spell.
+            if (!inMission) { InputSuppressed = false; return; }
+            if (!MageKnowledge.IsMage) { InputSuppressed = false; return; }
+
+            bool altHeld = Input.IsKeyDown(InputKey.LeftAlt);
+            bool lbHeld  = Input.IsKeyDown(InputKey.ControllerLBumper);
+            bool focusing = altHeld || lbHeld;
+            InputSuppressed = focusing;
+
+            if (focusing)
+            {
+                if (!_wasFocusing)
+                {
+                    MageElementKnowledge.ResetLoaded();
+                    _drawTime = 0f;
+                    _readyAnnounced = false;
+                    try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch { }
+                    try { if (Agent.Main != null) SpellEffects.BeginFocusVisual(Agent.Main, FocusSchool()); } catch { }
+                    _wasFocusing = true;
+                }
+
+                ReadElementSelect(altHeld, lbHeld);
+
+                // Draw the charge while standing still with hands and armour free
+                // (Steel waives the hand and weight limits).
+                string reason = ChannelBlockReason();
+                if (reason == null)
+                {
+                    _drawTime += dt;
+                    if (!_readyAnnounced && _drawTime >= ElementMagicMath.MinDrawSeconds)
+                    {
+                        _readyAnnounced = true;
+                        Msg($"The {MageElementKnowledge.LoadedName()} gathers — Attack looses it, Block raises its wall. " +
+                            "Hold longer to spend fewer years.");
+                    }
+                }
+                else
+                {
+                    _drawTime = 0f;
+                    _readyAnnounced = false;
+                    _reminder -= dt;
+                    if (_reminder <= 0f) { Msg(reason); _reminder = ReminderInterval; }
+                }
+
+                // Release: attack = cone, block = wall.
+                bool atk = altHeld ? Input.IsKeyDown(InputKey.LeftMouseButton)  : Input.IsKeyDown(InputKey.ControllerRTrigger);
+                bool blk = altHeld ? Input.IsKeyDown(InputKey.RightMouseButton) : Input.IsKeyDown(InputKey.ControllerLTrigger);
+                if (atk && !_prevAtk) TryCast(CastForm.Attack);
+                if (blk && !_prevBlk) TryCast(CastForm.Wall);
+                _prevAtk = atk; _prevBlk = blk;
+            }
+            else if (_wasFocusing)
+            {
+                _wasFocusing = false;
+                _drawTime = 0f;
+                _prevAtk = _prevBlk = false;
+                _readyAnnounced = false;
+                try { if (Agent.Main != null) SpellEffects.EndCastLoop(Agent.Main); } catch { }
+                try { if (Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch { }
+            }
+        }
+
+        // W/S/A/D (or left-stick flicks) load a learned element; Fire needs no key.
+        private static void ReadElementSelect(bool kb, bool pad)
+        {
+            if (kb)
+            {
+                if      (Input.IsKeyPressed(InputKey.W)) MageElementKnowledge.TryLoad(MagicElement.Wind);
+                else if (Input.IsKeyPressed(InputKey.S)) MageElementKnowledge.TryLoad(MagicElement.Earth);
+                else if (Input.IsKeyPressed(InputKey.A)) MageElementKnowledge.TryLoad(MagicElement.Water);
+                else if (Input.IsKeyPressed(InputKey.D)) MageElementKnowledge.TryLoad(MagicElement.Spirit);
+            }
+            if (pad)
+            {
+                bool up    = Input.IsKeyDown(InputKey.ControllerLStickUp);
+                bool down  = Input.IsKeyDown(InputKey.ControllerLStickDown);
+                bool left  = Input.IsKeyDown(InputKey.ControllerLStickLeft);
+                bool right = Input.IsKeyDown(InputKey.ControllerLStickRight);
+                if (up    && !_prevPadUp)    MageElementKnowledge.TryLoad(MagicElement.Wind);
+                if (down  && !_prevPadDown)  MageElementKnowledge.TryLoad(MagicElement.Earth);
+                if (left  && !_prevPadLeft)  MageElementKnowledge.TryLoad(MagicElement.Water);
+                if (right && !_prevPadRight) MageElementKnowledge.TryLoad(MagicElement.Spirit);
+                _prevPadUp = up; _prevPadDown = down; _prevPadLeft = left; _prevPadRight = right;
+            }
+        }
+
+        private static void TryCast(CastForm form)
+        {
+            if (_drawTime < ElementMagicMath.MinDrawSeconds)
+            {
+                Msg("The element is not yet gathered — hold and draw it first.");
+                return;
+            }
+            var caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+
+            var el = MageElementKnowledge.Loaded;
+            try
+            {
+                if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, caster);
+                else                         ElementSpellEffects.CastWall(el, caster);
+            }
+            catch { }
+
+            int days = ElementMagicMath.CastAgingDays(form, _drawTime, MageElementKnowledge.HasNature);
+            ApplyCastCost(days);
+            _drawTime = 0f;        // the charge is spent — draw again
+            _readyAnnounced = false;
+        }
+
+        // Aging "burns through" like fire; the Ashen pay in criminal standing instead.
+        private static void ApplyCastCost(int days)
+        {
+            if (days <= 0) return;
+            try
+            {
+                if (MageKnowledge.IsAshen)
+                {
+                    if (Hero.MainHero?.MapFaction is Kingdom k)
+                        ChangeCrimeRatingAction.Apply(k, days * 5f, false);
+                }
+                else
+                {
+                    AgingSystem.AgeHero(Hero.MainHero, days);
+                }
+            }
+            catch { }
+        }
+
+        // Null when drawing is allowed, else a short reason the player can act on.
+        private static string ChannelBlockReason()
+        {
+            Agent c = Agent.Main;
+            if (c == null || !c.IsActive()) return "There is no hand here to shape the fire.";
+            try { if (c.GetCurrentVelocity().Length >= StillSpeed) return "The fire answers only the still — stop moving to draw it."; } catch { }
+            bool steel = MageElementKnowledge.HasSteel;
+            if (!steel && !SpellEffects.HasFreeHand(c))   return "Your hands are full of steel. Sheathe your weapon (X) to draw — or learn Steel.";
+            if (!steel && NatureEffects.ArmourTooHeavy(c)) return "Too much iron weighs you down — shed armour to draw, or learn Steel.";
+            return null;
+        }
+
+        private static ColorSchool FocusSchool()
+        {
+            // The Ashen draw on the cold, whatever the element; otherwise Fire is red
+            // and the other elements borrow the nature glow.
+            try { if (MageKnowledge.IsAshen) return ColorSchool.Ashen; } catch { }
+            return MageElementKnowledge.Loaded == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature;
+        }
+
+        private static void Msg(string text)
+            => InformationManager.DisplayMessage(new InformationMessage(text, new Color(0.95f, 0.55f, 0.25f)));
+    }
+}

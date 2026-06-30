@@ -889,9 +889,9 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void ElementMagicMath_CastAgingDays_Harmony_FloorsCheap()
+        public void ElementMagicMath_CastAgingDays_Nature_FloorsCheap()
         {
-            // Harmony: -1.5/s over 4s = -6 days; floored at 1.
+            // Nature attunement: -1.5/s over 4s = -6 days; floored at 1.
             Assert.AreEqual(1, ElementMagicMath.CastAgingDays(CastForm.Attack, 7f, true));
             Assert.AreEqual(1, ElementMagicMath.CastAgingDays(CastForm.Wall,   7f, true));
         }

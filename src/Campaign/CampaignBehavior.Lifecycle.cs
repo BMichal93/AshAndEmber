@@ -56,22 +56,20 @@ namespace AshAndEmber
                 try { victimIsLord = victim.IsLord; } catch { }
                 if (!victimIsLord) return;
 
-                // Reap: executing a captured lord draws back days of life scaled by
-                // the victim's standing — 20 + 10 per clan tier (20–80). A flat 100
-                // bought ~20 large battle spells per execution and trivialised the
-                // aging economy outright.
+                // Blood: executing a captured lord gives back the years the fire has
+                // burned, scaled by the victim's standing — clan tier × 25 days (25–150).
                 // Guard with a StringId set — HeroKilledEvent can fire twice under certain
                 // Bannerlord load/save conditions, causing double rejuvenation.
                 if (killer == Hero.MainHero
                     && MageKnowledge.IsMage
-                    && TalentSystem.Has(TalentId.Reap)
+                    && MageElementKnowledge.HasBlood
                     && victim.StringId != null
                     && !_executedLordIds.Contains(victim.StringId))
                 {
                     _executedLordIds.Add(victim.StringId);
-                    int reapTier = 0;
-                    try { reapTier = Math.Max(0, Math.Min(6, victim.Clan?.Tier ?? 0)); } catch { }
-                    try { AgingSystem.RejuvenateHero(Hero.MainHero, 20 + 10 * reapTier); } catch { }
+                    int tier = 1;
+                    try { tier = Math.Max(1, Math.Min(6, victim.Clan?.Tier ?? 1)); } catch { tier = 1; }
+                    try { AgingSystem.RejuvenateHero(Hero.MainHero, ElementMagicMath.BloodRejuvenationDays(tier)); } catch { }
                 }
                 // Whispers: executing any lord costs 5
                 if (killer == Hero.MainHero && MageKnowledge.IsMage)
@@ -188,6 +186,7 @@ namespace AshAndEmber
             }
             catch { }
             try { MageKnowledge.Save(dataStore); } catch { }
+            try { MageElementKnowledge.Save(dataStore); } catch { }
             try { RivalShadowSystem.Save(dataStore); } catch { }
             try { ColourLordRegistry.Save(dataStore); } catch { }
             try { AshenCitySystem.Save(dataStore); } catch { }

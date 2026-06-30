@@ -152,6 +152,19 @@ namespace AshAndEmber
                 try { NatureInputHandler.Tick(inMission: false);  } catch { }
                 try { ActiveEffectManager.MapTick(dt); } catch { }
 
+                // Codex of the Inner Fire — Left Alt + L opens the learning menu on the map.
+                try
+                {
+                    if (MageKnowledge.IsMage
+                        && TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftAlt)
+                        && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.L)
+                        && MageKnowledge._deferredInquiry == null)
+                    {
+                        MageKnowledge._deferredInquiry = MagicLearning.ShowCodex;
+                    }
+                }
+                catch { }
+
                 // Ctrl+Shift+F10 — toggle scheme debug mode
                 try
                 {
@@ -335,11 +348,11 @@ namespace AshAndEmber
             var mission = Mission.Current;
             if (mission == null || mission.CurrentState != Mission.State.Continuing) return;
 
-            MagicInputHandler.Tick(inMission: true);
+            // Unified elemental magic (merges the old fire + nature battle input).
+            ElementMagicInput.Tick(inMission: true, dt);
             CrystalEffects.MissionTick(dt);
             CrystalBattleAI.MissionTick(dt);
             MiracleInputHandler.Tick(inMission: true);
-            NatureInputHandler.Tick(inMission: true, dt);
             NatureChargeBar.Tick(dt);
             MiracleEffects.MissionTick(dt);
             MiracleBattleAI.MissionTick(dt);
@@ -402,6 +415,7 @@ namespace AshAndEmber
             try { BanditMageAI.OnMissionEnd();             } catch { }
             try { AgingSystem.ClearKnockdowns();           } catch { }
             try { ActiveEffectManager.ClearMissionEffects(); } catch { }
+            try { ElementMagicInput.ResetInputState();       } catch { }
             try { MagicInputHandler.ResetInputState();       } catch { }
             try { CrystalEffects.ClearBattleState();           } catch { }
             try { CrystalBattleAI.Reset();                    } catch { }

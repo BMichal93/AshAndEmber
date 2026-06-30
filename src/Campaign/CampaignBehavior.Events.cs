@@ -110,6 +110,7 @@ namespace AshAndEmber
             try
             {
                 MageKnowledge.ResetForNewGame();
+                MageElementKnowledge.ResetForNewGame();
                 RivalShadowSystem.ResetForNewGame();
                 AshenMapTone.ResetForNewGame();
                 CampaignMapEvents.ResetForNewGame();

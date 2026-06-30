@@ -213,23 +213,23 @@ namespace AshAndEmber
                 return;
             }
 
-            var spells = TalentSystem.All
-                .Where(d => d.IsSpell && TalentSystem.Has(d.Id))
-                .ToList();
-
-            if (spells.Count == 0)
+            // The unified magic: Fire is innate; every other element the player has
+            // learned grants its own campaign-map working. Each is cast through the
+            // memory-rite (ElementSpellMinigame), exactly as the old fire spells were.
+            var known = MageElementKnowledge.KnownElements().ToList();
+            if (known.Count == 0)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "No workings known. Learn spell talents first.",
+                    "No workings known.",
                     Color.FromUint(0xFFAAAAAA)));
                 return;
             }
 
-            var elements = spells.Select(d => new InquiryElement(
-                (int)d.Id,
-                d.Name,
+            var elements = known.Select(el => new InquiryElement(
+                (int)el,
+                ElementMapSpells.Name(el),
                 null, true,
-                $"{d.MechanicDesc}\n\n{d.Lore}"
+                ElementMapSpells.Lore(el)
             )).ToList();
 
             string castDesc = _isAshen
@@ -249,8 +249,8 @@ namespace AshAndEmber
                 {
                     if (chosen?.Count > 0)
                     {
-                        var id = (TalentId)(int)chosen[0].Identifier;
-                        _deferredInquiry = () => SpellMinigame.Begin(id);
+                        var el = (MagicElement)(int)chosen[0].Identifier;
+                        _deferredInquiry = () => ElementSpellMinigame.Begin(el);
                     }
                 },
                 null, "", false

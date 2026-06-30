@@ -105,6 +105,7 @@ namespace AshAndEmber
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             try { RegisterNatureMenus(starter); } catch { }
+            try { MagicTeacherDialogue.Register(starter); } catch { }
         }
 
         public override void SyncData(IDataStore store)

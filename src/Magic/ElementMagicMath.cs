@@ -34,16 +34,16 @@ namespace AshAndEmber
         public const int   AttackBaseDays = 4;     // a released attack ages you this much at the 3 s minimum
         public const int   WallBaseDays   = 6;     // a wall is a bigger working
         public const int   MinCastDays    = 1;     // a cast is never free
-        public const float DrawDiscountPerSec        = 0.5f; // days shaved per second drawn past the minimum
-        public const float HarmonyDrawDiscountPerSec = 1.5f; // …with the Harmony talent
+        public const float DrawDiscountPerSec       = 0.5f; // days shaved per second drawn past the minimum
+        public const float NatureDrawDiscountPerSec = 1.5f; // …with the Nature attunement (the patient draw)
 
         // Days of aging a cast costs, given the form, how long it was drawn, and
-        // whether the caster knows Harmony. Drawing longer is cheaper; floored at 1.
-        public static int CastAgingDays(CastForm form, float drawSeconds, bool hasHarmony)
+        // whether the caster knows Nature. Drawing longer is cheaper; floored at 1.
+        public static int CastAgingDays(CastForm form, float drawSeconds, bool hasNature)
         {
             int baseDays = form == CastForm.Wall ? WallBaseDays : AttackBaseDays;
             float over   = Math.Max(0f, Math.Min(drawSeconds, FullDrawSeconds) - MinDrawSeconds);
-            float perSec = hasHarmony ? HarmonyDrawDiscountPerSec : DrawDiscountPerSec;
+            float perSec = hasNature ? NatureDrawDiscountPerSec : DrawDiscountPerSec;
             int cost     = (int)Math.Round(baseDays - over * perSec, MidpointRounding.AwayFromZero);
             return Math.Max(MinCastDays, cost);
         }
