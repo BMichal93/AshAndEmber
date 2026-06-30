@@ -80,17 +80,16 @@ namespace AshAndEmber
 
         private static MiracleType ChooseGraceMiracle(Agent a)
         {
-            try { if (a.Health < a.HealthLimit * 0.40f) return MiracleType.RadiantMending; } catch { }
+            try { if (a.Health < a.HealthLimit * 0.40f) return MiracleType.MercyMend; } catch { }
 
-            // Repel Ashen if enemy Ashen are visible nearby.
-            if (AshenNearby(a)) return MiracleType.RepelAshen;
+            // A pillar of judgement when enemies (Ashen or otherwise) press near.
+            if (AshenNearby(a)) return MiracleType.InsightPyre;
 
             var set = new[]
             {
-                MiracleType.LightOfGuidance, MiracleType.SacredFlame,
-                MiracleType.AegisOfFaith,    MiracleType.RadiantMending,
-                MiracleType.CleansingRite,   MiracleType.PyreOfJudgement,
-                MiracleType.HallowedGround,
+                MiracleType.ValorFury,   MiracleType.HonorAegis,
+                MiracleType.MercyMend,   MiracleType.GraceBlessing,
+                MiracleType.InsightPyre,
             };
             return set[_rng.Next(set.Length)];
         }

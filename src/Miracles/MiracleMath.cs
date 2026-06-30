@@ -2,19 +2,18 @@
 // ASH AND EMBER — Miracles/MiracleMath.cs
 //
 // Pure numeric logic for the miracle system — no TaleWorlds types, fully
-// testable. Sequences, trait gates, effect magnitudes all live here so the
-// input handler and effects code never contain raw numbers.
+// testable. Sequences and effect magnitudes live here so the input handler and
+// effects code never contain raw numbers.
 //
-// Cold miracle constants removed — Dark Altars now grant permanent Dark Gifts
-// instead of Cold, and Cold miracles have been retired entirely.
+// Access is now gated by PERSONALITY TRAIT (handled in MiracleEffects, which can
+// read Hero traits), not by the old honor/mercy/generosity virtue gates — those
+// are removed. Grace GATHERING (GraceGain) is unchanged.
 // =============================================================================
 
 using System;
 
 namespace AshAndEmber
 {
-    public enum MiracleGate { None, OneVirtue, AllVirtues }
-
     public static class MiracleMath
     {
         // ── Counters ───────────────────────────────────────────────────────────
@@ -23,49 +22,47 @@ namespace AshAndEmber
         public const int WardingCooldownDays =  7;   // Warding Seal
 
         // ── Miracle sequences (6 chars, W=U A=L D=R S=D) ──────────────────────
-        public const string SeqRepelAshen      = "UUUURR";
-        public const string SeqRadiantMending  = "UUDDLR";
-        public const string SeqLightOfGuidance = "UDUDUD";
-        public const string SeqSacredFlame     = "UURRDL";
-        public const string SeqAegisOfFaith    = "LLUURR";
-        public const string SeqCleansingRite   = "RULRUU";
-        public const string SeqPyreJudgement   = "RRUUDD";
-        public const string SeqHallowedGround  = "LLRRUU";
+        // Two per personality trait: a battle prayer and a map prayer.
+        public const string SeqMercyMend      = "UUDDLR"; // Mercy  — Radiant Mending
+        public const string SeqMercyRelief    = "RULRUU"; // Mercy  — The Mending Road
+        public const string SeqValorFury      = "UDUDUD"; // Valor  — Light of Valour
+        public const string SeqValorMarch     = "ULULUL"; // Valor  — The Long March
+        public const string SeqHonorAegis     = "LLUURR"; // Honor  — Aegis of the Oath
+        public const string SeqHonorOath      = "LRLRLR"; // Honor  — The Sworn Word
+        public const string SeqGraceBlessing  = "LLRRUU"; // Gen.   — Shared Light
+        public const string SeqGraceBounty    = "DDUULL"; // Gen.   — The Open Hand
+        public const string SeqInsightPyre    = "RRUUDD"; // Calc.  — Pyre of Judgement
+        public const string SeqInsightSight   = "RDRDRD"; // Calc.  — Far-Sight
 
         public const int SequenceLength = 6;
 
         // Returns true and the matched MiracleType if the 6-char input is known.
         public static bool TryMatchSequence(string input, out MiracleType type)
         {
-            type = MiracleType.RadiantMending;
+            type = MiracleType.MercyMend;
             if (string.IsNullOrEmpty(input) || input.Length != SequenceLength) return false;
             switch (input)
             {
-                case SeqRepelAshen:      type = MiracleType.RepelAshen;      return true;
-                case SeqRadiantMending:  type = MiracleType.RadiantMending;  return true;
-                case SeqLightOfGuidance: type = MiracleType.LightOfGuidance; return true;
-                case SeqSacredFlame:     type = MiracleType.SacredFlame;     return true;
-                case SeqAegisOfFaith:    type = MiracleType.AegisOfFaith;    return true;
-                case SeqCleansingRite:   type = MiracleType.CleansingRite;   return true;
-                case SeqPyreJudgement:   type = MiracleType.PyreOfJudgement; return true;
-                case SeqHallowedGround:  type = MiracleType.HallowedGround;  return true;
-                default:                                                      return false;
+                case SeqMercyMend:     type = MiracleType.MercyMend;     return true;
+                case SeqMercyRelief:   type = MiracleType.MercyRelief;   return true;
+                case SeqValorFury:     type = MiracleType.ValorFury;     return true;
+                case SeqValorMarch:    type = MiracleType.ValorMarch;    return true;
+                case SeqHonorAegis:    type = MiracleType.HonorAegis;    return true;
+                case SeqHonorOath:     type = MiracleType.HonorOath;     return true;
+                case SeqGraceBlessing: type = MiracleType.GraceBlessing; return true;
+                case SeqGraceBounty:   type = MiracleType.GraceBounty;   return true;
+                case SeqInsightPyre:   type = MiracleType.InsightPyre;   return true;
+                case SeqInsightSight:  type = MiracleType.InsightSight;  return true;
+                default:                                                  return false;
             }
         }
 
         // ── Trait gate ─────────────────────────────────────────────────────────
-        public static bool MeetsGraceGate(MiracleGate gate, int honor, int mercy, int generosity)
-        {
-            switch (gate)
-            {
-                case MiracleGate.None:       return true;
-                case MiracleGate.OneVirtue:  return honor >= 1 || mercy >= 1 || generosity >= 1;
-                case MiracleGate.AllVirtues: return honor >= 1 && mercy >= 1 && generosity >= 1;
-                default:                     return false;
-            }
-        }
+        // A miracle answers once its granting personality trait is at +1 or higher.
+        public const int TraitGateLevel = 1;
+        public static bool MeetsTraitGate(int traitLevel) => traitLevel >= TraitGateLevel;
 
-        // ── Point gain ─────────────────────────────────────────────────────────
+        // ── Point gain (Sanctuary — unchanged) ─────────────────────────────────
         // Grace scales with virtue; a hero with no virtue gains nothing.
         public static int GraceGain(int honor, int mercy, int generosity)
         {
@@ -78,10 +75,7 @@ namespace AshAndEmber
         public static double NpcBattleUseChance(bool isPriest) => isPriest ? 0.004 : 0.001;
         public static double NpcDailyUseChance(bool isPriest)  => isPriest ? 0.05  : 0.01;
 
-        // ── Battle effect magnitudes ───────────────────────────────────────────
-        public const float RepelAshenRadius     = 10f;
-        public const float RepelAshenDamage     = 45f;
-
+        // ── Battle effect magnitudes (reused effects) ──────────────────────────
         public const float RadiantMendSelfFrac   = 0.35f;
         public const float RadiantMendAllyFrac   = 0.18f;
         public const float RadiantMendAllyRadius = 8f;
@@ -92,22 +86,33 @@ namespace AshAndEmber
         public const float GuidanceSpeedDurSec    = 15f;
         public const float GuidanceSpeedRadius    = 12f;
 
-        public const float SacredFlameDurationSec = 25f;
-        public const float SacredFlameBonusDamage = 10f;
-
         public const float AegisResistFrac  = 0.30f;
         public const float AegisDurationSec = 18f;
 
-        public const float CleansingRiteRadius = 8f;
-        public const float CleansingRiteDamage = 30f;
-
-        // Pyre of Judgement: a pillar of consecrated fire dropped ahead of the caster.
         public const float PyreJudgementReach  = 8f;   // metres ahead the pillar falls
         public const float PyreJudgementRadius = 6f;   // blast radius at the impact point
         public const float PyreJudgementDamage = 60f;  // HP seared from each enemy struck
 
-        // Hallowed Ground: wards caster + nearby allies against all magic, then mends them.
         public const float HallowedGroundRadius   = 8f;
         public const float HallowedGroundHealFrac = 0.15f;
+
+        // Retired-effect constants — the RepelAshen / SacredFlame / CleansingRite
+        // battle effects are no longer granted by any trait, but their (now
+        // never-dispatched) implementations still compile against these.
+        public const float RepelAshenRadius       = 10f;
+        public const float RepelAshenDamage       = 45f;
+        public const float SacredFlameDurationSec = 25f;
+        public const float SacredFlameBonusDamage = 10f;
+        public const float CleansingRiteRadius    = 8f;
+        public const float CleansingRiteDamage    = 30f;
+
+        // ── Map effect magnitudes (new) ────────────────────────────────────────
+        public const int   ReliefHealCount     = 6;    // wounded healed by The Mending Road
+        public const float OathLoyaltyGain      = 15f;  // loyalty/security restored by The Sworn Word
+        public const int   OathRelationGain     = 4;    // relation gained when not in a settlement
+        public const int   BountyFood           = 30;   // grain added by The Open Hand
+        public const float BountyMorale         = 20f;
+        public const float SightMorale          = 10f;  // morale from Far-Sight
+        public const float SightRadius          = 30f;  // map units scanned for threats
     }
 }

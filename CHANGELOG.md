@@ -6,6 +6,19 @@
 
 ---
 
+## v0.34.0
+
+### Grace, reforged around your character
+- **Your virtues now grant your prayers.** The old per-miracle virtue gates are gone. Instead, each of the five personality traits — Mercy, Valour, Honour, Generosity, Calculating — grants TWO Grace prayers once that trait stands at +1 or higher: one for battle, one for the campaign map. A crueller, more cowardly, or more impulsive hero simply has fewer prayers to call on.
+  - **Mercy** — Radiant Mending (heal allies, battle) · The Mending Road (heal the party's wounded, map)
+  - **Valour** — Light of Valour (courage + speed, battle) · The Long March (party morale + speed, map)
+  - **Honour** — Aegis of the Oath (golden ward, battle) · The Sworn Word (steady a town / warm a lord, map)
+  - **Generosity** — Shared Light (consecrate + mend allies, battle) · The Open Hand (party food + morale, map)
+  - **Calculating** — Pyre of Judgement (pillar of fire, battle) · Far-Sight (scout the roads, map)
+- **Casting and Grace-gathering are unchanged** — the Ctrl-sequence in battle, the Shift+X litany and its memory-rite on the map, and praying for Grace at a Sanctuary all work exactly as before. The map prayers' rites are rewritten to match (a march, an oath, a blessing of the open hand, alongside the healing and guidance prayers).
+
+---
+
 ## v0.33.0
 
 ### The Northmen

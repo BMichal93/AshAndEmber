@@ -143,27 +143,29 @@ namespace AshAndEmber
                 "Gamepad: LB + RB."), true);
 
             AddLog(new TextObject(
-                "MIRACLES — Shift + X opens the litany of Grace, on the map or in battle; " +
-                "each entry shows its battle keys and what it does. " +
-                "In battle you may also cast directly: hold Left Ctrl and trace the six-stroke sequence " +
-                "with W / A / S / D, then release. Gamepad: RB + L3. Each miracle spends 1 Grace; " +
-                "replenish Grace at a Sanctuary."), true);
+                "MIRACLES — Each of your PERSONALITY TRAITS grants two prayers once it stands at +1 or " +
+                "higher: one for battle, one for the road. In battle, hold Left Ctrl and trace the prayer's " +
+                "six-stroke sequence with W / A / S / D, then release (gamepad: hold RB, flick the left " +
+                "stick). On the map, Shift + X (gamepad: RB + L3) opens the litany — pick a prayer and " +
+                "recall its rite. Each prayer spends 1 Grace; replenish Grace at a Sanctuary."), true);
 
             AddLog(new TextObject(
-                "MIRACLES OF GRACE (golden) — Repel the Ashen [W W W W D D]: scorch every Ashen near " +
-                "you and break their resolve. · Radiant Mending [W W S S A D]: heal yourself and nearby " +
-                "allies. · Light of Guidance [W S W S W S]: steady your soldiers — clearer aim, quieter fear."), true);
+                "MIRACLES · MERCY — Radiant Mending [W W S S A D] (battle): heal yourself and nearby allies. · " +
+                "The Mending Road [D W A D W W] (map): the party's wounded mend faster. " +
+                "MIRACLES · VALOR — Light of Valour [W S W S W S] (battle): courage and speed surge through your " +
+                "line. · The Long March [W A W A W A] (map): morale lifts and the miles fall away."), true);
 
             AddLog(new TextObject(
-                "MIRACLES OF GRACE (cont.) — Sacred Flame [W W D D S A]: your blade burns with holy fire " +
-                "(battle only). · Aegis of Faith [A A W W D D]: a golden ward grants more life than your " +
-                "body should hold (battle only). · Cleansing Rite [D W A D W W]: lift cold and dread from " +
-                "those around you."), true);
+                "MIRACLES · HONOUR — Aegis of the Oath [A A W W D D] (battle): a golden ward returns damage as " +
+                "healing. · The Sworn Word [A D A D A D] (map): steady a wavering town, or warm a lord toward you. " +
+                "MIRACLES · GENEROSITY — Shared Light [A A D D W W] (battle): consecrate the ground — ward and " +
+                "mend nearby allies. · The Open Hand [S S W W A A] (map): the stores are fuller, the column eats well."), true);
 
             AddLog(new TextObject(
-                "MIRACLES · VIRTUE — Some rites are gated: an entry marked [some virtue] or [full virtue] " +
-                "requires standing in Honour, Mercy, and Generosity. The litany window greys out any you " +
-                "cannot yet invoke, so check there to see what your character has earned."), true);
+                "MIRACLES · CALCULATING — Pyre of Judgement [D D W W S S] (battle): a pillar of holy fire falls " +
+                "where you look. · Far-Sight [D S D S D S] (map): the light shows the roads and what moves on them. " +
+                "A prayer you are not yet virtuous enough to bear is greyed in the litany; raise the granting trait " +
+                "to +1 to earn it."), true);
 
             AddLog(new TextObject(
                 "CRYSTALS — Six mineral formations, each focused on a different light. " +

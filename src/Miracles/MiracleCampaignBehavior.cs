@@ -85,11 +85,11 @@ namespace AshAndEmber
                 {
                     int wounded = hero.PartyBelongedTo.MemberRoster.GetTroopRoster()
                         .Sum(e => e.WoundedNumber);
-                    if (wounded > 5) return MiracleType.RadiantMending;
+                    if (wounded > 5) return MiracleType.MercyRelief;
                 }
             }
             catch { }
-            return MiracleType.LightOfGuidance;
+            return MiracleType.ValorMarch;
         }
 
         private static bool IsPriest(Hero hero)

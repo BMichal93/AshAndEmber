@@ -37,37 +37,9 @@ namespace AshAndEmber
         private static readonly Dictionary<MiracleType, string[][]> _prayers =
             new Dictionary<MiracleType, string[][]>
         {
-            // Deliverance — "Libera nos a malo." A prayer of protection against the cold.
-            [MiracleType.RepelAshen] = new[]
-            {
-                new[]
-                {
-                    "Light everlasting, stand between me and the cold. Be my wall where the dark would enter.",
-                    "Light everlasting, stand between me and the grave. Be my wall where the dark would enter.",
-                    "Light unfailing, stand between me and the cold. Be my wall where the dark would enter.",
-                    "Light everlasting, stand between me and the cold. Be my shield where the dark would enter.",
-                    "Light everlasting, stand before me and the cold. Be my wall where the dark would enter.",
-                },
-                new[]
-                {
-                    "By the warmth that made me, I deny you. Go back to the silence that bore you.",
-                    "By the warmth that made me, I refuse you. Go back to the silence that bore you.",
-                    "By the fire that made me, I deny you. Go back to the silence that bore you.",
-                    "By the warmth that made me, I deny you. Go back to the darkness that bore you.",
-                    "By the warmth that made me, I deny you. Return to the silence that bore you.",
-                },
-                new[]
-                {
-                    "Deliver me from the hollow and the grey. Let nothing cold remain where the light has passed.",
-                    "Deliver me from the hollow and the grey. Let nothing cold abide where the light has passed.",
-                    "Deliver me from the hollow and the cold. Let nothing cold remain where the light has passed.",
-                    "Deliver me from the empty and the grey. Let nothing cold remain where the light has passed.",
-                    "Deliver me from the hollow and the grey. Let nothing dark remain where the light has passed.",
-                },
-            },
-
-            // Healing — "Domine, non sum dignus... sed tantum dic verbo, et sanabitur anima mea."
-            [MiracleType.RadiantMending] = new[]
+            // Mercy / The Mending Road — healing.
+            // "Domine, non sum dignus... sed tantum dic verbo, et sanabitur anima mea."
+            [MiracleType.MercyRelief] = new[]
             {
                 new[]
                 {
@@ -95,8 +67,9 @@ namespace AshAndEmber
                 },
             },
 
-            // Guidance — "Lead, kindly Light" / "Domine, ut videam" (Lord, that I may see).
-            [MiracleType.LightOfGuidance] = new[]
+            // Calculating / Far-Sight — guidance.
+            // "Lead, kindly Light" / "Domine, ut videam" (Lord, that I may see).
+            [MiracleType.InsightSight] = new[]
             {
                 new[]
                 {
@@ -124,32 +97,90 @@ namespace AshAndEmber
                 },
             },
 
-            // Purification — "Asperges me" / "Cor mundum crea in me" (Create in me a clean heart).
-            [MiracleType.CleansingRite] = new[]
+            // Valor / The Long March — courage on the road. "The Lord is my strength and my song."
+            [MiracleType.ValorMarch] = new[]
             {
                 new[]
                 {
-                    "Wash me, and I shall be whiter than snow. Find the stain I have hidden even from myself.",
-                    "Wash me, and I shall be cleaner than snow. Find the stain I have hidden even from myself.",
-                    "Wash me, and I shall be whiter than snow. Find the sin I have hidden even from myself.",
-                    "Cleanse me, and I shall be whiter than snow. Find the stain I have hidden even from myself.",
-                    "Wash me, and I shall be whiter than snow. Find the stain I have buried even from myself.",
+                    "The light is my strength and my song. I will go out, and I will not be afraid.",
+                    "The light is my shield and my song. I will go out, and I will not be afraid.",
+                    "The light is my strength and my song. I will march out, and I will not be afraid.",
+                    "The light is my strength and my song. I will go out, and I will not be dismayed.",
+                    "The light is my strength and my song. We will go out, and we will not be afraid.",
                 },
                 new[]
                 {
-                    "Create in me a clean heart. Do not break what is sick — gently lift it out.",
-                    "Create in me a clean heart. Do not break what is sick — gently draw it out.",
-                    "Create in me a pure heart. Do not break what is sick — gently lift it out.",
-                    "Create in me a clean heart. Do not crush what is sick — gently lift it out.",
-                    "Make in me a clean heart. Do not break what is sick — gently lift it out.",
+                    "Strengthen the going-out and the coming-in. Let no heart fail upon the road.",
+                    "Strengthen the going-out and the coming-in. Let no heart break upon the road.",
+                    "Strengthen the going-out and the coming-in. Let no heart fail along the road.",
+                    "Steady the going-out and the coming-in. Let no heart fail upon the road.",
+                    "Strengthen the marching-out and the coming-in. Let no heart fail upon the road.",
                 },
                 new[]
                 {
-                    "Let what does not belong depart in peace. Restore to me the joy that was clean.",
-                    "Let what does not belong depart in peace. Return to me the joy that was clean.",
-                    "Let what does not belong pass in peace. Restore to me the joy that was clean.",
-                    "Let what does not belong depart in peace. Restore to me the peace that was clean.",
-                    "Let what does not belong depart in quiet. Restore to me the joy that was clean.",
+                    "Set our faces forward and our feet sure. We will be there before the light fails.",
+                    "Set our faces forward and our feet sure. We will be there before the day fails.",
+                    "Set our faces onward and our feet sure. We will be there before the light fails.",
+                    "Set our faces forward and our feet swift. We will be there before the light fails.",
+                    "Set our faces forward and our feet sure. We will arrive before the light fails.",
+                },
+            },
+
+            // Honor / The Sworn Word — an oath before the light. "Let your yes be yes."
+            [MiracleType.HonorOath] = new[]
+            {
+                new[]
+                {
+                    "Let my word be a stone, not a reed. What I swear, I swear before the light.",
+                    "Let my word be a stone, not a reed. What I vow, I vow before the light.",
+                    "Let my word be a stone, not a straw. What I swear, I swear before the light.",
+                    "Let my word be iron, not a reed. What I swear, I swear before the light.",
+                    "Let my word be a stone, not a reed. What I swear, I swear under the light.",
+                },
+                new[]
+                {
+                    "Bind me to what I have promised. Let my yes be yes, and my no be no.",
+                    "Hold me to what I have promised. Let my yes be yes, and my no be no.",
+                    "Bind me to what I have sworn. Let my yes be yes, and my no be no.",
+                    "Bind me to what I have promised. Let my yes be yes, and my nay be nay.",
+                    "Bind me to all I have promised. Let my yes be yes, and my no be no.",
+                },
+                new[]
+                {
+                    "Hold me to my oath when it costs me. Honour is the debt I mean to pay.",
+                    "Hold me to my oath when it wounds me. Honour is the debt I mean to pay.",
+                    "Hold me to my word when it costs me. Honour is the debt I mean to pay.",
+                    "Hold me to my oath when it costs me. Honour is the debt I will yet pay.",
+                    "Hold me to my oath though it costs me. Honour is the debt I mean to pay.",
+                },
+            },
+
+            // Generosity / The Open Hand — daily bread and the open hand. "Give us this day."
+            [MiracleType.GraceBounty] = new[]
+            {
+                new[]
+                {
+                    "Open my hand before it is asked. What I have, I hold only to give.",
+                    "Open my hand before it is asked. What I keep, I hold only to give.",
+                    "Open my hand before it is begged. What I have, I hold only to give.",
+                    "Open my hand before it is asked. What I have, I keep only to give.",
+                    "Open my hand before they ask. What I have, I hold only to give.",
+                },
+                new[]
+                {
+                    "Give us this day what the day requires. Let the stores be enough, and a little over.",
+                    "Give us this day what the day requires. Let the stores be full, and a little over.",
+                    "Grant us this day what the day requires. Let the stores be enough, and a little over.",
+                    "Give us this day what the day demands. Let the stores be enough, and a little over.",
+                    "Give us this day what the day requires. Let the stores be enough, and some to spare.",
+                },
+                new[]
+                {
+                    "Let no one at my fire go hungry. The hand that opens first is never empty.",
+                    "Let no one at my hearth go hungry. The hand that opens first is never empty.",
+                    "Let no one at my fire go wanting. The hand that opens first is never empty.",
+                    "Let no one at my fire go hungry. The hand that gives first is never empty.",
+                    "Let none at my fire go hungry. The hand that opens first is never empty.",
                 },
             },
         };
@@ -158,7 +189,7 @@ namespace AshAndEmber
         internal static bool HasRite(MiracleType type) => _prayers.ContainsKey(type);
 
         private static string[][] GetPrayer(MiracleType type) =>
-            _prayers.TryGetValue(type, out var p) ? p : _prayers[MiracleType.RadiantMending];
+            _prayers.TryGetValue(type, out var p) ? p : _prayers[MiracleType.MercyRelief];
 
         // ── State ─────────────────────────────────────────────────────────────
 

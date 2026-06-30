@@ -55,6 +55,31 @@ namespace AshAndEmber
             try { a.SetMaximumSpeedLimit(1f, true); } catch { }
         }
 
+        // ── Trait gate ─────────────────────────────────────────────────────────
+        // Each Grace miracle is granted by one personality trait; it answers only
+        // while the player holds that trait at +1 or higher.
+        public static TraitObject TraitObjectOf(GraceTrait t)
+        {
+            switch (t)
+            {
+                case GraceTrait.Mercy:      return DefaultTraits.Mercy;
+                case GraceTrait.Valor:      return DefaultTraits.Valor;
+                case GraceTrait.Honor:      return DefaultTraits.Honor;
+                case GraceTrait.Generosity: return DefaultTraits.Generosity;
+                default:                    return DefaultTraits.Calculating;
+            }
+        }
+
+        public static bool PlayerMeetsTrait(MiracleDef def)
+        {
+            try
+            {
+                var h = Hero.MainHero;
+                return h != null && MiracleMath.MeetsTraitGate(h.GetTraitLevel(TraitObjectOf(def.Trait)));
+            }
+            catch { return false; }
+        }
+
         // ── Player entry point ────────────────────────────────────────────────
         // Called by MiracleInputHandler after the sequence is confirmed. Validates
         // context, gate, and inventory, then applies the effect.
@@ -72,31 +97,18 @@ namespace AshAndEmber
                 return false;
             }
 
-            // Inventory + gate check
-            int honor = 0, mercy = 0, generosity = 0;
-            try
-            {
-                var h = Hero.MainHero;
-                if (h != null)
-                {
-                    honor      = h.GetTraitLevel(DefaultTraits.Honor);
-                    mercy      = h.GetTraitLevel(DefaultTraits.Mercy);
-                    generosity = h.GetTraitLevel(DefaultTraits.Generosity);
-                }
-            }
-            catch { }
-
+            // Inventory + trait gate
             if (!MiracleInventory.HasGrace)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
                     "You carry no Grace. Pray at a Sanctuary first.", GraceColor));
                 return false;
             }
-            if (!MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity))
+            if (!PlayerMeetsTrait(def))
             {
                 MiracleInventory.SpendGrace(); // gate failure still costs Grace
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"{def.Name} — the light does not answer. Your virtue is not enough. [Grace spent]",
+                    $"{def.Name} — the light does not answer. You are not {def.TraitName} enough. [Grace spent]",
                     GraceColor));
                 return false;
             }
@@ -132,14 +144,11 @@ namespace AshAndEmber
             try { SpellEffects.FlashFocusAura(a, ColorSchool.Yellow); } catch { }
             switch (type)
             {
-                case MiracleType.RepelAshen:      BattleRepelAshen(a, announce);      break;
-                case MiracleType.RadiantMending:  BattleRadiantMending(a, announce);  break;
-                case MiracleType.LightOfGuidance: BattleGuidance(a, announce);        break;
-                case MiracleType.SacredFlame:     BattleSacredFlame(a, announce);     break;
-                case MiracleType.AegisOfFaith:    BattleAegis(a, announce);           break;
-                case MiracleType.CleansingRite:   BattleCleansingRite(a, announce);   break;
-                case MiracleType.PyreOfJudgement: BattlePyreJudgement(a, announce);   break;
-                case MiracleType.HallowedGround:  BattleHallowedGround(a, announce);  break;
+                case MiracleType.MercyMend:     BattleRadiantMending(a, announce);  break;
+                case MiracleType.ValorFury:     BattleGuidance(a, announce);        break;
+                case MiracleType.HonorAegis:    BattleAegis(a, announce);           break;
+                case MiracleType.GraceBlessing: BattleHallowedGround(a, announce);  break;
+                case MiracleType.InsightPyre:   BattlePyreJudgement(a, announce);   break;
             }
         }
 
@@ -149,16 +158,86 @@ namespace AshAndEmber
         {
             switch (type)
             {
-                case MiracleType.RepelAshen:      return CampaignRepelAshen(party);
-                case MiracleType.RadiantMending:  return CampaignRadiantMending(hero, party);
-                case MiracleType.LightOfGuidance: return CampaignGuidance(party);
-                case MiracleType.AegisOfFaith:    return "The Aegis of Faith calls for a battlefield.";
-                case MiracleType.SacredFlame:     return "Sacred Flame calls for a battlefield.";
-                case MiracleType.CleansingRite:   return CampaignCleansingRite(hero, party);
-                case MiracleType.PyreOfJudgement: return "The Pyre of Judgement calls for a battlefield.";
-                case MiracleType.HallowedGround:  return "Hallowed Ground calls for a battlefield.";
-                default:                          return null;
+                case MiracleType.MercyRelief:  return CampaignRadiantMending(hero, party);
+                case MiracleType.ValorMarch:   return CampaignGuidance(party);
+                case MiracleType.HonorOath:    return CampaignOath(hero);
+                case MiracleType.GraceBounty:  return CampaignBounty(party);
+                case MiracleType.InsightSight: return CampaignForesight(party);
+                default:                       return null;
             }
+        }
+
+        // ── New map effects (Honor / Generosity / Calculating) ────────────────
+
+        // The Sworn Word — steadies a wavering town the player stands in, or (in the
+        // open) warms a lord of the player's faction toward them.
+        private static string CampaignOath(Hero hero)
+        {
+            try
+            {
+                var s = hero?.CurrentSettlement;
+                if (s?.Town != null)
+                {
+                    s.Town.Loyalty  = Math.Min(100f, s.Town.Loyalty  + MiracleMath.OathLoyaltyGain);
+                    s.Town.Security = Math.Min(100f, s.Town.Security + MiracleMath.OathLoyaltyGain);
+                    return $"The Sworn Word is spoken over {s.Name}. The town steadies — loyalty and order return (+{(int)MiracleMath.OathLoyaltyGain}).";
+                }
+                var kingdom = hero?.Clan?.Kingdom;
+                var lord = Hero.AllAliveHeroes
+                    .Where(h => h != hero && h.IsLord && h.IsAlive && !h.IsPrisoner
+                             && h.Clan?.Kingdom == kingdom && kingdom != null)
+                    .OrderBy(_ => _rng.Next()).FirstOrDefault()
+                    ?? Hero.AllAliveHeroes.Where(h => h != hero && h.IsLord && h.IsAlive && !h.IsPrisoner)
+                        .OrderBy(_ => _rng.Next()).FirstOrDefault();
+                if (lord != null)
+                {
+                    try { TaleWorlds.CampaignSystem.Actions.ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
+                        hero, lord, MiracleMath.OathRelationGain, false); } catch { }
+                    return $"You swear an oath in the light, and word reaches {lord.Name}. They think the better of you (+{MiracleMath.OathRelationGain} relation).";
+                }
+                return "You speak the oath, but there is no one near to hold you to it.";
+            }
+            catch { return null; }
+        }
+
+        // The Open Hand — fills the party's stores and lifts its spirits.
+        private static string CampaignBounty(MobileParty party)
+        {
+            try
+            {
+                if (party == null) return null;
+                var grain = TaleWorlds.ObjectSystem.MBObjectManager.Instance?.GetObject<ItemObject>("grain");
+                if (grain != null)
+                    try { party.ItemRoster.AddToCounts(grain, MiracleMath.BountyFood); } catch { }
+                try { party.RecentEventsMorale += MiracleMath.BountyMorale; } catch { }
+                return $"The Open Hand opens. The stores are fuller by morning (+{MiracleMath.BountyFood} grain), and the column eats well (+{(int)MiracleMath.BountyMorale} morale).";
+            }
+            catch { return null; }
+        }
+
+        // Far-Sight — the light shows the roads; reports the nearest threat and steadies the party.
+        private static string CampaignForesight(MobileParty party)
+        {
+            try
+            {
+                if (party == null) return null;
+                try { party.RecentEventsMorale += MiracleMath.SightMorale; } catch { }
+                Vec2 here = party.GetPosition2D;
+                float r2 = MiracleMath.SightRadius * MiracleMath.SightRadius;
+                MobileParty nearest = null; float best = float.MaxValue;
+                foreach (var p in MobileParty.All)
+                {
+                    if (p == null || p == party || !p.IsActive) continue;
+                    if (p.MapFaction == null || party.MapFaction == null) continue;
+                    if (!FactionManager.IsAtWarAgainstFaction(p.MapFaction, party.MapFaction)) continue;
+                    float d = (p.GetPosition2D - here).LengthSquared;
+                    if (d < best && d <= r2) { best = d; nearest = p; }
+                }
+                return nearest != null
+                    ? $"Far-Sight — the light shows the roads. {nearest.Name} moves against you, not far off. Your scouts ride easier for it (+{(int)MiracleMath.SightMorale} morale)."
+                    : $"Far-Sight — the light shows the roads. Nothing hostile stirs nearby. The column rides easier (+{(int)MiracleMath.SightMorale} morale).";
+            }
+            catch { return null; }
         }
 
         // ── Mission tick: advance timers ──────────────────────────────────────

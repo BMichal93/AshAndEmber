@@ -847,10 +847,10 @@ namespace AshAndEmber.Tests
         [Test]
         public void MiracleMath_TryMatchSequence_NewMiracles_Resolve()
         {
-            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqPyreJudgement, out var pyre));
-            Assert.AreEqual(MiracleType.PyreOfJudgement, pyre);
-            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqHallowedGround, out var hallowed));
-            Assert.AreEqual(MiracleType.HallowedGround, hallowed);
+            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqInsightPyre, out var pyre));
+            Assert.AreEqual(MiracleType.InsightPyre, pyre);
+            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqGraceBlessing, out var blessing));
+            Assert.AreEqual(MiracleType.GraceBlessing, blessing);
         }
 
         [Test]
@@ -869,6 +869,38 @@ namespace AshAndEmber.Tests
                 Assert.IsTrue(MiracleMath.TryMatchSequence(def.Sequence, out var t), $"{def.Name} sequence does not match.");
                 Assert.AreEqual(def.Type, t, $"{def.Name} sequence resolves to the wrong miracle.");
             }
+        }
+
+        // ── ElementMagicMath (unified magic foundation) ─────────────────────────
+
+        [Test]
+        public void ElementMagicMath_CastAgingDays_MinDraw_IsBaseCost()
+        {
+            Assert.AreEqual(4, ElementMagicMath.CastAgingDays(CastForm.Attack, 3f, false));
+            Assert.AreEqual(6, ElementMagicMath.CastAgingDays(CastForm.Wall,   3f, false));
+        }
+
+        [Test]
+        public void ElementMagicMath_CastAgingDays_FullDraw_IsCheaper()
+        {
+            // 7s draw: -0.5/s over 4s = -2 days normally.
+            Assert.AreEqual(2, ElementMagicMath.CastAgingDays(CastForm.Attack, 7f, false));
+            Assert.AreEqual(4, ElementMagicMath.CastAgingDays(CastForm.Wall,   7f, false));
+        }
+
+        [Test]
+        public void ElementMagicMath_CastAgingDays_Harmony_FloorsCheap()
+        {
+            // Harmony: -1.5/s over 4s = -6 days; floored at 1.
+            Assert.AreEqual(1, ElementMagicMath.CastAgingDays(CastForm.Attack, 7f, true));
+            Assert.AreEqual(1, ElementMagicMath.CastAgingDays(CastForm.Wall,   7f, true));
+        }
+
+        [Test]
+        public void ElementMagicMath_BloodRejuvenation_ScalesByTier()
+        {
+            Assert.AreEqual(25,  ElementMagicMath.BloodRejuvenationDays(1));
+            Assert.AreEqual(150, ElementMagicMath.BloodRejuvenationDays(6));
         }
 
         // ── NatureMath ────────────────────────────────────────────────────────

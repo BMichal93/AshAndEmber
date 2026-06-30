@@ -227,19 +227,6 @@ namespace AshAndEmber
                 return;
             }
 
-            int honor = 0, mercy = 0, generosity = 0;
-            try
-            {
-                var h = TaleWorlds.CampaignSystem.Hero.MainHero;
-                if (h != null)
-                {
-                    honor      = h.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Honor);
-                    mercy      = h.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Mercy);
-                    generosity = h.GetTraitLevel(TaleWorlds.CampaignSystem.CharacterDevelopment.DefaultTraits.Generosity);
-                }
-            }
-            catch { }
-
             // This window is a campaign-map convenience only (the battle path is the
             // Ctrl-sequence). So it lists ONLY the prayers that answer on the march —
             // battle-only miracles are left off entirely rather than shown greyed.
@@ -249,10 +236,10 @@ namespace AshAndEmber
             {
                 if (!def.UsableOnMap) continue;   // map menu: skip battle-only prayers
 
-                bool gateMet = MiracleMath.MeetsGraceGate(def.Gate, honor, mercy, generosity);
+                // Each prayer is granted by a personality trait; it answers only once
+                // that trait stands at +1 or higher.
+                bool gateMet = MiracleEffects.PlayerMeetsTrait(def);
 
-                // Show the key combo (Ctrl + W/A/S/D) — the same gesture casts it directly —
-                // plus any virtue gate, on the always-visible label.
                 string keys  = SequenceToKeys(def.Sequence);
                 string stick = SequenceToStick(def.Sequence);
                 string gate  = string.IsNullOrEmpty(def.GateNote) ? "" : "  " + def.GateNote;
@@ -260,8 +247,7 @@ namespace AshAndEmber
                 string controls = $"Keyboard: hold Ctrl + {keys}\nController: hold RB + flick left stick {stick}";
                 string hint  = $"{controls}\n\n{def.Effect}\n\n{def.Flavour}";
                 if (!gateMet)
-                    hint = $"✗  Your virtue is not yet enough to be heard. Requires "
-                         + $"{(string.IsNullOrEmpty(def.GateNote) ? "greater virtue" : def.GateNote.Trim())}.\n\n{hint}";
+                    hint = $"✗  The light does not yet answer you here — this prayer is granted by the {def.TraitName} (it requires that trait at +1 or higher).\n\n{hint}";
                 elements.Add(new InquiryElement(def.Type, label, null, gateMet, hint));
             }
 
