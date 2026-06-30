@@ -6,6 +6,21 @@
 
 ---
 
+## v0.31.0
+
+### Crystals
+- **A crystal now answers the swing itself.** It used to require landing a blow on an enemy, in daylight, before it would begin its charge — so waving it in the air did nothing and it felt broken. Now any swing rouses it (hit or miss, day or night); after the brief charge the power releases as before. One charge gathers at a time.
+- **Crystals look like stones, not wands.** Bannerlord has no gem mesh, so they now carry a rough held mineral (the closest stock visual to a raw crystal) instead of the wand-like shape they had. The "Crystals" name and the Crystalline Chambers stay as they were.
+
+---
+
+## v0.30.2
+
+### Critical fix
+- **The Ashen "Came from nowhere", the Northerner origin, the "I don't know how old I am" age, and the God-King's-Apostle backstories no longer crash.** When such an option was picked, the engine builds its effects by calling `.ToList()` on the option's skill AND trait lists with no null check — and these options set skills but left the trait list null, throwing the instant the option was chosen. Every custom backstory option now provides both lists (empty where unused).
+
+---
+
 ## v0.30.1
 
 ### Fix

@@ -38,6 +38,10 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, Charge> _pendingCharge
             = new Dictionary<Agent, Charge>();
 
+        // Player's last detected melee-attack time, so a fresh swing (hit OR miss)
+        // begins a charge. Reset between battles.
+        private static float _lastSwingTime = 0f;
+
         // ── Active slows (keyed by agent, value = seconds left) ──────────────
         private static readonly Dictionary<Agent, float> _rimeSlow = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _veilSlow = new Dictionary<Agent, float>();
@@ -51,6 +55,7 @@ namespace AshAndEmber
             _rimeSlow.Clear();
             _veilSlow.Clear();
             _duskSlow.Clear();
+            _lastSwingTime = 0f;
         }
 
         // ── Daylight check ────────────────────────────────────────────────────
@@ -68,42 +73,34 @@ namespace AshAndEmber
         public static void OnCrystalHit(Agent victim, Agent attacker,
             MissionWeapon weapon, int inflictedDamage)
         {
-            if (attacker == null || !attacker.IsActive()) return;
-            if (attacker != Agent.Main) return; // only intercept player swings; NPC AI handles itself
+            if (attacker == null || attacker != Agent.Main) return; // player swings only
 
             string itemId = null;
             try { itemId = weapon.Item?.StringId; } catch { }
             if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
 
-            // Cancel the physical damage by restoring it to the victim.
+            // A crystal deals no physical harm — restore whatever it inflicted. The
+            // charge itself is begun by the swing detector in MissionTick, so it fires
+            // whether or not the swing connects (waving the crystal is enough).
             if (victim != null && victim.IsActive() && inflictedDamage > 0)
                 try { SpellEffects.HealAgent(victim, inflictedDamage); } catch { }
+        }
 
-            // Block if already charging or night-time.
-            if (_pendingCharge.ContainsKey(attacker))
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "The crystal is still gathering light.", CrystalColor(ColorSchool.Yellow)));
-                return;
-            }
-
-            if (!CheckDaylight(attacker))
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "The crystal is cold — it cannot be roused in darkness.",
-                    CrystalColor(ColorSchool.Blue)));
-                return;
-            }
-
+        // Begins a crystal's charge on a player swing — hit or miss, in any light.
+        // (The old gate required landing a blow in daylight, which felt like nothing
+        // happened.) One charge at a time; the next swing after it fires starts another.
+        private static void TryBeginChargeOnSwing(Agent main)
+        {
+            if (_pendingCharge.ContainsKey(main)) return;
+            string itemId = null;
+            try { itemId = main.WieldedWeapon.Item?.StringId; } catch { }
+            if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
             if (!CrystalCatalog.TryGetByItemId(itemId, out var def)) return;
 
-            // Begin charge phase.
-            _pendingCharge[attacker] = new Charge { Type = def.Type, Remaining = CrystalMath.ChargeDurationSec };
-            try { SpellEffects.BeginAgentGlow(attacker, def.GlowColor, CrystalMath.ChargeDurationSec + 0.5f); } catch { }
-
+            _pendingCharge[main] = new Charge { Type = def.Type, Remaining = CrystalMath.ChargeDurationSec };
+            try { SpellEffects.BeginAgentGlow(main, def.GlowColor, CrystalMath.ChargeDurationSec + 0.5f); } catch { }
             InformationManager.DisplayMessage(new InformationMessage(
-                $"{def.Name} — drawing light…",
-                CrystalColor(def.GlowColor)));
+                $"{def.Name} — drawing light…", CrystalColor(def.GlowColor)));
         }
 
         // ── MissionTick: advance charges and buff timers ──────────────────────
@@ -111,6 +108,24 @@ namespace AshAndEmber
         public static void MissionTick(float dt)
         {
             if (Mission.Current == null) return;
+
+            // Swing detection: the player rouses a crystal by swinging it. The melee
+            // attack time advances on every attack release (hit or miss), so a change
+            // since last frame is a fresh swing → begin the charge.
+            try
+            {
+                var main = Agent.Main;
+                if (main != null && main.IsActive())
+                {
+                    float swingT = main.LastMeleeAttackTime;
+                    if (swingT > 0f && swingT != _lastSwingTime)
+                    {
+                        _lastSwingTime = swingT;
+                        TryBeginChargeOnSwing(main);
+                    }
+                }
+            }
+            catch { }
 
             // Advance pending charges.
             foreach (var kvp in _pendingCharge.ToList())

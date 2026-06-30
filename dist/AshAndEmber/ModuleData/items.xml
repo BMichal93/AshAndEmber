@@ -13,8 +13,11 @@
   weapon mesh crashes the game the moment the item is equipped (no wield
   animation set / no collision body) — that was the old definition's bug.
 
-  Mesh: vanilla "horse_whip" used as a placeholder visual. A custom crystal
-  mesh can replace it via the mesh="" attribute without touching any code.
+  Mesh: vanilla "throwing_stone" — a rough held mineral, the closest stock mesh
+  to a raw crystal (Bannerlord has no gem/crystal weapon mesh). A custom crystal
+  mesh can replace it via the mesh="" attribute without touching any code. The
+  weapon structure (body / item_usage / physics / flags) is modelled on a vanilla
+  one-handed weapon so it equips and swings without faulting.
 
   Prices are intentionally high (1100–2000) — these are rare mineral formations,
   available for purchase only in Crystalline Chamber towns, restocked weekly
@@ -27,7 +30,7 @@
         name="Sunstone"
         body_name="bo_mace_a"
         recalculate_body="true"
-        mesh="horse_whip"
+        mesh="throwing_stone"
         Type="OneHandedWeapon"
         weight="0.3"
         value="1500"
@@ -57,7 +60,7 @@
         name="Embershard"
         body_name="bo_mace_a"
         recalculate_body="true"
-        mesh="horse_whip"
+        mesh="throwing_stone"
         Type="OneHandedWeapon"
         weight="0.3"
         value="1800"
@@ -87,7 +90,7 @@
         name="Rimeshard"
         body_name="bo_mace_a"
         recalculate_body="true"
-        mesh="horse_whip"
+        mesh="throwing_stone"
         Type="OneHandedWeapon"
         weight="0.3"
         value="1500"
@@ -117,7 +120,7 @@
         name="Veilstone"
         body_name="bo_mace_a"
         recalculate_body="true"
-        mesh="horse_whip"
+        mesh="throwing_stone"
         Type="OneHandedWeapon"
         weight="0.3"
         value="1700"
@@ -147,7 +150,7 @@
         name="Stormcrystal"
         body_name="bo_mace_a"
         recalculate_body="true"
-        mesh="horse_whip"
+        mesh="throwing_stone"
         Type="OneHandedWeapon"
         weight="0.3"
         value="2000"
@@ -177,7 +180,7 @@
         name="Duskstone"
         body_name="bo_mace_a"
         recalculate_body="true"
-        mesh="horse_whip"
+        mesh="throwing_stone"
         Type="OneHandedWeapon"
         weight="0.3"
         value="1600"

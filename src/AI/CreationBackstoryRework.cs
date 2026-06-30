@@ -85,6 +85,13 @@ namespace AshAndEmber
         private static readonly NarrativeMenuOptionOnConsequenceDelegate _noopConsequence =
             new NarrativeMenuOptionOnConsequenceDelegate((CharacterCreationManager _) => { });
 
+        // The engine's ApplyFinalEffects calls Args.AffectedSkills.ToList() AND
+        // Args.AffectedTraits.ToList() with no null guard, so an option whose args
+        // getter leaves either unset crashes (ArgumentNullException) the instant it
+        // is picked. Every getter we provide must set BOTH — empty when unused.
+        private static readonly SkillObject[] _noSkills = new SkillObject[0];
+        private static readonly TraitObject[] _noTraits = new TraitObject[0];
+
         // Stored at AfterInitializeContent so OnStageCompleted can read the LIVE
         // selected culture (unknown when the menus are first built, before selection).
         private static CharacterCreationManager _manager;
@@ -278,6 +285,7 @@ namespace AshAndEmber
                     new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) =>
                     {
                         args.SetAffectedSkills(new[] { DefaultSkills.TwoHanded });
+                        args.SetAffectedTraits(_noTraits);
                         args.SetFocusToSkills(_focus);
                         args.SetLevelToSkills(_skill);
                         args.SetLevelToAttribute(DefaultCharacterAttributes.Endurance, _attr);
@@ -309,6 +317,7 @@ namespace AshAndEmber
                     new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) =>
                     {
                         args.SetAffectedSkills(new[] { skill });
+                        args.SetAffectedTraits(_noTraits);
                         args.SetFocusToSkills(2);
                         args.SetLevelToAttribute(attribute, 1);
                     }),
@@ -338,7 +347,13 @@ namespace AshAndEmber
                         + "or fifty, or something in between that the calendar cannot account for. You feel "
                         + "old in ways the body does not show — and young in others, as though part of you "
                         + "has not aged at all, or aged too fast, or never started."),
-                    new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) => { }),
+                    new GetNarrativeMenuOptionArgsDelegate((NarrativeMenuOptionArgs args) =>
+                    {
+                        // No grant, but BOTH lists must be non-null or ApplyFinalEffects
+                        // throws when this option is picked (the age is applied post-reset).
+                        args.SetAffectedSkills(_noSkills);
+                        args.SetAffectedTraits(_noTraits);
+                    }),
                     new NarrativeMenuOptionOnConditionDelegate((CharacterCreationManager mgr) =>
                         mgr?.CharacterCreationContent?.SelectedCulture?.StringId == "sturgia"),
                     _noopSelect,
@@ -487,6 +502,7 @@ namespace AshAndEmber
         private static void ApostleArgs(NarrativeMenuOptionArgs args)
         {
             args.SetAffectedSkills(new SkillObject[] { DefaultSkills.Riding });
+            args.SetAffectedTraits(_noTraits);   // non-null or ApplyFinalEffects throws
             args.SetFocusToSkills(_focus);
             args.SetLevelToSkills(_skill);
             args.SetLevelToAttribute(DefaultCharacterAttributes.Endurance, _attr);
