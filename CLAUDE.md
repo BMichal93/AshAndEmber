@@ -133,3 +133,15 @@ build/test/verify steps it lists, then follow its cleanup step: delete the
 spec file and remove this section (including this import) from CLAUDE.md.
 
 @lifespan-migration.md
+
+## Pending task: charge-power casting
+
+A ready-to-implement spec for making draw/charge length scale a battle
+cast's power (instead of its aging cost) lives in a separate file. Implement
+it exactly as written (it is a specification, not a discussion), run the
+build/test/verify steps it lists, then follow its cleanup step: delete the
+spec file and remove this section (including this import) from CLAUDE.md.
+This task is independent of the lifespan migration above — implement both,
+in either order.
+
+@charge-power-casting.md
