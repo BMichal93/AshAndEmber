@@ -49,6 +49,33 @@ namespace AshAndEmber
             SpawnTempFireParticle(pos, 8f);
         }
 
+        // Called from the elemental Fire wall — lays a line of lingering burning
+        // patches across the wall so it keeps scorching enemies who hold the line.
+        // `perTickDamage` is already power-scaled by the caller. Three patches span
+        // the wall with minimal overlap; each reuses the spell_firepatch tick.
+        internal static void SpawnFireWallPatches(Vec3 centre, Vec3 right, float halfWidth,
+                                                  float perTickDamage, float duration, Team casterTeam)
+        {
+            for (float f = -halfWidth; f <= halfWidth + 0.01f; f += halfWidth)
+            {
+                Vec3 p = centre + right * f;
+                var node = new AreaEffect
+                {
+                    Id           = "spell_firepatch",
+                    School       = ColorSchool.Red,
+                    Position     = p,
+                    Radius       = 2.2f,
+                    TickInterval = 1f,
+                    TickTimer    = 1f,
+                    Remaining    = duration,
+                    Power        = perTickDamage,
+                    CasterTeam   = casterTeam,
+                };
+                node.LightEntity = SpawnAreaLight(p, ColorSchool.Red, 5f);
+                _areaEffects.Add(node);
+            }
+        }
+
         // Called from ExecuteBurstFromAgent (when RestoreCount > 0 and player is caster) —
         // a consecrated zone lingers at the burst centre, slowly healing allies.
         internal static void SpawnHolyZone(Vec3 pos, int restoreCount, float radius, Team casterTeam)

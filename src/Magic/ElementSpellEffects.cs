@@ -34,10 +34,12 @@ namespace AshAndEmber
         // ── Magnitudes ──────────────────────────────────────────────────────────
         private const float FireConeRange   = 9f;
         private const float FireConeDot      = 0.5f;   // ~60° half-cone
-        private const float FireConeDamage   = 38f;
+        private const float FireConeDamage   = 44f;    // the bruiser — highest single hit
         private const float FireWallRange    = 6f;
         private const float FireWallWidth    = 4f;
-        private const float FireWallDamage   = 30f;
+        private const float FireWallDamage   = 14f;    // contact hit as the flame front sweeps up
+        private const float FireWallBurnTick = 10f;    // per-second burn for those who hold the line
+        private const float FireWallBurnSec  = 5f;     // how long the wall of fire smoulders
         private const float SpiritRadius     = 9f;
         private const float SpiritFearSlow   = 0.55f;  // panicked enemies slow to this
         private const float SpiritFearSec    = 6f;
@@ -95,10 +97,12 @@ namespace AshAndEmber
                 if (Vec3.DotProduct(fwd, to * (1f / len)) < FireConeDot) continue;   // outside the cone
                 if (SpellEffects.IsWarded(a)) continue;
                 try { SpellEffects.DamageAgent(a, FireConeDamage * power, ColorSchool.Red, caster); } catch { }
-                SpawnLight(a.Position, rgb, 0.9f);
+                FireBloom(a.Position, ashen, rgb, 1.0f, false);
                 hit++;
             }
-            SpawnLight(pos + fwd * (FireConeRange * 0.5f), rgb, 2.2f);
+            // A living eruption of flame lances out along the cone; the Ashen show
+            // only the cold's pale light.
+            FireBloom(pos + fwd * (FireConeRange * 0.5f), ashen, rgb, 3f, true);
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch { }
         }
 
@@ -112,8 +116,20 @@ namespace AshAndEmber
             Vec3 rgb = Palette(MagicElement.Fire, ashen);
             Vec3 centre = pos + fwd * FireWallRange;
             Vec3 right  = new Vec3(fwd.y, -fwd.x, 0f);
+            // A standing curtain of flame the length of the wall — real fire for the
+            // living, a wall of driven frost and snow for the Ashen cold.
             for (float f = -FireWallWidth; f <= FireWallWidth; f += 1.5f)
-                SpawnLight(centre + right * f, rgb, 1.4f);
+            {
+                Vec3 node = centre + right * f;
+                try
+                {
+                    if (ashen) SpellEffects.SpawnTempSnowParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                    else       SpellEffects.SpawnTempFireParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                }
+                catch { }
+                SpawnLight(node, rgb, 1.4f);
+            }
+            // Contact hit as the wall erupts.
             foreach (Agent a in EnemiesNear(caster, FireWallRange + FireWallWidth))
             {
                 Vec3 d = a.Position - centre; d.z = 0f;
@@ -121,6 +137,15 @@ namespace AshAndEmber
                 if (SpellEffects.IsWarded(a)) continue;
                 try { SpellEffects.DamageAgent(a, FireWallDamage * power, ColorSchool.Red, caster); } catch { }
             }
+            // The living fire lingers — a burning line that scorches any who hold it
+            // (pure area-denial, no crowd control; the Ashen cold does not smoulder).
+            if (!ashen)
+                try
+                {
+                    SpellEffects.SpawnFireWallPatches(centre, right, FireWallWidth,
+                        FireWallBurnTick * power, FireWallBurnSec, caster.Team);
+                }
+                catch { }
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch { }
         }
 
@@ -152,10 +177,14 @@ namespace AshAndEmber
                     }
                 }
                 catch { }
+                // A wraith haze clings to each stricken foe.
+                try { SpellEffects.SpawnTempSmokeParticle(a.Position + new Vec3(0f, 0f, 0.6f), 0.9f); } catch { }
                 SpawnLight(a.Position, rgb, 0.8f);
                 struck++;
             }
             IssueRandomEnemyOrder(caster);
+            // A pall of spectral smoke wells up from the caster.
+            try { SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 1.4f); } catch { }
             SpawnLight(pos, rgb, 2.0f);
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 1.5f); } catch { }
         }
@@ -181,6 +210,8 @@ namespace AshAndEmber
                 }
             }
             catch { }
+            // A rising veil of spectral smoke marks the ward.
+            try { SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 1.6f); } catch { }
             SpawnLight(pos, rgb, 2.2f);
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 2.5f); } catch { }
         }
@@ -287,6 +318,25 @@ namespace AshAndEmber
         private static void SpawnLight(Vec3 pos, Vec3 rgb, float scale)
         {
             try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), rgb, 7f * scale, 0.7f); } catch { }
+        }
+
+        // The visible bloom of a fire cast. The living fire erupts in real flame —
+        // a full burst-explosion for the main eruption, a scatter of flame at each
+        // struck foe. The Ashen wield the cold, so their "fire" answers instead in
+        // driven frost and snow beneath the pale blue light.
+        private static void FireBloom(Vec3 at, bool ashen, Vec3 rgb, float lightScale, bool major)
+        {
+            try
+            {
+                if (ashen)
+                    SpellEffects.SpawnTempSnowParticle(at + new Vec3(0f, 0f, 0.4f), major ? 1.6f : 1.1f);
+                else if (major)
+                    SpellEffects.SpawnBurstExplosion(at, ColorSchool.Red, 3f, 1.3f);
+                else
+                    SpellEffects.SpawnTempFireParticle(at + new Vec3(0f, 0f, 0.4f), 1.1f);
+            }
+            catch { }
+            SpawnLight(at, rgb, lightScale);
         }
     }
 }

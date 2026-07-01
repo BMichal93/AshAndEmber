@@ -126,7 +126,7 @@ namespace AshAndEmber
                     true, true,
                     "Cast", "Talents",
                     () => { _deferredInquiry = ShowCampaignCastMenu; },
-                    () => { _deferredInquiry = ShowTalentMenu; }
+                    () => { _deferredInquiry = MagicLearning.ShowCodex; }
                 ), true, true);
             }
             else
@@ -137,7 +137,7 @@ namespace AshAndEmber
                     true, true,
                     "Close", "Talents",
                     () => { },
-                    () => { _deferredInquiry = () => ShowTalentMenu(); }
+                    () => { _deferredInquiry = MagicLearning.ShowCodex; }
                 ), true, true);
             }
         }
@@ -251,92 +251,6 @@ namespace AshAndEmber
                     {
                         var el = (MagicElement)(int)chosen[0].Identifier;
                         _deferredInquiry = () => ElementSpellMinigame.Begin(el);
-                    }
-                },
-                null, "", false
-            ), false, true);
-        }
-
-        // ── Talent menu ───────────────────────────────────────────────────────
-
-        public static void ShowTalentMenu()
-        {
-            var all = TalentSystem.All.ToList();
-            int cost = TalentSystem.PurchaseCost();
-            string costStr = $"{cost} focus point{(cost != 1 ? "s" : "")}";
-
-            var elements = new List<InquiryElement>();
-
-            TalentCategory? lastCategory = null;
-            foreach (var d in all)
-            {
-                // Consumables are granted through encounters, not purchased here
-                if (d.IsConsumable) continue;
-                // Info cards are only shown when the condition is met
-                if (d.IsInfo && d.Id == TalentId.AshenGift && !_isAshen) continue;
-                // Rite talents are learned through system-specific menus, not the grimoire
-                if (d.Category == TalentCategory.Rite) continue;
-                // Single talents are now bundled into Classes — only the class is
-                // purchasable. (Legacy saves keep any singles they already bought;
-                // those still function via Has(), they are just no longer listed.)
-                if (d.Category == TalentCategory.Passive || d.Category == TalentCategory.Enchantment
-                    || d.Category == TalentCategory.Spell || d.Category == TalentCategory.LostForm) continue;
-
-                // Insert a disabled separator when the category changes
-                if (d.Category != lastCategory)
-                {
-                    lastCategory = d.Category;
-                    string header = d.Category switch
-                    {
-                        TalentCategory.Class       => "─── Class ───",
-                        TalentCategory.Passive     => "─── Passive ───",
-                        TalentCategory.Enchantment => "─── Enchantment ───",
-                        TalentCategory.Spell       => "─── Spell ───",
-                        TalentCategory.Info        => "─── Ashen Status ───",
-                        TalentCategory.LostForm    => "─── Lost Form ───",
-                        _                          => "───────────",
-                    };
-                    // Negative identifier marks non-selectable separator rows
-                    elements.Add(new InquiryElement(-(int)d.Category - 1, header, null, false, ""));
-                }
-
-                bool   owned      = TalentSystem.Has(d.Id);
-                bool   selectable = !d.IsInfo && !owned;
-                int    talentCost = (d.Category == TalentCategory.Class && d.FocusCost == 0)
-                                  ? TalentSystem.GetNextPathCost()
-                                  : (d.FocusCost > 0 ? d.FocusCost : cost);
-                string icon  = d.IsInfo                                   ? "◉"
-                             : d.Category == TalentCategory.Class         ? "❖"
-                             : d.Category == TalentCategory.Spell         ? "✦"
-                             : d.Category == TalentCategory.Enchantment   ? "❋"
-                             : d.Category == TalentCategory.LostForm      ? "◈"
-                             :                                               "◆";
-                string tag   = d.IsInfo             ? "status"
-                             : d.Category == TalentCategory.LostForm ? "lost form"
-                             : d.Category.ToString().ToLowerInvariant();
-                string check = owned ? "✓ " : "   ";
-                string label = $"{check}{icon}  {d.Name}   [{tag}]";
-                string costHint = $"Cost: {talentCost} focus point{(talentCost != 1 ? "s" : "")}";
-                string hint  = $"【 {d.Name} 】  {tag}\n\n" +
-                               $"{d.MechanicDesc}\n\n" +
-                               $"{d.Lore}\n\n" +
-                               (d.IsInfo ? "— Status — not a talent to be learned —" : owned ? "— Already known —" : costHint);
-                elements.Add(new InquiryElement((int)d.Id, label, null, selectable, hint));
-            }
-
-            MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                "Paths  —  The Inner Fire",
-                $"❖ = path   Cost: {TalentSystem.GetNextPathCost()} fp for your next path, then +1 fp each additional. Discipline rites are learned at their ritual sites.",
-                elements,
-                true, 0, 1,
-                "Learn", "Close",
-                chosen =>
-                {
-                    if (chosen?.Count > 0)
-                    {
-                        int id = (int)chosen[0].Identifier;
-                        if (id < 0) return; // separator row — ignore
-                        _deferredInquiry = () => TalentSystem.TryPurchase((TalentId)id, Hero.MainHero);
                     }
                 },
                 null, "", false

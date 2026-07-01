@@ -4,6 +4,24 @@
 
 ## Unreleased
 
+### The grimoire's Talents open the true Codex
+- The grimoire's **Talents** button (Left Alt + X / LB + RB) now opens the **Codex of the Inner Fire** — the living elemental paths (Fire, Wind, Earth, Water, Spirit and the Steel / Blood / Nature disciplines) — instead of the retired fire classes. (Legacy saves keep whatever they already learned.)
+
+### The elements answer in earnest — real effects for every working
+- **Fire** now erupts in true flame again — a full burst of fire along the cone and a standing curtain of flame the length of the wall, not a single flickering light.
+- **Earth** breaks the ground in real **stone** — boulder, gravel, and torn roots — beneath an earthen glow.
+- **Spirit** wells up as a **spectral haze**, clinging to each foe it unmans.
+- **The Ashen cold** answers in driven **snow and frost** where the living would loose flame.
+
+### The five elements, balanced against one another (and against the crystals)
+- Each element now holds a clear identity in a tighter power band — a working costs you years of life, so at full draw it outreaches the near-free crystals:
+  - **Fire — the bruiser.** The heaviest single strike (cone 44) and a **wall that keeps burning** — a line of fire that scorches any who hold it, for five seconds after the cast.
+  - **Wind — the sweeper.** Widest reach of all (a full circle) with a stronger gust (30) that hurls and slows every foe around you.
+  - **Earth — the jailer.** Its damage eased (32) but its **hard root** kept — the price of the strongest lockdown in the art.
+  - **Water — the breaker.** A heavier forward wave (34) that scatters formations with knockback and a lingering chill.
+  - **Spirit — the dread.** Unchanged: no wound, but fear, a scattered order, and a ward that heartens and mends your own.
+- **The draw now governs your crowd control, too.** A snap cast roots and slows only briefly; a full draw holds a foe for the whole duration — no more full-length locks from an instant flick.
+
 ---
 
 ## v0.35.0

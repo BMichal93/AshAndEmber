@@ -188,22 +188,22 @@ namespace AshAndEmber
         public static double NpcDailyUseChance()  => 0.015;
 
         // ── Battle effect constants ─────────────────────────────────────────────
-        // Wind · Gale — 360° knockback + light damage
+        // Wind · Gale — the sweeper: widest area (360°), knockback + slow; hits all
         public const float GaleRadius     = 10f;
-        public const float GaleDamage     = 22f;
+        public const float GaleDamage     = 30f;
         public const float GaleKnockback  = 4f;
         public const float GaleSlowMult   = 0.80f;
         public const float GaleSlowSec    = 5f;
-        // Earth · Entangle — roots immobilise + damage
+        // Earth · Entangle — the jailer: moderate damage + a long hard root
         public const float EntangleRadius   = 6f;
-        public const float EntangleDamage   = 40f;
+        public const float EntangleDamage   = 32f;
         public const float EntangleRootSec  = 4f;
         public const float EntangleStaggerSec = 0.4f;  // brief caster pause
 
-        // Water · Torrent — forward cone, damage + knockback (breaks formation)
+        // Water · Torrent — the breaker: forward cone, solid damage + knockback + slow
         public const float TorrentRange     = 9f;
         public const float TorrentAngleDeg  = 70f;
-        public const float TorrentDamage    = 30f;
+        public const float TorrentDamage    = 34f;
         public const float TorrentKnockback = 5f;
         public const float TorrentSlowMult  = 0.70f;
         public const float TorrentSlowSec   = 5f;

@@ -70,6 +70,24 @@ namespace AshAndEmber
             "psys_torch_fire",
         };
 
+        // Spectral smoke — Spirit's whispered dread made visible; a wraith haze.
+        private static readonly string[] _smokeParticleNames =
+        {
+            "psys_smoke",
+            "psys_fire_smoke_env_point",
+            "psys_dummy_smoke",
+            "psys_burnt_wood_smoke",
+        };
+
+        // Driven snow and frost — the Ashen cold, standing in for flame.
+        private static readonly string[] _snowParticleNames =
+        {
+            "psys_env_snow_dust",
+            "psys_game_env_dust_snow",
+            "psys_snow_dust",
+            "psys_game_snow",
+        };
+
         private static GameEntity SpawnParticleEntity(Vec3 position, string particleName)
         {
             try
@@ -86,10 +104,22 @@ namespace AshAndEmber
         }
 
         // Spawns a cluster of fire particles at the given position.
-        // Tries each candidate name; on first success spawns a main + two offset flames.
         internal static void SpawnTempFireParticle(Vec3 position, float duration)
+            => SpawnParticleCluster(position, duration, _fireParticleNames);
+
+        // Spectral smoke cluster — Spirit's dread made visible.
+        internal static void SpawnTempSmokeParticle(Vec3 position, float duration)
+            => SpawnParticleCluster(position, duration, _smokeParticleNames);
+
+        // Driven snow / frost cluster — the Ashen cold in place of flame.
+        internal static void SpawnTempSnowParticle(Vec3 position, float duration)
+            => SpawnParticleCluster(position, duration, _snowParticleNames);
+
+        // Tries each candidate name; on first success spawns a main plume plus two
+        // scattered companions for a fuller, churning effect.
+        private static void SpawnParticleCluster(Vec3 position, float duration, string[] names)
         {
-            foreach (string name in _fireParticleNames)
+            foreach (string name in names)
             {
                 GameEntity entity = SpawnParticleEntity(position, name);
                 if (entity == null) continue;
@@ -101,7 +131,7 @@ namespace AshAndEmber
                     LightEntity = entity,
                 });
 
-                // Two scattered companion flames for a fuller fire effect
+                // Two scattered companions for a fuller effect
                 for (int i = 0; i < 2; i++)
                 {
                     float a = (float)(_rng.NextDouble() * Math.PI * 2);
@@ -159,9 +189,10 @@ namespace AshAndEmber
         {
             switch (el)
             {
-                case NatureElement.Earth:   // forest — torn grass, leaves, roots
-                    return new[] { "psys_game_infantry_grass_col", "psys_game_hoof_grass_col",
-                                   "psys_game_boulder_grass_coll", "psys_dust_env_forest" };
+                case NatureElement.Earth:   // stone erupts, torn earth and roots follow
+                    return new[] { "psys_game_boulder_stone_coll", "psys_game_stone_gravel",
+                                   "psys_game_infantry_stone_col", "psys_game_infantry_grass_col",
+                                   "psys_dust_env_forest" };
                 case NatureElement.Water:   // splashes
                     return new[] { "psys_game_water_splash_circular", "psys_game_water_splash_1",
                                    "psys_game_water_splash_2", "psys_game_hoof_water_coll" };
@@ -689,7 +720,7 @@ namespace AshAndEmber
             switch (el)
             {
                 case NatureElement.Wind:  return new Vec3(0.88f, 0.92f, 1.00f); // pale white-blue
-                case NatureElement.Earth: return new Vec3(0.12f, 0.85f, 0.12f); // bright green
+                case NatureElement.Earth: return new Vec3(0.55f, 0.62f, 0.24f); // mossy earth (stone + root)
                 case NatureElement.Water: return new Vec3(0.20f, 0.60f, 1.00f); // deep blue
                 case NatureElement.Storm: return new Vec3(1.00f, 1.00f, 1.00f); // stark white
                 default: return new Vec3(0.88f, 0.92f, 1.00f);

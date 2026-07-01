@@ -133,7 +133,7 @@ namespace AshAndEmber
                     enemy.TeleportToPosition(enemy.Position + dir * NatureMath.GaleKnockback);
                 }
                 catch { }
-                ApplySpeedToken(enemy, NatureMath.GaleSlowMult, NatureMath.GaleSlowSec);
+                ApplySpeedToken(enemy, NatureMath.GaleSlowMult, NatureMath.GaleSlowSec * _castPower);
             });
         }
 
@@ -156,7 +156,7 @@ namespace AshAndEmber
             {
                 ApplyDamage(enemy, caster, NatureMath.EntangleDamage, DamageTypes.Blunt);
                 try { enemy.SetMaximumSpeedLimit(0f, false); } catch { }
-                ApplySpeedToken(enemy, 0f, NatureMath.EntangleRootSec);   // held in place
+                ApplySpeedToken(enemy, 0f, NatureMath.EntangleRootSec * _castPower);   // held in place (root scales with draw)
                 try { SpellEffects.SpawnNatureBurst(enemy.Position, NatureElement.Earth, 2.0f); } catch { }
             });
             ApplySpeedToken(caster, 0f, NatureMath.EntangleStaggerSec);
@@ -176,7 +176,7 @@ namespace AshAndEmber
                 if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;
                 ApplyDamage(enemy, caster, NatureMath.TorrentDamage, DamageTypes.Invalid);
                 try { enemy.TeleportToPosition(enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch { }
-                ApplySpeedToken(enemy, NatureMath.TorrentSlowMult, NatureMath.TorrentSlowSec);
+                ApplySpeedToken(enemy, NatureMath.TorrentSlowMult, NatureMath.TorrentSlowSec * _castPower);
             });
         }
 
@@ -248,8 +248,8 @@ namespace AshAndEmber
                     SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.82f, 0.85f, 1.0f),  8f, 0.5f);
                     break;
                 case NatureElement.Earth:
-                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.15f, 1.0f, 0.15f),  9f, 2.5f);
-                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.1f,  0.7f, 0.1f),   5f, 1.5f);
+                    SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.60f, 0.66f, 0.26f),  9f, 2.5f);
+                    SpellEffects.SpawnTempLightRgb(pos,       new Vec3(0.45f, 0.36f, 0.16f),  5f, 1.5f);
                     break;
                 case NatureElement.Water:
                     SpellEffects.SpawnTempLightRgb(pos + up,  new Vec3(0.2f, 0.6f, 1.0f),   10f, 2.5f);
