@@ -233,6 +233,10 @@ namespace AshAndEmber
         // ── Per-element visuals (the Ashen wear the cold mask) ─────────────────────
         // Each element has a living colour and a cold Ashen colour:
         //   Fire→Cold · Wind→Storm · Earth→Ash · Water→Snow · Spirit→Void.
+        // Public accessor so the charging visual can tint its light to the loaded
+        // element (Ashen-aware), matching the colour the cast itself will show.
+        public static Vec3 ElementLightRgb(MagicElement el, bool ashen) => Palette(el, ashen);
+
         private static Vec3 Palette(MagicElement el, bool ashen)
         {
             if (ashen)

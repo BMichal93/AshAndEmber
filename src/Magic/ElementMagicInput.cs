@@ -40,6 +40,14 @@ namespace AshAndEmber
         private const  float StillSpeed       = 0.3f;
         private static bool  _readyAnnounced;
 
+        // Charging visual: element-specific particles engulf the caster while they
+        // draw, refreshed on a short interval and re-emitted the instant the loaded
+        // element changes (so switching W/S/A/D swaps flames for vines, splashes…).
+        private static float _visualTimer;
+        private static MagicElement? _lastVisualElement;
+        private const  float VisualInterval  = 0.4f;
+        private const  float VisualDuration  = 0.6f;
+
         public static bool InputSuppressed { get; private set; }
 
         public static void ResetInputState()
@@ -50,6 +58,8 @@ namespace AshAndEmber
             _prevPadUp = _prevPadDown = _prevPadLeft = _prevPadRight = false;
             _reminder = 0f;
             _readyAnnounced = false;
+            _visualTimer = 0f;
+            _lastVisualElement = null;
             InputSuppressed = false;
         }
 
@@ -71,8 +81,9 @@ namespace AshAndEmber
                     MageElementKnowledge.ResetLoaded();
                     _drawTime = 0f;
                     _readyAnnounced = false;
+                    _visualTimer = 0f;
+                    _lastVisualElement = null;   // force an immediate first pulse
                     try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch { }
-                    try { if (Agent.Main != null) SpellEffects.BeginFocusVisual(Agent.Main, FocusSchool()); } catch { }
                     _wasFocusing = true;
                 }
 
@@ -97,11 +108,13 @@ namespace AshAndEmber
                         _drawTime = 0f;
                         Msg("The gathered power slips your grip and disperses — begin the draw again.");
                     }
+                    TickChargeVisual(dt);
                 }
                 else
                 {
                     _drawTime = 0f;
                     _readyAnnounced = false;
+                    _lastVisualElement = null;   // re-emit when drawing resumes
                     _reminder -= dt;
                     if (_reminder <= 0f) { Msg(reason); _reminder = ReminderInterval; }
                 }
@@ -119,9 +132,74 @@ namespace AshAndEmber
                 _drawTime = 0f;
                 _prevAtk = _prevBlk = false;
                 _readyAnnounced = false;
+                _lastVisualElement = null;
                 try { if (Agent.Main != null) SpellEffects.EndCastLoop(Agent.Main); } catch { }
+                // Clears the body contour glow left by the charge visual.
                 try { if (Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch { }
             }
+        }
+
+        // Emit the element's charging visual on a short interval, and immediately
+        // whenever the loaded element changes, so the aura around the caster always
+        // matches what they are drawing — flames for Fire, vines/earth for Earth,
+        // splashes for Water, gusts for Wind, void-light for Spirit.
+        private static void TickChargeVisual(float dt)
+        {
+            var caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+            var el = MageElementKnowledge.Loaded;
+
+            if (_lastVisualElement != el)
+            {
+                EmitChargeVisual(caster, el);
+                _lastVisualElement = el;
+                _visualTimer = VisualInterval;
+                return;
+            }
+            _visualTimer -= dt;
+            if (_visualTimer <= 0f)
+            {
+                EmitChargeVisual(caster, el);
+                _visualTimer = VisualInterval;
+            }
+        }
+
+        private static void EmitChargeVisual(Agent caster, MagicElement el)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch { }
+            Vec3 up = new Vec3(0f, 0f, 0.8f);
+
+            // Element-corresponding particles engulf the caster while charging.
+            try
+            {
+                switch (el)
+                {
+                    case MagicElement.Fire:
+                        // Flames, as before — but the Ashen burn cold (light only).
+                        if (!ashen) SpellEffects.SpawnTempFireParticle(pos, VisualDuration);
+                        break;
+                    case MagicElement.Wind:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Wind,  VisualDuration);
+                        break;
+                    case MagicElement.Earth:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration);
+                        break;
+                    case MagicElement.Water:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, VisualDuration);
+                        break;
+                    case MagicElement.Spirit:
+                        // No earthly debris for the void — faint wisps and the violet light carry it.
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Wind,  VisualDuration * 0.6f);
+                        break;
+                }
+            }
+            catch { }
+
+            // Element-coloured light and a body contour glow, tinted to the element
+            // (the Ashen cold mask is applied by ElementLightRgb).
+            try { SpellEffects.SpawnTempLightRgb(pos + up, ElementSpellEffects.ElementLightRgb(el, ashen), 8f, VisualDuration + 0.2f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, FocusSchool(), VisualInterval + 0.3f); } catch { }
         }
 
         // W/S/A/D (or left-stick flicks) load a learned element; Fire needs no key.
