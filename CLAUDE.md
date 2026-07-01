@@ -123,3 +123,13 @@ Process and working-style guidance (how to build, verify the TaleWorlds API, bum
 the version, and avoid mod-conflict crashes) lives in a separate file:
 
 @behaviour.md
+
+## Pending task: lifespan migration
+
+A ready-to-implement spec for replacing the forward-aging spellcasting cost
+with a shrinking life-expectancy model lives in a separate file. Implement it
+exactly as written (it is a specification, not a discussion), run the
+build/test/verify steps it lists, then follow its cleanup step: delete the
+spec file and remove this section (including this import) from CLAUDE.md.
+
+@lifespan-migration.md
