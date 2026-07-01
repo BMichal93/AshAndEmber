@@ -18,6 +18,8 @@ namespace AshAndEmber
     {
         // ── Counters ───────────────────────────────────────────────────────────
         public const int GraceColdCap        = 10;
+        // Effective Grace ceiling — the base cap plus any Abundant Grace devotion.
+        public static int GraceCap() => GraceColdCap + MiracleTalents.GraceCapBonus;
         public const int PrayerCooldownDays  =  3;   // Pray for Grace
         public const int WardingCooldownDays =  7;   // Warding Seal
 

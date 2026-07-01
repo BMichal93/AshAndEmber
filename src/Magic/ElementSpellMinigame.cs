@@ -285,10 +285,10 @@ namespace AshAndEmber
                 else
                 {
                     int cost = TalentSystem.GetDailyCastCost();
-                    AgingSystem.AgeHero(Hero.MainHero, cost);
+                    AgingSystem.SpendLifeExpectancy(Hero.MainHero, cost);
                     if (cost > 1)
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"The fire demands more — {cost} days.", new Color(0.9f, 0.5f, 0.2f)));
+                            $"The fire demands more — {cost} days of life.", new Color(0.9f, 0.5f, 0.2f)));
                 }
                 TalentSystem.RegisterMapCast();
             }

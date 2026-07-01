@@ -62,6 +62,8 @@ namespace AshAndEmber
 
         private static bool CheckDaylight(Agent user)
         {
+            // Waking Light: the lapidary learns to wake a crystal's stored light after dark.
+            if (user == Agent.Main && CrystalTalents.WorksAtNight) return true;
             float hour = 12f; // default to noon if we can't read the time
             try { hour = (float)CampaignTime.Now.CurrentHourInDay; } catch { }
             bool extended = TalentSystem.Has(TalentId.SolarFlare);
@@ -97,8 +99,10 @@ namespace AshAndEmber
             if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
             if (!CrystalCatalog.TryGetByItemId(itemId, out var def)) return;
 
-            _pendingCharge[main] = new Charge { Type = def.Type, Remaining = CrystalMath.ChargeDurationSec };
-            try { SpellEffects.BeginAgentGlow(main, def.GlowColor, CrystalMath.ChargeDurationSec + 0.5f); } catch { }
+            // Swift Kindling shortens the charge for the player.
+            float chargeSec = CrystalMath.ChargeDurationSec * (main == Agent.Main ? CrystalTalents.ChargeMult : 1f);
+            _pendingCharge[main] = new Charge { Type = def.Type, Remaining = chargeSec };
+            try { SpellEffects.BeginAgentGlow(main, def.GlowColor, chargeSec + 0.5f); } catch { }
             InformationManager.DisplayMessage(new InformationMessage(
                 $"{def.Name} — drawing light…", CrystalColor(def.GlowColor)));
         }
@@ -409,7 +413,8 @@ namespace AshAndEmber
 
         private static void TryBurndown(CrystalType type)
         {
-            if (!(_rng.NextDouble() < CrystalMath.BurndownChance)) return;
+            // Lasting Lattice makes the crystal far more likely to survive the draw.
+            if (!(_rng.NextDouble() < CrystalMath.BurndownChance * CrystalTalents.ShatterMult)) return;
 
             var def    = CrystalCatalog.Get(type);
             var hero   = Hero.MainHero;

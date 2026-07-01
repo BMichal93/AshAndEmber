@@ -33,9 +33,14 @@ namespace AshAndEmber
         {
             try { store.SyncData("MIRACLE_Grace", ref MiracleInventory._grace); } catch { }
             try { int dummy = 0; store.SyncData("MIRACLE_Cold", ref dummy); } catch { } // Cold removed
+            try { MiracleTalents.Save(store); } catch { }
         }
 
-        public static void ResetForNewGame() => MiracleInventory.ResetForNewGame();
+        public static void ResetForNewGame()
+        {
+            MiracleInventory.ResetForNewGame();
+            MiracleTalents.ResetForNewGame();
+        }
 
         private void OnDailyTick()
         {

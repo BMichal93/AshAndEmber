@@ -175,12 +175,14 @@ namespace AshAndEmber
         {
             try
             {
+                float power = MiracleTalents.TraitPower(GraceTrait.Honor);
                 var s = hero?.CurrentSettlement;
                 if (s?.Town != null)
                 {
-                    s.Town.Loyalty  = Math.Min(100f, s.Town.Loyalty  + MiracleMath.OathLoyaltyGain);
-                    s.Town.Security = Math.Min(100f, s.Town.Security + MiracleMath.OathLoyaltyGain);
-                    return $"The Sworn Word is spoken over {s.Name}. The town steadies — loyalty and order return (+{(int)MiracleMath.OathLoyaltyGain}).";
+                    float gain = MiracleMath.OathLoyaltyGain * power;
+                    s.Town.Loyalty  = Math.Min(100f, s.Town.Loyalty  + gain);
+                    s.Town.Security = Math.Min(100f, s.Town.Security + gain);
+                    return $"The Sworn Word is spoken over {s.Name}. The town steadies — loyalty and order return (+{(int)gain}).";
                 }
                 var kingdom = hero?.Clan?.Kingdom;
                 var lord = Hero.AllAliveHeroes
@@ -191,9 +193,10 @@ namespace AshAndEmber
                         .OrderBy(_ => _rng.Next()).FirstOrDefault();
                 if (lord != null)
                 {
+                    int rel = Math.Max(1, (int)(MiracleMath.OathRelationGain * power));
                     try { TaleWorlds.CampaignSystem.Actions.ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                        hero, lord, MiracleMath.OathRelationGain, false); } catch { }
-                    return $"You swear an oath in the light, and word reaches {lord.Name}. They think the better of you (+{MiracleMath.OathRelationGain} relation).";
+                        hero, lord, rel, false); } catch { }
+                    return $"You swear an oath in the light, and word reaches {lord.Name}. They think the better of you (+{rel} relation).";
                 }
                 return "You speak the oath, but there is no one near to hold you to it.";
             }
@@ -206,11 +209,14 @@ namespace AshAndEmber
             try
             {
                 if (party == null) return null;
+                float power = MiracleTalents.TraitPower(GraceTrait.Generosity);
+                int food = Math.Max(1, (int)(MiracleMath.BountyFood * power));
+                float morale = MiracleMath.BountyMorale * power;
                 var grain = TaleWorlds.ObjectSystem.MBObjectManager.Instance?.GetObject<ItemObject>("grain");
                 if (grain != null)
-                    try { party.ItemRoster.AddToCounts(grain, MiracleMath.BountyFood); } catch { }
-                try { party.RecentEventsMorale += MiracleMath.BountyMorale; } catch { }
-                return $"The Open Hand opens. The stores are fuller by morning (+{MiracleMath.BountyFood} grain), and the column eats well (+{(int)MiracleMath.BountyMorale} morale).";
+                    try { party.ItemRoster.AddToCounts(grain, food); } catch { }
+                try { party.RecentEventsMorale += morale; } catch { }
+                return $"The Open Hand opens. The stores are fuller by morning (+{food} grain), and the column eats well (+{(int)morale} morale).";
             }
             catch { return null; }
         }
@@ -221,9 +227,12 @@ namespace AshAndEmber
             try
             {
                 if (party == null) return null;
-                try { party.RecentEventsMorale += MiracleMath.SightMorale; } catch { }
+                float power = MiracleTalents.TraitPower(GraceTrait.Calculating);
+                float sightMorale = MiracleMath.SightMorale * power;
+                try { party.RecentEventsMorale += sightMorale; } catch { }
                 Vec2 here = party.GetPosition2D;
-                float r2 = MiracleMath.SightRadius * MiracleMath.SightRadius;
+                float sr = MiracleMath.SightRadius * power;   // Clearer Sight reaches further
+                float r2 = sr * sr;
                 MobileParty nearest = null; float best = float.MaxValue;
                 foreach (var p in MobileParty.All)
                 {
@@ -234,8 +243,8 @@ namespace AshAndEmber
                     if (d < best && d <= r2) { best = d; nearest = p; }
                 }
                 return nearest != null
-                    ? $"Far-Sight — the light shows the roads. {nearest.Name} moves against you, not far off. Your scouts ride easier for it (+{(int)MiracleMath.SightMorale} morale)."
-                    : $"Far-Sight — the light shows the roads. Nothing hostile stirs nearby. The column rides easier (+{(int)MiracleMath.SightMorale} morale).";
+                    ? $"Far-Sight — the light shows the roads. {nearest.Name} moves against you, not far off. Your scouts ride easier for it (+{(int)sightMorale} morale)."
+                    : $"Far-Sight — the light shows the roads. Nothing hostile stirs nearby. The column rides easier (+{(int)sightMorale} morale).";
             }
             catch { return null; }
         }
@@ -302,7 +311,8 @@ namespace AshAndEmber
 
         private static void BattleRadiantMending(Agent caster, bool announce)
         {
-            float selfHeal = SafeLimit(caster) * MiracleMath.RadiantMendSelfFrac;
+            float power = MiracleTalents.TraitPower(GraceTrait.Mercy);
+            float selfHeal = SafeLimit(caster) * MiracleMath.RadiantMendSelfFrac * power;
             try { SpellEffects.HealAgent(caster, selfHeal); } catch { }
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 3f); } catch { }
 
@@ -318,7 +328,7 @@ namespace AshAndEmber
                     if (caster.Team == null || a.Team != caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
-                    try { SpellEffects.HealAgent(a, SafeLimit(a) * MiracleMath.RadiantMendAllyFrac); } catch { }
+                    try { SpellEffects.HealAgent(a, SafeLimit(a) * MiracleMath.RadiantMendAllyFrac * power); } catch { }
                     mended++;
                 }
             }
@@ -331,7 +341,8 @@ namespace AshAndEmber
 
         private static void BattleGuidance(Agent caster, bool announce)
         {
-            try { MobileParty.MainParty.RecentEventsMorale += MiracleMath.GuidanceBattleMorale; } catch { }
+            float power = MiracleTalents.TraitPower(GraceTrait.Valor);
+            try { MobileParty.MainParty.RecentEventsMorale += MiracleMath.GuidanceBattleMorale * power; } catch { }
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, MiracleMath.GuidanceSpeedDurSec); } catch { }
 
             // Speed surge: caster + nearby allies move faster for the duration.
@@ -370,10 +381,12 @@ namespace AshAndEmber
 
         private static void BattleAegis(Agent caster, bool announce)
         {
-            _aegis[caster] = MiracleMath.AegisDurationSec;
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, MiracleMath.AegisDurationSec); } catch { }
+            // The Iron Oath (Honour) holds the ward longer.
+            float dur = MiracleMath.AegisDurationSec * MiracleTalents.TraitPower(GraceTrait.Honor);
+            _aegis[caster] = dur;
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, dur); } catch { }
             if (announce)
-                Log(caster, $"is wrapped in the Aegis of Faith — {(int)(MiracleMath.AegisResistFrac * 100f)}% of all damage returned as healing for {(int)MiracleMath.AegisDurationSec} seconds.");
+                Log(caster, $"is wrapped in the Aegis of Faith — {(int)(MiracleMath.AegisResistFrac * 100f)}% of all damage returned as healing for {(int)dur} seconds.");
         }
 
         private static void BattleCleansingRite(Agent caster, bool announce)
@@ -446,7 +459,7 @@ namespace AshAndEmber
                     float dx = a.Position.x - impact.x, dy = a.Position.y - impact.y;
                     if (dx * dx + dy * dy > r2) continue;
                     if (SpellEffects.IsWarded(a)) continue;
-                    try { SpellEffects.DamageAgent(a, MiracleMath.PyreJudgementDamage, ColorSchool.Yellow, caster); } catch { }
+                    try { SpellEffects.DamageAgent(a, MiracleMath.PyreJudgementDamage * MiracleTalents.TraitPower(GraceTrait.Calculating), ColorSchool.Yellow, caster); } catch { }
                     try { SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Yellow, 4f); } catch { }
                     hit++;
                 }
@@ -467,8 +480,9 @@ namespace AshAndEmber
         {
             // Ward the caster and nearby allies against all magic (reuses the shared
             // ward system that enemy spells and Dark Gifts check), then mend them.
+            float power = MiracleTalents.TraitPower(GraceTrait.Generosity);
             try { SpellEffects.ExecuteWardFromAgent(caster, MiracleMath.HallowedGroundRadius); } catch { }
-            try { SpellEffects.HealAgent(caster, SafeLimit(caster) * MiracleMath.HallowedGroundHealFrac); } catch { }
+            try { SpellEffects.HealAgent(caster, SafeLimit(caster) * MiracleMath.HallowedGroundHealFrac * power); } catch { }
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 10f); } catch { }
 
             Vec3 pos;
@@ -483,7 +497,7 @@ namespace AshAndEmber
                     if (caster.Team == null || a.Team != caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
-                    try { SpellEffects.HealAgent(a, SafeLimit(a) * MiracleMath.HallowedGroundHealFrac); } catch { }
+                    try { SpellEffects.HealAgent(a, SafeLimit(a) * MiracleMath.HallowedGroundHealFrac * power); } catch { }
                     warded++;
                 }
             }
@@ -534,6 +548,7 @@ namespace AshAndEmber
 
         private static string CampaignRadiantMending(Hero hero, MobileParty party)
         {
+            float power = MiracleTalents.TraitPower(GraceTrait.Mercy);
             if (hero != null)
                 try { hero.HitPoints = hero.MaxHitPoints; } catch { }
             int healed = 0;
@@ -541,7 +556,7 @@ namespace AshAndEmber
                 foreach (var e in party.MemberRoster.GetTroopRoster().ToList())
                 {
                     if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
-                    int heal = Math.Max(1, e.WoundedNumber / 4);
+                    int heal = Math.Max(1, (int)(e.WoundedNumber / 4f * power));
                     try { party.MemberRoster.AddToCounts(e.Character, 0, false, -heal); healed += heal; } catch { }
                 }
             return healed > 0
@@ -551,8 +566,9 @@ namespace AshAndEmber
 
         private static string CampaignGuidance(MobileParty party)
         {
-            try { if (party != null) party.RecentEventsMorale += MiracleMath.GuidanceCampaignMorale; } catch { }
-            return $"A pillar of calm settles over the column. The men walk straighter (+{(int)MiracleMath.GuidanceCampaignMorale} morale).";
+            float morale = MiracleMath.GuidanceCampaignMorale * MiracleTalents.TraitPower(GraceTrait.Valor);
+            try { if (party != null) party.RecentEventsMorale += morale; } catch { }
+            return $"A pillar of calm settles over the column. The men walk straighter (+{(int)morale} morale).";
         }
 
         private static string CampaignCleansingRite(Hero hero, MobileParty party)

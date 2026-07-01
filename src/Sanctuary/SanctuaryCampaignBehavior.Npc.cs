@@ -37,7 +37,7 @@ namespace AshAndEmber
             {
                 try { if (mainParty != null) mainParty.RecentEventsMorale += 5f; } catch { }
 
-                if (MiracleInventory.Grace > MiracleMath.GraceColdCap / 2)
+                if (MiracleInventory.Grace > MiracleMath.GraceCap() / 2)
                 {
                     try
                     {

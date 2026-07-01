@@ -74,10 +74,21 @@ namespace AshAndEmber
         }
 
         // NPC variant — no player restrictions.
+        // Scoped power multiplier for the current cast — set by the unified element
+        // magic so a short draw looses a weaker working and a full draw a stronger
+        // one. 1.0 for NPC seers and the old nature path (unchanged behaviour).
+        private static float _castPower = 1f;
+
         public static void ExecuteNpc(NaturePower power, Agent caster, Team casterTeam)
+            => ExecuteNpc(power, caster, casterTeam, 1f);
+
+        public static void ExecuteNpc(NaturePower power, Agent caster, Team casterTeam, float castPower)
         {
             if (power == NaturePower.None || caster == null || !caster.IsActive()) return;
-            try { ExecuteBattleCore(power, caster, casterTeam); } catch { }
+            _castPower = castPower <= 0f ? 0.01f : castPower;
+            try { ExecuteBattleCore(power, caster, casterTeam); }
+            catch { }
+            finally { _castPower = 1f; }
         }
 
         // ── Battle ──────────────────────────────────────────────────────────────
@@ -694,6 +705,7 @@ namespace AshAndEmber
         private static void ApplyDamage(Agent target, Agent source, float amount, DamageTypes dmgType)
         {
             if (target == null || !target.IsActive() || target.Health <= 0f) return;
+            amount *= _castPower;   // scale by the current cast's draw-power
             try
             {
                 target.Health -= amount;

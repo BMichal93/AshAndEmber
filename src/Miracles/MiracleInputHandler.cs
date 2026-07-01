@@ -251,7 +251,7 @@ namespace AshAndEmber
                 elements.Add(new InquiryElement(def.Type, label, null, gateMet, hint));
             }
 
-            string title = $"Miracles  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
+            string title = $"Miracles  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]";
             string body  = "Choose a prayer to offer on the march. Each costs 1 Grace. " +
                   "Recall its rite truly and the light answers in full; let the words " +
                   "scatter and the Grace is spent for nothing.";

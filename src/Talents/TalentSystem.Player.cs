@@ -100,13 +100,13 @@ namespace AshAndEmber
         public static int GetNextPathCost()
         {
             int owned = _firePathIds.Count(id => _purchased.Contains(id));
-            return owned + 1;
+            return TalentCostCurve.Cost(owned);
         }
 
         public static int GetNextDisciplineCost(TalentId[] pool)
         {
             int owned = pool.Count(id => _purchased.Contains(id));
-            return owned + 1;
+            return TalentCostCurve.Cost(owned);
         }
 
         private static bool TryGetDisciplinePool(TalentId id, out TalentId[] pool)

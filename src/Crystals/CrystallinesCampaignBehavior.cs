@@ -52,8 +52,12 @@ namespace AshAndEmber
             CampaignEvents.WeeklyTickEvent.AddNonSerializedListener(this, OnWeeklyTick);
         }
 
-        // Crystals are real items in the world — no campaign keys to save.
-        public override void SyncData(IDataStore store) { }
+        // Crystals themselves are real items in the world — but the lapidary's
+        // learned craft (CrystalTalents) is persisted here.
+        public override void SyncData(IDataStore store)
+        {
+            try { CrystalTalents.Save(store); } catch { }
+        }
 
         // One-time seeding of the lords that already exist at campaign start. The
         // HeroCreated hook only fires for heroes spawned/born AFTER the campaign

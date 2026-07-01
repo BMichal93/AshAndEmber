@@ -63,9 +63,9 @@ namespace AshAndEmber
         // ── Cost ────────────────────────────────────────────────────────────────
         public static int LearnedCount => _all.Count(Has);
 
-        // Escalating: 1 for the first, 2 for the second, … A teacher shaves one off.
+        // Shared gentle curve (1,1,2,2,2,3,…). A teacher shaves one point off.
         public static int NextCost(bool fromTeacher = false)
-            => Math.Max(1, LearnedCount + 1 - (fromTeacher ? 1 : 0));
+            => Math.Max(1, TalentCostCurve.Cost(LearnedCount) - (fromTeacher ? 1 : 0));
 
         // ── Learn ───────────────────────────────────────────────────────────────
         public static bool TryLearn(MagePower p, bool fromTeacher, out string message)

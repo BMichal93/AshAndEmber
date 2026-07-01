@@ -8,10 +8,13 @@
 // always available; Wind / Earth / Water / Spirit are learned. Each element has
 // an ATTACK (cone/blast) and a WALL.
 //
-// Casting: hold focus, stand still to DRAW a charge for ~3 s (the nature limit),
-// then Attack or Block releases it. The longer you draw (up to 7 s) the LESS the
-// working ages you — gently — and the Harmony talent makes that patience pay far
-// more. Aging "burns through" exactly like the old fire magic.
+// Casting: hold focus, stand still, and DRAW a charge. The length of the draw
+// sets the working's POWER, not its price — an instant release is weak, and the
+// power climbs to full at a 10 s cap (drawing longer gains nothing). Hold a full
+// 10 s without releasing and the gathered energy DISPERSES — you must draw again.
+// The aging cost is FLAT: the same however long you drew. The Nature discipline
+// makes that flat cost cheaper (the patient, land-tuned draw spends fewer years).
+// Aging "burns through" exactly like the old fire magic.
 // =============================================================================
 
 using System;
@@ -26,26 +29,36 @@ namespace AshAndEmber
 
     public static class ElementMagicMath
     {
-        // ── Draw / charge ───────────────────────────────────────────────────────
-        public const float MinDrawSeconds  = 3f;   // must draw at least this long to release
-        public const float FullDrawSeconds = 7f;   // draw benefit (and Harmony) maxes out here
+        // ── Draw / charge → POWER ────────────────────────────────────────────────
+        // No minimum: you may release instantly. The draw sets power, from a weak
+        // instant cast up to full strength at the cap; holding to the cap disperses.
+        public const float MaxDrawSeconds = 10f;   // power cap AND the disperse threshold
+        public const float MinPower       = 0.35f; // strength of an instant (0 s) cast
+        public const float MaxPower       = 1.0f;  // strength at a full 10 s draw
 
-        // ── Aging cost (days) ───────────────────────────────────────────────────
-        public const int   AttackBaseDays = 4;     // a released attack ages you this much at the 3 s minimum
-        public const int   WallBaseDays   = 6;     // a wall is a bigger working
-        public const int   MinCastDays    = 1;     // a cast is never free
-        public const float DrawDiscountPerSec       = 0.5f; // days shaved per second drawn past the minimum
-        public const float NatureDrawDiscountPerSec = 1.5f; // …with the Nature attunement (the patient draw)
-
-        // Days of aging a cast costs, given the form, how long it was drawn, and
-        // whether the caster knows Nature. Drawing longer is cheaper; floored at 1.
-        public static int CastAgingDays(CastForm form, float drawSeconds, bool hasNature)
+        // Power multiplier for a cast released after `drawSeconds` of drawing.
+        // Linear from MinPower at 0 s to MaxPower at the cap; clamped past the cap.
+        public static float PowerMult(float drawSeconds)
         {
-            int baseDays = form == CastForm.Wall ? WallBaseDays : AttackBaseDays;
-            float over   = Math.Max(0f, Math.Min(drawSeconds, FullDrawSeconds) - MinDrawSeconds);
-            float perSec = hasNature ? NatureDrawDiscountPerSec : DrawDiscountPerSec;
-            int cost     = (int)Math.Round(baseDays - over * perSec, MidpointRounding.AwayFromZero);
-            return Math.Max(MinCastDays, cost);
+            float t = drawSeconds <= 0f ? 0f
+                    : drawSeconds >= MaxDrawSeconds ? 1f
+                    : drawSeconds / MaxDrawSeconds;
+            return MinPower + (MaxPower - MinPower) * t;
+        }
+
+        // ── Aging cost (days) — FLAT, independent of draw time ───────────────────
+        public const int   AttackCostDays = 3;     // a released attack ages you this much
+        public const int   WallCostDays   = 4;     // a wall is a slightly bigger working
+        public const int   MinCastDays    = 1;     // a cast is never free
+        public const float NatureCostMult = 0.5f;  // the Nature discipline's flat discount
+
+        // Days of aging a cast costs. The draw length no longer matters — only the
+        // form and whether the caster knows Nature. Floored at 1.
+        public static int CastAgingDays(CastForm form, bool hasNature)
+        {
+            int baseDays = form == CastForm.Wall ? WallCostDays : AttackCostDays;
+            if (hasNature) baseDays = (int)Math.Round(baseDays * NatureCostMult, MidpointRounding.AwayFromZero);
+            return Math.Max(MinCastDays, baseDays);
         }
 
         // ── Blood ───────────────────────────────────────────────────────────────

@@ -141,45 +141,59 @@ All these paths are **mutually exclusive** — Inner Fire, Grace, Nature, and th
 
 ## Controls
 
+*(As of v0.35.0, fire and nature magic are one unified art. The in-game journal entry **"Notes for the Adventurer"** always holds the authoritative, build-current controls; this is a summary.)*
+
 ### Keyboard
 
 | Action | Input |
 |--------|-------|
-| Enter spell mode | Hold **Left Alt** |
-| Shape form / effect | **W** (↑)  **A** (←)  **D** (→)  **S** (↓) while holding Alt |
-| Switch to effect phase | Press **X** (Break) |
-| Cast | Release **Left Alt** |
-| Open grimoire | **Alt + X** (only when no form has been started) |
+| Focus | Hold **Left Alt** |
+| Load a learned element | **W** Wind · **S** Earth · **A** Water · **D** Spirit (Fire is default) |
+| Draw the charge | Stand still, hand free, armour light — hold to build power |
+| Attack (element cone) | **Left Mouse** while focused |
+| Wall (element barrier) | **Right Mouse** while focused |
+| Open grimoire | **Alt + X** |
+| Codex of the Inner Fire (learn) | **Alt + L** (campaign map) |
+| Litany of Devotions (Grace talents) | **Shift + L** (campaign map) |
 
 ### Gamepad
 
 | Action | Input |
 |--------|-------|
-| Enter spell mode | Hold **Left Bumper (LB)** |
-| Shape form / effect | Push **left stick** (↑/←/↓/→) |
-| Break | Press **L3** (left stick click) |
-| Cast | Release **LB** |
+| Focus | Hold **Left Bumper (LB)** |
+| Load a learned element | Flick **left stick** (↑ Wind · ↓ Earth · ← Water · → Spirit) |
+| Attack / Wall | **Right Trigger** / **Left Trigger** |
 | Open grimoire | **LB + Right Bumper (RB)** |
 
 ### How casting works
 
-1. **Hold the focus key.** The buffer is empty.
-2. **Input form keys** — each press adds one count (e.g. three W presses = Blast, formCount 3).
-3. **Press Break (X / L3).** The input switches to the effect phase.
-4. **Input effect keys** after Break.
-5. **Release the focus key.** The spell fires.
+1. **Hold the focus key.** Fire is loaded by default; tap a direction to load a learned element.
+2. **Stand still and draw.** The longer you hold (up to ~10 s), the **stronger** the working — there is no minimum, so an instant release is allowed but weak. Hold the full ten seconds without releasing and the charge **disperses**.
+3. **Attack** looses the element's cone; **Block** raises its wall.
 
-Different form types may be mixed freely before Break — all fire simultaneously on release.
+The life-cost of a cast is **flat** — the draw buys power, never a cheaper cast. The **Nature** discipline lowers that flat cost; the Ashen pay in criminal standing instead of years.
 
-The buffer shows in the message log while held: `[ UUU ▷ UU ]` = Blast ×3, Damage ×2.
+**Free hand and light armour required** — unless you know **Steel**, which lets you cast with a weapon drawn and bear twice the weight.
 
-**Free hand required.** You cannot cast while wielding anything — weapon or shield. Sheathe everything first (**X** on keyboard, or the sheathe button on gamepad). Both hands must be empty.
+### The five elements
+
+| Element | Attack | Wall |
+|--------|--------|------|
+| **Fire** | cone of fire | wall of fire |
+| **Wind** | hurling, slowing blast | wall that turns arrows and bogs down |
+| **Earth** | rooting stone burst | stone wall |
+| **Water** | slowing wave | mist barrier |
+| **Spirit** | fear + a stray order into enemy ranks | wall that heartens and mends your own |
+
+Elements and disciplines (Steel, Blood, Nature) are learned in the **Codex** with focus points, or from a **teacher** for one point less. Each element also grants a **campaign-map working** cast through the grimoire's *Cast* menu.
 
 ---
 
-## The Living Ember
+## The Living Ember (legacy path)
 
-A second discipline, separate from the Inner Fire. Those who hear the living land — root, river, stone, and sky — **choose** an element, draw it from the world around them, and release it as a natural force. Drawing is never free: every working spends the **living energy** of the place it is fought over, and a land stripped bare turns on those who force it.
+> **Note:** As of v0.35.0 the living-world elements are folded into the unified magic above (learned as Wind / Earth / Water / Spirit), and the seers attuned to the land are now **teachers**. The separate Living-Ember attunement below remains for backward compatibility with existing saves.
+
+A discipline for those who hear the living land — root, river, stone, and sky. They **choose** an element, draw it from the world around them, and release it as a natural force. Drawing is never free: every working spends the **living energy** of the place it is fought over, and a land stripped bare turns on those who force it.
 
 ### Choosing this path
 
@@ -278,7 +292,9 @@ Two unit types appear rarely in warbands:
 
 ---
 
-## Spell Forms (before Break)
+## Spell Forms (before Break) — *pre-v0.35 reference*
+
+> **Superseded in v0.35.0.** The two-phase form/effect/Break system below describes the *old* Inner Fire. The player now casts with the unified element system (see **Controls → How casting works**). These sections are retained for players on older versions and because NPC mages still resolve their casts through the underlying blast/burst effects.
 
 | Key | Arrow | Form | What it does |
 |-----|-------|------|--------------|

@@ -46,31 +46,33 @@ namespace AshAndEmber
         private const int   SpiritRadiusInt  = 9;
 
         // ── Public dispatch ─────────────────────────────────────────────────────
-        public static void CastAttack(MagicElement el, Agent caster)
+        // `power` (0..1+) scales the working's strength — the caller sets it from
+        // how long the charge was drawn. Defaults to full for NPC callers.
+        public static void CastAttack(MagicElement el, Agent caster, float power = 1f)
         {
             if (caster == null || !caster.IsActive()) return;
             switch (el)
             {
-                case MagicElement.Fire:   FireCone(caster);  break;
-                case MagicElement.Wind:   NatureEffects.ExecuteNpc(NaturePower.Gale,     caster, caster.Team); break;
-                case MagicElement.Earth:  NatureEffects.ExecuteNpc(NaturePower.Entangle, caster, caster.Team); break;
-                case MagicElement.Water:  NatureEffects.ExecuteNpc(NaturePower.Torrent,  caster, caster.Team); break;
-                case MagicElement.Spirit: SpiritPanic(caster); break;
+                case MagicElement.Fire:   FireCone(caster, power);  break;
+                case MagicElement.Wind:   NatureEffects.ExecuteNpc(NaturePower.Gale,     caster, caster.Team, power); break;
+                case MagicElement.Earth:  NatureEffects.ExecuteNpc(NaturePower.Entangle, caster, caster.Team, power); break;
+                case MagicElement.Water:  NatureEffects.ExecuteNpc(NaturePower.Torrent,  caster, caster.Team, power); break;
+                case MagicElement.Spirit: SpiritPanic(caster, power); break;
             }
             CastFlash(el, caster);
             try { SpellEffects.RecordMagicCast(caster.Position); } catch { }
         }
 
-        public static void CastWall(MagicElement el, Agent caster)
+        public static void CastWall(MagicElement el, Agent caster, float power = 1f)
         {
             if (caster == null || !caster.IsActive()) return;
             switch (el)
             {
-                case MagicElement.Fire:   FireWall(caster);  break;
-                case MagicElement.Wind:   NatureEffects.ExecuteNpc(NaturePower.Windwall,  caster, caster.Team); break;
-                case MagicElement.Earth:  NatureEffects.ExecuteNpc(NaturePower.Thornwall, caster, caster.Team); break;
-                case MagicElement.Water:  NatureEffects.ExecuteNpc(NaturePower.Mistwall,  caster, caster.Team); break;
-                case MagicElement.Spirit: SpiritWall(caster); break;
+                case MagicElement.Fire:   FireWall(caster, power);  break;
+                case MagicElement.Wind:   NatureEffects.ExecuteNpc(NaturePower.Windwall,  caster, caster.Team, power); break;
+                case MagicElement.Earth:  NatureEffects.ExecuteNpc(NaturePower.Thornwall, caster, caster.Team, power); break;
+                case MagicElement.Water:  NatureEffects.ExecuteNpc(NaturePower.Mistwall,  caster, caster.Team, power); break;
+                case MagicElement.Spirit: SpiritWall(caster, power); break;
             }
             CastFlash(el, caster);
             try { SpellEffects.RecordMagicCast(caster.Position); } catch { }
@@ -78,7 +80,7 @@ namespace AshAndEmber
 
         // ── Fire ────────────────────────────────────────────────────────────────
         // A cone of fire scorches everything the caster faces.
-        private static void FireCone(Agent caster)
+        private static void FireCone(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
             try { pos = caster.Position; fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
@@ -92,7 +94,7 @@ namespace AshAndEmber
                 float len = to.Length; if (len < 0.01f) continue;
                 if (Vec3.DotProduct(fwd, to * (1f / len)) < FireConeDot) continue;   // outside the cone
                 if (SpellEffects.IsWarded(a)) continue;
-                try { SpellEffects.DamageAgent(a, FireConeDamage, ColorSchool.Red, caster); } catch { }
+                try { SpellEffects.DamageAgent(a, FireConeDamage * power, ColorSchool.Red, caster); } catch { }
                 SpawnLight(a.Position, rgb, 0.9f);
                 hit++;
             }
@@ -101,7 +103,7 @@ namespace AshAndEmber
         }
 
         // A wall of fire just ahead — burns those who stand in its line.
-        private static void FireWall(Agent caster)
+        private static void FireWall(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
             try { pos = caster.Position; fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
@@ -117,7 +119,7 @@ namespace AshAndEmber
                 Vec3 d = a.Position - centre; d.z = 0f;
                 if (d.Length > FireWallWidth + 1.5f) continue;
                 if (SpellEffects.IsWarded(a)) continue;
-                try { SpellEffects.DamageAgent(a, FireWallDamage, ColorSchool.Red, caster); } catch { }
+                try { SpellEffects.DamageAgent(a, FireWallDamage * power, ColorSchool.Red, caster); } catch { }
             }
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch { }
         }
@@ -126,16 +128,18 @@ namespace AshAndEmber
         // The attack strikes fear into men and horses near the caster's foes and
         // shouts a random order into the enemy ranks (a brief command that scatters
         // their order). Mounts bolt; men falter.
-        private static void SpiritPanic(Agent caster)
+        private static void SpiritPanic(Agent caster, float power)
         {
             Vec3 pos; try { pos = caster.Position; } catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb = Palette(MagicElement.Spirit, ashen);
+            // A weaker draw panics for a shorter spell; a fuller draw holds them longer.
+            float fearSec = SpiritFearSec * power;
             int struck = 0;
             foreach (Agent a in EnemiesNear(caster, SpiritRadius))
             {
                 // Panic: slow them and, if mounted, make the horse bolt off-line.
-                try { NatureEffects.ApplySpeedToken(a, SpiritFearSlow, SpiritFearSec); } catch { }
+                try { NatureEffects.ApplySpeedToken(a, SpiritFearSlow, fearSec); } catch { }
                 try { a.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction); } catch { }
                 try
                 {
@@ -157,12 +161,12 @@ namespace AshAndEmber
         }
 
         // The wall lifts the courage of nearby allies and mends them a little.
-        private static void SpiritWall(Agent caster)
+        private static void SpiritWall(Agent caster, float power)
         {
             Vec3 pos; try { pos = caster.Position; } catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb = Palette(MagicElement.Spirit, ashen);
-            try { MobileParty.MainParty.RecentEventsMorale += SpiritMorale; } catch { }
+            try { MobileParty.MainParty.RecentEventsMorale += SpiritMorale * power; } catch { }
             int blessed = 0;
             try
             {
@@ -172,7 +176,7 @@ namespace AshAndEmber
                     if (caster.Team == null || a.Team != caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > SpiritRadius * SpiritRadius) continue;
-                    try { SpellEffects.HealAgent(a, SafeLimit(a) * SpiritHealFrac); } catch { }
+                    try { SpellEffects.HealAgent(a, SafeLimit(a) * SpiritHealFrac * power); } catch { }
                     blessed++;
                 }
             }

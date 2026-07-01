@@ -149,12 +149,59 @@ namespace AshAndEmber
             catch { }
         }
 
-        // ── Death at 100 ──────────────────────────────────────────────────────
+        // ── Life expectancy (spellcasting cost) ───────────────────────────────
+        // Casting no longer makes the player OLDER — it SHORTENS how long they will
+        // live. The fire's toll is booked against the ledger, which lowers the age
+        // at which the fire finally burns out (was a flat 100). Current age is left
+        // untouched: a 30-year-old mage stays 30, but may now die at 70 instead.
+        // 1 Bannerlord year = 84 campaign days.
+        public const  float BaseDeathAge   = 100f;
+        public static int   NetDaysSpent   => Math.Max(0, _ledgerDaysSpent - _ledgerDaysReclaimed);
+        public static float PlayerDeathAge => Math.Max(20f, BaseDeathAge - NetDaysSpent / 84f);
+
+        /// Shorten the player's life expectancy by <paramref name="days"/> (the
+        /// spellcasting cost). Does NOT change current age. Player only.
+        public static void SpendLifeExpectancy(Hero hero, int days)
+        {
+            if (hero == null || days <= 0 || hero != Hero.MainHero) return;
+            if (MageKnowledge.IsAshen) return;                    // the cold preserves what remains
+            if (DragonQuestSystem.IsEmperorMerged) return;        // the Vessel bears no cost
+            try
+            {
+                _ledgerDaysSpent += days;
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"The fire burns its cost — {days} day{(days > 1 ? "s" : "")} of life to come. " +
+                    $"You will not see {(int)PlayerDeathAge}.",
+                    new Color(0.7f, 0.5f, 0.3f)));
+                CheckAgeLimit(hero);
+            }
+            catch { }
+        }
+
+        /// Give back life expectancy (Blood, and other life-restoring rites).
+        /// Offsets the casting debt; never lifts the death age past the base 100.
+        public static void RestoreLifeExpectancy(Hero hero, int days)
+        {
+            if (hero == null || days <= 0 || hero != Hero.MainHero) return;
+            try
+            {
+                _ledgerDaysReclaimed += days;
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"The fire gives back — {days} day{(days > 1 ? "s" : "")} of life restored. " +
+                    $"You may yet see {(int)PlayerDeathAge}.",
+                    new Color(0.9f, 0.6f, 0.3f)));
+            }
+            catch { }
+        }
+
+        // ── Death at the fire's end ───────────────────────────────────────────
 
         public static void CheckAgeLimit(Hero hero)
         {
             if (hero == null || !hero.IsAlive) return;
-            if (hero.Age < 100f) return;
+            // The player burns out at their (expectancy-reduced) death age; NPCs at 100.
+            float threshold = (hero == Hero.MainHero) ? PlayerDeathAge : 100f;
+            if (hero.Age < threshold) return;
             // Ashen mages are immune to age-death
             if (hero == Hero.MainHero && MageKnowledge.IsAshen) return;
             if (hero != Hero.MainHero && ColourLordRegistry.IsAshenLord(hero)) return;
@@ -195,9 +242,14 @@ namespace AshAndEmber
             {
                 foreach (Hero h in Hero.AllAliveHeroes.Where(h => h.IsAlive && ColourLordRegistry.IsColourLord(h)).ToList())
                     CheckAgeLimit(h);
-                // Also check player
+                // Also check player — and, since casting no longer moves current age,
+                // drive the age milestones off natural aging here instead.
                 if (Hero.MainHero != null && MageKnowledge.IsMage)
+                {
                     CheckAgeLimit(Hero.MainHero);
+                    try { CheckAgingMilestone(Hero.MainHero); } catch { }
+                    try { FlushPendingMilestone(); } catch { }
+                }
             }
             catch { }
         }
@@ -318,9 +370,10 @@ namespace AshAndEmber
                 else
                 {
                     // 1 Bannerlord year = 84 campaign days (4 seasons × 21 days).
-                    int daysLeft  = Math.Max(0, (int)((100f - (float)h.Age) * 84f));
+                    int deathAge  = (int)PlayerDeathAge;
+                    int daysLeft  = Math.Max(0, (int)((PlayerDeathAge - (float)h.Age) * 84f));
                     int yearsLeft = daysLeft / 84;
-                    lines.Append($"  Age: {age}   |   Until the fire burns out (100): ~{yearsLeft} year{(yearsLeft != 1 ? "s" : "")} ({daysLeft} days)\n");
+                    lines.Append($"  Age: {age}   |   Life expectancy: {deathAge} — ~{yearsLeft} year{(yearsLeft != 1 ? "s" : "")} left ({daysLeft} days)\n");
                 }
                 lines.Append($"  Days the fire has taken: {_ledgerDaysSpent}");
                 lines.Append($"   |   Days reclaimed: {_ledgerDaysReclaimed}\n");

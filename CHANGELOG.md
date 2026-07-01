@@ -6,6 +6,41 @@
 
 ---
 
+## v0.35.0
+
+### One magic, five elements — fire and nature, merged
+- **Fire and nature magic are now a single art.** Hold **Left Alt** (gamepad **LB**) to focus. Fire is loaded by default — the physical-and-spiritual root of the craft; tap **W / S / A / D** (or flick the left stick) to draw a learned element — **Wind / Earth / Water / Spirit**. **Attack** looses the element's cone, **Block** raises its wall.
+  - **Fire** — a cone of fire / a wall of fire. **Wind** — a hurling, slowing blast / a wall that turns arrows and bogs down. **Earth** — a rooting stone burst / a stone wall. **Water** — a slowing wave / a mist barrier. **Spirit** — strike fear into men and horses and shout a stray order into their ranks / a wall that heartens and mends your own.
+- **The draw now sets POWER, not price.** There is no minimum — release at once for a weak, instant cast, or hold (up to ~10 s) to strengthen the working to full. Hold the full ten seconds without releasing and the gathered power **disperses** — begin again. The life-cost is **flat**, the same however long you drew.
+- **Learn the craft with focus points or from a teacher.** Fire is innate; Wind, Earth, Water, Spirit and three disciplines are learned in the **Codex of the Inner Fire** (**Left Alt + L** on the map), each costing one focus point more than the last — or one less from a **teacher** (the attuned seers you meet). The disciplines: **Steel** (cast with a weapon in hand, bear twice the armour), **Blood** (taking a lord's head gives back the years the fire has burned — clan-tier × 25 days), **Nature** (lowers the flat life-cost of every working).
+- **Each element grants a campaign-map working**, cast through the memory-rite from the grimoire's *Cast* menu: **Emberfall**, **Scattering Gale**, **Deeproot Blight**, **Tidewash**, and **Farsight**.
+- **The Ashen wear a colder mask** — Fire→Cold, Wind→Storm, Earth→Ash, Water→Snow, Spirit→Void — and pay in criminal standing, not years.
+- **NPC mage lords now wield the full elemental kit** (fire, and one element each), alongside the nature seers.
+
+### The Litany of Devotions — miracle talents
+- **Grace now has a talent list.** **Left Shift + L** on the map opens the Litany of Devotions: a focus-point devotion for each virtue (learnable once that virtue stands at +1) that **deepens the two prayers it grants**, plus **Abundant Grace**, which widens the Grace well itself.
+
+### Dark Gifts — a price in will, and two roads down
+- Dark Gifts now cost **focus points** on top of the blood tithe (one more for each gift already borne). If your heart is still too warm, the altar offers **two** roads to the gate: spill a prisoner's blood to harden your heart (**Mercy** down), or swear a false oath over the dead to break your **Honour**.
+
+### Crystals — study the lattice
+- At any Crystalline Chamber you may spend focus points on the lapidary's craft: **Lasting Lattice** (shatter far less often), **Waking Light** (crystals answer at night), and **Swift Kindling** (charge in half the time).
+
+### The cost is your life expectancy, not your age
+- Casting no longer makes the player **older** — it **shortens how long they will live**. The fire's toll lowers the age at which it finally burns out (shown in the grimoire's Ledger as your life expectancy), while your current age is left untouched. **Blood** now gives that expectancy back. NPC mages are unchanged (they burn out at 100 or turn Ashen).
+
+### NPC mage lords wield a learned repertoire
+- Each NPC mage lord now knows Fire plus a **variable number of other elements (0–4)**, fixed by identity and scaled by standing — a great magnate throws stone, mist and gale where a landless knight only burns. The Ashen (and the false emperor) keep their high cold-fire.
+
+### The Living-Ember start option is retired
+- The separate "the world beneath me…" start-of-game choice is removed — the living-world elements are part of the one magic now (its seers remain as your teachers). Existing nature-attuned saves are unaffected.
+
+### Learning costs — a gentler ramp (all talent trees)
+- Every focus-point talent tree — the element Codex, the Grace devotions, the crystal lattice, the fire paths and disciplines, and the dark gifts' will-price — now shares one gentler cost curve. Instead of climbing 1 → 2 → 3 → 4 with every purchase, the price holds at each tier for several buys: **1, 1, 2, 2, 2, 3, 3, 3, 3, 4, …**
+
+### Housekeeping
+- Removed the orphaned old fire map-spell memory-rite (`SpellMinigame`), replaced by the unified element rite. Journal keybind reference rewritten throughout for the merged magic.
+
 ## v0.34.0
 
 ### Grace, reforged around your character

@@ -102,6 +102,37 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Study the lattice — the lapidary's learnable craft (focus points).
+            try
+            {
+                starter.AddGameMenuOption("crystal_main", "crystal_study", "{CRYSTAL_STUDY_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            int have = 0;
+                            try { have = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch { }
+                            MBTextManager.SetTextVariable("CRYSTAL_STUDY_TEXT",
+                                $"Study the lattice — the lapidary's craft  [Focus: {have}]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                        }
+                        catch { }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            if (MageKnowledge._deferredInquiry == null)
+                                MageKnowledge._deferredInquiry = CrystalTalents.ShowCodex;
+                        }
+                        catch { }
+                        try { GameMenu.SwitchToMenu("crystal_main"); } catch { }
+                    },
+                    false, -1, false);
+            }
+            catch { }
+
             // Leave.
             try
             {

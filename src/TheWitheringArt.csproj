@@ -4,9 +4,9 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>AshAndEmber</AssemblyName>
     <RootNamespace>AshAndEmber</RootNamespace>
-    <Version>0.34.0.0</Version>
-    <AssemblyVersion>0.34.0.0</AssemblyVersion>
-    <FileVersion>0.34.0.0</FileVersion>
+    <Version>0.35.0.0</Version>
+    <AssemblyVersion>0.35.0.0</AssemblyVersion>
+    <FileVersion>0.35.0.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <Optimize>true</Optimize>
@@ -100,6 +100,9 @@
     <Compile Include="Magic\MagicTeacherDialogue.cs"/>
     <Compile Include="Magic\ElementMapSpells.cs"/>
     <Compile Include="Magic\ElementSpellMinigame.cs"/>
+    <Compile Include="Miracles\MiracleTalents.cs"/>
+    <Compile Include="Crystals\CrystalTalents.cs"/>
+    <Compile Include="Talents\TalentCostCurve.cs"/>
     <Compile Include="SaveDefiner.cs"/>
     <Compile Include="Startup\AshEmberSplash.cs"/>
     <Compile Include="Startup\AshEmberLoreIntro.cs"/>
@@ -125,7 +128,6 @@
     <Compile Include="Mage\MageKnowledge.cs"/>
     <Compile Include="Mage\MageKnowledge.Events.cs"/>
     <Compile Include="Mage\MageKnowledge.UI.cs"/>
-    <Compile Include="SpellMinigame.cs"/>
     <Compile Include="ActiveEffects.cs"/>
     <Compile Include="SpellBuilder.cs"/>
     <Compile Include="Talents\TalentSystem.cs"/>

@@ -165,6 +165,20 @@ namespace AshAndEmber
                 }
                 catch { }
 
+                // Litany of Devotions — Left Shift + L opens the Grace talent list on the
+                // map, for the faithful (not mages, not the land-attuned, not the dark).
+                try
+                {
+                    if (!MageKnowledge.IsMage && !NatureKnowledge.IsAttuned && !DarkGiftSystem.HasAnyGift
+                        && TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftShift)
+                        && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.L)
+                        && MageKnowledge._deferredInquiry == null)
+                    {
+                        MageKnowledge._deferredInquiry = MiracleTalents.ShowCodex;
+                    }
+                }
+                catch { }
+
                 // Ctrl+Shift+F10 — toggle scheme debug mode
                 try
                 {
@@ -310,7 +324,7 @@ namespace AshAndEmber
             catch { }
 
             // 3. Max grace — set directly because dark gifts would otherwise block AddGrace.
-            try { MiracleInventory._grace = MiracleMath.GraceColdCap; } catch { }
+            try { MiracleInventory._grace = MiracleMath.GraceCap(); } catch { }
 
             // 4. 100 focus points.
             try { hero.HeroDeveloper.UnspentFocusPoints += 100; } catch { }

@@ -69,7 +69,7 @@ namespace AshAndEmber
                     _executedLordIds.Add(victim.StringId);
                     int tier = 1;
                     try { tier = Math.Max(1, Math.Min(6, victim.Clan?.Tier ?? 1)); } catch { tier = 1; }
-                    try { AgingSystem.RejuvenateHero(Hero.MainHero, ElementMagicMath.BloodRejuvenationDays(tier)); } catch { }
+                    try { AgingSystem.RestoreLifeExpectancy(Hero.MainHero, ElementMagicMath.BloodRejuvenationDays(tier)); } catch { }
                 }
                 // Whispers: executing any lord costs 5
                 if (killer == Hero.MainHero && MageKnowledge.IsMage)

@@ -114,9 +114,12 @@ namespace AshAndEmber
                 "MAGIC — Hold Left Alt to FOCUS (gamepad: hold LB). FIRE is loaded by default — the " +
                 "physical-and-spiritual root of the art. To draw another element you have LEARNED, tap " +
                 "W (Wind) · S (Earth) · A (Water) · D (Spirit) — gamepad: flick the left stick up / down / " +
-                "left / right. Stand STILL, with a hand free and your armour light, and the element " +
-                "gathers over about three seconds. Then ATTACK (left mouse / right trigger) looses its " +
-                "cone, or BLOCK (right mouse / left trigger) raises its wall. Release Alt to stop."), true);
+                "left / right. Stand STILL, with a hand free and your armour light, and DRAW — the " +
+                "longer you hold, the HARDER the working strikes, to full strength at about ten seconds. " +
+                "There is no minimum: release at once for a weak, instant cast. Then ATTACK (left mouse / " +
+                "right trigger) looses its cone, or BLOCK (right mouse / left trigger) raises its wall. " +
+                "Hold the full ten seconds without releasing and the gathered power DISPERSES — begin " +
+                "again. Release Alt to stop."), true);
 
             AddLog(new TextObject(
                 "MAGIC · THE FIVE ELEMENTS (in battle) — FIRE: a cone of fire / a wall of fire. " +
@@ -126,17 +129,18 @@ namespace AshAndEmber
                 "order into their ranks / a wall that heartens your own and mends them a little."), true);
 
             AddLog(new TextObject(
-                "MAGIC · THE COST — Every cast burns YEARS of your life. The longer you DRAW before you " +
-                "loose it (up to about seven seconds), the LESS it ages you — a snatched, three-second " +
-                "cast costs the most. Cast outside battle and the toll is paid in campaign days instead, " +
-                "rising with each working in the same day. The Ashen pay not in years but in criminal " +
-                "standing. The NATURE discipline makes the patient, full draw cost almost nothing."), true);
+                "MAGIC · THE COST — Every cast shortens your LIFE EXPECTANCY: it does not make you older " +
+                "here and now, but you will die sooner (watch the death age in your grimoire's Ledger). " +
+                "The toll is FLAT — a longer draw buys power, never a cheaper cast. Cast outside battle " +
+                "and it is paid in days too, rising with each working in the same day. The Ashen pay not " +
+                "in life but in criminal standing. The NATURE discipline lowers the flat toll; the BLOOD " +
+                "discipline gives life back when you take a lord's head."), true);
 
             AddLog(new TextObject(
                 "MAGIC · LEARNING THE CRAFT — Fire is innate; everything else is learned. The elements " +
                 "Wind, Earth, Water and Spirit, and three DISCIPLINES — STEEL (cast with a weapon still " +
                 "in hand, and bear twice the armour) · BLOOD (taking a lord's head gives back the years " +
-                "the fire has burned) · NATURE (the slow draw costs far less) — are studied on the map " +
+                "the fire has burned) · NATURE (lowers the flat life-cost of every working) — are studied on the map " +
                 "with Left Alt + L, the Codex of the Inner Fire. Each costs one more focus point than the " +
                 "last. A TEACHER who carries a craft teaches it for one point less — seek out the " +
                 "attuned, those the land speaks through, and ask them."), true);
@@ -160,7 +164,11 @@ namespace AshAndEmber
                 "higher: one for battle, one for the road. In battle, hold Left Ctrl and trace the prayer's " +
                 "six-stroke sequence with W / A / S / D, then release (gamepad: hold RB, flick the left " +
                 "stick). On the map, Shift + X (gamepad: RB + L3) opens the litany — pick a prayer and " +
-                "recall its rite. Each prayer spends 1 Grace; replenish Grace at a Sanctuary."), true);
+                "recall its rite. Each prayer spends 1 Grace; replenish Grace at a Sanctuary. " +
+                "THE LITANY OF DEVOTIONS — Left Shift + L on the map opens a talent list that REFINES " +
+                "your prayers: a devotion for each virtue (learnable once that virtue stands at +1) " +
+                "deepens the two prayers it grants, and Abundant Grace widens the well itself. Each " +
+                "devotion costs focus points, one more than the last."), true);
 
             AddLog(new TextObject(
                 "MIRACLES · MERCY — Radiant Mending [W W S S A D] (battle): heal yourself and nearby allies. · " +
@@ -196,6 +204,12 @@ namespace AshAndEmber
                 "towns' markets (expensive, restocked weekly) and can be looted from lords who carry them."), true);
 
             AddLog(new TextObject(
+                "CRYSTALS · STUDY THE LATTICE — at any Crystalline Chamber you may spend focus points on " +
+                "the lapidary's craft: Lasting Lattice (a crystal shatters far less often), Waking Light " +
+                "(crystals answer at night as well as by day), and Swift Kindling (the charge kindles in " +
+                "half the time). Each costs one focus point more than the last."), true);
+
+            AddLog(new TextObject(
                 "THE LIVING WORLD — what was once a separate art of the land is now woven into the one " +
                 "magic: its elements are the Wind, Earth and Water you learn (see MAGIC, above), and the " +
                 "seers attuned to the living world are now your TEACHERS — speak with them to learn the " +
@@ -203,15 +217,19 @@ namespace AshAndEmber
 
             AddLog(new TextObject(
                 "THE DARK GIFTS — Permanent boons bought at a Dark Altar (in the Empire and the " +
-                "old cold lands) with blood: each gift costs a growing tithe of prisoners, then " +
-                "prisoners AND captured lords. They are passive and forever — but renounce-able at " +
-                "any Dark Altar. Bearing even one gift bars you from Grace and from Nature."), true);
+                "old cold lands) with blood AND will: each gift costs a growing tithe of prisoners, " +
+                "then prisoners AND captured lords, AND focus points (one more for each gift you " +
+                "already bear). They are passive and forever — but renounce-able at any Dark Altar. " +
+                "Bearing even one gift bars you from Grace and from Nature."), true);
 
             AddLog(new TextObject(
                 "DARK GIFTS · THE PRICE OF DARKNESS — Gifts only work while you are Merciless or " +
-                "Devious (Mercy ≤ −1 or Honour ≤ −1). Lose both and your gifts sleep until you " +
-                "return to the dark. No keys to press — their power is woven into you. " +
-                "Your grimoire (Alt+X) lists the gifts you bear and whether they are active."), true);
+                "Devious (Mercy ≤ −1 or Honour ≤ −1). If your heart is still too warm, the altar " +
+                "offers two roads down: spill a prisoner's blood to harden your heart (Mercy), or " +
+                "swear a false oath over the dead to break your honour (Honour). Lose both dark " +
+                "traits and your gifts sleep until you return to the dark. No keys to press — their " +
+                "power is woven into you. Your grimoire (Alt+X) lists the gifts you bear and whether " +
+                "they are active."), true);
 
             AddLog(new TextObject(
                 "DARK GIFTS · THE BOONS — Iron Veil (−10% damage taken) · Dark Strike (+20 dark " +

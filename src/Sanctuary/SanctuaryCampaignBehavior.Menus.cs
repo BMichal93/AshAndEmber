@@ -32,7 +32,7 @@ namespace AshAndEmber
                         try
                         {
                             if (!HasSanctuary(Settlement.CurrentSettlement)) return false;
-                            string graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
+                            string graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]";
                             MBTextManager.SetTextVariable("SANCT_ENTER_TEXT", "Visit the Sanctuary" + graceNote);
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
                             args.IsEnabled = true;
@@ -56,7 +56,7 @@ namespace AshAndEmber
                         int protRem = CampaignMapEvents.ProtectedDaysRemaining;
                         string protNote = protRem > 0 ? $"  [Warding Seal: {protRem} day(s) remaining]" : "";
 
-                        string graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]";
+                        string graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]";
 
                         string interNote = "";
                         int sinceAltar = today - AshenAltarsCampaignBehavior._lastAltarUseDay;
@@ -84,7 +84,7 @@ namespace AshAndEmber
                             int today = CurrentCampaignDay();
                             bool onCooldown = (today - _lastPrayerDay) < MiracleMath.PrayerCooldownDays;
                             bool blockedByDark = DarkGiftSystem.HasAnyGift;
-                            bool atCap = MiracleInventory.Grace >= MiracleMath.GraceColdCap;
+                            bool atCap = MiracleInventory.Grace >= MiracleMath.GraceCap();
 
                             string suffix = "";
                             if (blockedByDark)
@@ -104,7 +104,7 @@ namespace AshAndEmber
 
                             int prayHpCost = TalentSystem.Has(TalentId.EmberCovenant) ? 8 : 12;
                             MBTextManager.SetTextVariable("SANCT_GRACE_TEXT",
-                                $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]{suffix}{coldNote}");
+                                $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]{suffix}{coldNote}");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
                         }
                         catch { }
@@ -237,9 +237,9 @@ namespace AshAndEmber
             string msg;
             if (gained > 0)
                 msg = $"The flame answers. You kneel until your knees ache and the candles burn lower. " +
-                      $"{gained} Grace received. [{MiracleInventory.Grace}/{MiracleMath.GraceColdCap}]\n\n" +
+                      $"{gained} Grace received. [{MiracleInventory.Grace}/{MiracleMath.GraceCap()}]\n\n" +
                       $"Press Shift+X on the field to invoke miracles. In battle, hold Ctrl and type the sequence.";
-            else if (MiracleInventory.Grace >= MiracleMath.GraceColdCap)
+            else if (MiracleInventory.Grace >= MiracleMath.GraceCap())
                 msg = "The flame burns, but has nothing more to give you today. Your Grace is full.";
             else
                 msg = "The flame receives your offering, but finds no virtue to kindle. Honour, mercy, and generosity are the tinder it seeks.";

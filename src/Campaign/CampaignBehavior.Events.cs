@@ -125,6 +125,7 @@ namespace AshAndEmber
                 ApprenticeSystem.ResetForNewGame();
                 MiracleCampaignBehavior.ResetForNewGame();
                 NatureCampaignBehavior.ResetForNewGame();
+                CrystalTalents.ResetForNewGame();
                 // Clear the previous campaign's static state BEFORE re-establishing,
                 // or a new game started in the same session inherits the old game's
                 // sanctuaries/altars and cooldowns (static-leak bug class).
@@ -152,9 +153,6 @@ namespace AshAndEmber
 
         private void ShowGiftPrompt()
         {
-            // Templars (Vlandia) walk the path of Grace; the Living Ember collides with it
-            // (both share the channel and are mutually exclusive), so the Order forbids it.
-            bool isTemplar = Hero.MainHero?.Culture?.StringId == "vlandia";
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "The Gift",
                 "As a child, you sometimes sensed things others could not — warmth ebbing from the wounded, the weight behind dying eyes. Do you feel it still?",
@@ -164,29 +162,15 @@ namespace AshAndEmber
                         "The fire stirs in you. Press Alt+X/LB+RB to open your grimoire."),
                     new InquiryElement("no", "I don't feel it.", null, true,
                         "The fire faded. You live as others do, and the world will treat you as it treats them."),
-                    new InquiryElement("living_ember", "The world beneath me has always been louder than the fire.", null,
-                        !isTemplar,
-                        isTemplar
-                            ? "The Templars keep the inner fire as a sacred trust; the old earth-listening is forbidden to the Order, for it cannot share a soul with Grace. [Not for Templars]"
-                            : "You hear the living land. Seek those in the old forests, the still rivers, the open steppe — those who still remember how to listen."),
                 },
                 false, 1, 1,
                 "Choose.",
                 "",
                 chosen =>
                 {
-                    bool isLivingEmber = chosen?.Any(e => e.Identifier is string s && s == "living_ember") == true;
-                    bool isMage        = chosen?.Any(e => e.Identifier is string s && s == "yes")          == true;
+                    bool isMage = chosen?.Any(e => e.Identifier is string s && s == "yes") == true;
                     MageKnowledge.SetMage(isMage);
-                    if (isLivingEmber)
-                    {
-                        NatureKnowledge.SetAttuned(true);
-                        try { NatureCampaignBehavior.EstablishForNewCampaign(); } catch { }
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            "The land has always known you were listening. Find those who remember the old ways — the hermits who still hear the root-voice.",
-                            new Color(0.35f, 0.75f, 0.35f)));
-                    }
-                    else if (isMage)
+                    if (isMage)
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The fire stirs in you. Its gestures are written in your Codex of Hand and Voice.",
@@ -200,6 +184,9 @@ namespace AshAndEmber
                     }
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                    // Seed the attuned seers — now the mage's TEACHERS — for every new
+                    // campaign (was previously tied to the removed Living-Ember choice).
+                    try { NatureCampaignBehavior.EstablishForNewCampaign(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
                     try { AshenCitySystem.DailyTick(); } catch { }
                     try { ReassignImperialSettlements(); } catch { }
@@ -213,6 +200,7 @@ namespace AshAndEmber
                     MageKnowledge.SetMage(false);
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                    try { NatureCampaignBehavior.EstablishForNewCampaign(); } catch { }
                     try { AshenCitySystem.Initialize(); } catch { }
                     try { AshenCitySystem.DailyTick(); } catch { }
                     try { ReassignImperialSettlements(); } catch { }

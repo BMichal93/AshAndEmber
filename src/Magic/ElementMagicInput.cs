@@ -79,16 +79,23 @@ namespace AshAndEmber
                 ReadElementSelect(altHeld, lbHeld);
 
                 // Draw the charge while standing still with hands and armour free
-                // (Steel waives the hand and weight limits).
+                // (Steel waives the hand and weight limits). The draw builds POWER,
+                // not cost: release at once for a weak working, or hold to strengthen
+                // it — but hold the full ~10 s and the charge disperses.
                 string reason = ChannelBlockReason();
                 if (reason == null)
                 {
-                    _drawTime += dt;
-                    if (!_readyAnnounced && _drawTime >= ElementMagicMath.MinDrawSeconds)
+                    if (!_readyAnnounced)
                     {
                         _readyAnnounced = true;
                         Msg($"The {MageElementKnowledge.LoadedName()} gathers — Attack looses it, Block raises its wall. " +
-                            "Hold longer to spend fewer years.");
+                            "The longer you hold, the harder it strikes; hold too long and it slips away.");
+                    }
+                    _drawTime += dt;
+                    if (_drawTime >= ElementMagicMath.MaxDrawSeconds)
+                    {
+                        _drawTime = 0f;
+                        Msg("The gathered power slips your grip and disperses — begin the draw again.");
                     }
                 }
                 else
@@ -143,23 +150,24 @@ namespace AshAndEmber
 
         private static void TryCast(CastForm form)
         {
-            if (_drawTime < ElementMagicMath.MinDrawSeconds)
-            {
-                Msg("The element is not yet gathered — hold and draw it first.");
-                return;
-            }
+            // No minimum draw — an instant release is allowed (and weak). But the
+            // still-hands-light gates still decide whether you can cast at all.
+            string reason = ChannelBlockReason();
+            if (reason != null) { Msg(reason); return; }
             var caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return;
 
+            float power = ElementMagicMath.PowerMult(_drawTime);
             var el = MageElementKnowledge.Loaded;
             try
             {
-                if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, caster);
-                else                         ElementSpellEffects.CastWall(el, caster);
+                if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, caster, power);
+                else                         ElementSpellEffects.CastWall(el, caster, power);
             }
             catch { }
 
-            int days = ElementMagicMath.CastAgingDays(form, _drawTime, MageElementKnowledge.HasNature);
+            // The toll is flat — the draw bought power, not a cheaper cast.
+            int days = ElementMagicMath.CastAgingDays(form, MageElementKnowledge.HasNature);
             ApplyCastCost(days);
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
@@ -178,7 +186,9 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    AgingSystem.AgeHero(Hero.MainHero, days);
+                    // The toll is paid in life expectancy — you die sooner, but the
+                    // fire does not make you older here and now.
+                    AgingSystem.SpendLifeExpectancy(Hero.MainHero, days);
                 }
             }
             catch { }

@@ -177,6 +177,52 @@ namespace AshAndEmber
             return true;
         }
 
+        // The other road to the dark: an oath broken over the altar drives Honour
+        // down toward Devious, which likewise satisfies the gifts' gate.
+        public static bool CanHardenHonor()
+        {
+            try
+            {
+                var h = Hero.MainHero;
+                return h != null && h.GetTraitLevel(DefaultTraits.Honor) > -2;
+            }
+            catch { return false; }
+        }
+
+        public static bool TryHardenHonor(out string msg)
+        {
+            msg = "";
+            var h = Hero.MainHero;
+            if (h == null) { msg = "There is no one here for the altar to take from."; return false; }
+
+            int honor = 0;
+            try { honor = h.GetTraitLevel(DefaultTraits.Honor); } catch { }
+            if (honor <= -2)
+            {
+                msg = "You have no honour left to break. The altar has already taken it all.";
+                return false;
+            }
+
+            int soldiers = 0;
+            try
+            {
+                var party = TaleWorlds.CampaignSystem.Party.MobileParty.MainParty;
+                soldiers = party?.PrisonRoster?.GetTroopRoster()
+                    .Where(e => !e.Character.IsHero).Sum(e => e.Number) ?? 0;
+            }
+            catch { }
+            if (soldiers < CrueltyPrisonerCost)
+            {
+                msg = $"The altar demands {CrueltyPrisonerCost} prisoners for this offering. You hold {soldiers}.";
+                return false;
+            }
+
+            ConsumeSacrifice(CrueltyPrisonerCost, 0);
+            try { h.SetTraitLevel(DefaultTraits.Honor, honor - 1); } catch { }
+            msg = "You swear a false word over their bodies and mean none of it. Something honest in you goes quiet, and the deviousness the gifts hunger for takes its place.";
+            return true;
+        }
+
         // ── Purchase / renounce ────────────────────────────────────────────────
 
         public static bool CanBuyGift(DarkGiftId gift)
@@ -208,11 +254,21 @@ namespace AshAndEmber
             // Templar culture (The Order's Price): dark gifts cost twice as much.
             int pCost = TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - prisonerDiscount));
             int lCost = TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned));
+            int fCost = GetNextFocusCost(owned);
 
+            // Both prices are checked before either is spent.
             if (!HasSufficientSacrifice(pCost, lCost, out errorMsg))
                 return false;
+            int haveFocus = 0;
+            try { haveFocus = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch { }
+            if (haveFocus < fCost)
+            {
+                errorMsg = $"The gift also demands {fCost} focus point{(fCost != 1 ? "s" : "")} of your will; you have {haveFocus}.";
+                return false;
+            }
 
             ConsumeSacrifice(pCost, lCost);
+            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints -= fCost; } catch { }
             ApplyGift(gift);
 
             // Owning a gift clears Grace and blocks Nature.
@@ -220,6 +276,10 @@ namespace AshAndEmber
 
             return true;
         }
+
+        // The will the gift also takes, on top of the blood — the shared gentle
+        // talent curve (1,1,2,2,2,3,…) keyed to how many gifts you already bear.
+        public static int GetNextFocusCost(int totalOwned) => TalentCostCurve.Cost(totalOwned);
 
         // Grant a gift with no sacrifice — for character creation and scripted
         // events. Clears Grace, since gifts bar the holy path.

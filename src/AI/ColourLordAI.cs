@@ -316,21 +316,53 @@ namespace AshAndEmber
             try { return hero.GetTraitLevel(DefaultTraits.Calculating) >= 2; } catch { return false; }
         }
 
-        // ── Unified elemental kit for non-Ashen mage lords ───────────────────────
-        // Fire is the basis and keeps its tuned blast/burst; the Ashen and the false
-        // emperor keep their cold-fire scaling. Every other mage lord wields ONE
-        // element (fixed by identity) and casts the same kit the player does, so the
-        // merged magic reads on the battlefield. The element's own visuals (including
-        // the Ashen cold mask) are applied inside ElementSpellEffects.
-        private static MagicElement ElementOf(Hero hero)
+        // ── Unified elemental kit for NPC mage lords ─────────────────────────────
+        // Fire is innate to every mage. Beyond it, each lord has LEARNED a variable
+        // repertoire — 0 to 4 of the other elements — fixed by their identity and
+        // scaled by their standing (a tier-6 magnate knows more than a landless
+        // knight). When they cast, they draw a random element from what they know,
+        // so a well-studied lord throws stone, mist and gale where a novice only
+        // burns. Fire keeps its tuned blast/burst; the Ashen and the false emperor
+        // keep their high cold-fire scaling (they are the boss tier). The element
+        // kit applies its own visuals, including the Ashen cold mask.
+        private static readonly MagicElement[] _learnable =
+            { MagicElement.Wind, MagicElement.Earth, MagicElement.Water, MagicElement.Spirit };
+
+        // How many elements beyond Fire this lord has learned (0..4).
+        private static int LearnedCount(Hero hero)
         {
             try
             {
-                if (hero == null || ColourLordRegistry.IsAshenLord(hero)) return MagicElement.Fire;
-                int h = StableHash(hero.StringId ?? "");
-                return (MagicElement)(((h % 5) + 5) % 5);
+                if (hero == null) return 0;
+                if (ColourLordRegistry.IsAshenLord(hero)) return 4; // the Ashen know them all
+                int tier   = Math.Max(0, Math.Min(6, hero.Clan?.Tier ?? 0));
+                int jitter = (int)((uint)StableHash(hero.StringId ?? "") % 3); // 0..2
+                return Math.Max(0, Math.Min(4, (tier + jitter) / 2));
             }
-            catch { return MagicElement.Fire; }
+            catch { return 0; }
+        }
+
+        // The lord's repertoire, Fire first, then their learned elements (stable).
+        private static System.Collections.Generic.List<MagicElement> KnownElements(Hero hero)
+        {
+            var known = new System.Collections.Generic.List<MagicElement> { MagicElement.Fire };
+            int n = LearnedCount(hero);
+            if (n > 0 && hero != null)
+            {
+                string id = hero.StringId ?? "";
+                foreach (var el in _learnable
+                    .OrderBy(e => StableHash(id + "|" + (int)e))
+                    .Take(n))
+                    known.Add(el);
+            }
+            return known;
+        }
+
+        // Draw one element from what this lord knows for the cast at hand.
+        private static MagicElement PickCastElement(Hero hero)
+        {
+            var known = KnownElements(hero);
+            return known[_rng.Next(known.Count)];
         }
 
         private static int StableHash(string s)
@@ -338,12 +370,13 @@ namespace AshAndEmber
             unchecked { int hash = (int)2166136261; foreach (char c in s) { hash ^= c; hash *= 16777619; } return hash; }
         }
 
-        // Routes a non-Ashen, non-Fire lord's cast through the element kit.
-        // Returns true when it handled the cast (caller should then return).
+        // Routes a non-Ashen lord's cast through the element kit when they draw a
+        // non-Fire element. Returns true when it handled the cast (caller returns).
         private static bool TryCastElement(Agent agent, Hero hero, CastForm form, int inputs)
         {
-            var el = ElementOf(hero);
-            if (ColourLordRegistry.IsAshenLord(hero) || el == MagicElement.Fire) return false;
+            if (ColourLordRegistry.IsAshenLord(hero)) return false; // boss tier keeps tuned cold-fire
+            var el = PickCastElement(hero);
+            if (el == MagicElement.Fire) return false;
             AnnounceEnemyCast(agent, hero, ElementBlurb(el, form));
             SetCooldown(hero);
             RecordCast(hero, inputs);

@@ -24,7 +24,7 @@ namespace AshAndEmber
         // Returns how many points were actually added (0 if blocked or at cap).
         public static int AddGrace(int amount)
         {
-            int add = Math.Min(amount, MiracleMath.GraceColdCap - _grace);
+            int add = Math.Min(amount, MiracleMath.GraceCap() - _grace);
             if (add <= 0) return 0;
             _grace += add;
             return add;

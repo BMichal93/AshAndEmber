@@ -874,26 +874,44 @@ namespace AshAndEmber.Tests
         // ── ElementMagicMath (unified magic foundation) ─────────────────────────
 
         [Test]
-        public void ElementMagicMath_CastAgingDays_MinDraw_IsBaseCost()
+        public void ElementMagicMath_CastAgingDays_IsFlat_IndependentOfDraw()
         {
-            Assert.AreEqual(4, ElementMagicMath.CastAgingDays(CastForm.Attack, 3f, false));
-            Assert.AreEqual(6, ElementMagicMath.CastAgingDays(CastForm.Wall,   3f, false));
+            // The cost no longer depends on draw time — it is a flat per-form toll.
+            Assert.AreEqual(3, ElementMagicMath.CastAgingDays(CastForm.Attack, false));
+            Assert.AreEqual(4, ElementMagicMath.CastAgingDays(CastForm.Wall,   false));
         }
 
         [Test]
-        public void ElementMagicMath_CastAgingDays_FullDraw_IsCheaper()
+        public void ElementMagicMath_CastAgingDays_Nature_IsCheaper()
         {
-            // 7s draw: -0.5/s over 4s = -2 days normally.
-            Assert.AreEqual(2, ElementMagicMath.CastAgingDays(CastForm.Attack, 7f, false));
-            Assert.AreEqual(4, ElementMagicMath.CastAgingDays(CastForm.Wall,   7f, false));
+            // Nature halves the flat cost (floored at 1): attack 3→2, wall 4→2.
+            Assert.AreEqual(2, ElementMagicMath.CastAgingDays(CastForm.Attack, true));
+            Assert.AreEqual(2, ElementMagicMath.CastAgingDays(CastForm.Wall,   true));
+            Assert.IsTrue(ElementMagicMath.CastAgingDays(CastForm.Attack, true)
+                        < ElementMagicMath.CastAgingDays(CastForm.Attack, false));
         }
 
         [Test]
-        public void ElementMagicMath_CastAgingDays_Nature_FloorsCheap()
+        public void ElementMagicMath_PowerMult_InstantWeak_CapFull_ClampsPastCap()
         {
-            // Nature attunement: -1.5/s over 4s = -6 days; floored at 1.
-            Assert.AreEqual(1, ElementMagicMath.CastAgingDays(CastForm.Attack, 7f, true));
-            Assert.AreEqual(1, ElementMagicMath.CastAgingDays(CastForm.Wall,   7f, true));
+            Assert.AreEqual(ElementMagicMath.MinPower, ElementMagicMath.PowerMult(0f), 0.0001f);
+            Assert.AreEqual(ElementMagicMath.MaxPower, ElementMagicMath.PowerMult(ElementMagicMath.MaxDrawSeconds), 0.0001f);
+            // Past the cap gives no further power.
+            Assert.AreEqual(ElementMagicMath.MaxPower, ElementMagicMath.PowerMult(20f), 0.0001f);
+            // Monotonic: a longer draw is never weaker.
+            Assert.IsTrue(ElementMagicMath.PowerMult(5f) > ElementMagicMath.PowerMult(0f));
+            Assert.IsTrue(ElementMagicMath.PowerMult(10f) > ElementMagicMath.PowerMult(5f));
+        }
+
+        [Test]
+        public void TalentCostCurve_FollowsGentleRamp()
+        {
+            // owned → next cost: 1,1,2,2,2,3,3,3,3,4,...  (tier N charged N+1 times)
+            int[] expected = { 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4 };
+            for (int owned = 0; owned < expected.Length; owned++)
+                Assert.AreEqual(expected[owned], TalentCostCurve.Cost(owned), $"owned={owned}");
+            // Never below 1, even for a nonsensical negative count.
+            Assert.AreEqual(1, TalentCostCurve.Cost(-3));
         }
 
         [Test]
