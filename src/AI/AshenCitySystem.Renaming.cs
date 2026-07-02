@@ -573,5 +573,71 @@ namespace AshAndEmber
             }
             catch { }
         }
+
+        // ── Sturgia → Northmen troop rename ────────────────────────────────────
+        // Renames vanilla Sturgian troops from "Sturgian X" to "Northman X", the
+        // same treatment as Vlandia → Templar and Khuzait → Tribal. A few iconic
+        // units get more evocative overrides; everything else is a plain prefix
+        // swap. Idempotent (already-renamed names are skipped by the "Sturgian "
+        // guard). Called once per session alongside the other troop renames.
+        private static readonly Dictionary<string, string> _northmenTroopOverrides =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Sturgian Recruit",             "Northman Bondsman" },
+            { "Sturgian Druzhinnik Champion", "Northman Chosen"   },
+        };
+
+        public static void RenameSturgianTroops()
+            => RenameCultureTroops("sturgian_", "Sturgian ", "Northman ", _northmenTroopOverrides);
+
+        // ── Aserai → Duneborn troop rename ─────────────────────────────────────
+        // Renames vanilla Aserai troops from "Aserai X" to "Duneborn X". "Duneborn"
+        // reads cleanly as an attributive, so most units need no override.
+        private static readonly Dictionary<string, string> _dunebornTroopOverrides =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Aserai Recruit",       "Duneborn Servant"    },
+            { "Aserai Vanguard Faris", "Duneborn Bloodsworn" },
+        };
+
+        public static void RenameAseraiTroops()
+            => RenameCultureTroops("aserai_", "Aserai ", "Duneborn ", _dunebornTroopOverrides);
+
+        // Shared troop-rename loop used by the Sturgia/Aserai renames above.
+        // (RenameVlandianTroops / RenameKhuzaitTroops predate this helper and keep
+        // their own inline copies.) Matches CharacterObjects by StringId prefix and
+        // rewrites the display name via overrides, falling back to a prefix swap.
+        private static void RenameCultureTroops(string idPrefix, string namePrefix,
+            string newPrefix, Dictionary<string, string> overrides)
+        {
+            try
+            {
+                var nameField = _characterNameField ?? _nameField;
+                if (nameField == null) return;
+
+                foreach (var ch in MBObjectManager.Instance
+                             ?.GetObjectTypeList<CharacterObject>()
+                             ?? Enumerable.Empty<CharacterObject>())
+                {
+                    try
+                    {
+                        if (ch == null) continue;
+                        if (!(ch.StringId?.StartsWith(idPrefix, StringComparison.OrdinalIgnoreCase) ?? false))
+                            continue;
+
+                        string current = ch.Name?.ToString() ?? "";
+                        if (!current.StartsWith(namePrefix, StringComparison.OrdinalIgnoreCase)) continue;
+
+                        string newName;
+                        if (overrides == null || !overrides.TryGetValue(current, out newName))
+                            newName = newPrefix + current.Substring(namePrefix.Length);
+
+                        nameField.SetValue(ch, new TextObject(newName));
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
     }
 }

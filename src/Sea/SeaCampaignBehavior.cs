@@ -63,7 +63,7 @@ namespace AshAndEmber
             new Dictionary<string, string>
             {
                 ["Revyl"]    = "Salt-pine and old blood on the wind. The longships here have been south and come back with fewer men and better silence.",
-                ["Varcheg"]  = "Ice in the ropes even in late summer. Sturgian captains are carved from the same timber as their ships — dense, weathered, honest about the cost.",
+                ["Varcheg"]  = "Ice in the ropes even in late summer. Northmen captains are carved from the same timber as their ships — dense, weathered, honest about the cost.",
                 ["Balgard"]  = "The harbor mouth faces north. Every captain here has survived something that left no visible mark, and the ones who have not are still at sea.",
                 ["Sibir"]    = "The water past the breakwater is black at any hour. What trades through Sibir's docks rarely appears in any ledger.",
                 ["Galend"]   = "Wool and timber move through these docks in tonnage that embarrasses the landlocked lords. The harbormaster counts coin faster than a moneylender.",

@@ -212,14 +212,14 @@ namespace AshAndEmber
                     "The Western Empire receives the scrolls. Gairos's mages will not sleep for weeks.");
 
                 // Non-imperial factions
-                AddFactionOption(elements, "sturgia",  "give_sturgia",  "Give it to the Sturgians — iron hands may steady iron knowledge.",
-                    "Sturgia receives the scrolls. What they do with fire-made-life is their own affair.");
-                AddFactionOption(elements, "khuzait",  "give_khuzait",  "Give it to the Khuzaites — the steppe lords keep their own counsel.",
-                    "The Khuzait Khanate receives the scrolls. The wind carries secrets far.");
+                AddFactionOption(elements, "sturgia",  "give_sturgia",  "Give it to the Northmen — iron hands may steady iron knowledge.",
+                    "The Northmen receive the scrolls. What they do with fire-made-life is their own affair.");
+                AddFactionOption(elements, "khuzait",  "give_khuzait",  "Give it to the Tribes of the East — the God-King keeps his own counsel.",
+                    "The Tribes of the East receive the scrolls. The wind carries secrets far.");
                 AddFactionOption(elements, "battania", "give_battania", "Give it to the Battanians — they understand old power.",
                     "Battania receives the scrolls. They know things about life and death that predate the Empire.");
-                AddFactionOption(elements, "aserai",   "give_aserai",   "Give it to the Aserai — scholars of the deep south.",
-                    "The Aserai receive the scrolls. Desert silence is good for dangerous research.");
+                AddFactionOption(elements, "aserai",   "give_aserai",   "Give it to the Duneborn — the desert keeps its own secrets.",
+                    "The Duneborn receive the scrolls. Desert silence is good for dangerous research.");
                 AddFactionOption(elements, "vlandia",  "give_vlandia",  "Give it to The Holy Temple — the Templars guard old fire.",
                     "The Holy Temple receives the scrolls. They will lock them beneath an altar and pray no one breaks the seal.");
 

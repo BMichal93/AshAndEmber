@@ -37,6 +37,8 @@ namespace AshAndEmber
             try { TempleCulture.SetupTempleKingdom(); } catch { }
             try { RenameTribesKingdom();              } catch { }
             try { RenameKhuzaitTroops();              } catch { }
+            try { RenameSturgianTroops();             } catch { }
+            try { RenameAseraiTroops();               } catch { }
             _settlementsRenamed = true;
         }
 

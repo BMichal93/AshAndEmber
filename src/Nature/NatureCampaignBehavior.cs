@@ -456,7 +456,7 @@ namespace AshAndEmber
         {
             InformationManager.ShowInquiry(new InquiryData(
                 "Faruk the Patient",
-                "He is old — older than the village, maybe. He is not from the Aserai. " +
+                "He is old — older than the village, maybe. He is not from the Duneborn. " +
                 "He is not from anywhere you could name. He speaks before you reach him, " +
                 "without looking up from the ground he is studying.\n\n" +
                 "\"You wait for it,\" he says. \"That is your mistake.\"\n\n" +

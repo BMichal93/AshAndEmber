@@ -90,17 +90,17 @@ namespace AshAndEmber
                     "The Western Empire receives the scrolls.");
 
                 AddFactionOption(elements, "sturgia",  "give_sturgia",
-                    "Pass them to the Sturgians.",
-                    "Sturgia receives the scrolls.");
+                    "Pass them to the Northmen.",
+                    "The Northmen receive the scrolls.");
                 AddFactionOption(elements, "khuzait",  "give_khuzait",
-                    "Pass them to the Khuzaites.",
-                    "The Khuzait Khanate receives the scrolls.");
+                    "Pass them to the Tribes of the East.",
+                    "The Tribes of the East receive the scrolls.");
                 AddFactionOption(elements, "battania", "give_battania",
                     "Pass them to the Battanians.",
                     "Battania receives the scrolls.");
                 AddFactionOption(elements, "aserai",   "give_aserai",
-                    "Pass them to the Aserai.",
-                    "The Aserai receive the scrolls.");
+                    "Pass them to the Duneborn.",
+                    "The Duneborn receive the scrolls.");
                 AddFactionOption(elements, "vlandia",  "give_vlandia",
                     "Pass them to The Holy Temple.",
                     "The Templars receive the scrolls.");
