@@ -101,6 +101,7 @@ namespace AshAndEmber
             try { AshenCitySystem.ApplyTempleCultureTexts();        } catch { }
             try { AshenCitySystem.ApplyTribalCultureTexts();       } catch { }
             try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch { }
+            try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch { }
         }
 
         // Re-applies the Templar culture text while still in the menu / intro-video /
@@ -118,6 +119,7 @@ namespace AshAndEmber
                 try { AshenCitySystem.ApplyTempleCultureTexts();        } catch { }
                 try { AshenCitySystem.ApplyTribalCultureTexts();       } catch { }
                 try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch { }
+            try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch { }
                 // The character-creation culture cards cache their name when built, so
                 // the text override above never reaches them — rename the card directly.
                 try { TempleCultureCardFixer.TickTryFix(); } catch { }

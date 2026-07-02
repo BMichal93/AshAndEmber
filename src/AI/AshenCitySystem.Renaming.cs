@@ -418,6 +418,51 @@ namespace AshAndEmber
             catch { return false; }
         }
 
+        // ── Aserai → the Duneborn (culture rename) ──────────────────────────────
+        // Renames the Aserai culture object so the character sheet, encyclopedia,
+        // troop culture and creation card read "Duneborn" — the same treatment as
+        // Sturgia → Northmen. Aserai stays mechanically vanilla; only the label and
+        // the culture blurb change (no feat relabelling, no kingdom rename).
+        public static void RenameDunebornCulture()
+        {
+            try
+            {
+                var aseraiCulture = MBObjectManager.Instance?.GetObject<CultureObject>("aserai");
+                if (aseraiCulture != null)
+                    _nameField?.SetValue(aseraiCulture, new TextObject("Duneborn"));
+            }
+            catch { }
+        }
+
+        // ── Character-creation culture card text override for the Duneborn ─────
+        // Works identically to ApplyTempleCultureTexts / ApplyNorthmenCultureTexts.
+        public static bool ApplyDunebornCultureTexts()
+        {
+            try
+            {
+                RenameDunebornCulture();
+
+                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                var mgr = mgrField?.GetValue(null) as GameTextManager;
+                if (mgr == null) return false;
+
+                SetCultureVariation(mgr, "str_culture_rich_name", "aserai", "Duneborn");
+                SetCultureVariation(mgr, "str_culture_description", "aserai",
+                    "The desert does not forgive, and the Duneborn stopped asking it to. Once they kept the same " +
+                    "covenant with the inner fire as every tribe beneath the sun — a warmth earned, a debt honoured. " +
+                    "Then came the long drought: three generations of cracked wells and a sun that gave nothing back " +
+                    "for what it took, and the fire-covenant went dry along with everything else. In the black-glass " +
+                    "caverns beneath the dunes, where no torch had ever burned, the first Duneborn found something " +
+                    "older than fire and far hungrier — a power that asked no devotion, only blood, and did not care " +
+                    "what was done with what it gave. They do not call it a god. They call it patient. Every great " +
+                    "house keeps its bargain quiet and its knives quieter, for the desert has always kept its own " +
+                    "secrets better than any temple ever kept its.");
+                return true;
+            }
+            catch { return false; }
+        }
+
         // ── Khuzait troop rename ───────────────────────────────────────────────
         // Renames all vanilla Khuzait troops from "Khuzait X" to "Tribal X", with
         // specific overrides for key units. Idempotent: already-renamed names are

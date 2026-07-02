@@ -1,7 +1,8 @@
 // =============================================================================
 // ASH AND EMBER — AI/TempleCultureCardFixer.cs
 // Rewrites the renamed culture cards on the character-creation culture-selection
-// screen: Vlandia → The Holy Temple, and Khuzait → Tribes of the East.
+// screen: Vlandia → The Holy Temple, Khuzait → Tribes of the East, Sturgia →
+// Northmen, and Aserai → the Duneborn.
 //
 // Why this exists: the culture cards read "str_culture_rich_name" and CACHE the
 // resolved string when the card is built, and they build their feats list from
@@ -97,6 +98,24 @@ namespace AshAndEmber
                     + "Ashen — the dead-cold lords who neither age nor tire — and it falls to the Northmen to "
                     + "stand in the gap. Every hall keeps its watch-fires burning; every child learns the axe "
                     + "before the plough. They do not expect to break the cold. They expect to hold the line.",
+                Feats = new string[0],
+            },
+            // Aserai → the Duneborn. Name + blurb only; the feats are LEFT as vanilla
+            // Aserai (empty list ⇒ RewriteFeats is a no-op), since the Duneborn are
+            // mechanically ordinary Aserai — only renamed.
+            new CultureCard
+            {
+                Id   = "aserai",
+                Name = "Duneborn",
+                Desc =
+                    "The desert does not forgive, and the Duneborn stopped asking it to. Once they kept the same "
+                    + "covenant with the inner fire as every tribe beneath the sun — a warmth earned, a debt honoured. "
+                    + "Then came the long drought: three generations of cracked wells and a sun that gave nothing "
+                    + "back for what it took, and the fire-covenant went dry along with everything else.\n\n"
+                    + "In the black-glass caverns beneath the dunes, where no torch had ever burned, the first "
+                    + "Duneborn found something older than fire and far hungrier — a power that asked no devotion, "
+                    + "only blood, and did not care what was done with what it gave. They do not call it a god. "
+                    + "They call it patient. Every great house keeps its bargain quiet and its knives quieter still.",
                 Feats = new string[0],
             },
         };

@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### The Duneborn
+- **Aserai is now presented as the Duneborn** — the same treatment as Vlandia → The Holy Temple, Khuzait → Tribes of the East, and Sturgia → Northmen. The culture reads "Duneborn" on the character sheet, the encyclopedia, troop culture, and the character-creation card. They remain mechanically ordinary Aserai — only the name and the blurb change.
+- **New lore:** the Duneborn once kept the same fire-covenant as every culture, until a generations-long drought broke it along with their wells. What the first Duneborn found in the black-glass caverns beneath the dunes asked no devotion — only blood — and cares nothing for what is done with the power it grants. This finally gives lore grounding to the existing (and previously unexplained) tendency of Aserai lords to be quietly seeded with Dark Gifts.
+
 ### Lords speak in their own tongue — flavourful dialogue for every hall
 - **Tribes of the East** lords now answer with the fanatical, blood-hungry voice of the God-King's riders, in place of vanilla Khuzait lines.
 - **Northmen** lords now answer bluntly and bravely, as befits the folk holding the cold line against the Ashen.
