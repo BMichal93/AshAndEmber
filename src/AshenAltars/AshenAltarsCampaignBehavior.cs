@@ -5,8 +5,8 @@
 // merciless) purchase permanent Dark Gifts. Each gift exacts a geometrically
 // growing toll of prisoners and captured lords.
 //
-// Fixed altar cities: Tyal / Sibir / Baltakhand / Amprela (Ashen lands),
-// plus one random Aserai town and two random Empire towns per campaign.
+// Fixed altar cities: Sanala / Askar / Iyakis / Hybyar (Aserai settlements),
+// plus three random Ashen cities per campaign.
 // =============================================================================
 
 using System;
@@ -28,9 +28,9 @@ namespace AshAndEmber
             new HashSet<string> { "empire", "empire_n", "empire_s", "empire_w" };
 
         private static readonly string[] FixedAltarCities =
-            { "Tyal", "Sibir", "Baltakhand", "Amprela" };
+            { "Sanala", "Askar", "Iyakis", "Hybyar" };
 
-        // Dynamic altar settlement StringIds — 1 Aserai + 2 Empire
+        // Dynamic altar settlement StringIds — 3 random Ashen cities
         private static readonly List<string> _dynamicAltarIds = new List<string>();
 
         private static bool _altarsAnnounced = false;
@@ -99,17 +99,11 @@ namespace AshAndEmber
             if (_dynamicAltarIds.Count > 0) return;
             try
             {
-                // 1 Aserai town
-                var aserai = Settlement.All
-                    .Where(s => s.IsTown && s.OwnerClan?.Kingdom?.StringId == AseraiKingdomId)
-                    .OrderBy(_ => _rng.Next()).FirstOrDefault();
-                if (aserai != null) _dynamicAltarIds.Add(aserai.StringId);
-
-                // 2 Empire towns
-                var empireTowns = Settlement.All
-                    .Where(s => s.IsTown && EmpireKingdomIds.Contains(s.OwnerClan?.Kingdom?.StringId ?? ""))
-                    .OrderBy(_ => _rng.Next()).Take(2).ToList();
-                foreach (var t in empireTowns) _dynamicAltarIds.Add(t.StringId);
+                // 3 random Ashen cities
+                var ashenTowns = Settlement.All
+                    .Where(s => s.IsTown && s.OwnerClan?.Kingdom?.StringId == AshenKingdomId)
+                    .OrderBy(_ => _rng.Next()).Take(3).ToList();
+                foreach (var t in ashenTowns) _dynamicAltarIds.Add(t.StringId);
             }
             catch { }
         }
