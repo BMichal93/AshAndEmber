@@ -5,7 +5,7 @@
 // merciless) purchase permanent Dark Gifts. Each gift exacts a geometrically
 // growing toll of prisoners and captured lords.
 //
-// Fixed altar cities: Sanala / Askar / Iyakis / Hybyar (Aserai settlements),
+// Fixed altar cities: Sanala / Askar / Iyakis / Hubyar (Aserai settlements),
 // plus three random Ashen cities per campaign.
 // =============================================================================
 
@@ -28,7 +28,7 @@ namespace AshAndEmber
             new HashSet<string> { "empire", "empire_n", "empire_s", "empire_w" };
 
         private static readonly string[] FixedAltarCities =
-            { "Sanala", "Askar", "Iyakis", "Hybyar" };
+            { "Sanala", "Askar", "Iyakis", "Hubyar" };
 
         // Dynamic altar settlement StringIds — 3 random Ashen cities
         private static readonly List<string> _dynamicAltarIds = new List<string>();
@@ -139,7 +139,7 @@ namespace AshAndEmber
             try
             {
                 string name = s.Name?.ToString() ?? "";
-                // Fixed Ashen altars + dynamically rolled Aserai/Empire ones
+                // Fixed Aserai altars + dynamically rolled Ashen ones
                 if (FixedAltarCities.Any(city =>
                         name.IndexOf(city, StringComparison.OrdinalIgnoreCase) >= 0)
                     || AshenQuestSystem.IsWastelandCity(s.StringId)

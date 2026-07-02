@@ -114,7 +114,7 @@ namespace AshAndEmber
                 // Draw the charge while standing still with hands and armour free
                 // (Steel waives the hand and weight limits). The draw builds POWER,
                 // not cost: release at once for a weak working, or hold to strengthen
-                // it — but hold the full ~10 s and the charge disperses.
+                // it — full at ~7 s, but hold ~15 s and the charge disperses.
                 string reason = ChannelBlockReason();
                 if (reason == null)
                 {

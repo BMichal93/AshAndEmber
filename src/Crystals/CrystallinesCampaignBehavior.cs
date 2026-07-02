@@ -2,11 +2,11 @@
 // ASH AND EMBER — Crystals/CrystallinesCampaignBehavior.cs
 //
 // Campaign layer for the crystal system:
-//   • Crystalline Chambers in 6 towns (4 Aserai, 2 Sturgian) — rare places where
-//     crystals grow in deep mines and mountain passes infused with fire magic.
-//     Formation menu (Silver Ore + trade good), open to any visitor.
+//   • Crystalline Chambers in 5 towns (2 Sturgian, 2 Battanian, 1 Northern Empire)
+//     — rare places where crystals grow in deep mines and mountain passes infused
+//     with fire magic. Formation menu (Silver Ore + trade good), open to any visitor.
 //   • EstablishForNewCampaign — faction-weighted seed across lords at game start
-//     (12% Aserai, 8% Sturgian, 5% others)
+//     (8% Sturgian, 8% Battanian, 6% Northern Empire, 5% others)
 //   • OnHeroCreated — faction-weighted chance for new lords' equipment
 //   • Weekly/session shop restock so chamber towns always carry every crystal
 //   • SyncData — nothing to persist (crystals are real items in inventories)
@@ -43,11 +43,11 @@ namespace AshAndEmber
         private static readonly string[] ChamberTowns =
         {
             // Sturgian
-            "Revyl", "Vatcheg",
+            "Revyl", "Varcheg",
             // Battania
             "Dunglanys", "Car Banseth",
             // Northern Empire
-            "Sanopea",
+            "Saneopa",
         };
 
         // ── CampaignBehaviorBase ─────────────────────────────────────────────

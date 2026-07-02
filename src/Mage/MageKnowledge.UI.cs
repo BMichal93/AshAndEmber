@@ -64,8 +64,8 @@ namespace AshAndEmber
                 "── THE CASTING, IN BRIEF ────────────────────────────\n" +
                 "  Hold Left Alt → stand still and DRAW → Attack looses a cone,\n" +
                 "  Block raises a wall → release Alt to stop.\n" +
-                "  The longer you hold, the harder it strikes (full at ~10 s);\n" +
-                "  hold too long and the charge disperses. Keep a hand free.\n" +
+                "  The longer you hold, the harder it strikes (full at ~7 s);\n" +
+                "  hold too long (~15 s) and the charge disperses. Keep a hand free.\n" +
                 "  Fire is loaded by default. Tap W / A / S / D to load a learned\n" +
                 "  element — W Wind · S Earth · A Water · D Spirit.\n" +
                 "  (Full gestures, miracles and crystals: your Codex of Hand and Voice.)\n\n" +
@@ -98,7 +98,7 @@ namespace AshAndEmber
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +
                 "  Open this book any time: Left Alt + X  (LB + RB on a controller).\n\n" +
                 "── DARK ALTARS ──────────────────────────────────────────\n" +
-                "  Dark Altars stand in Sanala, Askar, Iyakis, Hybyar,\n" +
+                "  Dark Altars stand in Sanala, Askar, Iyakis, Hubyar,\n" +
                 "  and three random Ashen cities.\n" +
                 "  The Merciless and Devious may purchase permanent Dark Gifts\n" +
                 "  by sacrificing prisoners and captured lords.\n" +
@@ -164,8 +164,8 @@ namespace AshAndEmber
                 + "  Equip a crystal in a weapon slot (Sunstone, Embershard, Rimeshard,\n"
                 + "  Veilstone, Stormcrystal, Duskstone). Strike with it between 06:00\n"
                 + "  and 20:00 to charge for 2 s then unleash the effect. 10 % burndown\n"
-                + "  chance per use. Chambers in Revyl, Vatcheg, Dunglanys, Car Banseth,\n"
-                + "  and Sanopea.\n\n"
+                + "  chance per use. Chambers in Revyl, Varcheg, Dunglanys, Car Banseth,\n"
+                + "  and Saneopa.\n\n"
                 + "── THE LIVING EMBER — the land's own fire ───────────\n"
                 + "  (For those attuned to the living world, not the inner fire.)\n"
                 + "  Gather a charge     Hold Left Ctrl + stand still   (hold R3, stand still)\n"
