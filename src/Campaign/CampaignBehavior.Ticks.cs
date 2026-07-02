@@ -159,6 +159,7 @@ namespace AshAndEmber
                 // Must run after aging so _battleCasts still holds data during ApplyNpcBattleAging.
                 try { ColourLordAI.FlushBattleCasts(); } catch { }
                 try { ApplyNpcBattleMoraleBonus(mapEvent); } catch { }
+                try { ApplyNpcMagicCombatBonus(mapEvent); } catch { }
                 try { CheckReapRaidYield(mapEvent);           } catch { }
                 try { TribalCulture.CheckRaidBonus(mapEvent); } catch { }
                 try { SettlementEncounters.OnMapEventEnded(mapEvent); } catch { }
