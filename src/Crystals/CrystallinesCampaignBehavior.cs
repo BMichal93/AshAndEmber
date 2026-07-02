@@ -37,15 +37,17 @@ namespace AshAndEmber
         private static readonly Random _rng = new Random();
 
         // Towns that host a Crystalline Chamber.
-        // Six locations in deep mines, mountain passes, and quarries where fire magic
-        // runs strong — rare places where crystals naturally grow. Aserai control four,
-        // Sturgians two.
+        // Five locations in deep mines, mountain passes, and quarries where fire magic
+        // runs strong — rare places where crystals naturally grow. Sturgians control two,
+        // Battania two, and the Northern Empire one.
         private static readonly string[] ChamberTowns =
         {
-            // Aserai
-            "Sanala", "Askar", "Iyakis", "Hybyar",
             // Sturgian
-            "Revyl", "Varcheg",
+            "Revyl", "Vatcheg",
+            // Battania
+            "Dunglanys", "Car Banseth",
+            // Northern Empire
+            "Sanopea",
         };
 
         // ── CampaignBehaviorBase ─────────────────────────────────────────────
@@ -174,10 +176,12 @@ namespace AshAndEmber
                 if (hero?.Clan?.Kingdom == null) return CrystalMath.LordSeedChance;
 
                 string kingdomId = hero.Clan.Kingdom.StringId;
-                // Aserai control the richest crystal deposits.
-                if (kingdomId == "aserai") return 0.12;
-                // Sturgian mountain passes yield more.
+                // Sturgian mountain passes yield crystals.
                 if (kingdomId == "sturgia") return 0.08;
+                // Battanian forests and ruins hold them.
+                if (kingdomId == "battania") return 0.08;
+                // Northern Empire cities shelter them.
+                if (kingdomId == "empire_n") return 0.06;
             }
             catch { }
             return CrystalMath.LordSeedChance;

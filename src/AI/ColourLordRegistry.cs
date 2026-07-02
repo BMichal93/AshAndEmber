@@ -221,6 +221,19 @@ namespace AshAndEmber
                     }
                 }
                 catch { }
+
+                // Seed dark gifts for Aserai lords — the desert carries the culture of darkness.
+                try
+                {
+                    foreach (Hero h in Hero.AllAliveHeroes
+                        .Where(h => h.IsLord && h != Hero.MainHero && h.IsAlive
+                                 && !_ashenIds.Contains(h.StringId)
+                                 && h.Clan?.Kingdom?.StringId == "aserai"))
+                    {
+                        DarkGiftSystem.SeedNpcGifts(h, isAshenLord: false, isEvilLord: true);
+                    }
+                }
+                catch { }
             }
             catch { }
         }
