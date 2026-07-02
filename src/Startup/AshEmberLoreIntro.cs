@@ -72,7 +72,8 @@ namespace AshAndEmber
             "There were some who wanted to use the Fire.",
 
             "In the East, sorcerer-kings raised an army to ride against the first empire. They brought fire and blood. " +
-            "In the southern and northern caves, alchemists mine crystals to harness the Fire and use them for their own ends.",
+            "In remote, heavily guarded caves, greedy lords mine crystals to harness the Fire and use it for their own ends. " +
+            "In the South, masters of the desert sacrifice dozens of lives at the altars of the dark forces, pleading for their favour, blind to the danger.",
 
             "Now, the fire fades. The ancient forces raise their heads in the north. " +
             "The Ashen mages who defied death are gathering their strengths.",
