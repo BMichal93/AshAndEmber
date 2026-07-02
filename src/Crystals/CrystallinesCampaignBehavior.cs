@@ -6,7 +6,7 @@
 //     crystals grow in deep mines and mountain passes infused with fire magic.
 //     Formation menu (Silver Ore + trade good), open to any visitor.
 //   • EstablishForNewCampaign — faction-weighted seed across lords at game start
-//     (higher for Aserai, slight bonus for Sturgian)
+//     (12% Aserai, 8% Sturgian, 5% others)
 //   • OnHeroCreated — faction-weighted chance for new lords' equipment
 //   • Weekly/session shop restock so chamber towns always carry every crystal
 //   • SyncData — nothing to persist (crystals are real items in inventories)
@@ -175,9 +175,9 @@ namespace AshAndEmber
 
                 string kingdomId = hero.Clan.Kingdom.StringId;
                 // Aserai control the richest crystal deposits.
-                if (kingdomId == "aserai") return CrystalMath.LordSeedChance * 2.0;
-                // Sturgian mountain passes yield slightly more.
-                if (kingdomId == "sturgia") return CrystalMath.LordSeedChance * 1.25;
+                if (kingdomId == "aserai") return 0.12;
+                // Sturgian mountain passes yield more.
+                if (kingdomId == "sturgia") return 0.08;
             }
             catch { }
             return CrystalMath.LordSeedChance;
