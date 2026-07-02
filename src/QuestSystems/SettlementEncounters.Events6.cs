@@ -942,7 +942,9 @@ namespace AshAndEmber
 
             bool isMage    = MageKnowledge.IsMage;
             bool isAshen   = MageKnowledge.IsAshen;
-            bool isNature  = NatureKnowledge.IsAttuned;
+            // Old attunement or the merged art — any living mage draws the living
+            // world now. Not the Ashen: the cold has its own answer below.
+            bool isNature  = NatureKnowledge.IsAttuned || (isMage && !isAshen);
 
             MageKnowledge._deferredInquiry = () =>
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(

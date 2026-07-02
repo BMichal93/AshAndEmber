@@ -410,7 +410,10 @@ namespace AshAndEmber
                         if (entry.Character.IsHero || entry.WoundedNumber <= 0) continue;
 
                         int originalWounded = entry.WoundedNumber;
-                        int adjustedWounded = (int)Math.Round(originalWounded * multiplier);
+                        // Wounded can never exceed the stack's total troop count, or
+                        // the roster is left in an invalid state.
+                        int adjustedWounded = Math.Max(0, Math.Min(entry.Number,
+                            (int)Math.Round(originalWounded * multiplier)));
                         int delta = adjustedWounded - originalWounded;
 
                         if (delta != 0)

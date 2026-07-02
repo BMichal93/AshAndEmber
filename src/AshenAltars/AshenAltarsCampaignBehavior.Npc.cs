@@ -16,6 +16,12 @@ namespace AshAndEmber
 
         private static void OnDailyTick()
         {
+            // The dynamic (Ashen-city) altars cannot be rolled at session launch on a
+            // NEW campaign — the Ashen kingdom receives its cities only after character
+            // creation, and OnNewGameCreated resets this behaviour besides. Retry here
+            // until the world has Ashen towns to pick, then announce the full set once.
+            try { EnsureDynamicAltars(); AnnounceAltars(); } catch { }
+
             if (!DarkGiftSystem.HasAnyGift) { _giftDisabledNotified = false; return; }
 
             bool active = DarkGiftSystem.GiftsActive;

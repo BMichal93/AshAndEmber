@@ -68,18 +68,18 @@ namespace AshAndEmber
             "First, there was the Fire. The power that breathed life into the world, raised mountains, stilled seas. " +
             "Then came humans. They harnessed the fire and built a great empire upon it. With the fire, humans built great cities, raised armies and brought order to the world.",
 
-            "The order lasted a thousand years under the banner of the Empire and aegis of the Temple. " +
-            "There were some who wanted to use the Fire.",
+            "The order lasted a thousand years under the banner of the Empire and the aegis of the Temple. " +
+            "But there were always those who would take the Fire for themselves.",
 
             "In the East, sorcerer-kings raised an army to ride against the first empire. They brought fire and blood. " +
             "In remote, heavily guarded caves, greedy lords mine crystals to harness the Fire and use it for their own ends. " +
             "In the South, masters of the desert sacrifice dozens of lives at the altars of the dark forces, pleading for their favour, blind to the danger.",
 
-            "Now, the fire fades. The ancient forces raise their heads in the north. " +
-            "The Ashen mages who defied death are gathering their strengths.",
+            "Now the fire fades. Ancient forces raise their heads in the north. " +
+            "The Ashen — the mages who defied death — are gathering their strength.",
 
-            "With the Emperor dead, and three contestants reaching for the shattered crown, when the time comes, nothing will stop the grey march from the wastelands. " +
-            "In the last days of the Empire, among the ruins, you began your journey. Where it will lead you, O Firelord?",
+            "The Emperor is dead, and three claimants reach for the shattered crown. When the time comes, nothing will stand against the grey march from the wastelands. " +
+            "In the last days of the Empire, among the ruins, you begin your journey. Where will it lead you, O Firelord?",
         };
 
         // Per-paragraph timing (seconds).

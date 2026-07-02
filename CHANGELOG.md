@@ -7,6 +7,16 @@
 ### The Imperial Marches
 - **Qasira now answers to the Southern Empire** from the world's birth, joining Razih on the Empire's desert border (Sanala already flies the Western Empire's banner). Assigned through the same border-reassignment pass that hands the other frontier cities to their Empires, with the same nearby-castle sweep.
 
+### Fixes — the production-readiness pass
+- **An NPC's Embershard now belongs to its bearer.** The flying shard credited every detonation to the *player* — kills, combat-log announcements, even the blame for friendly scorching — and its flight could never strike the player directly. The missile now carries its true caster: an enemy crystal-bearer's shard can hit you, its kills are his, and the log names him.
+- **Off-screen magic advantage can no longer corrupt a party roster.** The new casualty swing for mage-heavy sides could push a stack's wounded count above its troop count (e.g. 9 wounded of 10 troops × 1.3). Wounded are now clamped to the stack's size.
+- **Dark Altars now rise on a NEW campaign's first day, not its first reload.** The three dynamic Ashen-city altars were rolled at session launch — before the Ashen kingdom owns any city on a fresh start — then wiped by new-game setup, so a new campaign had no dynamic altars (and no announcement) until the save was reloaded. The roll now retries each day until the Ashen hold their cities, and the herald speaks once the full set stands.
+- **A wall of fire scorches only its own footprint.** The eruption's contact hit was a circle around the wall's centre wide enough to reach beside — even behind — the caster. It now strikes only inside the wall's actual rectangle.
+- **The Wasting and the Camp Sickness answer the merged art.** Both encounters still gated their living-world options on the retired Living-Ember attunement (unreachable in new campaigns) — they now answer any living mage, as sea travel already does. The Wasting's dark ritual likewise accepts a Dark Gift borne from the altars, not only the retired fire-path talents.
+- **Only lords speak the factions' lord-dialogue.** The Temple / Tribes / Northmen / Duneborn line pools matched any hero of the faction, so town notables and wanderers could greet you as blood-sworn riders. All four pools now require a lord.
+- **The opening cinematic reads cleanly** — grammar and flow polish across the lore paragraphs ("Where will it lead you, O Firelord?").
+- Housekeeping: the ended battle's mission object is no longer kept alive while waiting on the map (the Ashen cast-tally now holds it weakly).
+
 ## v0.36.0
 
 ### Mage lords, priests and crystal-bearers fight like people, not scripts

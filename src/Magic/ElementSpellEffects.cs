@@ -153,14 +153,17 @@ namespace AshAndEmber
                     catch { }
             }
 
-            // Contact hit as the wall erupts — across the whole rectangle's footprint.
+            // Contact hit as the wall erupts — only inside the rectangle's actual
+            // footprint (project onto the wall's axes), so a foe standing beside or
+            // behind the caster is never scorched by a wall raised ahead of him.
             float depth = (rows - 1) * rowSpacing;
-            Vec3  mid   = pos + fwd * (FireWallRange + depth * 0.5f);
-            float reach = width + depth * 0.5f + 1.5f;
-            foreach (Agent a in EnemiesNear(caster, FireWallRange + reach))
+            foreach (Agent a in EnemiesNear(caster, FireWallRange + depth + width + 1.5f))
             {
-                Vec3 d = a.Position - mid; d.z = 0f;
-                if (d.Length > reach) continue;
+                Vec3 d = a.Position - pos; d.z = 0f;
+                float along  = Vec3.DotProduct(d, fwd);
+                float across = Vec3.DotProduct(d, right);
+                if (along < FireWallRange - 1.2f || along > FireWallRange + depth + 1.2f) continue;
+                if (Math.Abs(across) > width + 1.5f) continue;
                 if (SpellEffects.IsWarded(a)) continue;
                 try { SpellEffects.DamageAgent(a, FireWallDamage * power, ColorSchool.Red, caster); } catch { }
             }

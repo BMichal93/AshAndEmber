@@ -55,6 +55,7 @@ namespace AshAndEmber
             public float       TravelLeft;
             public float       ExplosionRadius;
             public CrystalType Type;
+            public Agent       Caster;
             public Team        CasterTeam;
             public float       TrailTimer = 0f;
             public const float Speed         = 28f;
@@ -284,6 +285,7 @@ namespace AshAndEmber
                 TravelLeft = range,
                 ExplosionRadius = explRadius,
                 Type = CrystalType.Embershard,
+                Caster = caster,
                 CasterTeam = caster.Team,
             };
             _crystalMissiles.Add(missile);
@@ -462,7 +464,7 @@ namespace AshAndEmber
                 {
                     foreach (Agent a in Mission.Current.Agents)
                     {
-                        if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
+                        if (!a.IsActive() || a.IsMount || a == m.Caster) continue;
                         if (m.CasterTeam != null && a.Team == m.CasterTeam) continue;
                         float dx = a.Position.x - mpos.x;
                         float dy = a.Position.y - mpos.y;
@@ -509,7 +511,9 @@ namespace AshAndEmber
                     if (m.CasterTeam != null && a.Team == m.CasterTeam) continue;
                     try
                     {
-                        SpellEffects.DamageAgent(a, CrystalMath.EmberDamage, ColorSchool.Red, Agent.Main);
+                        // Blame the crystal's actual bearer, not the player — NPC
+                        // crystal-bearers loose these missiles too.
+                        SpellEffects.DamageAgent(a, CrystalMath.EmberDamage, ColorSchool.Red, m.Caster);
                         SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Red, 4f);
                         hit++;
                     }
@@ -518,7 +522,7 @@ namespace AshAndEmber
             }
             catch { }
 
-            Announce(Agent.Main, hit > 0
+            Announce(m.Caster, hit > 0
                 ? $"Embershard detonates — {hit} enemies scorched ({(int)CrystalMath.EmberDamage} HP each)."
                 : "Embershard detonates — no enemies in range.",
                 ColorSchool.Red);

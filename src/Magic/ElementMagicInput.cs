@@ -58,7 +58,9 @@ namespace AshAndEmber
         // the post-battle "Fading" encounter can still read it after the fight
         // closes, whatever order the engine ends the mission and the map event in.
         private static int _ashenBattleCasts;
-        private static object _countedMission;
+        // Weak so the ended mission's object graph can be collected while we wait on
+        // the map; if it is collected the next mission simply resets the tally.
+        private static readonly WeakReference _countedMission = new WeakReference(null);
         public static int AshenBattleCastCount => _ashenBattleCasts;
 
         public static void ResetInputState()
@@ -84,8 +86,8 @@ namespace AshAndEmber
             try
             {
                 object m = Mission.Current;
-                if (m != null && !ReferenceEquals(m, _countedMission))
-                { _ashenBattleCasts = 0; _countedMission = m; }
+                if (m != null && !ReferenceEquals(m, _countedMission.Target))
+                { _ashenBattleCasts = 0; _countedMission.Target = m; }
             }
             catch { }
             if (!MageKnowledge.IsMage) { InputSuppressed = false; return; }

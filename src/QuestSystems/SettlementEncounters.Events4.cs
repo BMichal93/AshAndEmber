@@ -124,9 +124,15 @@ namespace AshAndEmber
 
             bool mage          = MageKnowledge.IsMage;
             bool isAshen       = MageKnowledge.IsAshen;
-            bool hasDarkTalent = mage && (TalentSystem.Has(TalentId.Ember)
-                                       || TalentSystem.Has(TalentId.Reap));
-            bool isNature      = NatureKnowledge.IsAttuned;
+            // A dark ritual answers to the old dark talents OR to a Dark Gift borne
+            // from the altars — the retired fire paths are no longer purchasable.
+            bool hasDarkTalent = (mage && (TalentSystem.Has(TalentId.Ember)
+                                        || TalentSystem.Has(TalentId.Reap)))
+                               || DarkGiftSystem.HasAnyGift;
+            // The living world answers the old attunement or the merged art (any
+            // living mage now draws the living elements) — same repointing as sea
+            // travel. Not the Ashen: the cold has its own answer below.
+            bool isNature      = NatureKnowledge.IsAttuned || (mage && !isAshen);
 
             string spouseName = spouse.Name?.ToString() ?? "your spouse";
             string childName  = child.Name?.ToString()  ?? "your child";
@@ -136,10 +142,10 @@ namespace AshAndEmber
                 : "Requires mage ability.";
             string dHint = hasDarkTalent
                 ? $"The ritual requires something living. It requires a lot of it."
-                : "Requires Ember or Reap talent.";
+                : "Requires a dark talent or a Dark Gift.";
             string nHint = isNature
                 ? "Let the living world work through them. It takes what it needs from you — your blood, not your years."
-                : "Requires attunement to The Living Ember.";
+                : "Requires a mage's bond with the living world.";
             string ashenHint = isAshen
                 ? "The cold holds them in stillness — suspended between life and letting go. They will survive. The cold always asks something back."
                 : "Requires Ashen affinity.";

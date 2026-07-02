@@ -63,6 +63,7 @@ namespace AshAndEmber
             {
                 var h = Hero.OneToOneConversationHero;
                 if (h == null || ColourLordRegistry.IsAshenLord(h)) return false;
+                if (!h.IsLord) return false;   // lord dialogue only — never notables or wanderers
                 if (h.MapFaction?.StringId != "khuzait") return false;
                 int idx = Math.Abs(DeterministicHash(h.StringId ?? h.Name?.ToString() ?? "")) % poolSize;
                 return idx == variant;

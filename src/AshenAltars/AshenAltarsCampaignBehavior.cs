@@ -111,6 +111,11 @@ namespace AshAndEmber
         private static void AnnounceAltars()
         {
             if (_altarsAnnounced) return;
+            // Hold the announcement until the dynamic altars have actually been
+            // rolled — on a new campaign the Ashen kingdom receives its cities only
+            // after character creation, so the roll (and thus the announcement)
+            // completes on a later daily tick.
+            if (_dynamicAltarIds.Count == 0) return;
             _altarsAnnounced = true;
             try
             {
