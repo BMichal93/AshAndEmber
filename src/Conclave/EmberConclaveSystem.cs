@@ -547,6 +547,10 @@ namespace AshAndEmber
             _missionTargetId      = null;
             _missionDaysRemaining = 0;
             _missionCooldown      = MissionCooldownDays;
+            _eliminateLog         = null;
+            _visitLog             = null;
+            _protectLog           = null;
+            _ruinLog              = null;
         }
 
         private static EmberConclaveMissionLogBase GetActiveMissionLog()
