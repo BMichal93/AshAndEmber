@@ -286,5 +286,140 @@ namespace AshAndEmber
                 catch { }
             }
         }
+
+        private void ApplyNpcMagicCombatBonus(MapEvent mapEvent)
+        {
+            bool playerInvolved = false;
+            try
+            {
+                playerInvolved =
+                    mapEvent.AttackerSide.Parties.Any(p => p.Party == PartyBase.MainParty) ||
+                    mapEvent.DefenderSide.Parties.Any(p => p.Party == PartyBase.MainParty);
+            }
+            catch { }
+            if (playerInvolved) return;
+
+            // Count magic users on each side
+            int attackerMages = CountMagicUsers(mapEvent.AttackerSide);
+            int defenderMages = CountMagicUsers(mapEvent.DefenderSide);
+
+            // If one side has significantly more mages, apply casualty bonus to them
+            if (attackerMages > defenderMages)
+                ApplyCasualtyBonus(mapEvent.AttackerSide, attackerMages - defenderMages, true);
+            else if (defenderMages > attackerMages)
+                ApplyCasualtyBonus(mapEvent.DefenderSide, defenderMages - attackerMages, true);
+
+            // Apply casualty penalty to the disadvantaged side
+            if (defenderMages > attackerMages)
+                ApplyCasualtyBonus(mapEvent.AttackerSide, defenderMages - attackerMages, false);
+            else if (attackerMages > defenderMages)
+                ApplyCasualtyBonus(mapEvent.DefenderSide, attackerMages - defenderMages, false);
+        }
+
+        private int CountMagicUsers(MapEventSide side)
+        {
+            if (side == null) return 0;
+            int count = 0;
+            try
+            {
+                foreach (var party in side.Parties)
+                {
+                    Hero leader = party?.Party?.LeaderHero;
+                    if (leader == null) continue;
+
+                    // Count different types of magic users
+                    if (ColourLordRegistry.IsColourLord(leader))
+                        count++;
+                    else if (IsGraceLord(leader))
+                        count++;
+                    else if (NatureSeerRegistry.IsNatureSeer(leader))
+                        count++;
+                    else if (HasCrystal(leader))
+                        count++;
+                    else if (HasDarkGift(leader))
+                        count++;
+                }
+            }
+            catch { }
+            return count;
+        }
+
+        private bool HasDarkGift(Hero hero)
+        {
+            if (hero == null) return false;
+            try
+            {
+                // Check for combat-relevant dark gifts that NPCs can use
+                return DarkGiftSystem.NpcHasGift(hero, DarkGiftId.IronVeil)
+                    || DarkGiftSystem.NpcHasGift(hero, DarkGiftId.DarkStrike)
+                    || DarkGiftSystem.NpcHasGift(hero, DarkGiftId.SoulMirror)
+                    || DarkGiftSystem.NpcHasGift(hero, DarkGiftId.SoulDrain);
+            }
+            catch { return false; }
+        }
+
+        private bool IsGraceLord(Hero hero)
+        {
+            if (hero == null) return false;
+            try
+            {
+                int honor = hero.GetTraitLevel(DefaultTraits.Honor);
+                int mercy = hero.GetTraitLevel(DefaultTraits.Mercy);
+                return honor >= 1 && mercy >= 1;
+            }
+            catch { return false; }
+        }
+
+        private bool HasCrystal(Hero hero)
+        {
+            if (hero == null) return false;
+            try
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    var elem = hero.BattleEquipment[(EquipmentIndex)i];
+                    if (elem.IsEmpty) continue;
+                    string id = elem.Item?.StringId ?? "";
+                    if (CrystalCatalog.TryGetByItemId(id, out var _))
+                        return true;
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private void ApplyCasualtyBonus(MapEventSide side, int mageDifference, bool isBonus)
+        {
+            if (side == null || mageDifference <= 0) return;
+            try
+            {
+                foreach (var party in side.Parties)
+                {
+                    var roster = party?.Party?.MobileParty?.MemberRoster;
+                    if (roster == null) continue;
+
+                    // Scale bonus/penalty: +/- 5% casualties per magic user advantage
+                    float multiplier = isBonus
+                        ? 1f - (mageDifference * 0.05f)
+                        : 1f + (mageDifference * 0.05f);
+                    multiplier = Math.Max(0.7f, Math.Min(1.3f, multiplier)); // Clamp to ±30%
+
+                    var troopEntries = roster.GetTroopRoster().ToList();
+                    foreach (var entry in troopEntries)
+                    {
+                        if (entry.Character.IsHero || entry.WoundedNumber <= 0) continue;
+
+                        int originalWounded = entry.WoundedNumber;
+                        int adjustedWounded = (int)Math.Round(originalWounded * multiplier);
+                        int delta = adjustedWounded - originalWounded;
+
+                        if (delta != 0)
+                            try { roster.AddToCounts(entry.Character, 0, false, delta); }
+                            catch { }
+                    }
+                }
+            }
+            catch { }
+        }
     }
 }
