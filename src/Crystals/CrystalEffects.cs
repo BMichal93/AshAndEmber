@@ -47,6 +47,23 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, float> _veilSlow = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _duskSlow = new Dictionary<Agent, float>();
 
+        // ── Crystal missile state ──────────────────────────────────────────────
+        private class CrystalMissileState
+        {
+            public Vec3        Position;
+            public Vec3        Forward;
+            public float       TravelLeft;
+            public float       ExplosionRadius;
+            public CrystalType Type;
+            public Team        CasterTeam;
+            public float       TrailTimer = 0f;
+            public const float Speed         = 28f;
+            public const float TrailInterval = 0.05f;
+            public const float DetectRadius  = 1.5f;
+        }
+
+        private static CrystalMissileState _crystalMissile = null;
+
         // ── State management ──────────────────────────────────────────────────
 
         public static void ClearBattleState()
@@ -56,6 +73,7 @@ namespace AshAndEmber
             _veilSlow.Clear();
             _duskSlow.Clear();
             _lastSwingTime = 0f;
+            ClearCrystalMissile();
         }
 
         // ── Daylight check ────────────────────────────────────────────────────
@@ -112,6 +130,8 @@ namespace AshAndEmber
         public static void MissionTick(float dt)
         {
             if (Mission.Current == null) return;
+
+            TickCrystalMissile(dt);
 
             // Swing detection: the player rouses a crystal by swinging it. The melee
             // attack time advances on every attack release (hit or miss), so a change
@@ -245,29 +265,42 @@ namespace AshAndEmber
 
         private static void EffectEmbershard(Agent caster, bool solarFlare)
         {
-            Vec3 pos;
-            try { pos = caster.Position; } catch { return; }
-            float r = solarFlare ? CrystalMath.SolarFlareRadius(CrystalMath.EmberRadius) : CrystalMath.EmberRadius;
-            float r2 = r * r;
-            int hit = 0;
-            try
+            if (caster == null || !caster.IsActive()) return;
+
+            // If a missile is already in flight, clear it and fire a new one.
+            if (_crystalMissile != null)
             {
-                foreach (Agent a in Mission.Current.Agents.ToList())
-                {
-                    if (!a.IsActive() || a.IsMount || a == caster) continue;
-                    if (caster.Team != null && a.Team == caster.Team) continue;
-                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
-                    if (dx * dx + dy * dy > r2) continue;
-                    try { SpellEffects.DamageAgent(a, CrystalMath.EmberDamage, ColorSchool.Red, caster); } catch { }
-                    hit++;
-                }
+                ClearCrystalMissile();
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "Embershard — shard redirected.", new Color(0.9f, 0.3f, 0.2f)));
+                return;
             }
-            catch { }
+
+            Vec3 fwd = caster.LookDirection.NormalizedCopy();
+            Vec3 startPos = caster.Position + fwd * 1.5f + new Vec3(0f, 0f, 1.2f);
+
+            float range = solarFlare
+                ? CrystalMath.SolarFlareRadius(CrystalMath.EmberRadius) * 3f
+                : CrystalMath.EmberRadius * 3f;
+            float explRadius = solarFlare
+                ? CrystalMath.SolarFlareRadius(CrystalMath.EmberRadius)
+                : CrystalMath.EmberRadius;
+
+            _crystalMissile = new CrystalMissileState
+            {
+                Position = startPos,
+                Forward = fwd,
+                TravelLeft = range,
+                ExplosionRadius = explRadius,
+                Type = CrystalType.Embershard,
+                CasterTeam = caster.Team,
+            };
 
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Red, 1.5f); } catch { }
-            Announce(caster, hit > 0
-                ? $"Embershard — shard burst ({hit} enemies scorched, {(int)CrystalMath.EmberDamage} HP each)."
-                : "Embershard — shard burst (no enemies in range).",
+            try { SpellEffects.SpawnTempLight(startPos, ColorSchool.Red, 6f, 10f); } catch { }
+
+            Announce(caster,
+                $"Embershard — burning shards launch ({range:F0}m, {explRadius:F0}m blast).",
                 ColorSchool.Red);
         }
 
@@ -407,6 +440,93 @@ namespace AshAndEmber
                 ? $"Duskstone — despair wave ({drained} enemies: −{(int)CrystalMath.DuskMoraleDrain} morale, {duskSlowPct} % slow for {(int)CrystalMath.DuskDurationSec} s)."
                 : "Duskstone — despair wave (no enemies in range).",
                 ColorSchool.Ashen);
+        }
+
+        // ── Crystal missile tick ──────────────────────────────────────────────
+
+        private static void TickCrystalMissile(float dt)
+        {
+            if (_crystalMissile == null) return;
+
+            float moved = CrystalMissileState.Speed * dt;
+            _crystalMissile.Position += _crystalMissile.Forward * moved;
+            _crystalMissile.TravelLeft -= moved;
+
+            _crystalMissile.TrailTimer -= dt;
+            if (_crystalMissile.TrailTimer <= 0f)
+            {
+                _crystalMissile.TrailTimer = CrystalMissileState.TrailInterval;
+                try { SpellEffects.SpawnTempLight(_crystalMissile.Position, ColorSchool.Red, 3f, 0.5f); } catch { }
+            }
+
+            Vec3 mpos = _crystalMissile.Position;
+
+            // Check for enemy collision.
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents)
+                {
+                    if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
+                    if (_crystalMissile.CasterTeam != null && a.Team == _crystalMissile.CasterTeam) continue;
+                    float dx = a.Position.x - mpos.x;
+                    float dy = a.Position.y - mpos.y;
+                    if (dx * dx + dy * dy > CrystalMissileState.DetectRadius * CrystalMissileState.DetectRadius) continue;
+                    ExplodeCrystalMissile(mpos);
+                    return;
+                }
+            }
+            catch { }
+
+            if (_crystalMissile.TravelLeft <= 0f)
+                ExplodeCrystalMissile(_crystalMissile.Position);
+        }
+
+        private static void ExplodeCrystalMissile(Vec3 pos)
+        {
+            if (_crystalMissile == null) return;
+            CrystalMissileState m = _crystalMissile;
+            _crystalMissile = null;
+
+            if (Mission.Current == null) return;
+
+            float radius = m.ExplosionRadius;
+            int hit = 0;
+
+            try
+            {
+                SpellEffects.SpawnExplosionEffect(pos, ColorSchool.Red, radius, 5f);
+                SpellEffects.TryCastSound(pos, ColorSchool.Red);
+            }
+            catch { }
+
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount) continue;
+                    float dist = new Vec3(a.Position.x - pos.x, a.Position.y - pos.y, 0f).Length;
+                    if (dist > radius) continue;
+                    if (m.CasterTeam != null && a.Team == m.CasterTeam) continue;
+                    try
+                    {
+                        SpellEffects.DamageAgent(a, CrystalMath.EmberDamage, ColorSchool.Red, Agent.Main);
+                        SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Red, 4f);
+                        hit++;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            Announce(Agent.Main, hit > 0
+                ? $"Embershard detonates — {hit} enemies scorched ({(int)CrystalMath.EmberDamage} HP each)."
+                : "Embershard detonates — no enemies in range.",
+                ColorSchool.Red);
+        }
+
+        private static void ClearCrystalMissile()
+        {
+            _crystalMissile = null;
         }
 
         // ── Burndown ──────────────────────────────────────────────────────────
