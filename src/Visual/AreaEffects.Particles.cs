@@ -557,7 +557,7 @@ namespace AshAndEmber
         // forward. Each node holds two persistent particle columns (low + high) and a
         // coloured point light for its full duration; repulsion and elemental effects
         // pulse at BarrierTickInterval for as long as the wall stands.
-        public static void SpawnNatureBarrier(Vec3 pos, Vec3 lookDir, NatureElement el, Team casterTeam)
+        public static void SpawnNatureBarrier(Vec3 pos, Vec3 lookDir, NatureElement el, Team casterTeam, float castPower = 1f)
         {
             // Flatten to the horizontal plane.
             Vec3 fwd = new Vec3(lookDir.x, lookDir.y, 0f);
@@ -574,46 +574,53 @@ namespace AshAndEmber
             float    fwdD    = NatureMath.BarrierForwardDist;
             float    nodeR   = NatureMath.BarrierNodeRadius;
             int      count   = NatureMath.BarrierNodeCount;
+            // A fully-drawn wall runs several rows deep — a filled rectangle rather
+            // than a single curtain — matching the charged fire wall.
+            int      rows    = Math.Min(NatureMath.BarrierMaxDepthRows, ElementMagicMath.WallDepthRows(castPower));
 
             RemoveAreaEffect(id);
 
-            for (int i = 0; i < count; i++)
+            for (int row = 0; row < rows; row++)
             {
-                float lateral = (i - (count - 1) * 0.5f) * spacing;
-                Vec3  nodePos = pos + fwd * fwdD + right * lateral;
-                nodePos.z = pos.z;
-
-                // Lower particle column (ground level).
-                GameEntity partLow = null;
-                foreach (string name in pNames)
+                float rowFwd = fwdD + row * NatureMath.BarrierRowSpacing;
+                for (int i = 0; i < count; i++)
                 {
-                    partLow = SpawnParticleEntity(nodePos + new Vec3(0f, 0f, 0.25f), name);
-                    if (partLow != null) break;
+                    float lateral = (i - (count - 1) * 0.5f) * spacing;
+                    Vec3  nodePos = pos + fwd * rowFwd + right * lateral;
+                    nodePos.z = pos.z;
+
+                    // Lower particle column (ground level).
+                    GameEntity partLow = null;
+                    foreach (string name in pNames)
+                    {
+                        partLow = SpawnParticleEntity(nodePos + new Vec3(0f, 0f, 0.25f), name);
+                        if (partLow != null) break;
+                    }
+
+                    // Upper particle column for a taller, more imposing wall.
+                    GameEntity partHigh = null;
+                    foreach (string name in pNames)
+                    {
+                        partHigh = SpawnParticleEntity(nodePos + new Vec3(0f, 0f, 1.1f), name);
+                        if (partHigh != null) break;
+                    }
+
+                    var node = new AreaEffect
+                    {
+                        Id           = id,
+                        School       = ColorSchool.Nature,
+                        Position     = nodePos,
+                        Radius       = nodeR,
+                        TickInterval = NatureMath.BarrierTickInterval,
+                        TickTimer    = NatureMath.BarrierTickInterval,
+                        Remaining    = dur,
+                        CasterTeam   = casterTeam,
+                    };
+                    node.LightEntity  = partLow;                                                          // lower particle
+                    node.LightEntity2 = partHigh;                                                         // upper particle
+                    node.LightEntity3 = SpawnAreaLightRaw(nodePos + new Vec3(0f, 0f, 0.8f), rgb, 8f);    // glow column
+                    _areaEffects.Add(node);
                 }
-
-                // Upper particle column for a taller, more imposing wall.
-                GameEntity partHigh = null;
-                foreach (string name in pNames)
-                {
-                    partHigh = SpawnParticleEntity(nodePos + new Vec3(0f, 0f, 1.1f), name);
-                    if (partHigh != null) break;
-                }
-
-                var node = new AreaEffect
-                {
-                    Id           = id,
-                    School       = ColorSchool.Nature,
-                    Position     = nodePos,
-                    Radius       = nodeR,
-                    TickInterval = NatureMath.BarrierTickInterval,
-                    TickTimer    = NatureMath.BarrierTickInterval,
-                    Remaining    = dur,
-                    CasterTeam   = casterTeam,
-                };
-                node.LightEntity  = partLow;                                                          // lower particle
-                node.LightEntity2 = partHigh;                                                         // upper particle
-                node.LightEntity3 = SpawnAreaLightRaw(nodePos + new Vec3(0f, 0f, 0.8f), rgb, 8f);    // glow column
-                _areaEffects.Add(node);
             }
         }
 
@@ -646,17 +653,23 @@ namespace AshAndEmber
                     away = away.NormalizedCopy();
                     away.z = 0f;
 
+                    // Firm barrier: shove the foe back to just beyond the node's edge
+                    // rather than a small nudge a runner would out-pace, so the wall
+                    // genuinely cannot be walked through. Each element then layers its
+                    // own bite (root/slow/arc) on top.
+                    Vec3 bounce = e.Position + away * (e.Radius + NatureMath.BarrierBounceMargin);
+                    bounce.z = a.Position.z;
+                    a.TeleportToPosition(bounce);
+
                     switch (el)
                     {
                         case NatureElement.Wind:
                             // Pure repulsion — powerful, instantaneous gust.
-                            a.TeleportToPosition(a.Position + away * NatureMath.WindwallPush);
                             try { SpawnNatureBurst(a.Position, NatureElement.Wind, 0.4f); } catch { }
                             break;
 
                         case NatureElement.Earth:
-                            // Brief push into thorns + root + bleed.
-                            a.TeleportToPosition(a.Position + away * NatureMath.ThornwallPush);
+                            // Thrown into thorns + rooted + bled.
                             NatureEffects.ApplySpeedToken(a, 0f, NatureMath.ThornwallRootSec);
                             float tDmg = NatureMath.ThornwallDamage;
                             if (a.Health <= tDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
@@ -665,15 +678,16 @@ namespace AshAndEmber
                             break;
 
                         case NatureElement.Water:
-                            // Churning push + lingering slow.
-                            a.TeleportToPosition(a.Position + away * NatureMath.MistwallPush);
+                            // Churning bounce + lingering slow + a cold bite.
                             NatureEffects.ApplySpeedToken(a, NatureMath.MistwallSlowMult, NatureMath.MistwallSlowSec);
+                            float wDmg = NatureMath.MistwallDamage;
+                            if (a.Health <= wDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
+                            else a.Health -= wDmg;
                             try { SpawnNatureBurst(a.Position, NatureElement.Water, 0.4f); } catch { }
                             break;
 
                         case NatureElement.Storm:
-                            // Lightning discharge — push + arc damage.
-                            a.TeleportToPosition(a.Position + away * NatureMath.StormwallPush);
+                            // Lightning discharge — arc damage.
                             float sDmg = NatureMath.StormwallDamage;
                             if (a.Health <= sDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
                             else a.Health -= sDmg;

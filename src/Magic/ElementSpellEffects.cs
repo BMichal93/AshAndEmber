@@ -89,8 +89,10 @@ namespace AshAndEmber
             catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb = Palette(MagicElement.Fire, ashen);
+            // A fully-drawn cone lances far further than an instant flick.
+            float range = ElementMagicMath.ConeRange(FireConeRange, power);
             int hit = 0;
-            foreach (Agent a in EnemiesNear(caster, FireConeRange))
+            foreach (Agent a in EnemiesNear(caster, range))
             {
                 Vec3 to = a.Position - pos; to.z = 0f;
                 float len = to.Length; if (len < 0.01f) continue;
@@ -101,12 +103,15 @@ namespace AshAndEmber
                 hit++;
             }
             // A living eruption of flame lances out along the cone; the Ashen show
-            // only the cold's pale light.
-            FireBloom(pos + fwd * (FireConeRange * 0.5f), ashen, rgb, 3f, true);
+            // only the cold's pale light. Trailing blooms mark the deeper reach.
+            FireBloom(pos + fwd * (range * 0.5f), ashen, rgb, 3f, true);
+            FireBloom(pos + fwd * (range * 0.85f), ashen, rgb, 2f, false);
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch { }
         }
 
-        // A wall of fire just ahead — burns those who stand in its line.
+        // A wall of fire just ahead — burns those who stand in its line. Thrown
+        // weakly it is a single thin curtain; drawn to full it thickens into a
+        // filled rectangle of flame, several rows deep, that is far harder to cross.
         private static void FireWall(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
@@ -114,38 +119,51 @@ namespace AshAndEmber
             catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb = Palette(MagicElement.Fire, ashen);
-            Vec3 centre = pos + fwd * FireWallRange;
             Vec3 right  = new Vec3(fwd.y, -fwd.x, 0f);
-            // A standing curtain of flame the length of the wall — real fire for the
-            // living, a wall of driven frost and snow for the Ashen cold.
-            for (float f = -FireWallWidth; f <= FireWallWidth; f += 1.5f)
+            // The charge decides both the wall's width and how many rows deep it runs.
+            float frac  = ElementMagicMath.ChargeFraction(power);
+            float width = FireWallWidth * (0.7f + 0.6f * frac);   // wider when charged
+            int   rows  = ElementMagicMath.WallDepthRows(power);  // 1 (line) → filled rectangle
+            float rowSpacing = 1.6f;
+
+            for (int r = 0; r < rows; r++)
             {
-                Vec3 node = centre + right * f;
-                try
+                Vec3 rowCentre = pos + fwd * (FireWallRange + r * rowSpacing);
+                // A standing curtain of flame the length of the wall — real fire for
+                // the living, a wall of driven frost and snow for the Ashen cold.
+                for (float f = -width; f <= width; f += 1.5f)
                 {
-                    if (ashen) SpellEffects.SpawnTempSnowParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
-                    else       SpellEffects.SpawnTempFireParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                    Vec3 node = rowCentre + right * f;
+                    try
+                    {
+                        if (ashen) SpellEffects.SpawnTempSnowParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                        else       SpellEffects.SpawnTempFireParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                    }
+                    catch { }
+                    SpawnLight(node, rgb, 1.4f);
                 }
-                catch { }
-                SpawnLight(node, rgb, 1.4f);
+                // The living fire lingers on each row — a burning band that scorches
+                // any who hold it (the Ashen cold does not smoulder).
+                if (!ashen)
+                    try
+                    {
+                        SpellEffects.SpawnFireWallPatches(rowCentre, right, width,
+                            FireWallBurnTick * power, FireWallBurnSec, caster.Team);
+                    }
+                    catch { }
             }
-            // Contact hit as the wall erupts.
-            foreach (Agent a in EnemiesNear(caster, FireWallRange + FireWallWidth))
+
+            // Contact hit as the wall erupts — across the whole rectangle's footprint.
+            float depth = (rows - 1) * rowSpacing;
+            Vec3  mid   = pos + fwd * (FireWallRange + depth * 0.5f);
+            float reach = width + depth * 0.5f + 1.5f;
+            foreach (Agent a in EnemiesNear(caster, FireWallRange + reach))
             {
-                Vec3 d = a.Position - centre; d.z = 0f;
-                if (d.Length > FireWallWidth + 1.5f) continue;
+                Vec3 d = a.Position - mid; d.z = 0f;
+                if (d.Length > reach) continue;
                 if (SpellEffects.IsWarded(a)) continue;
                 try { SpellEffects.DamageAgent(a, FireWallDamage * power, ColorSchool.Red, caster); } catch { }
             }
-            // The living fire lingers — a burning line that scorches any who hold it
-            // (pure area-denial, no crowd control; the Ashen cold does not smoulder).
-            if (!ashen)
-                try
-                {
-                    SpellEffects.SpawnFireWallPatches(centre, right, FireWallWidth,
-                        FireWallBurnTick * power, FireWallBurnSec, caster.Team);
-                }
-                catch { }
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch { }
         }
 

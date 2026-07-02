@@ -140,7 +140,7 @@ namespace AshAndEmber
         // All barrier powers — place an elemental wall in front of the caster.
         private static void BattleBarrier(Agent caster, Vec3 pos, Team team, NatureElement el)
         {
-            try { SpellEffects.SpawnNatureBarrier(pos, caster.LookDirection, el, team); } catch { }
+            try { SpellEffects.SpawnNatureBarrier(pos, caster.LookDirection, el, team, _castPower); } catch { }
             bool isPlayer = false;
             try { isPlayer = Agent.Main != null && caster == Agent.Main; } catch { }
             if (isPlayer)

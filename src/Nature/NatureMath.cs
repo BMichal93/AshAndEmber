@@ -223,22 +223,27 @@ namespace AshAndEmber
         public const float BarrierNodeRadius   = 2.0f;  // engagement radius per node
         public const int   BarrierNodeCount    = 5;     // nodes across the wall (8 m wide)
         public const float BarrierTickInterval = 0.4f;  // visual + repulsion pulse rate
+        // A fully-drawn wall thickens into this many rows deep (a filled rectangle);
+        // a weak one is a single curtain. The rows sit this far apart.
+        public const int   BarrierMaxDepthRows = 3;
+        public const float BarrierRowSpacing   = 1.8f;
+        // Rather than a small nudge (which a running enemy simply out-paces), the
+        // wall shoves any foe back to just beyond the node's edge — a firm barrier
+        // they cannot walk through. This is the margin past the radius.
+        public const float BarrierBounceMargin = 0.75f;
 
-        // Wind · Windwall — pure repulsion
-        public const float WindwallPush = 3.5f;
+        // Wind · Windwall — pure firm repulsion (the bounce itself is the effect)
 
-        // Earth · Thornwall — push + brief root + damage-per-tick
-        public const float ThornwallPush    = 0.8f;
+        // Earth · Thornwall — firm bounce + brief root + damage-per-tick
         public const float ThornwallDamage  = 8f;    // per 0.4 s tick ≈ 20 dps
         public const float ThornwallRootSec = 0.6f;
 
-        // Water · Mistwall — push + slow
-        public const float MistwallPush     = 2.5f;
+        // Water · Mistwall — firm bounce + slow + a cold bite (no longer harmless)
         public const float MistwallSlowMult = 0.45f;
         public const float MistwallSlowSec  = 1.8f;
+        public const float MistwallDamage   = 6f;    // per 0.4 s tick ≈ 15 dps
 
-        // Storm · Stormwall — push + damage-per-tick
-        public const float StormwallPush   = 2.0f;
+        // Storm · Stormwall — firm bounce + damage-per-tick
         public const float StormwallDamage = 18f;    // per 0.4 s tick ≈ 45 dps
 
         // ── Naming ──────────────────────────────────────────────────────────────

@@ -901,6 +901,33 @@ namespace AshAndEmber.Tests
             // Monotonic: a longer draw is never weaker.
             Assert.IsTrue(ElementMagicMath.PowerMult(5f) > ElementMagicMath.PowerMult(0f));
             Assert.IsTrue(ElementMagicMath.PowerMult(10f) > ElementMagicMath.PowerMult(5f));
+            // Full power is reached at FullChargeSeconds and holds through the grace
+            // window up to the disperse threshold — so full strength is attainable.
+            Assert.AreEqual(ElementMagicMath.MaxPower, ElementMagicMath.PowerMult(ElementMagicMath.FullChargeSeconds), 0.0001f);
+            Assert.IsTrue(ElementMagicMath.FullChargeSeconds < ElementMagicMath.MaxDrawSeconds);
+        }
+
+        [Test]
+        public void ElementMagicMath_FullyCharged_AtThreshold()
+        {
+            Assert.IsFalse(ElementMagicMath.IsFullyCharged(ElementMagicMath.FullChargeSeconds - 0.1f));
+            Assert.IsTrue(ElementMagicMath.IsFullyCharged(ElementMagicMath.FullChargeSeconds));
+            Assert.IsTrue(ElementMagicMath.IsFullyCharged(ElementMagicMath.MaxDrawSeconds));
+        }
+
+        [Test]
+        public void ElementMagicMath_ChargeShapes_GrowWithCharge()
+        {
+            // Charge fraction: 0 at an instant cast, 1 at full power, clamped.
+            Assert.AreEqual(0f, ElementMagicMath.ChargeFraction(ElementMagicMath.MinPower), 0.0001f);
+            Assert.AreEqual(1f, ElementMagicMath.ChargeFraction(ElementMagicMath.MaxPower), 0.0001f);
+            Assert.AreEqual(0f, ElementMagicMath.ChargeFraction(0f), 0.0001f);
+
+            // Cone reaches further when charged; a wall thickens from 1 row to many.
+            Assert.IsTrue(ElementMagicMath.ConeRange(10f, ElementMagicMath.MaxPower)
+                        > ElementMagicMath.ConeRange(10f, ElementMagicMath.MinPower));
+            Assert.AreEqual(1, ElementMagicMath.WallDepthRows(ElementMagicMath.MinPower));
+            Assert.AreEqual(ElementMagicMath.WallMaxDepthRows, ElementMagicMath.WallDepthRows(ElementMagicMath.MaxPower));
         }
 
         [Test]

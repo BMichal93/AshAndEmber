@@ -9,8 +9,10 @@
 //   DRAW for at least ~3 s, then ATTACK (left mouse / right trigger) looses the
 //   element's cone, or BLOCK (right mouse / left trigger) raises its wall.
 //
-//   The longer you draw (up to ~7 s) the LESS it ages you; Harmony makes that
-//   patience pay far more. Casting needs a free hand and light armour — unless
+//   The longer you draw (up to ~7 s) the STRONGER the working — a charged cone
+//   reaches further and a charged wall thickens into a filled rectangle; the
+//   aging toll is flat either way. Hold past ~15 s and the charge disperses.
+//   Casting needs a free hand and light armour — unless
 //   you know STEEL, which lets you cast with a weapon drawn and bears the weight.
 //   Aging "burns through" your years exactly like the old fire magic (the Ashen
 //   pay in criminal standing instead).
@@ -39,6 +41,7 @@ namespace AshAndEmber
         private const  float ReminderInterval = 2.0f;
         private const  float StillSpeed       = 0.3f;
         private static bool  _readyAnnounced;
+        private static bool  _fullAnnounced;       // "fully charged" said once per draw
 
         // Charging visual: element-specific particles engulf the caster while they
         // draw, refreshed on a short interval and re-emitted the instant the loaded
@@ -66,6 +69,7 @@ namespace AshAndEmber
             _prevPadUp = _prevPadDown = _prevPadLeft = _prevPadRight = false;
             _reminder = 0f;
             _readyAnnounced = false;
+            _fullAnnounced = false;
             _visualTimer = 0f;
             _lastVisualElement = null;
             InputSuppressed = false;
@@ -98,6 +102,7 @@ namespace AshAndEmber
                     MageElementKnowledge.ResetLoaded();
                     _drawTime = 0f;
                     _readyAnnounced = false;
+                    _fullAnnounced = false;
                     _visualTimer = 0f;
                     _lastVisualElement = null;   // force an immediate first pulse
                     try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch { }
@@ -120,9 +125,16 @@ namespace AshAndEmber
                             "The longer you hold, the harder it strikes; hold too long and it slips away.");
                     }
                     _drawTime += dt;
+                    if (!_fullAnnounced && ElementMagicMath.IsFullyCharged(_drawTime))
+                    {
+                        _fullAnnounced = true;
+                        Msg($"The {MageElementKnowledge.LoadedName()} is fully gathered — loose it now, before it slips your grip.");
+                    }
                     if (_drawTime >= ElementMagicMath.MaxDrawSeconds)
                     {
                         _drawTime = 0f;
+                        _readyAnnounced = false;
+                        _fullAnnounced = false;
                         Msg("The gathered power slips your grip and disperses — begin the draw again.");
                     }
                     TickChargeVisual(dt);
@@ -131,6 +143,7 @@ namespace AshAndEmber
                 {
                     _drawTime = 0f;
                     _readyAnnounced = false;
+                    _fullAnnounced = false;
                     _lastVisualElement = null;   // re-emit when drawing resumes
                     _reminder -= dt;
                     if (_reminder <= 0f) { Msg(reason); _reminder = ReminderInterval; }
@@ -149,6 +162,7 @@ namespace AshAndEmber
                 _drawTime = 0f;
                 _prevAtk = _prevBlk = false;
                 _readyAnnounced = false;
+                _fullAnnounced = false;
                 _lastVisualElement = null;
                 try { if (Agent.Main != null) SpellEffects.EndCastLoop(Agent.Main); } catch { }
                 // Clears the body contour glow left by the charge visual.
@@ -266,6 +280,7 @@ namespace AshAndEmber
             ApplyCastCost(days);
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
+            _fullAnnounced = false;
         }
 
         // Aging "burns through" like fire; the Ashen pay in criminal standing instead.

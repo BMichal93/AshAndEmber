@@ -22,6 +22,12 @@
   - **Spirit — the dread.** Unchanged: no wound, but fear, a scattered order, and a ward that heartens and mends your own.
 - **The draw now governs your crowd control, too.** A snap cast roots and slows only briefly; a full draw holds a foe for the whole duration — no more full-length locks from an instant flick.
 
+### The charge reaches its peak — and walls that truly stand
+- **The gathering now peaks at a full draw.** Hold the charge to its zenith (~7 s) and a whisper tells you *the element is fully gathered* — a generous grace window before it slips your grip at ~15 s. Full strength is now actually attainable, where before the charge always dispersed the instant it maxed.
+- **A fully-drawn cone lances far further** — its reach grows with the charge, so a patient cast strikes across the field where a snap flick barely leaves the hand.
+- **A fully-drawn wall thickens into a filled rectangle** — a single thin curtain when thrown weakly, several rows deep at full draw, for both fire and the elemental walls.
+- **Walls now truly stop what crosses them.** Stone and mist walls were shoving foes only a nudge — a running looter simply out-paced it and walked through unscratched. They now bounce any foe firmly back beyond the wall's edge, and the **mist wall bites** as well as chills (it was doing no damage at all).
+
 ---
 
 ## v0.35.0

@@ -31,20 +31,51 @@ namespace AshAndEmber
     {
         // ── Draw / charge → POWER ────────────────────────────────────────────────
         // No minimum: you may release instantly. The draw sets power, from a weak
-        // instant cast up to full strength at the cap; holding to the cap disperses.
-        public const float MaxDrawSeconds = 10f;   // power cap AND the disperse threshold
-        public const float MinPower       = 0.35f; // strength of an instant (0 s) cast
-        public const float MaxPower       = 1.0f;  // strength at a full 10 s draw
+        // instant cast up to FULL strength at FullChargeSeconds — then it holds at
+        // full through a short grace window before the charge finally DISPERSES at
+        // MaxDrawSeconds. That window is when the working is at its most potent.
+        public const float FullChargeSeconds = 7f;    // power reaches its peak here
+        public const float MaxDrawSeconds     = 15f;   // held this long, the charge disperses
+        public const float MinPower           = 0.5f;  // strength of an instant (0 s) cast
+        public const float MaxPower           = 1.0f;  // strength once fully charged
 
         // Power multiplier for a cast released after `drawSeconds` of drawing.
-        // Linear from MinPower at 0 s to MaxPower at the cap; clamped past the cap.
+        // Linear from MinPower at 0 s up to MaxPower at FullChargeSeconds, then flat
+        // at MaxPower until the charge disperses.
         public static float PowerMult(float drawSeconds)
         {
             float t = drawSeconds <= 0f ? 0f
-                    : drawSeconds >= MaxDrawSeconds ? 1f
-                    : drawSeconds / MaxDrawSeconds;
+                    : drawSeconds >= FullChargeSeconds ? 1f
+                    : drawSeconds / FullChargeSeconds;
             return MinPower + (MaxPower - MinPower) * t;
         }
+
+        // True once the draw has reached full strength (used to announce "fully
+        // charged" and to unlock the charged cone-range / rectangular-wall shapes).
+        public static bool IsFullyCharged(float drawSeconds) => drawSeconds >= FullChargeSeconds;
+
+        // 0 at an instant release, 1 at full charge — the normalised charge level,
+        // independent of MinPower. Effects use it to grow a cone's reach or turn a
+        // wall from a thin line into a filled rectangle as the draw deepens.
+        public static float ChargeFraction(float power)
+        {
+            float f = (power - MinPower) / (MaxPower - MinPower);
+            return f < 0f ? 0f : f > 1f ? 1f : f;
+        }
+
+        // ── Charged cone reach ───────────────────────────────────────────────────
+        // A cone thrown instantly barely leaves the hand; a fully-drawn one lances
+        // far further. Reach scales from 1.0× (instant) to ConeRangeChargedMult× (full).
+        public const float ConeRangeChargedMult = 1.6f;
+        public static float ConeRange(float baseRange, float power)
+            => baseRange * (1f + (ConeRangeChargedMult - 1f) * ChargeFraction(power));
+
+        // ── Charged wall depth ───────────────────────────────────────────────────
+        // A wall thrown weakly is a single thin curtain; drawn to full it thickens
+        // into a filled rectangle this many rows deep.
+        public const int WallMaxDepthRows = 4;
+        public static int WallDepthRows(float power)
+            => 1 + (int)Math.Round((WallMaxDepthRows - 1) * ChargeFraction(power), MidpointRounding.AwayFromZero);
 
         // ── Aging cost (days) — FLAT, independent of draw time ───────────────────
         public const int   AttackCostDays = 3;     // a released attack ages you this much
