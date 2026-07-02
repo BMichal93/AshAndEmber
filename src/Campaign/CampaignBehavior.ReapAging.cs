@@ -174,16 +174,16 @@ namespace AshAndEmber
 
                             if (!ColourLordRegistry.IsAshenLord(leader))
                             {
-                                AgeHeroDeferred(leader, agingCost);
-                                // Heavy overexertion: if a lord aged 15+ days in one battle,
-                                // the cold whispers to them — 8% chance of Ashen conversion.
+                                ColourLordRegistry.SpendLordLifeExpectancy(leader, agingCost);
+                                // Heavy overexertion: if a lord spent 15+ days of life in one
+                                // battle, the cold whispers to them — 8% chance of Ashen conversion.
                                 if (agingCost >= 15 && _rng.Next(100) < 8)
                                     TryConvertMageToAshen(leader, "overexerted themselves in battle");
+                                if (playerInvolved)
+                                    InformationManager.DisplayMessage(new InformationMessage(
+                                        $"{leader.Name} is spent by the working — {agingCost} day{(agingCost > 1 ? "s" : "")} of life given.",
+                                        new Color(0.5f, 0.4f, 0.7f)));
                             }
-                            if (playerInvolved)
-                                InformationManager.DisplayMessage(new InformationMessage(
-                                    $"{leader.Name} is spent by the working — {agingCost} day{(agingCost > 1 ? "s" : "")} older.",
-                                    new Color(0.5f, 0.4f, 0.7f)));
                         }
                         catch { }
                     }
@@ -209,7 +209,7 @@ namespace AshAndEmber
                                     || !ColourLordRegistry.IsColourLord(leader)
                                     || ColourLordRegistry.IsAshenLord(leader)) continue;
                                 if (_rng.NextDouble() < 0.80)
-                                    AgeHeroDeferred(leader, 1 + _rng.Next(3));
+                                    ColourLordRegistry.SpendLordLifeExpectancy(leader, 1 + _rng.Next(3));
                             }
                             catch { }
                         }
@@ -240,23 +240,15 @@ namespace AshAndEmber
                         agingCost = (int)Math.Ceiling(agingCost * 1.25);
 
                     if (!ColourLordRegistry.IsAshenLord(companion))
-                        AgeHeroDeferred(companion, agingCost);
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        $"{companion.Name} is spent by the working — {agingCost} day{(agingCost > 1 ? "s" : "")} older.",
-                        new Color(0.5f, 0.4f, 0.7f)));
+                    {
+                        ColourLordRegistry.SpendLordLifeExpectancy(companion, agingCost);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            $"{companion.Name} is spent by the working — {agingCost} day{(agingCost > 1 ? "s" : "")} of life given.",
+                            new Color(0.5f, 0.4f, 0.7f)));
+                    }
                 }
             }
             catch { }
-        }
-
-        // Shifts a hero's birth day without triggering CheckAgeLimit immediately.
-        // Safe to call during OnMapEventEnded (post-battle transition) because
-        // KillCharacterAction during that window causes cascading handler crashes.
-        // DailyAgeCheck runs on the next tick and handles any over-100 cases cleanly.
-        private static void AgeHeroDeferred(Hero hero, int days)
-        {
-            if (hero == null || days <= 0) return;
-            try { hero.SetBirthDay(hero.BirthDay - CampaignTime.Days(days)); } catch { }
         }
 
         private void ApplyNpcBattleMoraleBonus(MapEvent mapEvent)

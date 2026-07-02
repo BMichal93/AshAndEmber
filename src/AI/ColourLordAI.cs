@@ -372,14 +372,14 @@ namespace AshAndEmber
 
         // Routes a non-Ashen lord's cast through the element kit when they draw a
         // non-Fire element. Returns true when it handled the cast (caller returns).
-        private static bool TryCastElement(Agent agent, Hero hero, CastForm form, int inputs)
+        private static bool TryCastElement(Agent agent, Hero hero, CastForm form)
         {
             if (ColourLordRegistry.IsAshenLord(hero)) return false; // boss tier keeps tuned cold-fire
             var el = PickCastElement(hero);
             if (el == MagicElement.Fire) return false;
             AnnounceEnemyCast(agent, hero, ElementBlurb(el, form));
             SetCooldown(hero);
-            RecordCast(hero, inputs);
+            RecordCast(hero, form);
             SpellEffects.QueueNpcCastWithWindup(agent, () =>
             {
                 if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, agent);
@@ -418,10 +418,10 @@ namespace AshAndEmber
             try
             {
                 _pyreBarriersPlaced.Add(hero.StringId);
-                if (TryCastElement(agent, hero, CastForm.Wall, 6)) return;
+                if (TryCastElement(agent, hero, CastForm.Wall)) return;
                 AnnounceEnemyCast(agent, hero, "raises a wall of fire.");
                 SetCooldown(hero);
-                RecordCast(hero, 6); // 3 nodes + 3 damage inputs
+                RecordCast(hero, CastForm.Wall);
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
                     SpellEffects.ExecuteNpcBarrier(agent, 3, 3, 0, agent.Team);
@@ -435,14 +435,14 @@ namespace AshAndEmber
         {
             try
             {
-                if (TryCastElement(agent, hero, CastForm.Attack, formCount + dmg + restore)) return;
+                if (TryCastElement(agent, hero, CastForm.Attack)) return;
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
                     ? (isAshen ? "cold fire tears forward." : "channels a devastating blast.")
                     : (isAshen ? "cold fire lashes out." : "shapes fire into a forward blade.");
                 AnnounceEnemyCast(agent, hero, blurb);
                 SetCooldown(hero);
-                RecordCast(hero, formCount + dmg + restore);
+                RecordCast(hero, CastForm.Attack);
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
                     SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, restore, agent.Team);
@@ -458,14 +458,14 @@ namespace AshAndEmber
             {
                 // Restore-heavy bursts are self-heals — those stay element-agnostic
                 // (any mage can turn the fire inward). Offensive bursts go elemental.
-                if (restore < dmg && TryCastElement(agent, hero, CastForm.Attack, formCount + dmg + restore)) return;
+                if (restore < dmg && TryCastElement(agent, hero, CastForm.Attack)) return;
                 bool isAshen = ColourLordRegistry.IsAshenLord(hero);
                 string blurb = formCount >= 4
                     ? (isAshen ? "tears the veil — cold fire erupts." : "channels a great eruption.")
                     : (isAshen ? "erupts with cold fire." : "fire bursts outward.");
                 AnnounceEnemyCast(agent, hero, blurb);
                 SetCooldown(hero);
-                RecordCast(hero, formCount + dmg + restore);
+                RecordCast(hero, CastForm.Attack);
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
                     SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, restore, agent.Team);
@@ -481,7 +481,7 @@ namespace AshAndEmber
             {
                 AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
                 SetCooldown(hero);
-                RecordCast(hero, 5);
+                RecordCast(hero, CastForm.Attack);
                 // 3 Restore inputs: meets the Rouse enchantment threshold (>= 3)
                 // so lords who own Rouse can summon allies when healing.
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
@@ -523,13 +523,15 @@ namespace AshAndEmber
             catch { }
         }
 
-        // Accumulates aging COST (not raw inputs) so NPC lords pay the same geometric
-        // rate as the player: ComputeBattleAgingCost(totalInputs) days per spell cast.
-        private static void RecordCast(Hero hero, int totalInputs = 1)
+        // Accumulates the life-expectancy COST of a cast so NPC lords pay the same
+        // FLAT rate as the player: ElementMagicMath.CastAgingDays(form) — 3 days for
+        // an attack, 4 for a wall (drawn out longer for power, never a cheaper cast).
+        // NPC lords do not know the Nature discipline, so its discount never applies.
+        private static void RecordCast(Hero hero, CastForm form)
         {
             if (!_battleCasts.ContainsKey(hero.StringId))
                 _battleCasts[hero.StringId] = 0;
-            _battleCasts[hero.StringId] += AgingSystem.ComputeBattleAgingCost(totalInputs, false);
+            _battleCasts[hero.StringId] += ElementMagicMath.CastAgingDays(form, hasNature: false);
         }
 
         // Shows a combat-log message when an NPC lord casts against the player.

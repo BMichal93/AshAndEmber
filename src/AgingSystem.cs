@@ -199,8 +199,11 @@ namespace AshAndEmber
         public static void CheckAgeLimit(Hero hero)
         {
             if (hero == null || !hero.IsAlive) return;
-            // The player burns out at their (expectancy-reduced) death age; NPCs at 100.
-            float threshold = (hero == Hero.MainHero) ? PlayerDeathAge : 100f;
+            // The player and mage lords alike burn out at their own expectancy-reduced
+            // death age (both lowered from the base 100 by the life their casting spent).
+            float threshold = (hero == Hero.MainHero)
+                ? PlayerDeathAge
+                : ColourLordRegistry.LordDeathAge(hero);
             if (hero.Age < threshold) return;
             // Ashen mages are immune to age-death
             if (hero == Hero.MainHero && MageKnowledge.IsAshen) return;

@@ -50,6 +50,14 @@ namespace AshAndEmber
 
         public static bool InputSuppressed { get; private set; }
 
+        // How many times an Ashen player has loosed the cold in the current (or
+        // just-ended) battle. Reset once per new mission — NOT at mission end — so
+        // the post-battle "Fading" encounter can still read it after the fight
+        // closes, whatever order the engine ends the mission and the map event in.
+        private static int _ashenBattleCasts;
+        private static object _countedMission;
+        public static int AshenBattleCastCount => _ashenBattleCasts;
+
         public static void ResetInputState()
         {
             _wasFocusing = false;
@@ -67,6 +75,15 @@ namespace AshAndEmber
         {
             // Combat casting only — the map grants each element its own litany spell.
             if (!inMission) { InputSuppressed = false; return; }
+            // A new battle resets the Ashen cast tally (the previous battle's count is
+            // left standing until now so the post-battle encounter could read it).
+            try
+            {
+                object m = Mission.Current;
+                if (m != null && !ReferenceEquals(m, _countedMission))
+                { _ashenBattleCasts = 0; _countedMission = m; }
+            }
+            catch { }
             if (!MageKnowledge.IsMage) { InputSuppressed = false; return; }
 
             bool altHeld = Input.IsKeyDown(InputKey.LeftAlt);
@@ -259,6 +276,7 @@ namespace AshAndEmber
             {
                 if (MageKnowledge.IsAshen)
                 {
+                    _ashenBattleCasts++;
                     if (Hero.MainHero?.MapFaction is Kingdom k)
                         ChangeCrimeRatingAction.Apply(k, days * 5f, false);
                 }

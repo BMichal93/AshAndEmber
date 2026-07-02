@@ -412,10 +412,14 @@ namespace AshAndEmber
 
         private static void InventorResult1()
         {
-            try { TalentSystem.GrantFree(TalentId.ToxicFog, Hero.MainHero); } catch { }
+            // The formula works — but it is not a thing to carry. Its worth is in
+            // the wanting: a buyer with no scruples pays a fortune for the vessel
+            // and the recipe both, and the alchemist is never seen again.
+            ChangeGold(18000);
             Msg("He returns three days later clutching a clay vessel sealed with black wax. His hands are steady; his voice is not. " +
-                "\"Burn it,\" he says. \"In still air. Then walk away. Do not wait to see it work.\" " +
-                "You do not ask where the others who funded him went.",
+                "\"It works,\" he whispers. \"In still air. I dare not carry it further.\" " +
+                "You do not carry it either. Word travels fast; within the week a buyer with no name and no scruples takes the vessel and the recipe both, " +
+                "and leaves behind a strongbox heavier than any weapon. You do not ask where the others who funded him went — or where he goes now.",
                 FireColor);
         }
 

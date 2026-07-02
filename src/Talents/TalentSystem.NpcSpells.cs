@@ -49,7 +49,7 @@ namespace AshAndEmber
             }
 
             if (ColourLordRegistry.IsAshenLord(caster)) ApplyBlightDrain(caster);
-            else AgingSystem.AgeHero(caster, 1);
+            else ColourLordRegistry.SpendLordLifeExpectancy(caster, 1);
         }
 
         private static void ApplyBlightDrain(Hero caster)
@@ -95,7 +95,7 @@ namespace AshAndEmber
             var targetHero = target.LeaderHero;
             if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
             {
-                try { AgingSystem.AgeHero(targetHero, 1); } catch { }
+                try { ColourLordRegistry.SpendLordLifeExpectancy(targetHero, 1); } catch { }
                 string casterName = caster.Name?.ToString() ?? "A mage";
                 string targetName = targetHero.Name?.ToString() ?? "another mage";
                 InformationManager.DisplayMessage(new InformationMessage(
@@ -138,7 +138,7 @@ namespace AshAndEmber
             var targetHero = target.LeaderHero;
             if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
             {
-                try { AgingSystem.AgeHero(targetHero, 1); } catch { }
+                try { ColourLordRegistry.SpendLordLifeExpectancy(targetHero, 1); } catch { }
                 string casterName = caster.Name?.ToString() ?? "A mage";
                 string targetName = targetHero.Name?.ToString() ?? "another mage";
                 InformationManager.DisplayMessage(new InformationMessage(

@@ -219,7 +219,7 @@ namespace AshAndEmber
             bool mage  = MageKnowledge.IsMage;
             bool ashen = MageKnowledge.IsAshen;
             float ren  = Hero.MainHero?.Clan?.Renown ?? 0f;
-            int   ashenCasts = MagicInputHandler.AshenBattleCastCount;
+            int   ashenCasts = ElementMagicInput.AshenBattleCastCount;
             int   clanTier   = Hero.MainHero?.Clan?.Tier ?? 0;
             var pool  = new List<Action>();
 

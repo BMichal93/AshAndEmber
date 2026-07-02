@@ -62,35 +62,28 @@ namespace AshAndEmber
             string desc =
                 AgingSystem.BuildLedgerText() +
                 "── THE CASTING, IN BRIEF ────────────────────────────\n" +
-                "  Hold Left Alt → shape with W A D S → press X to Break →\n" +
-                "  give power with W A D S → release Alt to loose it.\n" +
-                "  Watch [ U ▷ U ] build your formula; keep your hands free.\n" +
+                "  Hold Left Alt → stand still and DRAW → Attack looses a cone,\n" +
+                "  Block raises a wall → release Alt to stop.\n" +
+                "  The longer you hold, the harder it strikes (full at ~10 s);\n" +
+                "  hold too long and the charge disperses. Keep a hand free.\n" +
+                "  Fire is loaded by default. Tap W / A / S / D to load a learned\n" +
+                "  element — W Wind · S Earth · A Water · D Spirit.\n" +
                 "  (Full gestures, miracles and crystals: your Codex of Hand and Voice.)\n\n" +
-                "── SHAPES  (before Break) ───────────────────────────\n" +
-                "  W / ↑  Blast    — cone of fire forward  (+2.5 m per W)\n" +
-                "  A / ←  Missile  — fire bolt that explodes  (+3 m range, +1 m blast per A)\n" +
-                "  D / →  Barrier  — summoned wall of nodes  (press again to release)\n" +
-                "  S / ↓  Burst    — ring around you  (+2.5 m radius per S, also heals you)\n" +
-                "  Mix freely — W then S fires a Blast and a Burst at the same time.\n\n" +
-                "── POWER  (after Break) ─────────────────────────────\n" +
-                "  Every damage key deals 25 fire damage — but each carries a nature:\n" +
-                "  W / ↑  Sear   — searing burn  (+5 burn per press; Immolate amplifies)\n" +
-                "  A / ←  Force  — concussive push (1.5 m per press; Scatter amplifies)\n" +
-                "  D / →  Shred  — armour shred  (+4% damage taken; Sunder amplifies)\n" +
-                "  S / ↓  Restore — 15 healing per press + small morale lift to allies\n" +
-                "  Mix natures freely: WWA after Break = 75 damage, sear ×2 + force ×1.\n" +
-                "  Each fire path you walk transforms what your fire can do.\n\n" +
-                "── EXAMPLES  (try these first!) ─────────────────────\n" +
-                "  W, X, W, release        →  Blast,   25 dmg,   1 day\n" +
-                "  A, X, W, release        →  Missile, 25 dmg,   1 day\n" +
-                "  S, X, SS, release       →  Burst,   30 heal,  2 days  (heals you too)\n" +
-                "  AAA, X, WW, release     →  Long missile, 50 dmg,  4 days\n" +
-                "  WW+SS, X, W+S, release  →  Blast+Burst, dmg+heal, 5 days\n\n" +
-                "── BATTLE COST  (days of life per cast — geometric) ──\n" +
-                "  1–2 inputs = 1 day   3 = 2 days   4 = 3   5 = 4   6 = 5\n" +
-                "  7 = 8 days   8 = 11   9 = 15   10 = 21   12 = 41   14 = 80\n" +
-                "  Hard cap: 84 days (= 1 year). Mage lords age at the same rate.\n" +
-                (TalentSystem.Has(TalentId.BattleMage) ? "  [Tempered] −25% cost (min 1) + up to 30% age reduction.\n" : "") +
+                "── THE FIVE ELEMENTS  (Attack = cone · Block = wall) ─\n" +
+                "  Fire    — a cone of fire            / a wall of fire\n" +
+                "  Wind    — a blast that hurls & slows / a wall that turns arrows\n" +
+                "  Earth   — a burst of rooting stone   / a stone wall\n" +
+                "  Water   — a slowing wave             / a barrier of mist\n" +
+                "  Spirit  — fear men & horses, a stray / a wall that heartens\n" +
+                "            order into their ranks       and mends your own\n" +
+                "  A longer draw makes every element strike harder.\n\n" +
+                "── BATTLE COST  (life expectancy — flat per cast) ────\n" +
+                "  Attack = 3 days of life   Wall = 4 days.\n" +
+                "  The draw buys power, never a cheaper cast — the toll is flat.\n" +
+                "  You are not aged here and now; you simply die sooner (watch\n" +
+                "  the death age in the Ledger above). Mage lords pay the same.\n" +
+                "  The Nature discipline halves the toll; Steel lets you cast\n" +
+                "  with a weapon drawn and bears the armour weight.\n" +
                 ashenNote +
                 "\n── CAMPAIGN SPELLS  (outside a mission → \"Cast\") ────────\n" +
                 "  A 3-step ritual description appears. Commit it to memory.\n" +

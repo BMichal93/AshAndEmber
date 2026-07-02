@@ -38,6 +38,13 @@ namespace AshAndEmber
         private static readonly Dictionary<string, int> _campaignCooldowns
             = new Dictionary<string, int>();
 
+        // Life expectancy spent to casting per lord: heroId → days. Mirrors the
+        // player's ledger (AgingSystem) — casting no longer makes a lord OLDER, it
+        // lowers the age at which the fire finally burns them out. The Ashen pay
+        // nothing (the cold preserves what remains).
+        private static readonly Dictionary<string, int> _lordDaysSpent
+            = new Dictionary<string, int>();
+
         // Six NPC path archetypes — each mirrors one player fire path.
         // Spells  : campaign-map workings (TalentId values 4–8, filtered in DailyMapCast).
         // Enchants: battle passives activated by ColourLordAI.
@@ -179,6 +186,7 @@ namespace AshAndEmber
             _companionMageIds.Clear();
             _lordTalents.Clear();
             _campaignCooldowns.Clear();
+            _lordDaysSpent.Clear();
         }
 
         // ── Seeding ───────────────────────────────────────────────────────────
@@ -299,7 +307,29 @@ namespace AshAndEmber
             catch { }
         }
 
-        // Kill all mage lords aged 100+ (called from weekly tick)
+        // ── Life expectancy (spellcasting cost — mirrors the player) ──────────────
+        // A mage lord's casting toll is booked here instead of shifting their birth
+        // day: it lowers the age at which they burn out (from the base 100), leaving
+        // their current age — and thus their skills — untouched. 1 year = 84 days.
+        public static void SpendLordLifeExpectancy(Hero hero, int days)
+        {
+            if (hero == null || days <= 0) return;
+            if (_ashenIds.Contains(hero.StringId)) return;   // the cold preserves what remains
+            _lordDaysSpent.TryGetValue(hero.StringId, out int cur);
+            _lordDaysSpent[hero.StringId] = cur + days;
+        }
+
+        // The age at which the fire burns a lord out — the base 100 minus the life
+        // the working has already spent. Floored at 20 so a heavy caster still lives.
+        public static float LordDeathAge(Hero hero)
+        {
+            if (hero == null) return 100f;
+            _lordDaysSpent.TryGetValue(hero.StringId, out int spent);
+            return Math.Max(20f, 100f - spent / 84f);
+        }
+
+        // Kill all mage lords who have reached their (expectancy-reduced) death age
+        // (called from weekly tick). The Ashen never burn out.
         public static void CheckAgeLimit()
         {
             try
@@ -307,7 +337,7 @@ namespace AshAndEmber
                 var toKill = Hero.AllAliveHeroes
                     .Where(h => h != Hero.MainHero && h.IsAlive && _mageIds.Contains(h.StringId)
                              && !_ashenIds.Contains(h.StringId)
-                             && h.Age >= 100f)
+                             && h.Age >= LordDeathAge(h))
                     .ToList();
                 foreach (Hero h in toKill)
                 {
@@ -419,6 +449,8 @@ namespace AshAndEmber
             bool seeded  = _seeded;
             var cdKeys = _campaignCooldowns.Keys.ToList();
             var cdVals = _campaignCooldowns.Values.ToList();
+            var lifeKeys = _lordDaysSpent.Keys.ToList();
+            var lifeVals = _lordDaysSpent.Values.ToList();
 
             // Flatten lord talents: parallel lists of heroId, count, flat ints
             var talentIds   = _lordTalents.Keys.ToList();
@@ -431,6 +463,8 @@ namespace AshAndEmber
             store.SyncData("LDM_MageSeeded",    ref seeded);
             store.SyncData("LDM_CdKeys",      ref cdKeys);
             store.SyncData("LDM_CdVals",      ref cdVals);
+            store.SyncData("LDM_LifeKeys",    ref lifeKeys);
+            store.SyncData("LDM_LifeVals",    ref lifeVals);
             store.SyncData("LDM_TalentIds",   ref talentIds);
             store.SyncData("LDM_TalentCnts",  ref talentCnts);
             store.SyncData("LDM_TalentFlat",  ref talentFlat);
@@ -447,6 +481,11 @@ namespace AshAndEmber
             if (cdKeys != null && cdVals != null)
                 for (int i = 0; i < Math.Min(cdKeys.Count, cdVals.Count); i++)
                     _campaignCooldowns[cdKeys[i]] = cdVals[i];
+
+            _lordDaysSpent.Clear();
+            if (lifeKeys != null && lifeVals != null)
+                for (int i = 0; i < Math.Min(lifeKeys.Count, lifeVals.Count); i++)
+                    _lordDaysSpent[lifeKeys[i]] = lifeVals[i];
 
             _lordTalents.Clear();
             if (talentIds != null && talentCnts != null && talentFlat != null)
