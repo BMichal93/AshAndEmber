@@ -186,6 +186,9 @@
     <Compile Include="AI\AshenDiplomacyModel.cs"/>
     <Compile Include="AI\AshenDialogue.cs"/>
     <Compile Include="AI\TempleDialogue.cs"/>
+    <Compile Include="AI\TribesDialogue.cs"/>
+    <Compile Include="AI\NorthmenDialogue.cs"/>
+    <Compile Include="AI\DunebornDialogue.cs"/>
     <Compile Include="AI\CreationBackstoryRework.cs"/>
     <Compile Include="AI\FireWorshippersSystem.cs"/>
     <Compile Include="AI\RivalShadowSystem.cs"/>
