@@ -62,28 +62,21 @@ namespace AshAndEmber
 
     internal static class AshEmberLoreIntro
     {
-        // The opening lore, split into paragraphs. Moved here from the old
-        // ShowLoreIntro pop-up; the wording is unchanged.
+        // The opening lore, split into paragraphs.
         private static readonly string[] Paragraphs =
         {
-            "All living things carry an Inner Fire. " +
-            "It is the force that binds soul to flesh, that keeps the living from the cold. " +
-            "Those who learn to reach into it are called mages. " +
-            "The Temple of Ember has kept their doctrine for centuries — " +
-            "guarding its rites, naming its heresies, and deciding who may be trusted " +
-            "to carry the fire, and who may not.",
+            "First, there was the Fire. The power that breathed life into the world, raised mountains, stilled seas. " +
+            "Then came humans. They harnessed the fire and built a great empire upon it. With the fire, humans built great cities, raised armies and brought order to the world.",
 
-            "The empire that once held these lands together is fracturing. " +
-            "Three claimants. Three armies. The eastern Tribes, long kept behind the passes, " +
-            "have begun to move.",
+            "The order lasted a thousand years under the banner of the Empire and aegis of the Temple. " +
+            "There were some who wanted to use the Fire.",
 
-            "But the greater danger comes from the north. " +
-            "Long ago, certain lords chose to extinguish their own Inner Fire rather than age and die. " +
-            "The cold took them. It did not kill them.\n\n" +
-            "They are called the Ashen. They do not tire. They do not stop. " +
-            "For centuries they kept to the wastes. Now they march.",
+            "In the East, sorcerer-kings raised an army to ride against the first empire. They brought fire and blood. " +
+            "Now, the fire fades. The ancient forces raise their head in the north.",
 
-            "The fire in you has not yet gone out.\n\nWhat you do with it is yours to decide.",
+            "The Ashen mages who defied death are gathering their strengths. " +
+            "With the Emperor dead, and three contestants reaching for the shattered crown, when the time comes, nothing will stop the grey march from the wastelands. " +
+            "In the last days of the Empire, among the ruins, you began your journey. Where it will lead you, O Firelord?",
         };
 
         // Per-paragraph timing (seconds).
