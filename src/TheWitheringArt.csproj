@@ -4,9 +4,9 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>AshAndEmber</AssemblyName>
     <RootNamespace>AshAndEmber</RootNamespace>
-    <Version>0.35.0.0</Version>
-    <AssemblyVersion>0.35.0.0</AssemblyVersion>
-    <FileVersion>0.35.0.0</FileVersion>
+    <Version>0.36.0.0</Version>
+    <AssemblyVersion>0.36.0.0</AssemblyVersion>
+    <FileVersion>0.36.0.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <Optimize>true</Optimize>
@@ -172,6 +172,7 @@
     <Compile Include="AI\BanditMageAI.cs"/>
     <Compile Include="AI\ColourLordRegistry.cs"/>
     <Compile Include="AI\ColourLordAI.cs"/>
+    <Compile Include="AI\NpcCastPlanner.cs"/>
     <Compile Include="AI\AshenCitySystem.cs"/>
     <Compile Include="AI\AshenCitySystem.Setup.cs"/>
     <Compile Include="AI\AshenCitySystem.Maintenance.cs"/>

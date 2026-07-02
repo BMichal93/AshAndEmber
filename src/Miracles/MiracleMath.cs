@@ -77,6 +77,24 @@ namespace AshAndEmber
         public static double NpcBattleUseChance(bool isPriest) => isPriest ? 0.004 : 0.001;
         public static double NpcDailyUseChance(bool isPriest)  => isPriest ? 0.05  : 0.01;
 
+        // ── NPC battle miracle selection ──────────────────────────────────────
+        // Grace flows from an unlimited wellspring, so a devout NPC never rations
+        // it — but he still answers the MOMENT rather than praying at random. In
+        // priority: mend himself when hurt, call down judgement on the Ashen, ward
+        // and mend a wounded line, raise a shield under heavy pressure, and otherwise
+        // rally or bless. `roll` in [0,1) only breaks the two calmest ties.
+        public static MiracleType ChooseBattleMiracle(bool selfHurt, int alliesHurtNear,
+            bool enemyPressingSelf, bool ashenAdjacent, float roll)
+        {
+            if (selfHurt)            return MiracleType.MercyMend;      // self-preservation first
+            if (ashenAdjacent)       return MiracleType.InsightPyre;    // judgement on the cold
+            if (alliesHurtNear >= 2) return MiracleType.GraceBlessing;  // shared light — ward + heal many
+            if (alliesHurtNear >= 1) return MiracleType.MercyMend;      // mend the one who bleeds
+            if (enemyPressingSelf)   return MiracleType.HonorAegis;     // shield under the press
+            // Nothing pressing — steel the line: rally, or bless if the roll favours it.
+            return roll < 0.5f ? MiracleType.ValorFury : MiracleType.GraceBlessing;
+        }
+
         // ── Battle effect magnitudes (reused effects) ──────────────────────────
         public const float RadiantMendSelfFrac   = 0.35f;
         public const float RadiantMendAllyFrac   = 0.18f;

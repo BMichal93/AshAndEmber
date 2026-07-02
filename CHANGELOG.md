@@ -4,6 +4,16 @@
 
 ## Unreleased
 
+## v0.36.0
+
+### Mage lords, priests and crystal-bearers fight like people, not scripts
+- **NPC mage lords now cast on the same unified element system as the player.** Their fire moved off the old pre-merge engine onto the very cone the player throws — same shape, damage, and power-scaling — so a lord's Fire, Wind, Earth, Water and Spirit all read as one art.
+- **They choose the element that fits the moment** instead of throwing at random: a gale or a rooting stone when surrounded, a slowing wave or roots to break a cavalry charge, a forward fire cone at a lone target, cold dread to unmake a formation. A lord only uses what he has actually learned; Fire is always there as a fallback.
+- **A lord spends his life like a person spends a purse.** Casting costs him years of life expectancy, so a young lord with time to burn casts big and often, while one near his burning-out grows careful — weaker workings, cast rarely — and pours out full power only when his life is on the line. Temperament tilts it: **impulsive** lords spend recklessly, **calculating** lords hoard their years (in battle *and* on the campaign map).
+- The **Ashen and the False Emperor** are unchanged in menace: they pay no life, cast at full boss power, and their brands (the cold that takes, the sundering, the smoulder) still ride their fire.
+- **Crystal-bearers use crystals when it helps** — a warmth-stone when they are actually hurt, an offensive stone only when enemies are in reach — instead of a blind roll.
+- **The devout answer the moment** — grace lords and priests now mend the wounded, raise a shield under a press, call judgement down on the Ashen, or rally a steady line, rather than praying at random. Grace remains an unlimited wellspring.
+
 ### The Duneborn
 - **Aserai is now presented as the Duneborn** — the same treatment as Vlandia → The Holy Temple, Khuzait → Tribes of the East, and Sturgia → Northmen. The culture reads "Duneborn" on the character sheet, the encyclopedia, troop culture, and the character-creation card. They remain mechanically ordinary Aserai — only the name and the blurb change.
 - **New lore:** the Duneborn once kept the same fire-covenant as every culture, until a generations-long drought broke it along with their wells. What the first Duneborn found in the black-glass caverns beneath the dunes asked no devotion — only blood — and cares nothing for what is done with the power it grants. This finally gives lore grounding to the existing (and previously unexplained) tendency of Aserai lords to be quietly seeded with Dark Gifts.

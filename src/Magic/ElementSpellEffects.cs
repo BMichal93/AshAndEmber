@@ -91,7 +91,7 @@ namespace AshAndEmber
             Vec3 rgb = Palette(MagicElement.Fire, ashen);
             // A fully-drawn cone lances far further than an instant flick.
             float range = ElementMagicMath.ConeRange(FireConeRange, power);
-            int hit = 0;
+            var struckEnemies = new System.Collections.Generic.List<Agent>();
             foreach (Agent a in EnemiesNear(caster, range))
             {
                 Vec3 to = a.Position - pos; to.z = 0f;
@@ -100,8 +100,12 @@ namespace AshAndEmber
                 if (SpellEffects.IsWarded(a)) continue;
                 try { SpellEffects.DamageAgent(a, FireConeDamage * power, ColorSchool.Red, caster); } catch { }
                 FireBloom(a.Position, ashen, rgb, 1.0f, false);
-                hit++;
+                struckEnemies.Add(a);
             }
+            // An NPC lord's inner brands (Immolate/Sunder/…) ride his fire even on the
+            // unified path — preserving the boss-tier bite of the Ashen and False
+            // Emperor. No-op for the player and for lords who carry no enchantment.
+            try { SpellEffects.ApplyNpcElementEnchantments(caster, struckEnemies, power); } catch { }
             // A living eruption of flame lances out along the cone; the Ashen show
             // only the cold's pale light. Trailing blooms mark the deeper reach.
             FireBloom(pos + fwd * (range * 0.5f), ashen, rgb, 3f, true);

@@ -89,5 +89,26 @@ namespace AshAndEmber
 
         // SolarFlare (+25 % AoE radius multiplier) applies to burst-type crystals.
         public static float SolarFlareRadius(float baseRadius) => baseRadius * 1.25f;
+
+        // ── NPC situational use ───────────────────────────────────────────────
+        // A crystal-bearer breaks a crystal when it actually helps, not on a blind
+        // roll: the Sunstone heals, so it wants its bearer hurt; every other crystal
+        // is offensive/control, so it wants enemies in reach. `roll` in [0,1) gates
+        // the base eagerness so use stays occasional even when the situation fits.
+        public static bool IsHealingCrystal(CrystalType type) => type == CrystalType.Sunstone;
+
+        // The reach at which a crystal has worthwhile targets — the Veilstone reaches
+        // far, the rest are short-range AoE.
+        public static float CrystalUseRange(CrystalType type)
+            => type == CrystalType.Veilstone ? VeilRange : 10f;
+
+        public static bool NpcShouldUse(CrystalType type, float hpFrac, int enemiesInRange, float roll)
+        {
+            if (IsHealingCrystal(type))
+                return hpFrac < 0.55f && roll < 0.70f;   // mend when meaningfully hurt
+            if (enemiesInRange <= 0) return false;        // never spend an offensive crystal on empty air
+            float eagerness = enemiesInRange >= 3 ? 0.70f : 0.45f;
+            return roll < eagerness;
+        }
     }
 }

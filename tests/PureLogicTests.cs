@@ -1187,5 +1187,127 @@ namespace AshAndEmber.Tests
             Assert.Less(LivingEnergyMath.WeedFreeDrawChance, 1f);
             Assert.AreEqual(0.30f, LivingEnergyMath.WeedFreeDrawChance, 0.001f);
         }
+
+        // ── NpcCastPlanner (how an NPC lord spends his life-expectancy) ───────────
+
+        [Test]
+        public void NpcCastPlanner_LifeFrac_ClampsToUnitRange()
+        {
+            Assert.AreEqual(0f,   NpcCastPlanner.LifeFrac(0f),   0.001f);
+            Assert.AreEqual(0f,   NpcCastPlanner.LifeFrac(-5f),  0.001f, "negative budget floors at 0");
+            Assert.AreEqual(0.5f, NpcCastPlanner.LifeFrac(20f),  0.001f);
+            Assert.AreEqual(1f,   NpcCastPlanner.LifeFrac(40f),  0.001f);
+            Assert.AreEqual(1f,   NpcCastPlanner.LifeFrac(80f),  0.001f, "plentiful life caps at 1");
+        }
+
+        [Test]
+        public void NpcCastPlanner_PowerMult_FullLife_IsFullForAllTempers()
+        {
+            foreach (CasterTemper t in new[] { CasterTemper.Calculating, CasterTemper.Balanced, CasterTemper.Impulsive })
+                Assert.AreEqual(1f, NpcCastPlanner.PowerMult(1f, t, emergency: false), 0.001f,
+                    $"a fresh {t} lord casts at full power");
+        }
+
+        [Test]
+        public void NpcCastPlanner_PowerMult_NearBurnout_HoardsByTemper()
+        {
+            // No life left, no emergency: each temper falls back to its floor.
+            Assert.AreEqual(0.50f, NpcCastPlanner.PowerMult(0f, CasterTemper.Calculating, false), 0.001f);
+            Assert.AreEqual(0.65f, NpcCastPlanner.PowerMult(0f, CasterTemper.Balanced,    false), 0.001f);
+            Assert.AreEqual(0.90f, NpcCastPlanner.PowerMult(0f, CasterTemper.Impulsive,   false), 0.001f);
+            // The impulsive lord always spends more than the calculating one.
+            Assert.Greater(NpcCastPlanner.PowerMult(0.3f, CasterTemper.Impulsive, false),
+                           NpcCastPlanner.PowerMult(0.3f, CasterTemper.Calculating, false));
+        }
+
+        [Test]
+        public void NpcCastPlanner_Emergency_FloorsPowerHighEvenForOldMiser()
+        {
+            Assert.GreaterOrEqual(NpcCastPlanner.PowerMult(0f, CasterTemper.Calculating, emergency: true),
+                                  NpcCastPlanner.EmergencyFloor);
+            Assert.GreaterOrEqual(NpcCastPlanner.CastPower(NpcCastPlanner.BaseHarass, 0f, CasterTemper.Calculating, true),
+                                  NpcCastPlanner.EmergencyFloor,
+                                  "survival trumps thrift regardless of the situational base");
+        }
+
+        [Test]
+        public void NpcCastPlanner_CastPower_YoungImpulsive_SpendsBig_OldCalculating_Conserves()
+        {
+            float young = NpcCastPlanner.CastPower(NpcCastPlanner.BaseCluster, lifeFrac: 1f,
+                                                   CasterTemper.Impulsive,   emergency: false);
+            float old   = NpcCastPlanner.CastPower(NpcCastPlanner.BaseHarass,  lifeFrac: 0f,
+                                                   CasterTemper.Calculating, emergency: false);
+            Assert.Greater(young, old);
+            Assert.LessOrEqual(NpcCastPlanner.CastPower(NpcCastPlanner.BaseDesperate, 1f, CasterTemper.Impulsive, false), 1.2f,
+                "power is clamped to a sane ceiling");
+        }
+
+        [Test]
+        public void NpcCastPlanner_CooldownMult_FreshIsBaseline_ScarcityStretchesByTemper()
+        {
+            foreach (CasterTemper t in new[] { CasterTemper.Calculating, CasterTemper.Balanced, CasterTemper.Impulsive })
+                Assert.AreEqual(1f, NpcCastPlanner.CooldownMult(1f, t), 0.001f,
+                    $"a fresh {t} lord keeps his normal cadence");
+
+            Assert.AreEqual(2.5f, NpcCastPlanner.CooldownMult(0f, CasterTemper.Calculating), 0.001f);
+            Assert.AreEqual(1.1f, NpcCastPlanner.CooldownMult(0f, CasterTemper.Impulsive),   0.001f);
+            // A near-burnout calculating lord goes quieter than an impulsive one.
+            Assert.Greater(NpcCastPlanner.CooldownMult(0.2f, CasterTemper.Calculating),
+                           NpcCastPlanner.CooldownMult(0.2f, CasterTemper.Impulsive));
+        }
+
+        // ── CrystalMath NPC situational use ───────────────────────────────────────
+
+        [Test]
+        public void CrystalMath_NpcShouldUse_HealStone_WantsBearerHurt()
+        {
+            // Sunstone: fires when meaningfully hurt, not at (near) full health.
+            Assert.IsTrue (CrystalMath.NpcShouldUse(CrystalType.Sunstone, 0.30f, 0, 0.1f));
+            Assert.IsFalse(CrystalMath.NpcShouldUse(CrystalType.Sunstone, 0.90f, 0, 0.1f),
+                "a healthy bearer does not waste a heal-stone");
+            Assert.IsTrue(CrystalMath.IsHealingCrystal(CrystalType.Sunstone));
+            Assert.IsFalse(CrystalMath.IsHealingCrystal(CrystalType.Embershard));
+        }
+
+        [Test]
+        public void CrystalMath_NpcShouldUse_OffensiveStone_NeedsEnemiesInReach()
+        {
+            // Offensive crystal on empty air: never.
+            Assert.IsFalse(CrystalMath.NpcShouldUse(CrystalType.Embershard, 1f, 0, 0.01f));
+            // Enemies present + eager roll: yes; a crowd raises the eagerness.
+            Assert.IsTrue(CrystalMath.NpcShouldUse(CrystalType.Embershard, 1f, 4, 0.6f));
+            Assert.IsFalse(CrystalMath.NpcShouldUse(CrystalType.Embershard, 1f, 1, 0.6f),
+                "a lone target with a lukewarm roll holds the crystal");
+            // The Veilstone reaches farther than the short-range AoE stones.
+            Assert.Greater(CrystalMath.CrystalUseRange(CrystalType.Veilstone),
+                           CrystalMath.CrystalUseRange(CrystalType.Embershard));
+        }
+
+        // ── MiracleMath battle selection (right miracle for the moment) ───────────
+
+        [Test]
+        public void MiracleMath_ChooseBattleMiracle_PrioritisesBySituation()
+        {
+            // Self-preservation trumps everything.
+            Assert.AreEqual(MiracleType.MercyMend,
+                MiracleMath.ChooseBattleMiracle(selfHurt: true, alliesHurtNear: 5,
+                    enemyPressingSelf: true, ashenAdjacent: true, roll: 0.9f));
+            // Ashen adjacent (and self fine) → judgement.
+            Assert.AreEqual(MiracleType.InsightPyre,
+                MiracleMath.ChooseBattleMiracle(false, 3, true, ashenAdjacent: true, 0.9f));
+            // A wounded line → shared light; a single wounded ally → a targeted mend.
+            Assert.AreEqual(MiracleType.GraceBlessing,
+                MiracleMath.ChooseBattleMiracle(false, 2, false, false, 0.9f));
+            Assert.AreEqual(MiracleType.MercyMend,
+                MiracleMath.ChooseBattleMiracle(false, 1, false, false, 0.9f));
+            // Under a press, no one wounded → shield.
+            Assert.AreEqual(MiracleType.HonorAegis,
+                MiracleMath.ChooseBattleMiracle(false, 0, enemyPressingSelf: true, false, 0.9f));
+            // Nothing pressing → rally or bless by the roll.
+            Assert.AreEqual(MiracleType.ValorFury,
+                MiracleMath.ChooseBattleMiracle(false, 0, false, false, roll: 0.1f));
+            Assert.AreEqual(MiracleType.GraceBlessing,
+                MiracleMath.ChooseBattleMiracle(false, 0, false, false, roll: 0.9f));
+        }
     }
 }

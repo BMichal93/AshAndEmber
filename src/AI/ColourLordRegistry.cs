@@ -341,6 +341,34 @@ namespace AshAndEmber
             return Math.Max(20f, 100f - spent / 84f);
         }
 
+        // Years of life a lord has left before the fire burns him out — his real
+        // spellcasting RESOURCE. The Ashen pay nothing, so they read as unlimited.
+        // Used by both the battle AI (ColourLordAI) and the map AI (DailyMapCast)
+        // to make lords spend their years like people: freely while young, sparingly
+        // near burnout. See NpcCastPlanner.
+        public const float UnlimitedLife = 999f;
+        public static float LifeBudgetYears(Hero hero)
+        {
+            if (hero == null) return UnlimitedLife;
+            if (_ashenIds.Contains(hero.StringId)) return UnlimitedLife;
+            try { return Math.Max(0f, LordDeathAge(hero) - hero.Age); }
+            catch { return UnlimitedLife; }
+        }
+
+        // A lord's temperament, read from the Calculating trait: >0 hoards his years
+        // (miser), <0 spends them recklessly (impulsive), 0 is balanced.
+        public static CasterTemper TemperOf(Hero hero)
+        {
+            try
+            {
+                int calc = hero.GetTraitLevel(DefaultTraits.Calculating);
+                if (calc > 0) return CasterTemper.Calculating;
+                if (calc < 0) return CasterTemper.Impulsive;
+            }
+            catch { }
+            return CasterTemper.Balanced;
+        }
+
         // Kill all mage lords who have reached their (expectancy-reduced) death age
         // (called from weekly tick). The Ashen never burn out.
         public static void CheckAgeLimit()
@@ -410,12 +438,24 @@ namespace AshAndEmber
                     if (_campaignCooldowns.TryGetValue(id, out int cd) && cd > 0)
                     { _campaignCooldowns[id] = cd - 1; continue; }
 
-                    // False emperor casts voraciously; Blight lords cast hungrily; normal lords slow with age
-                    int castChance = isFalseEmperor ? 30
-                                   : isBlight       ? 10
-                                   : hero.Age < 50f  ? 8
-                                   : hero.Age < 70f  ? 4
-                                   : 2;
+                    // False emperor casts voraciously; Blight lords cast hungrily.
+                    // Normal lords spend their remaining life like people (mirrors the
+                    // battle model): a lord with years to spare works often, one near
+                    // burnout rarely — nudged by temperament (impulsive spend, the
+                    // calculating hoard). See NpcCastPlanner / [[feedback-npc-parity]].
+                    int castChance;
+                    if (isFalseEmperor) castChance = 30;
+                    else if (isBlight)  castChance = 10;
+                    else
+                    {
+                        float lifeFrac = NpcCastPlanner.LifeFrac(LifeBudgetYears(hero));
+                        castChance = 2 + (int)Math.Round(7f * lifeFrac);   // 2 (burnout) .. 9 (fresh)
+                        switch (TemperOf(hero))
+                        {
+                            case CasterTemper.Impulsive:   castChance += 2; break;
+                            case CasterTemper.Calculating: castChance = Math.Max(1, castChance - 2); break;
+                        }
+                    }
                     if (_rng.Next(100) >= castChance) continue;
 
                     if (!_lordTalents.TryGetValue(id, out var talents) || talents.Count == 0) continue;

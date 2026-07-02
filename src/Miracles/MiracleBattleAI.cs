@@ -80,18 +80,33 @@ namespace AshAndEmber
 
         private static MiracleType ChooseGraceMiracle(Agent a)
         {
-            try { if (a.Health < a.HealthLimit * 0.40f) return MiracleType.MercyMend; } catch { }
+            // Read the moment, then let MiracleMath choose the fitting miracle — heal
+            // when hurt, judge the Ashen, ward/bless a wounded line, shield under a
+            // press, otherwise rally. Grace itself is unlimited (no resource gate).
+            bool selfHurt = false;
+            try { selfHurt = a.Health < a.HealthLimit * 0.40f; } catch { }
 
-            // A pillar of judgement when enemies (Ashen or otherwise) press near.
-            if (AshenNearby(a)) return MiracleType.InsightPyre;
-
-            var set = new[]
+            int alliesHurtNear = 0, enemiesPressing = 0;
+            try
             {
-                MiracleType.ValorFury,   MiracleType.HonorAegis,
-                MiracleType.MercyMend,   MiracleType.GraceBlessing,
-                MiracleType.InsightPyre,
-            };
-            return set[_rng.Next(set.Length)];
+                Vec3 pos = a.Position;
+                foreach (Agent ally in SpellEffects.AlliesOf(a))
+                {
+                    if (ally == a) continue;
+                    if (ally.Health >= ally.HealthLimit * 0.5f) continue;
+                    float dx = ally.Position.x - pos.x, dy = ally.Position.y - pos.y;
+                    if (dx * dx + dy * dy <= 12f * 12f) alliesHurtNear++;
+                }
+                foreach (Agent e in SpellEffects.EnemiesOf(a))
+                {
+                    float dx = e.Position.x - pos.x, dy = e.Position.y - pos.y;
+                    if (dx * dx + dy * dy <= 6f * 6f) enemiesPressing++;
+                }
+            }
+            catch { }
+
+            return MiracleMath.ChooseBattleMiracle(
+                selfHurt, alliesHurtNear, enemiesPressing >= 2, AshenNearby(a), (float)_rng.NextDouble());
         }
 
         private static void AnnounceEnemy(Agent a, Hero hero, MiracleType type)

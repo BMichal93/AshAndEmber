@@ -422,6 +422,34 @@ namespace AshAndEmber
             }
         }
 
+        // Applies an NPC colour lord's owned offensive enchantments (Immolate /
+        // Sunder / Scatter / Smoulder) to the enemies his UNIFIED element attack just
+        // struck. Post-v0.35 the player's element casts go straight through
+        // ElementSpellEffects and intentionally carry no enchantments (that layer was
+        // retired for the player). NPC lords, however, are still seeded with these
+        // brands, and they are what make Ashen and the False Emperor lethal — so we
+        // re-apply them here rather than silently dropping the behaviour when their
+        // fire moved onto the unified path. `power` (~0.35..1.2) sets how hard the
+        // brand bites: a full-power working brands like the old 5-input blast, a weak
+        // flick like a 2-input one. Lords without the enchantment get nothing.
+        internal static void ApplyNpcElementEnchantments(Agent caster,
+            System.Collections.Generic.IList<Agent> enemiesHit, float power)
+        {
+            if (caster == null || caster == Agent.Main || enemiesHit == null || enemiesHit.Count == 0) return;
+            Hero hero;
+            try { hero = (caster.Character as TaleWorlds.CampaignSystem.CharacterObject)?.HeroObject; }
+            catch { return; }
+            if (hero == null || !ColourLordRegistry.IsColourLord(hero)) return;
+
+            int intensity = (int)Math.Round(power * 5f, MidpointRounding.AwayFromZero);
+            if (intensity < 2) intensity = 2; else if (intensity > 5) intensity = 5;
+
+            var cast = new SpellCast { DamageCount = intensity, OverrideVisualColor = ResolveNpcSchool(caster) };
+            ResetImmolateKill();  // one kill-slot budget per cast, before the per-target loop
+            foreach (Agent a in enemiesHit)
+                ApplyDamageEnchantments(a, cast, caster);
+        }
+
         // Checks whether a caster (player or NPC lord) has a given enchantment talent.
         private static bool CasterHasEnchantment(Agent caster, TalentId enchantment)
         {

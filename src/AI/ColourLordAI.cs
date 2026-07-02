@@ -1,9 +1,15 @@
 // =============================================================================
 // LIFE & DEATH MAGIC — AI/ColourLordAI.cs
-// NPC mage battle AI. Uses SpellEffects.ExecuteNpcBlast/ExecuteNpcBurst with
-// pre-prepared SpellCast recipes. Impulsive lords cast more, Calculating less.
-// Enchantment talents are applied automatically by ApplyEffectsToAgent.
-// Tracks casts per battle for post-battle aging.
+// NPC mage battle AI. Casts through the unified element system
+// (ElementSpellEffects.CastAttack/CastWall) exactly as the player does — Fire and
+// the learned Wind/Earth/Water/Spirit all on one path. A lord reads the tactical
+// situation and throws the element that FITS it (gale when surrounded, root/wave
+// against a charge, a fire cone at a lone target), at a POWER and CADENCE set by
+// his remaining life expectancy and temperament (NpcCastPlanner): young/impulsive
+// lords spend big and fast, old/calculating lords hoard their years. Ashen and the
+// False Emperor pay no life and cast at boss power. Offensive enchantments still
+// ride a lord's fire via SpellEffects.ApplyNpcElementEnchantments. Tracks casts
+// per battle for post-battle life-expectancy spend.
 // =============================================================================
 
 using System;
@@ -123,6 +129,9 @@ namespace AshAndEmber
             }
         }
 
+        // The tactical picture a lord reads before choosing what to throw.
+        private enum Situation { Surrounded, ChargeBreak, Cluster, Harass }
+
         private static void TryCast(Agent agent, Hero hero)
         {
             if (Mission.Current == null) return;
@@ -139,173 +148,77 @@ namespace AshAndEmber
             float hpPct      = agent.Health / Math.Max(agent.HealthLimit, 1f);
             int closeEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < 8f);
             int nearEnemies  = enemies.Count(a => a.Position.Distance(agent.Position) < 20f);
-
-            bool isCalculating = false;
-            bool isImpulsive   = false;
-            try
+            int mountedNear  = enemies.Count(a =>
             {
-                int calc = hero.GetTraitLevel(DefaultTraits.Calculating);
-                isCalculating = !isAshen && calc > 0;
-                isImpulsive   = !isAshen && calc < 0;
-            }
-            catch { }
+                try { return a.MountAgent != null && a.MountAgent.IsActive()
+                          && a.Position.Distance(agent.Position) < 25f; }
+                catch { return false; }
+            });
 
-            // -1. Pyre Lord: plant a barrier wall once at battle start before attacking.
+            // Resource + temperament. Casting spends LIFE EXPECTANCY, so a lord's
+            // remaining years are his real reserve: he pours out power freely while
+            // young and hoards it near burnout, weighted by temperament. The Ashen
+            // pay nothing — they always read as "full reserve" and cast at boss power.
+            CasterTemper temper = ColourLordRegistry.TemperOf(hero);
+            float lifeFrac = isAshen ? 1f
+                : NpcCastPlanner.LifeFrac(ColourLordRegistry.LifeBudgetYears(hero));
+
+            // -1. Pyre Lord: fortify with a wall once before attacking.
             if (IsPyreLord(hero) && !_pyreBarriersPlaced.Contains(hero.StringId) && nearEnemies >= 1)
             {
-                CastBarrierWall(agent, hero);
+                CastElementWall(agent, hero, isAshen, isFalseEmperor, temper, lifeFrac);
                 return;
             }
 
-            // 0. Defensive burst when endangered — Ward is now a Restoration talent, not NPC-castable.
-            //    False emperor responds with maximum devastation; Ashen with overwhelming force.
+            // 0. Desperate — hurt and pressed. Survival trumps thrift: full power,
+            //    clear the space around him with whatever answers a surrounding.
             if (hpPct < 0.40f && closeEnemies >= 1)
             {
-                if (isFalseEmperor)
-                    CastBurst(agent, hero, 5, 5, 0); // 12.5 m radius
-                else if (isAshen)
-                    CastBurst(agent, hero, 4, 4, 0); // 10 m radius
-                else
-                    CastBurst(agent, hero, 3, 3, 0); // 7.5 m radius
+                CastElementAttack(agent, hero, Situation.Surrounded, isAshen, isFalseEmperor,
+                    temper, lifeFrac, forwardSafe: true, aroundSafe: true, emergency: true);
                 return;
             }
 
-            // 1. Heal self when badly hurt
-            if (hpPct < 0.30f)
-            {
-                CastHealBurst(agent, hero);
-                return;
-            }
+            // 1. Heal self when badly hurt.
+            if (hpPct < 0.30f) { CastHeal(agent, hero, isAshen, temper, lifeFrac); return; }
 
-            // 2. Help hurt allies — Ashen don't bother, they only care about themselves
+            // 2. Help hurt allies — the Ashen care only for themselves.
             if (!isAshen)
             {
                 bool allyHurt = allies.Any(a => a.Health < a.HealthLimit * 0.5f
                                              && a.Position.Distance(agent.Position) <= 15f);
-                if (allyHurt)
-                {
-                    CastHealBurst(agent, hero);
-                    return;
-                }
+                if (allyHurt) { CastHeal(agent, hero, isAshen, temper, lifeFrac); return; }
             }
 
             if (nearEnemies == 0 && !isAshen) return;
 
-            // 3. Attack — evaluate both zones for friendly fire safety and target density
-            int roll = isAshen ? _rng.Next(6) : _rng.Next(4);
-
-            const float BlastDot = 0.65f;
-            // Detection range and burst-check radius are scaled to match the larger
-            // spell sizes below so the friendly-fire check covers the actual impact zone.
-            float blastRange      = isAshen ? 10f  : 8f;   // was 8 / 6
-            float burstCheckRange = isAshen ? 10f  : 7.5f; // was 5 (formCount=2); now formCount=3-4
+            // 3. Attack — read the situation, then throw the element that fits it and
+            //    the geometry: root a crowd, break a charge, or lance a lone forward
+            //    target, instead of throwing the same working every time.
+            float blastRange      = isAshen ? 10f  : 8f;
+            float burstCheckRange = isAshen ? 10f  : 7.5f;
+            const float BlastDot  = 0.65f;
 
             int coneEnemies   = SpellEffects.CountEnemiesInCone(agent, blastRange, BlastDot);
             int coneAllies    = SpellEffects.CountAlliesInCone(agent, blastRange, BlastDot);
             int radiusEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < burstCheckRange);
             int radiusAllies  = SpellEffects.CountAlliesInRadius(agent, burstCheckRange);
 
-            // A zone is "safe" when enemies outnumber allies in it.
-            // Ashen lords accept equal counts (reckless); non-Ashen require a strict majority.
-            bool blastSafe = coneEnemies >= 1
+            // A forward (cone) or all-around (radius) working is "safe" when enemies
+            // outnumber friends in its footprint. Ashen accept an even trade.
+            bool forwardSafe = coneEnemies >= 1
                 && (coneAllies == 0 || (isAshen ? coneEnemies >= coneAllies : coneEnemies > coneAllies));
-            bool burstSafe = radiusEnemies >= 1
+            bool aroundSafe = radiusEnemies >= 1
                 && (radiusAllies == 0 || (isAshen ? radiusEnemies >= radiusAllies : radiusEnemies > radiusAllies));
 
-            // Surrounded — burst to clear space; all formCounts bumped +1 vs previous
-            if (closeEnemies >= 3)
-            {
-                // False emperor: always maximum; Ashen: 4–5; non-Ashen: 3–4
-                int form = isFalseEmperor ? 5
-                         : isAshen ? (closeEnemies >= 5 || roll >= 3 ? 5 : 4)
-                                   : (closeEnemies >= 5              ? 4 : 3);
-                CastBurst(agent, hero, form, form, 0);
-                return;
-            }
+            Situation sit;
+            if (closeEnemies >= 3)                           sit = Situation.Surrounded;
+            else if (mountedNear >= 2)                        sit = Situation.ChargeBreak;
+            else if (coneEnemies >= 2 || radiusEnemies >= 2) sit = Situation.Cluster;
+            else                                             sit = Situation.Harass;
 
-            if (isFalseEmperor)
-            {
-                // False emperor: maximum power always — cold fire has no patience
-                if (blastSafe && burstSafe)
-                {
-                    if (roll < 3) CastBlast(agent, hero, 5, 5, 0);
-                    else          CastBurst(agent, hero, 5, 5, 0);
-                }
-                else if (blastSafe) CastBlast(agent, hero, 5, 5, 0);
-                else if (burstSafe) CastBurst(agent, hero, 5, 5, 0);
-                else
-                {
-                    // Cold fire doesn't wait for a clean target
-                    if (roll < 3) CastBurst(agent, hero, 4, 5, 0);
-                    else          CastBlast(agent, hero, 4, 5, 0);
-                }
-            }
-            else if (isAshen)
-            {
-                // Ashen: aggressive, unpredictable — all spells one tier larger than before
-                if (blastSafe && burstSafe)
-                {
-                    switch (roll)
-                    {
-                        case 0: CastBlast(agent, hero, coneEnemies >= 3 ? 4 : 3, coneEnemies >= 3 ? 4 : 3, 0); break;
-                        case 1: CastBurst(agent, hero, radiusEnemies >= 3 ? 4 : 3, radiusEnemies >= 3 ? 4 : 3, 0); break;
-                        case 2: CastBlast(agent, hero, 3, 3, 0); break;
-                        case 3: CastBurst(agent, hero, 3, 3, 0); break;
-                        case 4: CastBlast(agent, hero, 4, coneEnemies >= 3 ? 4 : 3, 0); break;
-                        default: CastBurst(agent, hero, 3, radiusEnemies >= 3 ? 4 : 3, 0); break;
-                    }
-                }
-                else if (blastSafe)
-                {
-                    int form = coneEnemies >= 3 ? 4 : 3;
-                    CastBlast(agent, hero, form, form, 0);
-                }
-                else if (burstSafe)
-                {
-                    int form = radiusEnemies >= 3 ? 4 : 3;
-                    CastBurst(agent, hero, form, form, 0);
-                }
-                else if (nearEnemies > 0)
-                {
-                    // Ashen never idle — harass even without a clean target
-                    if (roll < 3) CastBurst(agent, hero, 3, 3, 0);
-                    else          CastBlast(agent, hero, 3, 3, 0);
-                }
-            }
-            else if (isCalculating)
-            {
-                // Patient: prefers area bursts when enemies cluster; holds fire for clean shots
-                if (burstSafe && radiusEnemies >= 2)
-                    CastBurst(agent, hero, 3, 3, 0);
-                else if (blastSafe && coneEnemies >= 2)
-                    CastBlast(agent, hero, 3, 3, 0);
-                else if (blastSafe)
-                    CastBlast(agent, hero, 3, 3, 0);
-                else if (burstSafe)
-                    CastBurst(agent, hero, 3, 2, 0);
-                // else: no quality opportunity this tick — wait
-            }
-            else if (isImpulsive)
-            {
-                // Direct: fires as soon as any safe forward target appears
-                if (blastSafe)
-                    CastBlast(agent, hero, 3, 3, 0);
-                else if (burstSafe)
-                    CastBurst(agent, hero, 3, 3, 0);
-                // else: no safe target this tick
-            }
-            else
-            {
-                // Default: balanced mix, avoids friendly fire
-                if (blastSafe && (roll <= 2 || !burstSafe))
-                    CastBlast(agent, hero, 3, 3, 0);
-                else if (burstSafe)
-                    CastBurst(agent, hero, 3, 3, 0);
-                else if (blastSafe)
-                    CastBlast(agent, hero, 3, 3, 0);
-                else if (nearEnemies > 0)
-                    CastBurst(agent, hero, 3, 2, 0); // light pressure while repositioning
-            }
+            CastElementAttack(agent, hero, sit, isAshen, isFalseEmperor, temper, lifeFrac,
+                forwardSafe, aroundSafe, emergency: sit == Situation.Surrounded);
         }
 
         // Pyre Lords: highly calculating (Calculating >= 2) non-Ashen lords who prefer to
@@ -320,11 +233,13 @@ namespace AshAndEmber
         // Fire is innate to every mage. Beyond it, each lord has LEARNED a variable
         // repertoire — 0 to 4 of the other elements — fixed by their identity and
         // scaled by their standing (a tier-6 magnate knows more than a landless
-        // knight). When they cast, they draw a random element from what they know,
-        // so a well-studied lord throws stone, mist and gale where a novice only
-        // burns. Fire keeps its tuned blast/burst; the Ashen and the false emperor
-        // keep their high cold-fire scaling (they are the boss tier). The element
-        // kit applies its own visuals, including the Ashen cold mask.
+        // knight). When he casts he does NOT pick at random: he reads the situation
+        // and throws the element that fits it (see CastElementAttack/Preference), so a
+        // well-studied lord roots a crowd with stone or sweeps it with gale where a
+        // novice only burns. Fire runs through the same unified path as every other
+        // element and as the player. The Ashen and the false emperor know them all
+        // and cast at boss power. The element kit applies its own visuals, including
+        // the Ashen cold mask.
         private static readonly MagicElement[] _learnable =
             { MagicElement.Wind, MagicElement.Earth, MagicElement.Water, MagicElement.Spirit };
 
@@ -358,36 +273,9 @@ namespace AshAndEmber
             return known;
         }
 
-        // Draw one element from what this lord knows for the cast at hand.
-        private static MagicElement PickCastElement(Hero hero)
-        {
-            var known = KnownElements(hero);
-            return known[_rng.Next(known.Count)];
-        }
-
         private static int StableHash(string s)
         {
             unchecked { int hash = (int)2166136261; foreach (char c in s) { hash ^= c; hash *= 16777619; } return hash; }
-        }
-
-        // Routes a non-Ashen lord's cast through the element kit when they draw a
-        // non-Fire element. Returns true when it handled the cast (caller returns).
-        private static bool TryCastElement(Agent agent, Hero hero, CastForm form)
-        {
-            if (ColourLordRegistry.IsAshenLord(hero)) return false; // boss tier keeps tuned cold-fire
-            var el = PickCastElement(hero);
-            if (el == MagicElement.Fire) return false;
-            AnnounceEnemyCast(agent, hero, ElementBlurb(el, form));
-            SetCooldown(hero);
-            RecordCast(hero, form);
-            SpellEffects.QueueNpcCastWithWindup(agent, () =>
-            {
-                if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, agent);
-                else                          ElementSpellEffects.CastWall(el, agent);
-                try { SpellEffects.TryCastSound(agent.Position, ColorSchool.Nature); } catch { }
-                try { SpellEffects.TryCastAnimation(agent); } catch { }
-            });
-            return true;
         }
 
         private static string ElementBlurb(MagicElement el, CastForm form)
@@ -413,66 +301,154 @@ namespace AshAndEmber
             }
         }
 
-        private static void CastBarrierWall(Agent agent, Hero hero)
+        // ── Tactical element selection ───────────────────────────────────────────
+        // Each situation has an ordered preference of elements. Fire and Water are
+        // forward cones (best on a target ahead); Wind and Earth strike all around
+        // (best when surrounded); Water and Earth break a cavalry charge (knockback /
+        // root); Spirit is pure control and never endangers friends. A lord throws
+        // the first element he KNOWS that fits — Fire is always known as a fallback.
+        private static readonly MagicElement[] _prefSurrounded =
+            { MagicElement.Wind, MagicElement.Earth, MagicElement.Spirit, MagicElement.Water, MagicElement.Fire };
+        private static readonly MagicElement[] _prefChargeBreak =
+            { MagicElement.Water, MagicElement.Earth, MagicElement.Wind, MagicElement.Fire, MagicElement.Spirit };
+        private static readonly MagicElement[] _prefCluster =
+            { MagicElement.Fire, MagicElement.Water, MagicElement.Earth, MagicElement.Wind, MagicElement.Spirit };
+        private static readonly MagicElement[] _prefHarass =
+            { MagicElement.Fire, MagicElement.Spirit, MagicElement.Wind, MagicElement.Water, MagicElement.Earth };
+
+        private static MagicElement[] Preference(Situation sit)
+        {
+            switch (sit)
+            {
+                case Situation.Surrounded:  return _prefSurrounded;
+                case Situation.ChargeBreak: return _prefChargeBreak;
+                case Situation.Cluster:     return _prefCluster;
+                default:                    return _prefHarass;
+            }
+        }
+
+        // Whether an element's shape can fire without hitting friends in this geometry.
+        private static bool ElementFits(MagicElement el, bool forwardSafe, bool aroundSafe)
+        {
+            switch (el)
+            {
+                case MagicElement.Fire:
+                case MagicElement.Water:  return forwardSafe;  // forward cones
+                case MagicElement.Wind:
+                case MagicElement.Earth:  return aroundSafe;   // strike all around
+                default:                  return true;         // Spirit — control only, 0 damage
+            }
+        }
+
+        private static void CastElementAttack(Agent agent, Hero hero, Situation sit,
+            bool isAshen, bool isFalseEmperor, CasterTemper temper, float lifeFrac,
+            bool forwardSafe, bool aroundSafe, bool emergency)
+        {
+            try
+            {
+                var known = KnownElements(hero);
+                // Ashen, impulsive lords, and anyone fighting for their life will throw
+                // even without a clean lane; patient lords hold fire until it's safe.
+                bool reckless = isAshen || emergency || temper == CasterTemper.Impulsive;
+
+                MagicElement? pick = null;
+                foreach (var el in Preference(sit))
+                {
+                    if (!known.Contains(el)) continue;
+                    if (reckless || ElementFits(el, forwardSafe, aroundSafe)) { pick = el; break; }
+                }
+                if (pick == null)
+                {
+                    if (!reckless) return;      // no safe opportunity — wait, keep the cooldown
+                    pick = known[0];            // Fire — reckless casters loose it anyway
+                }
+                MagicElement chosen = pick.Value;
+
+                float situationBase = emergency ? NpcCastPlanner.BaseDesperate
+                                    : sit == Situation.Harass ? NpcCastPlanner.BaseHarass
+                                    : NpcCastPlanner.BaseCluster;
+                float power = isAshen
+                    ? (isFalseEmperor ? 1.2f : 1.0f)   // boss tier overcharges, pays no life
+                    : NpcCastPlanner.CastPower(situationBase, lifeFrac, temper, emergency);
+
+                AnnounceEnemyCast(agent, hero, ElementBlurb(chosen, CastForm.Attack));
+                SetCooldown(hero);
+                RecordCast(hero, CastForm.Attack);
+                SpellEffects.QueueNpcCastWithWindup(agent, () =>
+                {
+                    ElementSpellEffects.CastAttack(chosen, agent, power);
+                    PlayCastFx(agent, chosen, isAshen);
+                });
+            }
+            catch { }
+        }
+
+        // Pyre Lord opener — a wall. Prefers stone (roots) or fire (burns) if known.
+        private static void CastElementWall(Agent agent, Hero hero,
+            bool isAshen, bool isFalseEmperor, CasterTemper temper, float lifeFrac)
         {
             try
             {
                 _pyreBarriersPlaced.Add(hero.StringId);
-                if (TryCastElement(agent, hero, CastForm.Wall)) return;
-                AnnounceEnemyCast(agent, hero, "raises a wall of fire.");
+                var known = KnownElements(hero);
+                MagicElement chosen = MagicElement.Fire;
+                foreach (var el in new[] { MagicElement.Earth, MagicElement.Fire,
+                                           MagicElement.Water, MagicElement.Wind, MagicElement.Spirit })
+                    if (known.Contains(el)) { chosen = el; break; }
+
+                float power = isAshen ? (isFalseEmperor ? 1.2f : 1.0f)
+                    : NpcCastPlanner.CastPower(NpcCastPlanner.BaseCluster, lifeFrac, temper, emergency: false);
+
+                AnnounceEnemyCast(agent, hero, ElementBlurb(chosen, CastForm.Wall));
                 SetCooldown(hero);
                 RecordCast(hero, CastForm.Wall);
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
-                    SpellEffects.ExecuteNpcBarrier(agent, 3, 3, 0, agent.Team);
-                    ApplyCastVisuals(agent);
+                    ElementSpellEffects.CastWall(chosen, agent, power);
+                    PlayCastFx(agent, chosen, isAshen);
                 });
             }
             catch { }
         }
 
-        private static void CastBlast(Agent agent, Hero hero, int formCount, int dmg, int restore)
+        // Self / ally heal. A lord who knows Spirit raises the warding wall (heals
+        // allies + self, lifts morale); otherwise he turns the fire inward — the one
+        // working still routed through the old path, because it carries the
+        // restorative brands (Ashveil / Hearthlight / Reflect) and lets a fire-only
+        // lord mend himself at all.
+        private static void CastHeal(Agent agent, Hero hero, bool isAshen, CasterTemper temper, float lifeFrac)
         {
-            try
+            if (KnownElements(hero).Contains(MagicElement.Spirit))
             {
-                if (TryCastElement(agent, hero, CastForm.Attack)) return;
-                bool isAshen = ColourLordRegistry.IsAshenLord(hero);
-                string blurb = formCount >= 4
-                    ? (isAshen ? "cold fire tears forward." : "channels a devastating blast.")
-                    : (isAshen ? "cold fire lashes out." : "shapes fire into a forward blade.");
-                AnnounceEnemyCast(agent, hero, blurb);
-                SetCooldown(hero);
-                RecordCast(hero, CastForm.Attack);
-                SpellEffects.QueueNpcCastWithWindup(agent, () =>
+                try
                 {
-                    SpellEffects.ExecuteNpcBlast(agent, formCount, dmg, restore, agent.Team);
-                    ApplyCastVisuals(agent);
-                });
+                    // Mending is survival — pour it out (emergency floor on the power).
+                    float power = isAshen ? 1.0f
+                        : NpcCastPlanner.CastPower(NpcCastPlanner.BaseCluster, lifeFrac, temper, emergency: true);
+                    AnnounceEnemyCast(agent, hero, "raises a ward — the wounded are mended.");
+                    SetCooldown(hero);
+                    RecordCast(hero, CastForm.Wall);
+                    SpellEffects.QueueNpcCastWithWindup(agent, () =>
+                    {
+                        ElementSpellEffects.CastWall(MagicElement.Spirit, agent, power);
+                        PlayCastFx(agent, MagicElement.Spirit, isAshen);
+                    });
+                    return;
+                }
+                catch { }
             }
-            catch { }
+            CastHealBurst(agent, hero);
         }
 
-        private static void CastBurst(Agent agent, Hero hero, int formCount, int dmg, int restore)
+        // Cast sound + gesture for a unified element working. The element effects
+        // draw their own light and the caster's glow; this adds the audible cast.
+        private static void PlayCastFx(Agent agent, MagicElement el, bool isAshen)
         {
-            try
-            {
-                // Restore-heavy bursts are self-heals — those stay element-agnostic
-                // (any mage can turn the fire inward). Offensive bursts go elemental.
-                if (restore < dmg && TryCastElement(agent, hero, CastForm.Attack)) return;
-                bool isAshen = ColourLordRegistry.IsAshenLord(hero);
-                string blurb = formCount >= 4
-                    ? (isAshen ? "tears the veil — cold fire erupts." : "channels a great eruption.")
-                    : (isAshen ? "erupts with cold fire." : "fire bursts outward.");
-                AnnounceEnemyCast(agent, hero, blurb);
-                SetCooldown(hero);
-                RecordCast(hero, CastForm.Attack);
-                SpellEffects.QueueNpcCastWithWindup(agent, () =>
-                {
-                    SpellEffects.ExecuteNpcBurst(agent, formCount, dmg, restore, agent.Team);
-                    ApplyCastVisuals(agent);
-                });
-            }
-            catch { }
+            ColorSchool sfx = isAshen ? ColorSchool.Ashen
+                            : el == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature;
+            try { SpellEffects.TryCastSound(agent.Position, sfx); } catch { }
+            try { SpellEffects.TryCastAnimation(agent); } catch { }
+            try { SpellEffects.RecordMagicCast(agent.Position); } catch { }
         }
 
         private static void CastHealBurst(Agent agent, Hero hero)
@@ -518,6 +494,11 @@ namespace AshAndEmber
                 int calc = hero.GetTraitLevel(DefaultTraits.Calculating);
                 if (calc < 0) cd = ImpulsiveCooldown;
                 else if (calc > 0) cd = CalculatingCooldown;
+                // Near-burnout lords stretch their cadence to hoard their remaining
+                // years — a calculating lord goes quiet, an impulsive one hardly slows.
+                CasterTemper temper = ColourLordRegistry.TemperOf(hero);
+                float lifeFrac = NpcCastPlanner.LifeFrac(ColourLordRegistry.LifeBudgetYears(hero));
+                cd *= NpcCastPlanner.CooldownMult(lifeFrac, temper);
                 _cooldowns[hero.StringId] = cd;
             }
             catch { }

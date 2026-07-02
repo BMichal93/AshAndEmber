@@ -69,8 +69,13 @@ namespace AshAndEmber
                     CrystalType crystalType;
                     if (!TryFindEquippedCrystal(hero, out crystalType)) continue;
 
-                    // Use bias: prefer healing when hurt, otherwise random 50 % chance per scan.
-                    if (_rng.NextDouble() > 0.40) continue;
+                    // Situational use: heal-stones want their bearer hurt, offensive
+                    // stones want enemies in reach — never spent on empty air.
+                    float hpFrac = 1f;
+                    try { hpFrac = a.Health / Math.Max(a.HealthLimit, 1f); } catch { }
+                    int enemiesInRange = CountEnemiesInRange(a, CrystalMath.CrystalUseRange(crystalType));
+                    if (!CrystalMath.NpcShouldUse(crystalType, hpFrac, enemiesInRange, (float)_rng.NextDouble()))
+                        continue;
 
                     CrystalEffects.FireEffect(a, crystalType);
                     _cooldowns[a] = AgentCooldown;
@@ -125,6 +130,22 @@ namespace AshAndEmber
         {
             try { return (a.Character as TaleWorlds.CampaignSystem.CharacterObject)?.HeroObject; }
             catch { return null; }
+        }
+
+        private static int CountEnemiesInRange(Agent a, float range)
+        {
+            try
+            {
+                float r2 = range * range;
+                int n = 0;
+                foreach (Agent e in SpellEffects.EnemiesOf(a))
+                {
+                    float dx = e.Position.x - a.Position.x, dy = e.Position.y - a.Position.y;
+                    if (dx * dx + dy * dy <= r2) n++;
+                }
+                return n;
+            }
+            catch { return 0; }
         }
     }
 }
