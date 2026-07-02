@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Lords speak in their own tongue — flavourful dialogue for every hall
+- **Tribes of the East** lords now answer with the fanatical, blood-hungry voice of the God-King's riders, in place of vanilla Khuzait lines.
+- **Northmen** lords now answer bluntly and bravely, as befits the folk holding the cold line against the Ashen.
+- **Duneborn** lords now answer with the distant, calculating menace of the desert's debt-collectors and scholars.
+- Each faction speaks from its own pool of lines across greetings, barter, defeat, special requests, and captivity — the same lord always says the same line, mirroring the existing Holy Temple dialogue. The Ashen's wordless "..." remains untouched.
+
 ### The grimoire's Talents open the true Codex
 - The grimoire's **Talents** button (Left Alt + X / LB + RB) now opens the **Codex of the Inner Fire** — the living elemental paths (Fire, Wind, Earth, Water, Spirit and the Steel / Blood / Nature disciplines) — instead of the retired fire classes. (Legacy saves keep whatever they already learned.)
 

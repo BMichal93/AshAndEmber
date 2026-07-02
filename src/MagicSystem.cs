@@ -81,6 +81,9 @@ namespace AshAndEmber
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { TempleDialogue.Register(campaignStarter);   } catch { }
+                try { TribesDialogue.Register(campaignStarter);   } catch { }
+                try { NorthmenDialogue.Register(campaignStarter); } catch { }
+                try { DunebornDialogue.Register(campaignStarter); } catch { }
                 try { SchemeSystem.Initialize();              } catch { }
                 try { ExchangeCampaignBehavior.ResetState();  } catch { }
                 try { SeaCampaignBehavior.ResetForNewGame();  } catch { }
