@@ -169,7 +169,7 @@ namespace AshAndEmber
             var available = TalentSystem.All
                 .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id) && !t.IsInfo && !t.IsConsumable)
                 .OrderBy(_ => _rng.Next())
-                .Take(2)
+                .Take(4)
                 .ToList();
 
             foreach (var t in available)
