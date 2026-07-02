@@ -65,17 +65,17 @@ namespace AshAndEmber
         // The opening lore, split into paragraphs.
         private static readonly string[] Paragraphs =
         {
-            "First, there was the fire. The power that breathed life into the world, raised mountains, stilled seas. " +
+            "First, there was the Fire. The power that breathed life into the world, raised mountains, stilled seas. " +
             "Then came humans. They harnessed the fire and built a great empire upon it. With the fire, humans built great cities, raised armies and brought order to the world.",
 
             "The order lasted a thousand years under the banner of the Empire and aegis of the Temple. " +
-            "There were some who wanted to use the Fire. " +
-            "In the East, sorcerer-kings raised an army to ride against the first empire. They brought fire and blood.",
+            "There were some who wanted to use the Fire.",
 
-            "Then, the last emperor died, and his council and family reached for his crown. The empire was shattered. " +
+            "In the East, sorcerer-kings raised an army to ride against the first empire. They brought fire and blood. " +
             "Now, the fire fades. The ancient forces raise their head in the north.",
 
-            "The Ashen mages who defied death are gathering their strengths, and when the time comes, nothing will stop the grey march from the wastelands. " +
+            "The Ashen mages who defied death are gathering their strengths. " +
+            "With the Emperor dead, and three contestants reaching for the shattered crown, when the time comes, nothing will stop the grey march from the wastelands. " +
             "In the last days of the Empire, among the ruins, you began your journey. Where it will lead you, O Firelord?",
         };
 
