@@ -8,6 +8,12 @@
 - **Aserai is now presented as the Duneborn** — the same treatment as Vlandia → The Holy Temple, Khuzait → Tribes of the East, and Sturgia → Northmen. The culture reads "Duneborn" on the character sheet, the encyclopedia, troop culture, and the character-creation card. They remain mechanically ordinary Aserai — only the name and the blurb change.
 - **New lore:** the Duneborn once kept the same fire-covenant as every culture, until a generations-long drought broke it along with their wells. What the first Duneborn found in the black-glass caverns beneath the dunes asked no devotion — only blood — and cares nothing for what is done with the power it grants. This finally gives lore grounding to the existing (and previously unexplained) tendency of Aserai lords to be quietly seeded with Dark Gifts.
 
+### Lords speak in their own tongue — flavourful dialogue for every hall
+- **Tribes of the East** lords now answer with the fanatical, blood-hungry voice of the God-King's riders, in place of vanilla Khuzait lines.
+- **Northmen** lords now answer bluntly and bravely, as befits the folk holding the cold line against the Ashen.
+- **Duneborn** lords now answer with the distant, calculating menace of the desert's debt-collectors and scholars.
+- Each faction speaks from its own pool of lines across greetings, barter, defeat, special requests, and captivity — the same lord always says the same line, mirroring the existing Holy Temple dialogue. The Ashen's wordless "..." remains untouched.
+
 ### The grimoire's Talents open the true Codex
 - The grimoire's **Talents** button (Left Alt + X / LB + RB) now opens the **Codex of the Inner Fire** — the living elemental paths (Fire, Wind, Earth, Water, Spirit and the Steel / Blood / Nature disciplines) — instead of the retired fire classes. (Legacy saves keep whatever they already learned.)
 
