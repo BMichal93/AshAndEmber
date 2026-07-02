@@ -9,6 +9,6 @@ namespace AshAndEmber
     public static partial class SpellEffects
     {
         // All campaign map spell effects are now in TalentSystem.cs.
-        // NPC casting uses TalentSystem.ExecuteNpcMapSpell(hero, talentId).
+        // NPC casting uses TalentSystem.ExecuteNpcElementMapSpell(hero, element).
     }
 }

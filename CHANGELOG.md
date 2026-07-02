@@ -4,13 +4,17 @@
 
 ## Unreleased
 
+### The Imperial Marches
+- **Qasira now answers to the Southern Empire** from the world's birth, joining Razih on the Empire's desert border (Sanala already flies the Western Empire's banner). Assigned through the same border-reassignment pass that hands the other frontier cities to their Empires, with the same nearby-castle sweep.
+
 ## v0.36.0
 
 ### Mage lords, priests and crystal-bearers fight like people, not scripts
-- **NPC mage lords now cast on the same unified element system as the player.** Their fire moved off the old pre-merge engine onto the very cone the player throws — same shape, damage, and power-scaling — so a lord's Fire, Wind, Earth, Water and Spirit all read as one art.
+- **NPC mages now wield exactly the same magic the player does** — the five unified elements (Fire, Wind, Earth, Water, Spirit) and their Ashen cold variants, and nothing of the retired fire tradition. Their battle fire moved off the old pre-merge engine onto the very cone the player throws (same shape, damage, power-scaling), and the old spell-brands (the cold that takes, the sundering, the smoulder) are gone from their casting just as they are from the player's.
+- **On the campaign map they cast the element workings too** — Emberfall, Scattering Gale, Deeproot Blight, Tidewash and Farsight (Coldfall, Stormfront, Ashrot, Snowmelt and the Void's Sight for the Ashen) — drawn from the elements each lord has learned, in place of the old fire-path map spells.
 - **They choose the element that fits the moment** instead of throwing at random: a gale or a rooting stone when surrounded, a slowing wave or roots to break a cavalry charge, a forward fire cone at a lone target, cold dread to unmake a formation. A lord only uses what he has actually learned; Fire is always there as a fallback.
 - **A lord spends his life like a person spends a purse.** Casting costs him years of life expectancy, so a young lord with time to burn casts big and often, while one near his burning-out grows careful — weaker workings, cast rarely — and pours out full power only when his life is on the line. Temperament tilts it: **impulsive** lords spend recklessly, **calculating** lords hoard their years (in battle *and* on the campaign map).
-- The **Ashen and the False Emperor** are unchanged in menace: they pay no life, cast at full boss power, and their brands (the cold that takes, the sundering, the smoulder) still ride their fire.
+- The **Ashen and the False Emperor** keep their menace through raw power, not old brands: they pay no life, know all five elements, and cast at full boss strength.
 - **Crystal-bearers use crystals when it helps** — a warmth-stone when they are actually hurt, an offensive stone only when enemies are in reach — instead of a blind roll.
 - **The devout answer the moment** — grace lords and priests now mend the wounded, raise a shield under a press, call judgement down on the Ashen, or rally a steady line, rather than praying at random. Grace remains an unlimited wellspring.
 

@@ -7,8 +7,8 @@
 // against a charge, a fire cone at a lone target), at a POWER and CADENCE set by
 // his remaining life expectancy and temperament (NpcCastPlanner): young/impulsive
 // lords spend big and fast, old/calculating lords hoard their years. Ashen and the
-// False Emperor pay no life and cast at boss power. Offensive enchantments still
-// ride a lord's fire via SpellEffects.ApplyNpcElementEnchantments. Tracks casts
+// False Emperor pay no life and cast at boss power. NPC lords wield PURE element
+// magic exactly like the player — no retired enchantment brands. Tracks casts
 // per battle for post-battle life-expectancy spend.
 // =============================================================================
 
@@ -230,53 +230,16 @@ namespace AshAndEmber
         }
 
         // ── Unified elemental kit for NPC mage lords ─────────────────────────────
-        // Fire is innate to every mage. Beyond it, each lord has LEARNED a variable
-        // repertoire — 0 to 4 of the other elements — fixed by their identity and
-        // scaled by their standing (a tier-6 magnate knows more than a landless
-        // knight). When he casts he does NOT pick at random: he reads the situation
-        // and throws the element that fits it (see CastElementAttack/Preference), so a
-        // well-studied lord roots a crowd with stone or sweeps it with gale where a
-        // novice only burns. Fire runs through the same unified path as every other
-        // element and as the player. The Ashen and the false emperor know them all
-        // and cast at boss power. The element kit applies its own visuals, including
-        // the Ashen cold mask.
-        private static readonly MagicElement[] _learnable =
-            { MagicElement.Wind, MagicElement.Earth, MagicElement.Water, MagicElement.Spirit };
-
-        // How many elements beyond Fire this lord has learned (0..4).
-        private static int LearnedCount(Hero hero)
-        {
-            try
-            {
-                if (hero == null) return 0;
-                if (ColourLordRegistry.IsAshenLord(hero)) return 4; // the Ashen know them all
-                int tier   = Math.Max(0, Math.Min(6, hero.Clan?.Tier ?? 0));
-                int jitter = (int)((uint)StableHash(hero.StringId ?? "") % 3); // 0..2
-                return Math.Max(0, Math.Min(4, (tier + jitter) / 2));
-            }
-            catch { return 0; }
-        }
-
-        // The lord's repertoire, Fire first, then their learned elements (stable).
+        // A lord's learned repertoire lives on ColourLordRegistry.KnownElements (the
+        // canonical source, shared with the campaign-map AI). When he casts he does
+        // NOT pick at random: he reads the situation and throws the element that fits
+        // it (see CastElementAttack/Preference), so a well-studied lord roots a crowd
+        // with stone or sweeps it with gale where a novice only burns. Fire and every
+        // other element run through the same unified path as the player — no old
+        // fire-path spells or brands. The Ashen and the false emperor know them all
+        // and cast at boss power; the element kit applies the Ashen cold mask itself.
         private static System.Collections.Generic.List<MagicElement> KnownElements(Hero hero)
-        {
-            var known = new System.Collections.Generic.List<MagicElement> { MagicElement.Fire };
-            int n = LearnedCount(hero);
-            if (n > 0 && hero != null)
-            {
-                string id = hero.StringId ?? "";
-                foreach (var el in _learnable
-                    .OrderBy(e => StableHash(id + "|" + (int)e))
-                    .Take(n))
-                    known.Add(el);
-            }
-            return known;
-        }
-
-        private static int StableHash(string s)
-        {
-            unchecked { int hash = (int)2166136261; foreach (char c in s) { hash ^= c; hash *= 16777619; } return hash; }
-        }
+            => ColourLordRegistry.KnownElements(hero);
 
         private static string ElementBlurb(MagicElement el, CastForm form)
         {
@@ -451,6 +414,9 @@ namespace AshAndEmber
             try { SpellEffects.RecordMagicCast(agent.Position); } catch { }
         }
 
+        // Turn the fire inward — an element-agnostic self-mend for a lord who has not
+        // learned the Spirit ward. A DIRECT heal (no SpellCast), so it carries none of
+        // the retired enchantment brands: the same pure magic the player wields.
         private static void CastHealBurst(Agent agent, Hero hero)
         {
             try
@@ -458,15 +424,24 @@ namespace AshAndEmber
                 AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
                 SetCooldown(hero);
                 RecordCast(hero, CastForm.Attack);
-                // 3 Restore inputs: meets the Rouse enchantment threshold (>= 3)
-                // so lords who own Rouse can summon allies when healing.
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
-                    SpellEffects.ExecuteNpcBurst(agent, 2, 0, 3, agent.Team);
+                    try { SpellEffects.HealAgent(agent, HealthCap(agent) * 0.35f); } catch { }
+                    foreach (Agent ally in SpellEffects.AlliesOf(agent))
+                    {
+                        if (ally == agent || !ally.IsActive()) continue;
+                        if (ally.Position.Distance(agent.Position) > 8f) continue;
+                        try { SpellEffects.HealAgent(ally, HealthCap(ally) * 0.15f); } catch { }
+                    }
                     ApplyCastVisuals(agent);
                 });
             }
             catch { }
+        }
+
+        private static float HealthCap(Agent a)
+        {
+            try { return a.HealthLimit > 0f ? a.HealthLimit : 100f; } catch { return 100f; }
         }
 
         private static void ApplyCastVisuals(Agent agent)

@@ -2,11 +2,13 @@
 // ASH AND EMBER — AI/ColourLordRegistry.cs
 // Tracks which NPC lords carry the gift (isMage).
 // Population target: ~20% of all lords. Weekly regulator keeps it stable.
-// Each mage lord is seeded with a path archetype (Reaper / Seer / Warden /
-// Heartfire / Pyrelord / Ashbinder) that determines their campaign spells
-// and battle enchantments. Ashen lords override to the cold-fire destroyer set.
-// NPC campaign map spells use TalentSystem.ExecuteNpcMapSpell.
-// Mage lords age when they cast and die at age 100.
+// Mage lords cast the unified element magic — the same five elements the player
+// wields (KnownElements), in battle (ColourLordAI) and on the campaign map
+// (DailyMapCast → TalentSystem.ExecuteNpcElementMapSpell). Ashen lords know them
+// all and wear the cold mask. Casting spends life expectancy; a lord burns out and
+// dies once he reaches his (spend-reduced) death age. The legacy path-archetype
+// talents (_lordTalents) are retained only for save compatibility and Dark Gift
+// seeding — they no longer drive casting.
 // =============================================================================
 
 using System;
@@ -369,6 +371,50 @@ namespace AshAndEmber
             return CasterTemper.Balanced;
         }
 
+        // ── A lord's learned elements (canonical — used by battle AND map AI) ──────
+        // Fire is innate to every mage. Beyond it a lord has LEARNED 0–4 of the other
+        // elements, fixed by his identity and scaled by his standing (a tier-6 magnate
+        // knows more than a landless knight). The Ashen know them all. Both the battle
+        // AI (ColourLordAI) and the campaign-map AI (DailyMapCast) draw from this, so a
+        // lord uses ONLY the unified element magic the player wields — no old fire-path
+        // spells or brands.
+        private static readonly MagicElement[] _learnableElements =
+            { MagicElement.Wind, MagicElement.Earth, MagicElement.Water, MagicElement.Spirit };
+
+        public static int LearnedElementCount(Hero hero)
+        {
+            try
+            {
+                if (hero == null) return 0;
+                if (IsAshenLord(hero)) return 4;                     // the Ashen know them all
+                int tier   = Math.Max(0, Math.Min(6, hero.Clan?.Tier ?? 0));
+                int jitter = (int)((uint)StableHash(hero.StringId ?? "") % 3); // 0..2
+                return Math.Max(0, Math.Min(4, (tier + jitter) / 2));
+            }
+            catch { return 0; }
+        }
+
+        // The lord's repertoire, Fire first, then his learned elements (stable order).
+        public static List<MagicElement> KnownElements(Hero hero)
+        {
+            var known = new List<MagicElement> { MagicElement.Fire };
+            int n = LearnedElementCount(hero);
+            if (n > 0 && hero != null)
+            {
+                string id = hero.StringId ?? "";
+                foreach (var el in _learnableElements
+                    .OrderBy(e => StableHash(id + "|" + (int)e))
+                    .Take(n))
+                    known.Add(el);
+            }
+            return known;
+        }
+
+        private static int StableHash(string s)
+        {
+            unchecked { int hash = (int)2166136261; foreach (char c in s) { hash ^= c; hash *= 16777619; } return hash; }
+        }
+
         // Kill all mage lords who have reached their (expectancy-reduced) death age
         // (called from weekly tick). The Ashen never burn out.
         public static void CheckAgeLimit()
@@ -458,15 +504,13 @@ namespace AshAndEmber
                     }
                     if (_rng.Next(100) >= castChance) continue;
 
-                    if (!_lordTalents.TryGetValue(id, out var talents) || talents.Count == 0) continue;
-                    // Pick a spell talent (not passive)
-                    var spellTalents = talents.Where(t => t >= 1 && t <= 8).ToList();
-                    if (spellTalents.Count == 0) continue;
-
-                    TalentId chosen = (TalentId)spellTalents[_rng.Next(spellTalents.Count)];
+                    // Cast one of the elements this lord has learned — the same unified
+                    // element map workings the player wields, no old fire-path spells.
+                    var known = KnownElements(hero);
+                    MagicElement chosen = known[_rng.Next(known.Count)];
                     try
                     {
-                        TalentSystem.ExecuteNpcMapSpell(hero, chosen);
+                        TalentSystem.ExecuteNpcElementMapSpell(hero, chosen);
                         // False emperor recovers fastest; Blight lords quickly; normal lords need days
                         _campaignCooldowns[id] = isFalseEmperor ? 2 + _rng.Next(3)
                                                : isBlight       ? 5 + _rng.Next(4)

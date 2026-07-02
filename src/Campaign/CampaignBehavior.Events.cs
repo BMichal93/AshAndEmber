@@ -221,7 +221,7 @@ namespace AshAndEmber
             // Charas, Galend, Pravend (Vlandia → West)      → Western  Empire
             // Quyaz, Sanala           (Aserai  → West)      → Western  Empire
             // ── Southern Empire ───────────────────────────────────────────────
-            // Razih     (by name) + nearby castles          → Southern Empire
+            // Razih, Qasira (by name) + nearby castles      → Southern Empire
             // Akkalat             (Khuzait → South border)  → Southern Empire
             // ── Ashen kingdom ─────────────────────────────────────────────────
             // Ostican   + nearby castles                    → Ashen kingdom
@@ -291,8 +291,9 @@ namespace AshAndEmber
             // ── Southern Empire (by name) ─────────────────────────────────────
             if (southLeader != null)
             {
-                // Razih: Aserai city near the Southern Empire border
+                // Razih, Qasira: Aserai cities near the Southern Empire border
                 try { AssignSettlementAndNearby("Razih",   southLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Qasira",  southLeader, 40f); } catch { }
                 // Akkalat: Khuzait city at the Khuzait–South border
                 try { AssignSettlementAndNearby("Akkalat", southLeader, 40f); } catch { }
             }

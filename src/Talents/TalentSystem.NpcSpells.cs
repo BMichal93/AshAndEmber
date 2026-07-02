@@ -22,33 +22,36 @@ namespace AshAndEmber
 {
     public partial class TalentSystem
     {
-        // ── NPC campaign map spell execution ─────────────────────────────────
-        public static void ExecuteNpcMapSpell(Hero caster, TalentId id)
+        // ── NPC campaign map spell execution (unified element magic) ─────────────
+        // A mage lord casts ONE map working per element he has learned, mirroring the
+        // player's five element map spells (ElementMapSpells) but centred on his own
+        // party and faction. No old fire-path workings — the same magic the player
+        // wields. The Ashen wear the cold mask (naming) over the same effects.
+        public static void ExecuteNpcElementMapSpell(Hero caster, MagicElement el)
         {
             if (caster == null) return;
+            bool isAshen = ColourLordRegistry.IsAshenLord(caster);
             string blurb = null;
             try
             {
-                switch (id)
+                switch (el)
                 {
-                    case TalentId.BreakWills:  NpcBreakWills(caster);  blurb = "casts Unsettle — dread spreads through an enemy party."; break;
-                    case TalentId.Inspire:     NpcInspire(caster);     blurb = "kindles their warband — morale rises."; break;
-                    case TalentId.Plague:      NpcPlague(caster);      blurb = "works a Wither — a village's hearth fades."; break;
-                    case TalentId.Extinguish:  NpcExtinguish(caster);  blurb = "casts Extinguish — fires snuffed in a distant party."; break;
-                    case TalentId.Clairvoyance:NpcClairvoyance(caster);blurb = "reads the threads — power flows to them."; break;
-                    default: break;
+                    case MagicElement.Fire:   NpcEmberfall(caster);      blurb = isAshen ? "looses a Coldfall — the freeze guts an enemy host."          : "calls Emberfall — fire guts an enemy host."; break;
+                    case MagicElement.Wind:   NpcScatteringGale(caster); blurb = isAshen ? "raises a Stormfront — an enemy host is thrown into disorder." : "raises a Scattering Gale — an enemy host is thrown into disorder."; break;
+                    case MagicElement.Earth:  NpcDeeprootBlight(caster); blurb = isAshen ? "spreads the Ashrot — a village's hearth withers."            : "works a Deeproot Blight — a village's hearth withers."; break;
+                    case MagicElement.Water:  NpcTidewash(caster);       blurb = isAshen ? "draws the Snowmelt — their column is mended and steadied."    : "draws a Tidewash — their column is mended and steadied."; break;
+                    case MagicElement.Spirit: NpcFarsight(caster);       blurb = isAshen ? "casts the Void's Sight — power flows to them."                : "casts Farsight — power flows to them."; break;
                 }
             }
             catch { }
 
             if (blurb != null)
             {
-                bool isAshen = ColourLordRegistry.IsAshenLord(caster);
                 Color c = isAshen ? new Color(0.38f, 0.50f, 0.75f) : new Color(0.65f, 0.45f, 0.8f);
                 InformationManager.DisplayMessage(new InformationMessage($"{caster.Name} — {blurb}", c));
             }
 
-            if (ColourLordRegistry.IsAshenLord(caster)) ApplyBlightDrain(caster);
+            if (isAshen) ApplyBlightDrain(caster);
             else ColourLordRegistry.SpendLordLifeExpectancy(caster, 1);
         }
 
@@ -79,7 +82,8 @@ namespace AshAndEmber
             catch { }
         }
 
-        private static void NpcBreakWills(Hero caster)
+        // Wind — Scattering Gale: an enemy host near the caster is thrown into disorder.
+        private static void NpcScatteringGale(Hero caster)
         {
             Vec2 pos = caster.PartyBelongedTo?.GetPosition2D ?? Vec2.Zero;
             var target = MobileParty.All
@@ -91,7 +95,7 @@ namespace AshAndEmber
             var tClan = target.LeaderHero?.Clan;
             if (tClan != null) tClan.Influence = Math.Max(0f, tClan.Influence - 10f);
 
-            // Mage-to-mage interference: if Unsettle hits a fellow mage lord, threads cross — aging cost and log
+            // Mage-to-mage interference: crossing a fellow mage lord's fire costs both.
             var targetHero = target.LeaderHero;
             if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
             {
@@ -99,19 +103,32 @@ namespace AshAndEmber
                 string casterName = caster.Name?.ToString() ?? "A mage";
                 string targetName = targetHero.Name?.ToString() ?? "another mage";
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"{casterName}'s Unsettle crossed {targetName}'s fire — threads tangled. Both pay.",
+                    $"{casterName}'s gale crossed {targetName}'s fire — threads tangled. Both pay.",
                     new Color(0.55f, 0.40f, 0.70f)));
             }
         }
 
-        private static void NpcInspire(Hero caster)
+        // Water — Tidewash: the caster's own column is heartened and its wounded mended.
+        private static void NpcTidewash(Hero caster)
         {
             var party = caster.PartyBelongedTo;
             if (party == null) return;
             party.RecentEventsMorale += 20f;
+            try
+            {
+                var roster = party.MemberRoster;
+                var wounded = roster.GetTroopRoster().Where(e => !e.Character.IsHero && e.WoundedNumber > 0).ToList();
+                foreach (var entry in wounded)
+                {
+                    int heal = Math.Min(entry.WoundedNumber, 6);
+                    try { roster.AddToCounts(entry.Character, 0, false, -heal); } catch { }
+                }
+            }
+            catch { }
         }
 
-        private static void NpcPlague(Hero caster)
+        // Earth — Deeproot Blight: an enemy village's hearth withers.
+        private static void NpcDeeprootBlight(Hero caster)
         {
             var villages = Settlement.All
                 .Where(s => s.IsVillage && s.Village != null && s.MapFaction != caster.MapFaction).ToList();
@@ -120,7 +137,8 @@ namespace AshAndEmber
             v.Village.Hearth = Math.Max(10f, v.Village.Hearth * 0.80f);
         }
 
-        private static void NpcExtinguish(Hero caster)
+        // Fire — Emberfall: fire falls on an enemy host near the caster, guttering its ranks.
+        private static void NpcEmberfall(Hero caster)
         {
             Vec2 pos = caster.PartyBelongedTo?.GetPosition2D ?? Vec2.Zero;
             var target = MobileParty.All
@@ -134,7 +152,7 @@ namespace AshAndEmber
             if (troops.Count == 0) return;
             try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch { }
 
-            // Mage-to-mage interference: if Extinguish hits a fellow mage lord, threads cross
+            // Mage-to-mage interference: crossing a fellow mage lord's fire costs both.
             var targetHero = target.LeaderHero;
             if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
             {
@@ -142,12 +160,13 @@ namespace AshAndEmber
                 string casterName = caster.Name?.ToString() ?? "A mage";
                 string targetName = targetHero.Name?.ToString() ?? "another mage";
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"{casterName}'s Extinguish grazed {targetName}'s fire — the cold spreads where it was not aimed.",
-                    new Color(0.40f, 0.55f, 0.75f)));
+                    $"{casterName}'s Emberfall grazed {targetName}'s fire — the flame spread where it was not aimed.",
+                    new Color(0.75f, 0.45f, 0.30f)));
             }
         }
 
-        private static void NpcClairvoyance(Hero caster)
+        // Spirit — Farsight: the caster reads the currents of power; renown and influence flow to him.
+        private static void NpcFarsight(Hero caster)
         {
             try
             {
