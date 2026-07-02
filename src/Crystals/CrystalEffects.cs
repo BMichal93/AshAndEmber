@@ -62,7 +62,7 @@ namespace AshAndEmber
             public const float DetectRadius  = 1.5f;
         }
 
-        private static CrystalMissileState _crystalMissile = null;
+        private static readonly List<CrystalMissileState> _crystalMissiles = new List<CrystalMissileState>();
 
         // ── State management ──────────────────────────────────────────────────
 
@@ -73,7 +73,7 @@ namespace AshAndEmber
             _veilSlow.Clear();
             _duskSlow.Clear();
             _lastSwingTime = 0f;
-            ClearCrystalMissile();
+            _crystalMissiles.Clear();
         }
 
         // ── Daylight check ────────────────────────────────────────────────────
@@ -267,15 +267,6 @@ namespace AshAndEmber
         {
             if (caster == null || !caster.IsActive()) return;
 
-            // If a missile is already in flight, clear it and fire a new one.
-            if (_crystalMissile != null)
-            {
-                ClearCrystalMissile();
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "Embershard — shard redirected.", new Color(0.9f, 0.3f, 0.2f)));
-                return;
-            }
-
             Vec3 fwd = caster.LookDirection.NormalizedCopy();
             Vec3 startPos = caster.Position + fwd * 1.5f + new Vec3(0f, 0f, 1.2f);
 
@@ -286,7 +277,7 @@ namespace AshAndEmber
                 ? CrystalMath.SolarFlareRadius(CrystalMath.EmberRadius)
                 : CrystalMath.EmberRadius;
 
-            _crystalMissile = new CrystalMissileState
+            var missile = new CrystalMissileState
             {
                 Position = startPos,
                 Forward = fwd,
@@ -295,6 +286,7 @@ namespace AshAndEmber
                 Type = CrystalType.Embershard,
                 CasterTeam = caster.Team,
             };
+            _crystalMissiles.Add(missile);
 
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Red, 1.5f); } catch { }
             try { SpellEffects.SpawnTempLight(startPos, ColorSchool.Red, 6f, 10f); } catch { }
@@ -446,48 +438,56 @@ namespace AshAndEmber
 
         private static void TickCrystalMissile(float dt)
         {
-            if (_crystalMissile == null) return;
+            if (_crystalMissiles.Count == 0) return;
 
-            float moved = CrystalMissileState.Speed * dt;
-            _crystalMissile.Position += _crystalMissile.Forward * moved;
-            _crystalMissile.TravelLeft -= moved;
-
-            _crystalMissile.TrailTimer -= dt;
-            if (_crystalMissile.TrailTimer <= 0f)
+            for (int i = _crystalMissiles.Count - 1; i >= 0; i--)
             {
-                _crystalMissile.TrailTimer = CrystalMissileState.TrailInterval;
-                try { SpellEffects.SpawnTempLight(_crystalMissile.Position, ColorSchool.Red, 3f, 0.5f); } catch { }
-            }
+                var m = _crystalMissiles[i];
+                float moved = CrystalMissileState.Speed * dt;
+                m.Position += m.Forward * moved;
+                m.TravelLeft -= moved;
 
-            Vec3 mpos = _crystalMissile.Position;
-
-            // Check for enemy collision.
-            try
-            {
-                foreach (Agent a in Mission.Current.Agents)
+                m.TrailTimer -= dt;
+                if (m.TrailTimer <= 0f)
                 {
-                    if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
-                    if (_crystalMissile.CasterTeam != null && a.Team == _crystalMissile.CasterTeam) continue;
-                    float dx = a.Position.x - mpos.x;
-                    float dy = a.Position.y - mpos.y;
-                    if (dx * dx + dy * dy > CrystalMissileState.DetectRadius * CrystalMissileState.DetectRadius) continue;
-                    ExplodeCrystalMissile(mpos);
-                    return;
+                    m.TrailTimer = CrystalMissileState.TrailInterval;
+                    try { SpellEffects.SpawnTempLight(m.Position, ColorSchool.Red, 3f, 0.5f); } catch { }
                 }
-            }
-            catch { }
 
-            if (_crystalMissile.TravelLeft <= 0f)
-                ExplodeCrystalMissile(_crystalMissile.Position);
+                Vec3 mpos = m.Position;
+                bool exploded = false;
+
+                // Check for enemy collision.
+                try
+                {
+                    foreach (Agent a in Mission.Current.Agents)
+                    {
+                        if (!a.IsActive() || a.IsMount || a == Agent.Main) continue;
+                        if (m.CasterTeam != null && a.Team == m.CasterTeam) continue;
+                        float dx = a.Position.x - mpos.x;
+                        float dy = a.Position.y - mpos.y;
+                        if (dx * dx + dy * dy > CrystalMissileState.DetectRadius * CrystalMissileState.DetectRadius) continue;
+                        ExplodeCrystalMissile(m, mpos);
+                        exploded = true;
+                        break;
+                    }
+                }
+                catch { }
+
+                if (!exploded && m.TravelLeft <= 0f)
+                {
+                    ExplodeCrystalMissile(m, m.Position);
+                    exploded = true;
+                }
+
+                if (exploded)
+                    _crystalMissiles.RemoveAt(i);
+            }
         }
 
-        private static void ExplodeCrystalMissile(Vec3 pos)
+        private static void ExplodeCrystalMissile(CrystalMissileState m, Vec3 pos)
         {
-            if (_crystalMissile == null) return;
-            CrystalMissileState m = _crystalMissile;
-            _crystalMissile = null;
-
-            if (Mission.Current == null) return;
+            if (m == null || Mission.Current == null) return;
 
             float radius = m.ExplosionRadius;
             int hit = 0;
@@ -522,11 +522,6 @@ namespace AshAndEmber
                 ? $"Embershard detonates — {hit} enemies scorched ({(int)CrystalMath.EmberDamage} HP each)."
                 : "Embershard detonates — no enemies in range.",
                 ColorSchool.Red);
-        }
-
-        private static void ClearCrystalMissile()
-        {
-            _crystalMissile = null;
         }
 
         // ── Burndown ──────────────────────────────────────────────────────────
