@@ -146,7 +146,7 @@ namespace AshAndEmber
             }
             catch { }
 
-            // ── Still the Waters (nature mages) ────────────────────────────
+            // ── Still the Waters (mages) ──────────────────────────────────
             try
             {
                 starter.AddGameMenuOption("sea_harbor", "sea_still_waters", "{SEA_STILL_TEXT}",
@@ -154,7 +154,7 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            if (!NatureKnowledge.IsAttuned) return false;
+                            if (!MageKnowledge.IsMage) return false;
                             bool canAfford = Hero.MainHero.HitPoints > SeaMath.StillWatersHpCost + 10;
                             if (_stillWatersCalled || !canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("SEA_STILL_TEXT",

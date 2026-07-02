@@ -295,7 +295,7 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("burn",
                         $"Burn it away ({SeaMath.FogBurnAgingDays} days aging)", null, true,
                         "Push a thread of the Inner Fire through the air. The fog boils off clean — no delay, no danger."));
-                if (NatureKnowledge.IsAttuned)
+                if (MageKnowledge.IsMage)
                 {
                     bool canAffordFog = Hero.MainHero.HitPoints > SeaMath.FogPartHpCost + 10;
                     options.Add(new InquiryElement("part",
@@ -380,7 +380,7 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("sense",
                         $"Read the wreck ({SeaMath.SenseWreckAgingDays} days aging)", null, true,
                         "Let the Inner Fire taste the hull — feel where coin and cargo lay heaviest. Finds more than blind hands would."));
-                if (NatureKnowledge.IsAttuned)
+                if (MageKnowledge.IsMage)
                 {
                     bool canAffordSense = Hero.MainHero.HitPoints > SeaMath.SenseWreckHpCost + 10;
                     options.Add(new InquiryElement("feel",
@@ -476,7 +476,7 @@ namespace AshAndEmber
                 if (MageKnowledge.IsMage)
                     options.Add(new InquiryElement("sear", $"Sear the Tide ({SeaMath.SearTheTideAgingDays} days aging)", null, true,
                         "Open the Inner Fire over open water. Burning rigging, screaming corsairs, and much better odds."));
-                if (NatureKnowledge.IsAttuned)
+                if (MageKnowledge.IsMage)
                 {
                     bool canAffordCurrent = Hero.MainHero.HitPoints > SeaMath.CallCurrentHpCost + 10;
                     options.Add(new InquiryElement("current",
@@ -596,7 +596,7 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("sear",
                         $"Sear the Tide ({SeaMath.SearTheTideAgingDays} days aging)", null, true,
                         "Open the Inner Fire over the blockade line. Burning rigging, broken formation, and much better odds."));
-                if (NatureKnowledge.IsAttuned)
+                if (MageKnowledge.IsMage)
                 {
                     bool canAffordLine = Hero.MainHero.HitPoints > SeaMath.CallCurrentHpCost + 10;
                     options.Add(new InquiryElement("current_blk",
@@ -712,7 +712,7 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("read",
                         $"Read the boat before you close ({SeaMath.SenseWreckAgingDays} day aging)", null, true,
                         "The Inner Fire can taste the boat from here — learn who they are before you decide whether to close."));
-                if (NatureKnowledge.IsAttuned)
+                if (MageKnowledge.IsMage)
                 {
                     bool canAffordFeel = Hero.MainHero.HitPoints > SeaMath.FeelLifeHpCost + 10;
                     options.Add(new InquiryElement("feel_life",
@@ -860,7 +860,7 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("speak",
                         $"Speak to it through the Inner Fire ({SeaMath.SerpentAgingDays} days aging)", null, true,
                         "Ancient things in the deep listen to the Fire. It costs years — but they do not always mean harm."));
-                if (NatureKnowledge.IsAttuned)
+                if (MageKnowledge.IsMage)
                 {
                     bool canAffordCommune = Hero.MainHero.HitPoints > SeaMath.SerpentCommuneHpCost + 10;
                     options.Add(new InquiryElement("commune",
