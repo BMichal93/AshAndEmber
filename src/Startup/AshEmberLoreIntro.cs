@@ -72,9 +72,11 @@ namespace AshAndEmber
             "There were some who wanted to use the Fire.",
 
             "In the East, sorcerer-kings raised an army to ride against the first empire. They brought fire and blood. " +
-            "Now, the fire fades. The ancient forces raise their head in the north.",
+            "In the southern and northern caves, alchemists mine crystals to harness the Fire and use them for their own ends.",
 
-            "The Ashen mages who defied death are gathering their strengths. " +
+            "Now, the fire fades. The ancient forces raise their heads in the north. " +
+            "The Ashen mages who defied death are gathering their strengths.",
+
             "With the Emperor dead, and three contestants reaching for the shattered crown, when the time comes, nothing will stop the grey march from the wastelands. " +
             "In the last days of the Empire, among the ruins, you began your journey. Where it will lead you, O Firelord?",
         };
