@@ -2,11 +2,13 @@
 // ASH AND EMBER — Crystals/CrystallinesCampaignBehavior.cs
 //
 // Campaign layer for the crystal system:
-//   • Crystalline Chambers in 8 towns — formation menu (Silver Ore + trade good),
-//     open to any visitor (no magical path required)
-//   • EstablishForNewCampaign — one-time 5 % seed across lords alive at game start
-//   • OnHeroCreated — 5 % flat chance to seed a crystal into a new lord's equipment
-//   • Weekly/session shop restock so the 8 towns always carry every crystal
+//   • Crystalline Chambers in 6 towns (4 Aserai, 2 Sturgian) — rare places where
+//     crystals grow in deep mines and mountain passes infused with fire magic.
+//     Formation menu (Silver Ore + trade good), open to any visitor.
+//   • EstablishForNewCampaign — faction-weighted seed across lords at game start
+//     (12% Aserai, 8% Sturgian, 5% others)
+//   • OnHeroCreated — faction-weighted chance for new lords' equipment
+//   • Weekly/session shop restock so chamber towns always carry every crystal
 //   • SyncData — nothing to persist (crystals are real items in inventories)
 //
 // Formation menu flow:
@@ -35,12 +37,15 @@ namespace AshAndEmber
         private static readonly Random _rng = new Random();
 
         // Towns that host a Crystalline Chamber.
-        // Eight locations selected for lore plausibility (deep mines, ancient quarries,
-        // cave networks). Names are matched by partial case-insensitive search.
+        // Six locations in deep mines, mountain passes, and quarries where fire magic
+        // runs strong — rare places where crystals naturally grow. Aserai control four,
+        // Sturgians two.
         private static readonly string[] ChamberTowns =
         {
-            "Sargot", "Marunath", "Ortysia", "Revyl",
-            "Husn Fulq", "Dunglanys", "Tyal", "Epicrotea",
+            // Aserai
+            "Sanala", "Askar", "Iyakis", "Hybyar",
+            // Sturgian
+            "Revyl", "Varcheg",
         };
 
         // ── CampaignBehaviorBase ─────────────────────────────────────────────
@@ -62,7 +67,7 @@ namespace AshAndEmber
         // One-time seeding of the lords that already exist at campaign start. The
         // HeroCreated hook only fires for heroes spawned/born AFTER the campaign
         // begins, so without this pass no crystal would be carried by any NPC until
-        // a new generation grew up. Mirrors the per-creation 5 % chance.
+        // a new generation grew up. Uses faction-weighted chances.
         public static void EstablishForNewCampaign()
         {
             try
@@ -73,7 +78,7 @@ namespace AshAndEmber
                     .ToList();
                 foreach (var hero in lords)
                 {
-                    if (_rng.NextDouble() >= CrystalMath.LordSeedChance) continue;
+                    if (_rng.NextDouble() >= GetSeedChanceForHero(hero)) continue;
                     try { SeedCrystalOnHero(hero); } catch { }
                 }
             }
@@ -123,7 +128,7 @@ namespace AshAndEmber
         {
             if (hero == null || hero == Hero.MainHero) return;
             if (!hero.IsLord && !hero.IsMinorFactionHero) return;
-            if (_rng.NextDouble() >= CrystalMath.LordSeedChance) return;
+            if (_rng.NextDouble() >= GetSeedChanceForHero(hero)) return;
             try { SeedCrystalOnHero(hero); } catch { }
         }
 
@@ -158,6 +163,24 @@ namespace AshAndEmber
                     name.IndexOf(c, StringComparison.OrdinalIgnoreCase) >= 0);
             }
             catch { return false; }
+        }
+
+        // ── Faction-based seeding ─────────────────────────────────────────
+
+        private static double GetSeedChanceForHero(Hero hero)
+        {
+            try
+            {
+                if (hero?.Clan?.Kingdom == null) return CrystalMath.LordSeedChance;
+
+                string kingdomId = hero.Clan.Kingdom.StringId;
+                // Aserai control the richest crystal deposits.
+                if (kingdomId == "aserai") return 0.12;
+                // Sturgian mountain passes yield more.
+                if (kingdomId == "sturgia") return 0.08;
+            }
+            catch { }
+            return CrystalMath.LordSeedChance;
         }
 
         // ── Material helpers ──────────────────────────────────────────────────
