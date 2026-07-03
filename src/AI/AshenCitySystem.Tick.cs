@@ -144,7 +144,9 @@ namespace AshAndEmber
                     float currentAge = h.Age;
                     if (currentAge > targetAge + 0.5f)
                     {
-                        float excessDays = (currentAge - targetAge) * 365f;
+                        // 1 Bannerlord year = 84 campaign days (4 seasons × 21 days) —
+                        // 365 here overshot the snap-back to ~age 30 instead of 35.
+                        float excessDays = (currentAge - targetAge) * 84f;
                         try { h.SetBirthDay(h.BirthDay + CampaignTime.Days(excessDays)); } catch { }
                     }
                     if (playerIsAshen)

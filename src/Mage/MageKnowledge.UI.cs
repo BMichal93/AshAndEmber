@@ -250,12 +250,19 @@ namespace AshAndEmber
                 ElementMapSpells.Lore(el)
             )).ToList();
 
+            // Only promise Resonance to those who actually carry it (Sorcerer).
+            bool hasResonance = TalentSystem.Has(TalentId.Sorcerer);
+            string resonanceNote = hasResonance
+                ? (TalentSystem.DailyCastCount == 0
+                    ? " Resonance spares your first working today."
+                    : " Resonance may spare you once in four.")
+                : "";
             string castDesc = _isAshen
                 ? "Choose a working. Costs criminal rating instead of years." +
                   (TalentSystem.DailyCastCount > 0 ? " After your first working today, further casts risk possession." : "")
                 : TalentSystem.DailyCastCount == 0
-                    ? "Choose a working. Each costs 1 day. Resonance may spare you once in four."
-                    : $"Choose a working. Working #{TalentSystem.DailyCastCount + 1} today — costs {TalentSystem.GetDailyCastCost()} days. Resonance may spare you.";
+                    ? "Choose a working. Each costs 1 day." + resonanceNote
+                    : $"Choose a working. Working #{TalentSystem.DailyCastCount + 1} today — costs {TalentSystem.GetDailyCastCost()} days." + resonanceNote;
 
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "Cast",

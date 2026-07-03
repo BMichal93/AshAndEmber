@@ -44,7 +44,9 @@ namespace AshAndEmber
             if (hero == Hero.MainHero && DragonQuestSystem.IsEmperorMerged) return;
             try
             {
-                if (hero == Hero.MainHero) _ledgerDaysSpent += days;
+                // Physical aging is its own full cost: the hero moves `days` closer
+                // to their death age. It must NOT also be booked into the expectancy
+                // ledger, or the same days would be paid twice (older AND dying sooner).
                 hero.SetBirthDay(hero.BirthDay - CampaignTime.Days(days));
 
                 if (hero == Hero.MainHero)
@@ -134,7 +136,8 @@ namespace AshAndEmber
                 days = Math.Min(days, maxDays);
                 if (days <= 0) return;
 
-                if (hero == Hero.MainHero) _ledgerDaysReclaimed += days;
+                // Mirror of AgeHero: becoming younger is the full benefit — it must
+                // not also raise the death age through the expectancy ledger.
                 hero.SetBirthDay(hero.BirthDay + CampaignTime.Days(days));
 
                 // Hard floor: float math in the clamp above can drift. Snap back if needed.
@@ -424,6 +427,7 @@ namespace AshAndEmber
         public static void ResetForNewGame()
         {
             _milestonesTriggered.Clear();
+            _pendingAshenDecision = false;
             _pendingMilestoneAge = 0;
             _ledgerDaysSpent     = 0;
             _ledgerDaysReclaimed = 0;

@@ -147,11 +147,12 @@ namespace AshAndEmber
             _conqueredDays.Clear();
             _appearanceDayCounter = 0;
             _settlementsRenamed   = false;
-            _warThrottle      = 0;
-            _clanThrottle     = 0;
-            _villageThrottle  = 0;
-            _recoveryThrottle = 0;
-            _prisonerThrottle = 0;
+            _warThrottle       = 0;
+            _clanThrottle      = 0;
+            _villageThrottle   = 0;
+            _recoveryThrottle  = 0;
+            _prisonerThrottle  = 0;
+            _lordPartyThrottle = 0;
         }
     }
 }

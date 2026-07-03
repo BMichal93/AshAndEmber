@@ -33,6 +33,7 @@ namespace AshAndEmber
 {
     public static class ElementMagicInput
     {
+        private static readonly Random _rng = new Random();
         private static bool  _wasFocusing;
         private static float _drawTime;            // seconds drawn since focus / last cast
         private static bool  _prevAtk, _prevBlk;
@@ -267,6 +268,17 @@ namespace AshAndEmber
             var caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return;
 
+            // Sorcery in the tournament is death and disqualification — the arena
+            // crowd does not forgive the fire (restored from the retired input path).
+            if (IsInTournament())
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "Sorcery in the tournament — you are disqualified!",
+                    Color.FromUint(0xFFFF4444)));
+                try { SpellEffects.QueueKill(caster); } catch { }
+                return;
+            }
+
             float power = ElementMagicMath.PowerMult(_drawTime);
             var el = MageElementKnowledge.Loaded;
             try
@@ -276,12 +288,77 @@ namespace AshAndEmber
             }
             catch { }
 
-            // The toll is flat — the draw bought power, not a cheaper cast.
+            // Flashfire — sometimes the fire finds the shape again on its own:
+            // 10% chance the working echoes at once, at no additional toll.
+            try
+            {
+                if (TalentSystem.Has(TalentId.Flashfire) && _rng.Next(10) == 0)
+                {
+                    if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, caster, power);
+                    else                         ElementSpellEffects.CastWall(el, caster, power);
+                    Msg("Flashfire — the working echoes!");
+                }
+            }
+            catch { }
+
+            // The toll is flat — the draw bought power, not a cheaper cast — but the
+            // old pipeline's cost talents and rites still keep their word: Tempered,
+            // Kinship, the Temple covenant and the Unbroken Ward all lighten it.
             int days = ElementMagicMath.CastAgingDays(form, MageElementKnowledge.HasNature);
+            days = ApplyCostTalents(days);
             ApplyCastCost(days);
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
             _fullAnnounced = false;
+        }
+
+        // Gather the cost-talent state and defer to the pure math (testable).
+        private static int ApplyCostTalents(int baseDays)
+        {
+            try
+            {
+                bool tempered = TalentSystem.Has(TalentId.BattleMage);
+                float age = 0f;
+                try { if (Hero.MainHero != null) age = (float)Hero.MainHero.Age; } catch { }
+                int allies = 0;
+                try { if (TalentSystem.Has(TalentId.Camaraderie)) allies = CountAlliedMageLords(); } catch { }
+                bool covenant = false;
+                try { covenant = TempleCovenant.CovenantActive; } catch { }
+                bool ward = false;
+                try { ward = TalentSystem.Has(TalentId.UnbrokenWard) && CampaignMapEvents.ProtectedDaysRemaining > 0; } catch { }
+                return ElementMagicMath.AdjustedCastDays(baseDays, tempered, age, allies, covenant, ward);
+            }
+            catch { return baseDays; }
+        }
+
+        // Kinship: allied mage lords fighting beside the player in this mission.
+        private static int CountAlliedMageLords()
+        {
+            if (Mission.Current == null || Agent.Main == null) return 0;
+            int count = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents)
+                {
+                    if (!a.IsActive() || !a.IsHero || a == Agent.Main || a.Team != Agent.Main.Team) continue;
+                    Hero h = (a.Character as CharacterObject)?.HeroObject;
+                    if (h != null && ColourLordRegistry.IsColourLord(h)) count++;
+                }
+            }
+            catch { }
+            return count;
+        }
+
+        private static bool IsInTournament()
+        {
+            try
+            {
+                if (Mission.Current == null) return false;
+                foreach (MissionBehavior b in Mission.Current.MissionBehaviors)
+                    if (b.GetType().Name.Contains("Tournament")) return true;
+            }
+            catch { }
+            return false;
         }
 
         // Aging "burns through" like fire; the Ashen pay in criminal standing instead.
@@ -313,7 +390,11 @@ namespace AshAndEmber
             if (c == null || !c.IsActive()) return "There is no hand here to shape the fire.";
             try { if (c.GetCurrentVelocity().Length >= StillSpeed) return "Stand still to draw."; } catch { }
             bool steel = MageElementKnowledge.HasSteel;
-            if (!steel && !SpellEffects.HasFreeHand(c))   return "Sheathe your weapon (X) to draw — or learn Steel.";
+            // Warcast (legacy talent): the fire flows through a full hand — waives the
+            // free-hand gate, though only Steel also bears the armour's weight.
+            bool armed = false;
+            try { armed = TalentSystem.Has(TalentId.ArmedCasting); } catch { }
+            if (!steel && !armed && !SpellEffects.HasFreeHand(c)) return "Sheathe your weapon (X) to draw — or learn Steel.";
             if (!steel && NatureEffects.ArmourTooHeavy(c)) return "Armour too heavy — shed it, or learn Steel.";
             return null;
         }

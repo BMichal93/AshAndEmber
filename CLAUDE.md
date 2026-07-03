@@ -44,13 +44,22 @@ Each registration is wrapped in its own try/catch for mod-conflict safety.
 
 ### Spell Cast Pipeline (Battle)
 
+The player's live battle pipeline is the **unified element magic** (`src/Magic/`):
+
 ```
-MagicInputHandler (Alt+Direction buffers)
-  → SpellBuilder.Parse(formBuffer, effectBuffer) → SpellCast
-  → AgingSystem.ComputeBattleAgingCost(totalInputs) → days cost
-  → SpellEffects.Execute*() → dispatches by spell type
+ElementMagicInput (hold Alt, stand still, DRAW; W/S/A/D loads a learned element)
+  → ElementMagicMath.PowerMult(drawTime) → power (the draw buys power, not cost)
+  → ElementSpellEffects.CastAttack / CastWall(element, caster, power)
+  → ElementMagicMath.CastAgingDays(form, hasNature) → flat cost (attack 3 d, wall 4 d)
+    → ElementMagicMath.AdjustedCastDays(...) → Tempered/Kinship/rite discounts, floor 1
+    → AgingSystem.SpendLifeExpectancy (the Ashen pay criminal rating instead)
 ```
 
+Campaign-map casts go through `ElementSpellMinigame` (the memory-rite) → `ElementMapSpells`.
+
+The **legacy buffer pipeline** (`MagicInputHandler` → `SpellBuilder` → `SpellEffects.Execute*`)
+is no longer reachable by the player in missions; it survives for bandit mages
+(`BanditMageAI` → `SpellEffects.ExecuteNpcBlast/Burst`) and for save compatibility.
 `SpellEffects.cs` is the core partial class; `BlastSpells.cs`, `SelfSpells.cs`, `CreateSpells.cs`, and `AffectSpells.cs` are partial-class files that extend it by spell form.
 
 ### State: Static vs. Serialized
@@ -93,10 +102,12 @@ The six purchasable fire paths (Reaper, Seer, Warden, Heartfire, Pyrelord, Ashbi
 
 | Thing | Value |
 |---|---|
-| Max form inputs per cast | 5 (reaching 5 auto-breaks to effect phase) |
-| Max effect inputs per cast | 5 |
-| Aging cost formula | round(1.5^(n−1)), capped at 84 days |
-| Aging cost at max (10 inputs) | 38 days |
+| Bannerlord year | 84 campaign days (4 seasons × 21 days) — never 365 |
+| Element cast cost (flat) | attack 3 days, wall 4 days; Nature discipline halves; floor 1 |
+| Element draw | full power at 7 s, charge disperses at 15 s |
+| Max form inputs per cast (legacy pipeline) | 5 (reaching 5 auto-breaks to effect phase) |
+| Max effect inputs per cast (legacy pipeline) | 5 |
+| Legacy aging cost formula | round(1.5^(n−1)), capped at 84 days |
 | Sear base damage per input | 35 HP + 1 m push |
 | Force base damage per input | 22 HP + 5% vulnerability 6 s |
 | Shred base damage per input | 22 HP + 12 morale drain |

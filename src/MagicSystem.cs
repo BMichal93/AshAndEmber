@@ -65,21 +65,23 @@ namespace AshAndEmber
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
             {
-                campaignStarter.AddModel(new AshenDiplomacyModel());
-                campaignStarter.AddBehavior(new MagicCampaignBehavior());
-                campaignStarter.AddBehavior(new SchemeCampaignBehavior());
-                campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());
-                campaignStarter.AddBehavior(new AshenAltarsCampaignBehavior());
-                campaignStarter.AddBehavior(new SeaCampaignBehavior());
-                campaignStarter.AddBehavior(new CrystallinesCampaignBehavior());
-                campaignStarter.AddBehavior(new ExchangeCampaignBehavior());
-                campaignStarter.AddBehavior(new TavernCampaignBehavior());
-                campaignStarter.AddBehavior(new AshenRuinCampaignBehavior());
-                campaignStarter.AddBehavior(new MiracleCampaignBehavior());
-                campaignStarter.AddBehavior(new NatureCampaignBehavior());
-                campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
-                campaignStarter.AddBehavior(new TribalKingdomBehavior());
-                campaignStarter.AddBehavior(new CreationBackstoryRework());
+                // Each registration wrapped individually for mod-conflict safety —
+                // one failing constructor must not take the rest of the mod with it.
+                try { campaignStarter.AddModel(new AshenDiplomacyModel());               } catch { }
+                try { campaignStarter.AddBehavior(new MagicCampaignBehavior());          } catch { }
+                try { campaignStarter.AddBehavior(new SchemeCampaignBehavior());         } catch { }
+                try { campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());      } catch { }
+                try { campaignStarter.AddBehavior(new AshenAltarsCampaignBehavior());    } catch { }
+                try { campaignStarter.AddBehavior(new SeaCampaignBehavior());            } catch { }
+                try { campaignStarter.AddBehavior(new CrystallinesCampaignBehavior());   } catch { }
+                try { campaignStarter.AddBehavior(new ExchangeCampaignBehavior());       } catch { }
+                try { campaignStarter.AddBehavior(new TavernCampaignBehavior());         } catch { }
+                try { campaignStarter.AddBehavior(new AshenRuinCampaignBehavior());      } catch { }
+                try { campaignStarter.AddBehavior(new MiracleCampaignBehavior());        } catch { }
+                try { campaignStarter.AddBehavior(new NatureCampaignBehavior());         } catch { }
+                try { campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());     } catch { }
+                try { campaignStarter.AddBehavior(new TribalKingdomBehavior());          } catch { }
+                try { campaignStarter.AddBehavior(new CreationBackstoryRework());        } catch { }
                 try { AshenDialogue.Register(campaignStarter);    } catch { }
                 try { ArenicosDialogue.Register(campaignStarter); } catch { }
                 try { TempleDialogue.Register(campaignStarter);   } catch { }

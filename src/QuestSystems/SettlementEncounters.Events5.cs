@@ -297,7 +297,7 @@ namespace AshAndEmber
                     var targetK = Kingdom.All.FirstOrDefault(k => k.StringId == kId);
                     if (targetK == null) return;
 
-                    AgingSystem.AgeHero(Hero.MainHero, 3 * 365);
+                    AgingSystem.AgeHero(Hero.MainHero, 3 * 84); // 3 years × 84 days (Bannerlord year)
 
                     string cityName = DevastateCityInKingdom(targetK);
 

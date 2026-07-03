@@ -285,10 +285,21 @@ namespace AshAndEmber
                 else
                 {
                     int cost = TalentSystem.GetDailyCastCost();
-                    AgingSystem.SpendLifeExpectancy(Hero.MainHero, cost);
-                    if (cost > 1)
+                    // Resonance (Sorcerer): the first working each day costs nothing,
+                    // and later ones are spared one time in four — the same grace the
+                    // old fire map-spells carried.
+                    bool spared = TalentSystem.Has(TalentId.Sorcerer)
+                        && (TalentSystem.DailyCastCount == 0 || _rng.Next(4) == 0);
+                    if (spared)
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"The fire demands more — {cost} days of life.", new Color(0.9f, 0.5f, 0.2f)));
+                            "Resonance — the fire gives back.", new Color(0.9f, 0.6f, 0.3f)));
+                    else
+                    {
+                        AgingSystem.SpendLifeExpectancy(Hero.MainHero, cost);
+                        if (cost > 1)
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                $"The fire demands more — {cost} days of life.", new Color(0.9f, 0.5f, 0.2f)));
+                    }
                 }
                 TalentSystem.RegisterMapCast();
             }
