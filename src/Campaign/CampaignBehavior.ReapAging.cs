@@ -24,7 +24,9 @@ namespace AshAndEmber
         // ── Reap: raid yield (7-day cooldown) ────────────────────────────────
         private void CheckReapRaidYield(MapEvent mapEvent)
         {
-            if (!MageKnowledge.IsMage || !TalentSystem.Has(TalentId.Reap)) return;
+            // Blood (the merged art's heir to Reap) harvests the same yields.
+            if (!MageKnowledge.IsMage
+                || !(MageElementKnowledge.HasBlood || TalentSystem.Has(TalentId.Reap))) return;
             if (mapEvent.EventType != MapEvent.BattleTypes.Raid) return;
             if (_reapRaidCooldown > 0) return;
 
@@ -33,14 +35,18 @@ namespace AshAndEmber
             if (!playerAttacker) return;
             if (mapEvent.WinningSide != BattleSideEnum.Attacker) return;
 
-            AgingSystem.RejuvenateHero(Hero.MainHero, 5);
+            // Post-merge cost model: harvested life offsets the expectancy ledger
+            // (the fire's debt), it does not make the hero literally younger.
+            AgingSystem.RestoreLifeExpectancy(Hero.MainHero, 5);
             _reapRaidCooldown = 7;
         }
 
         // ── Reap: prisoner discard yield ──────────────────────────────────────
         private void CheckReapPrisonerYield()
         {
-            if (!MageKnowledge.IsMage || !TalentSystem.Has(TalentId.Reap)) return;
+            // Blood (the merged art's heir to Reap) harvests the same yields.
+            if (!MageKnowledge.IsMage
+                || !(MageElementKnowledge.HasBlood || TalentSystem.Has(TalentId.Reap))) return;
 
             int current = MobileParty.MainParty?.PrisonRoster?.TotalManCount ?? 0;
 
@@ -54,7 +60,7 @@ namespace AshAndEmber
                         daysGained++;
                 }
                 if (daysGained > 0)
-                    AgingSystem.RejuvenateHero(Hero.MainHero, daysGained);
+                    AgingSystem.RestoreLifeExpectancy(Hero.MainHero, daysGained);
             }
 
             _prisonerCountSnapshot = current;

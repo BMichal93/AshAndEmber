@@ -1309,5 +1309,94 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(MiracleType.GraceBlessing,
                 MiracleMath.ChooseBattleMiracle(false, 0, false, false, roll: 0.9f));
         }
+
+        // ── WallWardMath (elemental wall warding) ─────────────────────────────────
+
+        [Test]
+        public void WallWardMath_MissileBlocking_WindAndStoneOnly()
+        {
+            Assert.IsTrue (WallWardMath.WallBlocksMissiles(MagicElement.Wind));
+            Assert.IsTrue (WallWardMath.WallBlocksMissiles(MagicElement.Earth));
+            Assert.IsFalse(WallWardMath.WallBlocksMissiles(MagicElement.Fire),
+                "arrows fly through flame");
+            Assert.IsFalse(WallWardMath.WallBlocksMissiles(MagicElement.Water));
+            Assert.IsFalse(WallWardMath.WallBlocksMissiles(MagicElement.Spirit));
+        }
+
+        [Test]
+        public void WallWardMath_MagicBlocking_MatchesTheElementalAnswers()
+        {
+            // Fire devours the gale; water quenches fire and drinks the wind;
+            // wind scatters flung stone; stone dams the wave.
+            Assert.IsTrue(WallWardMath.WallBlocksMagic(MagicElement.Fire,  MagicElement.Wind));
+            Assert.IsTrue(WallWardMath.WallBlocksMagic(MagicElement.Water, MagicElement.Fire));
+            Assert.IsTrue(WallWardMath.WallBlocksMagic(MagicElement.Water, MagicElement.Wind));
+            Assert.IsTrue(WallWardMath.WallBlocksMagic(MagicElement.Wind,  MagicElement.Earth));
+            Assert.IsTrue(WallWardMath.WallBlocksMagic(MagicElement.Earth, MagicElement.Water));
+
+            // What must pass: fire through fire/wind/earth walls, dread through all.
+            Assert.IsFalse(WallWardMath.WallBlocksMagic(MagicElement.Fire,  MagicElement.Fire));
+            Assert.IsFalse(WallWardMath.WallBlocksMagic(MagicElement.Wind,  MagicElement.Fire));
+            Assert.IsFalse(WallWardMath.WallBlocksMagic(MagicElement.Earth, MagicElement.Fire));
+            foreach (MagicElement wall in new[] { MagicElement.Fire, MagicElement.Wind,
+                                                  MagicElement.Earth, MagicElement.Water })
+                Assert.IsFalse(WallWardMath.WallBlocksMagic(wall, MagicElement.Spirit),
+                    $"dread passes a {wall} wall");
+            // Spirit is a ward, never a wall — it blocks nothing.
+            Assert.IsFalse(WallWardMath.WallBlocksMagic(MagicElement.Spirit, MagicElement.Fire));
+        }
+
+        [Test]
+        public void WallWardMath_CounterWall_AnswersEachElement()
+        {
+            Assert.AreEqual(MagicElement.Water, WallWardMath.CounterWallFor(MagicElement.Fire));
+            Assert.AreEqual(MagicElement.Water, WallWardMath.CounterWallFor(MagicElement.Wind));
+            Assert.AreEqual(MagicElement.Wind,  WallWardMath.CounterWallFor(MagicElement.Earth));
+            Assert.AreEqual(MagicElement.Earth, WallWardMath.CounterWallFor(MagicElement.Water));
+            Assert.IsNull(WallWardMath.CounterWallFor(MagicElement.Spirit),
+                "nothing walls out the dread");
+            // Every counter-wall actually blocks what it was raised against.
+            foreach (MagicElement el in new[] { MagicElement.Fire, MagicElement.Wind,
+                                                MagicElement.Earth, MagicElement.Water })
+                Assert.IsTrue(WallWardMath.WallBlocksMagic(WallWardMath.CounterWallFor(el).Value, el));
+            Assert.IsTrue(WallWardMath.QuenchesFireMissile(MagicElement.Water));
+            Assert.IsFalse(WallWardMath.QuenchesFireMissile(MagicElement.Earth));
+        }
+
+        // ── Ignition (a deep draw sets its marks alight) ──────────────────────────
+
+        [Test]
+        public void ElementMagicMath_Ignite_ScalesWithChargeAndCrossesKillThreshold()
+        {
+            // A snap flick ignites nothing; a full draw burns at the maximum rate.
+            Assert.AreEqual(0f, ElementMagicMath.IgniteDps(ElementMagicMath.MinPower), 0.001f);
+            Assert.AreEqual(ElementMagicMath.IgniteMaxDps,
+                            ElementMagicMath.IgniteDps(ElementMagicMath.MaxPower), 0.001f);
+            // Monotonic in the draw.
+            Assert.Greater(ElementMagicMath.IgniteDps(0.9f), ElementMagicMath.IgniteDps(0.7f));
+            // The bruiser's promise: a fully-drawn cone (44) plus its full burn
+            // (12/s × 5 s = 60) crosses the 100 HP kill threshold of a line troop.
+            float fullBurn = ElementMagicMath.IgniteMaxDps * ElementMagicMath.IgniteSeconds;
+            Assert.GreaterOrEqual(44f + fullBurn, 100f,
+                "a full-drawn fire cone must finish an unarmoured man");
+            // …but the burn alone must NOT (it finishes, it does not replace the strike).
+            Assert.Less(fullBurn, 100f);
+        }
+
+        [Test]
+        public void WallWardMath_SegmentNearPoint_Geometry()
+        {
+            // A wall node at (5,1) with radius 2 sits beside the line (0,0)→(10,0).
+            Assert.IsTrue(WallWardMath.SegmentNearPoint(0, 0, 10, 0, 5, 1, 2f));
+            // Too far off the line: no block.
+            Assert.IsFalse(WallWardMath.SegmentNearPoint(0, 0, 10, 0, 5, 5, 2f));
+            // BEHIND the caster: the segment ends before the node — no block.
+            Assert.IsFalse(WallWardMath.SegmentNearPoint(0, 0, 10, 0, -5, 0, 2f));
+            // Degenerate zero-length segment: only blocked when standing inside.
+            Assert.IsTrue (WallWardMath.SegmentNearPoint(3, 3, 3, 3, 3, 4, 2f));
+            Assert.IsFalse(WallWardMath.SegmentNearPoint(3, 3, 3, 3, 9, 9, 2f));
+            // Nearest-t: the closest approach to (5,1) along (0,0)→(10,0) is halfway.
+            Assert.AreEqual(0.5f, WallWardMath.SegmentNearestT(0, 0, 10, 0, 5, 1), 0.001f);
+        }
     }
 }

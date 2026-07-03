@@ -77,6 +77,17 @@ namespace AshAndEmber
         public static int WallDepthRows(float power)
             => 1 + (int)Math.Round((WallMaxDepthRows - 1) * ChargeFraction(power), MidpointRounding.AwayFromZero);
 
+        // ── Ignition — a deep draw sets its marks ALIGHT ─────────────────────────
+        // Fire is the bruiser, and the full draw must cross the kill threshold: a
+        // fully-charged cone leaves every struck foe BURNING (the Ashen cold clings
+        // as deep frost — same toll, colder face). The burn scales with the charge,
+        // so a snap flick ignites nothing and spam gains nothing: at full draw the
+        // cone's 44 plus the burn's 12/s × 5 s (= 60) finishes an unarmoured man
+        // over the seconds that follow, and leaves an armoured one crippled.
+        public const float IgniteMaxDps  = 12f;
+        public const float IgniteSeconds = 5f;
+        public static float IgniteDps(float power) => IgniteMaxDps * ChargeFraction(power);
+
         // ── Aging cost (days) — FLAT, independent of draw time ───────────────────
         public const int   AttackCostDays = 3;     // a released attack ages you this much
         public const int   WallCostDays   = 4;     // a wall is a slightly bigger working

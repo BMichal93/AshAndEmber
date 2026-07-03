@@ -314,10 +314,27 @@ namespace AshAndEmber
                 // even without a clean lane; patient lords hold fire until it's safe.
                 bool reckless = isAshen || emergency || temper == CasterTemper.Impulsive;
 
+                // A lord does not throw a cone into a wall that drinks it: probe the
+                // forward lane against the standing wards (fire dies on mist, the
+                // wave breaks on stone). Recklessness is courage, not blindness —
+                // every temper respects physics. Radial workings (Wind/Earth) are
+                // warded per-target, so they need no lane probe.
+                Vec3 fwdProbe = default(Vec3);
+                bool probeOk = false;
+                try
+                {
+                    Vec3 fwd = agent.LookDirection; fwd.z = 0f; fwd.Normalize();
+                    fwdProbe = agent.Position + fwd * 8f;
+                    probeOk = true;
+                }
+                catch { }
+
                 MagicElement? pick = null;
                 foreach (var el in Preference(sit))
                 {
                     if (!known.Contains(el)) continue;
+                    if (probeOk && (el == MagicElement.Fire || el == MagicElement.Water)
+                        && ElementWallWards.IsPathWarded(el, agent.Position, fwdProbe)) continue;
                     if (reckless || ElementFits(el, forwardSafe, aroundSafe)) { pick = el; break; }
                 }
                 if (pick == null)
@@ -346,7 +363,10 @@ namespace AshAndEmber
             catch { }
         }
 
-        // Pyre Lord opener — a wall. Prefers stone (roots) or fire (burns) if known.
+        // Pyre Lord opener — a wall. A lord who has SEEN what the enemy throws
+        // raises the wall that ANSWERS it (water against fire, wind against
+        // stone…) if he has learned that element; otherwise he prefers stone
+        // (roots) or fire (burns).
         private static void CastElementWall(Agent agent, Hero hero,
             bool isAshen, bool isFalseEmperor, CasterTemper temper, float lifeFrac)
         {
@@ -355,9 +375,19 @@ namespace AshAndEmber
                 _pyreBarriersPlaced.Add(hero.StringId);
                 var known = KnownElements(hero);
                 MagicElement chosen = MagicElement.Fire;
-                foreach (var el in new[] { MagicElement.Earth, MagicElement.Fire,
-                                           MagicElement.Water, MagicElement.Wind, MagicElement.Spirit })
-                    if (known.Contains(el)) { chosen = el; break; }
+                MagicElement? counter = null;
+                try
+                {
+                    var seen = ElementWallWards.LastHostileElement(agent.Team);
+                    if (seen != null) counter = WallWardMath.CounterWallFor(seen.Value);
+                }
+                catch { }
+                if (counter != null && known.Contains(counter.Value))
+                    chosen = counter.Value;
+                else
+                    foreach (var el in new[] { MagicElement.Earth, MagicElement.Fire,
+                                               MagicElement.Water, MagicElement.Wind, MagicElement.Spirit })
+                        if (known.Contains(el)) { chosen = el; break; }
 
                 float power = isAshen ? (isFalseEmperor ? 1.2f : 1.0f)
                     : NpcCastPlanner.CastPower(NpcCastPlanner.BaseCluster, lifeFrac, temper, emergency: false);

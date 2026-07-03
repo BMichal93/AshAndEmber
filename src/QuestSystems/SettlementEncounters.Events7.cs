@@ -164,18 +164,22 @@ namespace AshAndEmber
             }
         }
 
+        // The merchant's winnings are paid in the LIVING craft — up to four Codex
+        // powers (elements and disciplines) the player does not yet hold. The old
+        // spell/enchantment talents are retired and would pay in ash.
         private static void GrantMerchantTalents()
         {
-            var available = TalentSystem.All
-                .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id) && !t.IsInfo && !t.IsConsumable)
-                .OrderBy(_ => _rng.Next())
-                .Take(4)
-                .ToList();
+            var learned = new List<string>();
+            for (int i = 0; i < 4; i++)
+            {
+                if (!MagicLearning.TryGrantRandomUnknown(_rng, out string name)) break;
+                learned.Add(name);
+            }
 
-            foreach (var t in available)
-                TalentSystem.GrantFree(t.Id, Hero.MainHero);
-
-            if (available.Count == 0)
+            if (learned.Count > 0)
+                Msg("The coin falls heads, and the merchant pays in full — you know " +
+                    string.Join(", ", learned).ToUpperInvariant() + " now, unearned and unasked.", FireColor);
+            else
                 Msg("The fire surges inward and finds nothing new to carry — " +
                     "you already hold what was offered.", FireColor);
         }

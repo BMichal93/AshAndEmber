@@ -19,6 +19,7 @@
 // =============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
@@ -31,6 +32,86 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
 
+        // ── Ignition state (a deep draw sets its marks alight) ──────────────────
+        // One entry per burning agent; re-igniting refreshes to the stronger burn.
+        // Ticked from MagicMissionBehavior; cleared with the rest of battle state.
+        private class Ignition
+        {
+            public Agent Target;
+            public Agent Source;
+            public float Dps;
+            public float Remaining;
+            public float TickTimer = 1f;
+            public bool  Ashen;      // frost-bite visuals for the cold's mask
+        }
+        private static readonly List<Ignition> _ignitions = new List<Ignition>();
+
+        public static void ClearBattleState() => _ignitions.Clear();
+
+        public static void Tick(float dt)
+        {
+            if (_ignitions.Count == 0) return;
+            for (int i = _ignitions.Count - 1; i >= 0; i--)
+            {
+                var ig = _ignitions[i];
+                bool alive = false;
+                try { alive = ig.Target != null && ig.Target.IsActive(); } catch { }
+                if (!alive) { _ignitions.RemoveAt(i); continue; }
+
+                ig.Remaining -= dt;
+                ig.TickTimer -= dt;
+                if (ig.TickTimer <= 0f)
+                {
+                    ig.TickTimer = 1f;
+                    if (!SpellEffects.IsWarded(ig.Target))
+                        try { SpellEffects.DamageAgent(ig.Target, ig.Dps, ColorSchool.Red, ig.Source); } catch { }
+                    try
+                    {
+                        Vec3 at = ig.Target.Position + new Vec3(0f, 0f, 0.5f);
+                        if (ig.Ashen) SpellEffects.SpawnTempSnowParticle(at, 0.9f);
+                        else          SpellEffects.SpawnTempFireParticle(at, 0.9f);
+                    }
+                    catch { }
+                }
+                if (ig.Remaining <= 0f) _ignitions.RemoveAt(i);
+            }
+        }
+
+        // Water puts a burning man out — a wave or standing mist douses the
+        // ignition to a puff of steam. Returns true when a burn was quenched.
+        public static bool QuenchIgnition(Agent target)
+        {
+            for (int i = _ignitions.Count - 1; i >= 0; i--)
+            {
+                if (_ignitions[i].Target != target) continue;
+                _ignitions.RemoveAt(i);
+                try { SpellEffects.SpawnTempSmokeParticle(target.Position + new Vec3(0f, 0f, 0.6f), 2f); } catch { }
+                return true;
+            }
+            return false;
+        }
+
+        // Set (or refresh) a burn on a struck foe. Weak draws ignite nothing.
+        private static void Ignite(Agent target, Agent source, float power, bool ashen)
+        {
+            float dps = ElementMagicMath.IgniteDps(power);
+            if (dps < 1f) return;
+            foreach (var ig in _ignitions)
+            {
+                if (ig.Target != target) continue;
+                // Already alight — keep whichever burn is fiercer, refresh the clock.
+                if (dps > ig.Dps) ig.Dps = dps;
+                ig.Remaining = ElementMagicMath.IgniteSeconds;
+                ig.Source    = source;
+                return;
+            }
+            _ignitions.Add(new Ignition
+            {
+                Target = target, Source = source, Dps = dps,
+                Remaining = ElementMagicMath.IgniteSeconds, Ashen = ashen,
+            });
+        }
+
         // ── Magnitudes ──────────────────────────────────────────────────────────
         private const float FireConeRange   = 9f;
         private const float FireConeDot      = 0.5f;   // ~60° half-cone
@@ -40,6 +121,7 @@ namespace AshAndEmber
         private const float FireWallDamage   = 14f;    // contact hit as the flame front sweeps up
         private const float FireWallBurnTick = 10f;    // per-second burn for those who hold the line
         private const float FireWallBurnSec  = 5f;     // how long the wall of fire smoulders
+        private const float SiegeConeDamage  = 150f;   // vs wooden machines/gates, ×power
         private const float SpiritRadius     = 9f;
         private const float SpiritFearSlow   = 0.55f;  // panicked enemies slow to this
         private const float SpiritFearSec    = 6f;
@@ -62,6 +144,8 @@ namespace AshAndEmber
                 case MagicElement.Spirit: SpiritPanic(caster, power); break;
             }
             CastFlash(el, caster);
+            // Enemy mages remember what was thrown, and answer with the counter-wall.
+            try { ElementWallWards.NoteCast(el, caster.Team); } catch { }
             try { SpellEffects.RecordMagicCast(caster.Position); } catch { }
         }
 
@@ -98,10 +182,18 @@ namespace AshAndEmber
                 float len = to.Length; if (len < 0.01f) continue;
                 if (Vec3.DotProduct(fwd, to * (1f / len)) < FireConeDot) continue;   // outside the cone
                 if (SpellEffects.IsWarded(a)) continue;
+                // A wall of standing water between caster and mark drinks the fire.
+                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, pos, a.Position, out _)) continue; } catch { }
                 try { SpellEffects.DamageAgent(a, FireConeDamage * power, ColorSchool.Red, caster); } catch { }
+                // A deep draw sets the mark alight — the burn finishes what the
+                // strike began (the Ashen cold clings on as deep frost instead).
+                try { Ignite(a, caster, power, ashen); } catch { }
                 FireBloom(a.Position, ashen, rgb, 1.0f, false);
                 hit++;
             }
+            // Timber burns: siege engines and gates in the cone's throat char under
+            // the same fire (the cold splits the frozen grain just as surely).
+            try { SpellEffects.DamageBurnableStructures(pos + fwd * (range * 0.5f), range * 0.6f, SiegeConeDamage * power, caster); } catch { }
             // A living eruption of flame lances out along the cone; the Ashen show
             // only the cold's pale light. Trailing blooms mark the deeper reach.
             FireBloom(pos + fwd * (range * 0.5f), ashen, rgb, 3f, true);
@@ -136,11 +228,26 @@ namespace AshAndEmber
                     Vec3 node = rowCentre + right * f;
                     try
                     {
-                        if (ashen) SpellEffects.SpawnTempSnowParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
-                        else       SpellEffects.SpawnTempFireParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                        if (ashen)
+                        {
+                            SpellEffects.SpawnTempSnowParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                            // The cold deepens the drifts it stands on.
+                            if (SpellEffects.SceneIsSnowy())
+                                SpellEffects.SpawnTempSnowParticle(node + new Vec3(0.5f, 0.3f, 0.8f), 2.5f);
+                        }
+                        else
+                        {
+                            SpellEffects.SpawnTempFireParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
+                            // Living flame on snow-bound ground — the wall stands in steam.
+                            if (SpellEffects.SceneIsSnowy())
+                                SpellEffects.SpawnTempSmokeParticle(node + new Vec3(0f, 0f, 0.6f), 2.5f);
+                        }
                     }
                     catch { }
                     SpawnLight(node, rgb, 1.4f);
+                    // The standing flame WARDS: its updraft devours any gale that
+                    // crosses it while it burns (the Ashen frost stands the same).
+                    try { ElementWallWards.RegisterNode(MagicElement.Fire, node, 1.6f, FireWallBurnSec, caster.Team); } catch { }
                 }
                 // The living fire lingers on each row — a burning band that scorches
                 // any who hold it (the Ashen cold does not smoulder).
@@ -216,7 +323,14 @@ namespace AshAndEmber
             Vec3 pos; try { pos = caster.Position; } catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb = Palette(MagicElement.Spirit, ashen);
-            try { MobileParty.MainParty.RecentEventsMorale += SpiritMorale * power; } catch { }
+            // The party-morale lift belongs to the CASTER's party — NPC lords raise
+            // this ward too, and their working must not hearten the player's men.
+            try
+            {
+                if (caster == Agent.Main)
+                    MobileParty.MainParty.RecentEventsMorale += SpiritMorale * power;
+            }
+            catch { }
             int blessed = 0;
             try
             {
@@ -350,11 +464,21 @@ namespace AshAndEmber
             try
             {
                 if (ashen)
+                {
                     SpellEffects.SpawnTempSnowParticle(at + new Vec3(0f, 0f, 0.4f), major ? 1.6f : 1.1f);
-                else if (major)
-                    SpellEffects.SpawnBurstExplosion(at, ColorSchool.Red, 3f, 1.3f);
+                    // The cold does not melt snow — it DEEPENS it: on snow-bound
+                    // ground the Ashen fire thickens the drifts where it lands.
+                    if (SpellEffects.SceneIsSnowy())
+                        SpellEffects.SpawnTempSnowParticle(at + new Vec3(0.6f, 0.3f, 0.6f), major ? 2.2f : 1.4f);
+                }
                 else
-                    SpellEffects.SpawnTempFireParticle(at + new Vec3(0f, 0f, 0.4f), 1.1f);
+                {
+                    if (major) SpellEffects.SpawnBurstExplosion(at, ColorSchool.Red, 3f, 1.3f);
+                    else       SpellEffects.SpawnTempFireParticle(at + new Vec3(0f, 0f, 0.4f), 1.1f);
+                    // Living fire on snow-bound ground: the drifts steam and slump.
+                    if (SpellEffects.SceneIsSnowy())
+                        SpellEffects.SpawnTempSmokeParticle(at + new Vec3(0f, 0f, 0.4f), major ? 2.2f : 1.2f);
+                }
             }
             catch { }
             SpawnLight(at, rgb, lightScale);

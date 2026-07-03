@@ -223,10 +223,12 @@ namespace AshAndEmber
             if (burstFriendlyFire && !blastFriendlyFire) useBurst = false;
             else if (blastFriendlyFire && !burstFriendlyFire) useBurst = true;
 
-            // Spell power tiers:
-            //   Looter (untrained):       formCount=1, minimal damage
-            //   Regular bandit casters:   formCount=2, modest damage
-            //   Fire Worshippers / Ashen: formCount=3, heavy damage
+            // Spell power tiers — the borrowed fire burns at one crude, flat heat
+            // (35/hit, crystal-tier: below a trained lord's 44 full-draw cone, far
+            // below the boss tier); skill instead widens the WORKING:
+            //   Looter (untrained):       formCount=1, barely leaves the hand
+            //   Regular bandit casters:   formCount=2, modest reach
+            //   Fire Worshippers / Ashen: formCount=3, wide reach
             string troopId   = (mage.Character as TaleWorlds.CampaignSystem.CharacterObject)?.StringId ?? "";
             bool isLooter    = troopId == "looter";
             bool isCultist   = _cultistTroops.Contains(troopId);
@@ -258,8 +260,8 @@ namespace AshAndEmber
                 {
                     if (effectiveSpecial)
                     {
-                        if (burst) SpellEffects.ExecuteNpcBurst(mage, 3, 2, 0, mage.Team);
-                        else       SpellEffects.ExecuteNpcBlast(mage, 3, 2, 0, mage.Team);
+                        if (burst) SpellEffects.ExecuteNpcBurst(mage, 3, 1, 0, mage.Team);
+                        else       SpellEffects.ExecuteNpcBlast(mage, 3, 1, 0, mage.Team);
                     }
                     else if (looter)
                     {

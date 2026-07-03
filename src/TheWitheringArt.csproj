@@ -93,6 +93,8 @@
   <ItemGroup>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="Magic\ElementMagicMath.cs"/>
+    <Compile Include="Magic\WallWardMath.cs"/>
+    <Compile Include="Magic\ElementWallWards.cs"/>
     <Compile Include="Magic\MageElementKnowledge.cs"/>
     <Compile Include="Magic\ElementSpellEffects.cs"/>
     <Compile Include="Magic\ElementMagicInput.cs"/>
@@ -268,6 +270,7 @@
     <Compile Include="Spells\SpellEffects.Enchantments.cs"/>
     <Compile Include="Spells\SpellEffects.Battlefield.cs"/>
     <Compile Include="Spells\SpellEffects.Presentation.cs"/>
+    <Compile Include="Spells\SpellEffects.Siege.cs"/>
     <Compile Include="Spells\BlastSpells.cs"/>
     <Compile Include="Spells\SelfSpells.cs"/>
     <Compile Include="Spells\CreateSpells.cs"/>

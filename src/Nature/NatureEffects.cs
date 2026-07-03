@@ -124,13 +124,29 @@ namespace AshAndEmber
         {
             try { SpellEffects.SpawnNatureRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f, 1.6f); } catch { }
             try { SpawnEruptionRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f); } catch { }
+            // On desert sand the gale whips up a ring of stinging dust.
+            try
+            {
+                if (SpellEffects.SceneIsDesert())
+                    for (int i = 0; i < 8; i++)
+                    {
+                        double an = Math.PI * 2.0 * i / 8;
+                        Vec3 dp = pos + new Vec3((float)Math.Cos(an), (float)Math.Sin(an), 0.2f)
+                                      * (NatureMath.GaleRadius * 0.5f);
+                        SpellEffects.SpawnNatureBurst(dp, NatureElement.Earth, 0.8f);
+                    }
+            }
+            catch { }
             ForEachEnemyInRadius(pos, NatureMath.GaleRadius, team, enemy =>
             {
+                // Walls of flame and standing water devour a gale that crosses them.
+                try { if (ElementWallWards.BlocksPath(MagicElement.Wind, pos, enemy.Position, out _)) return; } catch { }
+                if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
                 ApplyDamage(enemy, caster, NatureMath.GaleDamage, DamageTypes.Invalid);
                 try
                 {
                     Vec3 dir = (enemy.Position - pos).NormalizedCopy();
-                    enemy.TeleportToPosition(enemy.Position + dir * NatureMath.GaleKnockback);
+                    KnockbackAgent(enemy, enemy.Position + dir * NatureMath.GaleKnockback);
                 }
                 catch { }
                 ApplySpeedToken(enemy, NatureMath.GaleSlowMult, NatureMath.GaleSlowSec * _castPower);
@@ -154,6 +170,9 @@ namespace AshAndEmber
             try { SpawnEruptionRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f); } catch { }
             ForEachEnemyInRadius(pos, NatureMath.EntangleRadius, team, enemy =>
             {
+                // A wall of driven wind scatters flung stone before it lands.
+                try { if (ElementWallWards.BlocksPath(MagicElement.Earth, pos, enemy.Position, out _)) return; } catch { }
+                if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
                 ApplyDamage(enemy, caster, NatureMath.EntangleDamage, DamageTypes.Blunt);
                 try { enemy.SetMaximumSpeedLimit(0f, false); } catch { }
                 ApplySpeedToken(enemy, 0f, NatureMath.EntangleRootSec * _castPower);   // held in place (root scales with draw)
@@ -170,12 +189,26 @@ namespace AshAndEmber
             try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.TorrentRange, NatureElement.Water, 2.0f); } catch { }
             try { SpawnEruptionCone(pos, fwd, NatureElement.Water, NatureMath.TorrentRange); } catch { }
 
+            // The wave puts out fire along its path — burning ground boils to
+            // steam (and any fire-wall warding there dies), burning men are doused.
+            try
+            {
+                SpellEffects.QuenchFireAt(pos + fwd * 3f, 3.5f);
+                SpellEffects.QuenchFireAt(pos + fwd * 6f, 3.5f);
+                SpellEffects.QuenchFireAt(pos + fwd * NatureMath.TorrentRange, 3.5f);
+            }
+            catch { }
+
             ForEachEnemyInRadius(pos, NatureMath.TorrentRange, team, enemy =>
             {
                 Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
                 if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;
+                // A standing dam of stone breaks the wave before it strikes.
+                try { if (ElementWallWards.BlocksPath(MagicElement.Water, pos, enemy.Position, out _)) return; } catch { }
+                try { ElementSpellEffects.QuenchIgnition(enemy); } catch { }
+                if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
                 ApplyDamage(enemy, caster, NatureMath.TorrentDamage, DamageTypes.Invalid);
-                try { enemy.TeleportToPosition(enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch { }
+                try { KnockbackAgent(enemy, enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch { }
                 ApplySpeedToken(enemy, NatureMath.TorrentSlowMult, NatureMath.TorrentSlowSec * _castPower);
             });
         }
@@ -706,10 +739,30 @@ namespace AshAndEmber
         {
             if (target == null || !target.IsActive() || target.Health <= 0f) return;
             amount *= _castPower;   // scale by the current cast's draw-power
+            // Route through the canonical spell-damage path so the elements obey
+            // the same laws as fire: heroes are floored (never magicked dead
+            // outright), Cinder Shell / Sunder modify the hit, kill credit flows.
+            try { SpellEffects.DamageAgent(target, amount, null, source); } catch { }
+        }
+
+        // Mount-safe knockback. Teleporting a RIDER out from under his horse
+        // desyncs the pair (a known crash/glitch class in this mod's history —
+        // the freeze system already refuses to teleport mounted agents). A
+        // mounted target is knocked back by moving the MOUNT the same distance;
+        // the rider follows. Everyone else is moved directly.
+        internal static void KnockbackAgent(Agent a, Vec3 newPos)
+        {
+            if (a == null) return;
             try
             {
-                target.Health -= amount;
-                if (target.Health <= 0f) target.Die(new Blow(source?.Index ?? -1));
+                var mount = a.MountAgent;
+                if (mount != null && mount.IsActive())
+                {
+                    Vec3 delta = newPos - a.Position; delta.z = 0f;
+                    mount.TeleportToPosition(mount.Position + delta);
+                }
+                else
+                    a.TeleportToPosition(newPos);
             }
             catch { }
         }

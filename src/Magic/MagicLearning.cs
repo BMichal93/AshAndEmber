@@ -60,6 +60,20 @@ namespace AshAndEmber
             }
         }
 
+        // Free grant for encounters and boons that bestow a power without the
+        // focus price — picks one the player does not yet hold, at random.
+        // Returns false (name null) when every power is already held.
+        public static bool TryGrantRandomUnknown(Random rng, out string name)
+        {
+            name = null;
+            var unknown = _all.Where(p => !Has(p)).ToList();
+            if (unknown.Count == 0) return false;
+            var pick = unknown[rng.Next(unknown.Count)];
+            Grant(pick);
+            name = Name(pick);
+            return true;
+        }
+
         // ── Cost ────────────────────────────────────────────────────────────────
         public static int LearnedCount => _all.Count(Has);
 

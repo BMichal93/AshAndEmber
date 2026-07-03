@@ -42,7 +42,17 @@ namespace AshAndEmber
             // Damage — fire hits everyone (friendly fire).
             // Player casts (HasSplitDamage) use per-nature base damage values.
             // NPC casts (DamageCount set directly, no split) use the flat 25/input.
-            if (cast.DamageCount > 0)
+            // Elemental wall warding: the old-path workings are fire, and a wall of
+            // standing water between caster and mark drinks them — bandit and legacy
+            // casts obey the same physics as the unified elements.
+            bool fireWarded = false;
+            try
+            {
+                fireWarded = caster != null && cast.DamageCount > 0
+                    && ElementWallWards.BlocksPath(MagicElement.Fire, caster.Position, target.Position, out _);
+            }
+            catch { }
+            if (cast.DamageCount > 0 && !fireWarded)
             {
                 if (cast.HasSplitDamage)
                 {

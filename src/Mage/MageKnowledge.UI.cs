@@ -76,7 +76,32 @@ namespace AshAndEmber
                 "  Water   — a slowing wave             / a barrier of mist\n" +
                 "  Spirit  — fear men & horses, a stray / a wall that heartens\n" +
                 "            order into their ranks       and mends your own\n" +
-                "  A longer draw makes every element strike harder.\n\n" +
+                "  A longer draw makes every element strike harder — and a DEEP\n" +
+                "  draw of Fire sets its marks ALIGHT: they keep burning (up to\n" +
+                "  ~12/s for 5 s at full charge; a snap flick ignites nothing).\n" +
+                "  The Ashen cold clings on as deep frost — the same toll.\n\n" +
+                "── WALLS WARD  (while they stand) ───────────────────\n" +
+                "  Fire   — devours any gale that crosses it; horses shy from flame.\n" +
+                "  Wind   — turns arrows and bolts aside, scatters flung stone.\n" +
+                "  Earth  — stops arrows dead and breaks the water's wave.\n" +
+                "  Water  — quenches fire to steam and drinks the wind's force.\n" +
+                "  The elements are impartial: a wall wards against ALL shot and\n" +
+                "  magic that crosses it, your own included. Only the Spirit's\n" +
+                "  dread passes every wall — as do despair (Duskstone) and Grace,\n" +
+                "  for no earthly wall stops the unseen. Other crystals are\n" +
+                "  shard-force: wind and stone bar their reach.\n\n" +
+                "── THE ELEMENTS REACT ───────────────────────────────\n" +
+                "  Fire on water   — boils to a hanging cloud of STEAM; burning\n" +
+                "                    ground and burning men are DOUSED by a wave\n" +
+                "                    or standing mist (a torrent can breach a\n" +
+                "                    fire wall).\n" +
+                "  Water on stone  — the broken wave churns the ground to MUD:\n" +
+                "                    a bogging patch that slows all who cross it,\n" +
+                "                    charging cavalry worst of all.\n" +
+                "  Fire on timber  — siege engines and castle GATES burn: a cone\n" +
+                "                    scorches them, a standing fire gnaws at them.\n" +
+                "                    (The Ashen cold splits the frozen grain.)\n" +
+                "  Horses and flame — no horse will hold a burning line.\n\n" +
                 "── BATTLE COST  (life expectancy — flat per cast) ────\n" +
                 "  Attack = 3 days of life   Wall = 4 days.\n" +
                 "  The draw buys power, never a cheaper cast — the toll is flat.\n" +

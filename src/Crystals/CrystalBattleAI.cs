@@ -141,7 +141,10 @@ namespace AshAndEmber
                 foreach (Agent e in SpellEffects.EnemiesOf(a))
                 {
                     float dx = e.Position.x - a.Position.x, dy = e.Position.y - a.Position.y;
-                    if (dx * dx + dy * dy <= r2) n++;
+                    if (dx * dx + dy * dy > r2) continue;
+                    // A bearer doesn't waste a stone on foes a wall already bars.
+                    try { if (ElementWallWards.BlocksCrystal(a.Position, e.Position)) continue; } catch { }
+                    n++;
                 }
                 return n;
             }

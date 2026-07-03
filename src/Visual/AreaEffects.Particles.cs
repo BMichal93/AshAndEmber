@@ -470,12 +470,10 @@ namespace AshAndEmber
                             if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
                             try
                             {
-                                if (a.Health <= cloudDmg) QueueKill(a);
-                                else
-                                {
-                                    a.Health -= cloudDmg;
-                                    try { a.SetMorale(Math.Max(0f, a.GetMorale() - 10f)); } catch { }
-                                }
+                                // Canonical damage path: heroes are floored (never
+                                // cloud-killed outright), wards/brands apply.
+                                DamageAgent(a, cloudDmg);
+                                try { a.SetMorale(Math.Max(0f, a.GetMorale() - 10f)); } catch { }
                                 BeginAgentGlow(a, e.School, 1.5f);
                             }
                             catch { }
@@ -487,9 +485,22 @@ namespace AshAndEmber
                     {
                         SpawnTempFireParticle(e.Position, 1.5f);
                         SpawnTempLight(e.Position, ColorSchool.Red, 5f, 1.5f);
+                        // Burning patches are LIVING fire (the Ashen cold never
+                        // smoulders): on snow-bound ground the drifts steam and
+                        // slump around the flame — fire melts snow, visibly.
+                        if (SceneIsSnowy())
+                            try { SpawnTempSmokeParticle(e.Position + new Vec3(0f, 0f, 0.4f), 1.4f); } catch { }
+                        // Dry grass and brush carry the flame a stride outward.
+                        try { TryFireCreep(e); } catch { }
+                        // A standing burn gnaws at wooden machines and gates in it.
+                        try { DamageBurnableStructures(e.Position, e.Radius + 1.5f, e.Power * 3f, null); } catch { }
                         foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount) continue;
+                            // Horses will not face open flame — whoever's banner
+                            // their rider carries. The mount shies off the fire.
+                            if (a.Position.Distance(e.Position) <= e.Radius + 1.5f)
+                                TryScareMountFromFire(a, e.Position);
                             if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
                             if (a.Position.Distance(e.Position) > e.Radius) continue;
                             if (IsWarded(a)) continue;
@@ -526,7 +537,32 @@ namespace AshAndEmber
                     case "nature_barrier_water":
                     case "nature_barrier_storm":
                         TickNatureBarrierNode(e);
+                        // Standing mist puts out fire beneath it: burning ground is
+                        // quenched to steam, and any fire-wall warding there dies.
+                        if (e.Id == "nature_barrier_water")
+                            QuenchFireAt(e.Position, e.Radius + 0.5f);
                         break;
+
+                    case "spell_mudpatch":
+                    {
+                        // Churned ground: everything crossing it wades — the mount
+                        // too, so cavalry bogs down hardest. Impartial (team null).
+                        if (_rng.Next(3) == 0)
+                            try { SpawnNatureBurst(e.Position, NatureElement.Earth, 0.5f); } catch { }
+                        foreach (Agent a in Mission.Current.Agents.ToList())
+                        {
+                            if (!a.IsActive() || a.IsMount) continue;
+                            if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            try
+                            {
+                                NatureEffects.ApplySpeedToken(a, 0.55f, 0.8f);
+                                if (a.MountAgent != null && a.MountAgent.IsActive())
+                                    NatureEffects.ApplySpeedToken(a.MountAgent, 0.45f, 0.8f);
+                            }
+                            catch { }
+                        }
+                        break;
+                    }
 
                     case "spell_dirge":
                     {
@@ -553,6 +589,141 @@ namespace AshAndEmber
         }
 
         // ── Nature barriers ──────────────────────────────────────────────────────
+        // Water puts out fire. Burning ground within reach is quenched to steam
+        // (patches are expired in place — the sweep disposes them safely) and the
+        // fire-wall warding there dies with it, opening a real gap in the wall.
+        internal static void QuenchFireAt(Vec3 pos, float radius)
+        {
+            float r2 = radius * radius;
+            bool any = false;
+            try
+            {
+                foreach (var fx in _areaEffects)
+                {
+                    if (fx.Id != "spell_firepatch" || fx.Remaining <= 0f) continue;
+                    float dx = fx.Position.x - pos.x, dy = fx.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    fx.Remaining = 0f;   // the expiry sweep removes and disposes it
+                    any = true;
+                    try { SpawnTempSmokeParticle(fx.Position + new Vec3(0f, 0f, 0.5f), 3.5f); } catch { }
+                }
+            }
+            catch { }
+            try { if (ElementWallWards.QuenchFireNodesNear(pos, radius) > 0) any = true; } catch { }
+            if (any)
+                try { SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 3f); } catch { }
+        }
+
+        // ── Scene feel — terrain-aware elemental flavour ─────────────────────────
+        // The battle terrain type (verified engine API) tells the elements what
+        // ground they work on: snow steams under fire, desert sand rides the wind,
+        // dry grass carries a creeping flame.
+        internal static bool SceneIsSnowy()
+        {
+            try
+            {
+                var m = Mission.Current;
+                if (m != null && m.HasValidTerrainType
+                    && m.TerrainType == TaleWorlds.Core.TerrainType.Snow) return true;
+            }
+            catch { }
+            // Winter anywhere reads as snow-bound ground (Seasons: 0 Spring … 3 Winter).
+            try
+            {
+                return TaleWorlds.CampaignSystem.Campaign.Current != null
+                    && (int)TaleWorlds.CampaignSystem.CampaignTime.Now.GetSeasonOfYear == 3;
+            }
+            catch { return false; }
+        }
+
+        internal static bool SceneIsDesert()
+        {
+            try
+            {
+                var m = Mission.Current;
+                return m != null && m.HasValidTerrainType
+                    && (m.TerrainType == TaleWorlds.Core.TerrainType.Desert
+                     || m.TerrainType == TaleWorlds.Core.TerrainType.Dune);
+            }
+            catch { return false; }
+        }
+
+        // ── Fire creep — dry ground carries the flame ────────────────────────────
+        // Each burning patch may seed ONE child patch a stride away per tick:
+        // eager through grass and brush (plain/steppe/forest), reluctant on sand,
+        // snow-bound or sodden ground. Two generations at most, and a hard cap,
+        // so a wall of fire smoulders outward without ever consuming the field.
+        private const int MaxFirePatches = 24;
+
+        private static float FireCreepChance()
+        {
+            try
+            {
+                var m = Mission.Current;
+                if (m != null && m.HasValidTerrainType)
+                {
+                    switch (m.TerrainType)
+                    {
+                        case TaleWorlds.Core.TerrainType.Forest:
+                        case TaleWorlds.Core.TerrainType.Plain:
+                        case TaleWorlds.Core.TerrainType.Steppe:
+                            return SceneIsSnowy() ? 0.02f : 0.10f;  // grass burns — unless under snow
+                        case TaleWorlds.Core.TerrainType.Desert:
+                        case TaleWorlds.Core.TerrainType.Dune:
+                        case TaleWorlds.Core.TerrainType.Swamp:
+                            return 0.02f;                            // sand and sodden ground barely carry it
+                    }
+                }
+            }
+            catch { }
+            return SceneIsSnowy() ? 0.02f : 0.06f;
+        }
+
+        private static void TryFireCreep(AreaEffect e)
+        {
+            if (e.Generation >= 2) return;
+            if (_rng.NextDouble() >= FireCreepChance()) return;
+            int patches = 0;
+            try { foreach (var fx in _areaEffects) if (fx.Id == "spell_firepatch") patches++; } catch { }
+            if (patches >= MaxFirePatches) return;
+
+            double ang = _rng.NextDouble() * Math.PI * 2;
+            Vec3 p = e.Position + new Vec3((float)Math.Cos(ang), (float)Math.Sin(ang), 0f)
+                                * (2.5f + (float)_rng.NextDouble());
+            var child = new AreaEffect
+            {
+                Id           = "spell_firepatch",
+                School       = ColorSchool.Red,
+                Position     = p,
+                Radius       = 2.2f,
+                TickInterval = 1f,
+                TickTimer    = 1f,
+                Remaining    = 6f,
+                Power        = Math.Max(3f, e.Power * 0.7f),   // the creeping flame burns lower
+                CasterTeam   = e.CasterTeam,
+                Generation   = e.Generation + 1,
+            };
+            child.LightEntity = SpawnAreaLight(p, ColorSchool.Red, 5f);
+            _areaEffects.Add(child);   // appended above the reverse loop's cursor — safe
+            try { SpawnTempFireParticle(p, 5f); } catch { }
+        }
+
+        // Horses fear open flame: a mounted agent beside a burning patch has its
+        // mount shy away — a short bolt off the fire line and a cry of fear.
+        // Mirrors the Spirit panic's mount handling; fires at the patch tick rate.
+        private static void TryScareMountFromFire(Agent rider, Vec3 firePos)
+        {
+            try
+            {
+                if (rider?.MountAgent == null || !rider.MountAgent.IsActive()) return;
+                Vec3 away = rider.Position - firePos; away.z = 0f;
+                if (away.Length > 0.1f) away.Normalize(); else away = new Vec3(1f, 0f, 0f);
+                rider.MountAgent.TeleportToPosition(rider.MountAgent.Position + away * 2.5f);
+                try { rider.MountAgent.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction); } catch { }
+            }
+            catch { }
+        }
+
         // Spawns a wall of BarrierNodeCount nodes perpendicular to the caster's
         // forward. Each node holds two persistent particle columns (low + high) and a
         // coloured point light for its full duration; repulsion and elemental effects
@@ -579,6 +750,8 @@ namespace AshAndEmber
             int      rows    = Math.Min(NatureMath.BarrierMaxDepthRows, ElementMagicMath.WallDepthRows(castPower));
 
             RemoveAreaEffect(id);
+            // The replaced wall's warding falls with it (same replacement scope).
+            try { ElementWallWards.ClearBySourceKey(id); } catch { }
 
             for (int row = 0; row < rows; row++)
             {
@@ -620,6 +793,18 @@ namespace AshAndEmber
                     node.LightEntity2 = partHigh;                                                         // upper particle
                     node.LightEntity3 = SpawnAreaLightRaw(nodePos + new Vec3(0f, 0f, 0.8f), rgb, 8f);    // glow column
                     _areaEffects.Add(node);
+
+                    // The wall WARDS while it stands: wind and stone turn missiles
+                    // (and each other's element), water quenches fire and drinks
+                    // the gale. Storm is the gale's kin and wards as wind does.
+                    try
+                    {
+                        MagicElement wardEl = el == NatureElement.Earth ? MagicElement.Earth
+                                            : el == NatureElement.Water ? MagicElement.Water
+                                            :                             MagicElement.Wind;
+                        ElementWallWards.RegisterNode(wardEl, nodePos, nodeR, dur, casterTeam, id);
+                    }
+                    catch { }
                 }
             }
         }
@@ -631,6 +816,9 @@ namespace AshAndEmber
             // Animated burst on each pulse so the wall feels alive and churning.
             try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 0.3f), el, 0.5f); } catch { }
             try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 1.0f), el, 0.4f); } catch { }
+            // A wall of wind over desert sand stands inside its own dust-devil.
+            if (el == NatureElement.Wind && _rng.Next(2) == 0 && SceneIsDesert())
+                try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 0.2f), NatureElement.Earth, 0.5f); } catch { }
             // Coloured light pulse each tick so the wall keeps a strong, visible glow
             // for its whole duration (the debris particles alone read as too brief).
             try { SpawnTempLightRgb(e.Position + new Vec3(0f, 0f, 1.0f), NatureBarrierLightRgb(el), 6f, NatureMath.BarrierTickInterval + 0.1f); } catch { }
@@ -659,7 +847,9 @@ namespace AshAndEmber
                     // own bite (root/slow/arc) on top.
                     Vec3 bounce = e.Position + away * (e.Radius + NatureMath.BarrierBounceMargin);
                     bounce.z = a.Position.z;
-                    a.TeleportToPosition(bounce);
+                    // Mount-safe: a mounted rider is bounced by moving his HORSE,
+                    // never by teleporting the rider out of the saddle.
+                    NatureEffects.KnockbackAgent(a, bounce);
 
                     switch (el)
                     {
@@ -669,28 +859,26 @@ namespace AshAndEmber
                             break;
 
                         case NatureElement.Earth:
-                            // Thrown into thorns + rooted + bled.
+                            // Thrown into thorns + rooted + bled. The bite goes
+                            // through DamageAgent so heroes are floored, never
+                            // wall-killed outright, and armour brands apply.
                             NatureEffects.ApplySpeedToken(a, 0f, NatureMath.ThornwallRootSec);
-                            float tDmg = NatureMath.ThornwallDamage;
-                            if (a.Health <= tDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
-                            else a.Health -= tDmg;
+                            try { DamageAgent(a, NatureMath.ThornwallDamage); } catch { }
                             try { SpawnNatureBurst(a.Position, NatureElement.Earth, 0.4f); } catch { }
                             break;
 
                         case NatureElement.Water:
-                            // Churning bounce + lingering slow + a cold bite.
+                            // Churning bounce + lingering slow + a cold bite. The
+                            // mist also douses a burning man to a puff of steam.
+                            try { ElementSpellEffects.QuenchIgnition(a); } catch { }
                             NatureEffects.ApplySpeedToken(a, NatureMath.MistwallSlowMult, NatureMath.MistwallSlowSec);
-                            float wDmg = NatureMath.MistwallDamage;
-                            if (a.Health <= wDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
-                            else a.Health -= wDmg;
+                            try { DamageAgent(a, NatureMath.MistwallDamage); } catch { }
                             try { SpawnNatureBurst(a.Position, NatureElement.Water, 0.4f); } catch { }
                             break;
 
                         case NatureElement.Storm:
                             // Lightning discharge — arc damage.
-                            float sDmg = NatureMath.StormwallDamage;
-                            if (a.Health <= sDmg) { try { a.Die(new Blow(-1)); } catch { a.Health = 0f; } }
-                            else a.Health -= sDmg;
+                            try { DamageAgent(a, NatureMath.StormwallDamage); } catch { }
                             try { SpawnTempLightWhite(a.Position + new Vec3(0f, 0f, 0.6f), 4f, 0.2f); } catch { }
                             try { SpawnNatureBurst(a.Position, NatureElement.Storm, 0.4f); } catch { }
                             break;

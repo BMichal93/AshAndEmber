@@ -188,8 +188,13 @@ namespace AshAndEmber
                                 ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, 2, false);
                                 Msg($"(Relation with {lord.Name}: +2)", GoodColor);
                             }
-                            if (!TalentSystem.Has(TalentId.Reap))
-                                TalentSystem.GrantFree(TalentId.Reap, Hero.MainHero);
+                            // The taking teaches its own art — the BLOOD discipline
+                            // (Reap's heir in the merged magic).
+                            if (!MageElementKnowledge.HasBlood)
+                            {
+                                MageElementKnowledge.LearnBlood();
+                                Msg("Something in the taking stays with you. You know the BLOOD discipline now — a lord's death by your hand gives back the years the fire has burned.", BadColor);
+                            }
                             Msg($"You join them. There is a specific kind of ease that comes with it — no decision to make, no weight to carry afterward. When it is over, you feel the familiar warmth. Something given back. The soldiers give you a wide berth on the road home.", BadColor);
                             break;
                         }

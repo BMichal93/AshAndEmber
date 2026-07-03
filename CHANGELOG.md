@@ -17,6 +17,57 @@
 - **The opening cinematic reads cleanly** — grammar and flow polish across the lore paragraphs ("Where will it lead you, O Firelord?").
 - Housekeeping: the ended battle's mission object is no longer kept alive while waiting on the map (the Ashen cast-tally now holds it weakly).
 
+### Blood inherits the Reaper's due
+- **The BLOOD discipline is the retired Reap talent's heir everywhere.** The Branded's fire-harvest, the Wasting's dark ritual, and the reaper's yields (life given back for a raided village or discarded prisoners) all now answer to Blood — legacy saves that own Reap keep every right. The two encounters that once granted Reap (the Sealed Archive's margin note, joining the reapers at the roadside) now teach Blood itself.
+- **Every harvest repays the fire's debt, not the body's years.** The Branded harvest, the reaper's yields and the legacy Ember on-kill spark now restore *life expectancy* (the v0.35 ledger) instead of literally de-aging the hero — one cost model, one currency.
+
+### The walls learn to ward — elemental interception
+- **A standing elemental wall now STOPS things, beyond its bite.** The elements answer one another the way the world does:
+  - **Fire** — its updraft devours any gale that crosses it, and **horses will not face open flame**: mounts shy off every burning line (fire walls and lingering fire patches alike), whichever banner their rider carries.
+  - **Wind** — turns **arrows and bolts** aside and scatters flung stone (blocks Earth magic). The seers' Stormwall wards as wind does.
+  - **Earth** — a standing dam: stops **missiles** dead and breaks the water's wave (blocks Water magic).
+  - **Water** — quenches **fire** to steam (a burning crystal shard fizzles without its blast) and drinks the **wind's** force.
+  - **Spirit** — a ward of the unseen: it stops nothing physical, and no earthly wall stops *it* — dread passes stone and steam alike.
+- **The elements are impartial.** A wall wards against every working and shot that crosses it — friend's, foe's, and the caster's own. Raising a mist wall in front of your own fire line is now a real mistake, and a real tactic.
+- **Every fire obeys**: the unified cones, the bandits' crude old-path blasts, and crystal shards all die against the same walls. Wherever a working is drunk by a wall, it dies visibly — steam, scattered dust, a burst of spray — with a short log line so you know *why* it failed.
+- **NPC mages read the exchange.** A lord who has seen what the enemy throws raises the wall that answers it — water against fire, wind against stone — if he has learned that element; and his own workings are subject to the same wards as yours.
+- **A lord does not throw a cone into a wall that drinks it** — before loosing fire or the wave he probes the forward lane against the standing wards and picks a different element instead. Recklessness is courage, not blindness.
+- A recast wall's warding falls with it — replacing a standing barrier never leaves an invisible ward behind.
+
+### The elements react — an interactive battlefield
+- **Fire takes to timber.** Siege engines and castle gates are wooden, and the fire finally treats them so: a fire cone scorches every machine in its throat (150 × draw-power against the same hit-point pool a catapult stone chews), and a standing burn — fire walls, lingering fire patches, an Embershard blast — gnaws at rams, towers, throwing machines and gates for as long as it burns. The Ashen cold splits the frozen grain just as surely. Stone wall segments do not burn.
+- **Water puts out fire.** A torrent quenches burning ground along its path to hanging steam (opening a real gap in a fire wall — its warding dies with it), a standing mist wall smothers flame beneath it, and a burning man hit by the wave or caught in the mist is doused with a hiss.
+- **A wave broken on stone churns the ground to MUD** — a bogging patch (~3.5 m, 10 s) that slows everyone who crosses it, and charging cavalry worst of all: the horse wades too. Mud, like the walls, is impartial.
+- **Where magic dies against a wall, the world answers**: quenched fire boils into a cloud of steam, a devoured gale makes the flame flare, the broken wave leaves mud at the stone's foot.
+- **Crystals join the warding.** Crystal power is shard-force — walls of wind and stone bar the Rimeshard's frost, the Stormcrystal's clap and the Veilstone's grasp from foes behind them (the Embershard missile already died on walls; water quenches it without a blast). **Duskstone's despair, the Spirit's dread and every Grace miracle pass all walls** — no earthly wall stops the unseen. Crystal-bearing NPCs count only foes a wall doesn't bar before breaking a stone.
+- **The ground itself answers** (terrain-aware, via the engine's battle terrain type):
+  - **Fire creeps.** A burning patch may seed a child flame a stride away — eagerly through grass and brush (plains, steppe, forest), barely at all on sand, snow-bound or sodden ground. Two generations and a hard cap, so a fire line smoulders outward without consuming the field.
+  - **Fire melts snow.** On snow-bound ground (snow terrain, or winter anywhere) living flame stands in rising steam — the drifts slump around every burning patch, cone-strike and fire wall. **The Ashen cold does the opposite**: it does not melt the snow, it *deepens* it — thicker drifts where the cold fire lands.
+  - **Wind raises the sand.** On desert and dune a gale whips up a ring of stinging dust, and a wall of wind stands inside its own dust-devil.
+- **Not done, honestly:** individual trees cannot burn — Bannerlord's scene flora isn't entity-backed, so there is nothing there for the fire to damage. The creeping ground-fire above is the nearest true mechanic.
+
+### Dead rewards live again — the retired talents no longer masquerade as prizes
+- **Two encounters were paying in ash.** The temple-square rescue and the coin-flip merchant granted the retired spell/enchantment talents (Pyrelord's brands, the old fire map-spells) — non-functional since the magic merge. Both now pay in the LIVING craft: a Codex power (element or discipline) you do not yet hold — the merchant up to four of them, fitting the stake of losing your magehood on the flip. All powers held → an attribute point instead.
+- Confirmed by sweep: nothing else invokes the retired paths — the archetype tables persist only for save compatibility, the old map-spell engine and two-phase input have no callers, and the legacy enchantments fire solely on the bandits' crude old-path casts, as intended.
+
+### Hit-safety sweep — mounts, riders and machines cannot break the game
+- **No spell ever teleports a rider out of the saddle again.** Gale and Torrent knockback and the elemental walls' bounce were teleporting mounted RIDERS directly — the horse/rider desync class this mod has been burned by before (the freeze system already refused to do it). All knockback now moves the HORSE the same distance and lets the rider follow; unmounted targets move as before.
+- **The alchemist's yellow cloud obeyed no law** — it could kill enemy lords outright with a direct health write. It now flows through the one spell-damage pipeline (heroes floored, wards and brands apply), like everything else.
+- Re-audited after the interactivity pass: every damage/heal loop skips mounts; siege machines are only ever touched through their own destructible component (never as agents, never with a null attacker); speed tokens hold agent references so reused agent indexes can't slow the wrong man; all mission-scoped state is cleared on both cleanup paths.
+
+### Parity fixes caught by the cone/wall verification pass
+- **Wind, Earth and Water could kill enemy heroes outright** where Fire correctly leaves them at death's door — the nature-routed damage bypassed the canonical spell-damage path. All element damage (attacks and wall bites, player and NPC alike) now flows through one pipeline: heroes are floored, Cinder Shell and Sunder apply, kill credit flows.
+- **The golden ward now holds against every element** — Gale, Entangle and Torrent were ignoring it; only Fire respected it.
+
+### The full draw sets its marks alight — fire crosses the kill threshold
+- **A deeply-drawn fire cone now IGNITES everyone it strikes.** The burn scales with the charge — nothing on a snap flick, up to **12/s for 5 s** at a full draw — so a fully-charged cone (44 on the strike + 60 burning after) finally finishes an unarmoured man over the seconds that follow, and leaves an armoured one crippled, where before even the fullest draw left every looter standing. Spam gains nothing: weak casts still ignite nothing, and re-igniting only refreshes the fiercer burn.
+- **The Ashen cold clings on as deep frost** — the same numbers under the colder mask.
+- **NPC parity is automatic:** a mage lord's full-power cone ignites exactly as the player's does (and his near-burnout half-power casts barely smoulder); the boss tier burns at full.
+
+### Balance — the borrowed fire and the crossed ward
+- **Bandit mages no longer out-burn the boss tier.** A Fire Worshipper's blast dealt 70 true damage — harder than the False Emperor's fullest cone (52.8) and a trained lord's full draw (44). The borrowed fire now burns at one crude flat heat (35, crystal-tier) for every bandit rank; skill widens the working's reach instead.
+- **An enemy lord's Spirit ward no longer heartens YOUR men.** The ward's party-morale lift was hard-wired to the player's party whoever cast it; it now belongs to the caster alone.
+
 ## v0.36.0
 
 ### Mage lords, priests and crystal-bearers fight like people, not scripts

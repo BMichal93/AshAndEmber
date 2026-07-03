@@ -45,6 +45,8 @@ namespace AshAndEmber
             try { SpellEffects.ClearMagicMemory();           } catch { }
             try { SpellEffects.ClearDarkGiftsBattleState();  } catch { }
             try { MagicInputHandler.ResetInputState();        } catch { }
+            try { ElementWallWards.Clear();              } catch { }
+            try { ElementSpellEffects.ClearBattleState();} catch { }
             try { MiracleEffects.ClearBattleState();     } catch { }
             try { MiracleBattleAI.Reset();               } catch { }
             try { MiracleInputHandler.ResetInputState(); } catch { }
@@ -369,6 +371,8 @@ namespace AshAndEmber
 
             // Unified elemental magic (merges the old fire + nature battle input).
             ElementMagicInput.Tick(inMission: true, dt);
+            ElementWallWards.Tick(dt);
+            ElementSpellEffects.Tick(dt);
             CrystalEffects.MissionTick(dt);
             CrystalBattleAI.MissionTick(dt);
             MiracleInputHandler.Tick(inMission: true);
@@ -438,6 +442,8 @@ namespace AshAndEmber
             try { MagicInputHandler.ResetInputState();       } catch { }
             try { CrystalEffects.ClearBattleState();           } catch { }
             try { CrystalBattleAI.Reset();                    } catch { }
+            try { ElementWallWards.Clear();                   } catch { }
+            try { ElementSpellEffects.ClearBattleState();     } catch { }
             try { NatureEffects.ClearBattleState();           } catch { }
             try { NatureCharge.ClearForMission();             } catch { }
             try { NatureChargeBar.Reset();                    } catch { }
@@ -501,10 +507,10 @@ namespace AshAndEmber
                 if (agentState != AgentState.Killed) return;
                 // Blood Pact gift: heal killer on kill (player and gifted NPC lords)
                 try { SpellEffects.ApplyDarkGiftKillEffects(affectedAgent, affectorAgent); } catch { }
-                // Ember passive: rejuvenate on kill
+                // Ember passive (legacy): a kill sometimes repays the fire's debt
                 if (affectorAgent == Agent.Main && MageKnowledge.IsMage && TalentSystem.Has(TalentId.Ember))
                     if (_rng.NextDouble() < 0.10)
-                        AgingSystem.RejuvenateHero(Hero.MainHero, 1);
+                        AgingSystem.RestoreLifeExpectancy(Hero.MainHero, 1);
             }
             catch { }
         }

@@ -72,7 +72,9 @@ namespace AshAndEmber
                 return;
             }
 
-            bool canHarvest = TalentSystem.Has(TalentId.Reap);
+            // The life-harvest answers the BLOOD discipline (the merged art's heir to
+            // the retired Reap talent — legacy owners keep the right).
+            bool canHarvest = MageElementKnowledge.HasBlood || TalentSystem.Has(TalentId.Reap);
 
             string affirmLabel = canHarvest ? "Harvest the fire" : "Leave them to it";
             string affirmDesc  = canHarvest
@@ -125,10 +127,12 @@ namespace AshAndEmber
         {
             try
             {
-                AgingSystem.RejuvenateHero(Hero.MainHero, 15);
+                // The harvest repays the fire's debt (life expectancy), the same
+                // ledger the Blood discipline feeds — it does not de-age the body.
+                AgingSystem.RestoreLifeExpectancy(Hero.MainHero, 15);
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"You draw the fire from {brandedName}. For a moment there is warmth — real warmth, " +
-                    $"the kind that restores. Then it is over. You are fifteen days younger. " +
+                    $"the kind that restores. Then it is over. Fifteen days of your fire's debt, repaid. " +
                     $"They are nothing at all."));
                 try
                 {

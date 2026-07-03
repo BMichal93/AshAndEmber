@@ -315,6 +315,8 @@ namespace AshAndEmber
                     if (caster.Team != null && a.Team == caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
+                    // Walls of wind and stone stop the crystal's reach.
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch { }
                     _rimeSlow[a] = CrystalMath.RimeDurationSec;
                     try { a.SetMaximumSpeedLimit(CrystalMath.RimeSlowMult, false); } catch { }
                     slowed++;
@@ -348,7 +350,10 @@ namespace AshAndEmber
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     if (caster.Team != null && a.Team == caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
-                    if (dx * dx + dy * dy <= r2) candidates.Add(a);
+                    if (dx * dx + dy * dy > r2) continue;
+                    // The veil's grasp is shard-force too — walls of wind/stone bar it.
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch { }
+                    candidates.Add(a);
                 }
             }
             catch { }
@@ -389,6 +394,8 @@ namespace AshAndEmber
                     if (caster.Team != null && a.Team == caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
+                    // Walls of wind and stone stop the crystal's reach.
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch { }
                     try { SpellEffects.DamageAgent(a, CrystalMath.StormDamage, ColorSchool.Orange, caster); } catch { }
                     try { a.ChangeMorale(-CrystalMath.StormMoraleDrain); } catch { }
                     hit++;
@@ -459,6 +466,24 @@ namespace AshAndEmber
                 Vec3 mpos = m.Position;
                 bool exploded = false;
 
+                // Elemental wall warding: a burning shard dies against walls of
+                // wind and stone (detonating there), and is QUENCHED outright by
+                // a wall of standing water — steam, no blast.
+                try
+                {
+                    var ward = ElementWallWards.MissileWardAt(mpos, fireMissile: true);
+                    if (ward != null)
+                    {
+                        if (WallWardMath.QuenchesFireMissile(ward.Value))
+                            try { SpellEffects.SpawnNatureBurst(mpos, NatureElement.Water, 0.8f); } catch { }
+                        else
+                            ExplodeCrystalMissile(m, mpos);
+                        _crystalMissiles.RemoveAt(i);
+                        continue;
+                    }
+                }
+                catch { }
+
                 // Check for enemy collision.
                 try
                 {
@@ -500,6 +525,9 @@ namespace AshAndEmber
                 SpellEffects.TryCastSound(pos, ColorSchool.Red);
             }
             catch { }
+
+            // Burning shards take to timber — machines and gates in the blast char.
+            try { SpellEffects.DamageBurnableStructures(pos, radius, CrystalMath.EmberDamage * 2f, m.Caster); } catch { }
 
             try
             {

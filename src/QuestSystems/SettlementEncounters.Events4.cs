@@ -124,9 +124,11 @@ namespace AshAndEmber
 
             bool mage          = MageKnowledge.IsMage;
             bool isAshen       = MageKnowledge.IsAshen;
-            // A dark ritual answers to the old dark talents OR to a Dark Gift borne
+            // A dark ritual answers to the BLOOD discipline (Reap's heir in the merged
+            // art), to the old dark talents on legacy saves, or to a Dark Gift borne
             // from the altars — the retired fire paths are no longer purchasable.
-            bool hasDarkTalent = (mage && (TalentSystem.Has(TalentId.Ember)
+            bool hasDarkTalent = (mage && (MageElementKnowledge.HasBlood
+                                        || TalentSystem.Has(TalentId.Ember)
                                         || TalentSystem.Has(TalentId.Reap)))
                                || DarkGiftSystem.HasAnyGift;
             // The living world answers the old attunement or the merged art (any
@@ -366,9 +368,13 @@ namespace AshAndEmber
                                     Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2);
                                 }
                                 catch { }
-                                // Grant Reap if not owned, else attribute point
-                                if (!TalentSystem.Has(TalentId.Reap))
-                                    TalentSystem.GrantFree(TalentId.Reap, Hero.MainHero);
+                                // The margin note teaches the life-harvest — the BLOOD
+                                // discipline (Reap's heir). Already versed? A point instead.
+                                if (!MageElementKnowledge.HasBlood)
+                                {
+                                    MageElementKnowledge.LearnBlood();
+                                    Msg("The margin note stays with you, whether you want it or not. You know the BLOOD discipline now — a lord's death by your hand gives back the years the fire has burned.", BadColor);
+                                }
                                 else
                                     try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 1; } catch { }
                                 KillHalfParty();
@@ -845,18 +851,23 @@ namespace AshAndEmber
             };
         }
 
-        // Grants a random spell or enchantment talent if the player has fewer than 5 of them.
+        // Grants one Codex power (element or discipline) the player does not yet
+        // hold — the living reward, now that the old spell/enchantment talents are
+        // retired and would do nothing. All powers held → a focus point instead.
         private static void GrantMagicalTalent()
         {
-            int magCount = TalentSystem.AllPurchased
-                .Count(id => { var d = TalentSystem.All.FirstOrDefault(x => x.Id == id);
-                               return d != null && (d.IsSpell || d.IsEnchantment); });
-            if (magCount >= 5) return;
-            var available = TalentSystem.All
-                .Where(t => (t.IsSpell || t.IsEnchantment) && !TalentSystem.Has(t.Id))
-                .ToList();
-            if (available.Count == 0) return;
-            TalentSystem.GrantFree(available[_rng.Next(available.Count)].Id, Hero.MainHero);
+            if (MagicLearning.TryGrantRandomUnknown(_rng, out string name))
+            {
+                Msg($"Something passes into you unasked — you know {name.ToUpperInvariant()} now, " +
+                    "as surely as if you had spent years at it.", FireColor);
+                return;
+            }
+            try
+            {
+                Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 1;
+                Msg("The fire finds nothing new to carry — but it settles deeper. (+1 attribute point)", FireColor);
+            }
+            catch { }
         }
 
     }

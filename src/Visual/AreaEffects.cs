@@ -44,6 +44,7 @@ namespace AshAndEmber
             public GameEntity LightEntity2; // extra persistent column light (1 m above node)
             public GameEntity LightEntity3; // extra persistent column light (2 m above node)
             public Team   CasterTeam;  // null = affect all teams; NPC effects set this to filter to enemies only
+            public int    Generation;  // fire creep: 0 = the cast patch; children inherit +1
         }
         private static readonly List<AreaEffect> _areaEffects = new List<AreaEffect>();
         // AgentIndex → (remaining, frozen position, original agent reference).

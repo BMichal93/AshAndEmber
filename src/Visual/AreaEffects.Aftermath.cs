@@ -76,6 +76,29 @@ namespace AshAndEmber
             }
         }
 
+        // Water meeting broken earth churns the ground to MUD — a bogging patch
+        // that slows everything crossing it (cavalry worst: the horse wades too).
+        // Impartial like the walls themselves: CasterTeam is null on purpose.
+        internal static void SpawnMudPatch(Vec3 pos)
+        {
+            var node = new AreaEffect
+            {
+                Id           = "spell_mudpatch",
+                School       = ColorSchool.Nature,
+                Position     = pos,
+                Radius       = 3.5f,
+                TickInterval = 0.5f,
+                TickTimer    = 0.5f,
+                Remaining    = 10f,
+                CasterTeam   = null,     // mud bogs friend and foe alike
+            };
+            node.LightEntity = SpawnAreaLightRaw(pos + new Vec3(0f, 0f, 0.4f),
+                                                 new Vec3(0.42f, 0.32f, 0.18f), 5f);
+            _areaEffects.Add(node);
+            try { SpawnNatureBurst(pos, NatureElement.Water, 1.2f); } catch { }
+            try { SpawnNatureBurst(pos, NatureElement.Earth, 1.2f); } catch { }
+        }
+
         // Called from ExecuteBurstFromAgent (when RestoreCount > 0 and player is caster) —
         // a consecrated zone lingers at the burst centre, slowly healing allies.
         internal static void SpawnHolyZone(Vec3 pos, int restoreCount, float radius, Team casterTeam)
