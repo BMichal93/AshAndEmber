@@ -227,6 +227,10 @@ namespace AshAndEmber
             // Ostican   + nearby castles                    → Ashen kingdom
             // ── Holy Temple (Vlandia) ─────────────────────────────────────────
             // Stripped cities above leave Vlandia with 1–2 cities (Ortysia/Sargot).
+            // ── Border lords ──────────────────────────────────────────────────
+            // A few of the Battanian/Vlandian/Aserai clans stripped of a castle above
+            // also swear to that castle's new Empire (see MigrateBorderLords) — never
+            // the Tribes of the East, who keep every lord regardless of Akkalat's fall.
             Hero northLeader = null;
             Hero westLeader  = null;
             Hero southLeader = null;
@@ -240,6 +244,17 @@ namespace AshAndEmber
             }
             catch { }
 
+            // Original owners of the border settlements below, captured just before
+            // their fief changes hands — feeds MigrateBorderLords further down, which
+            // follows a FEW of these clans into their castle's new Empire rather than
+            // leaving them landless nobles in a kingdom that no longer holds their home.
+            // Aserai→Western (Quyaz/Sanala) and Vlandia→Northern (Ocs Hall/Rovalt) are
+            // deliberately NOT captured — only cities move there, not their lords — and
+            // Khuzait (Akkalat) is never captured: the Tribes of the East keep every lord.
+            var battaniaToNorthern = new List<Clan>();
+            var vlandiaToWestern   = new List<Clan>();
+            var aseraiToSouthern   = new List<Clan>();
+
             // ── Northern Empire (explicit IDs) ────────────────────────────────
             if (northLeader != null)
             {
@@ -247,7 +262,11 @@ namespace AshAndEmber
                     try
                     {
                         var s = Settlement.Find(id);
-                        if (s != null && !AshenCitySystem.IsAshenSettlement(s)) { ChangeOwnerOfSettlementAction.ApplyByDefault(northLeader, s); StabiliseSettlement(s); }
+                        if (s != null && !AshenCitySystem.IsAshenSettlement(s))
+                        {
+                            if (s.OwnerClan != null) battaniaToNorthern.Add(s.OwnerClan);
+                            ChangeOwnerOfSettlementAction.ApplyByDefault(northLeader, s); StabiliseSettlement(s);
+                        }
                     }
                     catch { }
             }
@@ -259,7 +278,11 @@ namespace AshAndEmber
                     try
                     {
                         var s = Settlement.Find(id);
-                        if (s != null) { ChangeOwnerOfSettlementAction.ApplyByDefault(westLeader, s); StabiliseSettlement(s); }
+                        if (s != null)
+                        {
+                            if (s.OwnerClan != null) vlandiaToWestern.Add(s.OwnerClan);
+                            ChangeOwnerOfSettlementAction.ApplyByDefault(westLeader, s); StabiliseSettlement(s);
+                        }
                     }
                     catch { }
             }
@@ -268,21 +291,21 @@ namespace AshAndEmber
             if (northLeader != null)
             {
                 // Seonon: Battanian city near the Northern Empire border
-                try { AssignSettlementAndNearby("Seonon",      northLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Seonon",      northLeader, 40f, battaniaToNorthern); } catch { }
                 // Ocs Hall, Rovalt: Vlandian castles at the Vlandia–North border
                 try { AssignSettlementAndNearby("Ocs Hall",    northLeader, 40f); } catch { }
                 try { AssignSettlementAndNearby("Rovalt",      northLeader, 40f); } catch { }
                 // Car Banseth: Battanian city at the Battania–North border
-                try { AssignSettlementAndNearby("Car Banseth", northLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Car Banseth", northLeader, 40f, battaniaToNorthern); } catch { }
             }
 
             // ── Western Empire (by name) ──────────────────────────────────────
             if (westLeader != null)
             {
                 // Vlandian coastal cities reassigned to Western Empire
-                try { AssignSettlementAndNearby("Charas",  westLeader, 40f); } catch { }
-                try { AssignSettlementAndNearby("Galend",  westLeader, 40f); } catch { }
-                try { AssignSettlementAndNearby("Pravend", westLeader, 40f); } catch { }
+                try { AssignSettlementAndNearby("Charas",  westLeader, 40f, vlandiaToWestern); } catch { }
+                try { AssignSettlementAndNearby("Galend",  westLeader, 40f, vlandiaToWestern); } catch { }
+                try { AssignSettlementAndNearby("Pravend", westLeader, 40f, vlandiaToWestern); } catch { }
                 // Aserai border cities reassigned to Western Empire
                 try { AssignSettlementAndNearby("Quyaz",  westLeader, 40f); } catch { }
                 try { AssignSettlementAndNearby("Sanala", westLeader, 40f); } catch { }
@@ -292,15 +315,27 @@ namespace AshAndEmber
             if (southLeader != null)
             {
                 // Razih, Qasira: Aserai cities near the Southern Empire border
-                try { AssignSettlementAndNearby("Razih",   southLeader, 40f); } catch { }
-                try { AssignSettlementAndNearby("Qasira",  southLeader, 40f); } catch { }
-                // Akkalat: Khuzait city at the Khuzait–South border
+                try { AssignSettlementAndNearby("Razih",   southLeader, 40f, aseraiToSouthern); } catch { }
+                try { AssignSettlementAndNearby("Qasira",  southLeader, 40f, aseraiToSouthern); } catch { }
+                // Akkalat: Khuzait city at the Khuzait–South border — the Tribes of the
+                // East keep their lord; only the city (not the clan) changes hands.
                 try { AssignSettlementAndNearby("Akkalat", southLeader, 40f); } catch { }
             }
 
             // ── Ashen kingdom ─────────────────────────────────────────────────
             if (ashenLeader != null)
                 try { AssignSettlementAndNearby("Ostican", ashenLeader, 40f); } catch { }
+
+            // A few border lords swear to the Empire now holding their castle instead
+            // of staying landless in their old kingdom. Deliberately a minority of the
+            // clans stripped above, so no kingdom is gutted or overstuffed.
+            try
+            {
+                MigrateBorderLords(battaniaToNorthern, northLeader?.Clan?.Kingdom, 3);
+                MigrateBorderLords(vlandiaToWestern,   westLeader?.Clan?.Kingdom,  2);
+                MigrateBorderLords(aseraiToSouthern,   southLeader?.Clan?.Kingdom, 2);
+            }
+            catch { }
 
             // ── The Holy Temple (Vlandia) — declare founding war with Ashen ───
             // Ashen seized Ostican from Vlandia above; this seeds the permanent war.
@@ -322,8 +357,11 @@ namespace AshAndEmber
 
         // Finds a settlement by exact display name, transfers it and all non-town
         // settlements (castles/villages) within `radius` map-units to `newOwner`.
-        // Silently skips anything that can't be found or transferred.
-        private static void AssignSettlementAndNearby(string settlementName, Hero newOwner, float radius)
+        // Silently skips anything that can't be found or transferred. When
+        // `capturedClans` is supplied, each settlement's owning clan is recorded
+        // to it BEFORE the transfer, for MigrateBorderLords to draw from afterward.
+        private static void AssignSettlementAndNearby(string settlementName, Hero newOwner, float radius,
+            List<Clan> capturedClans = null)
         {
             Settlement anchor = null;
             try { anchor = Settlement.All.FirstOrDefault(s => s.Name?.ToString() == settlementName); }
@@ -334,7 +372,12 @@ namespace AshAndEmber
             if (AshenCitySystem.IsAshenSettlement(anchor)) return;
 
             // Transfer the anchor itself
-            try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, anchor); StabiliseSettlement(anchor); } catch { }
+            try
+            {
+                if (capturedClans != null && anchor.OwnerClan != null) capturedClans.Add(anchor.OwnerClan);
+                ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, anchor); StabiliseSettlement(anchor);
+            }
+            catch { }
 
             // Transfer nearby castles within radius (skip villages — they belong to their
             // bound town; skip Ashen castles so the radius sweep cannot bleed the cold realm,
@@ -348,10 +391,52 @@ namespace AshAndEmber
                              && (s.GetPosition2D - anchorPos).Length <= radius)
                     .ToList())
                 {
-                    try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, nearby); StabiliseSettlement(nearby); } catch { }
+                    try
+                    {
+                        if (capturedClans != null && nearby.OwnerClan != null) capturedClans.Add(nearby.OwnerClan);
+                        ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, nearby); StabiliseSettlement(nearby);
+                    }
+                    catch { }
                 }
             }
             catch { }
+        }
+
+        // ── A few border lords follow their castle into its new Empire ─────────
+        // Picks the lowest-tier ("minor") clans among `candidates` — the original
+        // owners of settlements just reassigned above — and moves up to `maxCount`
+        // of them into `target`, mirroring the Ashen conversion in
+        // AshenCitySystem.Setup.cs (leave old kingdom, then join the new one).
+        // Deliberately a minority: leaving most clans in their home kingdom keeps
+        // Vlandia, Battania and Aserai from being gutted by their own border loss.
+        private static void MigrateBorderLords(List<Clan> candidates, Kingdom target, int maxCount)
+        {
+            if (target == null || candidates == null || candidates.Count == 0) return;
+
+            var chosen = candidates
+                .Where(c => c != null && !c.IsEliminated && c.Leader != null
+                         && c != Hero.MainHero?.Clan
+                         && c.Kingdom != target
+                         && c.Kingdom?.RulingClan != c)   // never uproot a home kingdom's own ruler
+                .Distinct()
+                .OrderBy(c => c.Tier)
+                .ThenBy(c => c.StringId)
+                .Take(maxCount);
+
+            foreach (Clan clan in chosen)
+            {
+                try
+                {
+                    if (clan.Kingdom != null)
+                        ChangeKingdomAction.ApplyByLeaveKingdom(clan, false);
+                    if (target.RulingClan == null)
+                        ChangeKingdomAction.ApplyByCreateKingdom(clan, target, false);
+                    else
+                        ChangeKingdomAction.ApplyByJoinToKingdom(
+                            clan, target, CampaignTime.Now + CampaignTime.Years(1000), false);
+                }
+                catch { }
+            }
         }
 
         // Sets Town loyalty and security to maximum so code-driven captures don't
