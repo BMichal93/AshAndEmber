@@ -788,6 +788,9 @@ namespace AshAndEmber
                         TickTimer    = NatureMath.BarrierTickInterval,
                         Remaining    = dur,
                         CasterTeam   = casterTeam,
+                        // Middle rows of a deep wall are hidden inside the churn of the
+                        // outer rows — their per-tick visuals cost frames and show nothing.
+                        InteriorNode = row > 0 && row < rows - 1,
                     };
                     node.LightEntity  = partLow;                                                          // lower particle
                     node.LightEntity2 = partHigh;                                                         // upper particle
@@ -813,21 +816,29 @@ namespace AshAndEmber
         {
             NatureElement el = BarrierNodeElement(e.Id);
 
-            // Animated burst on each pulse so the wall feels alive and churning.
-            try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 0.3f), el, 0.5f); } catch { }
-            try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 1.0f), el, 0.4f); } catch { }
-            // A wall of wind over desert sand stands inside its own dust-devil.
-            if (el == NatureElement.Wind && _rng.Next(2) == 0 && SceneIsDesert())
-                try { SpawnNatureBurst(e.Position + new Vec3(0f, 0f, 0.2f), NatureElement.Earth, 0.5f); } catch { }
-            // Coloured light pulse each tick so the wall keeps a strong, visible glow
-            // for its whole duration (the debris particles alone read as too brief).
-            try { SpawnTempLightRgb(e.Position + new Vec3(0f, 0f, 1.0f), NatureBarrierLightRgb(el), 6f, NatureMath.BarrierTickInterval + 0.1f); } catch { }
-            if (el == NatureElement.Storm)
-                try { SpawnTempLightWhite(e.Position + new Vec3(0f, 0f, 1.2f), 4f, 0.25f); } catch { }
+            // Animated pulse so the wall feels alive. Per-node cost matters here — a
+            // charged wall runs 15 nodes at 2.5 pulses/s, so this used to be the
+            // heaviest per-frame load in the mod (full 3-entity clusters at two
+            // heights plus a fresh point light per node per pulse). The persistent
+            // glow column (LightEntity3) already lights the wall for its whole
+            // duration, and single plumes at two heights read the same as clusters
+            // once neighbouring nodes (2 m apart) fill the line. Interior rows are
+            // hidden inside the outer churn and skip visuals entirely.
+            if (!e.InteriorNode)
+            {
+                string[] pulseNames = NatureParticleNames(el);
+                try { SpawnSingleParticle(e.Position + new Vec3(0f, 0f, 0.3f), 0.5f, pulseNames); } catch { }
+                try { SpawnSingleParticle(e.Position + new Vec3(0f, 0f, 1.0f), 0.4f, pulseNames); } catch { }
+                // A wall of wind over desert sand stands inside its own dust-devil.
+                if (el == NatureElement.Wind && _rng.Next(2) == 0 && SceneIsDesert())
+                    try { SpawnSingleParticle(e.Position + new Vec3(0f, 0f, 0.2f), 0.5f, NatureParticleNames(NatureElement.Earth)); } catch { }
+                if (el == NatureElement.Storm)
+                    try { SpawnTempLightWhite(e.Position + new Vec3(0f, 0f, 1.2f), 4f, 0.25f); } catch { }
+            }
 
             if (Mission.Current == null) return;
             float r2 = e.Radius * e.Radius;
-            foreach (Agent a in Mission.Current.Agents.ToList())
+            foreach (Agent a in BarrierAgentSnapshot())
             {
                 if (!a.IsActive() || a.IsMount || a.Health <= 0f) continue;
                 if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
@@ -886,6 +897,27 @@ namespace AshAndEmber
                 }
                 catch { }
             }
+        }
+
+        // Shared agent snapshot for the barrier-node pulses. All nodes of a wall
+        // pulse on the same tick, so without this every node copied the full
+        // Mission agent list for itself (15 copies per pulse on a charged wall).
+        // The snapshot is reused within a short window; IsActive()/Health guards
+        // in the consumer keep any agent that died inside the window harmless.
+        private static List<Agent> _barrierAgentSnapshot;
+        private static float _barrierSnapshotTime = -1f;
+
+        private static List<Agent> BarrierAgentSnapshot()
+        {
+            var mission = Mission.Current;
+            if (mission == null) return _barrierAgentSnapshot ?? (_barrierAgentSnapshot = new List<Agent>());
+            float now = mission.CurrentTime;
+            if (_barrierAgentSnapshot == null || now < _barrierSnapshotTime || now - _barrierSnapshotTime > 0.1f)
+            {
+                try { _barrierAgentSnapshot = mission.Agents.ToList(); } catch { _barrierAgentSnapshot = new List<Agent>(); }
+                _barrierSnapshotTime = now;
+            }
+            return _barrierAgentSnapshot;
         }
 
         private static string BarrierNodeId(NatureElement el)

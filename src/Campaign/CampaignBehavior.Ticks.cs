@@ -43,6 +43,11 @@ namespace AshAndEmber
                 {
                     _selectionDone = true;
                     try { ColourLordRegistry.SeedInitialLords(); } catch { }
+                    // Establish the Ashen claims BEFORE the Empire reassignment —
+                    // ReassignImperialSettlements guards on IsAshenSettlement, which
+                    // is empty until Initialize() runs, so the reverse order let the
+                    // border sweeps and the Ashen swap fight over the same fiefs.
+                    try { AshenCitySystem.Initialize(); } catch { }
                     try { ReassignImperialSettlements(); } catch { }
                 }
                 try { AshenCitySystem.Initialize(); } catch { }

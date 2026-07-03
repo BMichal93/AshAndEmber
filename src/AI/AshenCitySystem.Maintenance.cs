@@ -350,11 +350,16 @@ namespace AshAndEmber
             {
                 foreach (var s in Settlement.All.ToList())
                 {
-                    if (released >= 2) break;            // at most a couple of handovers per day
+                    if (released >= 4) break;            // a few handovers per day — a botched start heals fast
                     try
                     {
                         if (!(s.IsTown || s.IsCastle)) continue;           // villages follow their bound town
-                        if (s.MapFaction?.StringId != AshenKingdomId) continue;
+                        // Held by the cold in either form: the Ashen kingdom itself, or an
+                        // Ashen clan drifting outside it (the eject/rejoin gap would
+                        // otherwise hide a stolen town from this guard).
+                        bool ashenHeld = s.MapFaction?.StringId == AshenKingdomId
+                                      || _ashenClanIds.Contains(s.OwnerClan?.StringId ?? "");
+                        if (!ashenHeld) continue;
                         if (IsTargetSettlement(s)) continue;                // legitimately Ashen
                         if (s.IsUnderSiege) continue;                       // wait out an active battle
                         if (s.OwnerClan?.Leader == Hero.MainHero) continue; // never touch the player's fiefs

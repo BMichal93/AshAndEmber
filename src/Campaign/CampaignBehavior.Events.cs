@@ -241,6 +241,15 @@ namespace AshAndEmber
                 westLeader  = Kingdom.All.FirstOrDefault(k => k.StringId == "empire_w")?.Leader;
                 southLeader = Kingdom.All.FirstOrDefault(k => k.StringId == "empire_s")?.Leader;
                 ashenLeader = Kingdom.All.FirstOrDefault(k => k.StringId == "ashen_kingdom")?.Leader;
+
+                // If an Empire's leader reference resolves to a hero whose clan has
+                // gone Ashen (a stale RulingClan pointer after the cold claimed it),
+                // every transfer below would hand the border cities to the Ashen
+                // instead of the Empire. Better to skip that Empire's assignments
+                // entirely than to feed the cold.
+                if (AshenCitySystem.IsAshenClanMember(northLeader) || ColourLordRegistry.IsAshenLord(northLeader)) northLeader = null;
+                if (AshenCitySystem.IsAshenClanMember(westLeader)  || ColourLordRegistry.IsAshenLord(westLeader))  westLeader  = null;
+                if (AshenCitySystem.IsAshenClanMember(southLeader) || ColourLordRegistry.IsAshenLord(southLeader)) southLeader = null;
             }
             catch { }
 

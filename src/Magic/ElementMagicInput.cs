@@ -123,21 +123,20 @@ namespace AshAndEmber
                     if (!_readyAnnounced)
                     {
                         _readyAnnounced = true;
-                        Msg($"The {MageElementKnowledge.LoadedName()} gathers — Attack looses it, Block raises its wall. " +
-                            "The longer you hold, the harder it strikes; hold too long and it slips away.");
+                        Msg($"{MageElementKnowledge.LoadedName()} gathers — Attack: strike, Block: wall. Hold to strengthen.");
                     }
                     _drawTime += dt;
                     if (!_fullAnnounced && ElementMagicMath.IsFullyCharged(_drawTime))
                     {
                         _fullAnnounced = true;
-                        Msg($"The {MageElementKnowledge.LoadedName()} is fully gathered — loose it now, before it slips your grip.");
+                        Msg($"{MageElementKnowledge.LoadedName()} fully charged — release now.");
                     }
                     if (_drawTime >= ElementMagicMath.MaxDrawSeconds)
                     {
                         _drawTime = 0f;
                         _readyAnnounced = false;
                         _fullAnnounced = false;
-                        Msg("The gathered power slips your grip and disperses — begin the draw again.");
+                        Msg("The charge slips away — draw again.");
                     }
                     TickChargeVisual(dt);
                 }
@@ -312,10 +311,10 @@ namespace AshAndEmber
         {
             Agent c = Agent.Main;
             if (c == null || !c.IsActive()) return "There is no hand here to shape the fire.";
-            try { if (c.GetCurrentVelocity().Length >= StillSpeed) return "The fire answers only the still — stop moving to draw it."; } catch { }
+            try { if (c.GetCurrentVelocity().Length >= StillSpeed) return "Stand still to draw."; } catch { }
             bool steel = MageElementKnowledge.HasSteel;
-            if (!steel && !SpellEffects.HasFreeHand(c))   return "Your hands are full of steel. Sheathe your weapon (X) to draw — or learn Steel.";
-            if (!steel && NatureEffects.ArmourTooHeavy(c)) return "Too much iron weighs you down — shed armour to draw, or learn Steel.";
+            if (!steel && !SpellEffects.HasFreeHand(c))   return "Sheathe your weapon (X) to draw — or learn Steel.";
+            if (!steel && NatureEffects.ArmourTooHeavy(c)) return "Armour too heavy — shed it, or learn Steel.";
             return null;
         }
 

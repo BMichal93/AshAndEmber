@@ -77,9 +77,24 @@ namespace AshAndEmber
         };
 
         // Reflection handle for MBObjectBase._name — cached once, used per-call.
-        // Works for Kingdom and CultureObject (they read the base field).
+        // NOTE: Kingdom and BasicCultureObject SHADOW the base Name with their own
+        // auto-properties, so writing this base field has NO effect on them — use
+        // the dedicated handles below for kingdoms and cultures.
         private static readonly FieldInfo _nameField =
             typeof(MBObjectBase).GetField("_name",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // Kingdom declares its own `public TextObject Name { get; }` auto-property
+        // whose backing field shadows MBObjectBase._name. Kingdom.Name reads the
+        // backing field, so this is the one that must be written.
+        private static readonly FieldInfo _kingdomNameField =
+            typeof(Kingdom).GetField("<Name>k__BackingField",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // Same shadowing on BasicCultureObject — CultureObject.Name reads the
+        // BasicCultureObject auto-property, never MBObjectBase._name.
+        private static readonly FieldInfo _cultureNameField =
+            typeof(TaleWorlds.Core.BasicCultureObject).GetField("<Name>k__BackingField",
                 BindingFlags.NonPublic | BindingFlags.Instance);
 
         // Settlement SHADOWS MBObjectBase._name with its own _name field, and
@@ -162,8 +177,8 @@ namespace AshAndEmber
                     k.StringId == "vlandia" && !k.IsEliminated);
                 if (vlandia == null) return;
 
-                // MBObjectBase._name backs the Name property for all game objects.
-                _nameField?.SetValue(vlandia, new TextObject("The Holy Temple"));
+                // Kingdom.Name reads Kingdom's own backing field, not MBObjectBase._name.
+                (_kingdomNameField ?? _nameField)?.SetValue(vlandia, new TextObject("The Holy Temple"));
 
                 // Kingdom-specific informal name and ruler title fields.
                 // Try both the explicit-field and auto-property backing-field conventions.
@@ -193,7 +208,7 @@ namespace AshAndEmber
             {
                 var vlandiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("vlandia");
                 if (vlandiaCulture != null)
-                    _nameField?.SetValue(vlandiaCulture, new TextObject("Templar"));
+                    (_cultureNameField ?? _nameField)?.SetValue(vlandiaCulture, new TextObject("Templar"));
             }
             catch { }
         }
@@ -256,7 +271,7 @@ namespace AshAndEmber
                     k.StringId == "khuzait" && !k.IsEliminated);
                 if (khuzait == null) return;
 
-                _nameField?.SetValue(khuzait, new TextObject("Tribes of the East"));
+                (_kingdomNameField ?? _nameField)?.SetValue(khuzait, new TextObject("Tribes of the East"));
 
                 SetKingdomField(khuzait,
                     new[] { "_informalName", "<InformalName>k__BackingField" },
@@ -279,7 +294,7 @@ namespace AshAndEmber
             {
                 var khuzaitCulture = MBObjectManager.Instance?.GetObject<CultureObject>("khuzait");
                 if (khuzaitCulture != null)
-                    _nameField?.SetValue(khuzaitCulture, new TextObject("Tribal"));
+                    (_cultureNameField ?? _nameField)?.SetValue(khuzaitCulture, new TextObject("Tribal"));
             }
             catch { }
         }
@@ -333,11 +348,26 @@ namespace AshAndEmber
             "Spoils of the Raid — A village put to the torch yields more than the usual plunder. (+50–150 gold per raid)",
             "No Quarter — The God-King's word burns through any treaty; your wars do not end in peace.",
         };
+        // Duneborn: the caravan bonus is REPLACED (its effect zeroed via
+        // zeroPositiveIndex 0) by the Blood Tithe altar discount, which lives in
+        // DunebornCulture.AltarCost. The desert feat and the wage penalty keep
+        // their vanilla effects under new names.
+        private static readonly string[] _dunebornFeats =
+        {
+            "Blood Tithe — the thing beneath the dunes takes a fifth less of every offering. (Dark Altar sacrifices −20%)",
+            "Children of the Sand — the deep desert neither slows nor wearies your kin. (No speed penalty on desert)",
+            "Hungry Knives — hired blades smell the old bargain on you, and charge for it. (Mercenary wages +10%)",
+        };
         private static bool _templeFeatsRelabeled;
         private static bool _tribalFeatsRelabeled;
+        private static bool _dunebornFeatsRelabeled;
 
         // Relabels a culture's feat descriptions: positives in order, then the negative.
-        private static void RelabelCulturalFeats(string cultureId, string[] feats, ref bool done)
+        // `zeroPositiveIndex` additionally REMOVES the effect of the n-th positive
+        // feat (bonus set to 0) — used when a relabel replaces a vanilla bonus with
+        // a mod mechanic rather than merely renaming it.
+        private static void RelabelCulturalFeats(string cultureId, string[] feats, ref bool done,
+            int zeroPositiveIndex = -1)
         {
             if (done) return;
             try
@@ -361,6 +391,7 @@ namespace AshAndEmber
                     var ft = f.GetType();
                     bool isPositive = (bool)(ft.GetProperty("IsPositive")?.GetValue(f) ?? true);
                     float bonus     = (float)(ft.GetProperty("EffectBonus")?.GetValue(f) ?? 0f);
+                    if (isPositive && posIdx == zeroPositiveIndex) bonus = 0f;
                     object incType  = ft.GetProperty("IncrementType")?.GetValue(f);
                     string name     = (ft.GetProperty("Name")?.GetValue(f) as TextObject)?.ToString() ?? "";
                     string desc     = isPositive
@@ -386,7 +417,7 @@ namespace AshAndEmber
             {
                 var sturgiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
                 if (sturgiaCulture != null)
-                    _nameField?.SetValue(sturgiaCulture, new TextObject("Northmen"));
+                    (_cultureNameField ?? _nameField)?.SetValue(sturgiaCulture, new TextObject("Northmen"));
             }
             catch { }
         }
@@ -429,7 +460,7 @@ namespace AshAndEmber
             {
                 var aseraiCulture = MBObjectManager.Instance?.GetObject<CultureObject>("aserai");
                 if (aseraiCulture != null)
-                    _nameField?.SetValue(aseraiCulture, new TextObject("Duneborn"));
+                    (_cultureNameField ?? _nameField)?.SetValue(aseraiCulture, new TextObject("Duneborn"));
             }
             catch { }
         }
@@ -458,6 +489,8 @@ namespace AshAndEmber
                     "what was done with what it gave. They do not call it a god. They call it patient. Every great " +
                     "house keeps its bargain quiet and its knives quieter, for the desert has always kept its own " +
                     "secrets better than any temple ever kept its.");
+                RelabelCulturalFeats("aserai", _dunebornFeats, ref _dunebornFeatsRelabeled,
+                    zeroPositiveIndex: 0);   // Blood Tithe replaces the caravan bonus outright
                 return true;
             }
             catch { return false; }
@@ -532,6 +565,8 @@ namespace AshAndEmber
         // everything else gets a simple "Vlandian" → "Templar" substitution.
         private static readonly FieldInfo _characterNameField =
             typeof(TaleWorlds.Core.BasicCharacterObject).GetField(
+                "_basicName", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? typeof(TaleWorlds.Core.BasicCharacterObject).GetField(
                 "_name", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private static readonly System.Collections.Generic.Dictionary<string, string> _troopNameOverrides =

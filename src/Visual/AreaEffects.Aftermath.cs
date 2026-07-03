@@ -142,6 +142,10 @@ namespace AshAndEmber
 
         public static void ClearAreaEffects()
         {
+            // Drop the barrier pulse's agent snapshot — it must never carry Agent
+            // references from one mission into the next.
+            _barrierAgentSnapshot = null;
+            _barrierSnapshotTime  = -1f;
             foreach (var e in _areaEffects)
             {
                 try { e.LightEntity?.Remove(0); } catch { }

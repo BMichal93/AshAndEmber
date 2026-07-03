@@ -146,8 +146,8 @@ namespace AshAndEmber
                             bool qualifies  = DarkGiftSystem.PlayerQualifies();
                             int  owned      = DarkGiftSystem.TotalOwned;
                             int  discount   = GetWhisperDiscount();
-                            int  pCost      = TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount));
-                            int  lCost      = TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned));
+                            int  pCost      = DunebornCulture.AltarCost(TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount)));
+                            int  lCost      = DunebornCulture.AltarCost(TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned)));
                             int  fCost      = DarkGiftSystem.GetNextFocusCost(owned);
                             string costStr  = lCost > 0
                                 ? $"{pCost} prisoners + {lCost} lord(s) + {fCost} focus"
@@ -310,8 +310,8 @@ namespace AshAndEmber
                                 bool canBuy   = DarkGiftSystem.CanBuyGift(capturedGift);
                                 int  owned    = DarkGiftSystem.TotalOwned;
                                 int  discount = GetWhisperDiscount();
-                                int  pCost    = TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount));
-                                int  lCost    = TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned));
+                                int  pCost    = DunebornCulture.AltarCost(TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - discount)));
+                                int  lCost    = DunebornCulture.AltarCost(TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned)));
                                 string costStr = lCost > 0
                                     ? $"{pCost}p + {lCost}L"
                                     : $"{pCost}p";

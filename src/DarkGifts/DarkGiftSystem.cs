@@ -252,8 +252,9 @@ namespace AshAndEmber
 
             int owned = TotalOwned;
             // Templar culture (The Order's Price): dark gifts cost twice as much.
-            int pCost = TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - prisonerDiscount));
-            int lCost = TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned));
+            // Duneborn culture (Blood Tithe): altar sacrifices cost a fifth less.
+            int pCost = DunebornCulture.AltarCost(TempleCulture.DarkGiftCost(Math.Max(1, DarkGiftCosts.GetNextPrisonerCost(owned) - prisonerDiscount)));
+            int lCost = DunebornCulture.AltarCost(TempleCulture.DarkGiftCost(DarkGiftCosts.GetNextLordCost(owned)));
             int fCost = GetNextFocusCost(owned);
 
             // Both prices are checked before either is spent.
