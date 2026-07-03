@@ -6,6 +6,7 @@
 
 ### The Imperial Marches
 - **Qasira now answers to the Southern Empire** from the world's birth, joining Razih on the Empire's desert border (Sanala already flies the Western Empire's banner). Assigned through the same border-reassignment pass that hands the other frontier cities to their Empires, with the same nearby-castle sweep.
+- **A few border lords now swear to the Empire that took their castle.** When Battania, Vlandia or Aserai lose a frontier holding to the Northern, Western or Southern Empire at world's birth, a handful of the stripped clans (the least powerful among them) now swear fealty to their castle's new liege instead of sitting landless in a kingdom that no longer holds their home — 3 Battanian clans toward the Northern Empire, 2 Vlandian toward the Western, 2 Aserai toward the Southern. Most stripped clans still stay put, so no home kingdom is gutted. The Tribes of the East are untouched by this: Akkalat still falls to the Southern Empire, but no Khuzait lord ever changes allegiance for it.
 
 ### Fixes — the production-readiness pass
 - **An NPC's Embershard now belongs to its bearer.** The flying shard credited every detonation to the *player* — kills, combat-log announcements, even the blame for friendly scorching — and its flight could never strike the player directly. The missile now carries its true caster: an enemy crystal-bearer's shard can hit you, its kills are his, and the log names him.
