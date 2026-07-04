@@ -2,6 +2,11 @@
 
 ---
 
+## v0.38.3
+
+### Fix — crystals wake on the attack button itself
+- **Crystals now activate the moment you attack with one in hand — no connecting blow required.** The v0.38.2 fix routed activation through a landed hit, but that only fires when the swing actually strikes an agent; testing a crystal on an empty swing (or against a target the blow doesn't register on) still did nothing. Activation now edge-detects the raw **attack input** (left mouse / right trigger) while a crystal is wielded, so a press starts the charge regardless of the weapon's form or whether the swing connects. The landed-hit and swing-time signals remain as backstops, and all three share one guard so a single attack only ever starts one charge. (Activation is suppressed only while you are focusing an element spell, where that button releases a cone.)
+
 ## v0.38.2
 
 ### Fixes — crystals fire, and Grace shows its hand

@@ -19,6 +19,7 @@ using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
+using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
@@ -41,6 +42,10 @@ namespace AshAndEmber
         // Player's last detected melee-attack time, so a fresh swing (hit OR miss)
         // begins a charge. Reset between battles.
         private static float _lastSwingTime = 0f;
+        // Edge-detect the attack BUTTON itself — the reliable trigger. Neither the
+        // swing-time signal nor a landed blow fire dependably for the crystal's
+        // weapon form, so a raw attack-input press is what actually wakes it.
+        private static bool _prevAttackDown = false;
 
         // ── Active slows (keyed by agent, value = seconds left) ──────────────
         private static readonly Dictionary<Agent, float> _rimeSlow = new Dictionary<Agent, float>();
@@ -74,6 +79,7 @@ namespace AshAndEmber
             _veilSlow.Clear();
             _duskSlow.Clear();
             _lastSwingTime = 0f;
+            _prevAttackDown = false;
             _crystalMissiles.Clear();
         }
 
@@ -138,14 +144,26 @@ namespace AshAndEmber
 
             TickCrystalMissile(dt);
 
-            // Swing detection: the player rouses a crystal by swinging it. The melee
-            // attack time advances on every attack release (hit or miss), so a change
-            // since last frame is a fresh swing → begin the charge.
+            // Activation: the player rouses a crystal by attacking with it in hand.
             try
             {
                 var main = Agent.Main;
                 if (main != null && main.IsActive())
                 {
+                    // Primary, RELIABLE trigger — the raw attack BUTTON (LMB /
+                    // right trigger), edge-detected so one press starts one charge.
+                    // Suppressed while focusing an element spell (Alt / LB held),
+                    // where that same button releases a cone instead.
+                    bool focusing = Input.IsKeyDown(InputKey.LeftAlt)
+                                 || Input.IsKeyDown(InputKey.ControllerLBumper);
+                    bool attackDown = Input.IsKeyDown(InputKey.LeftMouseButton)
+                                   || Input.IsKeyDown(InputKey.ControllerRTrigger);
+                    if (attackDown && !_prevAttackDown && !focusing)
+                        TryBeginChargeOnSwing(main);
+                    _prevAttackDown = attackDown;
+
+                    // Secondary signal (kept as a backstop): the melee attack time
+                    // advances on a registered swing — where it fires at all.
                     float swingT = main.LastMeleeAttackTime;
                     if (swingT > 0f && swingT != _lastSwingTime)
                     {
