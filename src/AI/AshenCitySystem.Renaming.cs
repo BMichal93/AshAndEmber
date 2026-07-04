@@ -356,7 +356,7 @@ namespace AshAndEmber
         {
             "Blood Tithe — the thing beneath the dunes takes a fifth less of every offering. (Dark Altar sacrifices −20%)",
             "Children of the Sand — the deep desert neither slows nor wearies your kin. (No speed penalty on desert)",
-            "Hungry Knives — hired blades smell the old bargain on you, and charge for it. (Mercenary wages +10%)",
+            "Hungry Knives — hired blades smell the old bargain on you, and charge for it. (Daily troop wages +5%)",
         };
         private static bool _templeFeatsRelabeled;
         private static bool _tribalFeatsRelabeled;

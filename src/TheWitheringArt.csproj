@@ -189,6 +189,7 @@
     <Compile Include="AI\TribalCulture.cs"/>
     <Compile Include="AI\DunebornCulture.cs"/>
     <Compile Include="AI\TempleCultureCardFixer.cs"/>
+    <Compile Include="AI\NarrativeStageTextFixer.cs"/>
     <Compile Include="AI\AshenDiplomacyModel.cs"/>
     <Compile Include="AI\AshenDialogue.cs"/>
     <Compile Include="AI\TempleDialogue.cs"/>

@@ -100,9 +100,10 @@ namespace AshAndEmber
                     + "before the plough. They do not expect to break the cold. They expect to hold the line.",
                 Feats = new string[0],
             },
-            // Aserai → the Duneborn. Name + blurb only; the feats are LEFT as vanilla
-            // Aserai (empty list ⇒ RewriteFeats is a no-op), since the Duneborn are
-            // mechanically ordinary Aserai — only renamed.
+            // Aserai → the Duneborn. Name, blurb AND feats: the caravan bonus is
+            // replaced by the Blood Tithe (zeroed + relabelled in
+            // AshenCitySystem.RelabelCulturalFeats), but the card VM caches the
+            // vanilla descriptions before that lands — mirror _dunebornFeats here.
             new CultureCard
             {
                 Id   = "aserai",
@@ -116,7 +117,12 @@ namespace AshAndEmber
                     + "Duneborn found something older than fire and far hungrier — a power that asked no devotion, "
                     + "only blood, and did not care what was done with what it gave. They do not call it a god. "
                     + "They call it patient. Every great house keeps its bargain quiet and its knives quieter still.",
-                Feats = new string[0],
+                Feats = new[]
+                {
+                    "Blood Tithe — the thing beneath the dunes takes a fifth less of every offering. (Dark Altar sacrifices −20%)",
+                    "Children of the Sand — the deep desert neither slows nor wearies your kin. (No speed penalty on desert)",
+                    "Hungry Knives — hired blades smell the old bargain on you, and charge for it. (Daily troop wages +5%)",
+                },
             },
         };
 

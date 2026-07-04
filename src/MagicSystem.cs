@@ -126,6 +126,9 @@ namespace AshAndEmber
                 // The character-creation culture cards cache their name when built, so
                 // the text override above never reaches them — rename the card directly.
                 try { TempleCultureCardFixer.TickTryFix(); } catch { }
+                // The backstory option VMs cache their labels the same way (they only
+                // re-read on hover) — keep them synced with the narrative rewrites.
+                try { NarrativeStageTextFixer.TickTryFix(); } catch { }
             }
         }
 
