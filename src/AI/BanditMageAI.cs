@@ -1,6 +1,6 @@
 // =============================================================================
 // LIFE & DEATH MAGIC — AI/BanditMageAI.cs
-// Gives 12% of eligible bandit units minor spellcasting ability.
+// Gives ~4% of eligible bandit units minor spellcasting ability (MageChance).
 // Casters are seeded once per mission at warmup and tracked by Agent reference.
 // They use simple blast/burst recipes with modest power and an 18 s cooldown.
 // =============================================================================

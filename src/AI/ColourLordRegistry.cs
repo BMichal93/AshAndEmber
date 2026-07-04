@@ -535,6 +535,7 @@ namespace AshAndEmber
             _companionMageIds.Remove(hero.StringId);
             _lordTalents.Remove(hero.StringId);
             _campaignCooldowns.Remove(hero.StringId);
+            _lordDaysSpent.Remove(hero.StringId);
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────

@@ -948,6 +948,47 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(150, ElementMagicMath.BloodRejuvenationDays(6));
         }
 
+        [Test]
+        public void ElementMagicMath_AdjustedCastDays_NoTalents_IsIdentity()
+        {
+            Assert.AreEqual(3, ElementMagicMath.AdjustedCastDays(3, false, 30f, 0, false, false));
+            Assert.AreEqual(4, ElementMagicMath.AdjustedCastDays(4, false, 30f, 0, false, false));
+        }
+
+        [Test]
+        public void ElementMagicMath_AdjustedCastDays_Tempered_CutsAndDeepensWithAge()
+        {
+            // Tempered: −25% — attack 3→2, wall 4→3.
+            Assert.AreEqual(2, ElementMagicMath.AdjustedCastDays(3, true, 30f, 0, false, false));
+            Assert.AreEqual(3, ElementMagicMath.AdjustedCastDays(4, true, 30f, 0, false, false));
+            // Past 40 the cut deepens (0.5%/year, +30% cap): at age 100 a wall
+            // costs 4 × (1 − 0.55) = 1.8 → 2.
+            Assert.AreEqual(2, ElementMagicMath.AdjustedCastDays(4, true, 100f, 0, false, false));
+        }
+
+        [Test]
+        public void ElementMagicMath_AdjustedCastDays_Kinship_CapsAtHalf()
+        {
+            // Five allied mage lords hit the −50% cap: wall 4→2.
+            Assert.AreEqual(2, ElementMagicMath.AdjustedCastDays(4, false, 30f, 5, false, false));
+            // More lords cannot cut deeper than the cap.
+            Assert.AreEqual(ElementMagicMath.AdjustedCastDays(4, false, 30f, 5, false, false),
+                            ElementMagicMath.AdjustedCastDays(4, false, 30f, 9, false, false));
+        }
+
+        [Test]
+        public void ElementMagicMath_AdjustedCastDays_Rites_FlatCuts_NeverFree()
+        {
+            // Temple covenant: −1 day, but never below 1 (it only fires while >1).
+            Assert.AreEqual(2, ElementMagicMath.AdjustedCastDays(3, false, 30f, 0, true, false));
+            Assert.AreEqual(1, ElementMagicMath.AdjustedCastDays(1, false, 30f, 0, true, false));
+            // Unbroken Ward: −2 days, floored at the 1-day minimum.
+            Assert.AreEqual(2, ElementMagicMath.AdjustedCastDays(4, false, 30f, 0, false, true));
+            Assert.AreEqual(1, ElementMagicMath.AdjustedCastDays(3, false, 30f, 0, false, true));
+            // Everything stacked still floors at 1 — a cast is never free.
+            Assert.AreEqual(1, ElementMagicMath.AdjustedCastDays(4, true, 30f, 5, true, true));
+        }
+
         // ── NatureMath ────────────────────────────────────────────────────────
 
         [Test]

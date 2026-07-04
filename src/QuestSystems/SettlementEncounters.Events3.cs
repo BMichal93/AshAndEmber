@@ -448,7 +448,7 @@ namespace AshAndEmber
                         _ =>
                         {
                             WoundPlayer();
-                            AgePlayer(365);
+                            AgePlayer(84); // 1 year (84-day Bannerlord year)
                             Msg("Whatever he did with the drop, he did it with intent. You carry the wound and the year and the knowledge that the blood meant something to someone who knew what to do with it.", BadColor);
                         },
                         null, "", false), false, true);
@@ -578,7 +578,7 @@ namespace AshAndEmber
                                     else
                                         Msg("The evening is warm enough. Not remarkable, but real. You part before dawn. It is the kind of night that does not leave a scar. You think about it briefly on the road and then stop thinking about it.", DimColor);
                                     if (isMale)
-                                        _babyEventCountdown = 365;
+                                        _babyEventCountdown = 84; // one game year (84 days)
                                     else
                                         _pregnancyCountdown = 30;
                                     break;
@@ -600,7 +600,7 @@ namespace AshAndEmber
             };
         }
 
-        // ── Deferred: FireBabyConsequence — 365 days after EC_TavernStranger outcome 4 ──
+        // ── Deferred: FireBabyConsequence — one game year after EC_TavernStranger outcome 4 ──
         private static void FireBabyConsequence()
         {
             if (MageKnowledge._deferredInquiry != null) { _babyEventCountdown = 1; return; }
@@ -975,7 +975,7 @@ namespace AshAndEmber
                                 // Age 50 years — ends chain
                                 _trinketPhase   = 0;
                                 _trinketVariant = 0;
-                                AgePlayer(50 * 365);
+                                AgePlayer(50 * 84); // 50 years × 84 days (Bannerlord year)
                                 Msg(ageMsg, BadColor);
                             }
                             else

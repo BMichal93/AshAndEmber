@@ -10,8 +10,9 @@
 //
 // Casting: hold focus, stand still, and DRAW a charge. The length of the draw
 // sets the working's POWER, not its price — an instant release is weak, and the
-// power climbs to full at a 10 s cap (drawing longer gains nothing). Hold a full
-// 10 s without releasing and the gathered energy DISPERSES — you must draw again.
+// power climbs to full at FullChargeSeconds (~7 s; drawing longer gains nothing).
+// Hold to MaxDrawSeconds (~15 s) without releasing and the gathered energy
+// DISPERSES — you must draw again.
 // The aging cost is FLAT: the same however long you drew. The Nature discipline
 // makes that flat cost cheaper (the patient, land-tuned draw spends fewer years).
 // Aging "burns through" exactly like the old fire magic.
@@ -101,6 +102,35 @@ namespace AshAndEmber
             int baseDays = form == CastForm.Wall ? WallCostDays : AttackCostDays;
             if (hasNature) baseDays = (int)Math.Round(baseDays * NatureCostMult, MidpointRounding.AwayFromZero);
             return Math.Max(MinCastDays, baseDays);
+        }
+
+        // ── Cost-modifier talents (carried over from the retired fire pipeline) ──
+        // The old input path honoured Tempered, Kinship, the Temple covenant and the
+        // Unbroken Ward; the unified path pays the same respects. Multiplicative
+        // discounts apply first (Tempered — deepening past age 40 — then Kinship),
+        // then the flat rite reductions. Floored at MinCastDays — never free.
+        public const float TemperedBaseCut      = 0.25f;  // Tempered: −25% on every battle cast
+        public const float TemperedAgeCutPerYear = 0.005f; // …plus 0.5% per year beyond 40
+        public const float TemperedAgeCutCap     = 0.30f;  // …capped at a further −30%
+        public const float KinshipCutPerMage     = 0.10f;  // Kinship: −10% per allied mage lord
+        public const float KinshipCutCap         = 0.50f;  // …capped at −50%
+        public static int AdjustedCastDays(int baseDays, bool tempered, float heroAge,
+            int alliedMageLords, bool templeCovenant, bool wardActive)
+        {
+            float days = baseDays;
+            if (tempered)
+            {
+                float cut = TemperedBaseCut;
+                if (heroAge > 40f)
+                    cut += Math.Min(TemperedAgeCutCap, (heroAge - 40f) * TemperedAgeCutPerYear);
+                days *= 1f - cut;
+            }
+            if (alliedMageLords > 0)
+                days *= 1f - Math.Min(KinshipCutCap, alliedMageLords * KinshipCutPerMage);
+            int result = (int)Math.Round(days, MidpointRounding.AwayFromZero);
+            if (templeCovenant && result > 1) result -= 1;  // the Temple's rites steady the fire
+            if (wardActive) result -= 2;                    // the Warding Seal bears part of the toll
+            return Math.Max(MinCastDays, result);
         }
 
         // ── Blood ───────────────────────────────────────────────────────────────

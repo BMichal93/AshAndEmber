@@ -40,6 +40,10 @@ namespace AshAndEmber
         public static void DailyTick()
         {
             if (!IsPlayerTribal) return;
+            // The raid-bonus cooldown counts DAYS. (It used to tick down inside
+            // CheckRaidBonus, i.e. once per raid map-event anywhere in Calradia —
+            // effectively random. Now it is a plain 3-day cooldown.)
+            if (_raidCooldown > 0) _raidCooldown--;
             try
             {
                 var playerClan = Clan.PlayerClan;
@@ -67,7 +71,7 @@ namespace AshAndEmber
         {
             if (!IsPlayerTribal) return;
             if (mapEvent.EventType != MapEvent.BattleTypes.Raid) return;
-            if (_raidCooldown > 0) { _raidCooldown--; return; }
+            if (_raidCooldown > 0) return;   // counted down daily in DailyTick
 
             bool playerAttacker = mapEvent.AttackerSide?.Parties
                 .Any(p => p.Party == PartyBase.MainParty) == true;

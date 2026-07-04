@@ -119,7 +119,7 @@ namespace AshAndEmber
             {
                 // c) Child survives, will return in 10 years
                 _mothersPleaPhase = 4;
-                _mothersPleaCountdown = 3650;
+                _mothersPleaCountdown = 840; // 10 years × 84 days (Bannerlord year)
                 MageKnowledge._deferredInquiry = () =>
                     Msg("Word drifts back to you from the village: the child is well. Quieter than before the fever, the mother says. Watches fire differently. You note it and ride on.", GoodColor);
             }

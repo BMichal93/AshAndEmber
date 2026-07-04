@@ -964,7 +964,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            try { AgingSystem.RejuvenateHero(Hero.MainHero, 730); } catch { } // ~2 years
+                            try { AgingSystem.RejuvenateHero(Hero.MainHero, 168); } catch { } // ~2 years × 84 days (Bannerlord year)
                             ShiftTrait(DefaultTraits.Honor, -2);
                             ShiftTrait(DefaultTraits.Mercy, -2);
                             try { MageKnowledge.AddWhispers(8); } catch { }
@@ -982,7 +982,7 @@ namespace AshAndEmber
                             try { MageKnowledge.RemoveWhispers(3); } catch { }
                             if (_rng.NextDouble() < 0.5)
                             {
-                                AgePlayer(365); // 1 year
+                                AgePlayer(84); // 1 year (84-day Bannerlord year)
                                 Msg("You ride in fast and scatter them — they break and vanish into the dark, " +
                                     "one of them turning as she runs. You feel something land on you, " +
                                     "light and cold: a curse, spoken quickly, without ceremony. " +
