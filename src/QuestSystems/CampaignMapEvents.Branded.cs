@@ -1,7 +1,8 @@
 // =============================================================================
 // ASH AND EMBER — CampaignMapEvents.Branded.cs
 // "The Branded" — a mage lord's inner fire is consuming them.
-// The player can Harvest (gain youth, kill the lord), or Leave (do nothing).
+// The player can Harvest (repay the fire's debt on their years; the lord dies),
+// Soothe (steady the lord's fire at a small cost), or Leave (do nothing).
 // Partial of CampaignMapEvents (shared state lives in CampaignMapEvents.cs).
 // =============================================================================
 
@@ -94,7 +95,7 @@ namespace AshAndEmber
                         canHarvest ? "Harvest the fire — draw it out, take what is given." : "Leave them. This is not yours to take.",
                         null, true,
                         canHarvest
-                            ? "You will gain 15 days of youth. They will not survive the drawing."
+                            ? "Fifteen days of your fire's debt repaid. They will not survive the drawing."
                             : "You watch, and you walk away."),
                     new InquiryElement("leave",
                         canHarvest ? "Leave. Let it run its course." : "Offer what little steadying you can.",
@@ -112,11 +113,10 @@ namespace AshAndEmber
                         case "harvest" when canHarvest:
                             OnBrandedHarvest(branded, brandedName);
                             break;
-                        case "harvest": // canHarvest is false — button label is "Leave"
-                        case "leave"  when !canHarvest:
+                        case "leave" when !canHarvest: // labelled "Offer what little steadying you can"
                             OnBrandedSoothe(branded, brandedName);
                             break;
-                        default:
+                        default: // walk away — "leave" with the Blood right, "harvest" without it
                             OnBrandedLeave(branded, brandedName);
                             break;
                     }
@@ -162,6 +162,8 @@ namespace AshAndEmber
         {
             try
             {
+                // The steadying is paid for as advertised — 3 days of the player's years.
+                try { AgingSystem.AgeHero(Hero.MainHero, 3); } catch { }
                 try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, branded, 15, false); } catch { }
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"You reach in and steady {brandedName}'s fire — carefully, at a cost you feel but cannot measure. " +

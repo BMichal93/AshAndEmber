@@ -509,7 +509,7 @@ namespace AshAndEmber
                                 break;
                             case "b":
                                 ShiftTrait(DefaultTraits.Calculating, -1);
-                                Msg("You have the witch taken before she leaves the grounds. She does not argue. She asks only that you know what you are stopping. You have her hanged before noon. {spouseName} does not speak for three days. Neither do you.", BadColor);
+                                Msg($"You have the witch taken before she leaves the grounds. She does not argue. She asks only that you know what you are stopping. You have her hanged before noon. {spouseName} does not speak for three days. Neither do you.", BadColor);
                                 break;
                             case "c":
                                 ShiftTrait(DefaultTraits.Calculating, -1);
@@ -518,7 +518,7 @@ namespace AshAndEmber
                                 Msg($"The fury comes before the thought. The witch is first — she had time to understand what was happening. {spouseName} had less. You surface an hour later in a room that cannot be unchanged. What was done out of love and desperation is done. So is {spouseName}.", BadColor);
                                 break;
                             case "d":
-                                Msg("You step into the room before {spouseName} can speak. You tell the witch to go — calmly, with enough in your voice that she understands this is the last visit. She leaves. {spouseName} watches you with something that is not quite relief and not quite anger. You do not discuss it. The door stays between you for a long time.", DimColor);
+                                Msg($"You step into the room before {spouseName} can speak. You tell the witch to go — calmly, with enough in your voice that she understands this is the last visit. She leaves. {spouseName} watches you with something that is not quite relief and not quite anger. You do not discuss it. The door stays between you for a long time.", DimColor);
                                 break;
                         }
                     }, null, "", false), false, true);
@@ -853,7 +853,7 @@ namespace AshAndEmber
 
         // Grants one Codex power (element or discipline) the player does not yet
         // hold — the living reward, now that the old spell/enchantment talents are
-        // retired and would do nothing. All powers held → a focus point instead.
+        // retired and would do nothing. All powers held → an attribute point instead.
         private static void GrantMagicalTalent()
         {
             if (MagicLearning.TryGrantRandomUnknown(_rng, out string name))

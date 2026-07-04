@@ -145,7 +145,7 @@ namespace AshAndEmber
                     case 1: ShowVision_TheShapeOfWhatWas(); break;
                     case 2: ShowVision_VoiceInTheCold(); break;
                     case 3: ShowVision_FigureBeforeTheGrey(); break;
-                    case 4: ShowVision_EmperорsFace(); break;
+                    case 4: ShowVision_EmperorsFace(); break;
                     case 5: ShowVision_TruthOfTheCovenant(); break;
                     case 6: ShowVision_TheHour(); break;
                     default: break;
@@ -263,7 +263,7 @@ namespace AshAndEmber
         }
 
         // Vision 4 — The Emperor's Face (after 5th lord kill)
-        private static void ShowVision_EmperорsFace()
+        private static void ShowVision_EmperorsFace()
         {
             InformationManager.ShowInquiry(new InquiryData(
                 "The Emperor's Face",

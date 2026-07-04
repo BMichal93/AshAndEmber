@@ -23,13 +23,11 @@
 //      · Become the Vessel — player gains fire magic; Aelisar's covenant bars aging
 //      · The Last Binding — spend everything to break the Ashen cycle (player dies)
 //
-// Save keys  (prefix LDQ_)
-//   LDQ_Phase, LDQ_QuestVersion,
-//   LDQ_LordsSlain, LDQ_VisionPhase, LDQ_ContactDay,
-//   LDQ_HeartCaptured, LDQ_ContactRefusals,
-//   LDQ_EndingPhase, LDQ_WorldBound,
-//   LDQ_ColdTarget,
-//   LDQ_EverAshen (settlement tracking for cold quest path)
+// Save keys  (prefix LDQ2_ — distinct from the legacy v1 system's LDQ_ keys)
+//   LDQ2_Phase, LDQ2_LordsSlain, LDQ2_VisionPhase, LDQ2_ContactDay,
+//   LDQ2_EndingPhase, LDQ2_ColdTarget, LDQ2_ProxCooldown,
+//   LDQ2_HeartCaptured, LDQ2_WorldBound,
+//   LDQ2_EverAshen (settlement tracking for cold quest path)
 // =============================================================================
 
 using System;

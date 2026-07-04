@@ -915,6 +915,104 @@ namespace AshAndEmber.Tests
             Assert.IsTrue(ElementMagicMath.IsFullyCharged(ElementMagicMath.MaxDrawSeconds));
         }
 
+        // ── ElementUltimateMath (the Unbinding — element ultimates) ──────────────
+
+        [Test]
+        public void ElementUltimateMath_Cost_IsSteepFlat_NatureHalves()
+        {
+            // Twelve days flat — three walls' worth — halved by Nature, never free.
+            Assert.AreEqual(12, ElementUltimateMath.UltimateAgingDays(hasNature: false));
+            Assert.AreEqual(6,  ElementUltimateMath.UltimateAgingDays(hasNature: true));
+            Assert.Greater(ElementUltimateMath.UltimateCostDays, ElementMagicMath.WallCostDays,
+                "an Unbinding must cost far more than an ordinary working");
+            Assert.GreaterOrEqual(ElementUltimateMath.UltimateAgingDays(true), ElementMagicMath.MinCastDays);
+        }
+
+        [Test]
+        public void ElementUltimateMath_Unbind_OnlyAnswersAFullDraw()
+        {
+            // The chord is refused before the full 7 s draw — same gate as the
+            // "fully charged" announcement.
+            Assert.IsFalse(ElementUltimateMath.CanUnbind(0f));
+            Assert.IsFalse(ElementUltimateMath.CanUnbind(ElementMagicMath.FullChargeSeconds - 0.1f));
+            Assert.IsTrue(ElementUltimateMath.CanUnbind(ElementMagicMath.FullChargeSeconds));
+            // The chord window is a fraction of a heartbeat — the buffered normal
+            // cast must feel instant.
+            Assert.Less(ElementUltimateMath.ChordWindowSeconds, 0.5f);
+            Assert.Greater(ElementUltimateMath.ChordWindowSeconds, 0f);
+        }
+
+        [Test]
+        public void ElementUltimateMath_Names_AllFiveDistinct_BothFaces()
+        {
+            var all = new System.Collections.Generic.HashSet<string>();
+            foreach (MagicElement el in new[] { MagicElement.Fire, MagicElement.Wind,
+                     MagicElement.Earth, MagicElement.Water, MagicElement.Spirit })
+            {
+                string living = ElementUltimateMath.UltimateName(el, ashen: false);
+                string ashen  = ElementUltimateMath.UltimateName(el, ashen: true);
+                Assert.IsFalse(string.IsNullOrEmpty(living));
+                Assert.IsFalse(string.IsNullOrEmpty(ashen));
+                Assert.IsTrue(all.Add(living), $"living name for {el} duplicates another");
+                Assert.IsTrue(all.Add(ashen),  $"Ashen name for {el} duplicates another");
+            }
+        }
+
+        [Test]
+        public void ElementUltimateMath_Flight_HoldsHeightThenLandsGently()
+        {
+            // Full flight height through the crossing…
+            Assert.AreEqual(ElementUltimateMath.FlightHeight,
+                ElementUltimateMath.FlightHeightAt(ElementUltimateMath.FlightSeconds), 0.001f);
+            Assert.AreEqual(ElementUltimateMath.FlightHeight,
+                ElementUltimateMath.FlightHeightAt(ElementUltimateMath.FlightLandingSeconds), 0.001f);
+            // …then a monotonic descent to the ground in the landing window.
+            float half = ElementUltimateMath.FlightHeightAt(ElementUltimateMath.FlightLandingSeconds * 0.5f);
+            Assert.Less(half, ElementUltimateMath.FlightHeight);
+            Assert.Greater(half, 0f);
+            Assert.AreEqual(0f, ElementUltimateMath.FlightHeightAt(0f), 0.001f);
+            Assert.AreEqual(0f, ElementUltimateMath.FlightHeightAt(-1f), 0.001f);
+        }
+
+        [Test]
+        public void ElementUltimateMath_MantleKeepsOnlyAFraction()
+        {
+            // Three quarters shrugged off, and never a negative blow.
+            Assert.AreEqual(25f, ElementUltimateMath.MantleKeptDamage(100f), 0.001f);
+            Assert.AreEqual(0f,  ElementUltimateMath.MantleKeptDamage(0f),   0.001f);
+            Assert.AreEqual(0f,  ElementUltimateMath.MantleKeptDamage(-5f),  0.001f);
+            Assert.Greater(ElementUltimateMath.MantleSpeedMult, 0f);
+            Assert.Less(ElementUltimateMath.MantleSpeedMult, 1f, "the mountain walks slowly");
+        }
+
+        [Test]
+        public void ElementUltimateMath_Rain_MiresHorsesWorst_DampsButNeverKillsFire()
+        {
+            // The damp weakens fire without erasing it…
+            Assert.Greater(ElementUltimateMath.RainFireDamp, 0f);
+            Assert.Less(ElementUltimateMath.RainFireDamp, 1f);
+            // …horses suffer more than men on foot…
+            Assert.Less(ElementUltimateMath.RainMountSlowMult, ElementUltimateMath.RainFootSlowMult);
+            // …and the soaked strings cost a shot part of its bite, not all of it.
+            Assert.Greater(ElementUltimateMath.RainArcheryDamp, 0f);
+            Assert.Less(ElementUltimateMath.RainArcheryDamp, 1f);
+        }
+
+        [Test]
+        public void ElementUltimateMath_ElementalKind_AnswersTheScene()
+        {
+            // Snow always wins; sand is read from the scene's name; stone is the
+            // default answer everywhere else (including a null name).
+            Assert.AreEqual(ElementalKind.Frost, ElementUltimateMath.ElementalKindForScene(true,  "desert_x"));
+            Assert.AreEqual(ElementalKind.Sand,  ElementUltimateMath.ElementalKindForScene(false, "battle_terrain_desert_a"));
+            Assert.AreEqual(ElementalKind.Sand,  ElementUltimateMath.ElementalKindForScene(false, "aserai_dunes"));
+            Assert.AreEqual(ElementalKind.Stone, ElementUltimateMath.ElementalKindForScene(false, "battle_terrain_plain"));
+            Assert.AreEqual(ElementalKind.Stone, ElementUltimateMath.ElementalKindForScene(false, null));
+            // Every kind has a name for the combat log.
+            foreach (ElementalKind k in new[] { ElementalKind.Stone, ElementalKind.Frost, ElementalKind.Sand })
+                Assert.IsFalse(string.IsNullOrEmpty(ElementUltimateMath.ElementalName(k)));
+        }
+
         [Test]
         public void ElementMagicMath_ChargeShapes_GrowWithCharge()
         {

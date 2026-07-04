@@ -47,6 +47,7 @@ namespace AshAndEmber
             try { MagicInputHandler.ResetInputState();        } catch { }
             try { ElementWallWards.Clear();              } catch { }
             try { ElementSpellEffects.ClearBattleState();} catch { }
+            try { ElementUltimates.ClearBattleState();   } catch { }
             try { MiracleEffects.ClearBattleState();     } catch { }
             try { MiracleBattleAI.Reset();               } catch { }
             try { MiracleInputHandler.ResetInputState(); } catch { }
@@ -373,6 +374,7 @@ namespace AshAndEmber
             ElementMagicInput.Tick(inMission: true, dt);
             ElementWallWards.Tick(dt);
             ElementSpellEffects.Tick(dt);
+            ElementUltimates.Tick(dt);
             CrystalEffects.MissionTick(dt);
             CrystalBattleAI.MissionTick(dt);
             MiracleInputHandler.Tick(inMission: true);
@@ -444,6 +446,7 @@ namespace AshAndEmber
             try { CrystalBattleAI.Reset();                    } catch { }
             try { ElementWallWards.Clear();                   } catch { }
             try { ElementSpellEffects.ClearBattleState();     } catch { }
+            try { ElementUltimates.ClearBattleState();        } catch { }
             try { NatureEffects.ClearBattleState();           } catch { }
             try { NatureCharge.ClearForMission();             } catch { }
             try { NatureChargeBar.Reset();                    } catch { }
@@ -475,6 +478,10 @@ namespace AshAndEmber
             try { isMeleeHit = affectorWeapon.IsEmpty || !(affectorWeapon.CurrentUsageItem?.IsRangedWeapon ?? false); } catch { }
             if (isMeleeHit)
                 try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            // The Unbinding (element ultimates): a struck flyer falls, a struck
+            // channelling lord loses the working, the stone mantle drinks most of
+            // the blow, and rain-soaked bowstrings cost a ranged hit its bite.
+            try { ElementUltimates.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
             // Sunder enchantment: applies to all hits (attacker is globally weakened).
             try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
             // Dark Gifts: passive on-hit effects for attacker and defender.

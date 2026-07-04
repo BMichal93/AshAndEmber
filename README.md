@@ -794,31 +794,31 @@ You are given eleven options (minus those whose faction or leader has been elimi
 | **Destroy it** | +Honour. Quest ends. |
 | **Keep it** | Starts **Questline C**. |
 | **Sell it** | +10 000 gold, −Honour. 50 % chance the buyer is an imperial contact → starts **Questline A** with a random imperial faction. |
-| **Give to Rhagea** *(empire_s alive)* | Starts **Questline A** with the Southern Empire. |
-| **Give to Lucorn** *(empire_n alive)* | Starts **Questline A** with the Northern Empire. |
-| **Give to Gairos** *(empire_w alive)* | Starts **Questline A** with the Western Empire. |
+| **Give to Rhagaea** *(empire_s alive)* | Starts **Questline A** with the Southern Empire. |
+| **Give to Lucon** *(empire_n alive)* | Starts **Questline A** with the Northern Empire. |
+| **Give to Garios** *(empire_w alive)* | Starts **Questline A** with the Western Empire. |
 | **Give to Sturgians / Khuzaites / Battanians / Aserai / Vlandians** | Starts **Questline B** with that faction. |
 
 ---
 
-### Questline A — The Resurrection of Arencios
+### Questline A — The Resurrection of Arenicos
 
-The receiving faction's scholars attempt to revive the dead Emperor Arencios.
+The receiving faction's scholars attempt to revive the dead Emperor Arenicos.
 
 **Timeline:**
 
 | Delay | Event |
 |-------|-------|
 | +3 days | The rituals begin in secret. |
-| +10 days | Arencios is revived — he possesses a random male lord of the receiving empire and is made its faction leader. His nature (true emperor or Ashen spirit) is determined secretly. |
-| +3 days | Each of the two other empire factions has a **50% chance** to submit — they make peace and share wars, but keep their own kingdoms. |
-| +3 days | Arencios declares war on all non-imperial factions. |
+| +10 days | Arenicos is revived — he possesses a random male lord of the receiving empire and is made its faction leader. His nature (true emperor or Ashen spirit) is determined secretly. |
+| +3 days | Each other empire faction may submit (one is guaranteed, the rest have a **50% chance**) — a submitting empire's clans and fiefs are absorbed into Arenicos's empire. |
+| +3 days | Arenicos declares war on all non-imperial factions. |
 
 **True Emperor:** Fights all non-imperial factions and the Ashen.
 
-**False Emperor (Ashen spirit):** After 30 more days, the empire secretly allies with the Ashen — peace is enforced daily.
+**False Emperor (Ashen spirit):** After 50 more days, the empire secretly allies with the Ashen — peace is enforced daily.
 
-**If Arencios dies:** His empire's settlements are distributed randomly among the surviving imperial factions (empire_s, empire_n, empire_w).
+**If Arenicos dies:** His empire's settlements are distributed randomly among the surviving imperial factions (empire_s, empire_n, empire_w). If the Ashen had already merged with his empire, the Ashen clans withdraw to their own kingdom instead and the empire endures.
 
 ---
 

@@ -80,13 +80,13 @@ namespace AshAndEmber
                     "Long, strange, exhausting. Something about the fire inside. The price is ambiguous in all the ways that matter."));
 
                 AddImperialOption(elements, "empire_s", "give_s",
-                    "Pass them to Rhagea's scholars.",
+                    "Pass them to Rhagaea's scholars.",
                     "The Southern Empire receives the scrolls.");
                 AddImperialOption(elements, "empire_n", "give_n",
-                    "Pass them to Lucorn's court.",
+                    "Pass them to Lucon's court.",
                     "The Northern Empire receives the scrolls.");
                 AddImperialOption(elements, "empire_w", "give_w",
-                    "Pass them to Gairos's mages.",
+                    "Pass them to Garios's mages.",
                     "The Western Empire receives the scrolls.");
 
                 AddFactionOption(elements, "sturgia",  "give_sturgia",

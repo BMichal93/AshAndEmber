@@ -93,6 +93,8 @@
   <ItemGroup>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="Magic\ElementMagicMath.cs"/>
+    <Compile Include="Magic\ElementUltimateMath.cs"/>
+    <Compile Include="Magic\ElementUltimates.cs"/>
     <Compile Include="Magic\WallWardMath.cs"/>
     <Compile Include="Magic\ElementWallWards.cs"/>
     <Compile Include="Magic\MageElementKnowledge.cs"/>

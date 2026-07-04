@@ -129,6 +129,18 @@ namespace AshAndEmber
                 "order into their ranks / a wall that heartens your own and mends them a little."), true);
 
             AddLog(new TextObject(
+                "MAGIC · THE UNBINDING — Draw an element to its FULLEST (about seven seconds), then press " +
+                "ATTACK and BLOCK TOGETHER to unbind it: each element's ultimate working, once per element " +
+                "per battle, at a steep flat toll (twelve days). FIRE: a nova — everything around you burns, " +
+                "horses bolt, siege timber chars, a burning ring remains. WIND: the gale carries YOU — fly " +
+                "where you look; any hit knocks the wind out and you FALL. EARTH: a mantle of stone — most " +
+                "damage shrugged off, but the mountain walks slowly. WATER: the sky weeps over a wide field — " +
+                "burns quenched, fire halved, horses mired, bowstrings soaked (there is only one sky; a new " +
+                "casting tears the old down). SPIRIT: the land sends a champion — an elemental of frost, sand " +
+                "or stone fights at your side, then comes apart. Enemy lords know the Unbinding too — when one " +
+                "begins the long channel, break it: any blow that lands on him kills the working."), true);
+
+            AddLog(new TextObject(
                 "MAGIC · THE COST — Every cast shortens your LIFE EXPECTANCY: it does not make you older " +
                 "here and now, but you will die sooner (watch the death age in your grimoire's Ledger). " +
                 "The toll is FLAT — a longer draw buys power, never a cheaper cast. Cast outside battle " +

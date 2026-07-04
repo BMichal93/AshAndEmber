@@ -163,6 +163,24 @@ namespace AshAndEmber
             float lifeFrac = isAshen ? 1f
                 : NpcCastPlanner.LifeFrac(ColourLordRegistry.LifeBudgetYears(hero));
 
+            // -2. THE UNBINDING — a lord's once-per-battle ultimate. Only in
+            //     battles worth the working (70+ men), read from the same tactical
+            //     picture as his normal casts, and always behind a LONG telegraphed
+            //     windup: any hit on him during the channel breaks it (and it stays
+            //     spent). ElementUltimates owns the decision, the channel, and the
+            //     interruption; this just pays the cooldown and the life-cost.
+            try
+            {
+                if (ElementUltimates.TryQueueNpcUltimate(agent, hero, hpPct,
+                        closeEnemies, nearEnemies, mountedNear, isAshen, KnownElements(hero), temper))
+                {
+                    SetCooldown(hero);
+                    RecordUltimate(hero);
+                    return;
+                }
+            }
+            catch { }
+
             // -1. Pyre Lord: fortify with a wall once before attacking.
             if (IsPyreLord(hero) && !_pyreBarriersPlaced.Contains(hero.StringId) && nearEnemies >= 1)
             {
@@ -518,6 +536,15 @@ namespace AshAndEmber
             if (!_battleCasts.ContainsKey(hero.StringId))
                 _battleCasts[hero.StringId] = 0;
             _battleCasts[hero.StringId] += ElementMagicMath.CastAgingDays(form, hasNature: false);
+        }
+
+        // The Unbinding costs a lord the same flat toll the player pays (12 days;
+        // the Ashen never spend life, exactly as with every other recorded cast).
+        private static void RecordUltimate(Hero hero)
+        {
+            if (!_battleCasts.ContainsKey(hero.StringId))
+                _battleCasts[hero.StringId] = 0;
+            _battleCasts[hero.StringId] += ElementUltimateMath.UltimateAgingDays(hasNature: false);
         }
 
         // Shows a combat-log message when an NPC lord casts against the player.

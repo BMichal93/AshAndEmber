@@ -32,7 +32,8 @@
 // │                      │ the cold — declares war on all others.              │
 // ├──────────────────────┼─────────────────────────────────────────────────────┤
 // │ The Long March       │ (Rare) 4 massive Ashen warbands (100+ troops each)  │
-// │                      │ appear in one of Vlandia/Aserai/Khuzait/Sturgia.    │
+// │                      │ appear in one of Aserai/Khuzait/Sturgia. (Vlandia — │
+// │                      │ The Holy Temple — is never the target.)             │
 // ├──────────────────────┼─────────────────────────────────────────────────────┤
 // │ Whispers from the Ash│ (Very rare) 1–3 mage lords abandon their factions  │
 // │                      │ and join the Ashen.                                 │
@@ -124,7 +125,7 @@ namespace AshAndEmber
         public const float ChanceScorchingSun    = 0.04f;  // ~every 25 weeks  (rare, summer only)
         public const float ChanceFirstGreen      = 0.04f;  // ~every 25 weeks  (rare, spring only)
         public const float ChanceAmberHarvest    = 0.04f;  // ~every 25 weeks  (rare, autumn only)
-        public const float ChanceEmbersOfHope    = 0.06f;  // ~every 17 weeks  (once Ashen hold 8+ towns)
+        public const float ChanceEmbersOfHope    = 0.06f;  // ~every 17 weeks  (once Ashen hold EmbersOfHopeMinTowns+ towns)
         public const int   EmbersOfHopeMinTowns  = 13;     // Ashen must hold this many towns to trigger
         public const int   EmbersOfHopePeaceCount = 3;     // max wars ended per firing
         public const float ChanceASlightAtCourt   = 0.05f;  // ~every 20 weeks  (diplomatic incident → war or cold shoulder)
