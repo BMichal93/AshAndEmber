@@ -12,22 +12,23 @@
 //   2. Keep         → Questline C
 //   3. Sell         → +10 000 gold, lose Honour; 50 % chance book reaches
 //                     a random living imperial leader → Questline A
-//   4. Give Rhagea  → Questline A (empire_s)
-//   5. Give Lucorn  → Questline A (empire_n)
-//   6. Give Gairos  → Questline A (empire_w)
+//   4. Give Rhagaea → Questline A (empire_s)
+//   5. Give Lucon   → Questline A (empire_n)
+//   6. Give Garios  → Questline A (empire_w)
 //   7–11. Give non-imperial faction → Questline B
 //
-// QUESTLINE A — The Resurrection of Arencios
+// QUESTLINE A — The Resurrection of Arenicos
 //   Phase 0: 3-day delay  → "Rituals begin in secret…"
-//   Phase 1: 10-day delay → Arencios possesses a random male lord;
+//   Phase 1: 10-day delay → Arenicos possesses a random male lord;
 //              secretly rolled: true emperor or false emperor (Ashen spirit)
-//   Phase 2: 3-day delay  → other two empire factions: 50 % chance to ally
-//              (peace + shared wars; no clan movement to keep kingdoms alive)
-//   Phase 3: 3-day delay  → Arencios declares war on all non-imperial factions
+//   Phase 2: 3-day delay  → each other empire faction may submit (one is
+//              guaranteed, the rest 50 %); a submitting empire's clans and
+//              fiefs are absorbed into Arenicos's empire
+//   Phase 3: 3-day delay  → Arenicos declares war on all non-imperial factions
 //   Phase 4: active monitoring:
-//              • detect Arencios hero death → empire split (phase 5)
-//              • false emperor: 30-day timer → ally with Ashen (peace maintained daily)
-//   Phase 5: empire split — distribute Arencios empire fiefs to surviving empires
+//              • detect Arenicos hero death → empire split (phase 5)
+//              • false emperor: 50-day timer → ally with Ashen (peace maintained daily)
+//   Phase 5: empire split — distribute Arenicos empire fiefs to surviving empires
 //   Phase 9: complete
 //
 // QUESTLINE B — The Faction's Gambit
@@ -202,14 +203,14 @@ namespace AshAndEmber
 
                 // Imperial leaders
                 AddImperialOption(elements, "empire_s", "give_s",
-                    "Give it to Rhagea — perhaps she can use it to restore the Empire.",
-                    "The Southern Empire receives the scrolls. Rhagea's scholars will study them.");
+                    "Give it to Rhagaea — perhaps she can use it to restore the Empire.",
+                    "The Southern Empire receives the scrolls. Rhagaea's scholars will study them.");
                 AddImperialOption(elements, "empire_n", "give_n",
-                    "Give it to Lucorn — the North has the scholars for this.",
-                    "The Northern Empire receives the scrolls. Lucorn's court will decide their fate.");
+                    "Give it to Lucon — the North has the scholars for this.",
+                    "The Northern Empire receives the scrolls. Lucon's court will decide their fate.");
                 AddImperialOption(elements, "empire_w", "give_w",
-                    "Give it to Gairos — the West has the ambition for it.",
-                    "The Western Empire receives the scrolls. Gairos's mages will not sleep for weeks.");
+                    "Give it to Garios — the West has the ambition for it.",
+                    "The Western Empire receives the scrolls. Garios's mages will not sleep for weeks.");
 
                 // Non-imperial factions
                 AddFactionOption(elements, "sturgia",  "give_sturgia",  "Give it to the Northmen — iron hands may steady iron knowledge.",

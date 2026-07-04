@@ -18,7 +18,7 @@ namespace AshAndEmber
             // ── True Emperor — opening ────────────────────────────────────────
             try { starter.AddDialogLine("ar_true_start",
                 "start", "ar_reply",
-                "You stand before Arencios — first emperor of a united Calradia. " +
+                "You stand before Arenicos — emperor of a united Calradia, returned. " +
                 "Whatever age has passed between that throne and this one, I remember all of it. " +
                 "Say what you have come to say.",
                 IsTrueEmperor, null, P); } catch { }

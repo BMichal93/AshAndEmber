@@ -46,7 +46,7 @@ namespace AshAndEmber
                         case "a":
                             try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
                             AgePlayer(7);
-                            Msg("He stands in it for a long moment, eyes closed. Then he begins to speak — not quickly, not with ceremony, but as a man unburdening something he has carried for decades. He talks for two hours. When he leaves, you sit with the shape of what he gave you for a long time. One focus point, paid in warmth and thirty days. You call it even.", FireColor);
+                            Msg("He stands in it for a long moment, eyes closed. Then he begins to speak — not quickly, not with ceremony, but as a man unburdening something he has carried for decades. He talks for two hours. When he leaves, you sit with the shape of what he gave you for a long time. One focus point, paid in warmth and seven days. You call it even.", FireColor);
                             break;
                         case "b":
                             Msg("He nods once when you refuse, as though he expected it. He folds his coat around himself and walks away from the road — not toward any village you can see, just away from the direction you are heading. You do not see where he goes.", DimColor);
@@ -138,7 +138,7 @@ namespace AshAndEmber
             float charmChance = SkillChance(DefaultSkills.Charm, 0.30f);
             string charmHint  = SkillHint(DefaultSkills.Charm, 0.30f, "Intimidate him into speaking");
 
-            void ShowElixirChoice()
+            void ShowElixirChoice(bool paid)
             {
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                     "⚗  The Vial",
@@ -151,8 +151,9 @@ namespace AshAndEmber
                             "The road continues."),
                         new InquiryElement("c", "Report him to the city watch.", null, true,
                             "The watch will be interested. So will others."),
-                        new InquiryElement("d", "Beat him and recover your money.", null, true,
-                            "Your coin comes back. Something else may leave with it."),
+                        new InquiryElement("d", paid ? "Beat him and recover your money." : "Beat him and take his purse.", null, true,
+                            paid ? "Your coin comes back. Something else may leave with it."
+                                 : "His coin for your trouble. Something else may leave with it."),
                     },
                     false, 1, 1, "Decide", "",
                     chosen2 =>
@@ -188,8 +189,10 @@ namespace AshAndEmber
                                 break;
                             case "d":
                                 ShiftTrait(DefaultTraits.Mercy, -1);
-                                ChangeGold(1000);
-                                Msg("You make your position clear without extended negotiation. He returns the coins without being asked twice. He also offers two of the unnamed reagents as an apparent apology, which you did not request and are not certain you want. You leave him on the floor of his shop, breathing, with a considerably reduced opinion of street salesmanship.", DimColor);
+                                ChangeGold(paid ? 1000 : 200);
+                                Msg(paid
+                                    ? "You make your position clear without extended negotiation. He returns the coins without being asked twice. He also offers two of the unnamed reagents as an apparent apology, which you did not request and are not certain you want. You leave him on the floor of his shop, breathing, with a considerably reduced opinion of street salesmanship."
+                                    : "You make your position clear without extended negotiation. He empties his purse without being asked twice. He also offers two of the unnamed reagents as an apparent apology, which you did not request and are not certain you want. You leave him on the floor of his shop, breathing, with a considerably reduced opinion of street salesmanship.", DimColor);
                                 break;
                         }
                     }, null, "", false), false, true);
@@ -217,13 +220,13 @@ namespace AshAndEmber
                             break;
                         case "b":
                             if (!ChangeGold(-1000)) return;
-                            MageKnowledge._deferredInquiry = ShowElixirChoice;
+                            MageKnowledge._deferredInquiry = () => ShowElixirChoice(true);
                             break;
                         case "c":
                             if (SkillRoll(DefaultSkills.Charm, 0.30f))
                             {
                                 Msg("You do not raise your voice. You do not need to. He reads the situation correctly and decides that a free demonstration is preferable to the alternative. He is correct.", GoodColor);
-                                MageKnowledge._deferredInquiry = ShowElixirChoice;
+                                MageKnowledge._deferredInquiry = () => ShowElixirChoice(false);
                             }
                             else
                             {

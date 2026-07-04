@@ -74,7 +74,7 @@ namespace AshAndEmber
         // atomic defection action when the clan already belongs to a kingdom, so
         // settlements change banners cleanly instead of passing through an
         // ownerless "independent" state that can strand them as rebel/free cities.
-        // The player is NEVER moved automatically — serving Arencios (or refusing)
+        // The player is NEVER moved automatically — serving Arenicos (or refusing)
         // is the player's own choice. Newly held fiefs are stabilised so the
         // reshuffle cannot tip them straight into rebellion.
         private static void MoveClanInto(Clan clan, Kingdom targetKingdom)
