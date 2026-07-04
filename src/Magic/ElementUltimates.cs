@@ -134,6 +134,14 @@ namespace AshAndEmber
         {
             if (caster == null || !caster.IsActive()) return false;
             if (_playerUsed.Contains(el)) return false;
+            // The wind will not carry horse and rider — and teleporting a mounted
+            // RIDER out of the saddle is the desync class this mod never risks.
+            // Refused BEFORE the once-per-battle is spent; the charge stays drawn.
+            if (el == MagicElement.Wind && IsMounted(caster))
+            {
+                Msg("The wind will not carry horse and rider — take wing on your own feet.");
+                return false;
+            }
             _playerUsed.Add(el);
             bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch { }
             Msg($"{ElementUltimateMath.UltimateName(el, ashen)} — the " +
@@ -168,7 +176,8 @@ namespace AshAndEmber
                 pick = MagicElement.Earth;
             else if (hpPct < ElementUltimateMath.LeapHpFrac
                 && closeEnemies >= ElementUltimateMath.LeapCloseEnemies
-                && known.Contains(MagicElement.Wind))
+                && known.Contains(MagicElement.Wind)
+                && !IsMounted(agent))   // the leap teleports the caster — never a rider
                 pick = MagicElement.Wind;
             else if (closeEnemies >= ElementUltimateMath.NovaCloseEnemies)
                 pick = MagicElement.Fire;   // Fire is innate — always known
@@ -195,6 +204,11 @@ namespace AshAndEmber
             AnnounceNpc(agent, hero,
                 $"begins the Unbinding — {ElementUltimateMath.UltimateName(pick.Value, isAshen)}! Break the working!");
             return true;
+        }
+
+        private static bool IsMounted(Agent agent)
+        {
+            try { return agent?.MountAgent != null; } catch { return false; }
         }
 
         private static bool LastHostileWasFire(Agent agent)
@@ -287,12 +301,16 @@ namespace AshAndEmber
 
             // 3. The stone mantle drinks most of a WEAPON blow: heal back the
             //    shrugged-off fraction (magic damage is reduced in DamageAgent).
+            //    healedFrac tracks what has been given back so the wet-bowstring
+            //    damp below can never push the combined heal past the whole blow.
+            float healedFrac = 0f;
             if (inflictedDamage > 0 && _mantles.Count > 0)
             {
                 foreach (var m in _mantles)
                 {
                     if (m.Bearer != victim || m.Remaining <= 0f) continue;
-                    float healBack = inflictedDamage * ElementUltimateMath.MantleDamageReduction;
+                    healedFrac = ElementUltimateMath.MantleDamageReduction;
+                    float healBack = inflictedDamage * healedFrac;
                     if (healBack >= 1f) try { SpellEffects.HealAgent(victim, healBack); } catch { }
                     try { SpellEffects.SpawnNatureBurst(victim.Position, NatureElement.Earth, 0.5f); } catch { }
                     break;
@@ -300,14 +318,16 @@ namespace AshAndEmber
             }
 
             // 4. Wet bowstrings: a RANGED hit loosed from inside the rain loses
-            //    part of its bite (heal-back, the same pattern as the mantle).
+            //    part of its bite (heal-back, the same pattern as the mantle —
+            //    capped alongside it, so no blow ever heals more than it dealt).
             if (inflictedDamage > 0 && !isMeleeHit && attacker != null && _rain != null)
             {
                 try
                 {
                     if (FireDampAt(attacker.Position) < 1f)
                     {
-                        float healBack = inflictedDamage * ElementUltimateMath.RainArcheryDamp;
+                        float damp = Math.Min(ElementUltimateMath.RainArcheryDamp, 1f - healedFrac);
+                        float healBack = inflictedDamage * damp;
                         if (healBack >= 1f) SpellEffects.HealAgent(victim, healBack);
                     }
                 }
@@ -398,6 +418,9 @@ namespace AshAndEmber
             foreach (Agent a in EnemiesNear(caster, ElementUltimateMath.NovaRadius))
             {
                 if (SpellEffects.IsWarded(a)) continue;
+                // The nova is fire like any other — a standing mist wall between
+                // the caster and a foe drinks the working before it reaches him.
+                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, pos, a.Position, out _)) continue; } catch { }
                 try { SpellEffects.DamageAgent(a, ElementUltimateMath.NovaDamage * power, ColorSchool.Red, caster); } catch { }
                 // Full ignition on everything the nova touches (the Ashen cold
                 // grips as deep frost instead of a burn — same dread, colder face).
@@ -691,9 +714,10 @@ namespace AshAndEmber
             }
             catch { }
 
-            // Standing fire dies under the rain (its warding falls with it), and
+            // Standing fire dies under the rain — the burning GROUND itself, not
+            // just its warding (QuenchFireAt sweeps both, patches to steam) — and
             // a scatter of spray/snow keeps the zone readable on screen.
-            try { ElementWallWards.QuenchFireNodesNear(r.Centre, ElementUltimateMath.RainRadius); } catch { }
+            try { SpellEffects.QuenchFireAt(r.Centre, ElementUltimateMath.RainRadius); } catch { }
             try
             {
                 for (int k = 0; k < 4; k++)
@@ -757,8 +781,10 @@ namespace AshAndEmber
                     .Age((int)body.Age)
                     .ClothingColor1(ChampionCloth(kind))
                     .ClothingColor2(ChampionCloth(kind))
-                    .InitialPosition(in pos)
-                    .InitialDirection(in fwd);
+                    .InitialPosition(in pos);
+                // InitialDirection takes a Vec2 (verified against the game DLLs).
+                Vec2 fwd2 = fwd.AsVec2;
+                agentData = agentData.InitialDirection(in fwd2);
 
                 var elemental = Mission.Current.SpawnAgent(agentData, false);
                 if (elemental == null) return;

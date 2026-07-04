@@ -2,6 +2,14 @@
 
 ---
 
+## v0.37.1
+
+### Fixes — the Unbinding reviewed and bound tighter
+- **The wind no longer tears a rider from the saddle.** On the Wings of the Gale flew a MOUNTED caster by teleporting the rider out of the saddle every tick — the horse/rider desync this mod has sworn off. The wind now refuses horse and rider: the player is told to take wing on their own feet (the chord is NOT spent — dismount and unbind), and a mounted NPC lord simply never picks the leap.
+- **The Weeping Sky now truly gutters fire out.** The rain removed only a fire wall's invisible warding; the burning ground itself kept scorching the very men the rain had just quenched. The rain now sweeps the burning patches to steam along with their wards, every tick.
+- **The First Flame Remembered obeys the standing water.** Every fire dies against a mist wall — except the nova, which reached through one untouched. A wall of standing water between the caster and a foe now drinks the nova's reach to that mark, like any other fire.
+- **No blow can heal more than it dealt.** A mantled caster shot by a rain-soaked archer was healed back 75% (stone) plus 40% (wet string) of the same arrow — a net GAIN of health from being shot. The heal-backs now share one cap: never more than the whole blow.
+
 ## v0.37.0
 
 ### Fixes — the weave untangled (interactive-effects repair)
