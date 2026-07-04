@@ -124,7 +124,7 @@ namespace AshAndEmber
                 // sub-phase 5 — don't tick the alliance countdown for a dead emperor.
                 if (_qaSubPhase != 4) return;
 
-                // False-emperor 30-day countdown
+                // False-emperor 50-day countdown (QAFalseAllianceDelay)
                 if (!_arenicosIsTrue && !_qaFalseAllianceActive && _qaFalseAllianceTimer > 0)
                 {
                     _qaFalseAllianceTimer--;
@@ -172,7 +172,7 @@ namespace AshAndEmber
                     break;
 
                 case 1:
-                    // Phase 1 → 2: Arencios revived
+                    // Phase 1 → 2: Arenicos revived
                     FireArenicosRevival();
                     _qaSubPhase = 2;
                     _qaTimer    = QAPhaseAllyDelay;
@@ -269,9 +269,9 @@ namespace AshAndEmber
 
             Notify(
                 $"The Burning Laboratory — it worked.\n\n" +
-                $"In the deep hall of {empName}'s court, something old and cold " +
+                $"In the deep hall of {empName}'s court, something ancient " +
                 $"passed through {heroName} and did not leave. He stands now where a different man once stood. " +
-                $"He calls himself Arencios. He says he has been waiting a long time.\n\n" +
+                $"He calls himself Arenicos. He says he has been waiting a long time.\n\n" +
                 $"{trueStr}\n\n" +
                 $"He has already begun issuing orders. The court — for the moment — is obeying.");
             try { _qaQuestLog?.LogRevival(heroName, _arenicosIsTrue); } catch { }
@@ -305,7 +305,7 @@ namespace AshAndEmber
 
                 submittedNames.Add(other.Name?.ToString() ?? id);
 
-                // Move all clans (and their fiefs) into Arencios's empire, atomically
+                // Move all clans (and their fiefs) into Arenicos's empire, atomically
                 // so the conquered cities change banners cleanly rather than rebelling.
                 foreach (var clan in other.Clans.ToList())
                     MoveClanInto(clan, arenicosEmpire);
@@ -315,12 +315,12 @@ namespace AshAndEmber
             if (submittedNames.Count == 0)
                 Notify(
                     $"The Burning Laboratory — the other imperial courts heard the announcement and sent no reply. " +
-                    $"Their silence is an answer. Arencios rules {arenicosName} alone. The empire is not yet whole.");
+                    $"Their silence is an answer. Arenicos rules {arenicosName} alone. The empire is not yet whole.");
             else
             {
                 string names = string.Join(" and ", submittedNames);
                 Notify(
-                    $"The Burning Laboratory — {names} looked at the man who calls himself Arencios " +
+                    $"The Burning Laboratory — {names} looked at the man who calls himself Arenicos " +
                     $"and chose, each for their own reasons, to believe him. " +
                     $"Their banners ride with his now. The empire is not what it was — but it is larger than it was yesterday.");
             }
@@ -331,7 +331,7 @@ namespace AshAndEmber
             Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
             if (arenicosEmpire == null || arenicosEmpire.IsEliminated) return;
 
-            string heroName = FindArenicosHero()?.Name?.ToString() ?? "Arencios";
+            string heroName = FindArenicosHero()?.Name?.ToString() ?? "Arenicos";
             var declaredOn = new List<string>();
 
             foreach (var k in Kingdom.All.ToList())
@@ -369,11 +369,11 @@ namespace AshAndEmber
             Hero ar = Hero.AllAliveHeroes.FirstOrDefault(h => h.StringId == _arenicosHeroId);
             if (ar == null || !ar.IsAlive)
             {
-                // Arencios is dead — queue the split
+                // Arenicos is dead — queue the split
                 _qaSubPhase = 5;
                 string name = _arenicosHeroId; // best we have if hero object is gone
                 Notify(
-                    $"The Burning Laboratory — the one who called himself Emperor Arencios is dead. " +
+                    $"The Burning Laboratory — the one who called himself Emperor Arenicos is dead. " +
                     "Whatever ancient thing wore his face has gone back to wherever it came from. " +
                     "His empire now stands without its centre. The fiefs will be re-drawn.");
             }
@@ -475,7 +475,7 @@ namespace AshAndEmber
         {
             bool isAshen = MageKnowledge.IsAshen;
             Hero ar = FindArenicosHero();
-            string arName = ar?.Name?.ToString() ?? "Arencios";
+            string arName = ar?.Name?.ToString() ?? "Arenicos";
 
             string title = "The Withering";
             string body, button;
@@ -525,7 +525,7 @@ namespace AshAndEmber
             _qaFalseAllianceActive = true;
             _qaAshenMerged = true;
             Hero ar = FindArenicosHero();
-            string arName = ar?.Name?.ToString() ?? "Arencios";
+            string arName = ar?.Name?.ToString() ?? "Arenicos";
 
             Kingdom arenicosEmpire = GetKingdom(_qaEmpireId);
             Kingdom ashen = GetKingdom(AshenKingdomId);
@@ -618,7 +618,7 @@ namespace AshAndEmber
 
             if (targets.Count == 0)
             {
-                Notify("The Burning Laboratory — Arencios's empire has no imperial heirs to split among. His fiefs remain.");
+                Notify("The Burning Laboratory — Arenicos's empire has no imperial heirs to split among. His fiefs remain.");
                 try { _qaQuestLog?.LogTrueEmperorDead(); _qaQuestLog?.CompleteFail(); } catch { }
                 return;
             }
@@ -647,7 +647,7 @@ namespace AshAndEmber
             }
 
             Notify(
-                $"The Burning Laboratory — with {empName}'s false emperor gone, the realm he assembled " +
+                $"The Burning Laboratory — with {empName}'s {(_arenicosIsTrue ? "emperor" : "false emperor")} gone, the realm he assembled " +
                 $"fragments back toward the borders it came from. {moved} settlement{(moved != 1 ? "s" : "")} " +
                 "change hands as surviving imperial lords carve out what they can before the war takes it.");
             try

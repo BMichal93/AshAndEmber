@@ -24,8 +24,10 @@ namespace AshAndEmber
     {
         // ── Event 10: The Long March ─────────────────────────────────────────
         // Four massive Ashen warbands (100+ troops each) materialise within
-        // one of the western, southern, eastern, or northern realms:
-        // Vlandia, Aserai, Khuzait Khanate, or Sturgia.
+        // one of the southern, eastern, or northern realms:
+        // Aserai, the Khuzait Khanate, or Sturgia (see LongMarchTargets).
+        // Vlandia — The Holy Temple — is never the target: the grey tide does
+        // not test the warded ground of its sworn enemy in a mere march.
         // This is a deliberate targeted invasion, not a scatter event.
         //
         // Safety constraints:

@@ -63,7 +63,7 @@ MagicInputHandler (Alt+Direction buffers)
 `MagicCampaignBehavior` hooks three tick rates:
 - **Daily:** aging decay, Whisper tier decay, Ashen resurgence logic
 - **Weekly (14+ day slots):** independent general-event and war-event queues in `CampaignMapEvents`
-- **On settlement enter/leave:** `SettlementEncounters`, gated by 6-day cooldown + renown + mage status
+- **On settlement enter/leave:** `SettlementEncounters`, gated by 7-day cooldown + renown + mage status
 
 ### NPC Mage AI
 
@@ -106,7 +106,7 @@ The six purchasable fire paths (Reaper, Seer, Warden, Heartfire, Pyrelord, Ashbi
 | Missile range per input | 3 m |
 | Mage lord fraction | ~20% of lords |
 | Ashen lord fraction | ~10% of lords |
-| Settlement encounter cooldown | 6 days |
+| Settlement encounter cooldown | 7 days |
 | World event slot interval | 14+ days |
 
 ## Conventions

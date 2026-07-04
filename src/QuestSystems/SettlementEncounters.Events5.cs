@@ -88,7 +88,7 @@ namespace AshAndEmber
                     new InquiryElement("e",
                         $"Join the killing. The {target} mean nothing to you.",
                         null, true,
-                        $"Cruelty is its own reward. Gain Mercy -1. -20 with a local lord. +2 with a Temple lord. Gain Reap if you don't have it."),
+                        $"Cruelty is its own reward. Gain Mercy -1. -20 with a local lord. +2 with a Temple lord. Learn the BLOOD discipline if you don't know it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>

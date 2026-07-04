@@ -6,8 +6,9 @@
 // Version history:
 //   1 — original Temple / ember-collection system (legacy, no longer playable)
 //   2 — The Sundered Crown (Aelisar Veth / Emperor soul quest)
-// On load, if the stored version is not CurrentVersion the quest is reset to
-// PhaseIdle so old saves are not corrupted by a changed state machine.
+// v2 uses the "LDQ2_" key prefix; a save from the legacy v1 system simply
+// lacks these keys, so loading it leaves the quest at PhaseIdle — old saves
+// are never corrupted by the changed state machine.
 // =============================================================================
 
 using System;

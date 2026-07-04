@@ -11,9 +11,9 @@
 //
 // Outcomes:
 //   A. Refuse  → he vanishes without a trace.
-//   B. Wealth  → 50 % win 30 000 gold / 50 % lose magic.
-//   C. Glory   → 50 % win 500 renown + 500 influence / 50 % lose magic.
-//   D. Power   → 50 % win 4 random talents / 50 % lose magic.
+//   B. Wealth  → 50 % win 20 000 gold / 50 % lose magic.
+//   C. Glory   → 50 % win 150 renown + 250 influence / 50 % lose magic.
+//   D. Power   → 50 % win up to 4 unknown Codex powers / 50 % lose magic.
 // =============================================================================
 
 using System;
@@ -70,7 +70,7 @@ namespace AshAndEmber
                     new InquiryElement("power",
                         "Agree — play for power.",
                         null, true,
-                        "Two gifts of the Inner Fire, against the fire itself."),
+                        "Four gifts of the Inner Fire, against the fire itself."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -134,8 +134,8 @@ namespace AshAndEmber
                             FlipForMerchant(
                                 winMsg:
                                     "He flips the coin. It rises higher than it should, hangs for a long moment, " +
-                                    "and falls heads. He sets two fingers briefly on the table — a count — then lifts them. " +
-                                    "Something arrives in you that was not there before. Two things, settling " +
+                                    "and falls heads. He sets four fingers briefly on the table — a count — then lifts them. " +
+                                    "Something arrives in you that was not there before. Four things, settling " +
                                     "into the fire like wood laid on a ready hearth. He says nothing. He leaves. " +
                                     "The fire is louder in you than it was.",
                                 winColor: FireColor,
