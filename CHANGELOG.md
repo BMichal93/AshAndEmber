@@ -2,7 +2,14 @@
 
 ---
 
-## Unreleased
+## v0.37.0
+
+### Fixes — the weave untangled (interactive-effects repair)
+- **The screen-wide "glitching textures" on interactive casts are gone.** The Ashen cold's snow and every wind working were drawn with the engine's *ambient weather* emitters (`psys_env_snow_dust`, `psys_dust_env` — systems that scatter sprites over a 70–100 m box), which smeared stray snow and dust across the entire battlefield from a single spell point. Every element visual now uses a true point-scale burst, each name verified against this game build's own particle data: kicked snow for the cold, kicked dust for the gale, and real blown sand — not flung stone — for the desert dust-devil.
+- **A wave now quenches EVERY burning patch in its reach.** The steam of the first quenched patch broke the quenching sweep itself, so water put out one patch and silently skipped the rest.
+- **The sands never read as snow-bound.** In campaign winter every battlefield counted as snowy — deserts included — so steam rose from dry dunes and creeping fire died everywhere. Snow terrain is always snow-bound, desert and dune never are; winter still whitens the lands that truly whiten.
+- **Fire on snow no longer buys its steam with frame hitches.** A charged fire wall's per-node steam and the per-second steam over burning ground now rise as single wisps instead of full three-plume clusters (one-shot blooms and quenchings keep their full clusters).
+- **A working that dies against a wall always says why.** The block log throttled ALL reasons to one line per four seconds, so repeated fizzles read as bugs. Only repeats of the same reason are throttled now — a new wall's answer always speaks.
 
 ### The Imperial Marches
 - **Qasira now answers to the Southern Empire** from the world's birth, joining Razih on the Empire's desert border (Sanala already flies the Western Empire's banner). Assigned through the same border-reassignment pass that hands the other frontier cities to their Empires, with the same nearby-castle sweep.
@@ -43,7 +50,7 @@
 - **Crystals join the warding.** Crystal power is shard-force — walls of wind and stone bar the Rimeshard's frost, the Stormcrystal's clap and the Veilstone's grasp from foes behind them (the Embershard missile already died on walls; water quenches it without a blast). **Duskstone's despair, the Spirit's dread and every Grace miracle pass all walls** — no earthly wall stops the unseen. Crystal-bearing NPCs count only foes a wall doesn't bar before breaking a stone.
 - **The ground itself answers** (terrain-aware, via the engine's battle terrain type):
   - **Fire creeps.** A burning patch may seed a child flame a stride away — eagerly through grass and brush (plains, steppe, forest), barely at all on sand, snow-bound or sodden ground. Two generations and a hard cap, so a fire line smoulders outward without consuming the field.
-  - **Fire melts snow.** On snow-bound ground (snow terrain, or winter anywhere) living flame stands in rising steam — the drifts slump around every burning patch, cone-strike and fire wall. **The Ashen cold does the opposite**: it does not melt the snow, it *deepens* it — thicker drifts where the cold fire lands.
+  - **Fire melts snow.** On snow-bound ground (snow terrain, or winter beyond the deserts) living flame stands in rising steam — the drifts slump around every burning patch, cone-strike and fire wall. **The Ashen cold does the opposite**: it does not melt the snow, it *deepens* it — thicker drifts where the cold fire lands.
   - **Wind raises the sand.** On desert and dune a gale whips up a ring of stinging dust, and a wall of wind stands inside its own dust-devil.
 - **Not done, honestly:** individual trees cannot burn — Bannerlord's scene flora isn't entity-backed, so there is nothing there for the fire to damage. The creeping ground-fire above is the nearest true mechanic.
 
