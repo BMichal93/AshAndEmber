@@ -15,8 +15,11 @@
 //   spent for nothing.
 //
 // Left Ctrl does not conflict with spell input (which uses Left Alt / LB).
-// Ctrl+X triggers Alchemy — but only when X is pressed, not W/A/S/D.
-// RB + R3 is Alchemy; RB + L3 is the map miracle menu — distinct thumbstick clicks.
+// While focusing (Ctrl held, Grace in hand), Ctrl+X — or RB+Y on a controller —
+// opens a READ-ONLY reference of the prayers you can offer and their sequences
+// (the miracle counterpart to the element grimoire on Alt+X); it never traces a
+// direction, so it cannot start or corrupt a sequence.
+// RB + L3 is the map miracle menu — distinct from the alchemist's RB + R3.
 // =============================================================================
 
 using System.Collections.Generic;
@@ -87,6 +90,18 @@ namespace AshAndEmber
                             SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Yellow); } catch { }
                 }
                 _wasHolding = true;
+
+                // Spellbook: Ctrl + X (keyboard) or RB + Y (controller), only before
+                // any direction has been traced — mirrors the element grimoire on
+                // Alt + X. A read-only list of the prayers you can offer here and the
+                // sequences that call them; casting is still the gesture itself.
+                bool bookKey = holdKb ? Input.IsKeyPressed(InputKey.X)
+                                      : Input.IsKeyPressed(InputKey.ControllerRUp);
+                if (bookKey && _seqBuffer.Length == 0)
+                {
+                    ShowMiracleReference(inMission);
+                    return;
+                }
 
                 if (holdKb)
                 {
@@ -274,6 +289,55 @@ namespace AshAndEmber
             {
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The miracle window will not open just now.", new Color(0.7f, 0.7f, 0.7f)));
+            }
+        }
+
+        // ── Battle reference: Ctrl + X (keyboard) or RB + Y (controller) ───────
+        // A READ-ONLY list of the prayers you can offer here and the sequences that
+        // call them — the miracle counterpart to the element grimoire (Alt + X).
+        // There is still no battle "menu"; casting stays the gesture itself. This
+        // just lets you see the combinations without leaving the fight.
+        private static void ShowMiracleReference(bool inMission)
+        {
+            if (!MiracleInventory.HasGrace)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "You carry no Grace. Pray at a Sanctuary first.", new Color(0.7f, 0.7f, 0.7f)));
+                return;
+            }
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("Hold Left Ctrl, tap the sequence, then release Ctrl to pray.");
+            sb.AppendLine("(Controller: hold RB and flick the left stick.)");
+            sb.AppendLine();
+
+            int shown = 0;
+            foreach (var def in MiracleCatalog.GraceAll)
+            {
+                bool usableHere = inMission ? def.UsableInBattle : def.UsableOnMap;
+                if (!usableHere) continue;
+                bool gateMet = MiracleEffects.PlayerMeetsTrait(def);
+                string keys  = SequenceToKeys(def.Sequence);
+                sb.AppendLine(gateMet
+                    ? $"{def.Name}   [Ctrl + {keys}]"
+                    : $"{def.Name}   [locked — granted by the {def.TraitName}, at +1 or higher]");
+                if (!string.IsNullOrEmpty(def.Effect)) sb.AppendLine("   " + def.Effect);
+                sb.AppendLine();
+                shown++;
+            }
+            if (shown == 0) sb.AppendLine("No prayer answers here.");
+
+            string title = $"Miracles  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]";
+            try
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    title, sb.ToString(), true, false, "Close", "",
+                    () => { }, null), true, true);
+            }
+            catch
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "The miracle list will not open just now.", new Color(0.7f, 0.7f, 0.7f)));
             }
         }
 

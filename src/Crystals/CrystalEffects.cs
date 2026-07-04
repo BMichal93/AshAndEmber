@@ -100,11 +100,15 @@ namespace AshAndEmber
             try { itemId = weapon.Item?.StringId; } catch { }
             if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
 
-            // A crystal deals no physical harm — restore whatever it inflicted. The
-            // charge itself is begun by the swing detector in MissionTick, so it fires
-            // whether or not the swing connects (waving the crystal is enough).
+            // A crystal deals no physical harm — restore whatever it inflicted.
             if (victim != null && victim.IsActive() && inflictedDamage > 0)
                 try { SpellEffects.HealAgent(victim, inflictedDamage); } catch { }
+
+            // A LANDED blow reliably wakes the crystal. The MissionTick swing detector
+            // (LastMeleeAttackTime) is meant to catch misses too, but that signal does
+            // not fire for these weapons in every build, so a connecting strike is the
+            // dependable trigger — begin the charge here from the wielded weapon.
+            try { TryBeginChargeOnSwing(attacker); } catch { }
         }
 
         // Begins a crystal's charge on a player swing — hit or miss, in any light.

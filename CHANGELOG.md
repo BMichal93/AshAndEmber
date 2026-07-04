@@ -2,6 +2,12 @@
 
 ---
 
+## v0.38.2
+
+### Fixes — crystals fire, and Grace shows its hand
+- **Crystals now reliably wake on a landed blow.** A crystal was roused only by the MissionTick swing detector (`LastMeleeAttackTime`), and that signal never fires for these weapons in this build — so striking an enemy with a crystal in hand did nothing at all, not even the "drawing light…" message. A connecting strike now begins the charge directly through the hit path (which is reliably wired), so: **swing the crystal into a foe → "…drawing light…" → about two seconds later the effect fires.** (It is a swing-then-wait, not a hold-to-charge.)
+- **You can now see your Grace prayers in battle.** Holding Left Ctrl (with Grace in hand) and pressing **X** — or **RB + Y** on a controller — opens a read-only list of the prayers you can offer here and the Ctrl+W/A/S/D sequences that call them, exactly mirroring the element grimoire on Alt+X. Casting is still the gesture itself; this only lets you read the combinations without leaving the fight. (Corrected a stale note that claimed Ctrl+X was bound to alchemy — it was not; the alchemist uses RB+R3.)
+
 ## v0.38.1
 
 ### Fix — the cold cannot steal your house
