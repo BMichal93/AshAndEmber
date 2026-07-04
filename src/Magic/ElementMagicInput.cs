@@ -36,6 +36,11 @@ namespace AshAndEmber
         private static bool  _wasFocusing;
         private static float _drawTime;            // seconds drawn since focus / last cast
         private static bool  _prevAtk, _prevBlk;
+        // The chord buffer (the Unbinding): a lone Attack/Block press waits
+        // ChordWindowSeconds for its partner before it commits as a normal cast,
+        // so Attack+Block pressed together can release the element's ULTIMATE.
+        private static CastForm? _pendingForm;
+        private static float     _pendingTimer;
         private static bool  _prevPadUp, _prevPadDown, _prevPadLeft, _prevPadRight;
         private static float _reminder;            // throttle for the "why can't I draw" hint
         private const  float ReminderInterval = 2.0f;
@@ -68,6 +73,8 @@ namespace AshAndEmber
             _wasFocusing = false;
             _drawTime = 0f;
             _prevAtk = _prevBlk = false;
+            _pendingForm = null;
+            _pendingTimer = 0f;
             _prevPadUp = _prevPadDown = _prevPadLeft = _prevPadRight = false;
             _reminder = 0f;
             _readyAnnounced = false;
@@ -129,7 +136,7 @@ namespace AshAndEmber
                     if (!_fullAnnounced && ElementMagicMath.IsFullyCharged(_drawTime))
                     {
                         _fullAnnounced = true;
-                        Msg($"{MageElementKnowledge.LoadedName()} fully charged — release now.");
+                        Msg($"{MageElementKnowledge.LoadedName()} fully charged — release now, or press Attack and Block together to UNBIND it.");
                     }
                     if (_drawTime >= ElementMagicMath.MaxDrawSeconds)
                     {
@@ -150,15 +157,45 @@ namespace AshAndEmber
                     if (_reminder <= 0f) { Msg(reason); _reminder = ReminderInterval; }
                 }
 
-                // Release: attack = cone, block = wall.
+                // Release: attack = cone, block = wall — and BOTH TOGETHER (the
+                // chord) is the element's ULTIMATE, the Unbinding. A lone press is
+                // buffered for ChordWindowSeconds so the chord's second button can
+                // land before the single-form cast commits; the buffered form fires
+                // when the window closes (a barely-perceptible release delay).
                 bool atk = altHeld ? Input.IsKeyDown(InputKey.LeftMouseButton)  : Input.IsKeyDown(InputKey.ControllerRTrigger);
                 bool blk = altHeld ? Input.IsKeyDown(InputKey.RightMouseButton) : Input.IsKeyDown(InputKey.ControllerLTrigger);
-                if (atk && !_prevAtk) TryCast(CastForm.Attack);
-                if (blk && !_prevBlk) TryCast(CastForm.Wall);
+                bool atkEdge = atk && !_prevAtk;
+                bool blkEdge = blk && !_prevBlk;
+                if ((atkEdge && (blk || _pendingForm == CastForm.Wall))
+                 || (blkEdge && (atk || _pendingForm == CastForm.Attack)))
+                {
+                    _pendingForm = null; _pendingTimer = 0f;
+                    TryCastUltimate();
+                }
+                else if (atkEdge) { _pendingForm = CastForm.Attack; _pendingTimer = ElementUltimateMath.ChordWindowSeconds; }
+                else if (blkEdge) { _pendingForm = CastForm.Wall;   _pendingTimer = ElementUltimateMath.ChordWindowSeconds; }
+                else if (_pendingForm != null)
+                {
+                    _pendingTimer -= dt;
+                    if (_pendingTimer <= 0f)
+                    {
+                        CastForm form = _pendingForm.Value;
+                        _pendingForm = null;
+                        TryCast(form);
+                    }
+                }
                 _prevAtk = atk; _prevBlk = blk;
             }
             else if (_wasFocusing)
             {
+                // Focus released with a press still buffered: commit it now, or a
+                // tap in the chord window's last instant would be silently lost.
+                if (_pendingForm != null)
+                {
+                    CastForm form = _pendingForm.Value;
+                    _pendingForm = null; _pendingTimer = 0f;
+                    TryCast(form);
+                }
                 _wasFocusing = false;
                 _drawTime = 0f;
                 _prevAtk = _prevBlk = false;
@@ -279,6 +316,42 @@ namespace AshAndEmber
             // The toll is flat — the draw bought power, not a cheaper cast.
             int days = ElementMagicMath.CastAgingDays(form, MageElementKnowledge.HasNature);
             ApplyCastCost(days);
+            _drawTime = 0f;        // the charge is spent — draw again
+            _readyAnnounced = false;
+            _fullAnnounced = false;
+        }
+
+        // The Attack+Block chord — THE UNBINDING, the loaded element's ultimate.
+        // Gated three ways: the usual still-hands-light channel gates, a FULL draw
+        // (7 s — the element resists a lesser one), and once per element per
+        // battle. A refused chord leaves the drawn charge intact, so the player
+        // can keep holding and release a normal cone/wall instead.
+        private static void TryCastUltimate()
+        {
+            string reason = ChannelBlockReason();
+            if (reason != null) { Msg(reason); return; }
+            var caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+
+            var el = MageElementKnowledge.Loaded;
+            if (!ElementUltimateMath.CanUnbind(_drawTime))
+            {
+                Msg("The element resists — it must be drawn to its fullest before it can be unbound.");
+                return;
+            }
+            if (!ElementUltimates.PlayerCanUnbind(el))
+            {
+                Msg($"{MageElementKnowledge.LoadedName()} has already been unbound this battle.");
+                return;
+            }
+
+            bool cast = false;
+            try { cast = ElementUltimates.CastPlayerUltimate(el, caster); } catch { }
+            if (!cast) return;
+
+            // The Unbinding's toll is flat and steep, like every other cast —
+            // Nature halves it, the Ashen pay it in criminal standing (days × 5).
+            ApplyCastCost(ElementUltimateMath.UltimateAgingDays(MageElementKnowledge.HasNature));
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
             _fullAnnounced = false;

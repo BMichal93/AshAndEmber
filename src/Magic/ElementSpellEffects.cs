@@ -91,6 +91,11 @@ namespace AshAndEmber
             return false;
         }
 
+        // Public entry for the Unbinding (ElementUltimates.FireNova) — the nova
+        // sets its whole ring alight through the same ignition state as the cone.
+        public static void IgniteTarget(Agent target, Agent source, float power, bool ashen)
+            => Ignite(target, source, power, ashen);
+
         // Set (or refresh) a burn on a struck foe. Weak draws ignite nothing.
         private static void Ignite(Agent target, Agent source, float power, bool ashen)
         {
@@ -135,6 +140,10 @@ namespace AshAndEmber
         public static void CastAttack(MagicElement el, Agent caster, float power = 1f)
         {
             if (caster == null || !caster.IsActive()) return;
+            // Under the Weeping Sky (the Water Unbinding), fire loosed from inside
+            // the rain works at half strength — judged at the caster's position.
+            if (el == MagicElement.Fire)
+                try { power *= ElementUltimates.FireDampAt(caster.Position); } catch { }
             switch (el)
             {
                 case MagicElement.Fire:   FireCone(caster, power);  break;
@@ -152,6 +161,9 @@ namespace AshAndEmber
         public static void CastWall(MagicElement el, Agent caster, float power = 1f)
         {
             if (caster == null || !caster.IsActive()) return;
+            // The rain dampens a wall of fire raised inside it, like the cone.
+            if (el == MagicElement.Fire)
+                try { power *= ElementUltimates.FireDampAt(caster.Position); } catch { }
             switch (el)
             {
                 case MagicElement.Fire:   FireWall(caster, power);  break;
