@@ -231,16 +231,19 @@ namespace AshAndEmber
                         if (ashen)
                         {
                             SpellEffects.SpawnTempSnowParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
-                            // The cold deepens the drifts it stands on.
+                            // The cold deepens the drifts it stands on. A single
+                            // wisp per node — the clusters above already churn, and
+                            // a full wall is dozens of nodes in one frame.
                             if (SpellEffects.SceneIsSnowy())
-                                SpellEffects.SpawnTempSnowParticle(node + new Vec3(0.5f, 0.3f, 0.8f), 2.5f);
+                                SpellEffects.SpawnTempSnowWisp(node + new Vec3(0.5f, 0.3f, 0.8f), 2.5f);
                         }
                         else
                         {
                             SpellEffects.SpawnTempFireParticle(node + new Vec3(0f, 0f, 0.4f), 2.5f);
-                            // Living flame on snow-bound ground — the wall stands in steam.
+                            // Living flame on snow-bound ground — the wall stands in
+                            // steam. One wisp per node keeps the frame alive.
                             if (SpellEffects.SceneIsSnowy())
-                                SpellEffects.SpawnTempSmokeParticle(node + new Vec3(0f, 0f, 0.6f), 2.5f);
+                                SpellEffects.SpawnTempSmokeWisp(node + new Vec3(0f, 0f, 0.6f), 2.5f);
                         }
                     }
                     catch { }
@@ -469,7 +472,7 @@ namespace AshAndEmber
                     // The cold does not melt snow — it DEEPENS it: on snow-bound
                     // ground the Ashen fire thickens the drifts where it lands.
                     if (SpellEffects.SceneIsSnowy())
-                        SpellEffects.SpawnTempSnowParticle(at + new Vec3(0.6f, 0.3f, 0.6f), major ? 2.2f : 1.4f);
+                        SpellEffects.SpawnTempSnowWisp(at + new Vec3(0.6f, 0.3f, 0.6f), major ? 2.2f : 1.4f);
                 }
                 else
                 {

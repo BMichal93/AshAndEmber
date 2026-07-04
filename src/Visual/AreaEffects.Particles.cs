@@ -39,7 +39,6 @@ namespace AshAndEmber
         {
             "psys_fire_vertical",
             "psys_campfire",
-            "psys_torch_fire",
             "psys_battleground_env_fire",
         };
 
@@ -49,7 +48,6 @@ namespace AshAndEmber
             "psys_battleground_env_fire",
             "psys_fire_vertical",
             "psys_campfire",
-            "psys_torch_fire",
         };
 
         // Explosion / detonation — a burst of flame and sparks.
@@ -67,7 +65,6 @@ namespace AshAndEmber
             "psys_torch_fire_moving",
             "psys_fire_vertical",
             "psys_campfire",
-            "psys_torch_fire",
         };
 
         // Spectral smoke — Spirit's whispered dread made visible; a wraith haze.
@@ -79,13 +76,22 @@ namespace AshAndEmber
             "psys_burnt_wood_smoke",
         };
 
-        // Driven snow and frost — the Ashen cold, standing in for flame.
+        // Driven snow and frost — the Ashen cold, standing in for flame. These
+        // MUST be point-scale emitters: the ambient weather systems
+        // (psys_env_snow_dust, psys_snow_dust_env) emit over a 100 m box around
+        // the entity and smear stray snow sprites across the whole battlefield
+        // when attached to a spell point.
         private static readonly string[] _snowParticleNames =
         {
-            "psys_env_snow_dust",
-            "psys_game_env_dust_snow",
-            "psys_snow_dust",
-            "psys_game_snow",
+            "psys_game_hoof_dust_snow",   // kicked-up snow burst — true point emitter
+            "psys_snow_dust",             // light drift over a 5 m patch
+        };
+
+        // Kicked desert sand — for the wind wall's dust-devil over the dunes.
+        private static readonly string[] _sandDustNames =
+        {
+            "psys_game_step_dust_on_sand",
+            "psys_game_hoof_dust",
         };
 
         private static GameEntity SpawnParticleEntity(Vec3 position, string particleName)
@@ -114,6 +120,15 @@ namespace AshAndEmber
         // Driven snow / frost cluster — the Ashen cold in place of flame.
         internal static void SpawnTempSnowParticle(Vec3 position, float duration)
             => SpawnParticleCluster(position, duration, _snowParticleNames);
+
+        // Single-wisp variants — for repeating ambience (steam over burning
+        // ground, the deepening Ashen drifts) where a full three-entity cluster
+        // per tick per patch would flood the frame with entity churn.
+        internal static void SpawnTempSmokeWisp(Vec3 position, float duration)
+            => SpawnSingleParticle(position, duration, _smokeParticleNames);
+
+        internal static void SpawnTempSnowWisp(Vec3 position, float duration)
+            => SpawnSingleParticle(position, duration, _snowParticleNames);
 
         // Tries each candidate name; on first success spawns a main plume plus two
         // scattered companions for a fuller, churning effect.
@@ -191,19 +206,20 @@ namespace AshAndEmber
             {
                 case NatureElement.Earth:   // stone erupts, torn earth and roots follow
                     return new[] { "psys_game_boulder_stone_coll", "psys_game_stone_gravel",
-                                   "psys_game_infantry_stone_col", "psys_game_infantry_grass_col",
-                                   "psys_dust_env_forest" };
+                                   "psys_game_infantry_stone_col", "psys_game_infantry_grass_col" };
                 case NatureElement.Water:   // splashes
                     return new[] { "psys_game_water_splash_circular", "psys_game_water_splash_1",
                                    "psys_game_water_splash_2", "psys_game_hoof_water_coll" };
-                case NatureElement.Wind:    // blown dust
-                    return new[] { "psys_dust_env", "psys_game_cam_dust",
-                                   "psys_dust_env_2", "psys_game_hoof_dust" };
+                case NatureElement.Wind:    // kicked-up dust puffs. NEVER the psys_dust_env
+                    // family: those are ambient weather emitters (70–100 m boxes)
+                    // that smear dust sprites across the whole field from a point.
+                    return new[] { "psys_game_hoof_dust", "psys_game_hoof_dust_2",
+                                   "psys_game_step_dust_on_default" };
                 case NatureElement.Storm:   // sparks
                     return new[] { "psys_campfire_sparks", "psys_game_stone_dust_a",
-                                   "psys_dust_env" };
+                                   "psys_game_hoof_dust" };
                 default:
-                    return new[] { "psys_dust_env" };
+                    return new[] { "psys_game_hoof_dust" };
             }
         }
 
@@ -489,7 +505,7 @@ namespace AshAndEmber
                         // smoulders): on snow-bound ground the drifts steam and
                         // slump around the flame — fire melts snow, visibly.
                         if (SceneIsSnowy())
-                            try { SpawnTempSmokeParticle(e.Position + new Vec3(0f, 0f, 0.4f), 1.4f); } catch { }
+                            try { SpawnTempSmokeWisp(e.Position + new Vec3(0f, 0f, 0.4f), 1.4f); } catch { }
                         // Dry grass and brush carry the flame a stride outward.
                         try { TryFireCreep(e); } catch { }
                         // A standing burn gnaws at wooden machines and gates in it.
@@ -596,19 +612,27 @@ namespace AshAndEmber
         {
             float r2 = radius * radius;
             bool any = false;
+            // Mark first, steam after: spawning smoke adds to _areaEffects, so it
+            // must not happen inside a sweep over that same list (a mid-sweep Add
+            // aborted the enumeration and left every later patch unquenched).
+            List<Vec3> steamAt = null;
             try
             {
-                foreach (var fx in _areaEffects)
+                for (int i = 0; i < _areaEffects.Count; i++)
                 {
+                    var fx = _areaEffects[i];
                     if (fx.Id != "spell_firepatch" || fx.Remaining <= 0f) continue;
                     float dx = fx.Position.x - pos.x, dy = fx.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
                     fx.Remaining = 0f;   // the expiry sweep removes and disposes it
                     any = true;
-                    try { SpawnTempSmokeParticle(fx.Position + new Vec3(0f, 0f, 0.5f), 3.5f); } catch { }
+                    (steamAt = steamAt ?? new List<Vec3>()).Add(fx.Position);
                 }
             }
             catch { }
+            if (steamAt != null)
+                foreach (var p in steamAt)
+                    try { SpawnTempSmokeParticle(p + new Vec3(0f, 0f, 0.5f), 3.5f); } catch { }
             try { if (ElementWallWards.QuenchFireNodesNear(pos, radius) > 0) any = true; } catch { }
             if (any)
                 try { SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 3f); } catch { }
@@ -623,11 +647,20 @@ namespace AshAndEmber
             try
             {
                 var m = Mission.Current;
-                if (m != null && m.HasValidTerrainType
-                    && m.TerrainType == TaleWorlds.Core.TerrainType.Snow) return true;
+                if (m != null && m.HasValidTerrainType)
+                {
+                    switch (m.TerrainType)
+                    {
+                        case TaleWorlds.Core.TerrainType.Snow:
+                            return true;
+                        case TaleWorlds.Core.TerrainType.Desert:
+                        case TaleWorlds.Core.TerrainType.Dune:
+                            return false;   // no drifts on the sands, whatever the season
+                    }
+                }
             }
             catch { }
-            // Winter anywhere reads as snow-bound ground (Seasons: 0 Spring … 3 Winter).
+            // Winter elsewhere reads as snow-bound ground (Seasons: 0 Spring … 3 Winter).
             try
             {
                 return TaleWorlds.CampaignSystem.Campaign.Current != null
@@ -829,9 +862,10 @@ namespace AshAndEmber
                 string[] pulseNames = NatureParticleNames(el);
                 try { SpawnSingleParticle(e.Position + new Vec3(0f, 0f, 0.3f), 0.5f, pulseNames); } catch { }
                 try { SpawnSingleParticle(e.Position + new Vec3(0f, 0f, 1.0f), 0.4f, pulseNames); } catch { }
-                // A wall of wind over desert sand stands inside its own dust-devil.
+                // A wall of wind over desert sand stands inside its own dust-devil —
+                // kicked SAND, not flung stone (and never a scene-wide env emitter).
                 if (el == NatureElement.Wind && _rng.Next(2) == 0 && SceneIsDesert())
-                    try { SpawnSingleParticle(e.Position + new Vec3(0f, 0f, 0.2f), 0.5f, NatureParticleNames(NatureElement.Earth)); } catch { }
+                    try { SpawnSingleParticle(e.Position + new Vec3(0f, 0f, 0.2f), 0.5f, _sandDustNames); } catch { }
                 if (el == NatureElement.Storm)
                     try { SpawnTempLightWhite(e.Position + new Vec3(0f, 0f, 1.2f), 4f, 0.25f); } catch { }
             }

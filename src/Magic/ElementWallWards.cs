@@ -48,12 +48,14 @@ namespace AshAndEmber
         private const float RecentCastMemorySec = 30f;
         private const int   MaxNodes            = 256;   // hard cap — safety against runaway registration
         private static float _blockMsgCooldown;          // throttle the player-facing block log
+        private static string _lastBlockLine;            // a NEW reason always shows through the throttle
 
         public static void Clear()
         {
             _nodes.Clear();
             _recent.Clear();
             _blockMsgCooldown = 0f;
+            _lastBlockLine = null;
         }
 
         // ── Registration ─────────────────────────────────────────────────────────
@@ -281,14 +283,17 @@ namespace AshAndEmber
             }
             catch { }
 
-            if (_blockMsgCooldown > 0f) return;
-            _blockMsgCooldown = 4f;
             string line;
             if (wall == MagicElement.Water && incoming == MagicElement.Fire)      line = "The mist drinks the fire — steam, and nothing more.";
             else if (wall == MagicElement.Water)                                   line = "The gale dies against the standing water.";
             else if (wall == MagicElement.Fire)                                    line = "The wind feeds the wall of flame and is gone.";
             else if (wall == MagicElement.Wind)                                    line = "The flung stone is scattered on the wind.";
             else                                                                   line = "The wave breaks against the standing stone.";
+            // Throttle only REPEATS of the same reason — a cast dying to a new
+            // wall must always say why, or the fizzle reads as a bug.
+            if (_blockMsgCooldown > 0f && line == _lastBlockLine) return;
+            _blockMsgCooldown = 2f;
+            _lastBlockLine = line;
             try
             {
                 TaleWorlds.Library.InformationManager.DisplayMessage(
