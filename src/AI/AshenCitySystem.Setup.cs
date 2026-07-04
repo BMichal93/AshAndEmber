@@ -148,7 +148,13 @@ namespace AshAndEmber
         public static void OnHeroSetAshen(Hero hero)
         {
             var clan = hero?.Clan;
-            if (clan == null || hero == Hero.MainHero) return;
+            // Never move the PLAYER'S clan into the cold because ONE of its members
+            // (a child taken by the cold, an aged companion mage) turned Ashen —
+            // that would eject the player's whole clan from its kingdom behind their
+            // back. The player's own conversion is handled elsewhere; callers that
+            // convert a player-clan member relocate that hero individually (e.g. the
+            // "child of the cold" encounter moves the child to an Ashen clan itself).
+            if (clan == null || hero == Hero.MainHero || clan == Clan.PlayerClan) return;
             try { ApplyAshenPersonality(hero); } catch { }
             try
             {

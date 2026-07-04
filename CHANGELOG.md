@@ -2,6 +2,11 @@
 
 ---
 
+## v0.38.1
+
+### Fix — the cold cannot steal your house
+- **Your own clan can no longer be dragged into the Ashen kingdom behind your back.** When any member of the player's clan turned Ashen — a child taken by the cold in the "child of the cold" encounter, or an aged companion mage who becomes Ashen instead of dying — the shared conversion path (`OnHeroSetAshen`) moved that hero's whole CLAN into the Ashen kingdom. It only ever guarded the main hero, not the rest of the player's clan, so the player would suddenly find their entire house ejected from its kingdom and sworn to the Ashen. The player's clan is now never auto-moved by a member's conversion; encounters that turn a player-clan member relocate that one hero themselves (the child event already moves the child to an Ashen clan of its own).
+
 ## v0.38.0
 
 ### The Northmen and Duneborn take their thrones — faction renames
