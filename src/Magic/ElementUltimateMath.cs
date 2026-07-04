@@ -16,8 +16,9 @@
 //            on the caster: heavy damage, everything burns, horses bolt.
 //   Wind   — On the Wings of the Gale / Carried by the Howl — FLIGHT: the wind
 //            bears the caster aloft; ANY hit knocks the wind out and you fall.
-//   Earth  — Heart of the Mountain / The Cairn-Shell        — a stone mantle:
-//            most damage is shrugged off, but you move slower.
+//   Earth  — The Mountain's Wrath / The Barrow Wakes        — the Sundering:
+//            the ground erupts around the caster, hurling foes back and
+//            leaving churned rubble that bogs the field.
 //   Water  — The Weeping Sky / The White Silence            — rain over a wide
 //            stretch of field: burns quenched, fire halved, horses mired,
 //            bowstrings soaked. There is only ONE sky — a newer working
@@ -93,14 +94,17 @@ namespace AshAndEmber
             return FlightHeight * (remainingSeconds / FlightLandingSeconds);
         }
 
-        // ── Earth — the stone mantle ─────────────────────────────────────────────
-        public const float MantleSeconds         = 25f;
-        public const float MantleDamageReduction = 0.75f; // fraction of every blow shrugged off
-        public const float MantleSpeedMult       = 0.75f; // made of mountain — a quarter slower
-
-        // The portion of a blow the mantled caster actually keeps.
-        public static float MantleKeptDamage(float damage)
-            => damage <= 0f ? 0f : damage * (1f - MantleDamageReduction);
+        // ── Earth — the Sundering (a radial earthquake) ──────────────────────────
+        // The ground heaves outward from the caster: heavy damage, every foe thrown
+        // off his feet, and a ring of churned rubble left to bog the field.
+        public const float QuakeRadius        = 11f;   // metres of heaving ground
+        public const float QuakeDamage        = 45f;   // per struck foe (cone caps at 44)
+        public const float QuakeKnockback     = 6f;    // metres the ground throws a foe
+        public const float QuakeSlowMult      = 0.5f;  // staggered footing…
+        public const float QuakeSlowSec       = 4f;    // …while they find their feet
+        public const int   QuakeRubblePatches = 5;     // lingering bog-rings left behind
+        public const float QuakeRubbleRing    = 6f;    // radius the rubble ring settles at
+        public const float QuakeSiegeDamage   = 200f;  // shaken wooden machines/gates, ×power
 
         // ── Water — the weeping sky ──────────────────────────────────────────────
         public const float RainRadius        = 35f;   // metres — a wide stretch of field
@@ -147,7 +151,7 @@ namespace AshAndEmber
         public const float NpcWindupSeconds   = 4.5f;
         public const int   NpcMinCombatants   = 70;   // no village skirmish eats an ultimate
         public const int   NovaCloseEnemies   = 4;    // swarmed → the nova answers
-        public const float MantleHpFrac       = 0.45f;// wounded and pressed → stone
+        public const float QuakeHpFrac        = 0.45f;// wounded and pressed → heave them back
         public const float LeapHpFrac         = 0.35f;// desperate → the wind carries him out
         public const int   LeapCloseEnemies   = 3;
         public const int   RainMountedNear    = 4;    // a cavalry wedge → the sky weeps
@@ -161,7 +165,7 @@ namespace AshAndEmber
                 {
                     case MagicElement.Fire:   return "The Long Winter";
                     case MagicElement.Wind:   return "Carried by the Howl";
-                    case MagicElement.Earth:  return "The Cairn-Shell";
+                    case MagicElement.Earth:  return "The Barrow Wakes";
                     case MagicElement.Water:  return "The White Silence";
                     default:                  return "What Sleeps Beneath";
                 }
@@ -170,7 +174,7 @@ namespace AshAndEmber
             {
                 case MagicElement.Fire:   return "The First Flame Remembered";
                 case MagicElement.Wind:   return "On the Wings of the Gale";
-                case MagicElement.Earth:  return "Heart of the Mountain";
+                case MagicElement.Earth:  return "The Mountain's Wrath";
                 case MagicElement.Water:  return "The Weeping Sky";
                 default:                  return "The Land's Answer";
             }

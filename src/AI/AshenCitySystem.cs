@@ -86,25 +86,28 @@ namespace AshAndEmber
         private const int    MinHeroGold       = 150_000;
         private const string AshenKingdomId    = "ashen_kingdom";
 
+        // The Ashen realm is the far north: the fallen Sturgian heartland plus the
+        // Khuzait marches the cold reached and the one Vlandian port it took. It
+        // deliberately holds NO Northern Empire (EN) settlements — Amprela, Argoron,
+        // Epinosa, Lochana, Syratos, Atrion, Mecalovea and Rhesos were once claimed
+        // here, but they belong to clan_empire_north_* and must stay with the
+        // Northern Empire; the old second-pass force-grab was dragging them into the
+        // cold against the first pass's own clan-purity filter.
         private static readonly string[] _targetSettlementNames =
         {
-            // Core Ashen cities
-            "Tyal", "Sibir", "Baltakhand", "Amprela",
+            // Core Ashen cities (fallen Sturgia + the Khuzait marches)
+            "Tyal", "Sibir", "Baltakhand",
             // Original castles
             "Urikskala", "Kaysar", "Dinar", "Vladiv",
             // Extended Ashen zone (nearby towns & castles — skipped automatically
             // if their clan also owns settlements outside this list)
-            "Varnovapol", "Tepes", "Epinosa", "Takor", "Khimli",
-            // Castles near Amprela (Lochana ~27, Syratos ~44; Epinosa already above)
-            "Lochana", "Syratos",
+            "Varnovapol", "Tepes", "Takor", "Khimli",
             // Ostican (Vlandian) — assigned at game start; daily tick enforces retention
             "Ostican",
-            // Additional Ashen cities
-            "Argoron", "Omor",
-            // Castles near Argoron
-            "Atrion",
+            // Additional Ashen city
+            "Omor",
             // Castles near Omor
-            "Ov Castle", "Mazhadan", "Mecalovea", "Rhesos",
+            "Ov Castle", "Mazhadan",
         };
 
         // True if a settlement belongs to the Ashen realm — exactly the target set,

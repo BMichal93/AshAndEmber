@@ -975,14 +975,15 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void ElementUltimateMath_MantleKeepsOnlyAFraction()
+        public void ElementUltimateMath_QuakeIsAnOffensiveWorking()
         {
-            // Three quarters shrugged off, and never a negative blow.
-            Assert.AreEqual(25f, ElementUltimateMath.MantleKeptDamage(100f), 0.001f);
-            Assert.AreEqual(0f,  ElementUltimateMath.MantleKeptDamage(0f),   0.001f);
-            Assert.AreEqual(0f,  ElementUltimateMath.MantleKeptDamage(-5f),  0.001f);
-            Assert.Greater(ElementUltimateMath.MantleSpeedMult, 0f);
-            Assert.Less(ElementUltimateMath.MantleSpeedMult, 1f, "the mountain walks slowly");
+            // The Sundering hits and hurls; its slow leaves the foe moving, not frozen.
+            Assert.Greater(ElementUltimateMath.QuakeDamage, 0f);
+            Assert.Greater(ElementUltimateMath.QuakeRadius, 0f);
+            Assert.Greater(ElementUltimateMath.QuakeKnockback, 0f);
+            Assert.Greater(ElementUltimateMath.QuakeSlowMult, 0f);
+            Assert.Less(ElementUltimateMath.QuakeSlowMult, 1f, "staggered footing, not a full stop");
+            Assert.Greater(ElementUltimateMath.QuakeRubblePatches, 0);
         }
 
         [Test]

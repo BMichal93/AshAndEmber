@@ -31,10 +31,8 @@ namespace AshAndEmber
             { "Tyal",       "The Heart of Winter"      },
             { "Sibir",      "The Pale Throne"           },
             { "Baltakhand", "The Smouldering Bastion"   },
-            { "Amprela",    "The Ashen Crown"           },
             { "Varnovapol", "The Sundered Hold"         },
             { "Ostican",    "The Grey Harbour"          },
-            { "Argoron",    "The Cinder Shore"          },
             { "Omor",       "The Dying Ember"           },
         };
 
@@ -47,16 +45,10 @@ namespace AshAndEmber
             { "Dinar",      "The Cold Watch"            },
             { "Vladiv",     "The Frozen Rampart"        },
             { "Tepes",      "The Iron Pyre"             },
-            { "Epinosa",    "Scorchstone Keep"          },
             { "Takor",      "The Char Bastion"          },
             { "Khimli",     "The Frostfang"             },
-            { "Lochana",    "The Ashen Gate"            },
-            { "Syratos",    "The Cinder Tower"          },
-            { "Atrion",     "The Grey Spire"            },
             { "Ov Castle",  "The Obsidian Keep"         },
             { "Mazhadan",   "The Hollow Fortress"       },
-            { "Mecalovea",  "The Smouldering Tower"     },
-            { "Rhesos",     "The Bone Rampart"          },
         };
 
         // Names drawn in order for Ashen villages. Sorted by StringId (deterministic)
@@ -418,6 +410,56 @@ namespace AshAndEmber
                 var sturgiaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("sturgia");
                 if (sturgiaCulture != null)
                     (_cultureNameField ?? _nameField)?.SetValue(sturgiaCulture, new TextObject("Northmen"));
+            }
+            catch { }
+        }
+
+        // ── Northmen kingdom rename ────────────────────────────────────────────
+        // The Sturgian kingdom IS the Northmen — the Sturgians who hold the line
+        // against the Ashen press from the deeper north. Parallels the Holy Temple
+        // and Tribes kingdom renames (the Ashen realm is a SEPARATE kingdom object,
+        // "ashen_kingdom", and is untouched by this). Kingdom names revert to XML on
+        // every load, so this runs on the first daily tick each session.
+        public static void RenameNorthmenKingdom()
+        {
+            try
+            {
+                var sturgia = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "sturgia" && !k.IsEliminated);
+                if (sturgia == null) { RenameNorthmenCulture(); return; }
+
+                (_kingdomNameField ?? _nameField)?.SetValue(sturgia, new TextObject("Northmen"));
+                SetKingdomField(sturgia,
+                    new[] { "_informalName", "<InformalName>k__BackingField" },
+                    new TextObject("Northmen"));
+                SetKingdomField(sturgia,
+                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new TextObject("Jarl"));
+
+                RenameNorthmenCulture();
+            }
+            catch { }
+        }
+
+        // ── Duneborn kingdom rename ────────────────────────────────────────────
+        // The Aserai sultanate IS the Duneborn. Same treatment as the renames above.
+        public static void RenameDunebornKingdom()
+        {
+            try
+            {
+                var aserai = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == "aserai" && !k.IsEliminated);
+                if (aserai == null) { RenameDunebornCulture(); return; }
+
+                (_kingdomNameField ?? _nameField)?.SetValue(aserai, new TextObject("Duneborn"));
+                SetKingdomField(aserai,
+                    new[] { "_informalName", "<InformalName>k__BackingField" },
+                    new TextObject("Duneborn"));
+                SetKingdomField(aserai,
+                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new TextObject("Sheikh"));
+
+                RenameDunebornCulture();
             }
             catch { }
         }

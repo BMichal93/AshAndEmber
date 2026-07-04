@@ -133,8 +133,8 @@ namespace AshAndEmber
                 "ATTACK and BLOCK TOGETHER to unbind it: each element's ultimate working, once per element " +
                 "per battle, at a steep flat toll (twelve days). FIRE: a nova — everything around you burns, " +
                 "horses bolt, siege timber chars, a burning ring remains. WIND: the gale carries YOU — fly " +
-                "where you look; any hit knocks the wind out and you FALL. EARTH: a mantle of stone — most " +
-                "damage shrugged off, but the mountain walks slowly. WATER: the sky weeps over a wide field — " +
+                "where you look; any hit knocks the wind out and you FALL. EARTH: the Sundering — the ground erupts " +
+                "around you, hurling foes back and leaving churned rubble that bogs the field. WATER: the sky weeps over a wide field — " +
                 "burns quenched, fire halved, horses mired, bowstrings soaked (there is only one sky; a new " +
                 "casting tears the old down). SPIRIT: the land sends a champion — an elemental of frost, sand " +
                 "or stone fights at your side, then comes apart. Enemy lords know the Unbinding too — when one " +

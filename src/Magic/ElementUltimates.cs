@@ -9,7 +9,8 @@
 //            charred siege timber, a burning ring left behind).
 //   Wind   — FLIGHT for the player (any hit drops you — a real fall); a
 //            straight wind-LEAP for NPC lords, who cannot pilot free flight.
-//   Earth  — a stone mantle on the caster (most damage shrugged off, slower).
+//   Earth  — the Sundering: a radial earthquake around the caster (heavy
+//            damage, foes hurled back, churned rubble left to bog the field).
 //   Water  — a standing rain zone (quenches burns, halves fire, mires horses,
 //            soaks bowstrings). Only ONE sky can stand — a recast replaces it.
 //   Spirit — summons ONE terrain-shaped elemental to the caster's side.
@@ -17,10 +18,9 @@
 // WIRING (all of it already done — listed so a fix knows where to look):
 //   • MagicMissionBehavior.OnMissionTick   → Tick(dt)
 //   • MagicMissionBehavior.OnAgentHit      → OnAgentHit(...)   (flight knock-out,
-//     NPC windup interruption, mantle heal-back, rain archery damp)
+//     NPC windup interruption, rain archery damp)
 //   • MagicMissionBehavior.OnEndMission and MainSubModule.OnGameStart
 //                                          → ClearBattleState()
-//   • SpellEffects.DamageAgent             → ReduceIfMantled(...)  (magic damage)
 //   • ElementSpellEffects.CastAttack/Wall  → FireDampAt(...)       (rain vs fire)
 //   • ElementMagicInput (the chord)        → PlayerCanUnbind / CastPlayerUltimate
 //   • ColourLordAI.TryCast                 → TryQueueNpcUltimate(...)
@@ -62,16 +62,6 @@ namespace AshAndEmber
             public float VisualTimer;
         }
         private static readonly List<Flight> _flights = new List<Flight>();
-
-        // ── Stone mantle (Earth) ────────────────────────────────────────────────
-        private class Mantle
-        {
-            public Agent Bearer;
-            public float Remaining;
-            public bool  Ashen;
-            public float VisualTimer;
-        }
-        private static readonly List<Mantle> _mantles = new List<Mantle>();
 
         // ── The one sky (Water) ─────────────────────────────────────────────────
         private class RainZone
@@ -115,7 +105,6 @@ namespace AshAndEmber
             _playerUsed.Clear();
             _npcUsed.Clear();
             _flights.Clear();
-            _mantles.Clear();
             _rain = null;
             _champions.Clear();
             _npcWindups.Clear();
@@ -171,9 +160,9 @@ namespace AshAndEmber
             if (_npcWindups.Any(w => w.Caster == agent)) return false;
 
             MagicElement? pick = null;
-            if (hpPct < ElementUltimateMath.MantleHpFrac && closeEnemies >= 1
+            if (hpPct < ElementUltimateMath.QuakeHpFrac && closeEnemies >= 1
                 && known.Contains(MagicElement.Earth))
-                pick = MagicElement.Earth;
+                pick = MagicElement.Earth;   // wounded and pressed → heave them off him
             else if (hpPct < ElementUltimateMath.LeapHpFrac
                 && closeEnemies >= ElementUltimateMath.LeapCloseEnemies
                 && known.Contains(MagicElement.Wind)
@@ -248,18 +237,6 @@ namespace AshAndEmber
                 ? ElementUltimateMath.RainFireDamp : 1f;
         }
 
-        // Called from SpellEffects.DamageAgent so MAGIC damage respects the stone
-        // mantle too (weapon hits are healed back in OnAgentHit, because the hit
-        // system applies them before we ever see them).
-        public static float ReduceIfMantled(Agent target, float damage)
-        {
-            if (target == null || damage <= 0f || _mantles.Count == 0) return damage;
-            foreach (var m in _mantles)
-                if (m.Bearer == target && m.Remaining > 0f)
-                    return ElementUltimateMath.MantleKeptDamage(damage);
-            return damage;
-        }
-
         // One entry point for everything the Unbinding must know about a landed
         // hit. OnAgentHit fires AFTER damage is applied, so mitigation here is
         // the established heal-back pattern (see the Nature resist in
@@ -299,35 +276,15 @@ namespace AshAndEmber
                 }
             }
 
-            // 3. The stone mantle drinks most of a WEAPON blow: heal back the
-            //    shrugged-off fraction (magic damage is reduced in DamageAgent).
-            //    healedFrac tracks what has been given back so the wet-bowstring
-            //    damp below can never push the combined heal past the whole blow.
-            float healedFrac = 0f;
-            if (inflictedDamage > 0 && _mantles.Count > 0)
-            {
-                foreach (var m in _mantles)
-                {
-                    if (m.Bearer != victim || m.Remaining <= 0f) continue;
-                    healedFrac = ElementUltimateMath.MantleDamageReduction;
-                    float healBack = inflictedDamage * healedFrac;
-                    if (healBack >= 1f) try { SpellEffects.HealAgent(victim, healBack); } catch { }
-                    try { SpellEffects.SpawnNatureBurst(victim.Position, NatureElement.Earth, 0.5f); } catch { }
-                    break;
-                }
-            }
-
-            // 4. Wet bowstrings: a RANGED hit loosed from inside the rain loses
-            //    part of its bite (heal-back, the same pattern as the mantle —
-            //    capped alongside it, so no blow ever heals more than it dealt).
+            // 3. Wet bowstrings: a RANGED hit loosed from inside the rain loses
+            //    part of its bite (heal-back — OnAgentHit fires after damage lands).
             if (inflictedDamage > 0 && !isMeleeHit && attacker != null && _rain != null)
             {
                 try
                 {
                     if (FireDampAt(attacker.Position) < 1f)
                     {
-                        float damp = Math.Min(ElementUltimateMath.RainArcheryDamp, 1f - healedFrac);
-                        float healBack = inflictedDamage * damp;
+                        float healBack = inflictedDamage * ElementUltimateMath.RainArcheryDamp;
                         if (healBack >= 1f) SpellEffects.HealAgent(victim, healBack);
                     }
                 }
@@ -344,7 +301,6 @@ namespace AshAndEmber
             if (Mission.Current == null) return;
             try { TickNpcWindups(dt); } catch { }
             try { TickFlights(dt); } catch { }
-            try { TickMantles(dt); } catch { }
             try { TickRain(dt); } catch { }
             try { TickChampions(dt); } catch { }
         }
@@ -394,7 +350,7 @@ namespace AshAndEmber
             {
                 case MagicElement.Fire:   FireNova(caster, ashen);        break;
                 case MagicElement.Wind:   BeginFlight(caster, ashen);     break;
-                case MagicElement.Earth:  BeginMantle(caster, ashen);     break;
+                case MagicElement.Earth:  EarthquakeSunder(caster, ashen); break;
                 case MagicElement.Water:  BeginRain(caster, ashen);       break;
                 case MagicElement.Spirit: SummonChampion(caster, ashen);  break;
             }
@@ -600,48 +556,68 @@ namespace AshAndEmber
             }
         }
 
-        // ── EARTH — Heart of the Mountain / The Cairn-Shell ─────────────────────
-        // Stone flows over the caster: MantleDamageReduction of every blow is
-        // shrugged off (weapon hits healed back in OnAgentHit, magic reduced in
-        // DamageAgent) — and the bearer moves at MantleSpeedMult, being briefly
-        // made of mountain. No knockdown immunity: the engine owns knockdowns,
-        // and the mantle does not reach that far (a deliberate simplification).
-        private static void BeginMantle(Agent caster, bool ashen)
+        // ── EARTH — The Mountain's Wrath / The Barrow Wakes ─────────────────────
+        // The Sundering: the ground erupts in a ring around the caster. Every foe
+        // caught is struck hard and HURLED off his feet (mount-safe — the horse is
+        // thrown, never the rider out of the saddle), left staggering on broken
+        // footing, and the churned earth is left as rings of rubble that bog anyone
+        // crossing them (impartial, like the mud a broken wave leaves). Wooden siege
+        // engines and gates in the ring are shaken apart; stone walls stand.
+        // Instantaneous — nothing to tick, no lingering buff on the caster.
+        private static void EarthquakeSunder(Agent caster, bool ashen)
         {
-            _mantles.RemoveAll(m => m.Bearer == caster);
-            _mantles.Add(new Mantle { Bearer = caster, Remaining = ElementUltimateMath.MantleSeconds, Ashen = ashen });
-            if (caster == Agent.Main)
-                Msg("The stone takes you in — little can bite through, but the mountain walks slowly.");
-            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Earth, 1.5f); } catch { }
-        }
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            float radius = ElementUltimateMath.QuakeRadius;
 
-        private static void TickMantles(float dt)
-        {
-            for (int i = _mantles.Count - 1; i >= 0; i--)
+            foreach (Agent a in EnemiesNear(caster, radius))
             {
-                var m = _mantles[i];
-                bool alive = false;
-                try { alive = m.Bearer != null && m.Bearer.IsActive() && m.Bearer.Health > 0f; } catch { }
-                m.Remaining -= dt;
-                if (!alive || m.Remaining <= 0f)
-                {
-                    _mantles.RemoveAt(i);
-                    if (alive && m.Bearer == Agent.Main) Msg("The stone releases you.");
-                    if (alive) try { SpellEffects.SpawnNatureBurst(m.Bearer.Position, NatureElement.Earth, 1f); } catch { }
-                    continue;
-                }
-                m.VisualTimer -= dt;
-                if (m.VisualTimer <= 0f)
-                {
-                    m.VisualTimer = 0.8f;
-                    // The slow is a short token re-applied each pulse, so it ends
-                    // cleanly with the mantle (NatureEffects owns the restore).
-                    try { NatureEffects.ApplySpeedToken(m.Bearer, ElementUltimateMath.MantleSpeedMult, 1.0f); } catch { }
-                    try { SpellEffects.BeginAgentGlow(m.Bearer,
-                            m.Ashen ? ColorSchool.Ashen : ColorSchool.Nature, 1.1f); } catch { }
-                    try { SpellEffects.SpawnNatureBurst(m.Bearer.Position, NatureElement.Earth, 0.4f); } catch { }
-                }
+                if (SpellEffects.IsWarded(a)) continue;
+                try { SpellEffects.DamageAgent(a, ElementUltimateMath.QuakeDamage, ColorSchool.Nature, caster); } catch { }
+
+                // Hurled outward off the heaving ground — mount-safe knockback.
+                Vec3 away = a.Position - pos; away.z = 0f;
+                if (away.Length > 0.1f) away.Normalize(); else away = new Vec3(1f, 0f, 0f);
+                Vec3 dest = a.Position + away * ElementUltimateMath.QuakeKnockback;
+                dest.z = a.Position.z;
+                try { NatureEffects.KnockbackAgent(a, dest); } catch { }
+
+                // Broken footing: a short slow (deep frost for the Ashen barrow-cold).
+                try { NatureEffects.ApplySpeedToken(a, ElementUltimateMath.QuakeSlowMult,
+                                                       ElementUltimateMath.QuakeSlowSec); } catch { }
+                try { SpellEffects.SpawnNatureBurst(a.Position,
+                        ashen ? NatureElement.Water : NatureElement.Earth, 0.6f); } catch { }
             }
+
+            // The survivors scatter; wooden machines in the ring are shaken apart.
+            try { SpellEffects.ScatterEnemies(pos, radius, caster.Team); } catch { }
+            try { SpellEffects.DamageBurnableStructures(pos, radius,
+                    ElementUltimateMath.QuakeSiegeDamage, caster); } catch { }
+
+            // A ring of churned rubble is left to bog the ground the quake tore up.
+            int rubble = ElementUltimateMath.QuakeRubblePatches;
+            for (int k = 0; k < rubble; k++)
+            {
+                double ang = (Math.PI * 2.0 / rubble) * k + _rng.NextDouble() * 0.4;
+                Vec3 p = pos + new Vec3((float)Math.Cos(ang) * ElementUltimateMath.QuakeRubbleRing,
+                                        (float)Math.Sin(ang) * ElementUltimateMath.QuakeRubbleRing, 0f);
+                p.z = pos.z;
+                try { SpellEffects.SpawnMudPatch(p); } catch { }
+            }
+
+            // The eruption itself — a stone shockwave ring and a heave at the centre.
+            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, radius * 0.55f, 1.2f); } catch { }
+            try { SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, 2f); } catch { }
+            try
+            {
+                Vec3 rgb = ElementSpellEffects.ElementLightRgb(MagicElement.Earth, ashen);
+                SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), rgb, 18f, 1.1f);
+            }
+            catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ashen ? ColorSchool.Ashen : ColorSchool.Nature, 1.5f); } catch { }
+
+            if (caster == Agent.Main)
+                Msg(ashen ? "The barrow wakes — the frozen ground splits, and the cold throws them down."
+                          : "The mountain's wrath breaks loose — the earth heaves, and they are thrown like chaff.");
         }
 
         // ── WATER — The Weeping Sky / The White Silence ──────────────────────────

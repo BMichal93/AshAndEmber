@@ -157,11 +157,6 @@ namespace AshAndEmber
                 damage *= (1f + amplification);
             }
 
-            // Heart of the Mountain (the Earth Unbinding): the stone mantle drinks
-            // most of any MAGIC damage here; weapon hits are healed back in
-            // MagicMissionBehavior.OnAgentHit, which fires after the hit system.
-            try { damage = ElementUltimates.ReduceIfMantled(target, damage); } catch { }
-
             float newHealth = target.Health - damage;
             if (newHealth <= 0f)
             {

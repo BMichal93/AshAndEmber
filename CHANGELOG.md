@@ -2,7 +2,17 @@
 
 ---
 
-## Unreleased
+## v0.38.0
+
+### The Northmen and Duneborn take their thrones — faction renames
+- **The Sturgian and Aserai KINGDOMS now read Northmen and Duneborn**, not just their cultures. The culture rename already showed (your character read "Northmen"), but the faction/kingdom still read "Sturgia" everywhere the realm was named — because only Vlandia→The Holy Temple and Khuzait→Tribes of the East had kingdom renames. Sturgia now becomes the **Northmen** (ruler: Jarl) and Aserai the **Duneborn** (ruler: Sheikh), matching the existing pattern. The Ashen realm is a separate kingdom and is untouched.
+
+### The cold keeps to its own — the Ashen no longer swallow the Northern Empire
+- **Eight Northern Empire settlements are returned to the Northern Empire.** The Ashen "target" list was claiming the towns **Amprela** and **Argoron** and the castles **Epinosa, Lochana, Syratos, Atrion, Mecalovea and Rhesos** — all of them Northern Empire holdings (`clan_empire_north_*`). The world-birth setup runs two passes: the first deliberately SKIPS clans that own land outside the Ashen set (so a great Empire house is never dragged into the cold for one border castle), but the second pass force-grabbed every remaining target settlement regardless — overriding that very protection and handing the Empire's cities to the Ashen. Those eight settlements are removed from the Ashen realm entirely; they now stay with the Northern Empire as they should. The Ashen realm is now the fallen Sturgian heartland, the Khuzait marches the cold reached, and the one Vlandian port it took — and no Imperial ground.
+
+### The Sundering — the Earth Unbinding, remade
+- **Heart of the Mountain is gone; The Mountain's Wrath takes its place** *(Ashen: The Barrow Wakes)*. The old Earth ultimate was a stone mantle worn ON the caster — a self-buff whose repeated glow read as a shimmering, "blinging" suit of armour. In its place is a working that answers on the battlefield itself: the ground **erupts in a ring around the caster**, striking every foe caught, **hurling them off their feet** (mount-safe — the horse is thrown, never the rider from the saddle), leaving them staggering on broken footing, and shaking apart any wooden siege engine or gate in the ring. The torn earth is left as **rings of churned rubble that bog anyone who crosses them**, friend or foe. Instantaneous — no lingering buff, no armour glow.
+- **NPC lords wield it the same way**, and still reach for it when wounded and pressed — now to heave their attackers back and buy space rather than to turtle up in stone.
 
 ### Fixes — character creation reads true
 - **The Duneborn culture card now shows the Duneborn bargain.** The card's feats panel still read the vanilla caravan bonus ("Caravans are 30% cheaper…") even though the mechanic was already replaced: the culture-card view-model caches its feat text before the mod's relabel lands, and the card fixer was only rewriting the name and lore. The card now shows the true feats — **Blood Tithe** (Dark Altar sacrifices −20%), **Children of the Sand** (no desert speed penalty), **Hungry Knives** (daily troop wages +5%).
