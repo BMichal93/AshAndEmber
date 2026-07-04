@@ -165,7 +165,15 @@ namespace AshAndEmber
                 foreach (var c in Cards) pending.Add(c.Id);
 
                 _stageVmThisPass = null;
-                Walk(screen, visited, 0, ref budget, pending);
+                // Direct path first: screen._currentStageView._dataSource IS the live
+                // stage VM (verified against SandBox.View/SandBox.GauntletUI). Walking
+                // from the screen root starves the node budget in the Gauntlet
+                // layer/sprite graphs before ever reaching the data source — which is
+                // exactly why the cards used to stay vanilla until a hover refreshed
+                // them. The full-screen walk remains only as a fallback.
+                object ds = CurrentStageDataSource(screen);
+                if (ds != null) Walk(ds, visited, 0, ref budget, pending);
+                else            Walk(screen, visited, 0, ref budget, pending);
 
                 // Gate the stage while any card still shows its stale (vanilla) text:
                 // the rename lands a few frames after the screen is built, and we do
@@ -191,6 +199,32 @@ namespace AshAndEmber
                 _stageVmThisPass = null;
             }
             catch { }
+        }
+
+        // The current stage's view-model, straight off the screen:
+        // CharacterCreationScreen._currentStageView (SandBox.View) holds the active
+        // stage view, and every concrete stage view keeps its VM in _dataSource.
+        // Fields are searched up the type hierarchy; any miss returns null and the
+        // caller falls back to the bounded full-screen walk.
+        internal static object CurrentStageDataSource(object screen)
+        {
+            try
+            {
+                object view = GetFieldUpHierarchy(screen, "_currentStageView");
+                if (view == null) return null;
+                return GetFieldUpHierarchy(view, "_dataSource");
+            }
+            catch { return null; }
+        }
+
+        private static object GetFieldUpHierarchy(object obj, string name)
+        {
+            for (Type t = obj.GetType(); t != null; t = t.BaseType)
+            {
+                FieldInfo f = t.GetField(name, F);
+                if (f != null) { try { return f.GetValue(obj); } catch { return null; } }
+            }
+            return null;
         }
 
         private static void Walk(object obj, HashSet<object> visited, int depth, ref int budget, HashSet<string> pending)

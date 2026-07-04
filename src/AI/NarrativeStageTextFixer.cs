@@ -56,7 +56,12 @@ namespace AshAndEmber
 
                 int budget = 8000;
                 var visited = new HashSet<object>(RefComparer.Instance);
-                Walk(screen, visited, 0, ref budget);
+                // Direct path first (see TempleCultureCardFixer): the stage VM off
+                // screen._currentStageView._dataSource — a full-screen walk starves
+                // its budget in the widget/sprite graphs before reaching the VM.
+                object ds = TempleCultureCardFixer.CurrentStageDataSource(screen);
+                if (ds != null) Walk(ds, visited, 0, ref budget);
+                else            Walk(screen, visited, 0, ref budget);
             }
             catch { }
         }
