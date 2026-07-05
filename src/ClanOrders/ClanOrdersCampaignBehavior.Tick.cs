@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
@@ -61,6 +62,12 @@ namespace AshAndEmber
         // ── Order processing ──────────────────────────────────────────────────
         private static void TickAllOrders()
         {
+            // Loyalty is judged against the player's Leadership once per day: a poorly
+            // led commander cannot keep distant captains to a task they never chose.
+            int leadership = 0;
+            try { leadership = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0; } catch { }
+            int abandonPct = ClanOrdersMath.DailyAbandonChance(leadership);
+
             for (int i = _orderPartyIds.Count - 1; i >= 0; i--)
             {
                 try
@@ -72,8 +79,71 @@ namespace AshAndEmber
                         continue;
                     }
 
+                    // Daily loyalty check — may abandon the order (and release the hold).
+                    if (abandonPct > 0 && _rng.Next(100) < abandonPct)
+                    {
+                        string leader = party.LeaderHero?.Name?.ToString() ?? "Your captain";
+                        try
+                        {
+                            MBInformationManager.AddQuickInformation(new TextObject(
+                                $"{leader} has abandoned your orders and returns to their own counsel."));
+                        }
+                        catch { }
+                        RemoveOrderAt(i);
+                        continue;
+                    }
+
+                    // Re-assert the AI hold each day (self-heals after a save reload,
+                    // where the engine does not persist the flag).
+                    SetAiHold(party, true);
+
                     if (_orderTypes[i] == "travel") TickTravel(i, party, _orderTargetIds[i]);
                     else if (_orderTypes[i] == "hunt") TickHunt(i, party, _orderTargetIds[i]);
+                }
+                catch { }
+            }
+        }
+
+        // ── Re-assert on load ─────────────────────────────────────────────────
+        // SetDoNotMakeNewDecisions is runtime-only state; a freshly loaded save has
+        // ordered parties free to wander. Called from OnSessionLaunched (after
+        // SyncData has repopulated the order lists) to re-pin them and re-issue the
+        // movement goal immediately, rather than waiting for the first daily tick.
+        internal static void ReassertAllOrders()
+        {
+            if (Campaign.Current == null) return;
+            for (int i = _orderPartyIds.Count - 1; i >= 0; i--)
+            {
+                try
+                {
+                    var party = MobileParty.All.FirstOrDefault(p => p.StringId == _orderPartyIds[i]);
+                    if (party == null || !party.IsActive)
+                    {
+                        RemoveOrderAt(i);
+                        continue;
+                    }
+
+                    SetAiHold(party, true);
+
+                    Settlement dest = null;
+                    if (_orderTypes[i] == "travel")
+                    {
+                        dest = Settlement.All.FirstOrDefault(s => s.StringId == _orderTargetIds[i]);
+                    }
+                    else if (_orderTypes[i] == "hunt")
+                    {
+                        Hero target = Hero.AllAliveHeroes.FirstOrDefault(h => h.StringId == _orderTargetIds[i]);
+                        try
+                        {
+                            dest = target?.CurrentSettlement
+                                ?? target?.PartyBelongedTo?.CurrentSettlement
+                                ?? target?.HomeSettlement;
+                        }
+                        catch { }
+                    }
+
+                    if (dest != null)
+                        try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
                 }
                 catch { }
             }
