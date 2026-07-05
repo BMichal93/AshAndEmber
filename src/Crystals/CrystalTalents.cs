@@ -5,9 +5,15 @@
 // crystals, studied with focus points at a Crystalline Chamber. These refine how
 // the crystals answer you; they do not change the stones themselves.
 //
-//   Lasting Lattice — the lattice holds; a crystal shatters far less often.
-//   Waking Light    — you coax light from a crystal even after dark.
-//   Swift Kindling  — the charge kindles in half the time.
+//   Lasting Lattice   — the lattice holds; a crystal shatters far less often.
+//   Mending Light     — the stored light looks after its bearer: each use mends you.
+//   Brilliant Lattice — you draw the light more fiercely: crystals hit harder.
+//
+// (Slots 1 and 2 once held Waking Light and Swift Kindling — a night-casting
+// unlock and a charge-speed cut. Crystals now fire instantly with no daylight
+// gate, so both were dead; they are repurposed here. The enum's INT values are
+// unchanged, so a save that owned the old talents keeps the new effect in the
+// same slot.)
 //
 // Persisted in the save by CrystallinesCampaignBehavior. Bought at the Chamber
 // (Study the lattice), each costing one focus point more than the last.
@@ -24,23 +30,23 @@ namespace AshAndEmber
 {
     public enum CrystalTalentId
     {
-        LastingLattice = 0, // shatter far less often
-        WakingLight    = 1, // crystals work at night too
-        SwiftKindling  = 2, // charge kindles twice as fast
+        LastingLattice   = 0, // shatter far less often
+        MendingLight     = 1, // each use mends the bearer
+        BrilliantLattice = 2, // crystal damage & healing hit harder
     }
 
     public static class CrystalTalents
     {
         private static readonly CrystalTalentId[] _all =
-            { CrystalTalentId.LastingLattice, CrystalTalentId.WakingLight, CrystalTalentId.SwiftKindling };
+            { CrystalTalentId.LastingLattice, CrystalTalentId.MendingLight, CrystalTalentId.BrilliantLattice };
 
         private static readonly HashSet<CrystalTalentId> _owned = new HashSet<CrystalTalentId>();
 
         // ── The hooks the crystal system reads ───────────────────────────────────
         public static bool  Has(CrystalTalentId id) => _owned.Contains(id);
         public static float ShatterMult => Has(CrystalTalentId.LastingLattice) ? 0.4f : 1f;
-        public static bool  WorksAtNight => Has(CrystalTalentId.WakingLight);
-        public static float ChargeMult  => Has(CrystalTalentId.SwiftKindling) ? 0.5f : 1f;
+        public static float MendOnUse   => Has(CrystalTalentId.MendingLight)     ? 25f  : 0f;
+        public static float PotencyMult => Has(CrystalTalentId.BrilliantLattice) ? 1.3f : 1f;
 
         public static int OwnedCount => _owned.Count;
 
@@ -107,8 +113,8 @@ namespace AshAndEmber
             switch (id)
             {
                 case CrystalTalentId.LastingLattice: return "Lasting Lattice";
-                case CrystalTalentId.WakingLight:    return "Waking Light";
-                default:                             return "Swift Kindling";
+                case CrystalTalentId.MendingLight:   return "Mending Light";
+                default:                             return "Brilliant Lattice";
             }
         }
 
@@ -117,8 +123,8 @@ namespace AshAndEmber
             switch (id)
             {
                 case CrystalTalentId.LastingLattice: return "Lasting Lattice — the crystal's structure holds; it shatters far less often when you draw from it.";
-                case CrystalTalentId.WakingLight:    return "Waking Light — you learn to wake a crystal's stored light even after dark; crystals answer at night as well as by day.";
-                default:                             return "Swift Kindling — you kindle a crystal's charge in half the time.";
+                case CrystalTalentId.MendingLight:   return "Mending Light — the stored light looks after its bearer; every crystal you loose also mends you (+25 HP).";
+                default:                             return "Brilliant Lattice — you draw the light more fiercely; a crystal's damage and healing strike about a third harder.";
             }
         }
 

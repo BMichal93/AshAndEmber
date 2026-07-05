@@ -2,6 +2,22 @@
 
 ---
 
+## v0.38.5
+
+### Lapidary talents — the two dead ones repurposed
+- With crystals now firing instantly (no charge) and under no daylight gate, two of the three Crystalline Chamber talents did nothing. They are reworked in place — **a save that owned the old talent keeps the new effect in the same slot**, at the same focus-point cost:
+  - **Waking Light → Mending Light.** (The old night-casting unlock was moot — there is no daylight gate.) Now: **every crystal you loose also mends you for 25 HP** — the stored light looks after its bearer.
+  - **Swift Kindling → Brilliant Lattice.** (The old half-charge cut was moot — there is no charge.) Now: **a crystal's damage and healing strike about a third harder** (Sunstone, Embershard, Veilstone, Stormcrystal).
+  - **Lasting Lattice is unchanged** — a crystal still shatters far less often when you draw from it.
+- Both new talents are the player's alone: an NPC crystal-bearer never reads your lapidary craft.
+
+## v0.38.4
+
+### Crystals — used like a weapon, spent for good
+- **No more charge — the crystal looses its light the instant you attack.** The two-second charge-up is gone; a crystal now fires the moment you strike with it in hand, like loosing a weapon (one press = one use).
+- **A spent crystal is now truly destroyed.** When the lattice fractures ("the crystal is spent"), the crystal is struck from your hand for the rest of the battle AND cleared from your battle loadout so it does not return — fixing the bug where a "spent" crystal stayed wielded and kept firing.
+- **Every use blasts its light, targets or not.** A crystal now always looses a visible pulse of its coloured light (and its cast report) at you when used, exactly like any other magic — it no longer looked inert when no one stood in range.
+
 ## v0.38.3
 
 ### Fix — crystals wake on the attack button itself

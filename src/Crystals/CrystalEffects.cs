@@ -2,13 +2,13 @@
 // ASH AND EMBER — Crystals/CrystalEffects.cs
 //
 // Battle crystal activation pipeline:
-//   Player attacks with equipped crystal → OnCrystalHit() intercepts the blow,
-//   cancels physical damage, starts a 2-second charge phase (coloured glow),
-//   then fires the crystal's AoE effect via MissionTick.
+//   Player attacks with an equipped crystal → the attack INPUT fires the
+//   crystal's effect INSTANTLY (no charge), like loosing a weapon. Every use
+//   blasts its light whether or not anything stands in range.
 //
 // NPCs fire directly through CrystalBattleAI.ExecuteEffect().
-// Daylight gate applies to both (SolarFlare extends the window).
-// 10 % burndown chance per activation; item is removed from inventory on trigger.
+// Burndown chance per use; when it triggers the crystal is DESTROYED — struck
+// from the hand and the loadout — so a spent crystal cannot be used again.
 //
 // All TaleWorlds access is null-guarded and wrapped in individual try/catch.
 // =============================================================================
@@ -29,22 +29,9 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
 
-        // ── Pending charge: attacker → (crystal type, seconds remaining) ──────
-        private struct Charge
-        {
-            public CrystalType Type;
-            public float       Remaining;
-        }
-
-        private static readonly Dictionary<Agent, Charge> _pendingCharge
-            = new Dictionary<Agent, Charge>();
-
-        // Player's last detected melee-attack time, so a fresh swing (hit OR miss)
-        // begins a charge. Reset between battles.
-        private static float _lastSwingTime = 0f;
-        // Edge-detect the attack BUTTON itself — the reliable trigger. Neither the
-        // swing-time signal nor a landed blow fire dependably for the crystal's
-        // weapon form, so a raw attack-input press is what actually wakes it.
+        // Edge-detect the attack BUTTON itself — the reliable trigger. The
+        // swing-time signal and landed-blow paths do not fire dependably for the
+        // crystal's weapon form, so a raw attack-input press is what wakes it.
         private static bool _prevAttackDown = false;
 
         // ── Active slows (keyed by agent, value = seconds left) ──────────────
@@ -74,25 +61,11 @@ namespace AshAndEmber
 
         public static void ClearBattleState()
         {
-            _pendingCharge.Clear();
             _rimeSlow.Clear();
             _veilSlow.Clear();
             _duskSlow.Clear();
-            _lastSwingTime = 0f;
             _prevAttackDown = false;
             _crystalMissiles.Clear();
-        }
-
-        // ── Daylight check ────────────────────────────────────────────────────
-
-        private static bool CheckDaylight(Agent user)
-        {
-            // Waking Light: the lapidary learns to wake a crystal's stored light after dark.
-            if (user == Agent.Main && CrystalTalents.WorksAtNight) return true;
-            float hour = 12f; // default to noon if we can't read the time
-            try { hour = (float)CampaignTime.Now.CurrentHourInDay; } catch { }
-            bool extended = TalentSystem.Has(TalentId.SolarFlare);
-            return extended ? CrystalMath.IsDaylightExtended(hour) : CrystalMath.IsDaylight(hour);
         }
 
         // ── Player: crystal weapon hit intercept ──────────────────────────────
@@ -107,36 +80,25 @@ namespace AshAndEmber
             if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
 
             // A crystal deals no physical harm — restore whatever it inflicted.
+            // (Activation is driven by the attack INPUT in MissionTick, not the hit,
+            // so a crystal fires instantly on the swing whether or not it connects.)
             if (victim != null && victim.IsActive() && inflictedDamage > 0)
                 try { SpellEffects.HealAgent(victim, inflictedDamage); } catch { }
-
-            // A LANDED blow reliably wakes the crystal. The MissionTick swing detector
-            // (LastMeleeAttackTime) is meant to catch misses too, but that signal does
-            // not fire for these weapons in every build, so a connecting strike is the
-            // dependable trigger — begin the charge here from the wielded weapon.
-            try { TryBeginChargeOnSwing(attacker); } catch { }
         }
 
-        // Begins a crystal's charge on a player swing — hit or miss, in any light.
-        // (The old gate required landing a blow in daylight, which felt like nothing
-        // happened.) One charge at a time; the next swing after it fires starts another.
-        private static void TryBeginChargeOnSwing(Agent main)
+        // Looses the wielded crystal's light the instant the player strikes with it —
+        // no charge, used like a weapon. Does nothing if the wielded item is not a
+        // crystal, so ordinary attacks pass through untouched.
+        private static void TryActivateCrystal(Agent main)
         {
-            if (_pendingCharge.ContainsKey(main)) return;
             string itemId = null;
             try { itemId = main.WieldedWeapon.Item?.StringId; } catch { }
             if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
             if (!CrystalCatalog.TryGetByItemId(itemId, out var def)) return;
-
-            // Swift Kindling shortens the charge for the player.
-            float chargeSec = CrystalMath.ChargeDurationSec * (main == Agent.Main ? CrystalTalents.ChargeMult : 1f);
-            _pendingCharge[main] = new Charge { Type = def.Type, Remaining = chargeSec };
-            try { SpellEffects.BeginAgentGlow(main, def.GlowColor, chargeSec + 0.5f); } catch { }
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"{def.Name} — drawing light…", CrystalColor(def.GlowColor)));
+            FireEffect(main, def.Type);
         }
 
-        // ── MissionTick: advance charges and buff timers ──────────────────────
+        // ── MissionTick: activation + buff timers ─────────────────────────────
 
         public static void MissionTick(float dt)
         {
@@ -144,50 +106,25 @@ namespace AshAndEmber
 
             TickCrystalMissile(dt);
 
-            // Activation: the player rouses a crystal by attacking with it in hand.
+            // Activation: attacking with a crystal in hand looses it INSTANTLY.
             try
             {
                 var main = Agent.Main;
                 if (main != null && main.IsActive())
                 {
-                    // Primary, RELIABLE trigger — the raw attack BUTTON (LMB /
-                    // right trigger), edge-detected so one press starts one charge.
-                    // Suppressed while focusing an element spell (Alt / LB held),
-                    // where that same button releases a cone instead.
+                    // The raw attack BUTTON (LMB / right trigger), edge-detected so
+                    // one press = one use. Suppressed while focusing an element spell
+                    // (Alt / LB held), where that same button releases a cone instead.
                     bool focusing = Input.IsKeyDown(InputKey.LeftAlt)
                                  || Input.IsKeyDown(InputKey.ControllerLBumper);
                     bool attackDown = Input.IsKeyDown(InputKey.LeftMouseButton)
                                    || Input.IsKeyDown(InputKey.ControllerRTrigger);
                     if (attackDown && !_prevAttackDown && !focusing)
-                        TryBeginChargeOnSwing(main);
+                        TryActivateCrystal(main);
                     _prevAttackDown = attackDown;
-
-                    // Secondary signal (kept as a backstop): the melee attack time
-                    // advances on a registered swing — where it fires at all.
-                    float swingT = main.LastMeleeAttackTime;
-                    if (swingT > 0f && swingT != _lastSwingTime)
-                    {
-                        _lastSwingTime = swingT;
-                        TryBeginChargeOnSwing(main);
-                    }
                 }
             }
             catch { }
-
-            // Advance pending charges.
-            foreach (var kvp in _pendingCharge.ToList())
-            {
-                var agent  = kvp.Key;
-                float left = kvp.Value.Remaining - dt;
-                if (!agent.IsActive() || left <= 0f)
-                {
-                    _pendingCharge.Remove(agent);
-                    if (agent.IsActive() && left <= 0f)
-                        FireEffect(agent, kvp.Value.Type);
-                }
-                else
-                    _pendingCharge[agent] = new Charge { Type = kvp.Value.Type, Remaining = left };
-            }
 
             // Expire Rimeshard slow.
             foreach (var kvp in _rimeSlow.ToList())
@@ -231,12 +168,25 @@ namespace AshAndEmber
 
         // ── Effect dispatch ────────────────────────────────────────────────────
 
-        // Called after the charge phase expires, and directly by CrystalBattleAI.
+        // Fired instantly on use (player) or directly by CrystalBattleAI (NPC).
         public static void FireEffect(Agent caster, CrystalType type)
         {
             if (caster == null || !caster.IsActive() || Mission.Current == null) return;
 
             bool solarFlare = TalentSystem.Has(TalentId.SolarFlare);
+
+            // A visible pulse of the crystal's stored light at the caster — EVERY
+            // use, whether or not anything stands in range. The crystal works like
+            // any other magic: it always looses its light and reports the cast.
+            var def = CrystalCatalog.Get(type);
+            try
+            {
+                Vec3 at = caster.Position + new Vec3(0f, 0f, 1f);
+                SpellEffects.SpawnImpactBurst(at, def.GlowColor, 1.2f);
+                SpellEffects.SpawnTempLight(at, def.GlowColor, 8f, 1.0f);
+                SpellEffects.TryCastSound(caster.Position, def.GlowColor);
+            }
+            catch { }
 
             switch (type)
             {
@@ -248,16 +198,22 @@ namespace AshAndEmber
                 case CrystalType.Duskstone:    EffectDuskstone(caster, solarFlare);   break;
             }
 
-            // Burndown roll — only for player (NPC inventory is not adjusted mid-battle).
+            // Player-only lapidary talents: Mending Light heals the bearer on every
+            // use; the burndown roll may destroy the spent crystal.
             if (caster == Agent.Main)
-                TryBurndown(type);
+            {
+                float mend = CrystalTalents.MendOnUse;
+                if (mend > 0f) try { SpellEffects.HealAgent(caster, mend); } catch { }
+                TryBurndown(caster, type);
+            }
         }
 
         // ── Sunstone ─────────────────────────────────────────────────────────
 
         private static void EffectSunstone(Agent caster)
         {
-            try { SpellEffects.HealAgent(caster, CrystalMath.SunSelfHeal); } catch { }
+            float pot = Potency(caster);   // Brilliant Lattice: harder heals (player)
+            try { SpellEffects.HealAgent(caster, CrystalMath.SunSelfHeal * pot); } catch { }
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 2f); } catch { }
 
             Vec3 pos;
@@ -272,7 +228,7 @@ namespace AshAndEmber
                     if (caster.Team == null || a.Team != caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
-                    try { SpellEffects.HealAgent(a, CrystalMath.SunAllyHeal); } catch { }
+                    try { SpellEffects.HealAgent(a, CrystalMath.SunAllyHeal * pot); } catch { }
                     mended++;
                 }
             }
@@ -389,7 +345,7 @@ namespace AshAndEmber
             }
 
             var target = candidates[_rng.Next(candidates.Count)];
-            try { SpellEffects.DamageAgent(target, CrystalMath.VeilDamage, ColorSchool.Purple, caster); } catch { }
+            try { SpellEffects.DamageAgent(target, CrystalMath.VeilDamage * Potency(caster), ColorSchool.Purple, caster); } catch { }
             _veilSlow[target] = CrystalMath.VeilDurationSec;
             try { target.SetMaximumSpeedLimit(CrystalMath.VeilSlowMult, false); } catch { }
 
@@ -418,7 +374,7 @@ namespace AshAndEmber
                     if (dx * dx + dy * dy > r2) continue;
                     // Walls of wind and stone stop the crystal's reach.
                     try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch { }
-                    try { SpellEffects.DamageAgent(a, CrystalMath.StormDamage, ColorSchool.Orange, caster); } catch { }
+                    try { SpellEffects.DamageAgent(a, CrystalMath.StormDamage * Potency(caster), ColorSchool.Orange, caster); } catch { }
                     try { a.ChangeMorale(-CrystalMath.StormMoraleDrain); } catch { }
                     hit++;
                 }
@@ -563,7 +519,7 @@ namespace AshAndEmber
                     {
                         // Blame the crystal's actual bearer, not the player — NPC
                         // crystal-bearers loose these missiles too.
-                        SpellEffects.DamageAgent(a, CrystalMath.EmberDamage, ColorSchool.Red, m.Caster);
+                        SpellEffects.DamageAgent(a, CrystalMath.EmberDamage * Potency(m.Caster), ColorSchool.Red, m.Caster);
                         SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Red, 4f);
                         hit++;
                     }
@@ -580,20 +536,35 @@ namespace AshAndEmber
 
         // ── Burndown ──────────────────────────────────────────────────────────
 
-        private static void TryBurndown(CrystalType type)
+        private static void TryBurndown(Agent caster, CrystalType type)
         {
             // Lasting Lattice makes the crystal far more likely to survive the draw.
             if (!(_rng.NextDouble() < CrystalMath.BurndownChance * CrystalTalents.ShatterMult)) return;
 
-            var def    = CrystalCatalog.Get(type);
-            var hero   = Hero.MainHero;
-            var roster = MobileParty.MainParty?.ItemRoster;
-            if (roster == null) return;
+            var def = CrystalCatalog.Get(type);
+
+            // DESTROY the spent crystal so it cannot be used again:
+            //   • strike it from the caster's HAND this battle (the reported bug —
+            //     a "spent" crystal was still wielded and kept firing), and
+            //   • clear it from the persistent battle LOADOUT so it does not return
+            //     next battle, and
+            //   • drop one from the party stores (a spare, if any).
+            try
+            {
+                EquipmentIndex slot = caster.GetPrimaryWieldedItemIndex();
+                if (slot != EquipmentIndex.None)
+                {
+                    try { caster.RemoveEquippedWeapon(slot); } catch { }
+                    try { Hero.MainHero.BattleEquipment[slot] = default(EquipmentElement); } catch { }
+                }
+            }
+            catch { }
 
             try
             {
+                var roster = MobileParty.MainParty?.ItemRoster;
                 var item = TaleWorlds.ObjectSystem.MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
-                if (item != null && roster.GetItemNumber(item) > 0)
+                if (roster != null && item != null && roster.GetItemNumber(item) > 0)
                     roster.AddToCounts(item, -1);
             }
             catch { }
@@ -617,6 +588,11 @@ namespace AshAndEmber
             }
             catch { }
         }
+
+        // Brilliant Lattice potency — player only (an NPC bearer's crystal must not
+        // read the player's lapidary talents).
+        private static float Potency(Agent caster)
+            => caster == Agent.Main ? CrystalTalents.PotencyMult : 1f;
 
         private static Color CrystalColor(ColorSchool school)
         {

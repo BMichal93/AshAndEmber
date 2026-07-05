@@ -1,4 +1,4 @@
-# Ash and Ember — v0.18
+# Ash and Ember — v0.38
 
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
@@ -12,45 +12,31 @@ AshAndEmber/
 ├── ModuleData/
 │   ├── items.xml                    (reserved)
 │   └── troops.xml                   (reserved)
-├── src/                             ~10 000 lines across 35 source files
+├── src/                             ~62 000 lines across ~200 source files (grouped by system folder)
 │   ├── MagicSystem.cs               module entry point + mission behaviour
-│   ├── MageKnowledge.cs             gift tracking, grimoire UI, talent menu, Whisper system
-│   ├── SpellBuilder.cs              two-phase input parser → SpellCast (Lost Form flags)
-│   ├── SpellMinigame.cs             arcane sequence memory game for campaign map casting
-│   ├── TalentSystem.cs              25 talents (7 passive, 8 enchantment, 6 spell, 4 lost form)
-│   ├── AgingSystem.cs               casting cost (days of life), Blight path
-│   ├── MagicInputHandler.cs         keyboard/gamepad combo detection
-│   ├── CampaignBehavior.cs          new-game setup, aging, map event hooks, Whisper hooks
-│   ├── CampaignMapEvents.cs         27 world events across two independent weekly slots
-│   ├── BattleEvents.cs              per-battle battlefield events with atmospheric visuals
-│   ├── DragonQuestSystem.cs         main quest — The Last Flight of the Dragons
-│   ├── BurningLabQuestSystem.cs     questline — The Burning Laboratory (3 branching arcs)
-│   ├── SettlementEncounters.cs      40+ random events on settlement enter/leave/battle
-│   ├── SchoolData.cs                colour school definitions and visual data
-│   ├── SpellDatabase.cs             spell definition registry
-│   ├── ActiveEffects.cs             per-frame effect state tracking
-│   ├── Spells/
-│   │   ├── SpellEffects.cs          core partial: helpers, effects, targeting, death queue
-│   │   ├── AffectSpells.cs          affect form execution
-│   │   ├── BlastSpells.cs           Blast form + Lost Blast (widened cone)
-│   │   ├── SelfSpells.cs            Missile + Ward + Twin Bolt + fire patch aftermath
-│   │   └── CreateSpells.cs          Barrier + Burst + Fading Ward + Directed Burst + holy zone
-│   ├── Visual/
-│   │   ├── AreaEffects.cs           area effect engine: spell_firepatch + spell_holyzone added
-│   │   ├── GlowSystem.cs            agent glow outlines + cast sound
-│   │   ├── MoveSystem.cs            smooth push/pull lerp movement
-│   │   ├── AshenSceneTone.cs        cold atmospheric fog in Ashen battles
-│   │   └── NamePrefixes.cs          title/prefix management for mage lords
-│   └── AI/
-│       ├── RivalShadowSystem.cs     Rival Shadow — personal Ashen antagonist system (NEW)
-│       ├── ColourLordRegistry.cs    marks lords as mages or Ashen lords; companion tracking
-│       ├── ColourLordAI.cs          priority-driven battle AI for mage lords
-│       ├── ColourUnitRegistry.cs    unit-level mage tracking (stub)
-│       ├── BanditMageAI.cs          rare bandit unit spellcasters with burnout
-│       ├── BlightSystem.cs          Ashen blight mechanics (stub)
-│       ├── AshenDialogue.cs         silences all dialogue with Ashen lords and Spawn
-│       ├── FireWorshippersSystem.cs renames qualifying bandit parties
-│       └── AshenCitySystem.cs       Ashen kingdom, settlements, war, resurgence
+│   ├── MagicInputHandler.cs         keyboard/gamepad combo detection (legacy path)
+│   ├── SpellBuilder.cs              two-phase input parser → SpellCast (legacy / NPC)
+│   ├── AgingSystem.cs               casting cost (days of life)
+│   ├── SchoolData.cs / SpellDatabase.cs / ActiveEffects.cs / SaveDefiner.cs
+│   ├── Magic/                       unified element system (Codex, input, effects, walls, ultimates, map spells, teachers)
+│   ├── Spells/                      legacy two-phase Inner Fire — SpellEffects.* partials, Blast/Self/Create spells, enchantments (drives NPC casts)
+│   ├── Nature/                      the Living Ember — charges, living-energy economy, seers, backlash
+│   ├── Miracles/                    Grace — prayers, grace economy, priest troops, battle AI, talents
+│   ├── DarkGifts/                   the Dark Gift path
+│   ├── Crystals/                    consumable crystal items, effects, battle AI
+│   ├── Talents/                     talent tree, learning curve, map-spell talents
+│   ├── Schemes/                     covert operations (scheme system, behaviour, minigame)
+│   ├── Sea/                         harbours, voyages, trade ventures, NPC sea lanes
+│   ├── Markets/                     the Exchange — commodity speculation
+│   ├── Tavern/                      tavern menus, rumours, outcomes
+│   ├── ClanOrders/                  clan order system
+│   ├── AshenRuins/                  explorable Ashen ruins
+│   ├── Conclave/ Apprentice/        Ember Conclave, apprentice system
+│   ├── QuestSystems/                Dragon main quest, Burning Lab questline, settlement encounters, world & battle events
+│   ├── AI/                          Ashen kingdom/city, NPC mage AI, bandit mages, dialogue, Rival Shadow, cultures
+│   ├── Tribes/ Campaign/            faction/culture reworks (Templars, Tribes, Northmen, Duneborn), map tone
+│   ├── Visual/                      glows, movement, atmospheric scene tone, battle whispers
+│   └── Startup/                     splash, lore intro, loading screen
 ├── tests/
 │   ├── AshAndEmber.Tests.csproj
 │   └── PureLogicTests.cs

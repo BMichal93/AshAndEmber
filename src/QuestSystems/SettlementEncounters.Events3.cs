@@ -684,10 +684,30 @@ namespace AshAndEmber
             }
         }
 
+        // ── Trinket rarity tuning ─────────────────────────────────────────────
+        // A found magical trinket is uncommon: it only enters the encounter pool
+        // on a minority of settlement visits, only one variant is offered at a
+        // time (chosen at random so the find is never predictable), and a long
+        // cooldown separates one find from the next.
+        private const double TrinketFindChance       = 0.30;  // pool-presence gate per eligible visit
+        private const int    TrinketFindCooldownDays = 60;    // min days between trinket finds
+
+        // Pick a single trinket variant at random for this find.
+        private static Action<Settlement> RandomTrinketFind()
+        {
+            switch (_rng.Next(3))
+            {
+                case 0:  return EB_TrinketBlindEye;
+                case 1:  return EB_TrinketPaleCompass;
+                default: return EB_TrinketEmberShard;
+            }
+        }
+
         // ── EB_TrinketEmberShard — enter settlement, general, no active trinket ──
         // A fragment of amber found on a corpse. Warm to the touch through a gauntlet.
         private static void EB_TrinketEmberShard(Settlement s)
         {
+            _trinketFindCooldown = TrinketFindCooldownDays;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "◈  The Ember Shard",
                 "Among the enemy dead, you find him — the one who had no reason to carry what he carried. Inside his breastplate, tucked against the lining: a fragment of amber the size of a thumb. Something is suspended inside it, too small to name. What you notice first is not the shape but the warmth. From inside sealed armour, on a dead man, through your gauntlet: warmth that has no right to be there.",
@@ -719,6 +739,7 @@ namespace AshAndEmber
         // A small iron medallion with an eye etched on both sides. One closed, one open.
         private static void EB_TrinketBlindEye(Settlement s)
         {
+            _trinketFindCooldown = TrinketFindCooldownDays;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "◈  The Blind Eye",
                 "A small iron medallion, caught in the buckle of a dead man's belt. Black with age. On one side: an eye, etched with a precision that belongs to a different tradition than anything else this man was carrying. The eye is closed. You turn it over. On the reverse, the same eye. Open.",
@@ -750,6 +771,7 @@ namespace AshAndEmber
         // A carved bone disc that settles on a fixed bearing regardless of how it is held.
         private static void EB_TrinketPaleCompass(Settlement s)
         {
+            _trinketFindCooldown = TrinketFindCooldownDays;
             MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
                 "◈  The Pale Compass",
                 "Inside the lining of a dead man's coat, stitched there with deliberate care: a disc of carved bone, the size of a coin. The face is engraved with radial lines like a compass rose with no directions marked. You set it on your palm to examine it. It rotates. Slowly, precisely, it settles on a bearing. You turn your hand. It corrects. There is no magnet. There is no mechanism you can find.",
@@ -962,8 +984,13 @@ namespace AshAndEmber
                             break;
                         case "b":
                         {
+                            // The bargain's odds shift every night — success ~50–75%,
+                            // death ~8–20%, the remainder aging — so the outcome can
+                            // never be reliably predicted from one dream to the next.
+                            double successChance = 0.50 + _rng.NextDouble() * 0.25;
+                            double deathChance   = 0.08 + _rng.NextDouble() * 0.12;
                             double roll = _rng.NextDouble();
-                            if (roll < 0.70)
+                            if (roll < successChance)
                             {
                                 // Success — significant gains, chain continues
                                 _trinketCountdown = 7;
@@ -973,7 +1000,7 @@ namespace AshAndEmber
                                 AddMorale(15f);
                                 Msg(successMsg, GoodColor);
                             }
-                            else if (roll < 0.90)
+                            else if (roll < 1.0 - deathChance)
                             {
                                 // Age 50 years — ends chain
                                 _trinketPhase   = 0;

@@ -106,6 +106,7 @@ namespace AshAndEmber
         private static int    _trinketCountdown      = 0;   // days until next trinket-dream stage fires
         private static int    _trinketPhase          = 0;   // 0=inactive, 1=first dream, 2=recurring dream
         private static int    _trinketVariant        = 0;   // 1=ember shard, 2=blind eye, 3=pale compass
+        private static int    _trinketFindCooldown   = 0;   // days before another trinket can be found (rarity gate)
         private static int    _brokenSealCountdown  = 0;   // days until kingdom-plot consequence fires
         private static int    _brokenSealPlotType   = 0;   // 0=inactive, 1=war, 2=annexation, 3=sabotage
         private static bool   _brokenSealExtraWar   = false; // B also declares war when scouting-pass/charm-fail
@@ -213,6 +214,7 @@ namespace AshAndEmber
             _trinketCountdown      = 0;
             _trinketPhase          = 0;
             _trinketVariant        = 0;
+            _trinketFindCooldown   = 0;
             _brokenSealCountdown   = 0;
             _brokenSealPlotType    = 0;
             _brokenSealExtraWar    = false;
@@ -290,6 +292,7 @@ namespace AshAndEmber
             store.SyncData("SE_TrinketCountdown",   ref _trinketCountdown);
             store.SyncData("SE_TrinketPhase",       ref _trinketPhase);
             store.SyncData("SE_TrinketVariant",     ref _trinketVariant);
+            store.SyncData("SE_TrinketFindCD",      ref _trinketFindCooldown);
             store.SyncData("SE_BrokenSealCD",       ref _brokenSealCountdown);
             store.SyncData("SE_BrokenSealPlot",     ref _brokenSealPlotType);
             store.SyncData("SE_BrokenSealExtraWar", ref _brokenSealExtraWar);
@@ -450,6 +453,9 @@ namespace AshAndEmber
                 if (_trinketCountdown == 0)
                     FireTrinketStage();
             }
+
+            if (_trinketFindCooldown > 0)
+                _trinketFindCooldown--;
 
             if (_brokenSealCountdown > 0)
             {

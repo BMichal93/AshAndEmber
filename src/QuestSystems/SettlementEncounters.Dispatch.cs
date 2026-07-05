@@ -47,12 +47,9 @@ namespace AshAndEmber
                 pool.Add(EV8_ColdTrail);
                 if (_burningVillageCountdown == 0) pool.Add(EV_DarknessSpreads);
                 if (_burningWitchCountdown == 0)   pool.Add(EV_BurningWitch);
-                if (_trinketPhase == 0)
-                {
-                    pool.Add(EB_TrinketEmberShard);
-                    pool.Add(EB_TrinketBlindEye);
-                    pool.Add(EB_TrinketPaleCompass);
-                }
+                if (_trinketPhase == 0 && _trinketFindCooldown == 0
+                    && _rng.NextDouble() < TrinketFindChance)
+                    pool.Add(RandomTrinketFind());
                 if (mage)
                 {
                     pool.Add(E_OldFlameSeer);
@@ -82,12 +79,9 @@ namespace AshAndEmber
                 if (_babyEventCountdown == 0 && _pregnancyCountdown == 0 && _tavernRobberyCountdown == 0)
                     pool.Add(EC_TavernStranger);
                 if (_brokenSealCountdown == 0 && _brokenSealPlotType == 0) pool.Add(EC_BrokenSeal);
-                if (_trinketPhase == 0)
-                {
-                    pool.Add(EB_TrinketEmberShard);
-                    pool.Add(EB_TrinketBlindEye);
-                    pool.Add(EB_TrinketPaleCompass);
-                }
+                if (_trinketPhase == 0 && _trinketFindCooldown == 0
+                    && _rng.NextDouble() < TrinketFindChance)
+                    pool.Add(RandomTrinketFind());
                 if (mage)
                 {
                     if (!ashen && _emberTitheRefusedCountdown == 0) pool.Add(E_EmberTithe);
