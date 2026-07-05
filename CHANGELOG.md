@@ -11,6 +11,11 @@
   - **Lasting Lattice is unchanged** — a crystal still shatters far less often when you draw from it.
 - Both new talents are the player's alone: an NPC crystal-bearer never reads your lapidary craft.
 
+### Fix — clan orders are now obeyed, and loyalty is earned (merged from the clan-orders branch)
+- **Parties you order to ride or to hunt now actually hold the course.** An ordered party was re-pointed only once per day, so between ticks its own AI took back over and wandered off — travel orders crawled and hunt orders barely followed. While an order is active the party's AI is now **pinned** (it stops making its own movement decisions and holds the road you set), and the hold is released the instant the order ends, is cancelled, or completes. The pin is re-asserted on session load and on every daily tick, so orders survive a save-and-reload rather than dissolving on the next campaign think.
+- **A poorly-led commander can no longer command distant captains at will.** Each day, every standing order faces a loyalty check against your **Leadership**: a captain under a leader with no standing may abandon the task and return to their own counsel (~10%/day at zero Leadership, falling to nothing as your Leadership grows). Well-earned Leadership keeps your house to its orders; a weak hand does not.
+- Fixed the acknowledgement line addressing the player by an unresolved name token (it now uses your first name).
+
 ## v0.38.4
 
 ### Crystals — used like a weapon, spent for good

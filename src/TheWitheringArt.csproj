@@ -290,6 +290,7 @@
     <Compile Include="Visual\FocusVisuals.cs"/>
     <Compile Include="Conclave\EmberConclaveSystem.cs"/>
     <Compile Include="Conclave\EmberConclaveLog.cs"/>
+    <Compile Include="ClanOrders\ClanOrdersMath.cs"/>
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.cs"/>
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.Tick.cs"/>
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.Dialogue.cs"/>
