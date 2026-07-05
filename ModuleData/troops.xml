@@ -592,6 +592,13 @@
        is fixed (min==max) so every Kindled shares one bare, uniform shape
        rather than looking like an individual person.
 
+       The body key must be a FULL, VALID body-properties key (~128 hex chars) —
+       the one below is the base game's adult "BodyProperty.looter" min key. A
+       short/truncated key (e.g. "0000000000000000") fails to parse and the body
+       falls back to BodyProperties.Default, whose age is 0 — so every Kindled
+       spawned as a NEWBORN/baby-scaled model. Keep the min==max age solidly
+       adult too.
+
        CULTURE MUST BE "Culture.looters" (plural). The base game's bandit culture
        id is "looters"; "Culture.looter" (singular) does NOT resolve, and an
        unresolved culture is a placeholder with a null Name. When the player
@@ -613,7 +620,7 @@
 
   <NPCCharacter id="elemental_being"
                 name="{=elemental_being_name}Elemental"
-                age="24"
+                age="30"
                 level="30"
                 culture="Culture.looters"
                 default_group="Infantry"
@@ -621,8 +628,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="true">
     <face>
-      <BodyPropertiesMin version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
     </face>
     <Equipments>
       <!-- Weaponless by design; a plain garment only, so the body renders. -->

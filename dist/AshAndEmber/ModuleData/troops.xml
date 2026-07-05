@@ -455,10 +455,13 @@
        be "Culture.looters" (plural, the base bandit culture); "Culture.looter"
        does not resolve, and its null-Name placeholder NREs when the caught-party
        conversation prints the character's culture (ConversationManager.StartNew)
-       — hard-crashing the game when the player engages a heroless wild band. -->
+       — hard-crashing the game when the player engages a heroless wild band. The
+       body key must be a FULL valid key (~128 hex) — the base "BodyProperty.looter"
+       adult min key below; a short key parses to BodyProperties.Default (age 0),
+       spawning baby-scaled models. -->
   <NPCCharacter id="elemental_being"
                 name="{=elemental_being_name}Elemental"
-                age="24"
+                age="30"
                 level="30"
                 culture="Culture.looters"
                 default_group="Infantry"
@@ -466,8 +469,8 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="true">
     <face>
-      <BodyPropertiesMin version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
     </face>
     <Equipments>
       <EquipmentRoster>

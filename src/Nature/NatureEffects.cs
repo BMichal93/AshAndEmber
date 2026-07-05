@@ -147,8 +147,7 @@ namespace AshAndEmber
         {
             Vec3 fwd = caster.LookDirection.NormalizedCopy();
             float halfAngle = NatureMath.GaleConeAngleDeg * 0.5f * (float)(Math.PI / 180.0);
-            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.GaleRadius, NatureElement.Wind, 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { SpawnEruptionCone(pos, fwd, NatureElement.Wind, NatureMath.GaleRadius); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnWindGust(pos, fwd, NatureMath.GaleRadius); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // On desert sand the gust drives a plume of stinging dust down its line.
             try
             {
@@ -175,6 +174,9 @@ namespace AshAndEmber
                     KnockbackAgent(enemy, enemy.Position + dir * NatureMath.GaleKnockback);
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // The gust visibly buffets the man it strikes — dust bursts off him.
+                try { SpellEffects.SpawnTempSmokeWisp(enemy.Position + new Vec3(0f, 0f, 1.0f), 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnNatureBurst(enemy.Position + new Vec3(0f, 0f, 0.2f), NatureElement.Wind, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 ApplySpeedToken(enemy, NatureMath.GaleSlowMult, NatureMath.GaleSlowSec * _castPower);
             });
         }
@@ -281,6 +283,34 @@ namespace AshAndEmber
                 Vec3 lp = pos + new Vec3((float)Math.Cos(a) * radius, (float)Math.Sin(a) * radius, 0.8f);
                 SpellEffects.SpawnTempLightRgb(lp, rgb, 4.5f, 0.6f);
                 try { SpellEffects.SpawnNatureBurst(lp, el, 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+        }
+
+        // Wind · the GUST made visible. Wind's own particles are faint ground dust,
+        // so a bare forward line of them barely reads — this drives a spreading front
+        // of dust-cloud (smoke wisps) at BODY height plus a pale-white glow streaming
+        // forward, brightest at the caster's hands and widening as it travels.
+        private static void SpawnWindGust(Vec3 pos, Vec3 fwd, float range)
+        {
+            Vec3 rgb   = SpellEffects.NatureElementRgb(NatureElement.Wind);   // pale white-blue
+            Vec3 right = new Vec3(fwd.y, -fwd.x, 0f);
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.2f), rgb, 9f, 0.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }   // mouth flash
+            const int steps = 6;
+            for (int i = 1; i <= steps; i++)
+            {
+                float t = (float)i / steps;
+                Vec3  centre = pos + fwd * (range * t);
+                float spread = 0.4f + t * 1.4f;   // the front widens as it drives out
+                for (int s = -1; s <= 1; s++)
+                {
+                    Vec3 node = centre + right * (s * spread);
+                    // A visible cloud of driven dust at chest height…
+                    try { SpellEffects.SpawnTempSmokeWisp(node + new Vec3(0f, 0f, 1.1f), 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    // …and a low kick of dust off the ground along the centre line.
+                    if (s == 0)
+                        try { SpellEffects.SpawnNatureBurst(node + new Vec3(0f, 0f, 0.2f), NatureElement.Wind, 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+                try { SpellEffects.SpawnTempLightRgb(centre + new Vec3(0f, 0f, 0.9f), rgb, 4.5f, 0.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
