@@ -48,6 +48,17 @@ namespace AshAndEmber
             try { store.SyncData("CLANORD_TARGET_IDS", ref _orderTargetIds); } catch { }
         }
 
+        // ── AI hold ───────────────────────────────────────────────────────────
+        // While an order is active we pin the party's AI so it stops making its own
+        // movement decisions and holds the course we set. Released the moment the
+        // order ends. (This flag is runtime-only and not serialised by the engine,
+        // so it is re-asserted on session launch and on every daily tick.)
+        internal static void SetAiHold(MobileParty party, bool hold)
+        {
+            if (party == null) return;
+            try { party.Ai.SetDoNotMakeNewDecisions(hold); } catch { }
+        }
+
         // ── Order CRUD ────────────────────────────────────────────────────────
         internal static void SetOrder(MobileParty party, string type, string targetId)
         {
@@ -56,6 +67,7 @@ namespace AshAndEmber
             _orderPartyIds.Add(party.StringId);
             _orderTypes.Add(type);
             _orderTargetIds.Add(targetId);
+            SetAiHold(party, true);
         }
 
         internal static void ClearOrder(MobileParty party)
@@ -63,6 +75,7 @@ namespace AshAndEmber
             if (party == null) return;
             int idx = _orderPartyIds.IndexOf(party.StringId);
             if (idx < 0) return;
+            SetAiHold(party, false);
             _orderPartyIds.RemoveAt(idx);
             _orderTypes.RemoveAt(idx);
             _orderTargetIds.RemoveAt(idx);
@@ -99,6 +112,15 @@ namespace AshAndEmber
         {
             try
             {
+                // Release the AI hold on the party whose order is ending.
+                try
+                {
+                    string pid   = _orderPartyIds[idx];
+                    var    party = MobileParty.All.FirstOrDefault(p => p.StringId == pid);
+                    SetAiHold(party, false);
+                }
+                catch { }
+
                 _orderPartyIds.RemoveAt(idx);
                 _orderTypes.RemoveAt(idx);
                 _orderTargetIds.RemoveAt(idx);

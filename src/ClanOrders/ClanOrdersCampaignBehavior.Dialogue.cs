@@ -23,6 +23,7 @@ namespace AshAndEmber
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             RegisterDialogue(starter);
+            try { ReassertAllOrders(); } catch { }
         }
 
         // ── Dialogue lines ────────────────────────────────────────────────────
@@ -174,6 +175,15 @@ namespace AshAndEmber
         private static void CaptureOrderLeader()
         {
             try { _pendingLeaderHeroId = Hero.OneToOneConversationHero?.StringId; } catch { }
+
+            // {PLAYER_FIRST_NAME} is not an engine-registered conversation token, so
+            // set it explicitly for the acknowledgement line below.
+            try
+            {
+                var first = Hero.MainHero?.FirstName ?? Hero.MainHero?.Name;
+                if (first != null) MBTextManager.SetTextVariable("PLAYER_FIRST_NAME", first);
+            }
+            catch { }
         }
 
         private static void BuildStatusText()
