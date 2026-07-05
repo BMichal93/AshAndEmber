@@ -104,7 +104,7 @@ namespace AshAndEmber
                 _ashenIds.Add(hero.StringId);
                 MageKnowledge.ApplyAshenAppearance(hero);
                 // Move clan to the Ashen kingdom (or eject if kingdom isn't ready yet)
-                try { AshenCitySystem.OnHeroSetAshen(hero); } catch { }
+                try { AshenCitySystem.OnHeroSetAshen(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Ashen lords take the cold-fire destroyer archetype.
                 // Overwrite any prior path assignment so their talent set is coherent.
                 var ashenTalents = new List<int>
@@ -119,7 +119,7 @@ namespace AshAndEmber
                 if (_rng.Next(10) < 4) ashenTalents.Add((int)TalentId.Immolate); // 40% the cold that takes
                 _lordTalents[hero.StringId] = ashenTalents;
                 // Seed dark gifts for this Ashen lord.
-                try { DarkGiftSystem.SeedNpcGifts(hero, isAshenLord: true, isEvilLord: false); } catch { }
+                try { DarkGiftSystem.SeedNpcGifts(hero, isAshenLord: true, isEvilLord: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else
             {
@@ -222,7 +222,7 @@ namespace AshAndEmber
                         DarkGiftSystem.SeedNpcGifts(h, isAshenLord: false, isEvilLord: true);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Seed dark gifts for Aserai lords — the desert carries the culture of darkness.
                 try
@@ -235,9 +235,9 @@ namespace AshAndEmber
                         DarkGiftSystem.SeedNpcGifts(h, isAshenLord: false, isEvilLord: true);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void AssignPathArchetype(string heroId)
@@ -319,7 +319,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Life expectancy (spellcasting cost — mirrors the player) ──────────────
@@ -367,7 +367,7 @@ namespace AshAndEmber
                 if (calc > 0) return CasterTemper.Calculating;
                 if (calc < 0) return CasterTemper.Impulsive;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return CasterTemper.Balanced;
         }
 
@@ -435,10 +435,10 @@ namespace AshAndEmber
                             new Color(0.5f, 0.3f, 0.7f)));
                         KillCharacterAction.ApplyByOldAge(h, true);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Campaign map casting ───────────────────────────────────────────────
@@ -520,10 +520,10 @@ namespace AshAndEmber
                         else if (isBlight)  ashenCastsToday++;
                         else                normalCastsToday++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Death ─────────────────────────────────────────────────────────────

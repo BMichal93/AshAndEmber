@@ -99,20 +99,20 @@ namespace AshAndEmber
                     _stillHours = 0;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
-            try { RegisterNatureMenus(starter); } catch { }
-            try { MagicTeacherDialogue.Register(starter); } catch { }
+            try { RegisterNatureMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MagicTeacherDialogue.Register(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void SyncData(IDataStore store)
         {
-            try { NatureKnowledge.Save(store);              } catch { }
-            try { NatureSeerRegistry.Save(store);           } catch { }
-            try { LivingEnergy.Save(store);                 } catch { }
+            try { NatureKnowledge.Save(store);              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureSeerRegistry.Save(store);           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { LivingEnergy.Save(store);                 } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void ResetForNewGame()
@@ -133,7 +133,7 @@ namespace AshAndEmber
             // Campaign charges come from standing still (see OnHourlyTick).
 
             // The living world mends a little each day it is left in peace.
-            try { LivingEnergy.DailyRegen(); } catch { }
+            try { LivingEnergy.DailyRegen(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // NPC Nature Seers draw on the land once a day when the chance fires.
             try
@@ -149,7 +149,7 @@ namespace AshAndEmber
                     // Prefer Earth Root-Mend when their party has many wounded.
                     int wounded = 0;
                     try { wounded = hero.PartyBelongedTo.MemberRoster
-                            .GetTroopRoster().Sum(e => e.WoundedNumber); } catch { }
+                            .GetTroopRoster().Sum(e => e.WoundedNumber); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     NatureElement el = allEls[_rng.Next(allEls.Length)];
                     NaturePower power = wounded > 3
                         ? NatureMath.SupportPower(NatureElement.Earth)
@@ -164,7 +164,7 @@ namespace AshAndEmber
                         if (outcome.Soured)
                             NatureBacklash.ApplyMap(hero.PartyBelongedTo, hero, announce: false);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     string msg = NatureEffects.ApplyCampaignEffect(power, hero.PartyBelongedTo);
                     if (!string.IsNullOrEmpty(msg) && _rng.NextDouble() < 0.20)
@@ -172,7 +172,7 @@ namespace AshAndEmber
                             $"{hero.Name}: {msg}", new Color(0.35f, 0.75f, 0.35f)));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Tick hermit cooldowns
             foreach (string key in _hermitCooldowns.Keys.ToList())
@@ -189,7 +189,7 @@ namespace AshAndEmber
             if (party != MobileParty.MainParty) return;
             if (!NatureKnowledge.IsAttuned) return;
 
-            try { CheckHermitEncounter(settlement); } catch { }
+            try { CheckHermitEncounter(settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private void CheckHermitEncounter(Settlement settlement)
@@ -200,7 +200,7 @@ namespace AshAndEmber
 
             // Renown gate — the hermits do not teach the untested
             float renown = 0f;
-            try { renown = TaleWorlds.CampaignSystem.Hero.MainHero?.Clan?.Renown ?? 0f; } catch { }
+            try { renown = TaleWorlds.CampaignSystem.Hero.MainHero?.Clan?.Renown ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (renown < 100f) return;
 
             string culture = settlement.Culture?.StringId ?? "";
@@ -344,7 +344,7 @@ namespace AshAndEmber
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsVillage) return false;
                             string sName = null;
-                            try { sName = s.Name?.ToString()?.Trim(); } catch { }
+                            try { sName = s.Name?.ToString()?.Trim(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             if (!string.Equals(sName, RetreatVillageName,
                                     System.StringComparison.OrdinalIgnoreCase)) return false;
                             if (!NatureKnowledge.IsAttuned) return false;
@@ -353,7 +353,7 @@ namespace AshAndEmber
                             MBTextManager.SetTextVariable("NATURE_RETREAT_LABEL",
                                 taught ? "The mountain retreat [Tiryn has taught you what she knows]"
                                        : "Seek the hermit at the mountain retreat");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             args.IsEnabled = !taught;
                             return true;
                         }
@@ -361,11 +361,11 @@ namespace AshAndEmber
                     },
                     args =>
                     {
-                        try { GameMenu.SwitchToMenu("nature_retreat_menu"); } catch { }
+                        try { GameMenu.SwitchToMenu("nature_retreat_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Retreat submenu
             try
@@ -377,7 +377,7 @@ namespace AshAndEmber
                     "\"You listen,\" she says. \"Come, then.\"",
                     args => { });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -385,7 +385,7 @@ namespace AshAndEmber
                     "I am listening.",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args =>
@@ -395,12 +395,12 @@ namespace AshAndEmber
                             if (MageKnowledge._deferredInquiry == null)
                                 MageKnowledge._deferredInquiry = ShowTiryn;
                         }
-                        catch { }
-                        try { GameMenu.SwitchToMenu("village"); } catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { GameMenu.SwitchToMenu("village"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -408,16 +408,16 @@ namespace AshAndEmber
                     "Leave.",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args =>
                     {
-                        try { GameMenu.SwitchToMenu("village"); } catch { }
+                        try { GameMenu.SwitchToMenu("village"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Tiryn — Marunath Retreat — Deep Earth ─────────────────────────────
@@ -488,7 +488,7 @@ namespace AshAndEmber
             TaleWorlds.CampaignSystem.Actions.KillCharacterAction.KillCharacterActionDetail detail,
             bool showNotification)
         {
-            try { NatureSeerRegistry.OnLordDied(victim); } catch { }
+            try { NatureSeerRegistry.OnLordDied(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

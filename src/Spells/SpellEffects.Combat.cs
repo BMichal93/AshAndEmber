@@ -70,7 +70,7 @@ namespace AshAndEmber
                     if (isEnemy) result.Add(a);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return result;
         }
 
@@ -94,8 +94,8 @@ namespace AshAndEmber
         {
             if (target == null || target.IsHero) return;
             bool usingEquip = false;
-            try { usingEquip = target.IsUsingGameObject; } catch { }
-            if (usingEquip) { try { target.Health = 1f; } catch { } return; }
+            try { usingEquip = target.IsUsingGameObject; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (usingEquip) { try { target.Health = 1f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return; }
             if (target.IsActive() && !_pendingDeaths.Exists(e => e.Target == target))
                 _pendingDeaths.Add((target, owner));
         }
@@ -124,24 +124,34 @@ namespace AshAndEmber
         {
             if (target == null || !target.IsActive()) return;
             if (target.IsHero)
-            { try { target.Health = Math.Max(1f, target.Health - 2f); } catch { } return; }
+            { try { target.Health = Math.Max(1f, target.Health - 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return; }
             bool usingEquip = false;
-            try { usingEquip = target.IsUsingGameObject; } catch { }
-            if (usingEquip) { try { target.Health = 1f; } catch { } return; }
+            try { usingEquip = target.IsUsingGameObject; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (usingEquip) { try { target.Health = 1f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return; }
             try
             {
                 Blow blow = BuildBlow(target, DamageTypes.Cut, 2000f, owner);
                 target.Die(blow, (Agent.KillInfo)0);
                 return;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!target.IsActive()) return;
-            try { target.MakeDead(true, ActionIndexCache.Create("act_strike_walk_right_stance"), 0); } catch { }
+            try { target.MakeDead(true, ActionIndexCache.Create("act_strike_walk_right_stance"), 0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        public static void DamageAgent(Agent target, float damage, ColorSchool? school = null, Agent owner = null)
+        public static void DamageAgent(Agent target, float damage, ColorSchool? school = null, Agent owner = null,
+            MagicElement? attackElement = null)
         {
             if (target == null || !target.IsActive()) return;
+
+            // The Kindled: an elemental being drinks its own element and buckles to
+            // the one that unmakes it. Only bites when the caller knows which
+            // element it threw (fire cone/wall, the nature powers) — a plain hit
+            // with no element passes through unchanged.
+            if (attackElement.HasValue)
+            {
+                try { damage *= ElementalBeings.IncomingElementMultiplier(target, attackElement.Value); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
 
             // Cinder Shell enchantment: reduce incoming damage
             if (_stoneskinAgents.TryGetValue(target, out var skin) && skin.Remaining > 0f)
@@ -161,15 +171,15 @@ namespace AshAndEmber
             if (newHealth <= 0f)
             {
                 if (!target.IsHero) QueueKill(target, owner);
-                else try { target.Health = 1f; } catch { }
+                else try { target.Health = 1f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            else try { target.Health = newHealth; } catch { }
+            else try { target.Health = newHealth; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void HealAgent(Agent target, float amount)
         {
             if (target == null || !target.IsActive()) return;
-            try { target.Health = Math.Min(target.HealthLimit, target.Health + amount); } catch { }
+            try { target.Health = Math.Min(target.HealthLimit, target.Health + amount); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static Blow BuildBlow(Agent target, DamageTypes type, float magnitude, Agent owner = null)
@@ -207,7 +217,7 @@ namespace AshAndEmber
                     result.Add(a);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return result;
         }
 
@@ -228,7 +238,7 @@ namespace AshAndEmber
                     result.Add(a);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return result;
         }
 
@@ -252,7 +262,7 @@ namespace AshAndEmber
                     count++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return count;
         }
 
@@ -270,7 +280,7 @@ namespace AshAndEmber
                     count++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return count;
         }
 

@@ -43,7 +43,7 @@ namespace AshAndEmber
                     $"While you were away your broker closed the {name} position at 90% of book — {payout} denars returned.",
                     new Color(0.65f, 0.60f, 0.40f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Daily tick ────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ namespace AshAndEmber
                     if (_townCooldowns[key] <= 0) _townCooldowns.Remove(key);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Menus ─────────────────────────────────────────────────────────────
@@ -78,27 +78,27 @@ namespace AshAndEmber
                             // Tribes of the East have no organised exchange — only tribute and blood.
                             if (s.OwnerClan?.Kingdom?.StringId == TribalKingdomBehavior.KhuzaitId)
                                 return false;
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                             int cd = 0;
-                            try { _townCooldowns.TryGetValue(s.StringId, out cd); } catch { }
+                            try { _townCooldowns.TryGetValue(s.StringId, out cd); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                             args.IsEnabled = cd <= 0 && _ventureActive == 0;
                             if (cd > 0)
                                 try { args.Tooltip = new TextObject(
-                                    $"The factors remember your last venture — {cd} day{(cd != 1 ? "s" : "")} before they deal with you again."); } catch { }
+                                    $"The factors remember your last venture — {cd} day{(cd != 1 ? "s" : "")} before they deal with you again."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             else if (_ventureActive != 0)
-                                try { args.Tooltip = new TextObject("You already hold an open position."); } catch { }
+                                try { args.Tooltip = new TextObject("You already hold an open position."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             return true;
                         }
                         catch { return false; }
                     },
                     args =>
                     {
-                        try { RollOffers(); GameMenu.SwitchToMenu("ldm_exchange_menu"); } catch { }
+                        try { RollOffers(); GameMenu.SwitchToMenu("ldm_exchange_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Exchange floor menu ───────────────────────────────────────────
             try
@@ -121,10 +121,10 @@ namespace AshAndEmber
                                 + "Pick a board to open a position. Each round: SELL to close, HOLD STEADY, or SPECULATE HARD.\n"
                                 + "Crash risk grows the longer you stay in. Running out of rounds forces a sale at 90%.");
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── One option per volatility class ───────────────────────────────
             try
@@ -149,7 +149,7 @@ namespace AshAndEmber
                                     MBTextManager.SetTextVariable(textKey,
                                         $"{_offer[vol]}  —  {ClassRiskDescs[vol]}"
                                         + (canAfford ? "" : "  [not enough coin]"));
-                                    try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                                    try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     args.IsEnabled = canAfford;
 
                                     int mood  = CurrentMood();
@@ -162,17 +162,17 @@ namespace AshAndEmber
                                         $"Hold Steady: {Pct(sMin)} to {Pct(sMax)} per round.\n"
                                         + $"Speculate Hard: {Pct(hMin)} to {Pct(hMax)} per round.\n"
                                         + $"Starting crash risk: ~{cPct}% (climbs each round)."
-                                        + (canAfford ? "" : $"\nMinimum stake: {minStake}g.")); } catch { }
+                                        + (canAfford ? "" : $"\nMinimum stake: {minStake}g.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
-                                catch { }
+                                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 return true;
                             },
                             args => OpenStakeUI(vol));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Leave ──────────────────────────────────────────────────────────
             try
@@ -182,13 +182,13 @@ namespace AshAndEmber
                     "Step back out into the street.",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("town"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void RollOffers()
@@ -199,7 +199,7 @@ namespace AshAndEmber
                 _offer[1] = CraftedGoods[_rng.Next(CraftedGoods.Length)];
                 _offer[2] = LuxuryGoods[_rng.Next(LuxuryGoods.Length)];
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Stake selection ───────────────────────────────────────────────────
@@ -234,11 +234,11 @@ namespace AshAndEmber
                                 if (!(chosen[0].Identifier is int stake)) return;
                                 CommitVenture(vol, stake);
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CommitVenture(int vol, int stake)
@@ -255,7 +255,7 @@ namespace AshAndEmber
                 }
                 if (_ventureActive != 0) return;
 
-                try { Hero.MainHero.Gold -= stake; } catch { }
+                try { Hero.MainHero.Gold -= stake; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 _ventureActive      = 1;
                 _ventureStake       = stake;
@@ -268,12 +268,12 @@ namespace AshAndEmber
                 _ventureCommodity   = _offer[vol];
                 _roundHistory.Clear();
 
-                try { _townCooldowns[_ventureTownId] = SpeculationMath.CooldownDays; } catch { }
+                try { _townCooldowns[_ventureTownId] = SpeculationMath.CooldownDays; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                try { GameMenu.SwitchToMenu("town"); } catch { }
-                MageKnowledge._deferredInquiry = () => { try { ShowRound(); } catch { } };
+                try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                MageKnowledge._deferredInquiry = () => { try { ShowRound(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

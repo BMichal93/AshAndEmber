@@ -247,7 +247,7 @@ namespace AshAndEmber
                     chosen =>
                     {
                         try { HandleInitialChoice(chosen?[0]?.Identifier as string ?? "destroy"); }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     null, "", false
                 ), false);
@@ -268,7 +268,7 @@ namespace AshAndEmber
                     case PhaseQC: TickQC(); break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void WeeklyTick()
@@ -281,7 +281,7 @@ namespace AshAndEmber
                 if (_phase == PhaseQC)
                     TickQCWeeklyPrompt();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Save / Load ────────────────────────────────────────────────────────
@@ -400,8 +400,8 @@ namespace AshAndEmber
         internal void LogTrueEmperorDead() =>
             AddLog(new TextObject("The emperor is dead. The empire he briefly held together has fractured. The resurrection failed to hold."));
 
-        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch { } }
-        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch { } }
+        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
+        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
     }
 
     public sealed class BurningLabQBLog : QuestBase
@@ -434,7 +434,7 @@ namespace AshAndEmber
         internal void LogBadComplete() =>
             AddLog(new TextObject("The grey tide has consumed everything it was given. The faction is no more."));
 
-        internal void CompleteFail() { try { CompleteQuestWithFail(); } catch { } }
+        internal void CompleteFail() { try { CompleteQuestWithFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
     }
 
     public sealed class BurningLabQCLog : QuestBase
@@ -467,7 +467,7 @@ namespace AshAndEmber
         internal void LogDiscarded() =>
             AddLog(new TextObject("The scrolls go into the fire. Whatever they were offering is gone. The last line was still readable when the ashes cooled."));
 
-        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch { } }
-        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch { } }
+        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
+        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
     }
 }

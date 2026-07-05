@@ -158,7 +158,7 @@ namespace AshAndEmber
                     var lf = new MatrixFrame(Mat3.Identity, m.Position);
                     m.Light.SetGlobalFrame(in lf, true);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             if (m.Light2 != null)
             {
@@ -167,7 +167,7 @@ namespace AshAndEmber
                     var lf2 = new MatrixFrame(Mat3.Identity, m.Position + new Vec3(0f, 0f, 0.4f));
                     m.Light2.SetGlobalFrame(in lf2, true);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             m.TrailTimer -= dt;
@@ -206,11 +206,11 @@ namespace AshAndEmber
                                 ApplyEffectsToAgent(a, m.Cast, Agent.Main);
                                 SpawnImpactBurst(a.Position, m.Cast.VisualColor, 3f);
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (m.TravelLeft <= 0f)
                     ExplodeMissileState(ref m, m.Position, isTwin);
             }
@@ -231,7 +231,7 @@ namespace AshAndEmber
                         return;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (m.TravelLeft <= 0f)
                     ExplodeMissileState(ref m, m.Position, isTwin);
             }
@@ -242,8 +242,8 @@ namespace AshAndEmber
         {
             if (slot == null) return;
             MissileState m = slot;
-            try { m.Light?.Remove(0);  } catch { }
-            try { m.Light2?.Remove(0); } catch { }
+            try { m.Light?.Remove(0);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { m.Light2?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             slot = null;
 
             if (Mission.Current == null) return;
@@ -278,10 +278,10 @@ namespace AshAndEmber
                         SpawnImpactBurst(a.Position, col, 4f);
                         affected++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (wantDmg) ScatterEnemies(pos, radius, m.CasterTeam);
 
@@ -304,14 +304,14 @@ namespace AshAndEmber
         {
             if (_missile != null)
             {
-                try { _missile.Light?.Remove(0);  } catch { }
-                try { _missile.Light2?.Remove(0); } catch { }
+                try { _missile.Light?.Remove(0);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _missile.Light2?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _missile = null;
             }
             if (_missile2 != null)
             {
-                try { _missile2.Light?.Remove(0);  } catch { }
-                try { _missile2.Light2?.Remove(0); } catch { }
+                try { _missile2.Light?.Remove(0);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _missile2.Light2?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _missile2 = null;
             }
         }
@@ -359,7 +359,7 @@ namespace AshAndEmber
                         count++;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             string msg = count > 1
@@ -391,7 +391,7 @@ namespace AshAndEmber
                         BeginAgentGlow(ally, ColorSchool.White, 10f);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 

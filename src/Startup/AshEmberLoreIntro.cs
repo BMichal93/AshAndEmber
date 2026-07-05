@@ -119,7 +119,7 @@ namespace AshAndEmber
             }
             catch
             {
-                try { Finish(); } catch { }
+                try { Finish(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -193,8 +193,8 @@ namespace AshAndEmber
                 if (_hostScreen != null && _layer != null && _hostScreen.HasLayer(_layer))
                     _hostScreen.RemoveLayer(_layer);
             }
-            catch { }
-            try { _layer?.ReleaseMovie(_movie); } catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { _layer?.ReleaseMovie(_movie); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _layer      = null;
             _hostScreen = null;
             _vm         = null;

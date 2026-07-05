@@ -47,7 +47,7 @@ namespace AshAndEmber
                         (a.Character as CharacterObject)?.HeroObject is Hero h &&
                         ColourLordRegistry.IsAshenLord(h));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (!playerAshen && !ashenEnemies) return;
 
@@ -81,7 +81,7 @@ namespace AshAndEmber
                     _setFogMethod.Invoke(scene, new object[]
                         { 0.004f, new Vec3(0.48f, 0.52f, 0.68f), 1.2f });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TryApplyAshenSky()
@@ -107,7 +107,7 @@ namespace AshAndEmber
                     _setSunMethod.Invoke(scene, new object[]
                         { new Vec3(0.3f, 0.7f, 0.4f), new Vec3(0.5f, 0.55f, 0.7f), 1.0f });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void Reset()

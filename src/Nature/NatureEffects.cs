@@ -87,7 +87,7 @@ namespace AshAndEmber
             if (power == NaturePower.None || caster == null || !caster.IsActive()) return;
             _castPower = castPower <= 0f ? 0.01f : castPower;
             try { ExecuteBattleCore(power, caster, casterTeam); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             finally { _castPower = 1f; }
         }
 
@@ -98,9 +98,29 @@ namespace AshAndEmber
             catch { return false; }
         }
 
+        // Which castable element the current battle power counts as — read by
+        // ApplyDamage so the Kindled's weakness knows what struck it. Mission-
+        // scoped, set only for the duration of one power's resolution.
+        private static MagicElement? _currentAttackElement = null;
+
+        private static MagicElement? ElementFor(NaturePower power)
+        {
+            switch (NatureMath.ElementOf(power))
+            {
+                case NatureElement.Wind:  return MagicElement.Wind;
+                case NatureElement.Earth: return MagicElement.Earth;
+                case NatureElement.Water: return MagicElement.Water;
+                case NatureElement.Storm: return MagicElement.Wind;   // storm rides the wind
+                default:                  return null;
+            }
+        }
+
         private static void ExecuteBattleCore(NaturePower power, Agent caster, Team team)
         {
             Vec3 pos = caster.Position;
+            _currentAttackElement = ElementFor(power);
+            try
+            {
             switch (power)
             {
                 case NaturePower.Gale:        BattleGale(caster, pos, team);                              break;
@@ -115,15 +135,17 @@ namespace AshAndEmber
 
             // Living glow + element light bloom (the per-power shapes are spawned
             // inside each Battle* method).
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2.5f); } catch { }
-            try { SpawnElementVisual(NatureMath.ElementOf(power), pos); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnElementVisual(NatureMath.ElementOf(power), pos); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            finally { _currentAttackElement = null; }
         }
 
         // Wind · Gale — 360° knockback + damage; a ring of blown dust.
         private static void BattleGale(Agent caster, Vec3 pos, Team team)
         {
-            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f, 1.6f); } catch { }
-            try { SpawnEruptionRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f); } catch { }
+            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f, 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnEruptionRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // On desert sand the gale whips up a ring of stinging dust.
             try
             {
@@ -136,11 +158,11 @@ namespace AshAndEmber
                         SpellEffects.SpawnNatureBurst(dp, NatureElement.Earth, 0.8f);
                     }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ForEachEnemyInRadius(pos, NatureMath.GaleRadius, team, enemy =>
             {
                 // Walls of flame and standing water devour a gale that crosses them.
-                try { if (ElementWallWards.BlocksPath(MagicElement.Wind, pos, enemy.Position, out _)) return; } catch { }
+                try { if (ElementWallWards.BlocksPath(MagicElement.Wind, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
                 ApplyDamage(enemy, caster, NatureMath.GaleDamage, DamageTypes.Invalid);
                 try
@@ -148,7 +170,7 @@ namespace AshAndEmber
                     Vec3 dir = (enemy.Position - pos).NormalizedCopy();
                     KnockbackAgent(enemy, enemy.Position + dir * NatureMath.GaleKnockback);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 ApplySpeedToken(enemy, NatureMath.GaleSlowMult, NatureMath.GaleSlowSec * _castPower);
             });
         }
@@ -156,9 +178,9 @@ namespace AshAndEmber
         // All barrier powers — place an elemental wall in front of the caster.
         private static void BattleBarrier(Agent caster, Vec3 pos, Team team, NatureElement el)
         {
-            try { SpellEffects.SpawnNatureBarrier(pos, caster.LookDirection, el, team, _castPower); } catch { }
+            try { SpellEffects.SpawnNatureBarrier(pos, caster.LookDirection, el, team, _castPower); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             bool isPlayer = false;
-            try { isPlayer = Agent.Main != null && caster == Agent.Main; } catch { }
+            try { isPlayer = Agent.Main != null && caster == Agent.Main; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (isPlayer)
                 Msg($"{NatureMath.PowerName(NatureMath.SupportPower(el))} — the land rises before you.", NatureColor);
         }
@@ -166,17 +188,17 @@ namespace AshAndEmber
         // Earth · Entangle — roots erupt in an AoE: damage + immobilise; root ring.
         private static void BattleEntangle(Agent caster, Vec3 pos, Team team)
         {
-            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f, 2.5f); } catch { }
-            try { SpawnEruptionRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f); } catch { }
+            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f, 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnEruptionRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ForEachEnemyInRadius(pos, NatureMath.EntangleRadius, team, enemy =>
             {
                 // A wall of driven wind scatters flung stone before it lands.
-                try { if (ElementWallWards.BlocksPath(MagicElement.Earth, pos, enemy.Position, out _)) return; } catch { }
+                try { if (ElementWallWards.BlocksPath(MagicElement.Earth, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
                 ApplyDamage(enemy, caster, NatureMath.EntangleDamage, DamageTypes.Blunt);
-                try { enemy.SetMaximumSpeedLimit(0f, false); } catch { }
+                try { enemy.SetMaximumSpeedLimit(0f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 ApplySpeedToken(enemy, 0f, NatureMath.EntangleRootSec * _castPower);   // held in place (root scales with draw)
-                try { SpellEffects.SpawnNatureBurst(enemy.Position, NatureElement.Earth, 2.0f); } catch { }
+                try { SpellEffects.SpawnNatureBurst(enemy.Position, NatureElement.Earth, 2.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             });
             ApplySpeedToken(caster, 0f, NatureMath.EntangleStaggerSec);
         }
@@ -186,8 +208,8 @@ namespace AshAndEmber
         {
             Vec3 fwd = caster.LookDirection.NormalizedCopy();
             float halfAngle = NatureMath.TorrentAngleDeg * 0.5f * (float)(Math.PI / 180.0);
-            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.TorrentRange, NatureElement.Water, 2.0f); } catch { }
-            try { SpawnEruptionCone(pos, fwd, NatureElement.Water, NatureMath.TorrentRange); } catch { }
+            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.TorrentRange, NatureElement.Water, 2.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnEruptionCone(pos, fwd, NatureElement.Water, NatureMath.TorrentRange); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // The wave puts out fire along its path — burning ground boils to
             // steam (and any fire-wall warding there dies), burning men are doused.
@@ -197,18 +219,18 @@ namespace AshAndEmber
                 SpellEffects.QuenchFireAt(pos + fwd * 6f, 3.5f);
                 SpellEffects.QuenchFireAt(pos + fwd * NatureMath.TorrentRange, 3.5f);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             ForEachEnemyInRadius(pos, NatureMath.TorrentRange, team, enemy =>
             {
                 Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
                 if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;
                 // A standing dam of stone breaks the wave before it strikes.
-                try { if (ElementWallWards.BlocksPath(MagicElement.Water, pos, enemy.Position, out _)) return; } catch { }
-                try { ElementSpellEffects.QuenchIgnition(enemy); } catch { }
+                try { if (ElementWallWards.BlocksPath(MagicElement.Water, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ElementSpellEffects.QuenchIgnition(enemy); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
                 ApplyDamage(enemy, caster, NatureMath.TorrentDamage, DamageTypes.Invalid);
-                try { KnockbackAgent(enemy, enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch { }
+                try { KnockbackAgent(enemy, enemy.Position + toEnemy * NatureMath.TorrentKnockback); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 ApplySpeedToken(enemy, NatureMath.TorrentSlowMult, NatureMath.TorrentSlowSec * _castPower);
             });
         }
@@ -220,18 +242,18 @@ namespace AshAndEmber
             if (primary == null) return;
 
             ApplyDamage(primary, caster, NatureMath.ThunderDamage, DamageTypes.Invalid);
-            try { primary.SetMaximumSpeedLimit(0f, false); } catch { }
+            try { primary.SetMaximumSpeedLimit(0f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ApplySpeedToken(primary, 0f, NatureMath.ThunderStunSec);
-            try { SpellEffects.SpawnTempLightWhite(primary.Position + new Vec3(0f, 0f, 1f), 10f, 0.3f); } catch { }
-            try { SpellEffects.SpawnNatureBurst(primary.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 1.0f); } catch { }
+            try { SpellEffects.SpawnTempLightWhite(primary.Position + new Vec3(0f, 0f, 1f), 10f, 0.3f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnNatureBurst(primary.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 1.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int chains = 0;
             ForEachEnemyInRadius(primary.Position, NatureMath.ThunderChainRadius, team, chain =>
             {
                 if (chains >= NatureMath.ThunderChainCount || chain == primary) return;
                 ApplyDamage(chain, caster, NatureMath.ThunderChainDamage, DamageTypes.Invalid);
-                try { SpellEffects.SpawnTempLightWhite(chain.Position + new Vec3(0f, 0f, 1f), 7f, 0.25f); } catch { }
-                try { SpellEffects.SpawnNatureBurst(chain.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 0.9f); } catch { }
+                try { SpellEffects.SpawnTempLightWhite(chain.Position + new Vec3(0f, 0f, 1f), 7f, 0.25f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnNatureBurst(chain.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 chains++;
             });
         }
@@ -249,7 +271,7 @@ namespace AshAndEmber
                 double a = Math.PI * 2.0 / n * i;
                 Vec3 lp = pos + new Vec3((float)Math.Cos(a) * radius, (float)Math.Sin(a) * radius, 0.8f);
                 SpellEffects.SpawnTempLightRgb(lp, rgb, 4.5f, 0.6f);
-                try { SpellEffects.SpawnNatureBurst(lp, el, 0.7f); } catch { }
+                try { SpellEffects.SpawnNatureBurst(lp, el, 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -265,7 +287,7 @@ namespace AshAndEmber
                 float t = (float)i / steps;
                 Vec3 lp = pos + fwd * (range * t) + new Vec3(0f, 0f, 0.8f);
                 SpellEffects.SpawnTempLightRgb(lp, rgb, 4.5f, 0.6f);
-                try { SpellEffects.SpawnNatureBurst(lp, el, 0.7f); } catch { }
+                try { SpellEffects.SpawnNatureBurst(lp, el, 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -320,7 +342,7 @@ namespace AshAndEmber
         {
             if (party == null) return "";
             bool isMain = false;
-            try { isMain = party.IsMainParty; } catch { }
+            try { isMain = party.IsMainParty; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             switch (power)
             {
                 case NaturePower.Windwall:  return CampaignWindward(party, isMain);
@@ -337,7 +359,7 @@ namespace AshAndEmber
         // DOWNSIDE: ~15 food scatters in the gust.
         private static string CampaignWindward(MobileParty party, bool isPlayer)
         {
-            try { party.RecentEventsMorale += 10f; } catch { }
+            try { party.RecentEventsMorale += 10f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!isPlayer)
                 return "The wind steadies the march (+10 morale).";
 
@@ -349,7 +371,7 @@ namespace AshAndEmber
             try
             {
                 Settlement target = null;
-                try { target = MobileParty.MainParty.TargetSettlement; } catch { }
+                try { target = MobileParty.MainParty.TargetSettlement; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (target != null)
                 {
                     Vec2 cur  = party.GetPosition2D;
@@ -368,7 +390,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // No movement target: scout the horizon instead.
             if (!advanced)
@@ -393,7 +415,7 @@ namespace AshAndEmber
                               $"{t.mp.Name} (~{t.mp.Party.MemberRoster.TotalManCount} men)")) + "."
                         : " The wind finds no enemies within reach.";
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return $"The wind goes out ahead and comes back knowing things.{scouted}{costLine} (+10 morale)";
             }
             return $"The wind stirs the column.{costLine} (+10 morale)";
@@ -404,7 +426,7 @@ namespace AshAndEmber
         // DOWNSIDE: Hero loses 15 HP — the roots take from the nearest living vessel.
         private static string CampaignRootMend(MobileParty party, bool isPlayer)
         {
-            try { party.RecentEventsMorale += 8f; } catch { }
+            try { party.RecentEventsMorale += 8f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!isPlayer)
                 return "The earth stirs and steadies the march (+8 morale).";
 
@@ -421,7 +443,7 @@ namespace AshAndEmber
                     if (d < best) { best = d; nearest = s; }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int hearthGain = 0;
             string villageName = "";
@@ -433,7 +455,7 @@ namespace AshAndEmber
                     nearest.Village.Hearth += 50f;
                     hearthGain = 50;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // The tithe: roots draw from the most alive thing nearby.
@@ -447,7 +469,7 @@ namespace AshAndEmber
                     if (hpDrained > 0) h.HitPoints -= hpDrained;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             string titeLine = hpDrained > 0 ? $" [{hpDrained} HP taken as tithe]" : "";
             string hearthLine = hearthGain > 0
@@ -467,7 +489,7 @@ namespace AshAndEmber
             if (!isPlayer)
             {
                 int healed = HealWounded(party, 6);
-                try { party.RecentEventsMorale += 10f; } catch { }
+                try { party.RecentEventsMorale += 10f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return healed > 0
                     ? $"Cool mist passes through the march; {healed} healed (+10 morale)."
                     : "Cool mist passes through the march (+10 morale).";
@@ -486,7 +508,7 @@ namespace AshAndEmber
                              || t == "Wetland" || t == "Arctic";
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (!nearWater)
             {
@@ -507,7 +529,7 @@ namespace AshAndEmber
                     .OrderBy(s => (s.GetPosition2D - cur).Length)
                     .ToList();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (ports == null || ports.Count == 0)
             {
@@ -537,10 +559,10 @@ namespace AshAndEmber
                         {
                             var main = MobileParty.MainParty;
                             main.Position = dest.GatePosition;
-                            try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                            try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
-                        try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Msg($"The current delivers you to the harbour at {dest.Name}. " +
                             "Not all are sure how far they have come. [-20 morale]", NatureColor);
                     },
@@ -554,10 +576,10 @@ namespace AshAndEmber
                 {
                     var main = MobileParty.MainParty;
                     main.Position = dest.GatePosition;
-                    try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                    try { main.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
-                catch { }
-                try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { MobileParty.MainParty.RecentEventsMorale -= 20f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 Msg($"The current carries you to {dest.Name}. [-20 morale]", NatureColor);
             }
             return "";
@@ -568,7 +590,7 @@ namespace AshAndEmber
         // DOWNSIDE: 2–3 of your weakest soldiers are struck and wounded.
         private static string CampaignThundersEdge(MobileParty party, bool isPlayer)
         {
-            try { party.RecentEventsMorale += isPlayer ? 35f : 20f; } catch { }
+            try { party.RecentEventsMorale += isPlayer ? 35f : 20f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!isPlayer)
                 return "The storm fills the march with iron courage (+20 morale).";
 
@@ -597,10 +619,10 @@ namespace AshAndEmber
                     try { hostile = mp.MapFaction != null && mp.MapFaction.IsAtWarWith(playerFaction); } catch { continue; }
                     if (!hostile) continue;
                     if ((mp.GetPosition2D - centre).Length > mapRadius) continue;
-                    try { mp.RecentEventsMorale -= moraleDrain; } catch { }
+                    try { mp.RecentEventsMorale -= moraleDrain; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Food item string IDs used in Bannerlord's base game.
@@ -627,7 +649,7 @@ namespace AshAndEmber
                     remaining -= toRemove;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return removed;
         }
 
@@ -652,7 +674,7 @@ namespace AshAndEmber
                     remaining -= toWound;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return wounded;
         }
 
@@ -673,7 +695,7 @@ namespace AshAndEmber
                     remaining -= toHeal;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return healed;
         }
 
@@ -692,14 +714,14 @@ namespace AshAndEmber
                 remaining -= dt;
                 if (remaining <= 0f || agent == null || !agent.IsActive())
                 {
-                    try { agent?.SetMaximumSpeedLimit(10f, false); } catch { }
+                    try { agent?.SetMaximumSpeedLimit(10f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     _speedTokens.Remove(key);
                 }
                 else
                 {
                     // Re-apply each frame, or the engine's per-tick recompute wipes it
                     // (a root would visibly "do nothing" despite the message firing).
-                    try { agent.SetMaximumSpeedLimit(speed, false); } catch { }
+                    try { agent.SetMaximumSpeedLimit(speed, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     _speedTokens[key] = (remaining, agent, speed);
                 }
             }
@@ -729,7 +751,7 @@ namespace AshAndEmber
         public static void ClearBattleState()
         {
             foreach (var (_, agent, _) in _speedTokens.Values)
-                try { agent?.SetMaximumSpeedLimit(10f, false); } catch { }
+                try { agent?.SetMaximumSpeedLimit(10f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _speedTokens.Clear();
             _resistTokens.Clear();
         }
@@ -742,7 +764,7 @@ namespace AshAndEmber
             // Route through the canonical spell-damage path so the elements obey
             // the same laws as fire: heroes are floored (never magicked dead
             // outright), Cinder Shell / Sunder modify the hit, kill credit flows.
-            try { SpellEffects.DamageAgent(target, amount, null, source); } catch { }
+            try { SpellEffects.DamageAgent(target, amount, null, source, _currentAttackElement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Mount-safe knockback. Teleporting a RIDER out from under his horse
@@ -764,14 +786,14 @@ namespace AshAndEmber
                 else
                     a.TeleportToPosition(newPos);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         internal static void ApplySpeedToken(Agent agent, float mult, float seconds)
         {
             if (agent == null || !agent.IsActive()) return;
             float speed = mult == 0f ? 0f : 10f * mult;
-            try { agent.SetMaximumSpeedLimit(speed, false); } catch { }
+            try { agent.SetMaximumSpeedLimit(speed, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _speedTokens[agent.Index] = (seconds, agent, speed);
         }
 
@@ -797,7 +819,7 @@ namespace AshAndEmber
                     if (d < bestDist) { bestDist = d; nearest = a; }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return nearest;
         }
 
@@ -812,10 +834,10 @@ namespace AshAndEmber
                     bool enemy = false;
                     try { enemy = team != null && team.IsEnemyOf(a.Team); } catch { continue; }
                     if (!enemy) continue;
-                    if ((a.Position - pos).LengthSquared <= r2) try { action(a); } catch { }
+                    if ((a.Position - pos).LengthSquared <= r2) try { action(a); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ForEachAllyInRadius(Vec3 pos, float radius, Agent exclude, Team team, Action<Agent> action)
@@ -827,10 +849,10 @@ namespace AshAndEmber
                 {
                     if (!a.IsActive() || a.IsMount || a == exclude || a.Health <= 0f) continue;
                     if (a.Team != team) continue;
-                    if ((a.Position - pos).LengthSquared <= r2) try { action(a); } catch { }
+                    if ((a.Position - pos).LengthSquared <= r2) try { action(a); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static readonly Color NatureColor = new Color(0.35f, 0.75f, 0.35f);

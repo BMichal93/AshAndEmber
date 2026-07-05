@@ -39,8 +39,8 @@ namespace AshAndEmber
                 var a = victims[_rng.Next(victims.Count)];
                 Vec3 pos = a.Position + new Vec3((float)(_rng.NextDouble() - 0.5) * 2f,
                                                  (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
-                try { SpellEffects.SpawnBigFireParticle(pos, CinderRainInterval * 0.55f); } catch { }
-                try { SpellEffects.SpawnExplosionParticle(pos, CinderRainInterval * 0.35f); } catch { }
+                try { SpellEffects.SpawnBigFireParticle(pos, CinderRainInterval * 0.55f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnExplosionParticle(pos, CinderRainInterval * 0.35f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Sky layer: stacked fire columns at multiple heights simulate fire streaks descending
             Vec3 centre = GetFieldCentre();
@@ -64,17 +64,17 @@ namespace AshAndEmber
                 if (!IsAshenAgent(agent)) continue;
                 SpellEffects.DamageAgent(agent, PeriodicDamage);
                 // The Ashen embrace the tithe — pain fuels their resolve
-                try { agent.SetMorale(Math.Min(100f, agent.GetMorale() + 10f)); } catch { }
+                try { agent.SetMorale(Math.Min(100f, agent.GetMorale() + 10f)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 victims.Add(agent);
             }
             // Inner-fire glow on each burning Ashen agent: bodies lit with amber resolve
             foreach (var a in victims.Take(6))
-                try { SpellEffects.BeginAgentGlow(a, ColorSchool.Yellow, EmberTitheInterval * 0.65f); } catch { }
+                try { SpellEffects.BeginAgentGlow(a, ColorSchool.Yellow, EmberTitheInterval * 0.65f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Atmospheric: ritual circle lights + amber pulse above the Ashen position
             if (_ashenTeam != null)
             {
                 Vec3 ashenCentre = GetTeamCentroid(_ashenTeam);
-                try { SpellEffects.SpawnCircleLights(ashenCentre, ColorSchool.Yellow, 10f, EmberTitheInterval * 0.80f); } catch { }
+                try { SpellEffects.SpawnCircleLights(ashenCentre, ColorSchool.Yellow, 10f, EmberTitheInterval * 0.80f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 SpawnAerialGlow(ashenCentre, 20f, 10f, 3, ColorSchool.Yellow, EmberTitheInterval * 0.80f);
                 SpawnGroundFireField(ashenCentre, 12f, 4, ColorSchool.Orange, EmberTitheInterval * 0.80f);
             }
@@ -89,15 +89,15 @@ namespace AshAndEmber
             int spawned = SpawnRisingUnits(RisingSpawnCount);
             if (spawned <= 0) return; // troop type missing or no valid anchor — say nothing
             // Ground eruption: explosion burst at the spawn point, as if torn from below
-            try { SpellEffects.SpawnExplosionEffect(anchor, ColorSchool.Purple, 8f, TheRisingInterval * 0.60f); } catch { }
-            try { SpellEffects.SpawnBurstExplosion(anchor, ColorSchool.Ashen, 12f, TheRisingInterval * 0.65f); } catch { }
+            try { SpellEffects.SpawnExplosionEffect(anchor, ColorSchool.Purple, 8f, TheRisingInterval * 0.60f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnBurstExplosion(anchor, ColorSchool.Ashen, 12f, TheRisingInterval * 0.65f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Fire ring surrounding the breach
             for (int i = 0; i < 4; i++)
             {
                 double angle = Math.PI * 2.0 / 4 * i;
                 Vec3 pos = anchor + new Vec3((float)Math.Cos(angle) * 3f,
                                              (float)Math.Sin(angle) * 3f, 0f);
-                try { SpellEffects.SpawnTempFireParticle(pos, TheRisingInterval * 0.7f); } catch { }
+                try { SpellEffects.SpawnTempFireParticle(pos, TheRisingInterval * 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Atmospheric: dim ghostly lights above the tear
             SpawnGroundFireField(anchor, 12f, 5, ColorSchool.Purple, TheRisingInterval * 0.75f);
@@ -117,9 +117,9 @@ namespace AshAndEmber
                 if (!agent.IsActive() || agent.IsMount) continue;
                 if (IsAshenAgent(agent)) continue;
                 try { agent.SetMorale(Math.Max(0f, agent.GetMorale() - DreadMoralePenalty)); }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Haunted grey aura on every affected fighter — visible fear made manifest
-                try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Ashen, 30f); } catch { }
+                try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Ashen, 30f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 count++;
             }
             // Impact bursts radiate outward across the field like a shockwave of terror
@@ -128,7 +128,7 @@ namespace AshAndEmber
             {
                 Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 22f,
                                              (float)(_rng.NextDouble() - 0.5) * 22f, 0f);
-                try { SpellEffects.SpawnImpactBurst(pos, ColorSchool.Ashen, 30f); } catch { }
+                try { SpellEffects.SpawnImpactBurst(pos, ColorSchool.Ashen, 30f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Atmospheric: deep-dusk sky, cold dark fog, wide field of grey flames
             TintSky(22f); // deep dusk / near-night
@@ -149,7 +149,7 @@ namespace AshAndEmber
         {
             // Last Light always overrides the sky — it's the defining one-shot event.
             _skySet = true;
-            try { Mission.Current?.Scene.TimeOfDay = 23f; } catch { }
+            try { Mission.Current?.Scene.TimeOfDay = 23f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int blinded = 0;
             int empowered = 0;
@@ -171,7 +171,7 @@ namespace AshAndEmber
                             blinded++;
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
@@ -181,7 +181,7 @@ namespace AshAndEmber
                 foreach (var agent in Mission.Current.Agents.ToList())
                 {
                     if (!agent.IsActive() || agent.IsMount || !IsAshenAgent(agent)) continue;
-                    try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Orange, 60f); } catch { }
+                    try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Orange, 60f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
             // Large fires scattered across the field — the only light sources left standing
@@ -190,7 +190,7 @@ namespace AshAndEmber
             {
                 Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 30f,
                                              (float)(_rng.NextDouble() - 0.5) * 30f, 0f);
-                try { SpellEffects.SpawnBigFireParticle(pos, 60f); } catch { }
+                try { SpellEffects.SpawnBigFireParticle(pos, 60f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Atmospheric: fire-lit midnight fog, wide ground fire, burning-sky aerial glow
             ApplyFog(new Vec3(0.80f, 0.22f, 0.05f), 0.005f); // fire-lit night
@@ -220,11 +220,11 @@ namespace AshAndEmber
             Vec3 centre = GetFieldCentre();
             foreach (var pos in dismounted.Take(4))
             {
-                try { SpellEffects.SpawnExplosionEffect(pos, ColorSchool.Ashen, 5f, AshenGroundInterval * 0.70f); } catch { }
-                try { SpellEffects.SpawnExplosionParticle(pos, AshenGroundInterval * 0.50f); } catch { }
+                try { SpellEffects.SpawnExplosionEffect(pos, ColorSchool.Ashen, 5f, AshenGroundInterval * 0.70f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnExplosionParticle(pos, AshenGroundInterval * 0.50f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Central shockwave as the ashen ground cracks open across the whole field
-            try { SpellEffects.SpawnBurstExplosion(centre, ColorSchool.Ashen, 25f, AshenGroundInterval * 0.65f); } catch { }
+            try { SpellEffects.SpawnBurstExplosion(centre, ColorSchool.Ashen, 25f, AshenGroundInterval * 0.65f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Atmospheric: ash fog + grey ground effect across the field
             ApplyFog(new Vec3(0.48f, 0.47f, 0.50f), 0.005f); // grey ash fog
             SpawnGroundFireField(centre, 30f, 5, ColorSchool.Ashen, AshenGroundInterval * 0.80f);
@@ -247,10 +247,10 @@ namespace AshAndEmber
                     {
                         if (formation == null || formation.CountOfUnits == 0) continue;
                         try { formation.SetMovementOrder(MovementOrder.MovementOrderCharge); }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Red bloodlust glow on every agent — discipline shattered, only killing remains
             if (Mission.Current != null)
@@ -258,7 +258,7 @@ namespace AshAndEmber
                 foreach (var agent in Mission.Current.Agents.ToList())
                 {
                     if (!agent.IsActive() || agent.IsMount) continue;
-                    try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Red, FrenzyInterval * 0.55f); } catch { }
+                    try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Red, FrenzyInterval * 0.55f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
             // Impact bursts erupt across the field as lines break and chaos spreads
@@ -267,14 +267,14 @@ namespace AshAndEmber
             {
                 Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 25f,
                                              (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
-                try { SpellEffects.SpawnImpactBurst(pos, ColorSchool.Red, FrenzyInterval * 0.55f); } catch { }
+                try { SpellEffects.SpawnImpactBurst(pos, ColorSchool.Red, FrenzyInterval * 0.55f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Scattered fires mark the lines breaking into chaos
             for (int i = 0; i < 5; i++)
             {
                 Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 25f,
                                              (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
-                try { SpellEffects.SpawnTempFireParticle(pos, FrenzyInterval * 0.9f); } catch { }
+                try { SpellEffects.SpawnTempFireParticle(pos, FrenzyInterval * 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             // Atmospheric: red chaos fog, wide ground fire, aerial crimson glow
             ApplyFog(new Vec3(0.85f, 0.15f, 0.05f), 0.003f); // blood-red fog
@@ -289,6 +289,54 @@ namespace AshAndEmber
         // vanilla bandit troops) near the centroid of the Ashen team. Returns
         // the number actually spawned so the caller can stay silent when
         // nothing appeared.
+        // ── Event: The Kindling ───────────────────────────────────────────────
+        // Raw magic in the field wakes into a few elemental beings that join a
+        // side (the player's enemies where there is one), shaped by the ground.
+        private static void FireKindling()
+        {
+            if (Mission.Current == null) return;
+            try
+            {
+                // Pick a side to reinforce — an enemy of the player if the battle
+                // has one, otherwise any team with bodies on it.
+                Team target = null;
+                try
+                {
+                    Team pt = Mission.Current.PlayerTeam;
+                    foreach (var t in Mission.Current.Teams.ToList())
+                    {
+                        if (t == null) continue;
+                        bool hasBodies = Mission.Current.Agents.Any(a => a.IsActive() && !a.IsMount && a.Team == t);
+                        if (!hasBodies) continue;
+                        if (pt != null && t.IsEnemyOf(pt)) { target = t; break; }
+                        if (pt == null && target == null) target = t;
+                    }
+                    if (target == null && pt != null)
+                        target = Mission.Current.Teams.FirstOrDefault(t => t != null && t != pt);
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (target == null) return;
+
+                bool snowy = false; try { snowy = SpellEffects.SceneIsSnowy(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                string sceneName = "";
+                try { sceneName = (Mission.Current.SceneName ?? "").ToLowerInvariant(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                ElementalKind kind = ElementUltimateMath.ElementalKindForScene(snowy, sceneName);
+
+                Vec3 anchor = GetTeamCentroid(target);
+                if (anchor.x == 0f && anchor.y == 0f) return;
+
+                for (int i = 0; i < ElementalMath.KindlingBodies; i++)
+                {
+                    Vec3 pos = anchor + new Vec3((float)(_rng.NextDouble() - 0.5) * 6f,
+                                                 (float)(_rng.NextDouble() - 0.5) * 6f, 0f);
+                    try { ElementalFactory.SpawnElemental(kind, target, pos, charge: true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+                try { MBInformationManager.AddQuickInformation(new TextObject(
+                    "The Kindling — the ground itself wakes and takes a side.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
         private static int SpawnRisingUnits(int count)
         {
             int spawned = 0;
@@ -325,7 +373,7 @@ namespace AshAndEmber
                                 ref gz);
                             pos.z = gz;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                         // An AgentBuildData with no explicit equipment/body properties
                         // spawns with default BodyProperties (age 0) — which renders as
@@ -350,13 +398,13 @@ namespace AshAndEmber
                         var agent = Mission.Current.SpawnAgent(agentData, false);
                         // Fallback bandit troops carry no Ashen marker, so the
                         // OnAgentBuild hook won't catch them — force the look.
-                        try { AshenVisuals.ForceApply(agent); } catch { }
+                        try { AshenVisuals.ForceApply(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         spawned++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return spawned;
         }
 

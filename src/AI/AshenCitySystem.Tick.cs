@@ -31,16 +31,16 @@ namespace AshAndEmber
             if (_settlementsRenamed) return;
             if (_ashenClanIds.Count == 0) return;          // clans not established yet
             if (DragonQuestSystem.WorldRekindled) return;  // the Ashen no longer exist
-            try { RenameAshenSettlements();          } catch { }
-            try { RenameHolyTempleKingdom();         } catch { }
-            try { RenameVlandianTroops();             } catch { }
-            try { TempleCulture.SetupTempleKingdom(); } catch { }
-            try { RenameTribesKingdom();              } catch { }
-            try { RenameKhuzaitTroops();              } catch { }
-            try { RenameNorthmenKingdom();            } catch { }
-            try { RenameSturgianTroops();             } catch { }
-            try { RenameDunebornKingdom();            } catch { }
-            try { RenameAseraiTroops();               } catch { }
+            try { RenameAshenSettlements();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameHolyTempleKingdom();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameVlandianTroops();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TempleCulture.SetupTempleKingdom(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameTribesKingdom();              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameKhuzaitTroops();              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameNorthmenKingdom();            } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameSturgianTroops();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameDunebornKingdom();            } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameAseraiTroops();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _settlementsRenamed = true;
         }
 
@@ -83,7 +83,7 @@ namespace AshAndEmber
             // One-time ownership initialisation
             if (!_ownershipInitDone)
             {
-                try { InitialiseSettlementOwnership(); } catch { }
+                try { InitialiseSettlementOwnership(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _ownershipInitDone = true;
             }
 
@@ -115,7 +115,7 @@ namespace AshAndEmber
             // Lord party composition — every LordPartyInterval days, one party per tick
             if (_lordPartyThrottle == 0)
             {
-                try { RefillAshenLordParties(); } catch { }
+                try { RefillAshenLordParties(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _lordPartyThrottle = LordPartyInterval;
             }
 
@@ -145,13 +145,13 @@ namespace AshAndEmber
                     if (currentAge > targetAge + 0.5f)
                     {
                         float excessDays = (currentAge - targetAge) * 365f;
-                        try { h.SetBirthDay(h.BirthDay + CampaignTime.Days(excessDays)); } catch { }
+                        try { h.SetBirthDay(h.BirthDay + CampaignTime.Days(excessDays)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     if (playerIsAshen)
                         MaxRelationsWithPlayer(h);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Kingdom rejoin prevention ─────────────────────────────────────────
@@ -174,23 +174,23 @@ namespace AshAndEmber
                 if (clan != null && _ashenKingdom != null)
                 {
                     if (clan.Kingdom != null && clan.Kingdom != _ashenKingdom)
-                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     if (clan.Kingdom?.StringId != AshenKingdomId)
                     {
                         bool needsRuler = _ashenKingdom.RulingClan == null;
                         if (needsRuler)
-                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch { }
+                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         else
                             try { ChangeKingdomAction.ApplyByJoinToKingdom(
                                     clan, _ashenKingdom,
                                     CampaignTime.Now + CampaignTime.Years(1000),
                                     false); }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Max relations with all Ashen lords
             try
@@ -199,7 +199,7 @@ namespace AshAndEmber
                     if (IsAshenClanMember(h))
                         MaxRelationsWithPlayer(h);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

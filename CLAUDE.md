@@ -40,7 +40,7 @@ dotnet test tests/AshAndEmber.Tests.csproj --filter "PureLogicTests.<TestMethodN
 `SubModule.xml` registers `AshAndEmber.MainSubModule` as the mod entry point. `MagicSystem.cs` contains `MainSubModule`, which on `OnGameStart()`:
 - Resets **all** in-mission static state (a long block of `SpellEffects.Clear*`, `Element*.ClearBattleState`, `Nature*`, `Miracle*`, `ColourLordAI`, etc.) so a save-load in the same process cannot carry stale state.
 - Registers `AshenDiplomacyModel` (permanent war override).
-- Registers ~15 `CampaignBehaviorBase` subclasses: `MagicCampaignBehavior`, `SchemeCampaignBehavior`, `SanctuaryCampaignBehavior`, `AshenAltarsCampaignBehavior`, `SeaCampaignBehavior`, `CrystallinesCampaignBehavior`, `ExchangeCampaignBehavior`, `TavernCampaignBehavior`, `AshenRuinCampaignBehavior`, `MiracleCampaignBehavior`, `NatureCampaignBehavior`, `ClanOrdersCampaignBehavior`, `TribalKingdomBehavior`, `CreationBackstoryRework`.
+- Registers ~15 `CampaignBehaviorBase` subclasses: `MagicCampaignBehavior`, `SchemeCampaignBehavior`, `SanctuaryCampaignBehavior`, `AshenAltarsCampaignBehavior`, `SeaCampaignBehavior`, `CrystallinesCampaignBehavior`, `ExchangeCampaignBehavior`, `TavernCampaignBehavior`, `AshenRuinCampaignBehavior`, `MiracleCampaignBehavior`, `NatureCampaignBehavior`, `ClanOrdersCampaignBehavior`, `ElementalWildsBehavior`, `TribalKingdomBehavior`, `CreationBackstoryRework`.
 - Registers the dialogue systems (`AshenDialogue`, `ArenicosDialogue`, `TempleDialogue`, `TribesDialogue`, `NorthmenDialogue`, `DunebornDialogue`) and calls per-system reset/init (`SchemeSystem.Initialize`, `ExchangeCampaignBehavior.ResetState`, `SeaCampaignBehavior.ResetForNewGame`, `ClanOrdersCampaignBehavior.ResetForNewGame`).
 
 `OnGameInitializationFinished` re-applies the culture-text overrides (Vlandia→The Holy Temple, Khuzait→Tribes, Sturgia→Northmen, Aserai→Duneborn) after the engine reloads its XML texts. `OnApplicationTick` skips intro videos, drives the splash/loading screens, polls the three map-magic input handlers, and handles map hotkeys: **Alt+L** codex, **Shift+L** litany, and debug keys **Ctrl+Shift+F10/F11/F12** (scheme debug, spawn combat, grant-all).
@@ -57,6 +57,7 @@ Each registration is wrapped in its own try/catch for mod-conflict safety.
 - `Miracles/` — Grace: prayers, grace economy, priest troops, battle AI, talents. Pure math in `MiracleMath`.
 - `DarkGifts/` — the Dark Gift path (battle effects + `DarkGiftSystem`).
 - `Crystals/` — consumable crystal items (`CrystalCatalog`, `CrystalEffects`, `CrystalBattleAI`, `CrystalMath`).
+- `Elementals/` — **The Kindled**: elemental beings (fire/water/stone/ice/sand/storm) that roam the wilds, are summoned by mages, or wake mid-battle. `ElementalFactory` builds one; `ElementalBeings` is the mission registry that drives the following aura + the element/physical weakness; `ElementalWildsBehavior` breeds roaming bands (persisted under `ELEM_*` keys); pure `ElementalMath` holds the weakness wheel. The Spirit Unbinding's champion (`ElementUltimates`) is unified onto this core. The `ElementalKind` enum lives in `ElementUltimateMath`.
 - `Schemes/` — covert operations (`SchemeSystem.*`, `SchemeCampaignBehavior.*`, minigame).
 - `Sea/` — harbors, voyages, trade ventures, NPC sea lanes; pure `SeaMath`.
 - `Markets/` — the Exchange / commodity speculation (`ExchangeCampaignBehavior.*`, pure `SpeculationMath`).
@@ -138,6 +139,7 @@ Numeric tuning lives in the pure `*Math.cs` files (each system has its own); tho
 - **Numeric logic goes in a pure `*Math.cs` file** (no TaleWorlds types) so it can be unit-tested. If a "pure" method needs a game value, pass it in as a parameter rather than reading `Hero.MainHero` inside — see `behaviour.md` for why (JIT type resolution defeats a `try/catch`).
 - **Static utility classes** (`AgingSystem`, `SchoolData`, `SpellDatabase`, the `*Math` classes) have no instance state — keep them that way.
 - **Null-guard pattern:** always check `Campaign.Current == null` / `Mission.Current == null` before accessing singletons in behavior methods, and wrap TaleWorlds singleton access in try/catch (mod-conflict safety).
+- **Never swallow silently:** a mod-conflict-safety `catch` must record the failure, not drop it. Use `catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }` (see `src/ModLog.cs`). `ModLog` is crash-proof, references no TaleWorlds types (safe from pure `*Math.cs`), de-duplicates per failure site so a per-tick throw is logged once, and writes to `Documents\Mount and Blade II Bannerlord\AshAndEmber\errors.log`. Do not reintroduce bare `catch { }`.
 - **Tests live in `tests/PureLogicTests.cs`** and cover only pure (no-TaleWorlds-runtime) logic. Keep new tests pure — do not reference game engine types.
 
 ## Working behaviour

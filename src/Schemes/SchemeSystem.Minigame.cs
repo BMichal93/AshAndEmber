@@ -87,11 +87,11 @@ namespace AshAndEmber
                     break;
                 }
                 case SchemeOutcome.Success:
-                    try { ApplySuccess(fake, instigator, targetHero, targetSett); } catch { }
+                    try { ApplySuccess(fake, instigator, targetHero, targetSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     break;
 
                 case SchemeOutcome.Bust:
-                    try { ApplyBreakConsequence(type, instigator, targetHero, targetSett); } catch { }
+                    try { ApplyBreakConsequence(type, instigator, targetHero, targetSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     break;
             }
 
@@ -108,7 +108,7 @@ namespace AshAndEmber
                         instigator?.HeroDeveloper?.AddSkillXp(def.Skill, xp);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         /// Per-scheme bust consequences — called directly from the minigame (bust = always caught).
@@ -123,16 +123,16 @@ namespace AshAndEmber
                 {
                     var targetKingdom = targetHero?.Clan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 80f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 80f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (targetHero != null && targetHero.IsAlive && targetHero != instigator)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -80, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -80, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     var instigKingdom = instigator.Clan?.Kingdom;
                     if (_rng.NextDouble() < 0.60
                         && instigKingdom != null && targetKingdom != null
                         && instigKingdom != targetKingdom
                         && !instigKingdom.IsEliminated && !targetKingdom.IsEliminated
                         && !instigKingdom.IsAtWarWith(targetKingdom))
-                        try { DeclareWarAction.ApplyByDefault(instigKingdom, targetKingdom); } catch { }
+                        try { DeclareWarAction.ApplyByDefault(instigKingdom, targetKingdom); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — Your assassin was taken alive. Under interrogation, they spoke your name. War may follow."));
                     break;
@@ -141,10 +141,10 @@ namespace AshAndEmber
                 {
                     Hero ownLeader = instigator.Clan?.Kingdom?.Leader;
                     if (ownLeader != null && ownLeader.IsAlive && ownLeader != instigator)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, ownLeader, -60, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, ownLeader, -60, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     var targetKingdom = targetHero?.Clan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The forgery unraveled and traced back to you. Your own lord is asking questions."));
                     break;
@@ -154,10 +154,10 @@ namespace AshAndEmber
                     if (instigator.Clan != null)
                     {
                         float loss = Math.Max(80f, instigator.Clan.Renown * 0.10f);
-                        try { instigator.Clan.Renown = Math.Max(0f, instigator.Clan.Renown - loss); } catch { }
+                        try { instigator.Clan.Renown = Math.Max(0f, instigator.Clan.Renown - loss); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     if (targetHero != null && targetHero.IsAlive)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -60, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -60, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The slander was too clumsy. It circled back. Your own reputation is now in question."));
                     break;
@@ -166,13 +166,13 @@ namespace AshAndEmber
                 {
                     var targetKingdom = targetSett?.OwnerClan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 50f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 50f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     var own = Settlement.All.FirstOrDefault(s =>
                         (s.IsTown || s.IsCastle) && s.OwnerClan == instigator.Clan && s.Town != null);
                     if (own?.Town != null)
                     {
-                        try { own.Town.Loyalty  = Math.Max(0f, own.Town.Loyalty  - 25f); } catch { }
-                        try { own.Town.Security = Math.Max(0f, own.Town.Security - 20f); } catch { }
+                        try { own.Town.Loyalty  = Math.Max(0f, own.Town.Loyalty  - 25f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { own.Town.Security = Math.Max(0f, own.Town.Security - 20f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The coup collapsed into riots. Your involvement reached the wrong ears — your own holdings suffer."));
@@ -182,11 +182,11 @@ namespace AshAndEmber
                 {
                     var targetKingdom = targetSett?.OwnerClan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 70f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 70f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     var own = Settlement.All.FirstOrDefault(s =>
                         s.IsTown && s.OwnerClan == instigator.Clan && s.Town != null);
                     if (own?.Town != null)
-                        try { own.Town.FoodStocks = Math.Max(10f, own.Town.FoodStocks * 0.60f); } catch { }
+                        try { own.Town.FoodStocks = Math.Max(10f, own.Town.FoodStocks * 0.60f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The agent confused the supply lines. Your own stores were poisoned."));
                     break;
@@ -195,10 +195,10 @@ namespace AshAndEmber
                 {
                     var targetKingdom = targetSett?.OwnerClan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 60f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 60f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     Hero owner = targetSett?.OwnerClan?.Leader;
                     if (owner != null && owner.IsAlive && owner != instigator)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The soldiers took your coin and marched straight to their captain."));
                     break;
@@ -207,15 +207,15 @@ namespace AshAndEmber
                 {
                     var targetKingdom = targetSett?.OwnerClan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 60f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 60f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (targetSett?.Town != null)
                     {
-                        try { targetSett.Town.FoodStocks = Math.Max(10f, targetSett.Town.FoodStocks * 0.25f); } catch { }
-                        try { targetSett.Town.Prosperity = Math.Max(10f, targetSett.Town.Prosperity * 0.70f); } catch { }
+                        try { targetSett.Town.FoodStocks = Math.Max(10f, targetSett.Town.FoodStocks * 0.25f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { targetSett.Town.Prosperity = Math.Max(10f, targetSett.Town.Prosperity * 0.70f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     Hero owner = targetSett?.OwnerClan?.Leader;
                     if (owner != null && owner.IsAlive && owner != instigator)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The fire leaped every wall. The destruction is total — and undeniably yours."));
                     break;
@@ -224,10 +224,10 @@ namespace AshAndEmber
                 {
                     var targetKingdom = targetSett?.OwnerClan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 70f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 70f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     Hero owner = targetSett?.OwnerClan?.Leader;
                     if (owner != null && owner.IsAlive && owner != instigator)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, owner, -70, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The violence was too organized. It left a trail straight to your doorstep."));
                     break;
@@ -238,12 +238,12 @@ namespace AshAndEmber
                         s.IsTown && s.OwnerClan == instigator.Clan && s.Town != null);
                     if (own?.Town != null)
                     {
-                        try { own.Town.Loyalty    = Math.Max(0f,  own.Town.Loyalty    - 20f); } catch { }
-                        try { own.Town.Prosperity = Math.Max(10f, own.Town.Prosperity * 0.92f); } catch { }
+                        try { own.Town.Loyalty    = Math.Max(0f,  own.Town.Loyalty    - 20f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { own.Town.Prosperity = Math.Max(10f, own.Town.Prosperity * 0.92f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     var targetKingdom = targetSett?.OwnerClan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The rumors warped in transit. Now they're about you. Your own people are whispering."));
                     break;
@@ -252,9 +252,9 @@ namespace AshAndEmber
                 {
                     Hero king = instigator.Clan?.Kingdom?.Leader;
                     if (king != null && king.IsAlive && king != instigator)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, king, -80, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, king, -80, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (targetHero != null && targetHero.IsAlive)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -60, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -60, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The king saw through the veil and recognized the hand behind it. You are no longer welcome at court."));
                     break;
@@ -268,12 +268,12 @@ namespace AshAndEmber
                             if (e.Character.IsHero) continue;
                             int toWound = Math.Max(1, (e.Number - e.WoundedNumber) / 5);
                             if (toWound <= 0) continue;
-                            try { Hero.MainHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                            try { Hero.MainHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     }
                     var targetKingdom = targetHero?.Clan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 50f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 50f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The blade turned around. Your own escort was ambushed."));
                     break;
@@ -282,10 +282,10 @@ namespace AshAndEmber
                 {
                     var ownKingdom = instigator.Clan?.Kingdom;
                     if (ownKingdom != null && !ownKingdom.IsEliminated)
-                        try { SpawnBanditsInKingdom(ownKingdom, 3); } catch { }
+                        try { SpawnBanditsInKingdom(ownKingdom, 3); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     var targetKingdom = targetHero?.Clan?.Kingdom;
                     if (targetKingdom != null && !targetKingdom.IsEliminated)
-                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch { }
+                        try { ChangeCrimeRatingAction.Apply(targetKingdom, 40f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         "BUST — The bandits took your coin and went wherever they pleased — including your own roads."));
                     break;

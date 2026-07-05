@@ -79,7 +79,7 @@ namespace AshAndEmber
                         AddMixedTierTroops(garrison.MemberRoster, s.Culture, count);
                         garrisonsBoosted++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 // Reinforce every Ashen lord's mobile party
@@ -96,7 +96,7 @@ namespace AshAndEmber
                         AddMixedTierTroops(party.MemberRoster, culture, count);
                         armiesBoosted++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 string flavour = isFirstFire
@@ -112,7 +112,7 @@ namespace AshAndEmber
                     $"[{garrisonsBoosted} garrison{(garrisonsBoosted != 1 ? "s" : "")} and " +
                     $"{armiesBoosted} arm{(armiesBoosted != 1 ? "ies" : "y")} reinforced with risen dead.]"));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event: The Undying Host ───────────────────────────────────────────
@@ -205,10 +205,10 @@ namespace AshAndEmber
                             troopsAdded = true;
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     // ── Morale surge — oversized parties bleed morale; drown it out ──
-                    try { party.RecentEventsMorale += 100f; } catch { }
+                    try { party.RecentEventsMorale += 100f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 // ── Flood the ruling clan with influence ──────────────────────
@@ -220,7 +220,7 @@ namespace AshAndEmber
                         ashenKingdom.RulingClan.Influence =
                             Math.Max(ashenKingdom.RulingClan.Influence, UndyingHostInfluenceGrant);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Also flood every other Ashen lord clan with generous influence so
                 // they can sustain secondary armies and reinforce the vanguard freely.
@@ -230,10 +230,10 @@ namespace AshAndEmber
                     {
                         if (!hero.IsLord || !ColourLordRegistry.IsAshenLord(hero)) continue;
                         if (hero.Clan == null || hero.Clan == ashenKingdom?.RulingClan) continue;
-                        try { hero.Clan.Influence = Math.Max(hero.Clan.Influence, 2000f); } catch { }
+                        try { hero.Clan.Influence = Math.Max(hero.Clan.Influence, 2000f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // ── Guarantee the Ashen are at war ────────────────────────────
                 // If the Ashen somehow have no active wars, declare on the strongest
@@ -259,7 +259,7 @@ namespace AshAndEmber
                         }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // ── Morale surge across all Ashen lord parties ────────────────
                 try
@@ -269,10 +269,10 @@ namespace AshAndEmber
                         if (!party.IsActive) continue;
                         var leader = party.LeaderHero;
                         if (leader != null && ColourLordRegistry.IsAshenLord(leader))
-                            try { party.RecentEventsMorale += 60f; } catch { }
+                            try { party.RecentEventsMorale += 60f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 string troopStr = troopsAdded
                     ? $"{UndyingHostTroopCount:N0} dead-eyed soldiers, each worth ten living men, "
@@ -286,7 +286,7 @@ namespace AshAndEmber
                     $"No levy will hold them. No castle wall was built high enough. " +
                     $"The Undying Host has begun its march to conquest."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Distributes totalCount troops across tiers 2, 3, and 4 (~⅓ each),
@@ -301,9 +301,9 @@ namespace AshAndEmber
             var tier3 = GetTroopAtTier(culture, 3);
             var tier4 = GetTroopAtTier(culture, 4);
 
-            try { if (tier2 != null) roster.AddToCounts(tier2, perTier);   } catch { }
-            try { if (tier3 != null) roster.AddToCounts(tier3, perTier);   } catch { }
-            try { if (tier4 != null) roster.AddToCounts(tier4, remainder); } catch { }
+            try { if (tier2 != null) roster.AddToCounts(tier2, perTier);   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { if (tier3 != null) roster.AddToCounts(tier3, perTier);   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { if (tier4 != null) roster.AddToCounts(tier4, remainder); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Walks a culture's elite troop upgrade chain and returns the first troop
@@ -352,7 +352,7 @@ namespace AshAndEmber
                     if (hs == null) hs = Settlement.All.FirstOrDefault(s => s?.Hideout != null);
                     hideout = hs?.Hideout;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (hideout == null) return null;
 
                 const float scatter = 5f;

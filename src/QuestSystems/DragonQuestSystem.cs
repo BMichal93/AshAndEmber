@@ -165,13 +165,13 @@ namespace AshAndEmber
                 for (int i = 0; i < ashenKilled && _lordsSlain < TargetLordsSlain; i++)
                 {
                     _lordsSlain++;
-                    try { _questLog?.LogLordSlain(_lordsSlain); } catch { }
+                    try { _questLog?.LogLordSlain(_lordsSlain); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"A shard of Aelisar returns to you. [{_lordsSlain}/{TargetLordsSlain} lords]",
                         new Color(0.75f, 0.50f, 0.30f)));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Called from CampaignBehavior.OnDailyTick ─────────────────────────
@@ -197,16 +197,16 @@ namespace AshAndEmber
 
             if (_phase != PhaseActive && _phase != PhaseAllDone) return;
 
-            if (_questLog == null) try { EnsureQuestLog(); } catch { }
+            if (_questLog == null) try { EnsureQuestLog(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Track Heart of Winter capture
-            try { CheckHeartCapture(); } catch { }
+            try { CheckHeartCapture(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Proximity message
-            try { CheckProximityToAshenLord(); } catch { }
+            try { CheckProximityToAshenLord(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Update journal objectives
-            try { _questLog?.UpdateProgress(_lordsSlain, DestinedRuinsCleared, _heartCaptured); } catch { }
+            try { _questLog?.UpdateProgress(_lordsSlain, DestinedRuinsCleared, _heartCaptured); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Transition to AllDone when every objective is met
             if (_phase == PhaseActive
@@ -215,7 +215,7 @@ namespace AshAndEmber
                 && _heartCaptured)
             {
                 _phase = PhaseAllDone;
-                try { _questLog?.LogAllDone(); } catch { }
+                try { _questLog?.LogAllDone(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The Sundered Crown — all conditions are met. Aelisar speaks clearly now.",
                     new Color(0.80f, 0.55f, 0.25f)));
@@ -254,7 +254,7 @@ namespace AshAndEmber
             if (tyal == null || tyal.OwnerClan != playerClan) return;
 
             _heartCaptured = true;
-            try { _questLog?.LogHeartCaptured(); } catch { }
+            try { _questLog?.LogHeartCaptured(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             InformationManager.DisplayMessage(new InformationMessage(
                 "The Heart of Winter is yours. Aelisar's voice sharpens — something here remembers him.",
                 new Color(0.70f, 0.60f, 0.80f)));
@@ -305,12 +305,12 @@ namespace AshAndEmber
                            || _phase == PhaseAllDone;
             if (!inProgress) return;
 
-            try { _questLog?.LogColdConversion(); } catch { }
+            try { _questLog?.LogColdConversion(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _questLog = null;
 
             _phase = PhaseColdActive;
-            try { StartColdQuest(); } catch { }
-            try { TickColdQuest(); }  catch { }
+            try { StartColdQuest(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickColdQuest(); }  catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void StartColdQuest()
@@ -326,16 +326,16 @@ namespace AshAndEmber
 
         private static void TickColdQuest()
         {
-            if (_coldQuestLog == null) try { EnsureColdQuestLog(); } catch { }
+            if (_coldQuestLog == null) try { EnsureColdQuestLog(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int owned = CountTowns(out int total);
             if (_coldTownTarget <= 0) _coldTownTarget = total;
 
-            try { _coldQuestLog?.UpdateProgress(owned, _coldTownTarget); } catch { }
+            try { _coldQuestLog?.UpdateProgress(owned, _coldTownTarget); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (total > 0 && owned >= total)
             {
-                try { _coldQuestLog?.LogComplete(); } catch { }
+                try { _coldQuestLog?.LogComplete(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _phase = PhaseColdDone;
                 InformationManager.DisplayMessage(new InformationMessage(
                     "Calradia is yours. The cold inherits everything. There is nothing left to warm.",
@@ -357,7 +357,7 @@ namespace AshAndEmber
                     if (playerFaction != null && s.MapFaction == playerFaction) owned++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return owned;
         }
 
@@ -441,17 +441,17 @@ namespace AshAndEmber
         internal void UpdateProgress(int lords, int ruinsCleared, bool heartCaptured)
         {
             EnsureObjectives();
-            try { _objLords?.UpdateCurrentProgress(Math.Min(lords, DragonQuestSystem.TargetLordsSlain)); } catch { }
+            try { _objLords?.UpdateCurrentProgress(Math.Min(lords, DragonQuestSystem.TargetLordsSlain)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             bool[] cleared =
             {
                 AshenRuinSystem.IsCleared(DragonQuestSystem.DestinedRuinVillages[0]),
                 AshenRuinSystem.IsCleared(DragonQuestSystem.DestinedRuinVillages[1]),
                 AshenRuinSystem.IsCleared(DragonQuestSystem.DestinedRuinVillages[2]),
             };
-            try { _objRuin1?.UpdateCurrentProgress(cleared[0] ? 1 : 0); } catch { }
-            try { _objRuin2?.UpdateCurrentProgress(cleared[1] ? 1 : 0); } catch { }
-            try { _objRuin3?.UpdateCurrentProgress(cleared[2] ? 1 : 0); } catch { }
-            try { _objHeart?.UpdateCurrentProgress(heartCaptured ? 1 : 0); } catch { }
+            try { _objRuin1?.UpdateCurrentProgress(cleared[0] ? 1 : 0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { _objRuin2?.UpdateCurrentProgress(cleared[1] ? 1 : 0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { _objRuin3?.UpdateCurrentProgress(cleared[2] ? 1 : 0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { _objHeart?.UpdateCurrentProgress(heartCaptured ? 1 : 0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         internal void LogLordSlain(int count) =>
@@ -526,7 +526,7 @@ namespace AshAndEmber
         internal void UpdateProgress(int owned, int target)
         {
             EnsureObjective(target);
-            try { _objConquer?.UpdateCurrentProgress(Math.Min(owned, Math.Max(target, 1))); } catch { }
+            try { _objConquer?.UpdateCurrentProgress(Math.Min(owned, Math.Max(target, 1))); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         internal void LogComplete()

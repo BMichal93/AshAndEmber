@@ -120,7 +120,7 @@ namespace AshAndEmber
                                             Msg("(+150 renown, +250 influence)", GoodColor);
                                         }
                                     }
-                                    catch { }
+                                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 },
                                 lossMsg:
                                     "He flips the coin. It lands tails. " +
@@ -159,7 +159,7 @@ namespace AshAndEmber
             }
             else
             {
-                try { MageKnowledge.SetMage(false); } catch { }
+                try { MageKnowledge.SetMage(false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 Msg(lossMsg, BadColor);
             }
         }

@@ -88,9 +88,9 @@ namespace AshAndEmber
                 }
 
                 foreach (var c in ordered.Where(c => !toKeep.Contains(c)))
-                    try { ChangeKingdomAction.ApplyByLeaveKingdom(c, false); } catch { }
+                    try { ChangeKingdomAction.ApplyByLeaveKingdom(c, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void EnsureTemplarGrace()
@@ -113,11 +113,11 @@ namespace AshAndEmber
                             if (hero.GetTraitLevel(DefaultTraits.Mercy) < 1)
                                 hero.SetTraitLevel(DefaultTraits.Mercy, 1);
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Daily tick — called from MagicCampaignBehavior.OnDailyTick ────────
@@ -151,11 +151,11 @@ namespace AshAndEmber
                             if (party.RecentEventsMorale < VigilMoraleFloor)
                                 party.RecentEventsMorale = VigilMoraleFloor;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -91,7 +91,7 @@ namespace AshAndEmber
                 float healBack = inflictedDamage * w.ReductionPct;
                 if (healBack >= 1f) HealAgent(victim, healBack);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void TickAttackWeaken(float dt)
@@ -135,7 +135,7 @@ namespace AshAndEmber
                 if (remaining <= 0f || key == null || !key.IsActive())
                 {
                     if (key != null && key.IsActive())
-                        try { key.SetMaximumSpeedLimit(10f, false); } catch { }
+                        try { key.SetMaximumSpeedLimit(10f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     _charredAgents.Remove(key);
                 }
                 else
@@ -147,7 +147,7 @@ namespace AshAndEmber
         {
             foreach (var kv in _charredAgents)
                 if (kv.Key != null && kv.Key.IsActive())
-                    try { kv.Key.SetMaximumSpeedLimit(10f, false); } catch { }
+                    try { kv.Key.SetMaximumSpeedLimit(10f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _charredAgents.Clear();
         }
 
@@ -174,7 +174,7 @@ namespace AshAndEmber
                     BeginAgentGlowRaw(victim, new Color(1f, 0.5f, 0.2f).ToUnsignedInteger(), 0.5f);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void TickReflect(float dt)
@@ -207,7 +207,7 @@ namespace AshAndEmber
                     _scorchAgents.Remove(key);
                     continue;
                 }
-                try { DamageAgent(key, dps * dt); } catch { }
+                try { DamageAgent(key, dps * dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _scorchAgents[key] = (dps, remaining);
             }
         }
@@ -236,7 +236,7 @@ namespace AshAndEmber
                     float cur = key.GetMorale();
                     if (cur > locked) key.SetMorale(locked);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _ashmarkedAgents[key] = (locked, remaining);
             }
         }

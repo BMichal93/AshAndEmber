@@ -249,7 +249,7 @@ namespace AshAndEmber
         private static int ComputeRoundsLimit()
         {
             int roguery = 0;
-            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
+            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return Math.Min(10, 5 + roguery / 100);
         }
 
@@ -348,11 +348,11 @@ namespace AshAndEmber
                         body,
                         options, false, 1, 1,
                         "Confirm", "Abort Operation",
-                        chosen => { try { ProcessChoice(chosen?[0]?.Identifier as string ?? "extract"); } catch { } },
-                        _      => { try { OnAbort(); } catch { } }),
+                        chosen => { try { ProcessChoice(chosen?[0]?.Identifier as string ?? "extract"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
+                        _      => { try { OnAbort(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Skill-based ability chance ─────────────────────────────────────────
@@ -365,7 +365,7 @@ namespace AshAndEmber
                     ? (Hero.MainHero?.GetSkillValue(DefaultSkills.Charm)   ?? 0)
                     : (Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return Math.Max(0.20f, Math.Min(0.80f, 0.20f + (skill / 500f) * 0.60f));
         }
 
@@ -386,7 +386,7 @@ namespace AshAndEmber
                     if (_rng.NextDouble() < ComputeAbilityChance(isCharm: false))
                     {
                         try { MBInformationManager.AddQuickInformation(
-                            new TextObject("Sidestep — your operative slipped through cleanly. No exposure taken.")); } catch { }
+                            new TextObject("Sidestep — your operative slipped through cleanly. No exposure taken.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         AdvanceRound();
                     }
                     else
@@ -401,14 +401,14 @@ namespace AshAndEmber
                     {
                         _exposure = Math.Max(0, _exposure - 5);
                         try { MBInformationManager.AddQuickInformation(
-                            new TextObject("Talk It Down — smooth words defused the situation. Exposure −5.")); } catch { }
+                            new TextObject("Talk It Down — smooth words defused the situation. Exposure −5.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         ShowPhase(_currentReport);
                     }
                     else
                     {
                         _exposure += 5;
                         try { MBInformationManager.AddQuickInformation(
-                            new TextObject("Talk It Down failed — they grew suspicious. Exposure +5.")); } catch { }
+                            new TextObject("Talk It Down failed — they grew suspicious. Exposure +5.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         if (_exposure > BlownThreshold) { OnBust(); return; }
                         ShowPhase(_currentReport);
                     }
@@ -418,7 +418,7 @@ namespace AshAndEmber
                 {
                     int roll = 4 + _rng.Next(7); // 4–10
                     try { MBInformationManager.AddQuickInformation(
-                        new TextObject($"Pushed hard — exposure +{roll}.")); } catch { }
+                        new TextObject($"Pushed hard — exposure +{roll}.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     ApplyPressRoll(roll);
                     break;
                 }
@@ -428,7 +428,7 @@ namespace AshAndEmber
                     int roll = _rng.Next(7) - 3; // −3 to +3
                     string rollStr = roll >= 0 ? $"+{roll}" : $"{roll}";
                     try { MBInformationManager.AddQuickInformation(
-                        new TextObject($"Careful approach — exposure {rollStr}.")); } catch { }
+                        new TextObject($"Careful approach — exposure {rollStr}.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     ApplyPressRoll(roll);
                     break;
                 }
@@ -437,7 +437,7 @@ namespace AshAndEmber
                 {
                     int roll = -(4 + _rng.Next(7)); // −4 to −10
                     try { MBInformationManager.AddQuickInformation(
-                        new TextObject($"Pulled back — exposure {roll}.")); } catch { }
+                        new TextObject($"Pulled back — exposure {roll}.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     ApplyPressRoll(roll);
                     break;
                 }
@@ -469,7 +469,7 @@ namespace AshAndEmber
             string msg = delta > 0
                 ? $"{abilityName} failed — drew unwanted attention. Exposure +{delta}."
                 : $"{abilityName} failed — confusion bought cover. Exposure {delta}.";
-            try { MBInformationManager.AddQuickInformation(new TextObject(msg)); } catch { }
+            try { MBInformationManager.AddQuickInformation(new TextObject(msg)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (_exposure > BlownThreshold) { OnBust(); return; }
             AdvanceRound();
@@ -481,16 +481,16 @@ namespace AshAndEmber
             if (_rng.NextDouble() < 0.50)
             {
                 try { MBInformationManager.AddQuickInformation(new TextObject(
-                    "Time ran out. Your operative overstayed — the network collapsed. Operation blown.")); } catch { }
-                try { SchemeSystem.ApplyBreakConsequence(_def.Type, Hero.MainHero, _targetHero, _targetSett); } catch { }
-                try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett); } catch { }
+                    "Time ran out. Your operative overstayed — the network collapsed. Operation blown.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SchemeSystem.ApplyBreakConsequence(_def.Type, Hero.MainHero, _targetHero, _targetSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else
             {
                 try { MBInformationManager.AddQuickInformation(new TextObject(
-                    "Time ran out. Your operative withdrew before the net closed — the operation accomplished nothing.")); } catch { }
-                try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, SchemeOutcome.SmallLoss); } catch { }
-                try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, days: 2); } catch { }
+                    "Time ran out. Your operative withdrew before the net closed — the operation accomplished nothing.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, SchemeOutcome.SmallLoss); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, days: 2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -499,18 +499,18 @@ namespace AshAndEmber
         {
             var cfg = GetConfig(_def.Type);
             SchemeOutcome outcome = _exposure >= cfg.RiskSum ? SchemeOutcome.Success : SchemeOutcome.SmallLoss;
-            try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, outcome); } catch { }
+            try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, outcome); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // SmallLoss extract: same 2-day cooldown as Abort — deliberate quiet retreat
             // shouldn't be penalised more than panic-aborting immediately.
             int cooldownDays = outcome == SchemeOutcome.SmallLoss ? 2 : -1;
-            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, cooldownDays); } catch { }
+            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, cooldownDays); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Blown ─────────────────────────────────────────────────────────────
         private static void OnBust()
         {
-            try { SchemeSystem.ApplyBreakConsequence(_def.Type, Hero.MainHero, _targetHero, _targetSett); } catch { }
-            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett); } catch { }
+            try { SchemeSystem.ApplyBreakConsequence(_def.Type, Hero.MainHero, _targetHero, _targetSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Abort ─────────────────────────────────────────────────────────────
@@ -521,8 +521,8 @@ namespace AshAndEmber
                 MBInformationManager.AddQuickInformation(
                     new TextObject("Your agent stands down. The operation is abandoned — costs are spent."));
             }
-            catch { }
-            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, days: 2); } catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, days: 2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

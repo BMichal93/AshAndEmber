@@ -75,7 +75,7 @@ namespace AshAndEmber
                     AnnounceEnemy(a, hero, type);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static MiracleType ChooseGraceMiracle(Agent a)
@@ -84,7 +84,7 @@ namespace AshAndEmber
             // when hurt, judge the Ashen, ward/bless a wounded line, shield under a
             // press, otherwise rally. Grace itself is unlimited (no resource gate).
             bool selfHurt = false;
-            try { selfHurt = a.Health < a.HealthLimit * 0.40f; } catch { }
+            try { selfHurt = a.Health < a.HealthLimit * 0.40f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int alliesHurtNear = 0, enemiesPressing = 0;
             try
@@ -103,7 +103,7 @@ namespace AshAndEmber
                     if (dx * dx + dy * dy <= 6f * 6f) enemiesPressing++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             return MiracleMath.ChooseBattleMiracle(
                 selfHurt, alliesHurtNear, enemiesPressing >= 2, AshenNearby(a), (float)_rng.NextDouble());
@@ -121,7 +121,7 @@ namespace AshAndEmber
                     $"{name} invokes {miracle}!",
                     new Color(0.80f, 0.65f, 0.30f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Classification helpers ─────────────────────────────────────────────
@@ -177,7 +177,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 

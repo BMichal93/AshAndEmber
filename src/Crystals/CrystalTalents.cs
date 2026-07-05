@@ -60,13 +60,13 @@ namespace AshAndEmber
             int cost = NextCost();
             var hero = Hero.MainHero;
             int have = 0;
-            try { have = hero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch { }
+            try { have = hero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (have < cost)
             {
                 message = $"{Name(id)} asks {cost} focus point{(cost != 1 ? "s" : "")}; you have {have}.";
                 return false;
             }
-            try { hero.HeroDeveloper.UnspentFocusPoints -= cost; } catch { }
+            try { hero.HeroDeveloper.UnspentFocusPoints -= cost; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _owned.Add(id);
             message = $"You learn {Name(id)}. ({cost} focus point{(cost != 1 ? "s" : "")})";
             return true;
@@ -76,7 +76,7 @@ namespace AshAndEmber
         public static void ShowCodex()
         {
             int have = 0;
-            try { have = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch { }
+            try { have = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             int cost = NextCost();
 
             var elements = new List<InquiryElement>();
@@ -105,7 +105,7 @@ namespace AshAndEmber
                     },
                     null, "", false), false, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static string Name(CrystalTalentId id)
@@ -143,7 +143,7 @@ namespace AshAndEmber
                     foreach (int i in owned) _owned.Add((CrystalTalentId)i);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static readonly Color Glow = new Color(0.7f, 0.85f, 1.0f);

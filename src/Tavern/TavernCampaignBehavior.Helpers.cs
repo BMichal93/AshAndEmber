@@ -75,7 +75,7 @@ namespace AshAndEmber
                 string sign = delta >= 0 ? "+" : "";
                 Msg($"(Relation with {target.Name}: {sign}{delta})", delta >= 0 ? GoodColor : BadColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ChangeCrime(float amount)
@@ -86,18 +86,18 @@ namespace AshAndEmber
                 if (kingdom != null)
                     ChangeCrimeRatingAction.Apply(kingdom, amount, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void AddMorale(float delta)
         {
-            try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += delta; } catch { }
+            try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += delta; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void Msg(string text, Color c)
         {
             try { MBInformationManager.AddQuickInformation(new TextObject(text)); }
-            catch { try { InformationManager.DisplayMessage(new InformationMessage(text, c)); } catch { } }
+            catch { try { InformationManager.DisplayMessage(new InformationMessage(text, c)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
         }
     }
 }

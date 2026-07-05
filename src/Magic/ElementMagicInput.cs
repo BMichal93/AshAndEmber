@@ -96,7 +96,7 @@ namespace AshAndEmber
                 if (m != null && !ReferenceEquals(m, _countedMission.Target))
                 { _ashenBattleCasts = 0; _countedMission.Target = m; }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!MageKnowledge.IsMage) { InputSuppressed = false; return; }
 
             bool altHeld = Input.IsKeyDown(InputKey.LeftAlt);
@@ -114,7 +114,7 @@ namespace AshAndEmber
                     _fullAnnounced = false;
                     _visualTimer = 0f;
                     _lastVisualElement = null;   // force an immediate first pulse
-                    try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch { }
+                    try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     _wasFocusing = true;
                 }
 
@@ -202,9 +202,9 @@ namespace AshAndEmber
                 _readyAnnounced = false;
                 _fullAnnounced = false;
                 _lastVisualElement = null;
-                try { if (Agent.Main != null) SpellEffects.EndCastLoop(Agent.Main); } catch { }
+                try { if (Agent.Main != null) SpellEffects.EndCastLoop(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Clears the body contour glow left by the charge visual.
-                try { if (Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch { }
+                try { if (Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -236,7 +236,7 @@ namespace AshAndEmber
         private static void EmitChargeVisual(Agent caster, MagicElement el)
         {
             Vec3 pos; try { pos = caster.Position; } catch { return; }
-            bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch { }
+            bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             Vec3 up = new Vec3(0f, 0f, 0.8f);
 
             // Element-corresponding particles engulf the caster while charging.
@@ -263,12 +263,12 @@ namespace AshAndEmber
                         break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Element-coloured light and a body contour glow, tinted to the element
             // (the Ashen cold mask is applied by ElementLightRgb).
-            try { SpellEffects.SpawnTempLightRgb(pos + up, ElementSpellEffects.ElementLightRgb(el, ashen), 8f, VisualDuration + 0.2f); } catch { }
-            try { SpellEffects.BeginAgentGlow(caster, FocusSchool(), VisualInterval + 0.3f); } catch { }
+            try { SpellEffects.SpawnTempLightRgb(pos + up, ElementSpellEffects.ElementLightRgb(el, ashen), 8f, VisualDuration + 0.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, FocusSchool(), VisualInterval + 0.3f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // W/S/A/D (or left-stick flicks) load a learned element; Fire needs no key.
@@ -311,7 +311,7 @@ namespace AshAndEmber
                 if (form == CastForm.Attack) ElementSpellEffects.CastAttack(el, caster, power);
                 else                         ElementSpellEffects.CastWall(el, caster, power);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // The toll is flat — the draw bought power, not a cheaper cast.
             int days = ElementMagicMath.CastAgingDays(form, MageElementKnowledge.HasNature);
@@ -346,12 +346,13 @@ namespace AshAndEmber
             }
 
             bool cast = false;
-            try { cast = ElementUltimates.CastPlayerUltimate(el, caster); } catch { }
+            try { cast = ElementUltimates.CastPlayerUltimate(el, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!cast) return;
 
             // The Unbinding's toll is flat and steep, like every other cast —
             // Nature halves it, the Ashen pay it in criminal standing (days × 5).
-            ApplyCastCost(ElementUltimateMath.UltimateAgingDays(MageElementKnowledge.HasNature));
+            // Spirit's living champion costs more life than a one-moment working.
+            ApplyCastCost(ElementUltimateMath.UltimateAgingDays(MageElementKnowledge.HasNature, el));
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
             _fullAnnounced = false;
@@ -376,7 +377,7 @@ namespace AshAndEmber
                     AgingSystem.SpendLifeExpectancy(Hero.MainHero, days);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Null when drawing is allowed, else a short reason the player can act on.
@@ -384,7 +385,7 @@ namespace AshAndEmber
         {
             Agent c = Agent.Main;
             if (c == null || !c.IsActive()) return "There is no hand here to shape the fire.";
-            try { if (c.GetCurrentVelocity().Length >= StillSpeed) return "Stand still to draw."; } catch { }
+            try { if (c.GetCurrentVelocity().Length >= StillSpeed) return "Stand still to draw."; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             bool steel = MageElementKnowledge.HasSteel;
             if (!steel && !SpellEffects.HasFreeHand(c))   return "Sheathe your weapon (X) to draw — or learn Steel.";
             if (!steel && NatureEffects.ArmourTooHeavy(c)) return "Armour too heavy — shed it, or learn Steel.";
@@ -395,7 +396,7 @@ namespace AshAndEmber
         {
             // The Ashen draw on the cold, whatever the element; otherwise Fire is red
             // and the other elements borrow the nature glow.
-            try { if (MageKnowledge.IsAshen) return ColorSchool.Ashen; } catch { }
+            try { if (MageKnowledge.IsAshen) return ColorSchool.Ashen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return MageElementKnowledge.Loaded == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature;
         }
 

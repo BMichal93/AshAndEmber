@@ -22,8 +22,8 @@ namespace AshAndEmber
         // ── Daily tick ────────────────────────────────────────────────────────
         private static void OnDailyTick()
         {
-            try { SchemeSystem.DailyTick();     } catch { }
-            try { SchemeSystem.NpcSchemeTick(); } catch { }
+            try { SchemeSystem.DailyTick();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SchemeSystem.NpcSchemeTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Counter-intelligence sweep ────────────────────────────────────────
@@ -38,7 +38,7 @@ namespace AshAndEmber
             try
             {
                 if (Hero.MainHero == null || Hero.MainHero.Gold < SweepCostGold) return;
-                try { Hero.MainHero.Gold -= SweepCostGold; } catch { }
+                try { Hero.MainHero.Gold -= SweepCostGold; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 var plot = SchemeSystem.FindSchemeAgainstPlayerInterests();
                 if (plot == null)
@@ -56,7 +56,7 @@ namespace AshAndEmber
                     string who   = schemer?.Name?.ToString() ?? "an unknown hand";
                     var def      = SchemeSystem.GetDefinition(plot.Type);
                     SchemeSystem.RemovePendingScheme(plot);
-                    try { Hero.MainHero.HeroDeveloper?.AddSkillXp(DefaultSkills.Roguery, 300); } catch { }
+                    try { Hero.MainHero.HeroDeveloper?.AddSkillXp(DefaultSkills.Roguery, 300); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Your informants caught the agent mid-errand. The {def?.Name ?? "scheme"} against you "
                         + $"is unravelled before it lands — and the hand behind it belongs to {who}."));
@@ -68,7 +68,7 @@ namespace AshAndEmber
                         + "Something is in motion against you. You could not stop it."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

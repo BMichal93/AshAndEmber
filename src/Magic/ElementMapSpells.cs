@@ -65,7 +65,7 @@ namespace AshAndEmber
                 case MagicElement.Spirit: CastFarsight(mult);        break;
                 default:                  CastEmberfall(mult);       break;
             }
-            try { MageKnowledge.RewardCastSkill(); } catch { }
+            try { MageKnowledge.RewardCastSkill(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Fire: Emberfall (mirror of the old Ashstorm) ───────────────────────────
@@ -95,17 +95,17 @@ namespace AshAndEmber
                     for (int i = 0; i < toKill && troops.Count > 0; i++)
                     {
                         int idx = _rng.Next(troops.Count);
-                        try { garrison.AddToCounts(troops[idx].Character, -1); killed++; } catch { }
+                        try { garrison.AddToCounts(troops[idx].Character, -1); killed++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                try { target.Town.FoodStocks -= (int)(150f * mult); } catch { }
-                try { target.Town.Prosperity = Math.Max(100f, target.Town.Prosperity - (int)(250f * mult)); } catch { }
-                try { target.Town.Security   = Math.Max(0f,   target.Town.Security   - (int)(25f  * mult)); } catch { }
+                try { target.Town.FoodStocks -= (int)(150f * mult); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { target.Town.Prosperity = Math.Max(100f, target.Town.Prosperity - (int)(250f * mult)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { target.Town.Security   = Math.Max(0f,   target.Town.Security   - (int)(25f  * mult)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 string killLine = killed > 0 ? $" {killed} garrison soldier{(killed != 1 ? "s" : "")} consumed." : "";
                 Msg($"Emberfall — fire rains over {target.Name}.{killLine} Food burns. The walls remember it.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Wind: Scattering Gale (disorder nearby hostile parties) ────────────────
@@ -122,13 +122,13 @@ namespace AshAndEmber
                     if (!p.IsActive || p == MobileParty.MainParty) continue;
                     try { if (!FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)) continue; } catch { continue; }
                     if ((p.GetPosition2D - playerPos).Length > 65f) continue;
-                    try { p.RecentEventsMorale -= morale; scattered++; } catch { }
+                    try { p.RecentEventsMorale -= morale; scattered++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 Msg(scattered > 0
                     ? $"Scattering Gale — the high wind comes down. {scattered} enemy {(scattered == 1 ? "host is" : "hosts are")} thrown into disorder. -{morale} morale."
                     : "Scattering Gale — the wind rises, but finds no enemy host nearby.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Earth: Deeproot Blight (mirror of the old Plague/Wither) ───────────────
@@ -151,7 +151,7 @@ namespace AshAndEmber
                 target.Village.Hearth = Math.Max(10f, before * (1f - reduction));
                 Msg($"Deeproot Blight — the root-rot reaches {target.Name}. Hearth reduced by {(int)(reduction * 100f)}%.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Water: Tidewash (mirror of the old Inspire/Kindle) ─────────────────────
@@ -170,13 +170,13 @@ namespace AshAndEmber
                 foreach (var entry in wounded)
                 {
                     int heal = Math.Min(entry.WoundedNumber, healPerTroop);
-                    try { roster.AddToCounts(entry.Character, 0, false, -heal); roused += heal; } catch { }
+                    try { roster.AddToCounts(entry.Character, 0, false, -heal); roused += heal; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 Msg(roused > 0
                     ? $"Tidewash — still water runs through your column. +{morale} morale, {roused} soldier{(roused != 1 ? "s" : "")} rise from their wounds."
                     : $"Tidewash — still water runs through your column. +{morale} morale.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Spirit: Farsight (mirror of the old Clairvoyance) ──────────────────────
@@ -231,11 +231,11 @@ namespace AshAndEmber
                                 },
                                 () => { Msg("You know it is coming. That is something."); }));
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     };
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void Msg(string text)

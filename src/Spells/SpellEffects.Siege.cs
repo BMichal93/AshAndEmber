@@ -67,7 +67,7 @@ namespace AshAndEmber
                             if (dir.Length > 0.1f) dir.Normalize(); else dir = new Vec3(1f, 0f, 0f);
                             MissionWeapon noWeapon = MissionWeapon.Invalid;
                             dc.TriggerOnHit(hand, (int)damage, at, dir, ref noWeapon, -1, null);
-                            try { dc.BurstHeavyHitParticles(); } catch { }
+                            try { dc.BurstHeavyHitParticles(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch
                         {
@@ -83,11 +83,11 @@ namespace AshAndEmber
                         // machinery) only ever triggers from an attributed hit.
                         try { dc.HitPoint = Math.Max(1f, dc.HitPoint - damage); } catch { continue; }
                     }
-                    try { SpawnTempFireParticle(at + new Vec3(0f, 0f, 1.0f), 2f); } catch { }
+                    try { SpawnTempFireParticle(at + new Vec3(0f, 0f, 1.0f), 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     struck++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Self-healing throttle: mission time restarts each battle, so a stale
             // high watermark from the previous fight resets itself.
@@ -102,7 +102,7 @@ namespace AshAndEmber
                         "The fire takes to the timber — the machine chars and groans.",
                         new Color(0.9f, 0.5f, 0.2f)));
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             return struck;
         }

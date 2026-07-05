@@ -366,7 +366,7 @@ namespace AshAndEmber
             try
             {
                 _lastSettlementId = settlement.StringId;
-                try { AmbientRemarks.CheckCompanionRemark(settlement); } catch { }
+                try { AmbientRemarks.CheckCompanionRemark(settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Apprentice discovery: independent 1% roll, not gated by shared cooldown
                 if (settlement.IsVillage && MageKnowledge.IsMage && ApprenticeSystem.CanSearch
@@ -375,7 +375,7 @@ namespace AshAndEmber
                 {
                     MageKnowledge._deferredInquiry = () =>
                     {
-                        try { ApprenticeSystem.ShowDiscovery(settlement); } catch { }
+                        try { ApprenticeSystem.ShowDiscovery(settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     };
                     return; // skip normal encounter this entry
                 }
@@ -384,7 +384,7 @@ namespace AshAndEmber
                 if (_rng.NextDouble() < EncounterChance)
                     TryFireEnter(settlement);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         /// Called from CampaignEvents.OnSettlementLeftEvent — fires immediately when the
@@ -399,7 +399,7 @@ namespace AshAndEmber
                 if (_rng.NextDouble() < EncounterChance)
                     TryFireLeave(settlement);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         /// Called from MagicCampaignBehavior.OnDailyTick — decrements cooldowns and fires deferred events.
@@ -685,7 +685,7 @@ namespace AshAndEmber
                         break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

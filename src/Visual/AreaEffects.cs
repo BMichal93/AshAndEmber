@@ -66,9 +66,9 @@ namespace AshAndEmber
             int idx = _areaEffects.FindIndex(e => e.Id == id);
             if (idx >= 0)
             {
-                try { _areaEffects[idx].LightEntity?.Remove(0); } catch { }
-                try { _areaEffects[idx].LightEntity2?.Remove(0); } catch { }
-                try { _areaEffects[idx].LightEntity3?.Remove(0); } catch { }
+                try { _areaEffects[idx].LightEntity?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _areaEffects[idx].LightEntity2?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _areaEffects[idx].LightEntity3?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _areaEffects.RemoveAt(idx);
                 return;
             }
@@ -83,9 +83,9 @@ namespace AshAndEmber
         {
             foreach (var e in _areaEffects.Where(e => e.Id == id).ToList())
             {
-                try { e.LightEntity?.Remove(0); } catch { }
-                try { e.LightEntity2?.Remove(0); } catch { }
-                try { e.LightEntity3?.Remove(0); } catch { }
+                try { e.LightEntity?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { e.LightEntity2?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { e.LightEntity3?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             _areaEffects.RemoveAll(e => e.Id == id);
         }

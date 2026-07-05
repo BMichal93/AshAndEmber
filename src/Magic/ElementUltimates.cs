@@ -132,7 +132,7 @@ namespace AshAndEmber
                 return false;
             }
             _playerUsed.Add(el);
-            bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch { }
+            bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             Msg($"{ElementUltimateMath.UltimateName(el, ashen)} — the " +
                 $"{(ashen ? ElementMagicMath.AshenElementName(el) : ElementMagicMath.ElementName(el))} is unbound!");
             Execute(el, caster, ashen);
@@ -183,7 +183,7 @@ namespace AshAndEmber
             // Marked SPENT at windup start: an interrupted Unbinding is gone for
             // the battle — that is the player's reward for riding the caster down.
             _npcUsed.Add(hero.StringId);
-            try { SpellEffects.BeginCastLoop(agent); } catch { }
+            try { SpellEffects.BeginCastLoop(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _npcWindups.Add(new NpcWindup
             {
                 Caster = agent, Element = pick.Value,
@@ -255,7 +255,7 @@ namespace AshAndEmber
                     _flights.RemoveAt(i);
                     if (victim == Agent.Main)
                         Msg("The wind is struck from you — you fall!");
-                    try { SpellEffects.SpawnNatureBurst(victim.Position, NatureElement.Wind, 0.8f); } catch { }
+                    try { SpellEffects.SpawnNatureBurst(victim.Position, NatureElement.Wind, 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
@@ -268,8 +268,8 @@ namespace AshAndEmber
                     if (_npcWindups[i].Caster != victim) continue;
                     var w = _npcWindups[i];
                     _npcWindups.RemoveAt(i);
-                    try { SpellEffects.EndCastLoop(victim); } catch { }
-                    try { SpellEffects.SpawnTempSmokeParticle(victim.Position + new Vec3(0f, 0f, 0.8f), 1.5f); } catch { }
+                    try { SpellEffects.EndCastLoop(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { SpellEffects.SpawnTempSmokeParticle(victim.Position + new Vec3(0f, 0f, 0.8f), 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (Agent.Main != null && victim.Team != null && Agent.Main.Team != null
                         && victim.Team != Agent.Main.Team)
                         Msg($"The Unbinding is broken — {ElementUltimateMath.UltimateName(w.Element, w.Ashen)} dies unspoken.");
@@ -288,7 +288,7 @@ namespace AshAndEmber
                         if (healBack >= 1f) SpellEffects.HealAgent(victim, healBack);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -299,10 +299,10 @@ namespace AshAndEmber
         public static void Tick(float dt)
         {
             if (Mission.Current == null) return;
-            try { TickNpcWindups(dt); } catch { }
-            try { TickFlights(dt); } catch { }
-            try { TickRain(dt); } catch { }
-            try { TickChampions(dt); } catch { }
+            try { TickNpcWindups(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickFlights(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickRain(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickChampions(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickNpcWindups(float dt)
@@ -311,7 +311,7 @@ namespace AshAndEmber
             {
                 var w = _npcWindups[i];
                 bool alive = false;
-                try { alive = w.Caster != null && w.Caster.IsActive() && w.Caster.Health > 0f; } catch { }
+                try { alive = w.Caster != null && w.Caster.IsActive() && w.Caster.Health > 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!alive) { _npcWindups.RemoveAt(i); continue; }
 
                 // The channel is LOUD: a swelling glow and the element's charge
@@ -329,14 +329,14 @@ namespace AshAndEmber
                         SpellEffects.SpawnTempLightRgb(w.Caster.Position + new Vec3(0f, 0f, 1f),
                             ElementSpellEffects.ElementLightRgb(w.Element, w.Ashen), 9f, 0.7f);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 w.Remaining -= dt;
                 if (w.Remaining > 0f) continue;
                 _npcWindups.RemoveAt(i);
-                try { SpellEffects.EndCastLoop(w.Caster); } catch { }
-                try { Execute(w.Element, w.Caster, w.Ashen); } catch { }
+                try { SpellEffects.EndCastLoop(w.Caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { Execute(w.Element, w.Caster, w.Ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -355,9 +355,9 @@ namespace AshAndEmber
                 case MagicElement.Spirit: SummonChampion(caster, ashen);  break;
             }
             try { SpellEffects.TryCastSound(caster.Position,
-                    ashen ? ColorSchool.Ashen : el == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature); } catch { }
-            try { SpellEffects.RecordMagicCast(caster.Position); } catch { }
-            try { ElementWallWards.NoteCast(el, caster.Team); } catch { }
+                    ashen ? ColorSchool.Ashen : el == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.RecordMagicCast(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementWallWards.NoteCast(el, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── FIRE — The First Flame Remembered / The Long Winter ─────────────────
@@ -376,13 +376,13 @@ namespace AshAndEmber
                 if (SpellEffects.IsWarded(a)) continue;
                 // The nova is fire like any other — a standing mist wall between
                 // the caster and a foe drinks the working before it reaches him.
-                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, pos, a.Position, out _)) continue; } catch { }
-                try { SpellEffects.DamageAgent(a, ElementUltimateMath.NovaDamage * power, ColorSchool.Red, caster); } catch { }
+                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, pos, a.Position, out _)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.DamageAgent(a, ElementUltimateMath.NovaDamage * power, ColorSchool.Red, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Full ignition on everything the nova touches (the Ashen cold
                 // grips as deep frost instead of a burn — same dread, colder face).
-                if (!ashen) try { ElementSpellEffects.IgniteTarget(a, caster, 1f * power, ashen); } catch { }
+                if (!ashen) try { ElementSpellEffects.IgniteTarget(a, caster, 1f * power, ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 else        try { NatureEffects.ApplySpeedToken(a, ElementUltimateMath.NovaAshenSlowMult,
-                                                                   ElementUltimateMath.NovaAshenSlowSec); } catch { }
+                                                                   ElementUltimateMath.NovaAshenSlowSec); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Horses panic and bolt away from the eruption.
                 try
                 {
@@ -395,19 +395,19 @@ namespace AshAndEmber
                             SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try
                 {
                     if (ashen) SpellEffects.SpawnTempSnowParticle(a.Position + new Vec3(0f, 0f, 0.4f), 1.2f);
                     else       SpellEffects.SpawnTempFireParticle(a.Position + new Vec3(0f, 0f, 0.4f), 1.2f);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // The survivors visibly flee the eruption; timber in the ring chars.
-            try { SpellEffects.ScatterEnemies(pos, ElementUltimateMath.NovaRadius, caster.Team); } catch { }
+            try { SpellEffects.ScatterEnemies(pos, ElementUltimateMath.NovaRadius, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.DamageBurnableStructures(pos, ElementUltimateMath.NovaRadius,
-                    ElementUltimateMath.NovaSiegeDamage * power, caster); } catch { }
+                    ElementUltimateMath.NovaSiegeDamage * power, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // The burning ring: eight tangent bands around the caster (the living
             // fire smoulders and scorches; the cold leaves standing frost that
@@ -423,13 +423,13 @@ namespace AshAndEmber
                     if (ashen) SpellEffects.SpawnTempSnowParticle(node + new Vec3(0f, 0f, 0.4f), ElementUltimateMath.NovaRingBurnSec);
                     else       SpellEffects.SpawnTempFireParticle(node + new Vec3(0f, 0f, 0.4f), ElementUltimateMath.NovaRingBurnSec);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ElementWallWards.RegisterNode(MagicElement.Fire, node, 1.6f,
-                        ElementUltimateMath.NovaRingBurnSec, caster.Team); } catch { }
+                        ElementUltimateMath.NovaRingBurnSec, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!ashen)
                     try { SpellEffects.SpawnFireWallPatches(node, tangent, 2.2f,
                             ElementUltimateMath.NovaRingBurnDps * power,
-                            ElementUltimateMath.NovaRingBurnSec, caster.Team); } catch { }
+                            ElementUltimateMath.NovaRingBurnSec, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // The eruption itself.
@@ -448,9 +448,9 @@ namespace AshAndEmber
                         SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.5f), 3f);
                 }
             }
-            catch { }
-            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.5f), rgb, 22f, 1.4f); } catch { }
-            try { SpellEffects.BeginAgentGlow(caster, ashen ? ColorSchool.Ashen : ColorSchool.Red, 2.5f); } catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.5f), rgb, 22f, 1.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ashen ? ColorSchool.Ashen : ColorSchool.Red, 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── WIND — On the Wings of the Gale / Carried by the Howl ───────────────
@@ -478,7 +478,7 @@ namespace AshAndEmber
             _flights.Add(new Flight { Flyer = caster, Remaining = seconds, FixedDir = fixedDir, Ashen = ashen });
             if (caster == Agent.Main)
                 Msg("The wind bears you — steer with your gaze. One arrow ends it.");
-            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Wind, 1.5f); } catch { }
+            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Wind, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickFlights(float dt)
@@ -489,7 +489,7 @@ namespace AshAndEmber
             {
                 var f = _flights[i];
                 bool alive = false;
-                try { alive = f.Flyer != null && f.Flyer.IsActive() && f.Flyer.Health > 0f; } catch { }
+                try { alive = f.Flyer != null && f.Flyer.IsActive() && f.Flyer.Health > 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!alive) { _flights.RemoveAt(i); continue; }
 
                 f.Remaining -= dt;
@@ -521,7 +521,7 @@ namespace AshAndEmber
                         if (!Mission.Current.IsPositionInsideBoundaries(next.AsVec2))
                             next = f.Flyer.Position;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     // Terrain-following: ground height + the flight/landing curve.
                     float ground = next.z;
@@ -530,7 +530,7 @@ namespace AshAndEmber
                         scene.GetHeightAtPoint(next.AsVec2,
                             BodyFlags.CommonCollisionExcludeFlagsForAgent, ref ground);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     next.z = ground + ElementUltimateMath.FlightHeightAt(f.Remaining);
 
                     // LOCAL-VERIFY (in-game): a per-tick TeleportToPosition is the
@@ -542,16 +542,16 @@ namespace AshAndEmber
                     // movement input while aloft. The mechanic itself stays as is.
                     f.Flyer.TeleportToPosition(next);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // A trail of gusts marks the carried caster.
                 f.VisualTimer -= dt;
                 if (f.VisualTimer <= 0f)
                 {
                     f.VisualTimer = 0.35f;
-                    try { SpellEffects.SpawnNatureBurst(f.Flyer.Position, NatureElement.Wind, 0.5f); } catch { }
+                    try { SpellEffects.SpawnNatureBurst(f.Flyer.Position, NatureElement.Wind, 0.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     try { SpellEffects.BeginAgentGlow(f.Flyer,
-                            f.Ashen ? ColorSchool.Ashen : ColorSchool.Nature, 0.6f); } catch { }
+                            f.Ashen ? ColorSchool.Ashen : ColorSchool.Nature, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
         }
@@ -572,26 +572,26 @@ namespace AshAndEmber
             foreach (Agent a in EnemiesNear(caster, radius))
             {
                 if (SpellEffects.IsWarded(a)) continue;
-                try { SpellEffects.DamageAgent(a, ElementUltimateMath.QuakeDamage, ColorSchool.Nature, caster); } catch { }
+                try { SpellEffects.DamageAgent(a, ElementUltimateMath.QuakeDamage, ColorSchool.Nature, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Hurled outward off the heaving ground — mount-safe knockback.
                 Vec3 away = a.Position - pos; away.z = 0f;
                 if (away.Length > 0.1f) away.Normalize(); else away = new Vec3(1f, 0f, 0f);
                 Vec3 dest = a.Position + away * ElementUltimateMath.QuakeKnockback;
                 dest.z = a.Position.z;
-                try { NatureEffects.KnockbackAgent(a, dest); } catch { }
+                try { NatureEffects.KnockbackAgent(a, dest); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Broken footing: a short slow (deep frost for the Ashen barrow-cold).
                 try { NatureEffects.ApplySpeedToken(a, ElementUltimateMath.QuakeSlowMult,
-                                                       ElementUltimateMath.QuakeSlowSec); } catch { }
+                                                       ElementUltimateMath.QuakeSlowSec); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { SpellEffects.SpawnNatureBurst(a.Position,
-                        ashen ? NatureElement.Water : NatureElement.Earth, 0.6f); } catch { }
+                        ashen ? NatureElement.Water : NatureElement.Earth, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // The survivors scatter; wooden machines in the ring are shaken apart.
-            try { SpellEffects.ScatterEnemies(pos, radius, caster.Team); } catch { }
+            try { SpellEffects.ScatterEnemies(pos, radius, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.DamageBurnableStructures(pos, radius,
-                    ElementUltimateMath.QuakeSiegeDamage, caster); } catch { }
+                    ElementUltimateMath.QuakeSiegeDamage, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // A ring of churned rubble is left to bog the ground the quake tore up.
             int rubble = ElementUltimateMath.QuakeRubblePatches;
@@ -601,19 +601,19 @@ namespace AshAndEmber
                 Vec3 p = pos + new Vec3((float)Math.Cos(ang) * ElementUltimateMath.QuakeRubbleRing,
                                         (float)Math.Sin(ang) * ElementUltimateMath.QuakeRubbleRing, 0f);
                 p.z = pos.z;
-                try { SpellEffects.SpawnMudPatch(p); } catch { }
+                try { SpellEffects.SpawnMudPatch(p); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // The eruption itself — a stone shockwave ring and a heave at the centre.
-            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, radius * 0.55f, 1.2f); } catch { }
-            try { SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, 2f); } catch { }
+            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, radius * 0.55f, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 Vec3 rgb = ElementSpellEffects.ElementLightRgb(MagicElement.Earth, ashen);
                 SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), rgb, 18f, 1.1f);
             }
-            catch { }
-            try { SpellEffects.BeginAgentGlow(caster, ashen ? ColorSchool.Ashen : ColorSchool.Nature, 1.5f); } catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ashen ? ColorSchool.Ashen : ColorSchool.Nature, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (caster == Agent.Main)
                 Msg(ashen ? "The barrow wakes — the frozen ground splits, and the cold throws them down."
@@ -638,7 +638,7 @@ namespace AshAndEmber
                 Ashen = ashen,
             };
             if (replaced) Msg("A new will takes the sky — the old rain is torn away.");
-            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Water, 2f); } catch { }
+            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Water, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickRain(float dt)
@@ -666,18 +666,18 @@ namespace AshAndEmber
                     if (dx * dx + dy * dy > radius2) continue;
 
                     // The rain puts out every burning man inside it.
-                    try { ElementSpellEffects.QuenchIgnition(a); } catch { }
+                    try { ElementSpellEffects.QuenchIgnition(a); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     // Slow tokens are short and re-applied each tick, so they end
                     // with the rain (or the moment someone walks out of it).
                     try { NatureEffects.ApplySpeedToken(a, ElementUltimateMath.RainFootSlowMult,
-                            ElementUltimateMath.RainTickSeconds + 0.3f); } catch { }
+                            ElementUltimateMath.RainTickSeconds + 0.3f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     try
                     {
                         if (a.MountAgent != null && a.MountAgent.IsActive())
                             NatureEffects.ApplySpeedToken(a.MountAgent, ElementUltimateMath.RainMountSlowMult,
                                 ElementUltimateMath.RainTickSeconds + 0.3f);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     // The blizzard gnaws at the caster's foes.
                     if (r.Ashen)
                         try
@@ -685,15 +685,15 @@ namespace AshAndEmber
                             if (r.CasterTeam != null && a.Team != null && a.Team.IsEnemyOf(r.CasterTeam))
                                 a.SetMorale(a.GetMorale() - ElementUltimateMath.RainAshenMoraleDrainPerTick);
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Standing fire dies under the rain — the burning GROUND itself, not
             // just its warding (QuenchFireAt sweeps both, patches to steam) — and
             // a scatter of spray/snow keeps the zone readable on screen.
-            try { SpellEffects.QuenchFireAt(r.Centre, ElementUltimateMath.RainRadius); } catch { }
+            try { SpellEffects.QuenchFireAt(r.Centre, ElementUltimateMath.RainRadius); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 for (int k = 0; k < 4; k++)
@@ -705,7 +705,7 @@ namespace AshAndEmber
                     else         SpellEffects.SpawnNatureBurst(p, NatureElement.Water, 0.8f);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── SPIRIT — The Land's Answer / What Sleeps Beneath ─────────────────────
@@ -721,60 +721,24 @@ namespace AshAndEmber
             {
                 if (Mission.Current == null || caster.Team == null) return;
 
-                var troop = MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
-                         ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter");
-                if (troop == null) return;
-
-                bool snowy = false; try { snowy = SpellEffects.SceneIsSnowy(); } catch { }
+                bool snowy = false; try { snowy = SpellEffects.SceneIsSnowy(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 string sceneName = "";
                 // LOCAL-VERIFY: Mission.SceneName — if the property has moved, the
                 // catch leaves the name empty and the champion defaults to Stone.
-                try { sceneName = (Mission.Current.SceneName ?? "").ToLowerInvariant(); } catch { }
+                try { sceneName = (Mission.Current.SceneName ?? "").ToLowerInvariant(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 ElementalKind kind = ElementUltimateMath.ElementalKindForScene(snowy, sceneName);
 
                 Vec3 fwd; try { fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
                 catch { fwd = new Vec3(0f, 1f, 0f); }
                 Vec3 pos = caster.Position + fwd * ElementUltimateMath.ElementalSpawnOffset;
-                float gz = pos.z;
-                try
-                {
-                    Mission.Current.Scene.GetHeightAtPoint(pos.AsVec2,
-                        BodyFlags.CommonCollisionExcludeFlagsForAgent, ref gz);
-                    pos.z = gz;
-                }
-                catch { }
 
-                int seed = _rng.Next();
-                Equipment equipment = troop.FirstBattleEquipment ?? troop.Equipment;
-                BodyProperties body = troop.GetBodyProperties(equipment, seed);
-
-                var origin    = new BasicBattleAgentOrigin(troop);
-                var agentData = new AgentBuildData(origin)
-                    .Team(caster.Team)
-                    .Controller(AgentControllerType.AI)
-                    .Equipment(equipment)
-                    .BodyProperties(body)
-                    .Age((int)body.Age)
-                    .ClothingColor1(ChampionCloth(kind))
-                    .ClothingColor2(ChampionCloth(kind))
-                    .InitialPosition(in pos);
-                // InitialDirection takes a Vec2 (verified against the game DLLs).
-                Vec2 fwd2 = fwd.AsVec2;
-                agentData = agentData.InitialDirection(in fwd2);
-
-                var elemental = Mission.Current.SpawnAgent(agentData, false);
+                // The champion is just a Kindled the land sends — build it through
+                // the shared factory so it looks, coats and buckles exactly like
+                // every other elemental (its aura and weakness are handled centrally
+                // by ElementalBeings). charge:true ropes an ENEMY lord's summon into
+                // his line; on the player's side the factory leaves battle orders be.
+                Agent elemental = ElementalFactory.SpawnElemental(kind, caster.Team, pos, charge: true);
                 if (elemental == null) return;
-
-                // Towering health — the champion is worth several men.
-                // LOCAL-VERIFY: Agent.HealthLimit setter. If it turns out read-only
-                // in this game version, drop these two lines — the champion then
-                // fights at troop health, weaker but perfectly functional.
-                try
-                {
-                    elemental.HealthLimit = ElementUltimateMath.ElementalHealth;
-                    elemental.Health      = ElementUltimateMath.ElementalHealth;
-                }
-                catch { }
 
                 _champions.Add(new Champion
                 {
@@ -783,19 +747,8 @@ namespace AshAndEmber
                 });
                 Msg($"The land answers — a {ElementUltimateMath.ElementalName(kind)} rises to fight beside " +
                     (caster == Agent.Main ? "you." : "its summoner."));
-                EmitChampionBurst(pos, kind, ashen, 1.6f);
             }
-            catch { }
-        }
-
-        private static uint ChampionCloth(ElementalKind kind)
-        {
-            switch (kind)
-            {
-                case ElementalKind.Frost: return 0xFFBFD9E8;  // pale ice
-                case ElementalKind.Sand:  return 0xFFC9A96A;  // dune ochre
-                default:                  return 0xFF6E6A64;  // old grey stone
-            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void EmitChampionBurst(Vec3 pos, ElementalKind kind, bool ashen, float scale)
@@ -815,9 +768,9 @@ namespace AshAndEmber
                         break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f),
-                    ElementSpellEffects.ElementLightRgb(MagicElement.Spirit, ashen), 8f, 0.8f); } catch { }
+                    ElementSpellEffects.ElementLightRgb(MagicElement.Spirit, ashen), 8f, 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickChampions(float dt)
@@ -826,7 +779,7 @@ namespace AshAndEmber
             {
                 var c = _champions[i];
                 bool alive = false;
-                try { alive = c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f; } catch { }
+                try { alive = c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!alive) { _champions.RemoveAt(i); continue; }
 
                 c.Remaining -= dt;
@@ -840,18 +793,11 @@ namespace AshAndEmber
                     // is the clean despawn (no corpse — it "comes apart"). If the
                     // signature has drifted, the fallback kill still removes it.
                     try { c.Elemental.FadeOut(true, true); }
-                    catch { try { SpellEffects.KillAgent(c.Elemental); } catch { } }
+                    catch { try { SpellEffects.KillAgent(c.Elemental); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
                     continue;
                 }
-
-                c.VisualTimer -= dt;
-                if (c.VisualTimer <= 0f)
-                {
-                    c.VisualTimer = 1.5f;
-                    EmitChampionBurst(c.Elemental.Position, c.Kind, c.Ashen, 0.5f);
-                    try { SpellEffects.BeginAgentGlow(c.Elemental,
-                            c.Ashen ? ColorSchool.Ashen : ColorSchool.Nature, 1.8f); } catch { }
-                }
+                // The living coat (following particles + glow) is driven centrally
+                // by ElementalBeings.TickAuras — the champion only owns its lifespan.
             }
         }
 
@@ -880,7 +826,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{hero.Name} {blurb}", new Color(0.9f, 0.35f, 0.25f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void Msg(string text)

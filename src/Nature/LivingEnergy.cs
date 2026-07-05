@@ -78,7 +78,7 @@ namespace AshAndEmber
                     name = t.ToString();
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _terrain[key] = name;
             return name;
         }
@@ -153,7 +153,7 @@ namespace AshAndEmber
                 outcome.BelowEmpty = true;
                 if (canBiteBack)
                 {
-                    try { BleedNearestHearth(mapPos, announce); } catch { }
+                    try { BleedNearestHearth(mapPos, announce); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (_rng.NextDouble() < LivingEnergyMath.SourChance)
                         outcome.Soured = true;
                 }
@@ -178,7 +178,7 @@ namespace AshAndEmber
                 float h = nearest.Village.Hearth;
                 nearest.Village.Hearth = Math.Max(10f, h - LivingEnergyMath.HearthToll);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce)
                 Msg($"The exhausted land takes what it must — the hearth of {nearest.Name} dims.");
         }

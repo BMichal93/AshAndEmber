@@ -127,12 +127,12 @@ namespace AshAndEmber
                     chosen =>
                     {
                         try { HandleQCWeeklyChoice(chosen?[0]?.Identifier as string ?? "discard"); }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     null, "", false
                 ), false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void HandleQCWeeklyChoice(string id)
@@ -140,13 +140,13 @@ namespace AshAndEmber
             switch (id)
             {
                 case "perform":
-                    try { PerformQCRite(); } catch { }
+                    try { PerformQCRite(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     break;
 
                 case "sell":
                 {
                     _qcActive = false;
-                    try { _qcQuestLog?.LogGivenAway("a merchant"); _qcQuestLog?.CompleteFail(); } catch { }
+                    try { _qcQuestLog?.LogGivenAway("a merchant"); _qcQuestLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     GainGold(10000);
                     ShiftHonour(-1);
                     bool soldToImperial = _rng.Next(100) < SellImperialChance;
@@ -187,7 +187,7 @@ namespace AshAndEmber
                         "You watch them burn. It takes longer than it should. " +
                         "The last line is still readable when the ashes cool. " +
                         "You do not write it down.");
-                    try { _qcQuestLog?.LogDiscarded(); _qcQuestLog?.CompleteFail(); } catch { }
+                    try { _qcQuestLog?.LogDiscarded(); _qcQuestLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     break;
             }
         }
@@ -200,7 +200,7 @@ namespace AshAndEmber
             Notify(
                 $"The Burning Laboratory — the scrolls are handed over to {factionName}. " +
                 "You held them longer than you meant to. You are not certain what you expected to feel.");
-            try { _qcQuestLog?.LogGivenAway(factionName); _qcQuestLog?.CompleteFail(); } catch { }
+            try { _qcQuestLog?.LogGivenAway(factionName); _qcQuestLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (isImperial)
                 StartQuestlineA(factionId);
             else
@@ -217,11 +217,11 @@ namespace AshAndEmber
                 h.Clan.Renown = Math.Max(0f, h.Clan.Renown + 50f);
 
             // Large XP grant across fitting skills
-            try { h.AddSkillXp(DefaultSkills.Athletics,   3000f); } catch { }
-            try { h.AddSkillXp(DefaultSkills.Medicine,    3000f); } catch { }
-            try { h.AddSkillXp(DefaultSkills.Roguery,     3000f); } catch { }
-            try { h.AddSkillXp(DefaultSkills.Leadership,  3000f); } catch { }
-            try { h.AddSkillXp(DefaultSkills.Charm,       2000f); } catch { }
+            try { h.AddSkillXp(DefaultSkills.Athletics,   3000f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { h.AddSkillXp(DefaultSkills.Medicine,    3000f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { h.AddSkillXp(DefaultSkills.Roguery,     3000f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { h.AddSkillXp(DefaultSkills.Leadership,  3000f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { h.AddSkillXp(DefaultSkills.Charm,       2000f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Lose honour
             ShiftHonour(-1);
@@ -230,15 +230,15 @@ namespace AshAndEmber
             bool turnedAshen = _rng.NextDouble() < 0.05;
             if (turnedAshen && !MageKnowledge.IsAshen)
             {
-                try { MageKnowledge.SetMage(true); }    catch { }
-                try { MageKnowledge.SetAshen(true); }   catch { }
-                try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
-                try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
+                try { MageKnowledge.SetMage(true); }    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { MageKnowledge.SetAshen(true); }   catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { MageKnowledge.ApplyAshenAppearance(h); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { AshenCitySystem.OnPlayerBecameAshen(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The Burning Laboratory — the fire in you goes cold. Something else answers instead.",
                     new Color(0.3f, 0.35f, 0.7f)));
-                try { _qcQuestLog?.LogBecameAshen(); _qcQuestLog?.CompleteSuccess(); } catch { }
+                try { _qcQuestLog?.LogBecameAshen(); _qcQuestLog?.CompleteSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _qcActive = false;
                 _phase    = PhaseEnded;
             }
@@ -249,7 +249,7 @@ namespace AshAndEmber
                     "You are not certain what you expected. What you received was stranger and quieter. " +
                     "The fire inside burned different for two days — hotter and without direction. " +
                     "It has settled back now. But not entirely to where it was.");
-                try { _qcQuestLog?.LogRitePerformed(); } catch { }
+                try { _qcQuestLog?.LogRitePerformed(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _qcWeeklyTimer = QCWeeklyDelay; // Schedule next prompt
             }
         }

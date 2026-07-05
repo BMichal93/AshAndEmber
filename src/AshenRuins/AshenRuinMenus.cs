@@ -25,9 +25,9 @@ namespace AshAndEmber
         // ── Session launch ─────────────────────────────────────────────────────
         public static void OnSessionLaunched(CampaignGameStarter starter)
         {
-            try { ResolveVillages(); } catch { }
-            try { RegisterMenus(starter); } catch { }
-            try { SpawnInitialGuards(); } catch { }
+            try { ResolveVillages(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RegisterMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnInitialGuards(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ResolveVillages()
@@ -42,7 +42,7 @@ namespace AshAndEmber
                 {
                     if (s == null || !s.IsVillage) continue;
                     string name = null;
-                    try { name = s.Name?.ToString()?.Trim(); } catch { }
+                    try { name = s.Name?.ToString()?.Trim(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (string.IsNullOrEmpty(name)) continue;
                     if (!string.Equals(name, def.VillageName, StringComparison.OrdinalIgnoreCase)) continue;
                     _ruinVillages.Add(s);
@@ -55,12 +55,12 @@ namespace AshAndEmber
         private static void SpawnInitialGuards()
         {
             foreach (var def in AshenRuinDefs.All)
-                try { AshenRuinSystem.SpawnGuardsForRuin(def); } catch { }
+                try { AshenRuinSystem.SpawnGuardsForRuin(def); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void WeeklySpawnGuards()
         {
-            try { AshenRuinSystem.WeeklyTick(); } catch { }
+            try { AshenRuinSystem.WeeklyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Menu registration ──────────────────────────────────────────────────
@@ -89,7 +89,7 @@ namespace AshAndEmber
                             else if (contested)  note = " [contested by a lord]";
 
                             MBTextManager.SetTextVariable("AR_RUIN_LABEL", $"Explore {def.RuinName}{note}");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             args.IsEnabled = !onCd;
                             return true;
                         }
@@ -103,11 +103,11 @@ namespace AshAndEmber
                             if (s == null || !_bySettlementId.TryGetValue(s.StringId, out var def)) return;
                             GameMenu.SwitchToMenu("ar_ruin_enter");
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Entry confirmation menu
             try
@@ -134,10 +134,10 @@ namespace AshAndEmber
                         MBTextManager.SetTextVariable("AR_RUIN_HDR",
                             $"{def.RuinName}  [{tierStr}]  [{def.Challenges.Length} room(s)]{soloNote}\n\n{def.EntryLore}");
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Option: Slip past guards (Tier 3+) vs Enter directly (Tier 1-2)
             try
@@ -153,7 +153,7 @@ namespace AshAndEmber
                             bool needsSlip = def.Tier >= RuinTier.Brutal && isSolo;
                             string label = needsSlip ? "Slip past the wardens and enter" : "Enter the ruin";
                             MBTextManager.SetTextVariable("AR_RUIN_GO", label);
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             return true;
                         }
                         catch { return false; }
@@ -172,11 +172,11 @@ namespace AshAndEmber
                             else
                                 AshenRuinSystem.BeginExploration(def, isSolo);
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Option: Leave
             try
@@ -184,20 +184,20 @@ namespace AshAndEmber
                 starter.AddGameMenuOption("ar_ruin_enter", "ar_ruin_leave", "Walk away",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("village"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("village"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Solo Tier-3/4 slip-past gate ──────────────────────────────────────
         private static void ShowSlipPastDialog(RuinDef def, bool isSolo)
         {
             int roguery = 0;
-            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch { }
+            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             int proficiency = TalentSystem.PurchasedCount;
             bool autoPass = roguery > 150 || proficiency >= 10;
 

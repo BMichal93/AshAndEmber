@@ -75,7 +75,7 @@ namespace AshAndEmber
                           $"These are not raiders. They do not break and scatter. They march."
                         : $"The Long March — something moved through {kingdom.Name}. The roads show it. The villages show it. But whatever passed has gone."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 11: Whispers from the Ash ──────────────────────────────────
@@ -127,13 +127,13 @@ namespace AshAndEmber
                     try
                     {
                         names.Add(hero.Name?.ToString() ?? "a lord");
-                        try { ColourLordRegistry.SetAshen(hero, true); }              catch { }
-                        try { AshenCitySystem.ApplyAshenPersonality(hero); }          catch { }
-                        try { ColourLordRegistry.SetMage(hero, true); }               catch { }
-                        try { AshenCitySystem.OnHeroSetAshen(hero); }                 catch { }
-                        try { MageKnowledge.ApplyAshenAppearance(hero); }             catch { }
+                        try { ColourLordRegistry.SetAshen(hero, true); }              catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { AshenCitySystem.ApplyAshenPersonality(hero); }          catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { ColourLordRegistry.SetMage(hero, true); }               catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { AshenCitySystem.OnHeroSetAshen(hero); }                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { MageKnowledge.ApplyAshenAppearance(hero); }             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 if (names.Count == 0) return;
@@ -148,7 +148,7 @@ namespace AshAndEmber
                     $"Their former lords received only a letter — unsigned, unaddressed, already cold. " +
                     $"[{names.Count} mage lord{(names.Count != 1 ? "s" : "")} defected to the Ashen.]"));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 12: Tyranny ────────────────────────────────────────────────
@@ -243,7 +243,7 @@ namespace AshAndEmber
                         {
                             try
                             {
-                                try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch { }
+                                try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 var executed = new List<string>();
                                 foreach (var clan in condemned)
                                 {
@@ -254,13 +254,13 @@ namespace AshAndEmber
                                         executed.Add(clan.Leader.Name?.ToString() ?? "a lord");
                                         KillCharacterAction.ApplyByMurder(clan.Leader, null, false);
                                     }
-                                    catch { }
+                                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
-                                try { ruling.Influence = 0f; } catch { }
+                                try { ruling.Influence = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                                 if (tyrant != null && tyrant.IsAlive)
                                     try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                                        Hero.MainHero, tyrant, +100, false); } catch { }
+                                        Hero.MainHero, tyrant, +100, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 foreach (var clan in condemned)
                                     PlayerRelationWithClan(clan, -50);
 
@@ -274,13 +274,13 @@ namespace AshAndEmber
                                     : $"Tyranny — you stood with {tyrantName}. {exList} did not leave the feast. {defectorName} read the invitation and chose the road. The tyrant's gratitude is real. The hatred of the condemned will outlast them.";
                                 MBInformationManager.AddQuickInformation(new TextObject(suppMsg));
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         },
                         () =>
                         {
                             try
                             {
-                                try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch { }
+                                try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 var executed = new List<string>();
                                 foreach (var clan in condemned)
                                 {
@@ -291,9 +291,9 @@ namespace AshAndEmber
                                         executed.Add(clan.Leader.Name?.ToString() ?? "a lord");
                                         KillCharacterAction.ApplyByMurder(clan.Leader, null, false);
                                     }
-                                    catch { }
+                                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
-                                try { ruling.Influence = 0f; } catch { }
+                                try { ruling.Influence = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                                 if (_rng.NextDouble() < 0.33)
                                 {
@@ -303,7 +303,7 @@ namespace AshAndEmber
                                         ? $"Tyranny — you defied {tyrantName} in the war-tent. They added your name before the wind could carry a warning. The Khan's riders found you."
                                         : $"Tyranny — you defied {tyrantName}. They added your name to the list. The blade found you before dawn.";
                                     MBInformationManager.AddQuickInformation(new TextObject(deathMsg));
-                                    try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
+                                    try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
                                 else
                                 {
@@ -318,13 +318,13 @@ namespace AshAndEmber
                                     MBInformationManager.AddQuickInformation(new TextObject(defMsg));
                                 }
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     ), true);
                 }
                 else
                 {
-                    try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch { }
+                    try { ChangeKingdomAction.ApplyByLeaveKingdom(defector, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     var executed = new List<string>();
                     foreach (var clan in condemned)
                     {
@@ -335,9 +335,9 @@ namespace AshAndEmber
                             executed.Add(clan.Leader.Name?.ToString() ?? "a lord");
                             KillCharacterAction.ApplyByMurder(clan.Leader, null, false);
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
-                    try { ruling.Influence = 0f; } catch { }
+                    try { ruling.Influence = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     string exList2 = executed.Count == 0 ? "none"
                         : executed.Count <= 3 ? string.Join(", ", executed)
@@ -350,7 +350,7 @@ namespace AshAndEmber
                     MBInformationManager.AddQuickInformation(new TextObject(worldMsg));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 13: Stolen Heirloom ─────────────────────────────────────────
@@ -433,7 +433,7 @@ namespace AshAndEmber
                         {
                             try
                             {
-                                try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
+                                try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 PlayerRelationWithClan(usurper,  +50);
                                 PlayerRelationWithClan(oldRuler, -100);
                                 string succMsg = IsTempleFaction(kingdom)
@@ -443,7 +443,7 @@ namespace AshAndEmber
                                     : $"Stolen Heirloom — you backed {newName}'s move. The seal of {kingName} changed hands. {oldName} knows exactly where you stood.";
                                 MBInformationManager.AddQuickInformation(new TextObject(succMsg));
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         },
                         () =>
                         {
@@ -462,7 +462,7 @@ namespace AshAndEmber
                                 }
                                 else
                                 {
-                                    try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
+                                    try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     string failMsg = IsTempleFaction(kingdom)
                                         ? $"Stolen Heirloom — despite your opposition, {newName} pressed the claim. The Covenant Seal of {kingName} is in their hands now. {oldName} is grateful, though without power. {newName} will not forget your name."
                                         : IsTribes(kingdom)
@@ -471,13 +471,13 @@ namespace AshAndEmber
                                     MBInformationManager.AddQuickInformation(new TextObject(failMsg));
                                 }
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     ), true);
                 }
                 else
                 {
-                    try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch { }
+                    try { ChangeRulingClanAction.Apply(kingdom, usurper); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     string worldMsg = IsTempleFaction(kingdom)
                         ? $"Stolen Heirloom — the Covenant Seal of {kingName} passed to new hands in the dark. {newName} holds it now. {oldName} held it at dusk. The transfer was quiet. The Temple's faithful will not know who arranged it for some time."
                         : IsTribes(kingdom)
@@ -486,7 +486,7 @@ namespace AshAndEmber
                     MBInformationManager.AddQuickInformation(new TextObject(worldMsg));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 14: Iron Winter ─────────────────────────────────────────────
@@ -518,7 +518,7 @@ namespace AshAndEmber
                     if (s == null || s.MapFaction != kingdom) continue;
                     if (s.IsVillage && s.Village != null)
                     {
-                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     else if (s.IsTown && s.Town != null)
                     {
@@ -528,7 +528,7 @@ namespace AshAndEmber
                             s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
                             towns++;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
@@ -538,7 +538,7 @@ namespace AshAndEmber
                     $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} halved their stores. " +
                     $"The roads are quiet in the wrong way."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 15: Scorching Sun ───────────────────────────────────────────
@@ -569,7 +569,7 @@ namespace AshAndEmber
                     if (s == null || s.MapFaction != kingdom) continue;
                     if (s.IsVillage && s.Village != null)
                     {
-                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     else if (s.IsTown && s.Town != null)
                     {
@@ -579,7 +579,7 @@ namespace AshAndEmber
                             s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
                             towns++;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
@@ -589,7 +589,7 @@ namespace AshAndEmber
                     $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} rationed their stores. " +
                     $"The land remembers."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 16: The First Green ─────────────────────────────────────────
@@ -610,7 +610,7 @@ namespace AshAndEmber
                     if (party == null || !party.IsActive || !party.IsLordParty) continue;
                     if (party.MapFaction == null || party.MapFaction.IsEliminated) continue;
                     if (party.MapFaction.StringId == AshenKingdomId) continue;
-                    try { party.RecentEventsMorale += 10f; boosted++; } catch { }
+                    try { party.RecentEventsMorale += 10f; boosted++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -619,7 +619,7 @@ namespace AshAndEmber
                     $"Across {boosted} warband{(boosted != 1 ? "s" : "")}, soldiers lift their eyes from the grey horizon. " +
                     $"The world has not forgotten how to be alive."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 17: The Amber Harvest ───────────────────────────────────────
@@ -638,7 +638,7 @@ namespace AshAndEmber
                 {
                     if (s == null || !s.IsVillage || s.Village == null) continue;
                     if (s.MapFaction == null || s.MapFaction.StringId == AshenKingdomId) continue;
-                    try { s.Village.Hearth += 20f; villages++; } catch { }
+                    try { s.Village.Hearth += 20f; villages++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -647,7 +647,7 @@ namespace AshAndEmber
                     $"There is laughter again, and the smell of fresh bread on the autumn air. " +
                     $"Let the cold come."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 18: Game of Thrones ─────────────────────────────────────────
@@ -689,7 +689,7 @@ namespace AshAndEmber
                     expelled.Add(clan.Name?.ToString() ?? "a house");
                     ChangeKingdomAction.ApplyByLeaveKingdom(clan, false);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             if (expelled.Count == 0) return;

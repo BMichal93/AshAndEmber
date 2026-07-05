@@ -43,7 +43,7 @@ namespace AshAndEmber
                 // the reference text — rewrite it so the controls are always current.
                 _log.RefreshEntriesIfStale();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void EnsureLog()
@@ -90,7 +90,7 @@ namespace AshAndEmber
         {
             if (_refreshedThisSession) return;
             _refreshedThisSession = true;
-            try { WriteEntries(); } catch { }
+            try { WriteEntries(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Each AddLog is one line in the Journal. Clears any prior entries first so
@@ -104,7 +104,7 @@ namespace AshAndEmber
                     foreach (var e in JournalEntries.ToList())
                         RemoveLog(e);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             AddLog(new TextObject(
                 "Every art has its grammar — the hand must learn the shapes before the fire will answer. " +

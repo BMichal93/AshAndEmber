@@ -28,11 +28,11 @@ namespace AshAndEmber
             if (MageKnowledge._deferredInquiry != null) { _pregnancyCountdown = 1; return; }
             MageKnowledge._deferredInquiry = () =>
             {
-                try { MakePregnantAction.Apply(Hero.MainHero); } catch { }
+                try { MakePregnantAction.Apply(Hero.MainHero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 Hero husband = Hero.MainHero?.Spouse;
                 if (husband != null && husband.IsAlive)
                 {
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, husband, -50, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, husband, -50, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     Msg($"You are with child — and {husband.Name} knows it is not his. ({husband.Name} −50 relation)", BadColor);
                 }
                 else
@@ -49,7 +49,7 @@ namespace AshAndEmber
                 ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -20, false);
                 Msg($"({spouse.Name} −20 relation)", BadColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Condition helpers ──────────────────────────────────────────────────
@@ -85,7 +85,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (remaining > 0)
             {
                 try
@@ -104,7 +104,7 @@ namespace AshAndEmber
                         }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             int sacrificed = count - remaining;
             if (sacrificed > 0) Msg($"({sacrificed} troops consumed by the ritual)", BadColor);
@@ -174,32 +174,32 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            try { KillCharacterAction.ApplyByMurder(child, null, false); } catch { }
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -20, false); } catch { }
+                            try { KillCharacterAction.ApplyByMurder(child, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -20, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"You put everything into {spouseName}. The fever breaks. {childName} does not wake. {spouseName} knows what you chose, and what it cost, and does not yet know what to do with either of those things.", BadColor);
                             break;
                         case "b":
-                            try { KillCharacterAction.ApplyByMurder(spouse, null, false); } catch { }
+                            try { KillCharacterAction.ApplyByMurder(spouse, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"You put everything into {childName}. The fever breaks. {spouseName} does not wake. {childName} will be older before they understand what happened in that room. You will have to decide what to tell them.", BadColor);
                             break;
                         case "c":
                             AgePlayer(3650); // 10 years
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, 10, false); } catch { }
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  10, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, 10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"You put the fire through both of them at once — not a thing that is meant to be done like this, not a thing you will be able to explain. It costs ten years. They both wake. {spouseName} holds your face when you come back to yourself and does not ask what you gave. {childName} is already asking for food.", FireColor);
                             break;
                         case "n":
-                            try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - 40); } catch { }
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, 8, false); } catch { }
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  8, false); } catch { }
+                            try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - 40); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, 8, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  8, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"You sit between them and open yourself to the living world — not the fire, not the cold, but the quiet warmth that runs through roots and rivers and the palms of living hands. It moves through you and into them. The sickness does not burn away; it simply has no purchase in something the land has touched. They both wake, slowly, over the course of a night. {spouseName} watches your face the whole time, understanding nothing but the cost. {childName} does not understand either, but they take your hand when it is over.",
                                 new TaleWorlds.Library.Color(0.35f, 0.75f, 0.35f));
                             break;
                         case "cold_hold":
                             AgePlayer(1825); // 5 years
                             ShiftTrait(DefaultTraits.Mercy, -1);
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -10, false); } catch { }
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -10, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"You hold the cold around them like a hand cupping a flame — not to extinguish, but to suspend. The sickness cannot spread in stillness. It costs you five years and the warmth of the next two weeks, and when {spouseName} and {childName} wake they are whole but quieter than they were. They look at you as if they went somewhere while they slept and you were what brought them back, and they are not entirely certain how they feel about the place you pulled them from.", AshenColor);
                             break;
                         case "d":
@@ -211,13 +211,13 @@ namespace AshAndEmber
                                 ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -20, false);
                                 ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -20, false);
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"The ritual requires something living and it requires a lot of it. One hundred of your soldiers do not wake up. You do not watch. {spouseName} and {childName} survive, fever-broken, and when they look at you afterward there is something in it that was not there before. You do not explain what you did. They do not ask. Both of you prefer it this way.", DarkColor);
                             break;
                         case "e":
                             BecomeAshen();
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -50, false); } catch { }
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -50, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, spouse, -50, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child,  -50, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"The cold accepts the offer immediately, as though it had been waiting. {spouseName} and {childName} wake — both of them, at the same moment, as if pulled back by the same thread. They look at you and something in both of their faces shifts before they can hide it. You are different now. The grey is already in your eyes. They are alive. They know what it cost.", AshenColor);
                             break;
                     }
@@ -250,7 +250,7 @@ namespace AshAndEmber
             Hero spouse = Hero.MainHero?.Spouse;
             if (spouse != null && spouse.IsAlive)
             {
-                try { KillCharacterAction.ApplyByMurder(spouse, Hero.MainHero, false); } catch { }
+                try { KillCharacterAction.ApplyByMurder(spouse, Hero.MainHero, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 Msg($"({spouse.Name} killed)", BadColor);
                 anyKilled = true;
             }
@@ -261,7 +261,7 @@ namespace AshAndEmber
                 .ToList();
             foreach (var ch in children)
             {
-                try { KillCharacterAction.ApplyByMurder(ch, Hero.MainHero, false); } catch { }
+                try { KillCharacterAction.ApplyByMurder(ch, Hero.MainHero, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 Msg($"({ch.Name} killed)", BadColor);
                 anyKilled = true;
             }
@@ -276,7 +276,7 @@ namespace AshAndEmber
                 if (companions.Count > 0)
                 {
                     var victim = companions[_rng.Next(companions.Count)];
-                    try { KillCharacterAction.ApplyByMurder(victim, Hero.MainHero, false); } catch { }
+                    try { KillCharacterAction.ApplyByMurder(victim, Hero.MainHero, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     Msg($"({victim.Name} killed)", BadColor);
                 }
             }
@@ -326,7 +326,7 @@ namespace AshAndEmber
                                 break;
                             case "c":
                                 Msg("You make the decision clearly, with both hands, before the hunger can use them for anything else. It is the last decision that is entirely yours. Nobody else dies.", DimColor);
-                                try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
+                                try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 break;
                         }
                     }, null, "", false), false, true);
@@ -367,7 +367,7 @@ namespace AshAndEmber
                                     Hero.MainHero.SetTraitLevel(DefaultTraits.Honor, -2);
                                     Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2);
                                 }
-                                catch { }
+                                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 // The margin note teaches the life-harvest — the BLOOD
                                 // discipline (Reap's heir). Already versed? A point instead.
                                 if (!MageElementKnowledge.HasBlood)
@@ -376,7 +376,7 @@ namespace AshAndEmber
                                     Msg("The margin note stays with you, whether you want it or not. You know the BLOOD discipline now — a lord's death by your hand gives back the years the fire has burned.", BadColor);
                                 }
                                 else
-                                    try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 1; } catch { }
+                                    try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 KillHalfParty();
                                 Msg("The working is exactly what the book said it was — which is to say it is the worst thing you have done. Your soldiers fall between one breath and the next, not in pain, just gone. The fire in you surges in a way that makes the preceding days feel like ash. You are standing in a room full of people who trusted you, and half of them are not standing anymore. The book's author was correct. It works.", BadColor);
                                 break;
@@ -440,7 +440,7 @@ namespace AshAndEmber
                 }
                 if (killed > 0) Msg($"({killed} troops consumed by the rite)", BadColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── HasHedgeWitchCondition ─────────────────────────────────────────────
@@ -502,7 +502,7 @@ namespace AshAndEmber
                                 {
                                     Hero target = (Hero.MainHero?.IsFemale == true)
                                         ? Hero.MainHero : spouse;
-                                    try { MakePregnantAction.Apply(target); } catch { }
+                                    try { MakePregnantAction.Apply(target); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
                                 _hedgeWitchCurse = 7;
                                 Msg($"You say nothing and leave the way you came. {spouseName} never knows you were there. The witch departs before dawn. You carry the knowledge of it without speaking it. Whatever was agreed in that room begins to work. Seven days later, so does everything else.", DimColor);
@@ -513,8 +513,8 @@ namespace AshAndEmber
                                 break;
                             case "c":
                                 ShiftTrait(DefaultTraits.Calculating, -1);
-                                try { Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2); } catch { }
-                                try { KillCharacterAction.ApplyByMurder(spouse, Hero.MainHero, false); } catch { }
+                                try { Hero.MainHero.SetTraitLevel(DefaultTraits.Mercy, -2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                try { KillCharacterAction.ApplyByMurder(spouse, Hero.MainHero, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg($"The fury comes before the thought. The witch is first — she had time to understand what was happening. {spouseName} had less. You surface an hour later in a room that cannot be unchanged. What was done out of love and desperation is done. So is {spouseName}.", BadColor);
                                 break;
                             case "d":
@@ -632,7 +632,7 @@ namespace AshAndEmber
                                         Msg($"(Relation with {leaderB.Name}: +10)", GoodColor);
                                     }
                                     if (!kA.IsAtWarWith(kB))
-                                        try { DeclareWarAction.ApplyByDefault(kA, kB); } catch { }
+                                        try { DeclareWarAction.ApplyByDefault(kA, kB); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     Msg($"They believe you. {kB.Name}'s council moves before you have finished explaining — emergency session, counter-orders written, messengers dispatched. The plot is dead. {kA.Name}, knowing the game is up, drops all pretence of patience and reaches for the only option left.", GoodColor);
                                 }
                                 else
@@ -696,7 +696,7 @@ namespace AshAndEmber
             void MaybeExtraWar()
             {
                 if (extraWar && !kB.IsAtWarWith(kA))
-                    try { DeclareWarAction.ApplyByDefault(kB, kA); } catch { }
+                    try { DeclareWarAction.ApplyByDefault(kB, kA); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             switch (plotType)
@@ -704,7 +704,7 @@ namespace AshAndEmber
                 case 1: // War
                 {
                     if (!kA.IsAtWarWith(kB))
-                        try { DeclareWarAction.ApplyByDefault(kA, kB); } catch { }
+                        try { DeclareWarAction.ApplyByDefault(kA, kB); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MaybeExtraWar();
                     MageKnowledge._deferredInquiry = () =>
                         Msg($"Three days since the letter. {kA.Name} has declared war on {kB.Name}. You had the order in your hands.", BadColor);
@@ -728,7 +728,7 @@ namespace AshAndEmber
                             var castle   = castles[_rng.Next(castles.Count)];
                             var newOwner = lordsA[_rng.Next(lordsA.Count)];
                             string cName = castle.Name.ToString();
-                            try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, castle); } catch { }
+                            try { ChangeOwnerOfSettlementAction.ApplyByDefault(newOwner, castle); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             MaybeExtraWar();
                             annexed = true;
                             MageKnowledge._deferredInquiry = () =>
@@ -759,7 +759,7 @@ namespace AshAndEmber
                             {
                                 target.Town.Prosperity = Math.Max(10f, target.Town.Prosperity - 300f);
                                 target.Town.Security   = Math.Max(0f,  target.Town.Security   - 30f);
-                            } catch { }
+                            } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             MaybeExtraWar();
                             sabotaged = true;
                             MageKnowledge._deferredInquiry = () =>
@@ -790,8 +790,8 @@ namespace AshAndEmber
             if (settlement?.Town != null)
             {
                 // Drop loyalty to near-zero so Bannerlord's native rebellion system fires within 1-2 days.
-                try { settlement.Town.Loyalty  = 5f; } catch { }
-                try { settlement.Town.Security = 0f; } catch { }
+                try { settlement.Town.Loyalty  = 5f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { settlement.Town.Security = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             MageKnowledge._deferredInquiry = () =>
@@ -826,7 +826,7 @@ namespace AshAndEmber
                             if (Hero.MainHero != null && Hero.MainHero.IsAlive)
                                 KillCharacterAction.ApplyByOldAge(Hero.MainHero, true);
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }, null, "", false), false, true);
             };
         }
@@ -867,7 +867,7 @@ namespace AshAndEmber
                 Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 1;
                 Msg("The fire finds nothing new to carry — but it settles deeper. (+1 attribute point)", FireColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

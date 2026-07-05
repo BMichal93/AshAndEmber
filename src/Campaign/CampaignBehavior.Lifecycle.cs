@@ -35,25 +35,25 @@ namespace AshAndEmber
                     if (vClan?.Kingdom?.RulingClan == vClan && vClan?.Kingdom?.Leader == victim)
                         CampaignMapEvents.OnFactionLeaderKilled(vClan.Kingdom);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (ColourLordRegistry.IsColourLord(victim))
-                    try { ColourLordRegistry.OnLordDied(victim); } catch { }
+                    try { ColourLordRegistry.OnLordDied(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                try { RivalShadowSystem.OnHeroKilled(victim); } catch { }
-                try { EmberConclaveSystem.OnHeroKilled(victim, killer); } catch { }
+                try { RivalShadowSystem.OnHeroKilled(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { EmberConclaveSystem.OnHeroKilled(victim, killer); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Whispers: killing an Ashen lord costs 1 — the cold notices its
                 // own dying, but fighting the Ashen is the mod's core loop and
                 // must not be the fastest road to corruption.
                 if (killer == Hero.MainHero && MageKnowledge.IsMage
                     && ColourLordRegistry.IsAshenLord(victim))
-                    try { MageKnowledge.AddWhispers(1); } catch { }
+                    try { MageKnowledge.AddWhispers(1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (detail != KillCharacterAction.KillCharacterActionDetail.Executed) return;
                 if (killer == null) return;
                 bool victimIsLord = false;
-                try { victimIsLord = victim.IsLord; } catch { }
+                try { victimIsLord = victim.IsLord; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!victimIsLord) return;
 
                 // Blood: executing a captured lord gives back the years the fire has
@@ -69,17 +69,17 @@ namespace AshAndEmber
                     _executedLordIds.Add(victim.StringId);
                     int tier = 1;
                     try { tier = Math.Max(1, Math.Min(6, victim.Clan?.Tier ?? 1)); } catch { tier = 1; }
-                    try { AgingSystem.RestoreLifeExpectancy(Hero.MainHero, ElementMagicMath.BloodRejuvenationDays(tier)); } catch { }
+                    try { AgingSystem.RestoreLifeExpectancy(Hero.MainHero, ElementMagicMath.BloodRejuvenationDays(tier)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 // Whispers: executing any lord costs 5
                 if (killer == Hero.MainHero && MageKnowledge.IsMage)
-                    try { MageKnowledge.AddWhispers(5); } catch { }
+                    try { MageKnowledge.AddWhispers(5); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (killer == Hero.MainHero)
-                    try { AshenQuestSystem.OnHeroExecuted(victim); } catch { }
+                    try { AshenQuestSystem.OnHeroExecuted(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (victim.IsLord)
-                    try { EmberConclaveSystem.OnLordExecuted(); } catch { }
+                    try { EmberConclaveSystem.OnLordExecuted(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Child inheritance ─────────────────────────────────────────────────
@@ -95,7 +95,7 @@ namespace AshAndEmber
                 bool fatherAshen = hero.Father != null && ColourLordRegistry.IsAshenLord(hero.Father);
                 if (motherAshen || fatherAshen)
                 {
-                    try { KillCharacterAction.ApplyByMurder(hero, null, false); } catch { }
+                    try { KillCharacterAction.ApplyByMurder(hero, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     return;
                 }
 
@@ -120,7 +120,7 @@ namespace AshAndEmber
                         ColourLordRegistry.SetMage(hero, true);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Companion recruitment ─────────────────────────────────────────────
@@ -146,18 +146,18 @@ namespace AshAndEmber
                         new Color(0.75f, 0.55f, 0.95f)));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Save / Load ───────────────────────────────────────────────────────
         public override void SyncData(IDataStore dataStore)
         {
-            try { dataStore.SyncData("LDM_SelectionDone",    ref _selectionDone); } catch { }
-            try { dataStore.SyncData("LDM_PrisonerSnapshot", ref _prisonerCountSnapshot); } catch { }
-            try { dataStore.SyncData("LDM_DayCounter",       ref _dayCounter); } catch { }
-            try { dataStore.SyncData("LDM_ReapRaidCooldown", ref _reapRaidCooldown); } catch { }
-            try { dataStore.SyncData("LDM_LordAnnounceCD",   ref _lordAnnounceCountdown); } catch { }
-            try { dataStore.SyncData("LDM_LordAnnounceDone", ref _lordAnnouncementDone); } catch { }
+            try { dataStore.SyncData("LDM_SelectionDone",    ref _selectionDone); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { dataStore.SyncData("LDM_PrisonerSnapshot", ref _prisonerCountSnapshot); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { dataStore.SyncData("LDM_DayCounter",       ref _dayCounter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { dataStore.SyncData("LDM_ReapRaidCooldown", ref _reapRaidCooldown); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { dataStore.SyncData("LDM_LordAnnounceCD",   ref _lordAnnounceCountdown); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { dataStore.SyncData("LDM_LordAnnounceDone", ref _lordAnnouncementDone); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Executed lord IDs — persisted so the double-fire guard survives save/load
             try
             {
@@ -169,7 +169,7 @@ namespace AshAndEmber
                     foreach (var id in elList) _executedLordIds.Add(id);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Ashen prisoner escape tracker (save/load)
             try
             {
@@ -184,23 +184,23 @@ namespace AshAndEmber
                         _ashenCaptiveDays[capKeys[i]] = capVals[i];
                 }
             }
-            catch { }
-            try { MageKnowledge.Save(dataStore); } catch { }
-            try { MageElementKnowledge.Save(dataStore); } catch { }
-            try { RivalShadowSystem.Save(dataStore); } catch { }
-            try { ColourLordRegistry.Save(dataStore); } catch { }
-            try { AshenCitySystem.Save(dataStore); } catch { }
-            try { FireWorshippersSystem.Save(dataStore); } catch { }
-            try { CampaignMapEvents.Save(dataStore); } catch { }
-            try { SettlementEncounters.Save(dataStore); } catch { }
-            try { DragonQuestSystem.Save(dataStore); } catch { }
-            try { AshenQuestSystem.Save(dataStore); } catch { }
-            try { BurningLabQuestSystem.Save(dataStore); } catch { }
-            try { EmberConclaveSystem.Save(dataStore); } catch { }
-            try { AgingSystem.Save(dataStore); } catch { }
-            try { TempleCovenant.Save(dataStore); } catch { }
-            try { AshenRuinSystem.Save(dataStore); } catch { }
-            try { ApprenticeSystem.Save(dataStore); } catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MageKnowledge.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MageElementKnowledge.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RivalShadowSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ColourLordRegistry.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenCitySystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { FireWorshippersSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CampaignMapEvents.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SettlementEncounters.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { DragonQuestSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenQuestSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { BurningLabQuestSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { EmberConclaveSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AgingSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TempleCovenant.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenRuinSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ApprenticeSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!dataStore.IsSaving)
                 _pendingAppearanceRefresh = true;
         }

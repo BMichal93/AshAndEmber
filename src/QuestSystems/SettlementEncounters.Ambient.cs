@@ -33,7 +33,7 @@ namespace AshAndEmber
                 _agingCommentCooldown = 50;
                 ShowAgingComment(age);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static readonly string[][] _agingCommentsByBracket =

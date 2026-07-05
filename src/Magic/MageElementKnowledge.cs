@@ -66,7 +66,7 @@ namespace AshAndEmber
         // Display name of the loaded element — the cold Ashen mask if the hero is Ashen.
         public static string LoadedName()
         {
-            try { if (MageKnowledge.IsAshen) return ElementMagicMath.AshenElementName(_loaded); } catch { }
+            try { if (MageKnowledge.IsAshen) return ElementMagicMath.AshenElementName(_loaded); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return ElementMagicMath.ElementName(_loaded);
         }
 
@@ -102,7 +102,7 @@ namespace AshAndEmber
                     foreach (int i in learned) _learned.Add((MagicElement)i);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -121,7 +121,7 @@ namespace AshAndEmber
                     if (s != null)
                         SetSettlementName(s, kvp.Value);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -146,7 +146,7 @@ namespace AshAndEmber
                         : $"The Wastes {i - _villageNames.Length + 1}";
                     SetSettlementName(villages[i], name);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -186,7 +186,7 @@ namespace AshAndEmber
                 // everywhere it is shown (character sheet, encyclopedia, troop culture).
                 RenameTempleCulture();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Culture-only rename (no Campaign required) ──────────────────────────
@@ -202,7 +202,7 @@ namespace AshAndEmber
                 if (vlandiaCulture != null)
                     (_cultureNameField ?? _nameField)?.SetValue(vlandiaCulture, new TextObject("Templar"));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Character-creation culture card text override ───────────────────────
@@ -248,7 +248,7 @@ namespace AshAndEmber
                 if (gt == null) return;
                 gt.SetVariationWithId(variation, new TextObject(value), null);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Tribes of the East kingdom rename ──────────────────────────────────
@@ -274,7 +274,7 @@ namespace AshAndEmber
 
                 RenameTribalCulture();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Renames the khuzait culture object to "Tribal" so character backgrounds
@@ -288,7 +288,7 @@ namespace AshAndEmber
                 if (khuzaitCulture != null)
                     (_cultureNameField ?? _nameField)?.SetValue(khuzaitCulture, new TextObject("Tribal"));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Character-creation culture card text override for Tribes ───────────
@@ -395,7 +395,7 @@ namespace AshAndEmber
                 }
                 if (any) done = true;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Sturgia → the Northmen (culture rename) ───────────────────────────
@@ -411,7 +411,7 @@ namespace AshAndEmber
                 if (sturgiaCulture != null)
                     (_cultureNameField ?? _nameField)?.SetValue(sturgiaCulture, new TextObject("Northmen"));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Northmen kingdom rename ────────────────────────────────────────────
@@ -438,7 +438,7 @@ namespace AshAndEmber
 
                 RenameNorthmenCulture();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Duneborn kingdom rename ────────────────────────────────────────────
@@ -461,7 +461,7 @@ namespace AshAndEmber
 
                 RenameDunebornCulture();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Character-creation culture card text override for the Northmen ─────
@@ -504,7 +504,7 @@ namespace AshAndEmber
                 if (aseraiCulture != null)
                     (_cultureNameField ?? _nameField)?.SetValue(aseraiCulture, new TextObject("Duneborn"));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Character-creation culture card text override for the Duneborn ─────
@@ -576,10 +576,10 @@ namespace AshAndEmber
 
                         nameField.SetValue(ch, new TextObject(newName));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void SetKingdomField(Kingdom kingdom, string[] candidates, TextObject value)
@@ -592,7 +592,7 @@ namespace AshAndEmber
                         BindingFlags.NonPublic | BindingFlags.Instance);
                     if (f != null) { f.SetValue(kingdom, value); return; }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -645,10 +645,10 @@ namespace AshAndEmber
 
                         nameField.SetValue(ch, new TextObject(newName));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Sturgia → Northmen troop rename ────────────────────────────────────
@@ -711,10 +711,10 @@ namespace AshAndEmber
 
                         nameField.SetValue(ch, new TextObject(newName));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

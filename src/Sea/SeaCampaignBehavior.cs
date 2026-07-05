@@ -142,7 +142,7 @@ namespace AshAndEmber
 
         public override void SyncData(IDataStore store)
         {
-            try { store.SyncData("SEA_FareEscrow", ref _fareEscrow); } catch { }
+            try { store.SyncData("SEA_FareEscrow", ref _fareEscrow); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -173,7 +173,7 @@ namespace AshAndEmber
                         });
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Clears per-campaign static state so a new game started in the same
@@ -194,8 +194,8 @@ namespace AshAndEmber
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
-            try { ResolvePorts(); } catch { }
-            try { RegisterHarborMenus(starter); } catch { }
+            try { ResolvePorts(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RegisterHarborMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Voyage state is not serialized: a save made mid-crossing reloads
             // with the party still docked at the origin. Return the fare.
@@ -211,14 +211,14 @@ namespace AshAndEmber
                     _fareEscrow = 0;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private void OnDailyTick()
         {
-            try { TickVentures(); } catch { }
-            try { TickNpcSea(); } catch { }
-            try { TickBlockades(); } catch { }
+            try { TickVentures(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickNpcSea(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickBlockades(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

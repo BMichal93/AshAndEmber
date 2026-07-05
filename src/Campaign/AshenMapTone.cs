@@ -58,7 +58,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.45f, 0.45f, 0.65f)));
                 _settlementCooldown = 3;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void DailyTick()
@@ -86,7 +86,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.45f, 0.45f, 0.65f)));
                 _ambientCooldown = 5;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -43,9 +43,9 @@ namespace AshAndEmber
 
         public override void SyncData(IDataStore store)
         {
-            try { store.SyncData("CLANORD_PARTY_IDS",  ref _orderPartyIds);  } catch { }
-            try { store.SyncData("CLANORD_TYPES",      ref _orderTypes);     } catch { }
-            try { store.SyncData("CLANORD_TARGET_IDS", ref _orderTargetIds); } catch { }
+            try { store.SyncData("CLANORD_PARTY_IDS",  ref _orderPartyIds);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { store.SyncData("CLANORD_TYPES",      ref _orderTypes);     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { store.SyncData("CLANORD_TARGET_IDS", ref _orderTargetIds); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── AI hold ───────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ namespace AshAndEmber
         internal static void SetAiHold(MobileParty party, bool hold)
         {
             if (party == null) return;
-            try { party.Ai.SetDoNotMakeNewDecisions(hold); } catch { }
+            try { party.Ai.SetDoNotMakeNewDecisions(hold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Order CRUD ────────────────────────────────────────────────────────
@@ -119,13 +119,13 @@ namespace AshAndEmber
                     var    party = MobileParty.All.FirstOrDefault(p => p.StringId == pid);
                     SetAiHold(party, false);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 _orderPartyIds.RemoveAt(idx);
                 _orderTypes.RemoveAt(idx);
                 _orderTargetIds.RemoveAt(idx);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Clears stale order state when a campaign starts, so orders from a

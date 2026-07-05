@@ -55,7 +55,7 @@ namespace AshAndEmber
                     () => { }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Merge ending ──────────────────────────────────────────────────────
@@ -67,9 +67,9 @@ namespace AshAndEmber
                 bool wasNotMage = !MageKnowledge.IsMage;
                 if (wasNotMage)
                 {
-                    try { MageKnowledge.SetMage(true); }         catch { }
-                    try { ColourLordRegistry.SetMage(Hero.MainHero, true); } catch { }
-                    try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 10; } catch { }
+                    try { MageKnowledge.SetMage(true); }         catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { ColourLordRegistry.SetMage(Hero.MainHero, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 10; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 string fireNote = wasNotMage
@@ -115,7 +115,7 @@ namespace AshAndEmber
                     () => { }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Sacrifice ending sequence ─────────────────────────────────────────
@@ -156,7 +156,7 @@ namespace AshAndEmber
                         break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ShowSacrificeDialog()
@@ -191,12 +191,12 @@ namespace AshAndEmber
                     "",
                     () =>
                     {
-                        try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, true); } catch { }
+                        try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     () => { }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Sacrifice ending helpers ───────────────────────────────────────────
@@ -210,10 +210,10 @@ namespace AshAndEmber
                     if (killed >= cap) break;
                     if (!h.IsAlive || h.IsChild || h == Hero.MainHero) continue;
                     if (!ColourLordRegistry.IsAshenLord(h)) continue;
-                    try { KillCharacterAction.ApplyByMurder(h, null, false); killed++; } catch { }
+                    try { KillCharacterAction.ApplyByMurder(h, null, false); killed++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void KillMageLords(int cap)
@@ -226,10 +226,10 @@ namespace AshAndEmber
                     if (killed >= cap) break;
                     if (!h.IsAlive || h.IsChild || h == Hero.MainHero) continue;
                     if (!ColourLordRegistry.IsColourLord(h)) continue;
-                    try { KillCharacterAction.ApplyByMurder(h, null, false); killed++; } catch { }
+                    try { KillCharacterAction.ApplyByMurder(h, null, false); killed++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void KillMageCompanions()
@@ -243,10 +243,10 @@ namespace AshAndEmber
                     Hero companion = entry.Character?.HeroObject;
                     if (companion == null || companion == Hero.MainHero) continue;
                     if (!ColourLordRegistry.IsColourLord(companion)) continue;
-                    try { KillCharacterAction.ApplyByMurder(companion, null, false); } catch { }
+                    try { KillCharacterAction.ApplyByMurder(companion, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void RedistributeAshenSettlements(int cap)
@@ -271,13 +271,13 @@ namespace AshAndEmber
                     try
                     {
                         ChangeOwnerOfSettlementAction.ApplyByDefault(lord, s);
-                        try { if (s.Town != null) { s.Town.Loyalty = 100f; s.Town.Security = 100f; } } catch { }
+                        try { if (s.Town != null) { s.Town.Loyalty = 100f; s.Town.Security = 100f; } } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         moved++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Grimoire summary ──────────────────────────────────────────────────

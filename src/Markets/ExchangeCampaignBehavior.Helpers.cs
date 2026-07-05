@@ -40,13 +40,13 @@ namespace AshAndEmber
         private static void GiveGold(int amount)
         {
             if (amount <= 0) return;
-            try { if (Hero.MainHero != null) Hero.MainHero.Gold += amount; } catch { }
+            try { if (Hero.MainHero != null) Hero.MainHero.Gold += amount; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void AddTradeXp(int xp)
         {
             if (xp <= 0) return;
-            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Trade, xp); } catch { }
+            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Trade, xp); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

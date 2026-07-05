@@ -56,6 +56,7 @@ namespace AshAndEmber
         public const float ChanceLastLight     = 0.03f;
         public const float ChanceAshenGround   = 0.04f;
         public const float ChanceFrenzy        = 0.04f;
+        public const float ChanceKindling      = 0.03f; // raw magic wakes into elementals
 
         public const float CinderRainInterval  = 20f;   // seconds between damage ticks
         public const float EmberTitheInterval  = 20f;
@@ -107,7 +108,7 @@ namespace AshAndEmber
                 evt.Timer -= dt;
                 if (evt.Timer > 0f) continue;
 
-                try { evt.OnFire(); } catch { }
+                try { evt.OnFire(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (evt.Interval <= 0f)
                     evt.Done = true;        // one-shot: remove after firing
@@ -137,7 +138,7 @@ namespace AshAndEmber
                     if (pos.x != 0f || pos.y != 0f)
                         CampaignMapEvents.SetBattleEcho(pos.x, pos.y);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -176,7 +177,7 @@ namespace AshAndEmber
                     break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Roll each event independently and register the active ones.
@@ -235,9 +236,18 @@ namespace AshAndEmber
                 Add("Frenzy", FrenzyInterval, FireFrenzy);
             }
 
+            // ── The Kindling (one-shot) ───────────────────────────────────────
+            // Raw magic pooled in this field wakes into elemental beings that
+            // join one side, shaped by the ground they rose from.
+            if (Roll(ChanceKindling))
+            {
+                names.Add("The Kindling");
+                AddOneShot("The Kindling", OneShotDelay + 2f, FireKindling);
+            }
+
             if (names.Count > 0)
                 try { MBInformationManager.AddQuickInformation(new TextObject(
-                    "The field is cursed — " + string.Join(", ", names) + ".")); } catch { }
+                    "The field is cursed — " + string.Join(", ", names) + ".")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

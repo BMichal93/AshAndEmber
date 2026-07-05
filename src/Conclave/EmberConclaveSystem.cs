@@ -124,7 +124,7 @@ namespace AshAndEmber
             if (wasMember)
             {
                 AddPower(-10);
-                try { _mainLog?.LogMemberLost(victim.Name?.ToString() ?? "an ember"); } catch { }
+                try { _mainLog?.LogMemberLost(victim.Name?.ToString() ?? "an ember"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 CheckDefeat();
             }
 
@@ -192,11 +192,11 @@ namespace AshAndEmber
             if (!_seeded)
             {
                 _seeded = true;
-                try { TrySeedInitialMembers(); } catch { }
+                try { TrySeedInitialMembers(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             if (_phase >= PhaseStirring && _mainLog == null)
-                try { EnsureMainLog(); } catch { }
+                try { EnsureMainLog(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (_missionCooldown > 0) _missionCooldown--;
 
@@ -217,7 +217,7 @@ namespace AshAndEmber
                             _enemyFollowUpTimer = 1;
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
@@ -233,7 +233,7 @@ namespace AshAndEmber
                         puppetAlive = _puppetCandidateId != null &&
                             Hero.AllAliveHeroes.Any(h => h.StringId == _puppetCandidateId && h.IsAlive);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     if (!puppetAlive)
                         FailActiveMission("The candidate fell before the hour was right.");
@@ -257,9 +257,9 @@ namespace AshAndEmber
             {
                 _tier1Fired = true;
                 _phase = PhaseStirring;
-                try { EnsureMainLog(); } catch { }
-                try { _mainLog?.LogFirstContact(); } catch { }
-                try { MageKnowledge._deferredInquiry = ShowFirstContactInquiry; } catch { }
+                try { EnsureMainLog(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _mainLog?.LogFirstContact(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { MageKnowledge._deferredInquiry = ShowFirstContactInquiry; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             if (!_tier2Fired && _power >= PowerTier2)
@@ -268,18 +268,18 @@ namespace AshAndEmber
                 _phase = PhaseRising;
                 if (_playerIsEnemy)
                 {
-                    try { _mainLog?.LogEnemyRisingWarning(); } catch { }
+                    try { _mainLog?.LogEnemyRisingWarning(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     try
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The fires at the Ashen ruins burn differently now. Something is being coaxed, not extinguished.",
                             new Color(0.6f, 0.35f, 0.35f)));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 else
                 {
-                    try { _mainLog?.LogRisingPhase(); } catch { }
+                    try { _mainLog?.LogRisingPhase(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
@@ -287,18 +287,18 @@ namespace AshAndEmber
             {
                 _tier3Fired = true;
                 _phase = PhaseAscendant;
-                try { ChoosePuppetCandidate(); } catch { }
+                try { ChoosePuppetCandidate(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _corruptionWarningTimer = CorruptionWarningInterval;
                 if (_playerIsEnemy)
                 {
-                    try { _mainLog?.LogEnemyAscendantWarning(); } catch { }
+                    try { _mainLog?.LogEnemyAscendantWarning(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     try
                     {
                         InformationManager.DisplayMessage(new InformationMessage(
                             "A mage lord has been seen at three different Ashen sites in a month. The Conclave has chosen its vessel.",
                             new Color(0.6f, 0.35f, 0.35f)));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
@@ -306,7 +306,7 @@ namespace AshAndEmber
             {
                 _tier4Fired = true;
                 _phase = PhaseHubris;
-                try { FireCulmination(); } catch { }
+                try { FireCulmination(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -344,7 +344,7 @@ namespace AshAndEmber
                 if (candidate != null)
                     _memberIds.Add(candidate.StringId);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Puppet candidate ───────────────────────────────────────────────────
@@ -373,9 +373,9 @@ namespace AshAndEmber
 
                 if (candidate == null) return;
                 _puppetCandidateId = candidate.StringId;
-                try { _mainLog?.LogPuppetChosen(candidate.Name?.ToString() ?? "a lord"); } catch { }
+                try { _mainLog?.LogPuppetChosen(candidate.Name?.ToString() ?? "a lord"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Missions ───────────────────────────────────────────────────────────
@@ -399,7 +399,7 @@ namespace AshAndEmber
                         .OrderBy(_ => _rng.Next())
                         .FirstOrDefault();
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (target == null) return;
 
                 string targetName = target.Name?.ToString() ?? "a lord";
@@ -413,9 +413,9 @@ namespace AshAndEmber
                     _eliminateLog.StartQuest();
                     _eliminateLog.LogOpened(targetName, MissionEliminateDays);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionEliminate, targetName); } catch { }
+                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionEliminate, targetName); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else if (missionType == MissionVisit)
             {
@@ -429,7 +429,7 @@ namespace AshAndEmber
                         .OrderBy(_ => _rng.Next())
                         .FirstOrDefault();
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (target == null) return;
 
                 string targetName = target.Name?.ToString() ?? "a settlement";
@@ -443,15 +443,15 @@ namespace AshAndEmber
                     _visitLog.StartQuest();
                     _visitLog.LogOpened(targetName, MissionVisitDays);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionVisit, targetName); } catch { }
+                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionVisit, targetName); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else if (missionType == MissionProtect && _puppetCandidateId != null)
             {
                 Hero puppet = null;
                 try { puppet = Hero.AllAliveHeroes.FirstOrDefault(h => h.StringId == _puppetCandidateId && h.IsAlive); }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (puppet == null) return;
 
                 string targetName = puppet.Name?.ToString() ?? "the candidate";
@@ -465,9 +465,9 @@ namespace AshAndEmber
                     _protectLog.StartQuest();
                     _protectLog.LogOpened(targetName, MissionProtectDays);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionProtect, targetName); } catch { }
+                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionProtect, targetName); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else if (missionType == MissionRuin)
             {
@@ -492,7 +492,7 @@ namespace AshAndEmber
                         break;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (targetRuin == null || targetSettlement == null) return;
 
                 string ruinName = targetRuin.RuinName ?? targetRuin.VillageName;
@@ -506,9 +506,9 @@ namespace AshAndEmber
                     _ruinLog.StartQuest();
                     _ruinLog.LogOpened(ruinName, MissionRuinDays);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionRuin, ruinName); } catch { }
+                try { MageKnowledge._deferredInquiry = () => ShowMissionOffer(MissionRuin, ruinName); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -527,8 +527,8 @@ namespace AshAndEmber
         {
             if (_activeMission == MissionNone) return;
             AddPower(15);
-            try { GetActiveMissionLog()?.LogSuccess(); } catch { }
-            try { GetActiveMissionLog()?.CompleteSuccess(); } catch { }
+            try { GetActiveMissionLog()?.LogSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { GetActiveMissionLog()?.CompleteSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ClearActiveMission();
         }
 
@@ -536,8 +536,8 @@ namespace AshAndEmber
         {
             if (_activeMission == MissionNone) return;
             AddPower(-5);
-            try { GetActiveMissionLog()?.LogFailed(reason); } catch { }
-            try { GetActiveMissionLog()?.CompleteFail(); } catch { }
+            try { GetActiveMissionLog()?.LogFailed(reason); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { GetActiveMissionLog()?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ClearActiveMission();
         }
 
@@ -589,10 +589,10 @@ namespace AshAndEmber
                     _corruptionWarnings[_corruptionWarningIndex % _corruptionWarnings.Length], name);
                 _corruptionWarningIndex++;
 
-                try { _mainLog?.LogCorruptionWarning(text); } catch { }
+                try { _mainLog?.LogCorruptionWarning(text); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.DisplayMessage(new InformationMessage(text, new Color(0.45f, 0.45f, 0.65f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Culmination ────────────────────────────────────────────────────────
@@ -627,8 +627,8 @@ namespace AshAndEmber
                 true, false,
                 "Leave the hall.",
                 "",
-                () => { try { ApplyCulmination(allyPath: true); } catch { } },
-                () => { try { ApplyCulmination(allyPath: true); } catch { } }
+                () => { try { ApplyCulmination(allyPath: true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
+                () => { try { ApplyCulmination(allyPath: true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
             ), true, true);
         }
 
@@ -650,8 +650,8 @@ namespace AshAndEmber
                 true, false,
                 "Remember this.",
                 "",
-                () => { try { ApplyCulmination(allyPath: false); } catch { } },
-                () => { try { ApplyCulmination(allyPath: false); } catch { } }
+                () => { try { ApplyCulmination(allyPath: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
+                () => { try { ApplyCulmination(allyPath: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
             ), true, true);
         }
 
@@ -668,7 +668,7 @@ namespace AshAndEmber
                         ColourLordRegistry.SetAshen(puppet, true);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             foreach (var id in _memberIds.ToList())
             {
@@ -677,20 +677,20 @@ namespace AshAndEmber
                     var h = Hero.AllAliveHeroes.FirstOrDefault(x => x.StringId == id && x.IsAlive);
                     if (h != null) ColourLordRegistry.SetAshen(h, true);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             _memberIds.Clear();
 
             if (allyPath)
             {
-                try { _mainLog?.LogAllyEnding(); } catch { }
-                try { _mainLog?.CompleteFail(); } catch { }
+                try { _mainLog?.LogAllyEnding(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _mainLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else
             {
-                try { _mainLog?.LogNeutralEnding(); } catch { }
-                try { _mainLog?.CompleteFail(); } catch { }
+                try { _mainLog?.LogNeutralEnding(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _mainLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -702,8 +702,8 @@ namespace AshAndEmber
             if (_memberIds.Count < CollapseThreshold && _power < PowerTier1)
             {
                 _phase = PhaseEnded;
-                try { _mainLog?.LogDefeat(); } catch { }
-                try { _mainLog?.CompleteSuccess(); } catch { }
+                try { _mainLog?.LogDefeat(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { _mainLog?.CompleteSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The Ember Conclave has collapsed. Their records reveal the full shape of what they intended.",
                     new Color(0.7f, 0.5f, 0.3f)));
@@ -749,7 +749,7 @@ namespace AshAndEmber
                 "",
                 chosen =>
                 {
-                    try { HandleFirstContactChoice(chosen?[0]?.Identifier as string ?? "ignore"); } catch { }
+                    try { HandleFirstContactChoice(chosen?[0]?.Identifier as string ?? "ignore"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 },
                 null, "", false
             ), false);
@@ -761,7 +761,7 @@ namespace AshAndEmber
             {
                 case "ally":
                     _playerIsAlly = true;
-                    try { _mainLog?.LogPlayerAllied(); } catch { }
+                    try { _mainLog?.LogPlayerAllied(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The Ember Conclave has taken note of your answer. They will be in touch.",
                         new Color(0.75f, 0.5f, 0.3f)));
@@ -770,14 +770,14 @@ namespace AshAndEmber
                 case "enemy":
                     _playerIsEnemy = true;
                     _enemyFollowUpTimer = 7;
-                    try { _mainLog?.LogPlayerOpposed(); } catch { }
+                    try { _mainLog?.LogPlayerOpposed(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The Ember Conclave now knows you are watching. Their plans will not stop.",
                         new Color(0.7f, 0.35f, 0.25f)));
                     break;
 
                 default:
-                    try { _mainLog?.LogPlayerIgnored(); } catch { }
+                    try { _mainLog?.LogPlayerIgnored(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The ember seal crumbles to dust. Some things cannot simply be left alone.",
                         new Color(0.5f, 0.5f, 0.5f)));
@@ -809,8 +809,8 @@ namespace AshAndEmber
                 true, false,
                 "Burn this one too.",
                 "",
-                () => { try { _mainLog?.LogCounterContact(); } catch { } },
-                () => { try { _mainLog?.LogCounterContact(); } catch { } }
+                () => { try { _mainLog?.LogCounterContact(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
+                () => { try { _mainLog?.LogCounterContact(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
             ), true, true);
         }
 
@@ -879,17 +879,17 @@ namespace AshAndEmber
                     {
                         if (chosen?[0]?.Identifier as string == "accept")
                         {
-                            try { GetActiveMissionLog()?.LogAccepted(); } catch { }
+                            try { GetActiveMissionLog()?.LogAccepted(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         else
                         {
                             AddPower(-5);
-                            try { GetActiveMissionLog()?.LogDeclined(); } catch { }
-                            try { GetActiveMissionLog()?.CompleteFail(); } catch { }
+                            try { GetActiveMissionLog()?.LogDeclined(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { GetActiveMissionLog()?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             ClearActiveMission();
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 },
                 null, "", false
             ), false);

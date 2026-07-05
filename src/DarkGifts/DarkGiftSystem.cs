@@ -150,7 +150,7 @@ namespace AshAndEmber
             if (h == null) { msg = "There is no one here for the altar to take from."; return false; }
 
             int mercy = 0;
-            try { mercy = h.GetTraitLevel(DefaultTraits.Mercy); } catch { }
+            try { mercy = h.GetTraitLevel(DefaultTraits.Mercy); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (mercy <= -2)
             {
                 msg = "Your heart is already as cold as the altar-stone. There is nothing warm left to give up.";
@@ -164,7 +164,7 @@ namespace AshAndEmber
                 soldiers = party?.PrisonRoster?.GetTroopRoster()
                     .Where(e => !e.Character.IsHero).Sum(e => e.Number) ?? 0;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (soldiers < CrueltyPrisonerCost)
             {
                 msg = $"The altar demands {CrueltyPrisonerCost} prisoners for this offering. You hold {soldiers}.";
@@ -172,7 +172,7 @@ namespace AshAndEmber
             }
 
             ConsumeSacrifice(CrueltyPrisonerCost, 0);
-            try { h.SetTraitLevel(DefaultTraits.Mercy, mercy - 1); } catch { }
+            try { h.SetTraitLevel(DefaultTraits.Mercy, mercy - 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             msg = "Their blood cools something in you. A measure of mercy bleeds away, and the cruelty the gifts hunger for settles in its place.";
             return true;
         }
@@ -196,7 +196,7 @@ namespace AshAndEmber
             if (h == null) { msg = "There is no one here for the altar to take from."; return false; }
 
             int honor = 0;
-            try { honor = h.GetTraitLevel(DefaultTraits.Honor); } catch { }
+            try { honor = h.GetTraitLevel(DefaultTraits.Honor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (honor <= -2)
             {
                 msg = "You have no honour left to break. The altar has already taken it all.";
@@ -210,7 +210,7 @@ namespace AshAndEmber
                 soldiers = party?.PrisonRoster?.GetTroopRoster()
                     .Where(e => !e.Character.IsHero).Sum(e => e.Number) ?? 0;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (soldiers < CrueltyPrisonerCost)
             {
                 msg = $"The altar demands {CrueltyPrisonerCost} prisoners for this offering. You hold {soldiers}.";
@@ -218,7 +218,7 @@ namespace AshAndEmber
             }
 
             ConsumeSacrifice(CrueltyPrisonerCost, 0);
-            try { h.SetTraitLevel(DefaultTraits.Honor, honor - 1); } catch { }
+            try { h.SetTraitLevel(DefaultTraits.Honor, honor - 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             msg = "You swear a false word over their bodies and mean none of it. Something honest in you goes quiet, and the deviousness the gifts hunger for takes its place.";
             return true;
         }
@@ -261,7 +261,7 @@ namespace AshAndEmber
             if (!HasSufficientSacrifice(pCost, lCost, out errorMsg))
                 return false;
             int haveFocus = 0;
-            try { haveFocus = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch { }
+            try { haveFocus = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (haveFocus < fCost)
             {
                 errorMsg = $"The gift also demands {fCost} focus point{(fCost != 1 ? "s" : "")} of your will; you have {haveFocus}.";
@@ -269,11 +269,11 @@ namespace AshAndEmber
             }
 
             ConsumeSacrifice(pCost, lCost);
-            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints -= fCost; } catch { }
+            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints -= fCost; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ApplyGift(gift);
 
             // Owning a gift clears Grace and blocks Nature.
-            try { MiracleInventory._grace = 0; } catch { }
+            try { MiracleInventory._grace = 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             return true;
         }
@@ -287,7 +287,7 @@ namespace AshAndEmber
         public static void GrantGift(DarkGiftId gift)
         {
             ApplyGift(gift);
-            try { MiracleInventory._grace = 0; } catch { }
+            try { MiracleInventory._grace = 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Grant one random gift (used by the character-creation dark path).
@@ -379,7 +379,7 @@ namespace AshAndEmber
                     prisonersLeft -= take;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ApplyGift(DarkGiftId gift)
@@ -504,9 +504,9 @@ namespace AshAndEmber
                 _ownedGifts.Clear();
                 if (ids != null) foreach (int i in ids) _ownedGifts.Add((DarkGiftId)i);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            try { store.SyncData("DGIFT_SpiritCount", ref _darkSpiritCount); } catch { }
+            try { store.SyncData("DGIFT_SpiritCount", ref _darkSpiritCount); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void ResetForNewGame()

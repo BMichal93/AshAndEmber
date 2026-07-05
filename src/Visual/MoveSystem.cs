@@ -82,15 +82,15 @@ namespace AshAndEmber
                 var m = _pendingMoves[i];
                 if (m.Agent == null || !m.Agent.IsActive()) { _pendingMoves.RemoveAt(i); continue; }
                 bool mounted = false;
-                try { mounted = m.Agent.MountAgent != null; } catch { }
+                try { mounted = m.Agent.MountAgent != null; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (mounted) continue; // pause until dismount propagates, then push
-                try { if (m.Agent.IsUsingGameObject) { _pendingMoves.RemoveAt(i); continue; } } catch { }
+                try { if (m.Agent.IsUsingGameObject) { _pendingMoves.RemoveAt(i); continue; } } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 float elapsed = m.Elapsed + dt;
                 float t = Math.Min(elapsed / m.Duration, 1f);
                 float smooth = t * t * (3f - 2f * t); // smoothstep
                 Vec3 pos = m.Start + (m.Target - m.Start) * smooth;
                 pos.z = m.Agent.Position.z;
-                try { m.Agent.TeleportToPosition(pos); } catch { }
+                try { m.Agent.TeleportToPosition(pos); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (elapsed >= m.Duration) _pendingMoves.RemoveAt(i);
                 else _pendingMoves[i] = new PendingMove { Agent = m.Agent, Start = m.Start, Target = m.Target, Duration = m.Duration, Elapsed = elapsed };
             }

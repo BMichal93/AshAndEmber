@@ -34,16 +34,16 @@ namespace AshAndEmber
                         {
                             if (_ports.Count < 2 || !IsPort(Settlement.CurrentSettlement)) return false;
                             MBTextManager.SetTextVariable("SEA_ENTER_TEXT", "Visit the harbor");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             args.IsEnabled = true;
                             return true;
                         }
                         catch { return false; }
                     },
-                    args => { try { GameMenu.SwitchToMenu("sea_harbor"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("sea_harbor"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Harbor menu header
             try
@@ -64,10 +64,10 @@ namespace AshAndEmber
                             "The harbor. Gulls argue over fish guts, ropes creak against the tide, and captains weigh your purse from across the quay.";
                         MBTextManager.SetTextVariable("SEA_HARBOR_HEADER", baseDesc + windNote + ventureNote);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Charter passage ─────────────────────────────────────────────
             try
@@ -81,14 +81,14 @@ namespace AshAndEmber
                                 "Charter passage to another port" +
                                 (_emberwindCalled ? " (Emberwind called)" :
                                  _stillWatersCalled ? " (Waters stilled)" : ""));
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args => ShowDestinationPicker(forTrade: false));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Fund a trade venture ────────────────────────────────────────
             try
@@ -102,14 +102,14 @@ namespace AshAndEmber
                                 ? $"  [All your factors are at sea — {_ventures.Count} venture(s) out]" : "";
                             if (full.Length > 0) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("SEA_VENTURE_TEXT", "Fund a trade venture" + full);
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args => ShowDestinationPicker(forTrade: true));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Call the Emberwind (mages) ──────────────────────────────────
             try
@@ -125,7 +125,7 @@ namespace AshAndEmber
                                 _emberwindCalled
                                     ? "Call the Emberwind  [already called — it waits in the rigging]"
                                     : $"Call the Emberwind ({SeaMath.EmberwindAgingDays} days aging) — halve the next crossing and ward it against storms");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch { return false; }
                         return true;
@@ -139,12 +139,12 @@ namespace AshAndEmber
                             _emberwindCalled = true;
                             MBInformationManager.AddQuickInformation(new TextObject(
                                 "You breathe a thread of the Inner Fire into the sky. The pennants snap taut toward open water."));
-                            try { GameMenu.SwitchToMenu("sea_harbor"); } catch { }
+                            try { GameMenu.SwitchToMenu("sea_harbor"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Still the Waters (mages) ──────────────────────────────────
             try
@@ -161,7 +161,7 @@ namespace AshAndEmber
                                 _stillWatersCalled
                                     ? "Still the Waters  [already stilled — the deep waits]"
                                     : $"Still the Waters ({SeaMath.StillWatersHpCost} HP) — halve the next crossing and ward it against storms");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch { return false; }
                         return true;
@@ -182,12 +182,12 @@ namespace AshAndEmber
                             MBInformationManager.AddQuickInformation(new TextObject(
                                 "You reach down into the harbour bed and call to what moves beneath. " +
                                 "Something vast and patient stirs. The water outside the breakwater goes flat."));
-                            try { GameMenu.SwitchToMenu("sea_harbor"); } catch { }
+                            try { GameMenu.SwitchToMenu("sea_harbor"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Raid the coast ──────────────────────────────────────────────
             try
@@ -208,14 +208,14 @@ namespace AshAndEmber
                             }
                             if (!anyEnemyPort) return false;
                             MBTextManager.SetTextVariable("SEA_RAID_TEXT", "Raid an enemy coast");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             return true;
                         }
                         catch { return false; }
                     },
                     args => ShowRaidDestinationPicker());
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Leave ───────────────────────────────────────────────────────
             try
@@ -223,13 +223,13 @@ namespace AshAndEmber
                 starter.AddGameMenuOption("sea_harbor", "sea_leave", "Back to the town",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("town"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Voyage wait menu ────────────────────────────────────────────
             try
@@ -242,7 +242,7 @@ namespace AshAndEmber
                     GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
                     GameMenu.MenuOverlayType.None, 0f, GameMenu.MenuFlags.None, null);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Destination picking (shared by passage and ventures) ──────────────
@@ -274,7 +274,7 @@ namespace AshAndEmber
                               + (IsAshenPort(p) ? " The grey waters off this cold coast take far more ships than they give back." : "");
                     }
                     string faction = "";
-                    try { faction = p.MapFaction?.Name?.ToString() ?? ""; } catch { }
+                    try { faction = p.MapFaction?.Name?.ToString() ?? ""; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     string ashenMark = IsAshenPort(p) ? "  ❄" : "";
                     options.Add(new InquiryElement(p, $"{p.Name} ({faction}){ashenMark}", null, true, hover));
                 }
@@ -295,7 +295,7 @@ namespace AshAndEmber
                     },
                     null, "", false), false, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ShowRaidDestinationPicker()
@@ -336,7 +336,7 @@ namespace AshAndEmber
                     },
                     null, "", false), false, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static int PartySize()

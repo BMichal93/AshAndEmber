@@ -87,7 +87,7 @@ namespace AshAndEmber
                 if (!_wasHolding)
                 {
                     try { if (inMission && Agent.Main != null)
-                            SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Yellow); } catch { }
+                            SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Yellow); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 _wasHolding = true;
 
@@ -138,7 +138,7 @@ namespace AshAndEmber
                 _wasHolding  = false;
                 _lastDisplay = "";
                 _prevLUp = _prevLDown = _prevLLeft = _prevLRight = false;
-                try { if (inMission) SpellEffects.EndFocusVisual(Agent.Main); } catch { }
+                try { if (inMission) SpellEffects.EndFocusVisual(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 TryCastSequence(inMission);
                 _seqBuffer = "";
             }

@@ -63,7 +63,7 @@ namespace AshAndEmber
         // learned craft (CrystalTalents) is persisted here.
         public override void SyncData(IDataStore store)
         {
-            try { CrystalTalents.Save(store); } catch { }
+            try { CrystalTalents.Save(store); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // One-time seeding of the lords that already exist at campaign start. The
@@ -81,23 +81,23 @@ namespace AshAndEmber
                 foreach (var hero in lords)
                 {
                     if (_rng.NextDouble() >= GetSeedChanceForHero(hero)) continue;
-                    try { SeedCrystalOnHero(hero); } catch { }
+                    try { SeedCrystalOnHero(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Session start ─────────────────────────────────────────────────────
 
         private static void OnSessionLaunched(CampaignGameStarter starter)
         {
-            try { RegisterCrystalMenus(starter); } catch { }
-            try { RestockChamberTownShops(); }     catch { }
+            try { RegisterCrystalMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RestockChamberTownShops(); }     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void OnWeeklyTick()
         {
-            try { RestockChamberTownShops(); } catch { }
+            try { RestockChamberTownShops(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Ensures each Crystalline Chamber town carries one of every crystal type
@@ -120,7 +120,7 @@ namespace AshAndEmber
                             roster.AddToCounts(item, CrystalMath.ShopStockPerType - have);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -131,7 +131,7 @@ namespace AshAndEmber
             if (hero == null || hero == Hero.MainHero) return;
             if (!hero.IsLord && !hero.IsMinorFactionHero) return;
             if (_rng.NextDouble() >= GetSeedChanceForHero(hero)) return;
-            try { SeedCrystalOnHero(hero); } catch { }
+            try { SeedCrystalOnHero(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Gives a hero a random crystal in a free battle-equipment weapon slot.
@@ -183,7 +183,7 @@ namespace AshAndEmber
                 // Northern Empire cities shelter them.
                 if (kingdomId == "empire_n") return 0.06;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return CrystalMath.LordSeedChance;
         }
 
@@ -229,7 +229,7 @@ namespace AshAndEmber
                 var good = MBObjectManager.Instance?.GetObject<ItemObject>(def.TradeGoodId);
                 if (good != null) roster.AddToCounts(good, -CrystalMath.TradeGoodCost);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         internal static void RefundSilverOre()
@@ -241,7 +241,7 @@ namespace AshAndEmber
                 if (roster != null && silver != null)
                     roster.AddToCounts(silver, CrystalMath.SilverOreCost);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         internal static void GrantCrystal(CrystalDef def)
@@ -253,7 +253,7 @@ namespace AshAndEmber
                 if (roster != null && item != null)
                     roster.AddToCounts(item, 1);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Formation skill check ─────────────────────────────────────────────
@@ -270,7 +270,7 @@ namespace AshAndEmber
                     eng = Hero.MainHero.GetSkillValue(DefaultSkills.Engineering);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             float odds = TalentSystem.Has(TalentId.PatientGrowth)
                 ? CrystalMath.FormationOddsWithPatience(med, eng)

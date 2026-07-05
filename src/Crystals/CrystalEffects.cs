@@ -76,14 +76,14 @@ namespace AshAndEmber
             if (attacker == null || attacker != Agent.Main) return; // player swings only
 
             string itemId = null;
-            try { itemId = weapon.Item?.StringId; } catch { }
+            try { itemId = weapon.Item?.StringId; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
 
             // A crystal deals no physical harm — restore whatever it inflicted.
             // (Activation is driven by the attack INPUT in MissionTick, not the hit,
             // so a crystal fires instantly on the swing whether or not it connects.)
             if (victim != null && victim.IsActive() && inflictedDamage > 0)
-                try { SpellEffects.HealAgent(victim, inflictedDamage); } catch { }
+                try { SpellEffects.HealAgent(victim, inflictedDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Looses the wielded crystal's light the instant the player strikes with it —
@@ -92,7 +92,7 @@ namespace AshAndEmber
         private static void TryActivateCrystal(Agent main)
         {
             string itemId = null;
-            try { itemId = main.WieldedWeapon.Item?.StringId; } catch { }
+            try { itemId = main.WieldedWeapon.Item?.StringId; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!CrystalCatalog.IsCrystalItemId(itemId)) return;
             if (!CrystalCatalog.TryGetByItemId(itemId, out var def)) return;
             FireEffect(main, def.Type);
@@ -124,7 +124,7 @@ namespace AshAndEmber
                     _prevAttackDown = attackDown;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Expire Rimeshard slow.
             foreach (var kvp in _rimeSlow.ToList())
@@ -134,7 +134,7 @@ namespace AshAndEmber
                 {
                     _rimeSlow.Remove(kvp.Key);
                     if (kvp.Key.IsActive())
-                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch { }
+                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 else _rimeSlow[kvp.Key] = left;
             }
@@ -147,7 +147,7 @@ namespace AshAndEmber
                 {
                     _veilSlow.Remove(kvp.Key);
                     if (kvp.Key.IsActive())
-                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch { }
+                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 else _veilSlow[kvp.Key] = left;
             }
@@ -160,7 +160,7 @@ namespace AshAndEmber
                 {
                     _duskSlow.Remove(kvp.Key);
                     if (kvp.Key.IsActive())
-                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch { }
+                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 else _duskSlow[kvp.Key] = left;
             }
@@ -186,7 +186,7 @@ namespace AshAndEmber
                 SpellEffects.SpawnTempLight(at, def.GlowColor, 8f, 1.0f);
                 SpellEffects.TryCastSound(caster.Position, def.GlowColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             switch (type)
             {
@@ -203,7 +203,7 @@ namespace AshAndEmber
             if (caster == Agent.Main)
             {
                 float mend = CrystalTalents.MendOnUse;
-                if (mend > 0f) try { SpellEffects.HealAgent(caster, mend); } catch { }
+                if (mend > 0f) try { SpellEffects.HealAgent(caster, mend); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 TryBurndown(caster, type);
             }
         }
@@ -213,8 +213,8 @@ namespace AshAndEmber
         private static void EffectSunstone(Agent caster)
         {
             float pot = Potency(caster);   // Brilliant Lattice: harder heals (player)
-            try { SpellEffects.HealAgent(caster, CrystalMath.SunSelfHeal * pot); } catch { }
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 2f); } catch { }
+            try { SpellEffects.HealAgent(caster, CrystalMath.SunSelfHeal * pot); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             Vec3 pos;
             try { pos = caster.Position; } catch { return; }
@@ -228,11 +228,11 @@ namespace AshAndEmber
                     if (caster.Team == null || a.Team != caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
-                    try { SpellEffects.HealAgent(a, CrystalMath.SunAllyHeal * pot); } catch { }
+                    try { SpellEffects.HealAgent(a, CrystalMath.SunAllyHeal * pot); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     mended++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             Announce(caster, mended > 0
                 ? $"Sunstone — warmth pulse (+{(int)CrystalMath.SunSelfHeal} HP self, +{(int)CrystalMath.SunAllyHeal} HP to {mended} allies)."
@@ -268,8 +268,8 @@ namespace AshAndEmber
             };
             _crystalMissiles.Add(missile);
 
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Red, 1.5f); } catch { }
-            try { SpellEffects.SpawnTempLight(startPos, ColorSchool.Red, 6f, 10f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Red, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempLight(startPos, ColorSchool.Red, 6f, 10f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             Announce(caster,
                 $"Embershard — burning shards launch ({range:F0}m, {explRadius:F0}m blast).",
@@ -294,15 +294,15 @@ namespace AshAndEmber
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
                     // Walls of wind and stone stop the crystal's reach.
-                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch { }
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     _rimeSlow[a] = CrystalMath.RimeDurationSec;
-                    try { a.SetMaximumSpeedLimit(CrystalMath.RimeSlowMult, false); } catch { }
+                    try { a.SetMaximumSpeedLimit(CrystalMath.RimeSlowMult, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     slowed++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Blue, 1.5f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Blue, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             int rimePct = (int)((1f - CrystalMath.RimeSlowMult) * 100f);
             Announce(caster, slowed > 0
                 ? $"Rimeshard — frost pulse ({slowed} enemies stilled, {rimePct} % slow for {(int)CrystalMath.RimeDurationSec} s)."
@@ -330,13 +330,13 @@ namespace AshAndEmber
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
                     // The veil's grasp is shard-force too — walls of wind/stone bar it.
-                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch { }
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     candidates.Add(a);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Purple, 1.5f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Purple, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (candidates.Count == 0)
             {
@@ -345,9 +345,9 @@ namespace AshAndEmber
             }
 
             var target = candidates[_rng.Next(candidates.Count)];
-            try { SpellEffects.DamageAgent(target, CrystalMath.VeilDamage * Potency(caster), ColorSchool.Purple, caster); } catch { }
+            try { SpellEffects.DamageAgent(target, CrystalMath.VeilDamage * Potency(caster), ColorSchool.Purple, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _veilSlow[target] = CrystalMath.VeilDurationSec;
-            try { target.SetMaximumSpeedLimit(CrystalMath.VeilSlowMult, false); } catch { }
+            try { target.SetMaximumSpeedLimit(CrystalMath.VeilSlowMult, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int slowPct = (int)((1f - CrystalMath.VeilSlowMult) * 100f);
             Announce(caster,
@@ -373,15 +373,15 @@ namespace AshAndEmber
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
                     // Walls of wind and stone stop the crystal's reach.
-                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch { }
-                    try { SpellEffects.DamageAgent(a, CrystalMath.StormDamage * Potency(caster), ColorSchool.Orange, caster); } catch { }
-                    try { a.ChangeMorale(-CrystalMath.StormMoraleDrain); } catch { }
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { SpellEffects.DamageAgent(a, CrystalMath.StormDamage * Potency(caster), ColorSchool.Orange, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { a.ChangeMorale(-CrystalMath.StormMoraleDrain); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     hit++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Orange, 1.5f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Orange, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             Announce(caster, hit > 0
                 ? $"Stormcrystal — thunder clap ({hit} enemies struck, {(int)CrystalMath.StormDamage} HP, −{(int)CrystalMath.StormMoraleDrain} morale)."
                 : "Stormcrystal — thunder clap (no enemies in range).",
@@ -405,15 +405,15 @@ namespace AshAndEmber
                     if (caster.Team != null && a.Team == caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > r2) continue;
-                    try { a.ChangeMorale(-CrystalMath.DuskMoraleDrain); } catch { }
+                    try { a.ChangeMorale(-CrystalMath.DuskMoraleDrain); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     _duskSlow[a] = CrystalMath.DuskDurationSec;
-                    try { a.SetMaximumSpeedLimit(CrystalMath.DuskSlowMult, false); } catch { }
+                    try { a.SetMaximumSpeedLimit(CrystalMath.DuskSlowMult, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     drained++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Ashen, 2f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Ashen, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             int duskSlowPct = (int)((1f - CrystalMath.DuskSlowMult) * 100f);
             Announce(caster, drained > 0
                 ? $"Duskstone — despair wave ({drained} enemies: −{(int)CrystalMath.DuskMoraleDrain} morale, {duskSlowPct} % slow for {(int)CrystalMath.DuskDurationSec} s)."
@@ -438,7 +438,7 @@ namespace AshAndEmber
                 if (m.TrailTimer <= 0f)
                 {
                     m.TrailTimer = CrystalMissileState.TrailInterval;
-                    try { SpellEffects.SpawnTempLight(m.Position, ColorSchool.Red, 3f, 0.5f); } catch { }
+                    try { SpellEffects.SpawnTempLight(m.Position, ColorSchool.Red, 3f, 0.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 Vec3 mpos = m.Position;
@@ -453,14 +453,14 @@ namespace AshAndEmber
                     if (ward != null)
                     {
                         if (WallWardMath.QuenchesFireMissile(ward.Value))
-                            try { SpellEffects.SpawnNatureBurst(mpos, NatureElement.Water, 0.8f); } catch { }
+                            try { SpellEffects.SpawnNatureBurst(mpos, NatureElement.Water, 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         else
                             ExplodeCrystalMissile(m, mpos);
                         _crystalMissiles.RemoveAt(i);
                         continue;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Check for enemy collision.
                 try
@@ -477,7 +477,7 @@ namespace AshAndEmber
                         break;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (!exploded && m.TravelLeft <= 0f)
                 {
@@ -502,10 +502,10 @@ namespace AshAndEmber
                 SpellEffects.SpawnExplosionEffect(pos, ColorSchool.Red, radius, 5f);
                 SpellEffects.TryCastSound(pos, ColorSchool.Red);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Burning shards take to timber — machines and gates in the blast char.
-            try { SpellEffects.DamageBurnableStructures(pos, radius, CrystalMath.EmberDamage * 2f, m.Caster); } catch { }
+            try { SpellEffects.DamageBurnableStructures(pos, radius, CrystalMath.EmberDamage * 2f, m.Caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -523,10 +523,10 @@ namespace AshAndEmber
                         SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Red, 4f);
                         hit++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             Announce(m.Caster, hit > 0
                 ? $"Embershard detonates — {hit} enemies scorched ({(int)CrystalMath.EmberDamage} HP each)."
@@ -554,11 +554,11 @@ namespace AshAndEmber
                 EquipmentIndex slot = caster.GetPrimaryWieldedItemIndex();
                 if (slot != EquipmentIndex.None)
                 {
-                    try { caster.RemoveEquippedWeapon(slot); } catch { }
-                    try { Hero.MainHero.BattleEquipment[slot] = default(EquipmentElement); } catch { }
+                    try { caster.RemoveEquippedWeapon(slot); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { Hero.MainHero.BattleEquipment[slot] = default(EquipmentElement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -567,7 +567,7 @@ namespace AshAndEmber
                 if (roster != null && item != null && roster.GetItemNumber(item) > 0)
                     roster.AddToCounts(item, -1);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             InformationManager.DisplayMessage(new InformationMessage(
                 $"{def.Name} — the lattice fractures. The crystal is spent.",
@@ -586,7 +586,7 @@ namespace AshAndEmber
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{caster.Name} — {msg}", CrystalColor(school)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Brilliant Lattice potency — player only (an NPC bearer's crystal must not

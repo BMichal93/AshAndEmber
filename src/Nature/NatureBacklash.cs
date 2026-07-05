@@ -43,14 +43,14 @@ namespace AshAndEmber
                     default: BattleWither(caster, announce);    break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Raw recoil — the drawn force turns inward.
         private static void BattleRecoil(Agent caster, bool announce)
         {
             Hurt(caster, LivingEnergyMath.SourSelfDamage);
-            try { SpawnGrey(caster.Position, 1.0f); } catch { }
+            try { SpawnGrey(caster.Position, 1.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce) Msg("The drained land recoils — the charge sours in your hands and the cold of it bites back.");
         }
 
@@ -58,16 +58,16 @@ namespace AshAndEmber
         private static void BattleBriars(Agent caster, bool announce)
         {
             Hurt(caster, LivingEnergyMath.SourSelfDamage * 0.5f);
-            try { NatureEffects.ApplySpeedToken(caster, 0f, 1.4f); } catch { }   // rooted
-            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Earth, 1.2f); } catch { }
+            try { NatureEffects.ApplySpeedToken(caster, 0f, 1.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }   // rooted
+            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Earth, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce) Msg("Grey, dead briars burst from the spent ground and seize your legs — the land will not let go of what it is owed.");
         }
 
         // The hollow land drinks the caster's strength — sluggish and slow.
         private static void BattleHollowing(Agent caster, bool announce)
         {
-            try { NatureEffects.ApplySpeedToken(caster, 0.45f, 6f); } catch { }
-            try { SpawnGrey(caster.Position, 0.8f); } catch { }
+            try { NatureEffects.ApplySpeedToken(caster, 0.45f, 6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnGrey(caster.Position, 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce) Msg("The hollow land drinks from you in turn — your limbs go leaden and the world slows to a crawl.");
         }
 
@@ -75,9 +75,9 @@ namespace AshAndEmber
         private static void BattleAshFlare(Agent caster, bool announce)
         {
             Hurt(caster, LivingEnergyMath.SourSelfDamage * 0.8f);
-            try { NatureEffects.ApplySpeedToken(caster, 0f, 0.6f); } catch { }   // brief stagger
-            try { SpellEffects.SpawnTempLightRgb(caster.Position + new Vec3(0f, 0f, 1f), new Vec3(0.4f, 0.45f, 0.35f), 8f, 0.5f); } catch { }
-            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Storm, 1.4f); } catch { }
+            try { NatureEffects.ApplySpeedToken(caster, 0f, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }   // brief stagger
+            try { SpellEffects.SpawnTempLightRgb(caster.Position + new Vec3(0f, 0f, 1f), new Vec3(0.4f, 0.45f, 0.35f), 8f, 0.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnNatureBurst(caster.Position, NatureElement.Storm, 1.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce) Msg("The draw detonates in a gout of grey ash — the dead light claws across your skin.");
         }
 
@@ -85,8 +85,8 @@ namespace AshAndEmber
         private static void BattleWither(Agent caster, bool announce)
         {
             Hurt(caster, LivingEnergyMath.SourSelfDamage * 0.65f);
-            try { NatureEffects.ApplySpeedToken(caster, 0.7f, 4f); } catch { }
-            try { SpawnGrey(caster.Position, 0.9f); } catch { }
+            try { NatureEffects.ApplySpeedToken(caster, 0.7f, 4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnGrey(caster.Position, 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce) Msg("Something withers in you to pay the debt — a grey ache settles into the marrow.");
         }
 
@@ -105,7 +105,7 @@ namespace AshAndEmber
                     default: MapFever(party, announce);     break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // The roots take their tithe from the caster's own body.
@@ -120,7 +120,7 @@ namespace AshAndEmber
                     hero.HitPoints = Math.Max(5, hero.HitPoints - loss);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce) Msg($"The roots take their tithe from the nearest living vessel — you. [-{loss} health]");
         }
 
@@ -138,7 +138,7 @@ namespace AshAndEmber
         private static void MapDespair(MobileParty party, bool announce)
         {
             float drop = 10f + _rng.Next(8);
-            try { party.RecentEventsMorale -= drop; } catch { }
+            try { party.RecentEventsMorale -= drop; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (announce) Msg($"A grey weight settles over the column — the dying land's despair is contagious. [-{(int)drop} morale]");
         }
 
@@ -155,12 +155,12 @@ namespace AshAndEmber
         // ── Helpers ──────────────────────────────────────────────────────────────
         private static void Hurt(Agent a, float dmg)
         {
-            try { if (a != null && a.IsActive()) a.Health = Math.Max(1f, a.Health - dmg); } catch { }
+            try { if (a != null && a.IsActive()) a.Health = Math.Max(1f, a.Health - dmg); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void SpawnGrey(Vec3 pos, float scale)
         {
-            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), new Vec3(0.35f, 0.4f, 0.3f), 6f * scale, 0.6f); } catch { }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), new Vec3(0.35f, 0.4f, 0.3f), 6f * scale, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static readonly string[] _foodIds =
@@ -184,7 +184,7 @@ namespace AshAndEmber
                     removed += take; remaining -= take;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return removed;
         }
 
@@ -205,14 +205,14 @@ namespace AshAndEmber
                     wounded += w; remaining -= w;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return wounded;
         }
 
         private static void Msg(string text)
         {
             try { InformationManager.DisplayMessage(new InformationMessage(text, NatureColor)); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -38,10 +38,10 @@ namespace AshAndEmber
                         isAshenSettlement ||
                         h.MapFaction?.StringId == AshenKingdomId;
                     if (!qualifies) continue;
-                    try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
+                    try { MageKnowledge.ApplyAshenAppearance(h); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Apply Ashen appearance (grey skin, hair, eyes) to any hero (lord/wanderer/notable)
@@ -66,10 +66,10 @@ namespace AshAndEmber
                         (h.PartyBelongedTo != null && FireWorshippersSystem.IsAshenSpawn(h.PartyBelongedTo));
 
                     if (!qualifies) continue;
-                    try { MageKnowledge.ApplyAshenAppearance(h); } catch { }
+                    try { MageKnowledge.ApplyAshenAppearance(h); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Ashen clan kingdom enforcement ────────────────────────────────────
@@ -98,24 +98,24 @@ namespace AshAndEmber
 
                     // Eject from whatever kingdom grabbed them
                     if (clan.Kingdom != null)
-                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     // Re-add to the Ashen kingdom
                     if (_ashenKingdom != null && !_ashenKingdom.IsEliminated)
                     {
                         bool needsRuler = _ashenKingdom.RulingClan == null;
                         if (needsRuler)
-                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch { }
+                            try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         else
                             try { ChangeKingdomAction.ApplyByJoinToKingdom(
                                     clan, _ashenKingdom,
                                     CampaignTime.Now + CampaignTime.Years(1000),
                                     false); }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     adjustments++;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -144,10 +144,10 @@ namespace AshAndEmber
                     if (leader == null) continue;
                     if (settlement.OwnerClan == leader.Clan) continue;
 
-                    try { ChangeOwnerOfSettlementAction.ApplyByDefault(leader, settlement); } catch { }
-                    try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch { }
+                    try { ChangeOwnerOfSettlementAction.ApplyByDefault(leader, settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -171,14 +171,14 @@ namespace AshAndEmber
                         // Leave alone while actively being raided
                         if (s.Village.VillageState == Village.VillageStates.BeingRaided) continue;
                         if (s.Village.VillageState != Village.VillageStates.Looted)
-                            try { s.Village.VillageState = Village.VillageStates.Looted; } catch { }
+                            try { s.Village.VillageState = Village.VillageStates.Looted; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         if (s.Village.Hearth > 10f)
-                            try { s.Village.Hearth = 10f; } catch { }
+                            try { s.Village.Hearth = 10f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -209,7 +209,7 @@ namespace AshAndEmber
                     Hero child = HeroCreator.CreateChild(template, birthPlace, Clan.PlayerClan, 18);
                     if (child != null)
                     {
-                        try { ColourLordRegistry.SetMage(child, true); } catch { }
+                        try { ColourLordRegistry.SetMage(child, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         ChangeRenown(15f);
                         Msg($"{child.Name} joins your clan. She carries the fire with a steadiness that took her ten years to learn on her own. It shows.", FireColor);
                         return;
@@ -442,7 +442,7 @@ namespace AshAndEmber
                 // Wound the hero directly by marking them wounded (simulated as party morale loss + hero wound)
                 Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - count * 10);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -497,7 +497,7 @@ namespace AshAndEmber
                             break;
                         case "b":
                             // Give in: big XP gain but 7-day death timer
-                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 2; } catch { }
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 2; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             ShiftTrait(DefaultTraits.Mercy, -2);
                             ShiftTrait(DefaultTraits.Honor, -1);
                             Msg("You open the door. Something floods through you — cold, complete, and enormously purposeful. " +
@@ -654,7 +654,7 @@ namespace AshAndEmber
         private static void SpawnAshenAtGate(Settlement s, int troops, float minStrength)
         {
             try { CampaignMapEvents.SpawnAshenAmbushNear(s.GetPosition2D, troops, minStrength); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Spawns a hostile party and immediately starts a field battle mission.
@@ -672,7 +672,7 @@ namespace AshAndEmber
                 if (enemy == null) return;
 
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── LEAVE CITY/CASTLE: An Insult at the Gate ─────────────────────────
@@ -787,7 +787,7 @@ namespace AshAndEmber
                 switch (outcome)
                 {
                     case 1: // showed him the fire
-                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Msg("A letter finds you — careful, unpracticed handwriting. He went back to his eight years and found something he had been attributing to the wrong cause. He thanks you without explaining exactly what for. He has solved something that was yours to solve too, and enclosed the solution. One focus point, arrived by post.", FireColor);
                         break;
                     case 2: // challenged him
@@ -795,7 +795,7 @@ namespace AshAndEmber
                         Msg("The self-taught mage has been seen leading a small circle of young practitioners in the region — not teaching exactly, but working problems alongside them, the way he worked alongside you. Someone who attended wrote to tell you the technique he developed for the margin-control problem has spread. Your name came up in the telling.", GoodColor);
                         break;
                     case 3: // listened to him
-                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Msg("He found you. The technique for sustaining a working at reduced attention cost has a variant he discovered after your meeting — a refinement that would not have happened without the hour you spent comparing notes. He wants you to have it. One focus point, sent in a letter that smells of woodsmoke from a village you have never visited.", FireColor);
                         break;
                     case 4: // agreed with him
@@ -872,7 +872,7 @@ namespace AshAndEmber
                         Msg("A letter from the old master's student: she found the better question's answer, or the first third of it. She has written it out in full and sent a copy to you — not out of generosity but because the answer is incomplete without a second perspective, and you are the only person she has met who asked the right question alongside her.", FireColor);
                         break;
                     case 3: // tested her
-                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Msg("She sent word: the working you gave her as a test has a fourth step she did not complete in your presence. She has completed it now, refined it, and returned the knowledge with the refinement included. What she sent back is better than what you gave. One focus point, improved in transit.", FireColor);
                         break;
                     case 4: // told her to find it herself

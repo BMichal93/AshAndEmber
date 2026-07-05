@@ -83,7 +83,7 @@ namespace AshAndEmber
                                 (a.Character as CharacterObject)?.HeroObject is Hero h &&
                                 ColourLordRegistry.IsAshenLord(h));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 if (!trigger) return;
                 _enabled = true;
@@ -117,7 +117,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     line, new Color(0.35f, 0.4f, 0.6f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -104,11 +104,11 @@ namespace AshAndEmber
                             }
                             ShowRound();
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     null, "", false), true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void FireMarketPanicEvent()
@@ -193,11 +193,11 @@ namespace AshAndEmber
                                     break;
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     null, "", false), true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void FireEmbargoScareEvent()
@@ -288,11 +288,11 @@ namespace AshAndEmber
                                 }
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     null, "", false), true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void FireKingsFactorEvent()
@@ -381,11 +381,11 @@ namespace AshAndEmber
                                 }
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     null, "", false), true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -194,12 +194,12 @@ namespace AshAndEmber
                     _ => 45 + _rng.Next(21),
                 };
                 float minStr = tier >= 3 ? 150f : 0f;
-                try { CampaignMapEvents.SpawnAshenAmbushNear(pos, troops, minStr); } catch { }
+                try { CampaignMapEvents.SpawnAshenAmbushNear(pos, troops, minStr); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Set respawn cooldown for this ruin
                 SetGuardCooldown(def.VillageName, tier >= 3 ? 10 : 7);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Challenge resolution ───────────────────────────────────────────────
@@ -905,7 +905,7 @@ namespace AshAndEmber
 
                 case RewardType.FocusPoints:
                     int fp = Math.Max(1, (int)(reward.Points * split));
-                    try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += fp; } catch { }
+                    try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += fp; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{header} The knowledge crystallises into {fp} focus point{(fp!=1?"s":"")}.",
                         new Color(0.7f, 0.9f, 0.7f)));
@@ -913,7 +913,7 @@ namespace AshAndEmber
 
                 case RewardType.RenownBurst:
                     float renown = reward.Points * split;
-                    try { Hero.MainHero.Clan.Renown = Math.Max(0, Hero.MainHero.Clan.Renown + renown); } catch { }
+                    try { Hero.MainHero.Clan.Renown = Math.Max(0, Hero.MainHero.Clan.Renown + renown); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{header} Word of this spreads. (+{(int)renown} renown)",
                         new Color(0.9f, 0.78f, 0.25f)));
@@ -941,7 +941,7 @@ namespace AshAndEmber
                         new Color(0.6f, 0.45f, 0.8f)));
                     if (_crownFragments >= 3)
                     {
-                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += AshenCrownFpBonus; } catch { }
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += AshenCrownFpBonus; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "The three fragments align. Something clicks in the fire. +3 focus points.",
                             new Color(0.9f, 0.6f, 0.9f)));
@@ -954,7 +954,7 @@ namespace AshAndEmber
                         "A dark glass shard, cold even when held. It hums at the same frequency as your inner fire. You could sell it — 5000 denars, to the right buyer — or let it dissolve into you, which costs the fire nothing and gives back 20 days.",
                         true, true, "Dissolve it (20 days reclaimed)", "Sell it (5000 denars)",
                         () => AgingSystem.RejuvenateHero(Hero.MainHero, 20),
-                        () => { try { Hero.MainHero.ChangeHeroGold(5000); } catch { } }), true);
+                        () => { try { Hero.MainHero.ChangeHeroGold(5000); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }), true);
                     break;
 
                 case RewardType.AncientGrimoire:
@@ -973,7 +973,7 @@ namespace AshAndEmber
             }
             else
             {
-                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 2; } catch { }
+                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 2; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{header} The knowledge was already yours — but the fire sharpens anyway. +2 focus points.",
                     new Color(0.7f, 0.9f, 0.7f)));
@@ -992,7 +992,7 @@ namespace AshAndEmber
                     new Color(0.9f, 0.7f, 0.3f)));
             else
             {
-                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 4; } catch { }
+                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 4; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{header} Every lost form was already yours. The grimoire gives back 4 focus points instead.",
                     new Color(0.7f, 0.9f, 0.7f)));
@@ -1023,7 +1023,7 @@ namespace AshAndEmber
         // ── Helpers ────────────────────────────────────────────────────────────
         private static void AgePlayer(int days)
         {
-            try { AgingSystem.AgeHero(Hero.MainHero, days); } catch { }
+            try { AgingSystem.AgeHero(Hero.MainHero, days); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void LoseTroops(int count)
@@ -1044,7 +1044,7 @@ namespace AshAndEmber
                     remaining -= kill;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ApplyPartyHealthPenalty(float fraction)
@@ -1058,10 +1058,10 @@ namespace AshAndEmber
                     if (entry.Character == null || entry.Character.IsHero) continue;
                     int healthy = entry.Number - entry.WoundedNumber;
                     int wound = Math.Max(1, (int)(healthy * fraction));
-                    if (wound > 0) try { roster.AddToCounts(entry.Character, 0, false, wound); } catch { }
+                    if (wound > 0) try { roster.AddToCounts(entry.Character, 0, false, wound); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Persistence ───────────────────────────────────────────────────────
@@ -1102,7 +1102,7 @@ namespace AshAndEmber
                     for (int i = 0; i < gCdKeys.Count; i++) { _guardCdKeys.Add(gCdKeys[i]); _guardCdDays.Add(gCdDays[i]); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void ResetForNewGame()

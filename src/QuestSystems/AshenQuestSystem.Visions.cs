@@ -28,12 +28,12 @@ namespace AshAndEmber
                 if (!_prereqGoal1 && (Hero.MainHero?.Clan?.Tier ?? 0) >= TargetClanTier)
                 {
                     _prereqGoal1 = true;
-                    try { _questLog?.LogPrereq1(); } catch { }
+                    try { _questLog?.LogPrereq1(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (MageKnowledge._deferredInquiry == null)
                         MageKnowledge._deferredInquiry = ShowPrereqGoalComplete1;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 if (!_prereqGoal2)
@@ -44,25 +44,25 @@ namespace AshAndEmber
                     if (epicrotea != null && epicrotea.OwnerClan == Hero.MainHero?.Clan)
                     {
                         _prereqGoal2 = true;
-                        try { _questLog?.LogPrereq2(); } catch { }
+                        try { _questLog?.LogPrereq2(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         if (MageKnowledge._deferredInquiry == null)
                             MageKnowledge._deferredInquiry = ShowPrereqGoalComplete2;
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 if (_prereqGoal1 && _prereqGoal2)
                     UnlockWastelandRite();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void UnlockWastelandRite()
         {
             _phase = PhaseWasteland;
-            try { _questLog?.LogWastelandUnlocked(); } catch { }
+            try { _questLog?.LogWastelandUnlocked(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             InformationManager.DisplayMessage(new InformationMessage(
                 "The Wasteland Rite is revealed. Visit an Ashen-owned city to consecrate it.",
                 new Color(0.4f, 0.5f, 0.85f)));
@@ -108,7 +108,7 @@ namespace AshAndEmber
                     }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── The Hunger Speaks (vision 2) ──────────────────────────────────────
@@ -146,7 +146,7 @@ namespace AshAndEmber
                     () =>
                     {
                         _phase = PhasePrereqs;
-                        try { _questLog = new AshenQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch { }
+                        try { _questLog = new AshenQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Quest added: The Hunger of the Void.",
                             new Color(0.38f, 0.50f, 0.85f)));
@@ -167,7 +167,7 @@ namespace AshAndEmber
                     }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Prereq goal pop-ups ───────────────────────────────────────────────
@@ -187,7 +187,7 @@ namespace AshAndEmber
                     () => { }, () => { }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ShowPrereqGoalComplete2()
@@ -211,7 +211,7 @@ namespace AshAndEmber
                     () => { }, () => { }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Wasteland Rite (called from AshenAltarsCampaignBehavior) ──────────
@@ -247,7 +247,7 @@ namespace AshAndEmber
                     () => { }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void OnWastelandRiteConfirmed(Settlement settlement)
@@ -263,11 +263,11 @@ namespace AshAndEmber
                     foreach (Settlement v in Settlement.All)
                     {
                         if (!v.IsVillage || v.Village?.Bound != settlement) continue;
-                        try { v.Village.VillageState = Village.VillageStates.Looted; } catch { }
-                        try { v.Village.Hearth = 1f; } catch { }
+                        try { v.Village.VillageState = Village.VillageStates.Looted; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { v.Village.Hearth = 1f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Lock town stats
                 try
@@ -278,13 +278,13 @@ namespace AshAndEmber
                         settlement.Town.Security = 100f;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 bool isCapital = IsTargetCapital(settlement.Name?.ToString() ?? "");
                 if (isCapital)
                 {
                     _capitalsCount++;
-                    try { _questLog?.LogCapital(settlement.Name?.ToString() ?? "", _capitalsCount); } catch { }
+                    try { _questLog?.LogCapital(settlement.Name?.ToString() ?? "", _capitalsCount); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{settlement.Name} — consecrated to the void. [{_capitalsCount}/{RequiredCapitals} capitals]",
                         new Color(0.4f, 0.5f, 0.9f)));
@@ -292,7 +292,7 @@ namespace AshAndEmber
                     if (_capitalsCount >= RequiredCapitals && _phase == PhaseWasteland)
                     {
                         _phase = PhaseAllDone;
-                        try { _questLog?.LogAllDone(); } catch { }
+                        try { _questLog?.LogAllDone(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         if (!BurningLabQuestSystem.WitheringFired && MageKnowledge._deferredInquiry == null)
                             MageKnowledge._deferredInquiry = ShowFinalPrompt;
                     }
@@ -304,7 +304,7 @@ namespace AshAndEmber
                         new Color(0.38f, 0.50f, 0.80f)));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

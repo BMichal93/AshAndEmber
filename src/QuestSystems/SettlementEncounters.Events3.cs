@@ -44,7 +44,7 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             AgePlayer(7);
                             Msg("He stands in it for a long moment, eyes closed. Then he begins to speak — not quickly, not with ceremony, but as a man unburdening something he has carried for decades. He talks for two hours. When he leaves, you sit with the shape of what he gave you for a long time. One focus point, paid in warmth and seven days. You call it even.", FireColor);
                             break;
@@ -76,7 +76,7 @@ namespace AshAndEmber
             {
                 if (_rng.NextDouble() < 0.50)
                 {
-                    try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                    try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     AgePlayer(14);
                     Msg("A soldier in your company found a body on the road outside the settlement — an old man, coat pulled around him, dead of cold or age or some combination of the two. His notes were scattered in the wind. The soldier recovered a single page before they blew, and brought it because he did not know what else to do with it. You read it in ten minutes. It took the old man forty years to write. The page teaches you something. One focus point, purchased at a price that was not yours to pay.", FireColor);
                 }
@@ -112,7 +112,7 @@ namespace AshAndEmber
                             ShiftTrait(DefaultTraits.Honor, -1);
                             if (_rng.NextDouble() < 0.20)
                             {
-                                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg("You read through most of the night. The scholar was working on the relationship between fire-carrying and certain physical states — not how to create it, but how to deepen it once present. The path they mapped is not one you would have found alone. By morning you understand something you did not understand before. One focus point, bought in hours and the specific unease of learning from someone you cannot question.", FireColor);
                             }
                             else
@@ -165,7 +165,7 @@ namespace AshAndEmber
                                 double roll = _rng.NextDouble();
                                 if (roll < 0.50)
                                 {
-                                    try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 2; } catch { }
+                                    try { Hero.MainHero.HeroDeveloper.UnspentAttributePoints += 2; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     Msg("The liquid is cold going down and then not cold at all. Your vision whites out briefly. When it returns you are sitting on the cobblestones and your hands are shaking — not from weakness, from something running faster than usual under the surface. You have two attribute points you did not have an hour ago. The alchemist has already left. So has any record of this.", GoodColor);
                                 }
                                 else if (roll < 0.75)
@@ -176,7 +176,7 @@ namespace AshAndEmber
                                 else
                                 {
                                     Msg("The liquid moves wrong in you from the moment it clears your throat. You have time to understand what is happening before you lose the ability to act on it. Your men find you on the street three minutes later, unmoving.", BadColor);
-                                    try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
+                                    try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
                                 break;
                             }
@@ -292,8 +292,8 @@ namespace AshAndEmber
                                 {
                                     ColourLordRegistry.SetAshen(child, true);
                                     ColourLordRegistry.SetMage(child, true);
-                                    try { AshenCitySystem.ApplyAshenPersonality(child); } catch { }
-                                    try { MageKnowledge.ApplyAshenAppearance(child); } catch { }
+                                    try { AshenCitySystem.ApplyAshenPersonality(child); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                    try { MageKnowledge.ApplyAshenAppearance(child); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     // Try to move child to a random Ashen clan
                                     var ashenClans = Clan.All
                                         .Where(c => c != Clan.PlayerClan && c.IsEliminated == false &&
@@ -302,20 +302,20 @@ namespace AshAndEmber
                                     if (ashenClans.Count > 0)
                                     {
                                         var targetClan = ashenClans[_rng.Next(ashenClans.Count)];
-                                        try { child.Clan = targetClan; } catch { }
+                                        try { child.Clan = targetClan; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     }
                                 }
-                                catch { }
+                                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg($"You did nothing. You told yourself it would pass. By the time you admit it is not passing, {childName} is already different — the grey in their eyes unmistakable, the cold they carry no longer concealable. They leave before you make a decision. You hear their name spoken by people you would rather not share a name with.", BadColor);
                             }
                             break;
                         case "b":
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child, -50, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, child, -50, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             ShiftTrait(DefaultTraits.Mercy, -1);
                             ShiftTrait(DefaultTraits.Calculating, 1);
                             if (_rng.NextDouble() < 0.30)
                             {
-                                try { KillCharacterAction.ApplyByMurder(child, null, false); } catch { }
+                                try { KillCharacterAction.ApplyByMurder(child, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg($"You watch, and what you watch for happens. The infection runs faster in isolation — the cold needs no kindness to spread, and it does not need the door to be open. {childName} does not survive it. You kept them from becoming what they were becoming. You are not sure what the distinction is worth.", BadColor);
                             }
                             else
@@ -331,7 +331,7 @@ namespace AshAndEmber
                                 Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1;
                                 KillCharacterAction.ApplyByMurder(child, Hero.MainHero, false);
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"You do it yourself. You do not ask anyone else to carry it. The cold that was building in {childName} releases at the end — you feel it disperse, formless, looking for somewhere else to go. It does not find you. You stand with what you did and you do not look away from it. One focus point, paid in full.", DarkColor);
                             break;
                     }
@@ -667,7 +667,7 @@ namespace AshAndEmber
                     Hero child = HeroCreator.CreateChild(template, birthPlace, Clan.PlayerClan, 1);
                     if (child != null)
                     {
-                        try { child.Father = Hero.MainHero; } catch { }
+                        try { child.Father = Hero.MainHero; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         PenaliseSpouseForAdoption();
                         Msg($"{child.Name} arrives in your household — quiet, small, and entirely unaware of the circumstances. They are yours now, in whatever sense you decide that means.", GoodColor);
                         return;
@@ -853,7 +853,7 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Calculating, -1);
-                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             ChangeRenown(10f);
                             _trinketPhase     = 2;
                             _trinketCountdown = 7;
@@ -994,7 +994,7 @@ namespace AshAndEmber
                             {
                                 // Success — significant gains, chain continues
                                 _trinketCountdown = 7;
-                                try { if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Influence += 60f; } catch { }
+                                try { if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Influence += 60f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 ChangeRenown(50f);
                                 ChangeGold(2000);
                                 AddMorale(15f);
@@ -1014,7 +1014,7 @@ namespace AshAndEmber
                                 _trinketPhase   = 0;
                                 _trinketVariant = 0;
                                 Msg(deathMsg, BadColor);
-                                try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch { }
+                                try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }
                             break;
                         }

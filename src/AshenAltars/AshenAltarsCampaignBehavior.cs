@@ -48,12 +48,12 @@ namespace AshAndEmber
 
         public override void SyncData(IDataStore store)
         {
-            try { store.SyncData("ALTAR_Announced",   ref _altarsAnnounced); } catch { }
-            try { store.SyncData("ALTAR_LastUseDay",  ref _lastAltarUseDay); } catch { }
+            try { store.SyncData("ALTAR_Announced",   ref _altarsAnnounced); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { store.SyncData("ALTAR_LastUseDay",  ref _lastAltarUseDay); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Backward-compat: silently read (and discard) old Cold keys so saves don't error.
-            try { int dummy = 0; store.SyncData("ALTAR_UseCount",     ref dummy); } catch { }
-            try { int dummy = 0; store.SyncData("ALTAR_LastInvokeDay", ref dummy); } catch { }
+            try { int dummy = 0; store.SyncData("ALTAR_UseCount",     ref dummy); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { int dummy = 0; store.SyncData("ALTAR_LastInvokeDay", ref dummy); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -65,7 +65,7 @@ namespace AshAndEmber
                     foreach (var id in dynIds) _dynamicAltarIds.Add(id);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             DarkGiftSystem.SyncData(store);
         }
@@ -105,7 +105,7 @@ namespace AshAndEmber
                     .OrderBy(_ => _rng.Next()).Take(3).ToList();
                 foreach (var t in ashenTowns) _dynamicAltarIds.Add(t.StringId);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void AnnounceAltars()
@@ -129,7 +129,7 @@ namespace AshAndEmber
                     $"Dark Altars have been raised in {string.Join(", ", names)}. " +
                     "Only the Merciless and Devious may kneel before them."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────

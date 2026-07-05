@@ -28,9 +28,9 @@ namespace AshAndEmber
             RegisterPool(starter, "nor_special",  "lord_special_request", "close_window",  _specials,  P);
             RegisterPool(starter, "nor_prisoner", "prisoner_chat",        "close_window",  _prisoners, P);
 
-            try { starter.AddPlayerLine("nor_reply_business", "nor_reply", "lord_pretalk", "I've business worth your time.",       null, null, P); } catch { }
-            try { starter.AddPlayerLine("nor_reply_respect",  "nor_reply", "lord_pretalk", "You've my respect, plain as that.",    null, null, P); } catch { }
-            try { starter.AddPlayerLine("nor_reply_leave",    "nor_reply", "close_window", "I'll leave you to the watch.",         null, null, P); } catch { }
+            try { starter.AddPlayerLine("nor_reply_business", "nor_reply", "lord_pretalk", "I've business worth your time.",       null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { starter.AddPlayerLine("nor_reply_respect",  "nor_reply", "lord_pretalk", "You've my respect, plain as that.",    null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { starter.AddPlayerLine("nor_reply_leave",    "nor_reply", "close_window", "I'll leave you to the watch.",         null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Registers one line per pool entry. Conditions pick the right variant
@@ -53,7 +53,7 @@ namespace AshAndEmber
                         null,
                         priority);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 

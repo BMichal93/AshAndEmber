@@ -65,9 +65,9 @@ namespace AshAndEmber
                 var e = _effects[i];
                 if (e.IsMissionEffect != inMission) continue;
                 e.Elapsed += dt;
-                try { e.OnTick?.Invoke(dt); } catch { }
+                try { e.OnTick?.Invoke(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!e.IsExpired) continue;
-                try { e.OnExpire?.Invoke(); } catch { }
+                try { e.OnExpire?.Invoke(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _effects.RemoveAt(i);
             }
         }

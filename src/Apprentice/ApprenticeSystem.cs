@@ -189,7 +189,7 @@ namespace AshAndEmber
             else if (progress >= 40)
             {
                 // Partial: skill buff only
-                try { Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints += 1; } catch { }
+                try { Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.ShowInquiry(new InquiryData(
                     "Training Complete",
                     $"{name} is not ready to carry the fire fully — but the weeks of work sharpened your own teaching instincts. +1 focus point.",
@@ -269,7 +269,7 @@ namespace AshAndEmber
                 store.SyncData("AP_SearchCD",  ref _searchCooldown);
                 store.SyncData("AP_Total",     ref _totalEver);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void ResetForNewGame()

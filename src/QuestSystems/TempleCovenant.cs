@@ -142,7 +142,7 @@ namespace AshAndEmber
                     MageKnowledge._deferredInquiry = () => ShowStrikeCall(temple);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Covenant offer ────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ namespace AshAndEmber
                         if (leader != null && leader.IsAlive && leader != Hero.MainHero)
                             ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, 15, false);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The covenant is sworn. The Temple's rites settle over your fire like a steady hand — "
                         + "battle workings now cost one day less.",
@@ -219,10 +219,10 @@ namespace AshAndEmber
                             case "ride":
                             {
                                 int struck = StrikeAshenParties(2, 10, 18);
-                                try { if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 50f; } catch { }
-                                try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += 10f; } catch { }
+                                try { if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 50f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += 10f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 if (leader != null && leader.IsAlive && leader != Hero.MainHero)
-                                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, 10, false); } catch { }
+                                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, 10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 InformationManager.DisplayMessage(new InformationMessage(
                                     struck > 0
                                         ? $"You ride with the templars. {struck} Ashen warband{(struck != 1 ? "s were" : " was")} caught on the road and bloodied. "
@@ -236,10 +236,10 @@ namespace AshAndEmber
                             {
                                 if ((Hero.MainHero?.Gold ?? 0) >= goldOffer)
                                 {
-                                    try { Hero.MainHero.Gold -= goldOffer; } catch { }
-                                    try { if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 15f; } catch { }
+                                    try { Hero.MainHero.Gold -= goldOffer; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                    try { if (Hero.MainHero?.Clan != null) Hero.MainHero.Clan.Renown += 15f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     if (leader != null && leader.IsAlive && leader != Hero.MainHero)
-                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, 5, false); } catch { }
+                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, 5, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     InformationManager.DisplayMessage(new InformationMessage(
                                         "Your coin rides where you do not. The strike goes ahead. +15 renown.",
                                         new Color(0.75f, 0.7f, 0.5f)));
@@ -250,14 +250,14 @@ namespace AshAndEmber
                                         "You have no coin to spare. The rider leaves with empty hands — the Temple notes it.",
                                         new Color(0.6f, 0.55f, 0.5f)));
                                     if (leader != null && leader.IsAlive && leader != Hero.MainHero)
-                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, -5, false); } catch { }
+                                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, -5, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
                                 break;
                             }
                             default:
                             {
                                 if (leader != null && leader.IsAlive && leader != Hero.MainHero)
-                                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, -5, false); } catch { }
+                                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, leader, -5, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 InformationManager.DisplayMessage(new InformationMessage(
                                     "You stand aside. The strike goes on without you. The covenant holds — for now.",
                                     new Color(0.6f, 0.6f, 0.6f)));
@@ -265,7 +265,7 @@ namespace AshAndEmber
                             }
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 },
                 null, "", false), false, true);
         }
@@ -294,14 +294,14 @@ namespace AshAndEmber
                         int healthy = e.Number - e.WoundedNumber;
                         int n = Math.Min(healthy, toWound - w);
                         if (n <= 0) continue;
-                        try { party.MemberRoster.AddToCounts(e.Character, 0, false, n); w += n; } catch { }
+                        try { party.MemberRoster.AddToCounts(e.Character, 0, false, n); w += n; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         if (w >= toWound) break;
                     }
-                    try { party.RecentEventsMorale -= 20f; } catch { }
+                    try { party.RecentEventsMorale -= 20f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (w > 0) struck++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return struck;
         }
 
@@ -317,7 +317,7 @@ namespace AshAndEmber
                     ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
                         Hero.MainHero, leader, wasSworn ? -40 : -30, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             string body = wasSworn
                 ? "A templar courier delivers a single torn page: your name, struck through in grey ink.\n\n"
@@ -338,7 +338,7 @@ namespace AshAndEmber
                             "Anathema", body, true, false,
                             "Let them watch.", "", () => { }, null));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
         }
@@ -360,7 +360,7 @@ namespace AshAndEmber
                     int healthy = e.Number - e.WoundedNumber;
                     int n = Math.Min(healthy, toWound - w);
                     if (n <= 0) continue;
-                    try { roster.AddToCounts(e.Character, 0, false, n); w += n; } catch { }
+                    try { roster.AddToCounts(e.Character, 0, false, n); w += n; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (w >= toWound) break;
                 }
                 if (w > 0)
@@ -369,7 +369,7 @@ namespace AshAndEmber
                         + $"{w} soldier{(w != 1 ? "s are" : " is")} wounded. The anathema stands while the cold clings to you.",
                         new Color(0.75f, 0.55f, 0.35f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Persistence ───────────────────────────────────────────────────────

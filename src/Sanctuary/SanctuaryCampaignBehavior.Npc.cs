@@ -35,7 +35,7 @@ namespace AshAndEmber
             // When Grace exceeds half the cap, quietly heals 1 wounded per troop type each dawn.
             if (TalentSystem.Has(TalentId.EmberCovenant) && MiracleInventory.Grace > 0)
             {
-                try { if (mainParty != null) mainParty.RecentEventsMorale += 5f; } catch { }
+                try { if (mainParty != null) mainParty.RecentEventsMorale += 5f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (MiracleInventory.Grace > MiracleMath.GraceCap() / 2)
                 {
@@ -46,18 +46,18 @@ namespace AshAndEmber
                             foreach (var e in mainParty.MemberRoster.GetTroopRoster().ToList())
                             {
                                 if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
-                                try { mainParty.MemberRoster.AddToCounts(e.Character, 0, false, -1); } catch { }
+                                try { mainParty.MemberRoster.AddToCounts(e.Character, 0, false, -1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
             // UnbrokenWard: +10 morale/day while the Warding Seal is active.
             if (TalentSystem.Has(TalentId.UnbrokenWard) && CampaignMapEvents.ProtectedDaysRemaining > 0)
             {
-                try { if (mainParty != null) mainParty.RecentEventsMorale += 10f; } catch { }
+                try { if (mainParty != null) mainParty.RecentEventsMorale += 10f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // KeepingFlame: party morale floor of 30 — the warmth holds a floor of courage.
@@ -68,7 +68,7 @@ namespace AshAndEmber
                     if (mainParty != null && mainParty.RecentEventsMorale < 30f)
                         mainParty.RecentEventsMorale = 30f;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Trait drift: every 10 sanctuary uses, nudge the player's weakest virtue up.
@@ -89,7 +89,7 @@ namespace AshAndEmber
                             "The flame has changed you. A virtue has deepened in you without your noticing."));
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _sanctuaryUseCount = 0;
             }
         }

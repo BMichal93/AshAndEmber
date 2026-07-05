@@ -38,7 +38,7 @@ namespace AshAndEmber
 
         public static void GrantWeedBlessing(double hours)
         {
-            try { _weedBlessUntilDays = CampaignTime.Now.ToDays + hours / 24.0; } catch { }
+            try { _weedBlessUntilDays = CampaignTime.Now.ToDays + hours / 24.0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Called when a hermit teaches the player a nature talent.

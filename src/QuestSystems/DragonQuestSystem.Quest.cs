@@ -49,7 +49,7 @@ namespace AshAndEmber
                     {
                         _phase = PhaseActive;
                         _visionPhase = 0;
-                        try { _questLog = new DragonQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch { }
+                        try { _questLog = new DragonQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Quest added: The Sundered Crown.",
                             new Color(0.80f, 0.55f, 0.25f)));
@@ -74,7 +74,7 @@ namespace AshAndEmber
                     }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Second contact (after 2nd Ashen kill, having refused once) ─────────
@@ -106,7 +106,7 @@ namespace AshAndEmber
                     {
                         _phase = PhaseActive;
                         _visionPhase = 0;
-                        try { _questLog = new DragonQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch { }
+                        try { _questLog = new DragonQuestLog(); _questLog.StartQuest(); _questLog.LogStarted(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Quest added: The Sundered Crown.",
                             new Color(0.80f, 0.55f, 0.25f)));
@@ -131,7 +131,7 @@ namespace AshAndEmber
                     }
                 ), true, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Visions (0–6, one per Ashen lord killed after accepting) ──────────
@@ -151,7 +151,7 @@ namespace AshAndEmber
                     default: break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Vision 0 — The Dreaming Fire (shown right after accepting)
@@ -426,13 +426,13 @@ namespace AshAndEmber
                     "",
                     chosen =>
                     {
-                        try { HandleFinalChoice(chosen?[0]?.Identifier as string ?? "banish"); } catch { }
+                        try { HandleFinalChoice(chosen?[0]?.Identifier as string ?? "banish"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     _ => { },
                     "", false
                 ), false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void HandleFinalChoice(string choice)
@@ -441,7 +441,7 @@ namespace AshAndEmber
             {
                 case "vessel":
                     _phase = PhaseEndedMerge;
-                    try { _questLog?.LogComplete("You accepted Aelisar. His fire is yours now — so is the weight of what he was."); } catch { }
+                    try { _questLog?.LogComplete("You accepted Aelisar. His fire is yours now — so is the weight of what he was."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     ShowMergeEnding();
                     break;
 
@@ -449,7 +449,7 @@ namespace AshAndEmber
                     _phase       = PhaseEndedSacrifice;
                     _endingPhase = 1;
                     _worldBound  = false; // world effects applied gradually in TickEnding
-                    try { _questLog?.LogComplete("The Last Binding fires. The grey retreats. It costs everything."); } catch { }
+                    try { _questLog?.LogComplete("The Last Binding fires. The grey retreats. It costs everything."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         "The Last Binding begins. There is no taking it back.",
                         new Color(0.90f, 0.65f, 0.20f)));
@@ -457,7 +457,7 @@ namespace AshAndEmber
 
                 default: // banish
                     _phase = PhaseEndedBanish;
-                    try { _questLog?.LogComplete("You cast him out. The cycle continues, as it always has."); } catch { }
+                    try { _questLog?.LogComplete("You cast him out. The cycle continues, as it always has."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     ShowBanishEnding();
                     break;
             }

@@ -31,14 +31,14 @@ namespace AshAndEmber
         public static void ForceDismount(Agent a, Agent owner = null)
         {
             Agent mount = null;
-            try { mount = a.MountAgent; } catch { }
+            try { mount = a.MountAgent; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (mount == null || !mount.IsActive()) return;
             try
             {
                 Blow b = BuildBlow(mount, DamageTypes.Blunt, mount.HealthLimit + 1f, owner);
                 mount.Die(b, (Agent.KillInfo)0);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Magic-event memory ─────────────────────────────────────────────────
@@ -100,10 +100,10 @@ namespace AshAndEmber
                         a.Position.x + scatterDir.x * scatterDist,
                         a.Position.y + scatterDir.y * scatterDist,
                         a.Position.z);
-                    try { QueueMove(a, target, 0.5f); } catch { }
+                    try { QueueMove(a, target, 0.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Battle command ─────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ namespace AshAndEmber
                 if (a.Formation == null) continue;
                 if (a.Position.Distance(source.Position) > 500f) continue;
                 bool visible = true;
-                try { visible = scene.CheckPointCanSeePoint(source.Position, a.Position, 500f); } catch { }
+                try { visible = scene.CheckPointCanSeePoint(source.Position, a.Position, 500f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!visible) continue;
                 formations.Add(a.Formation);
                 BeginAgentGlow(a, school, 1.5f);
@@ -134,16 +134,16 @@ namespace AshAndEmber
                     {
                         case BattleCommandKind.Halt:
                             foreach (Agent fa in Mission.Current.Agents.Where(a => a.IsActive() && a.Formation == f).ToList())
-                                try { fa.SetMorale(0f); } catch { }
+                                try { fa.SetMorale(0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             break;
                         case BattleCommandKind.Enrage:
                             foreach (Agent fa in Mission.Current.Agents.Where(a => a.IsActive() && a.Formation == f).ToList())
-                                try { fa.SetMorale(100f); } catch { }
-                            if (!IsSiegeActive()) try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch { }
+                                try { fa.SetMorale(100f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            if (!IsSiegeActive()) try { f.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             break;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 

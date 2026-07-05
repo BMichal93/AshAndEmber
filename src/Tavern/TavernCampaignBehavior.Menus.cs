@@ -32,7 +32,7 @@ namespace AshAndEmber
                     "I'll buy a round and see who's about.",
                     CondTavernAvailable, null, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 starter.AddDialogLine(
@@ -40,7 +40,7 @@ namespace AshAndEmber
                     "Coin on the bar and a seat by the fire. You know how this ends.",
                     null, OpenTavernMenuDeferred, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static bool CondTavernAvailable()
@@ -62,10 +62,10 @@ namespace AshAndEmber
                 MageKnowledge._deferredInquiry = () =>
                 {
                     ResetSessionState();
-                    try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { }
+                    try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Game menus ────────────────────────────────────────────────────────
@@ -92,15 +92,15 @@ namespace AshAndEmber
                         try
                         {
                             if (Settlement.CurrentSettlement?.IsTown != true) return false;
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             return true;
                         }
                         catch { return false; }
                     },
-                    args => { try { ResetSessionState(); GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { } },
+                    args => { try { ResetSessionState(); GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Order screen ──────────────────────────────────────────────────────
@@ -117,10 +117,10 @@ namespace AshAndEmber
                             : $"The room has taken on a pleasant warmth. Round {_roundsDrunk}. Tab: {_totalSpent} denars.";
                         MBTextManager.SetTextVariable("TAVERN_MENU_HEADER", state);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Cheap swill
             try
@@ -135,15 +135,15 @@ namespace AshAndEmber
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("TAVERN_CHEAP_TEXT",
                                 canAfford ? "Order the cheap swill (20 denars)" : "Order the cheap swill (20 denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { DrinkRound(20, 1); } catch { } },
+                    args => { try { DrinkRound(20, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Decent ale
             try
@@ -158,15 +158,15 @@ namespace AshAndEmber
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("TAVERN_DECENT_TEXT",
                                 canAfford ? "Order a decent ale (100 denars)" : "Order a decent ale (100 denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { DrinkRound(100, 2); } catch { } },
+                    args => { try { DrinkRound(100, 2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Fine wine
             try
@@ -181,15 +181,15 @@ namespace AshAndEmber
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("TAVERN_FINE_TEXT",
                                 canAfford ? "Order the finest wine in the house (500 denars)" : "Order the finest wine in the house (500 denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { DrinkRound(500, 3); } catch { } },
+                    args => { try { DrinkRound(500, 3); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Listen for rumours
             try
@@ -206,15 +206,15 @@ namespace AshAndEmber
                                 canAfford
                                     ? "Listen for word of the world (30 denars)"
                                     : "Listen for word of the world (30 denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { TryListenForRumors(); } catch { } },
+                    args => { try { TryListenForRumors(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Roll dice
             try
@@ -223,13 +223,13 @@ namespace AshAndEmber
                     "Join a dice game",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("ldm_dice_menu"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("ldm_dice_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Spend an evening
             try
@@ -247,15 +247,15 @@ namespace AshAndEmber
                                 canAfford
                                     ? $"Spend an evening in good company ({eveningCost} denars)"
                                     : $"Spend an evening in good company ({eveningCost} denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { SpendEvening(); } catch { } },
+                    args => { try { SpendEvening(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Smoke the rare weeds — only the land-attuned have any use for them.
             try
@@ -275,15 +275,15 @@ namespace AshAndEmber
                                 canAfford
                                     ? $"Buy a pouch of the old green and smoke it ({cost} denars){held}"
                                     : $"Buy a pouch of the old green and smoke it ({cost} denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch { return false; }
                         return true;
                     },
-                    args => { try { SmokeNatureWeeds(); } catch { } },
+                    args => { try { SmokeNatureWeeds(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Leave
             try
@@ -292,13 +292,13 @@ namespace AshAndEmber
                     "Call it a night.",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.ExitToLast(); } catch { } },
+                    args => { try { GameMenu.ExitToLast(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Result screen ─────────────────────────────────────────────────────
@@ -311,7 +311,7 @@ namespace AshAndEmber
                     // text is set before switching to this menu
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Another round / Roll again
             try
@@ -335,9 +335,9 @@ namespace AshAndEmber
                                 bool canAfford = (Hero.MainHero?.Gold ?? 0) >= _lastDrinkCost;
                                 if (!canAfford) args.IsEnabled = false;
                             }
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args =>
@@ -349,11 +349,11 @@ namespace AshAndEmber
                             else
                                 GameMenu.SwitchToMenu("ldm_tavern_menu");
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Leave from result screen
             try
@@ -362,13 +362,13 @@ namespace AshAndEmber
                     "That's enough for one night.",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.ExitToLast(); } catch { } },
+                    args => { try { GameMenu.ExitToLast(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Sober-up wait menu ────────────────────────────────────────────────
@@ -384,7 +384,7 @@ namespace AshAndEmber
                     GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
                     GameMenu.MenuOverlayType.None, 0f, GameMenu.MenuFlags.None, null);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void SoberOnInit(MenuCallbackArgs args)
@@ -396,7 +396,7 @@ namespace AshAndEmber
                 args.MenuContext.GameMenu.SetTargetedWaitingTimeAndInitialProgress(
                     Math.Max(1f, _soberHoursTotal), 0f);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static bool SoberOnCondition(MenuCallbackArgs args) => true;
@@ -414,7 +414,7 @@ namespace AshAndEmber
                         Math.Max(1f, remaining), 0f);
                 }
             }
-            catch { try { WakeUp(); } catch { } }
+            catch { try { WakeUp(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
         }
 
         private static void SoberOnTick(MenuCallbackArgs args, CampaignTime dt)
@@ -430,12 +430,12 @@ namespace AshAndEmber
                     args.MenuContext.GameMenu.SetProgressOfWaitingInMenu(
                         Math.Min(1f, _soberHoursElapsed / Math.Max(1f, _soberHoursTotal)));
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (_soberHoursElapsed >= _soberHoursTotal)
                     WakeUp();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void UpdateSoberText()
@@ -450,7 +450,7 @@ namespace AshAndEmber
                       $"You are not dying, but it feels that way. About {left} hour(s) before you can stand without the room spinning.";
                 MBTextManager.SetTextVariable("TAVERN_SOBER_TEXT", text);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Dice game menus ───────────────────────────────────────────────────
@@ -467,10 +467,10 @@ namespace AshAndEmber
                             "A circle of men with a leather cup and a worn board of felt. " +
                             "They look up when you approach. One nudges the cup your way.");
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Small bet — always available
             try
@@ -486,15 +486,15 @@ namespace AshAndEmber
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("DICE_SMALL_TEXT",
                                 canAfford ? $"Low stakes ({bet} denars)" : $"Low stakes ({bet} denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { ResolveDiceGame(DiceSmallBet()); } catch { } },
+                    args => { try { ResolveDiceGame(DiceSmallBet()); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Medium bet — prosperous towns only
             try
@@ -511,15 +511,15 @@ namespace AshAndEmber
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("DICE_MEDIUM_TEXT",
                                 canAfford ? $"A real wager ({bet} denars)" : $"A real wager ({bet} denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch { return false; }
                         return true;
                     },
-                    args => { try { ResolveDiceGame(DiceMediumBet()); } catch { } },
+                    args => { try { ResolveDiceGame(DiceMediumBet()); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Large bet — wealthy towns only
             try
@@ -536,15 +536,15 @@ namespace AshAndEmber
                             if (!canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("DICE_LARGE_TEXT",
                                 canAfford ? $"Empty the table ({bet} denars)" : $"Empty the table ({bet} denars)  [not enough coin]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch { return false; }
                         return true;
                     },
-                    args => { try { ResolveDiceGame(DiceLargeBet()); } catch { } },
+                    args => { try { ResolveDiceGame(DiceLargeBet()); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Walk away
             try
@@ -553,13 +553,13 @@ namespace AshAndEmber
                     "Walk away.",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Dice bet helpers ──────────────────────────────────────────────────
@@ -587,7 +587,7 @@ namespace AshAndEmber
                     GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
                     GameMenu.MenuOverlayType.None, 0f, GameMenu.MenuFlags.None, null);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void InnStayOnInit(MenuCallbackArgs args)
@@ -599,7 +599,7 @@ namespace AshAndEmber
                 args.MenuContext.GameMenu.SetTargetedWaitingTimeAndInitialProgress(
                     Math.Max(1f, _innStayHoursTotal), 0f);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static bool InnStayOnCondition(MenuCallbackArgs args) => true;
@@ -617,7 +617,7 @@ namespace AshAndEmber
                         Math.Max(1f, remaining), 0f);
                 }
             }
-            catch { try { FinishInnStay(); } catch { } }
+            catch { try { FinishInnStay(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
         }
 
         private static void InnStayOnTick(MenuCallbackArgs args, CampaignTime dt)
@@ -632,11 +632,11 @@ namespace AshAndEmber
                     args.MenuContext.GameMenu.SetProgressOfWaitingInMenu(
                         Math.Min(1f, _innStayHoursElapsed / Math.Max(1f, _innStayHoursTotal)));
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (_innStayHoursElapsed >= _innStayHoursTotal)
                     FinishInnStay();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void UpdateInnStayText()
@@ -648,7 +648,7 @@ namespace AshAndEmber
                 MBTextManager.SetTextVariable("INN_STAY_TEXT",
                     $"{_innStayLine1}\n\n{_innStayLine2}\n\nAbout {left} hour(s) of evening remain at {inn}.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void FinishInnStay()
@@ -659,9 +659,9 @@ namespace AshAndEmber
             {
                 AddMorale(5f);
                 Msg("The party rests well. A full evening of warmth and company does its work. (+5 morale)", GoodColor);
-                try { GameMenu.ExitToLast(); } catch { }
+                try { GameMenu.ExitToLast(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Sober-up wait menu ────────────────────────────────────────────────
@@ -680,9 +680,9 @@ namespace AshAndEmber
                     Msg("You come back to yourself slow and heavy-limbed, ears ringing with a green quiet. " +
                         "The land hums faintly under everything now — and will, until tomorrow.", DimColor);
                     ResetSessionState();
-                    try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { }
+                    try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return;
             }
 
@@ -693,7 +693,7 @@ namespace AshAndEmber
                 if (gold > 0 && _rng.NextDouble() < 0.25)
                 {
                     int stolen = Math.Min(gold, 20 + _rng.Next(81));
-                    try { Hero.MainHero?.ChangeHeroGold(-stolen); } catch { }
+                    try { Hero.MainHero?.ChangeHeroGold(-stolen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     Msg($"You wake with a splitting head and a lighter purse. Someone helped themselves to {stolen} denars while you slept.", BadColor);
                 }
                 else
@@ -702,9 +702,9 @@ namespace AshAndEmber
                 }
                 AddMorale(-3f);
                 ResetSessionState();
-                try { GameMenu.ExitToLast(); } catch { }
+                try { GameMenu.ExitToLast(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

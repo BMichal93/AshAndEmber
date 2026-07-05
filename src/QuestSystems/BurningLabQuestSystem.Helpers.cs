@@ -66,8 +66,8 @@ namespace AshAndEmber
         private static void StabiliseSettlement(Settlement s)
         {
             if (s?.Town == null) return;
-            try { s.Town.Loyalty  = 100f; } catch { }
-            try { s.Town.Security = 100f; } catch { }
+            try { s.Town.Loyalty  = 100f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { s.Town.Security = 100f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Moves a clan into targetKingdom carrying its fiefs intact. Prefers the
@@ -92,7 +92,7 @@ namespace AshAndEmber
                 {
                     // No ruler to defect to — seed the kingdom with this clan instead.
                     if (old != null && !old.IsEliminated)
-                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     ChangeKingdomAction.ApplyByCreateKingdom(clan, targetKingdom, false);
                 }
                 else if (old != null && !old.IsEliminated)
@@ -107,8 +107,8 @@ namespace AshAndEmber
             catch
             {
                 // Last-resort fallback to the legacy two-step path.
-                try { if (clan.Kingdom != null) ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
-                try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, stay, false); } catch { }
+                try { if (clan.Kingdom != null) ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, stay, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             StabiliseClanFiefs(clan);
         }
@@ -119,7 +119,7 @@ namespace AshAndEmber
         {
             if (clan == null) return;
             try { foreach (var s in clan.Settlements.ToList()) StabiliseSettlement(s); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void Notify(string text)
@@ -129,13 +129,13 @@ namespace AshAndEmber
             {
                 try { InformationManager.DisplayMessage(new InformationMessage(text,
                     new Color(0.80f, 0.65f, 0.30f))); }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
         private static void GainGold(int amount)
         {
-            try { Hero.MainHero?.ChangeHeroGold(amount); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(amount); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             Notify($"+{amount} gold.");
         }
 
@@ -150,7 +150,7 @@ namespace AshAndEmber
                 string sign = delta >= 0 ? "+" : "";
                 Notify($"(Honour {sign}{delta})");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static CharacterObject GetTier4Troop(Kingdom kingdom)

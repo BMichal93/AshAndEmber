@@ -64,8 +64,8 @@ namespace AshAndEmber
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             ResetSessionState();
-            try { RegisterDialogue(starter);  } catch { }
-            try { RegisterMenus(starter);     } catch { }
+            try { RegisterDialogue(starter);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RegisterMenus(starter);     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ResetSessionState()

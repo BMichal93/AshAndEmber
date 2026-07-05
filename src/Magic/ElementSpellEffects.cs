@@ -55,7 +55,7 @@ namespace AshAndEmber
             {
                 var ig = _ignitions[i];
                 bool alive = false;
-                try { alive = ig.Target != null && ig.Target.IsActive(); } catch { }
+                try { alive = ig.Target != null && ig.Target.IsActive(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (!alive) { _ignitions.RemoveAt(i); continue; }
 
                 ig.Remaining -= dt;
@@ -64,14 +64,14 @@ namespace AshAndEmber
                 {
                     ig.TickTimer = 1f;
                     if (!SpellEffects.IsWarded(ig.Target))
-                        try { SpellEffects.DamageAgent(ig.Target, ig.Dps, ColorSchool.Red, ig.Source); } catch { }
+                        try { SpellEffects.DamageAgent(ig.Target, ig.Dps, ColorSchool.Red, ig.Source); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     try
                     {
                         Vec3 at = ig.Target.Position + new Vec3(0f, 0f, 0.5f);
                         if (ig.Ashen) SpellEffects.SpawnTempSnowParticle(at, 0.9f);
                         else          SpellEffects.SpawnTempFireParticle(at, 0.9f);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 if (ig.Remaining <= 0f) _ignitions.RemoveAt(i);
             }
@@ -85,7 +85,7 @@ namespace AshAndEmber
             {
                 if (_ignitions[i].Target != target) continue;
                 _ignitions.RemoveAt(i);
-                try { SpellEffects.SpawnTempSmokeParticle(target.Position + new Vec3(0f, 0f, 0.6f), 2f); } catch { }
+                try { SpellEffects.SpawnTempSmokeParticle(target.Position + new Vec3(0f, 0f, 0.6f), 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return true;
             }
             return false;
@@ -143,7 +143,7 @@ namespace AshAndEmber
             // Under the Weeping Sky (the Water Unbinding), fire loosed from inside
             // the rain works at half strength — judged at the caster's position.
             if (el == MagicElement.Fire)
-                try { power *= ElementUltimates.FireDampAt(caster.Position); } catch { }
+                try { power *= ElementUltimates.FireDampAt(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             switch (el)
             {
                 case MagicElement.Fire:   FireCone(caster, power);  break;
@@ -154,8 +154,8 @@ namespace AshAndEmber
             }
             CastFlash(el, caster);
             // Enemy mages remember what was thrown, and answer with the counter-wall.
-            try { ElementWallWards.NoteCast(el, caster.Team); } catch { }
-            try { SpellEffects.RecordMagicCast(caster.Position); } catch { }
+            try { ElementWallWards.NoteCast(el, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.RecordMagicCast(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void CastWall(MagicElement el, Agent caster, float power = 1f)
@@ -163,7 +163,7 @@ namespace AshAndEmber
             if (caster == null || !caster.IsActive()) return;
             // The rain dampens a wall of fire raised inside it, like the cone.
             if (el == MagicElement.Fire)
-                try { power *= ElementUltimates.FireDampAt(caster.Position); } catch { }
+                try { power *= ElementUltimates.FireDampAt(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             switch (el)
             {
                 case MagicElement.Fire:   FireWall(caster, power);  break;
@@ -173,7 +173,7 @@ namespace AshAndEmber
                 case MagicElement.Spirit: SpiritWall(caster, power); break;
             }
             CastFlash(el, caster);
-            try { SpellEffects.RecordMagicCast(caster.Position); } catch { }
+            try { SpellEffects.RecordMagicCast(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Fire ────────────────────────────────────────────────────────────────
@@ -195,22 +195,22 @@ namespace AshAndEmber
                 if (Vec3.DotProduct(fwd, to * (1f / len)) < FireConeDot) continue;   // outside the cone
                 if (SpellEffects.IsWarded(a)) continue;
                 // A wall of standing water between caster and mark drinks the fire.
-                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, pos, a.Position, out _)) continue; } catch { }
-                try { SpellEffects.DamageAgent(a, FireConeDamage * power, ColorSchool.Red, caster); } catch { }
+                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, pos, a.Position, out _)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.DamageAgent(a, FireConeDamage * power, ColorSchool.Red, caster, MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // A deep draw sets the mark alight — the burn finishes what the
                 // strike began (the Ashen cold clings on as deep frost instead).
-                try { Ignite(a, caster, power, ashen); } catch { }
+                try { Ignite(a, caster, power, ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 FireBloom(a.Position, ashen, rgb, 1.0f, false);
                 hit++;
             }
             // Timber burns: siege engines and gates in the cone's throat char under
             // the same fire (the cold splits the frozen grain just as surely).
-            try { SpellEffects.DamageBurnableStructures(pos + fwd * (range * 0.5f), range * 0.6f, SiegeConeDamage * power, caster); } catch { }
+            try { SpellEffects.DamageBurnableStructures(pos + fwd * (range * 0.5f), range * 0.6f, SiegeConeDamage * power, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // A living eruption of flame lances out along the cone; the Ashen show
             // only the cold's pale light. Trailing blooms mark the deeper reach.
             FireBloom(pos + fwd * (range * 0.5f), ashen, rgb, 3f, true);
             FireBloom(pos + fwd * (range * 0.85f), ashen, rgb, 2f, false);
-            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // A wall of fire just ahead — burns those who stand in its line. Thrown
@@ -258,11 +258,11 @@ namespace AshAndEmber
                                 SpellEffects.SpawnTempSmokeWisp(node + new Vec3(0f, 0f, 0.6f), 2.5f);
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     SpawnLight(node, rgb, 1.4f);
                     // The standing flame WARDS: its updraft devours any gale that
                     // crosses it while it burns (the Ashen frost stands the same).
-                    try { ElementWallWards.RegisterNode(MagicElement.Fire, node, 1.6f, FireWallBurnSec, caster.Team); } catch { }
+                    try { ElementWallWards.RegisterNode(MagicElement.Fire, node, 1.6f, FireWallBurnSec, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 // The living fire lingers on each row — a burning band that scorches
                 // any who hold it (the Ashen cold does not smoulder).
@@ -272,7 +272,7 @@ namespace AshAndEmber
                         SpellEffects.SpawnFireWallPatches(rowCentre, right, width,
                             FireWallBurnTick * power, FireWallBurnSec, caster.Team);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Contact hit as the wall erupts — only inside the rectangle's actual
@@ -287,9 +287,9 @@ namespace AshAndEmber
                 if (along < FireWallRange - 1.2f || along > FireWallRange + depth + 1.2f) continue;
                 if (Math.Abs(across) > width + 1.5f) continue;
                 if (SpellEffects.IsWarded(a)) continue;
-                try { SpellEffects.DamageAgent(a, FireWallDamage * power, ColorSchool.Red, caster); } catch { }
+                try { SpellEffects.DamageAgent(a, FireWallDamage * power, ColorSchool.Red, caster, MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Spirit ────────────────────────────────────────────────────────────────
@@ -307,8 +307,8 @@ namespace AshAndEmber
             foreach (Agent a in EnemiesNear(caster, SpiritRadius))
             {
                 // Panic: slow them and, if mounted, make the horse bolt off-line.
-                try { NatureEffects.ApplySpeedToken(a, SpiritFearSlow, fearSec); } catch { }
-                try { a.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction); } catch { }
+                try { NatureEffects.ApplySpeedToken(a, SpiritFearSlow, fearSec); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { a.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try
                 {
                     if (a.MountAgent != null && a.MountAgent.IsActive())
@@ -316,20 +316,20 @@ namespace AshAndEmber
                         Vec3 dir = (a.Position - pos); dir.z = 0f;
                         if (dir.Length > 0.1f) dir.Normalize(); else dir = new Vec3(1, 0, 0);
                         a.MountAgent.TeleportToPosition(a.MountAgent.Position + dir * 2.0f);
-                        try { a.MountAgent.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction); } catch { }
+                        try { a.MountAgent.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // A wraith haze clings to each stricken foe.
-                try { SpellEffects.SpawnTempSmokeParticle(a.Position + new Vec3(0f, 0f, 0.6f), 0.9f); } catch { }
+                try { SpellEffects.SpawnTempSmokeParticle(a.Position + new Vec3(0f, 0f, 0.6f), 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 SpawnLight(a.Position, rgb, 0.8f);
                 struck++;
             }
             IssueRandomEnemyOrder(caster);
             // A pall of spectral smoke wells up from the caster.
-            try { SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 1.4f); } catch { }
+            try { SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 1.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             SpawnLight(pos, rgb, 2.0f);
-            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 1.5f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // The wall lifts the courage of nearby allies and mends them a little.
@@ -345,7 +345,7 @@ namespace AshAndEmber
                 if (caster == Agent.Main)
                     MobileParty.MainParty.RecentEventsMorale += SpiritMorale * power;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             int blessed = 0;
             try
             {
@@ -355,15 +355,15 @@ namespace AshAndEmber
                     if (caster.Team == null || a.Team != caster.Team) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
                     if (dx * dx + dy * dy > SpiritRadius * SpiritRadius) continue;
-                    try { SpellEffects.HealAgent(a, SafeLimit(a) * SpiritHealFrac * power); } catch { }
+                    try { SpellEffects.HealAgent(a, SafeLimit(a) * SpiritHealFrac * power); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     blessed++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // A rising veil of spectral smoke marks the ward.
-            try { SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 1.6f); } catch { }
+            try { SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             SpawnLight(pos, rgb, 2.2f);
-            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 2.5f); } catch { }
+            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Shouts a random order into a random enemy formation — charge, fall back, or
@@ -387,7 +387,7 @@ namespace AshAndEmber
                     default: form.SetMovementOrder(MovementOrder.MovementOrderAdvance); break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────────
@@ -462,12 +462,12 @@ namespace AshAndEmber
         // caster — gives the nature-routed Wind/Earth/Water casts their cold mask too.
         private static void CastFlash(MagicElement el, Agent caster)
         {
-            try { SpawnLight(caster.Position, Palette(el, CasterAshen(caster)), 2.2f); } catch { }
+            try { SpawnLight(caster.Position, Palette(el, CasterAshen(caster)), 2.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void SpawnLight(Vec3 pos, Vec3 rgb, float scale)
         {
-            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), rgb, 7f * scale, 0.7f); } catch { }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), rgb, 7f * scale, 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // The visible bloom of a fire cast. The living fire erupts in real flame —
@@ -495,7 +495,7 @@ namespace AshAndEmber
                         SpellEffects.SpawnTempSmokeParticle(at + new Vec3(0f, 0f, 0.4f), major ? 2.2f : 1.2f);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             SpawnLight(at, rgb, lightScale);
         }
     }

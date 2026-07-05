@@ -43,10 +43,10 @@ namespace AshAndEmber
                             $"Your operative is still in the field — the {def.Name} operation resumes."));
                         SchemeMinigame.Begin(def, hero, sett);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Tavernkeeper dialogue ─────────────────────────────────────────────
@@ -60,7 +60,7 @@ namespace AshAndEmber
                     "I have some shadier business that needs arranging.",
                     CondSchemeAvailable, null, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 starter.AddDialogLine(
@@ -68,7 +68,7 @@ namespace AshAndEmber
                     "Coin spent here buys silence. Find the usual spot in the square.",
                     null, OpenSchemMenuDeferred, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static bool CondSchemeAvailable()
@@ -90,10 +90,10 @@ namespace AshAndEmber
             {
                 MageKnowledge._deferredInquiry = () =>
                 {
-                    try { GameMenu.SwitchToMenu("ldm_scheme_menu"); } catch { }
+                    try { GameMenu.SwitchToMenu("ldm_scheme_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Scheme game menus ─────────────────────────────────────────────────
@@ -111,30 +111,30 @@ namespace AshAndEmber
                         {
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsTown) return false;
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                             // Disable while a queued NPC-era scheme is still in flight
                             bool pending = false;
-                            try { pending = SchemeSystem.PlayerHasPendingScheme(); } catch { }
+                            try { pending = SchemeSystem.PlayerHasPendingScheme(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                             // Disable while the post-operation global cooldown is active
                             bool onCooldown = false;
                             int  cdDays     = 0;
                             try { onCooldown = SchemeSystem.PlayerOnGlobalCooldown;
-                                  cdDays     = SchemeSystem.PlayerGlobalCooldownDays; } catch { }
+                                  cdDays     = SchemeSystem.PlayerGlobalCooldownDays; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                             args.IsEnabled = !pending && !onCooldown;
                             if (pending)
-                                try { args.Tooltip = new TextObject("A scheme is already in motion."); } catch { }
+                                try { args.Tooltip = new TextObject("A scheme is already in motion."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             else if (onCooldown)
-                                try { args.Tooltip = new TextObject($"Network cooling down — {cdDays} day{(cdDays != 1 ? "s" : "")} before the next operation."); } catch { }
+                                try { args.Tooltip = new TextObject($"Network cooling down — {cdDays} day{(cdDays != 1 ? "s" : "")} before the next operation."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             return true;
                         }
                         catch { return false; }
                     },
-                    args => { try { GameMenu.SwitchToMenu("ldm_scheme_menu"); } catch { } });
+                    args => { try { GameMenu.SwitchToMenu("ldm_scheme_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Scheme selection menu ─────────────────────────────────────────
             try
@@ -151,10 +151,10 @@ namespace AshAndEmber
                             MBTextManager.SetTextVariable("LDM_SCHEME_HDR",
                                 $"The tavernkeeper leans forward. Name the work.\nYour resources: {gold}g  |  {inf} influence");
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── One option per scheme — option IDs use letters only (no digits) ─
             // Pattern mirrors Sanctuary: always return true (show all), grey when
@@ -188,11 +188,11 @@ namespace AshAndEmber
                                         + $"  —  from {captured.GoldCost}g / from {captured.InfluenceCost} inf"
                                         + (canAfford ? "" : "  [Insufficient funds]");
                                     MBTextManager.SetTextVariable(textKey, label);
-                                    try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                                    try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     args.IsEnabled = canAfford;
-                                    try { args.Tooltip = new TextObject(captured.Description + "\nFinal cost scales with target clan tier."); } catch { }
+                                    try { args.Tooltip = new TextObject(captured.Description + "\nFinal cost scales with target clan tier."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
-                                catch { }
+                                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 return true;
                             },
                             args =>
@@ -203,10 +203,10 @@ namespace AshAndEmber
                                 OpenFactionFilterUI();
                             });
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Counter-intelligence sweep ──────────────────────────────────────
             // Active defence against NPC schemes targeting the player or their
@@ -225,19 +225,19 @@ namespace AshAndEmber
                             int pct = (int)(SweepSuccessChance(roguery) * 100f);
                             MBTextManager.SetTextVariable("LDM_SCHEME_SWEEP",
                                 $"Sweep the city for hostile agents  —  {SweepCostGold}g  [{pct}% Roguery]");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             args.IsEnabled = (Hero.MainHero?.Gold ?? 0) >= SweepCostGold;
                             try { args.Tooltip = new TextObject(
                                 "Pay informants to comb the underworld for plots against you or your fiefs. "
                                 + "If a scheme is in motion, a successful sweep cancels it and names its author. "
-                                + "If nothing is in motion, the coin buys only rumours."); } catch { }
+                                + "If nothing is in motion, the coin buys only rumours."); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args => RunCounterIntelSweep());
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Leave ──────────────────────────────────────────────────────────
             try
@@ -247,13 +247,13 @@ namespace AshAndEmber
                     "Think better of it.",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("town"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

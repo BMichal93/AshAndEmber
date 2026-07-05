@@ -99,7 +99,7 @@ namespace AshAndEmber
             {
                 agent.AgentVisuals?.GetEntity()?.SetContourColor(DarkGiftPlayerContour, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── MissionTick ─────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ namespace AshAndEmber
             {
                 _playerContourTimer = ContourRefreshInterval;
                 try { player.AgentVisuals?.GetEntity()?.SetContourColor(DarkGiftPlayerContour, true); }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             if (DarkGiftSystem.HasGift(DarkGiftId.DarkSpirit))
@@ -171,7 +171,7 @@ namespace AshAndEmber
                         // Deep crimson pulse on the struck agent.
                         BeginAgentGlowRaw(spirit.Target, new Color(0.7f, 0f, 0.15f).ToUnsignedInteger(), 0.5f);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     spirit.DamageCooldown = DarkSpiritDamageInterval;
                     // Do NOT clear Target — keep chasing until it dies.
                 }
@@ -198,7 +198,7 @@ namespace AshAndEmber
                     if (d2 < bestDist2) { bestDist2 = d2; nearest = a; }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return nearest;
         }
 
@@ -227,10 +227,10 @@ namespace AshAndEmber
                         DamageAgent(a, a.Health + 10f); // kill
                         BeginAgentGlowRaw(a, new Color(0.5f, 0f, 0f).ToUnsignedInteger(), 0.8f);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickDreadPresence(float dt, Agent player)
@@ -259,14 +259,14 @@ namespace AshAndEmber
                         float m = a.GetMorale();
                         a.SetMorale(Math.Max(m - DreadPresenceMoraleDrain, 0f));
                         if (a.GetMorale() < 15f)
-                            try { a.SetMorale(0f); } catch { }
+                            try { a.SetMorale(0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         // Pale desaturated purple flash — fear seeping in.
                         BeginAgentGlowRaw(a, new Color(0.25f, 0f, 0.25f).ToUnsignedInteger(), 0.6f);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── OnAgentHit (attacker has gifts — player OR NPC lord) ───────────────
@@ -298,7 +298,7 @@ namespace AshAndEmber
                     DamageAgent(victim, 20f);
                     BeginAgentGlowRaw(victim, new Color(0.6f, 0f, 0.08f).ToUnsignedInteger(), 0.35f);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // SoulDrain — morale drain + deep indigo flash on victim
@@ -310,7 +310,7 @@ namespace AshAndEmber
                     victim.SetMorale(Math.Max(m - 30f, 0f));
                     BeginAgentGlowRaw(victim, new Color(0.1f, 0f, 0.4f).ToUnsignedInteger(), 0.4f);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -345,7 +345,7 @@ namespace AshAndEmber
                         BeginAgentGlowRaw(victim, new Color(0.3f, 0.3f, 0.3f).ToUnsignedInteger(), 0.25f);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // SoulMirror — reflect 20% of melee damage + purple flash on victim
@@ -361,7 +361,7 @@ namespace AshAndEmber
                         BeginAgentGlowRaw(attacker, new Color(0.4f, 0f, 0.45f).ToUnsignedInteger(), 0.3f);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -389,7 +389,7 @@ namespace AshAndEmber
                 // Crimson flash on the killer — life stolen back.
                 BeginAgentGlowRaw(killer, new Color(0.7f, 0f, 0.1f).ToUnsignedInteger(), 0.5f);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Clear / reset ────────────────────────────────────────────────────────

@@ -109,7 +109,7 @@ namespace AshAndEmber
                         if (jitter > 0f) _cooldowns[h.StringId] = jitter;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             List<Agent> agents;
@@ -179,7 +179,7 @@ namespace AshAndEmber
                     return;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // -1. Pyre Lord: fortify with a wall once before attacking.
             if (IsPyreLord(hero) && !_pyreBarriersPlaced.Contains(hero.StringId) && nearEnemies >= 1)
@@ -345,7 +345,7 @@ namespace AshAndEmber
                     fwdProbe = agent.Position + fwd * 8f;
                     probeOk = true;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 MagicElement? pick = null;
                 foreach (var el in Preference(sit))
@@ -378,7 +378,7 @@ namespace AshAndEmber
                     PlayCastFx(agent, chosen, isAshen);
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Pyre Lord opener — a wall. A lord who has SEEN what the enemy throws
@@ -399,7 +399,7 @@ namespace AshAndEmber
                     var seen = ElementWallWards.LastHostileElement(agent.Team);
                     if (seen != null) counter = WallWardMath.CounterWallFor(seen.Value);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (counter != null && known.Contains(counter.Value))
                     chosen = counter.Value;
                 else
@@ -419,7 +419,7 @@ namespace AshAndEmber
                     PlayCastFx(agent, chosen, isAshen);
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Self / ally heal. A lord who knows Spirit raises the warding wall (heals
@@ -446,7 +446,7 @@ namespace AshAndEmber
                     });
                     return;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             CastHealBurst(agent, hero);
         }
@@ -457,9 +457,9 @@ namespace AshAndEmber
         {
             ColorSchool sfx = isAshen ? ColorSchool.Ashen
                             : el == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature;
-            try { SpellEffects.TryCastSound(agent.Position, sfx); } catch { }
-            try { SpellEffects.TryCastAnimation(agent); } catch { }
-            try { SpellEffects.RecordMagicCast(agent.Position); } catch { }
+            try { SpellEffects.TryCastSound(agent.Position, sfx); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.TryCastAnimation(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.RecordMagicCast(agent.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Turn the fire inward — an element-agnostic self-mend for a lord who has not
@@ -474,17 +474,17 @@ namespace AshAndEmber
                 RecordCast(hero, CastForm.Attack);
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
-                    try { SpellEffects.HealAgent(agent, HealthCap(agent) * 0.35f); } catch { }
+                    try { SpellEffects.HealAgent(agent, HealthCap(agent) * 0.35f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     foreach (Agent ally in SpellEffects.AlliesOf(agent))
                     {
                         if (ally == agent || !ally.IsActive()) continue;
                         if (ally.Position.Distance(agent.Position) > 8f) continue;
-                        try { SpellEffects.HealAgent(ally, HealthCap(ally) * 0.15f); } catch { }
+                        try { SpellEffects.HealAgent(ally, HealthCap(ally) * 0.15f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     ApplyCastVisuals(agent);
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static float HealthCap(Agent a)
@@ -524,7 +524,7 @@ namespace AshAndEmber
                 cd *= NpcCastPlanner.CooldownMult(lifeFrac, temper);
                 _cooldowns[hero.StringId] = cd;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Accumulates the life-expectancy COST of a cast so NPC lords pay the same
@@ -562,7 +562,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{hero.Name} — {blurb}", c));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

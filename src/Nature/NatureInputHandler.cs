@@ -75,8 +75,8 @@ namespace AshAndEmber
             {
                 if (!_wasHolding)
                 {
-                    try { ShowHint(inMission); } catch { }
-                    try { if (inMission && Agent.Main != null) SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Nature); } catch { }
+                    try { ShowHint(inMission); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { if (inMission && Agent.Main != null) SpellEffects.BeginFocusVisual(Agent.Main, ColorSchool.Nature); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     _wasHolding = true;
                 }
 
@@ -141,7 +141,7 @@ namespace AshAndEmber
                 _wasHolding = false;
                 _prevAtk = _prevBlk = _prevPadAtk = _prevPadBlk = false;
                 NatureCharge.ResetFill();
-                try { if (inMission && Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch { }
+                try { if (inMission && Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -180,7 +180,7 @@ namespace AshAndEmber
                 if (!outcome.Soured) return;
                 NatureBacklash.ApplyBattle(Agent.Main, announce: true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Channelling requires standing still; in battle also empty hands + light armour.
@@ -219,7 +219,7 @@ namespace AshAndEmber
             }
 
             bool inBattle = false;
-            try { inBattle = Mission.Current != null; } catch { }
+            try { inBattle = Mission.Current != null; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (!NatureCharge.HasCharge)
             {

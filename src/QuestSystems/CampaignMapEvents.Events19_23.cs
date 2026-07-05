@@ -94,7 +94,7 @@ namespace AshAndEmber
                         killed.Add(h.Name?.ToString() ?? "a mage");
                         KillCharacterAction.ApplyByMurder(h, null, false);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 string nameList = killed.Count == 1 ? killed[0]
@@ -108,7 +108,7 @@ namespace AshAndEmber
                     : $"Mage Fatwa — a preacher in {kingdomName} declared that the fire-touched were an abomination. The crowd agreed. {nameList} did not survive the week. The mob does not need to understand what it fears — only that it fears it.";
                 MBInformationManager.AddQuickInformation(new TextObject(fatwaMsg));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 20: The Temple Rises (retired) ─────────────────────────────
@@ -155,7 +155,7 @@ namespace AshAndEmber
                     MBInformationManager.AddQuickInformation(new TextObject(unrestMsg));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 22: A Wolf in Sheep's Clothing ─────────────────────────────
@@ -213,7 +213,7 @@ namespace AshAndEmber
                 if (!playerIn)
                 {
                     var victim = minorLords[_rng.Next(minorLords.Count)];
-                    try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch { }
+                    try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     string worldNotif = isWolfTemple
                         ? $"A Wolf in Sheep's Clothing — {victim.Name} of {kingdomName} was denounced before the tribunal as an Ashen sympathiser. The Inquisitor's writ arrived before they could answer the charge. Their family maintains their faith. The tribunal did not ask."
                         : isWolfTribes
@@ -232,7 +232,7 @@ namespace AshAndEmber
                     if (_rng.NextDouble() < p)
                     {
                         string clName = Hero.MainHero?.Clan?.Name?.ToString() ?? "your clan";
-                        try { ChangeKingdomAction.ApplyByLeaveKingdom(Hero.MainHero.Clan, false); } catch { }
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(Hero.MainHero.Clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         string castOutMsg = isWolfTemple
                             ? $"A Wolf in Sheep's Clothing — The Inquisitor's eye fell on {clName}. There was no proper trial; the writ of expulsion was signed before you could address the altar. You are cast out. Your Charm softened the odds — this time, the Temple's fear was stronger."
                             : isWolfTribes
@@ -243,7 +243,7 @@ namespace AshAndEmber
                     else
                     {
                         var victim = minorLords[_rng.Next(minorLords.Count)];
-                        try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch { }
+                        try { KillCharacterAction.ApplyByMurder(victim, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         string scapeMsg = isWolfTemple
                             ? $"A Wolf in Sheep's Clothing — The tribunal of {kingdomName} needed a name. {victim.Name} gave them one by existing. Condemned before sunset; their faith neither proven nor questioned."
                             : isWolfTribes
@@ -291,10 +291,10 @@ namespace AshAndEmber
                             switch (chosen?[0]?.Identifier as string)
                             {
                                 case "a":
-                                    try { KillCharacterAction.ApplyByMurder(lord1, null, false); } catch { }
+                                    try { KillCharacterAction.ApplyByMurder(lord1, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     if (ruler?.IsAlive == true && Hero.MainHero != null)
                                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                                            Hero.MainHero, ruler, +10, false); } catch { }
+                                            Hero.MainHero, ruler, +10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     {
                                         string aMsg = isWolfTemple
                                             ? $"A Wolf in Sheep's Clothing — You named {lord1Name} before the tribunal. The Inquisition accepted it. The writ was sealed before dusk. {rulerName} acknowledged you with a nod."
@@ -307,10 +307,10 @@ namespace AshAndEmber
                                 case "b":
                                     if (hasBoth)
                                     {
-                                        try { KillCharacterAction.ApplyByMurder(lord2, null, false); } catch { }
+                                        try { KillCharacterAction.ApplyByMurder(lord2, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                         if (ruler?.IsAlive == true && Hero.MainHero != null)
                                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                                                Hero.MainHero, ruler, +10, false); } catch { }
+                                                Hero.MainHero, ruler, +10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                         string bBothMsg = isWolfTemple
                                             ? $"A Wolf in Sheep's Clothing — You named {lord2Name}. The Inquisition accepted it without discussion. You bought standing in the chapter house, and you know exactly what that cost."
                                             : isWolfTribes
@@ -321,7 +321,7 @@ namespace AshAndEmber
                                     else
                                     {
                                         var v = minorLords[_rng.Next(minorLords.Count)];
-                                        try { KillCharacterAction.ApplyByMurder(v, null, false); } catch { }
+                                        try { KillCharacterAction.ApplyByMurder(v, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                         string bChooseMsg = isWolfTemple
                                             ? $"A Wolf in Sheep's Clothing — The Inquisition chose their own answer. {v.Name} did not survive the night."
                                             : isWolfTribes
@@ -333,7 +333,7 @@ namespace AshAndEmber
                                 case "c":
                                 {
                                     var v = minorLords[_rng.Next(minorLords.Count)];
-                                    try { KillCharacterAction.ApplyByMurder(v, null, false); } catch { }
+                                    try { KillCharacterAction.ApplyByMurder(v, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     string cMsg = isWolfTemple
                                         ? $"A Wolf in Sheep's Clothing — You kept silent before the tribunal. The Inquisition chose its own answer. {v.Name} did not survive the chapter-room. Your hands stay clean. Their blood does not."
                                         : isWolfTribes
@@ -346,22 +346,22 @@ namespace AshAndEmber
                                 {
                                     if (lord1.IsAlive && Hero.MainHero != null)
                                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                                            Hero.MainHero, lord1, +100, false); } catch { }
+                                            Hero.MainHero, lord1, +100, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                     if (hasBoth && lord2.IsAlive && Hero.MainHero != null)
                                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                                            Hero.MainHero, lord2, +100, false); } catch { }
+                                            Hero.MainHero, lord2, +100, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                                     if (_rng.NextDouble() < 0.33)
                                     {
                                         var traitor = minorLords[_rng.Next(minorLords.Count)];
-                                        try { ColourLordRegistry.SetAshen(traitor, true); } catch { }
-                                        try { AshenCitySystem.ApplyAshenPersonality(traitor); } catch { }
-                                        try { ColourLordRegistry.SetMage(traitor, true); } catch { }
-                                        try { AshenCitySystem.OnHeroSetAshen(traitor); } catch { }
-                                        try { MageKnowledge.ApplyAshenAppearance(traitor); } catch { }
+                                        try { ColourLordRegistry.SetAshen(traitor, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                        try { AshenCitySystem.ApplyAshenPersonality(traitor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                        try { ColourLordRegistry.SetMage(traitor, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                        try { AshenCitySystem.OnHeroSetAshen(traitor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                        try { MageKnowledge.ApplyAshenAppearance(traitor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                         if (ruler?.IsAlive == true && Hero.MainHero != null)
                                             try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(
-                                                Hero.MainHero, ruler, -10, false); } catch { }
+                                                Hero.MainHero, ruler, -10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                         string dTrueMsg = isWolfTemple
                                             ? $"A Wolf in Sheep's Clothing — You vouched for their faith and were believed. Three days later, {traitor.Name} was found at the edge of the Ashen lands — grey-eyed and cold. The accusation was true. {rulerName} has not forgotten that you spoke for them."
                                             : isWolfTribes
@@ -382,10 +382,10 @@ namespace AshAndEmber
                                 }
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }, null, "", false), false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 23: The Ashen Gambit ────────────────────────────────────────
@@ -453,10 +453,10 @@ namespace AshAndEmber
                         killedNames.Add(kingdom.Leader.Name?.ToString() ?? "an emperor");
                         KillCharacterAction.ApplyByMurder(kingdom.Leader, null, false);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Phase 2: −30 morale to all active Empire lord parties ─────────
             int moraleHit = 0;
@@ -472,10 +472,10 @@ namespace AshAndEmber
                         hero.PartyBelongedTo.RecentEventsMorale -= 30f;
                         moraleHit++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Phase 3: −30 security to every Empire town (floor 0) ─────────
             int secHit = 0;
@@ -490,10 +490,10 @@ namespace AshAndEmber
                         settlement.Town.Security = Math.Max(0f, settlement.Town.Security - 30f);
                         secHit++;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Phase 4: Spawn Ashen Spawn across Empire heartlands ───────────
             int spawned = 0;
@@ -515,7 +515,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Phase 4b: Seize Empire castles in the dead of night ──────────
             var seizedNames = new List<string>();
@@ -547,11 +547,11 @@ namespace AshAndEmber
                             StabiliseSettlement(castle);
                             seizedNames.Add(castle.Name?.ToString() ?? "a castle");
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Phase 5: Ashen go on the offensive ───────────────────────────
             try
@@ -569,7 +569,7 @@ namespace AshAndEmber
                             if (!ashenKingdom.IsAtWarWith(empire))
                                 DeclareWarAction.ApplyByDefault(ashenKingdom, empire);
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
@@ -580,11 +580,11 @@ namespace AshAndEmber
                     var leader = party.LeaderHero;
                     if (leader != null && ColourLordRegistry.IsAshenLord(leader))
                     {
-                        try { party.RecentEventsMorale += 50f; } catch { }
+                        try { party.RecentEventsMorale += 50f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Notification ──────────────────────────────────────────────────
             string leaderStr = killedNames.Count == 0

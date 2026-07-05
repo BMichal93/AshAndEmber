@@ -307,7 +307,7 @@ namespace AshAndEmber
                         var playerKingdom = Hero.MainHero?.Clan?.Kingdom;
                         if (playerKingdom != null && !targetK.IsAtWarWith(playerKingdom))
                         {
-                            try { DeclareWarAction.ApplyByDefault(targetK, playerKingdom); } catch { }
+                            try { DeclareWarAction.ApplyByDefault(targetK, playerKingdom); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             declaredWar = true;
                         }
                     }
@@ -338,19 +338,19 @@ namespace AshAndEmber
             if (towns.Count == 0) return null;
 
             var target = towns[_rng.Next(towns.Count)];
-            try { target.Town.Prosperity = 0f; } catch { }
-            try { target.Town.Security   = 0f; } catch { }
-            try { target.Town.FoodStocks = 0f; } catch { }
+            try { target.Town.Prosperity = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { target.Town.Security   = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { target.Town.FoodStocks = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 // Clear garrison roster
                 if (target.Town.GarrisonParty?.MemberRoster != null)
                 {
                     foreach (var elem in target.Town.GarrisonParty.MemberRoster.GetTroopRoster().ToList())
-                        try { target.Town.GarrisonParty.MemberRoster.AddToCounts(elem.Character, -elem.Number); } catch { }
+                        try { target.Town.GarrisonParty.MemberRoster.AddToCounts(elem.Character, -elem.Number); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             return target.Name?.ToString();
         }
@@ -441,7 +441,7 @@ namespace AshAndEmber
             {
                 if (s.IsTown && s.Town != null)
                 {
-                    try { s.Militia = Math.Max(0f, s.Militia * 0.10f); } catch { }
+                    try { s.Militia = Math.Max(0f, s.Militia * 0.10f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     var garrison = s.Town?.GarrisonParty?.MemberRoster;
                     if (garrison != null)
@@ -453,15 +453,15 @@ namespace AshAndEmber
                             int toWound = Math.Min(healthy,
                                 (int)(healthy * (0.50f + (float)_rng.NextDouble() * 0.30f)));
                             if (toWound > 0)
-                                try { garrison.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                                try { garrison.AddToCounts(e.Character, 0, false, toWound); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     }
 
-                    try { s.Town.Prosperity = Math.Max(100f, s.Town.Prosperity - 300f); } catch { }
-                    try { s.Town.Security   = Math.Max(0f,   s.Town.Security   -  30f); } catch { }
+                    try { s.Town.Prosperity = Math.Max(100f, s.Town.Prosperity - 300f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { s.Town.Security   = Math.Max(0f,   s.Town.Security   -  30f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             Msg($"Something goes wrong before anyone can stop it. A thick yellow-green reek rolls out of a district near the market, " +
                 $"driving animals mad before it reaches the men. By the time anyone understands what has happened, that quarter of {sName} is empty of the living. " +

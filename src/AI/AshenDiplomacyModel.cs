@@ -60,7 +60,7 @@ namespace AshAndEmber
                 if (stance != null && stance.IsAtWar && stance.WarStartDate.ElapsedDaysUntilNow < MinWarDays)
                     return -5000f;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             return base.GetScoreOfDeclaringPeace(factionDeclaresPeace, factionDeclaredPeace);
         }

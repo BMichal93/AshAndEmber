@@ -148,7 +148,7 @@ namespace AshAndEmber
 
             if (_phase == PhasePrereqs)
             {
-                if (_questLog == null) try { EnsureQuestLog(); } catch { }
+                if (_questLog == null) try { EnsureQuestLog(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 CheckPrereqGoals();
             }
             else if (_phase == PhaseAllDone && MageKnowledge._deferredInquiry == null)

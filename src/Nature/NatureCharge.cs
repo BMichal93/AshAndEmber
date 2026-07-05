@@ -115,10 +115,10 @@ namespace AshAndEmber
                     var terrain = Campaign.Current.MapSceneWrapper?.GetTerrainTypeAtPosition(pos);
                     if (terrain.HasValue) terrainName = terrain.Value.ToString();
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _battleTerrainElements = NatureMath.TerrainElements(terrainName);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static NatureElement[] GetCurrentTerrainElements(bool inMission)
@@ -135,7 +135,7 @@ namespace AshAndEmber
                     var terrain = Campaign.Current.MapSceneWrapper?.GetTerrainTypeAtPosition(pos);
                     if (terrain.HasValue) terrainName = terrain.Value.ToString();
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return NatureMath.TerrainElements(terrainName);
             }
             catch { return NatureMath.TerrainElements("Plain"); }
@@ -197,7 +197,7 @@ namespace AshAndEmber
                 }
                 _lastGather = LivingEnergy.DrawNature(MobileParty.MainParty.GetPosition2D, el, announce: true, drainMult: DrainMult);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Release ─────────────────────────────────────────────────────────────
@@ -224,7 +224,7 @@ namespace AshAndEmber
         private static void Msg(string text)
         {
             try { InformationManager.DisplayMessage(new InformationMessage(text, new Color(0.35f, 0.75f, 0.35f))); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Clear ───────────────────────────────────────────────────────────────

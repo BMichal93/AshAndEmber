@@ -32,8 +32,13 @@ using System;
 
 namespace AshAndEmber
 {
-    // What the land answers with when Spirit calls (chosen from the scene).
-    public enum ElementalKind { Stone = 0, Frost = 1, Sand = 2 }
+    // What the land answers with when Spirit calls (chosen from the scene), and
+    // — from v0.36 — what raw magic condenses into where it pools too thick.
+    // Stone/Frost/Sand are the terrain champions the Spirit Unbinding still sends;
+    // Flame/Tide/Gale are the "pure" beings born of concentrated magic (the
+    // Kindled), roaming the wilds and summoned against you. APPENDED, never
+    // renumbered — the enum is not serialized, but old summons pass ints around.
+    public enum ElementalKind { Stone = 0, Frost = 1, Sand = 2, Flame = 3, Tide = 4, Gale = 5 }
 
     public static class ElementUltimateMath
     {
@@ -47,10 +52,17 @@ namespace AshAndEmber
         // Steep: three walls' worth. The Nature discipline halves it as usual;
         // the Ashen pay it in criminal standing (days × 5, same as other casts).
         public const int UltimateCostDays = 12;
+        // Spirit's Unbinding does not spend itself — it leaves a living champion
+        // fighting for a full minute, worth several men. That standing power costs
+        // more life than a one-moment nova or gale.
+        public const int SpiritUltimateCostDays = 22;
 
         public static int UltimateAgingDays(bool hasNature)
+            => UltimateAgingDays(hasNature, MagicElement.Fire);
+
+        public static int UltimateAgingDays(bool hasNature, MagicElement el)
         {
-            int days = UltimateCostDays;
+            int days = el == MagicElement.Spirit ? SpiritUltimateCostDays : UltimateCostDays;
             if (hasNature) days = (int)Math.Round(days * ElementMagicMath.NatureCostMult,
                                                   MidpointRounding.AwayFromZero);
             return Math.Max(ElementMagicMath.MinCastDays, days);
@@ -140,6 +152,9 @@ namespace AshAndEmber
             {
                 case ElementalKind.Frost: return "Frost-Born";
                 case ElementalKind.Sand:  return "Sand-Born";
+                case ElementalKind.Flame: return "the Kindled";
+                case ElementalKind.Tide:  return "the Risen Tide";
+                case ElementalKind.Gale:  return "the Gathered Storm";
                 default:                  return "Stone-Born";
             }
         }

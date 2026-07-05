@@ -58,7 +58,7 @@ namespace AshAndEmber
                         foundAny = true;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Second pass: any target settlement whose clan failed the check above is still
@@ -84,21 +84,21 @@ namespace AshAndEmber
                             _settlementClanMap[settlement.StringId] = ashenClan.StringId;
                             if (ashenLord != null)
                             {
-                                try { ChangeOwnerOfSettlementAction.ApplyByDefault(ashenLord, settlement); } catch { }
-                                try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch { }
+                                try { ChangeOwnerOfSettlementAction.ApplyByDefault(ashenLord, settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }
-                            try { EnsureGarrison(settlement); } catch { }
+                            try { EnsureGarrison(settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             foundAny = true;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
 
             if (foundAny || _ashenKingdom != null)
             {
-                try { DeclareWarWithAllKingdoms(); } catch { }
-                try { ApplyAshenLookToSettlementHeroes(); } catch { }
+                try { DeclareWarWithAllKingdoms(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ApplyAshenLookToSettlementHeroes(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _initialized = true;
             }
         }
@@ -136,9 +136,9 @@ namespace AshAndEmber
         public static void ApplyAshenPersonality(Hero hero)
         {
             if (hero == null) return;
-            try { hero.SetTraitLevel(DefaultTraits.Mercy,      -2); } catch { }
-            try { hero.SetTraitLevel(DefaultTraits.Generosity, -2); } catch { }
-            try { hero.SetTraitLevel(DefaultTraits.Honor,      -2); } catch { }
+            try { hero.SetTraitLevel(DefaultTraits.Mercy,      -2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { hero.SetTraitLevel(DefaultTraits.Generosity, -2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { hero.SetTraitLevel(DefaultTraits.Honor,      -2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Called by ColourLordRegistry.SetAshen for every hero turned Ashen ──
@@ -155,14 +155,14 @@ namespace AshAndEmber
             // convert a player-clan member relocate that hero individually (e.g. the
             // "child of the cold" encounter moves the child to an Ashen clan itself).
             if (clan == null || hero == Hero.MainHero || clan == Clan.PlayerClan) return;
-            try { ApplyAshenPersonality(hero); } catch { }
+            try { ApplyAshenPersonality(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 if (_ashenKingdom == null)
                 {
                     // Kingdom not created yet — just eject; daily tick will re-add later
                     if (clan.Kingdom != null)
-                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     return;
                 }
 
@@ -170,21 +170,21 @@ namespace AshAndEmber
 
                 // Eject from current kingdom first
                 if (clan.Kingdom != null)
-                    try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                    try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Use ApplyByCreateKingdom only if the Ashen kingdom has no ruling clan yet;
                 // this establishes the first clan as ruler so the kingdom is properly set up.
                 bool needsRuler = _ashenKingdom.RulingClan == null;
                 if (needsRuler)
-                    try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch { }
+                    try { ChangeKingdomAction.ApplyByCreateKingdom(clan, _ashenKingdom, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 else
                     try { ChangeKingdomAction.ApplyByJoinToKingdom(
                             clan, _ashenKingdom,
                             CampaignTime.Now + CampaignTime.Years(1000),
                             false); }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Clan setup ────────────────────────────────────────────────────────
@@ -201,10 +201,10 @@ namespace AshAndEmber
                     // Ashen lords should hold their cold thrones, not start in chains —
                     // free any who were captive when the cold claimed them.
                     if (hero.IsPrisoner)
-                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
-                    try { ColourLordRegistry.SetAshen(hero, true); } catch { }
-                    try { RenameAshenHero(hero); } catch { }
-                    try { ColourLordRegistry.SetMage(hero, true); } catch { }
+                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { ColourLordRegistry.SetAshen(hero, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { RenameAshenHero(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { ColourLordRegistry.SetMage(hero, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 // Re-assert settlement ownership (guards against fief-distribution firing in the gap)
@@ -214,19 +214,19 @@ namespace AshAndEmber
                              ?? clan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
                     if (lord != null)
                     {
-                        try { ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement); } catch { }
-                        try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch { }
+                        try { ChangeOwnerOfSettlementAction.ApplyByDefault(lord, settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { if (settlement.Town != null) { settlement.Town.Loyalty = 100f; settlement.Town.Security = 100f; } } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
                 // Starting gold
                 foreach (Hero hero in clan.Heroes.Where(h => h.IsAlive).ToList())
-                    try { if (hero.Gold < MinHeroGold) hero.ChangeHeroGold(MinHeroGold - hero.Gold); } catch { }
+                    try { if (hero.Gold < MinHeroGold) hero.ChangeHeroGold(MinHeroGold - hero.Gold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Garrison boost
-                if (settlement != null) try { EnsureGarrison(settlement); } catch { }
+                if (settlement != null) try { EnsureGarrison(settlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void RenameAshenHero(Hero hero)
@@ -240,7 +240,7 @@ namespace AshAndEmber
             }
             catch
             {
-                try { hero.SetName(new TextObject(title), new TextObject(title)); } catch { }
+                try { hero.SetName(new TextObject(title), new TextObject(title)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -256,7 +256,7 @@ namespace AshAndEmber
                     // level 34 immediately when starting as Ashen (one +100 per Ashen lord).
                     CharacterRelationManager.SetHeroRelation(Hero.MainHero, hero, 100);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

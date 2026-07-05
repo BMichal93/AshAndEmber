@@ -79,7 +79,7 @@ namespace AshAndEmber
                         case "c":
                             ShiftTrait(drainTrait, -1);
                             ShiftTrait(candidates[_rng.Next(candidates.Length)], -1);
-                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             ChangeRenown(-10f);
                             Msg("You open the door. Something passes through you in both directions — you feel the loss clearly, two things, maybe more. " +
                                 "What returns is not the same shape as what left. It is colder. It is useful. " +
@@ -302,7 +302,7 @@ namespace AshAndEmber
         // ── Helper: wound the player hero and a few party members ─────────────
         private static void WoundPlayer()
         {
-            try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.MaxHitPoints / 4); } catch { }
+            try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.MaxHitPoints / 4); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 var roster = MobileParty.MainParty?.MemberRoster;
@@ -319,7 +319,7 @@ namespace AshAndEmber
                     if (wounded >= toWound) break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helper: wound a number of party troops (simulate Curse hit) ───────
@@ -341,7 +341,7 @@ namespace AshAndEmber
                     if (wounded >= count) break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helper: permanently remove N troops from the party ────────────────
@@ -363,7 +363,7 @@ namespace AshAndEmber
                 }
                 if (killed > 0) Msg($"({killed} soldier{(killed == 1 ? "" : "s")} found dead at dawn)", BadColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helper: become Ashen (full conversion sequence) ───────────────────
@@ -372,14 +372,14 @@ namespace AshAndEmber
             // Sync MageKnowledge player flags first so grimoire + spell aging work correctly.
             // ColourLordRegistry.SetAshen only updates the NPC-tracking sets; MageKnowledge
             // has its own _isMage / _isAshen flags that drive the player-facing UI and mechanics.
-            try { MageKnowledge.SetMage(true); }  catch { }
-            try { MageKnowledge.SetAshen(true); } catch { }
+            try { MageKnowledge.SetMage(true); }  catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MageKnowledge.SetAshen(true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            try { ColourLordRegistry.SetAshen(Hero.MainHero, true); } catch { }
-            try { AshenCitySystem.ApplyAshenPersonality(Hero.MainHero); } catch { }
-            try { ColourLordRegistry.SetMage(Hero.MainHero, true); } catch { }
-            try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
-            try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch { }
+            try { ColourLordRegistry.SetAshen(Hero.MainHero, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenCitySystem.ApplyAshenPersonality(Hero.MainHero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ColourLordRegistry.SetMage(Hero.MainHero, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenCitySystem.OnPlayerBecameAshen(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Queue the frenzy event for the next daily tick if there's someone to lose
             if (HasFamilyOrCompanions())
                 _ashenFrenzyCountdown = 1;
@@ -418,9 +418,9 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.30f); } catch { }
+                            try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.30f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             ChangeCrime(50f);
-                            try { MageKnowledge.AddWhispers(4); } catch { }
+                            try { MageKnowledge.AddWhispers(4); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             _burningVillageSettlementId = s.StringId;
                             _burningVillageCountdown    = 14;
                             if (_rng.NextDouble() < 0.5)
@@ -446,7 +446,7 @@ namespace AshAndEmber
                             }
                             else
                             {
-                                try { CampaignMapEvents.SpawnAshenAmbushNear(s.GetPosition2D, 20, 180f); } catch { }
+                                try { CampaignMapEvents.SpawnAshenAmbushNear(s.GetPosition2D, 20, 180f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg($"You showed mercy and rode on. That evening, {vName} caught fire from three sides at once. " +
                                     $"Ashen Spawn poured from the shadows — the cultists had already called for them. " +
                                     $"The village burned regardless of your choice.", BadColor);
@@ -474,7 +474,7 @@ namespace AshAndEmber
                                         {
                                             case "x1":
                                                 ChangeCrime(5f);
-                                                try { s.Village.Hearth = s.Village.Hearth + 50f; } catch { }
+                                                try { s.Village.Hearth = s.Village.Hearth + 50f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                                 ChangeRelWithOwner(s, 5);
                                                 Msg("You hold a brief public reckoning. The tanner does not deny it. The village watches. The elder thanks you. The settlement lord, receiving word of how you handled it, revises his opinion of you upward — you found the problem, judged it, and left the village intact.", GoodColor);
                                                 break;
@@ -591,13 +591,13 @@ namespace AshAndEmber
                     {
                         case "a":
                             ShiftTrait(DefaultTraits.Calculating, 1);
-                            try { MageKnowledge.AddWhispers(2); } catch { }
+                            try { MageKnowledge.AddWhispers(2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg("You say nothing. The fire is lit. She does not scream — or she does, and you have already turned away. " +
                                 "The village elder nods at your back as you leave.", DimColor);
                             break;
                         case "b":
                             ShiftTrait(DefaultTraits.Mercy, -1);
-                            try { MageKnowledge.AddWhispers(3); } catch { }
+                            try { MageKnowledge.AddWhispers(3); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg("You watch. The crowd watches you watching. " +
                                 "Something in you marks this moment and files it under things you have become.", BadColor);
                             _burningWitchOutcome   = 1;
@@ -605,13 +605,13 @@ namespace AshAndEmber
                             break;
                         case "c":
                             ShiftTrait(DefaultTraits.Mercy, 1);
-                            try { MageKnowledge.RemoveWhispers(3); } catch { }
+                            try { MageKnowledge.RemoveWhispers(3); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             if (_rng.NextDouble() < 0.5)
                             {
                                 // She was Ashen — casts Curse before dying
                                 int w = 5 + _rng.Next(8);
                                 WoundPartyTroops(w);
-                                try { AgePlayer(3); } catch { }
+                                try { AgePlayer(3); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg($"You step forward. The crowd parts. The girl raises her head — " +
                                     $"and her eyes are grey. Not frightened. Cold. She speaks one word " +
                                     $"and your soldiers cry out. {w} of them are clutching wounds " +
@@ -738,7 +738,7 @@ namespace AshAndEmber
                         case "a":
                             if (!ChangeGold(-10000)) break;
                             SanctuaryCampaignBehavior.AddPermanentSanctuary(s.StringId);
-                            try { MageKnowledge.RemoveWhispers(5); } catch { }
+                            try { MageKnowledge.RemoveWhispers(5); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg($"You give him the coin without ceremony. He bows once and says nothing further. " +
                                 $"Within a week, the sanctuary of {cName} is open. " +
                                 $"The flame burns clean inside it.", GoodColor);
@@ -777,7 +777,7 @@ namespace AshAndEmber
                             break;
                         case "e":
                             ShiftTrait(DefaultTraits.Mercy, -1);
-                            try { MageKnowledge.AddWhispers(3); } catch { }
+                            try { MageKnowledge.AddWhispers(3); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg("Your soldiers scatter him from the gate. He does not return. " +
                                 "The city remembers you were there.", BadColor);
                             _priestBeatCountdown = 14;
@@ -797,7 +797,7 @@ namespace AshAndEmber
                              && h.MapFaction?.StringId == "vlandia")
                     .ToList();
                 foreach (var lord in templeLords)
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -10, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (templeLords.Count > 0)
                     Msg("(All Templar lords: −10 relation)", BadColor);
                 Msg("The temple received a formal complaint: a lord drove off a priest at the city gate and had him beaten. The complaint includes the city, the gate, the hour, and three witnesses. The temple does not issue threats. It issues records. Your name is in the record, and the record is in the archive, and everyone who needs to know what is in the archive already knows.", BadColor);
@@ -861,7 +861,7 @@ namespace AshAndEmber
                             break;
                         case "d":
                             AgePlayer(3);
-                            try { MageKnowledge.AddWhispers(1); } catch { }
+                            try { MageKnowledge.AddWhispers(1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg("The fire comes from somewhere older than your hands. " +
                                 "They scatter before it — cold things do not like what burns. " +
                                 "They are gone in seconds. You are three days older. " +
@@ -902,7 +902,7 @@ namespace AshAndEmber
                                 "Your reflection in the horse trough shows grey at the edges of your eyes.", BadColor);
                             break;
                         case "b":
-                            try { MageKnowledge.RemoveWhispers(2); } catch { }
+                            try { MageKnowledge.RemoveWhispers(2); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg("You get up, drink cold water, and decide it was only a dream. " +
                                 "You are probably right. The world looks normal in daylight. " +
                                 "It usually does.", DimColor);
@@ -926,8 +926,8 @@ namespace AshAndEmber
                             }
                             else
                             {
-                                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
-                                try { MageKnowledge.AddWhispers(5); } catch { }
+                                try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                try { MageKnowledge.AddWhispers(5); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg("You reach toward it carefully, like touching something hot from the side. " +
                                     "You pull back before it pulls you in — but you bring something with you: " +
                                     "a clarity, a sense of how things connect. One focus point, " +
@@ -964,10 +964,10 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            try { AgingSystem.RejuvenateHero(Hero.MainHero, 730); } catch { } // ~2 years
+                            try { AgingSystem.RejuvenateHero(Hero.MainHero, 730); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } // ~2 years
                             ShiftTrait(DefaultTraits.Honor, -2);
                             ShiftTrait(DefaultTraits.Mercy, -2);
-                            try { MageKnowledge.AddWhispers(8); } catch { }
+                            try { MageKnowledge.AddWhispers(8); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Msg("You ride down and dismount at the fire. They make space for you without speaking. " +
                                 "The dance is not something you will remember clearly in daylight. " +
                                 "You feel two years lighter when you leave. You feel heavier in other ways.", DimColor);
@@ -978,8 +978,8 @@ namespace AshAndEmber
                                 "The crossroads is quiet behind you.", DimColor);
                             break;
                         case "c":
-                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch { }
-                            try { MageKnowledge.RemoveWhispers(3); } catch { }
+                            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { MageKnowledge.RemoveWhispers(3); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             if (_rng.NextDouble() < 0.5)
                             {
                                 AgePlayer(365); // 1 year

@@ -300,7 +300,7 @@ namespace AshAndEmber
                         new Color(0.38f, 0.50f, 0.75f)));
                     SpawnAshenSpawnParty(ePos, 2, 30f);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Tick down pending Game of Thrones events
@@ -318,7 +318,7 @@ namespace AshAndEmber
                         if (k != null && !k.IsEliminated)
                             FireGameOfThrones(k);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
@@ -348,7 +348,7 @@ namespace AshAndEmber
                         s.Town.Prosperity = Math.Max(10f, s.Town.Prosperity - 6f);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (_longNightDaysRemaining == 0)
                 {
@@ -369,7 +369,7 @@ namespace AshAndEmber
                                 "Morning returned, but not everything the dark took.",
                                 new Color(0.55f, 0.55f, 0.75f)));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
 
@@ -394,12 +394,12 @@ namespace AshAndEmber
                     if (templeK != null && clan != null)
                     {
                         if (clan.Kingdom != null && clan.Kingdom != templeK)
-                            try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch { }
+                            try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         if (clan.Kingdom?.StringId != "vlandia")
-                            try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK); } catch { }
+                            try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, templeK); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // The Holy Temple (Vlandia) is permanently at war with the Ashen — re-declare if peace is made
@@ -412,10 +412,10 @@ namespace AshAndEmber
                 if (temple != null && ashen != null && !temple.IsAtWarWith(ashen))
                     DeclareWarAction.ApplyByDefault(temple, ashen);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // The Temple's covenant / anathema relationship with the player
-            try { TempleCovenant.DailyTick(); } catch { }
+            try { TempleCovenant.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         /// Called from CampaignBehavior.OnWeeklyTick().
@@ -427,11 +427,11 @@ namespace AshAndEmber
 
             // Independent of the slot system — runs every week and forces inter-faction
             // conflict if the world has been at peace for too long.
-            try { TryEnsureInterFactionConflict(); } catch { }
+            try { TryEnsureInterFactionConflict(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Portents and whisper intel run independently (no slot needed)
-            try { TryFirePortents(); } catch { }
-            try { TryFireWhisperIntel(); } catch { }
+            try { TryFirePortents(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TryFireWhisperIntel(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Cooldown gate ─────────────────────────────────────────────────
             if (ElapsedCampaignDays() - _lastEventElapsedDay < EventCooldownDays) return;
@@ -490,7 +490,7 @@ namespace AshAndEmber
                     for (int j = i + 1; j < kingdoms.Count; j++)
                         if (kingdoms[i].IsAtWarWith(kingdoms[j])) warCount++;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Only reset the timer if at least one war already exists — if none do,
             // keep trying every week until one seeds successfully.
@@ -501,7 +501,7 @@ namespace AshAndEmber
             if (!TryPickAtPeacePair(out Kingdom ka, out Kingdom kb)) return;
 
             _lastConflictSeedDay = day;
-            try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+            try { DeclareWarAction.ApplyByDefault(ka, kb); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             InformationManager.DisplayMessage(new InformationMessage(
                 $"Tensions between {ka.Name} and {kb.Name} finally break — war is declared.",
                 new Color(0.85f, 0.35f, 0.25f)));

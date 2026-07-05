@@ -28,9 +28,9 @@ namespace AshAndEmber
             RegisterPool(starter, "trb_special",  "lord_special_request", "close_window",  _specials,  P);
             RegisterPool(starter, "trb_prisoner", "prisoner_chat",        "close_window",  _prisoners, P);
 
-            try { starter.AddPlayerLine("trb_reply_matter", "trb_reply", "lord_pretalk", "I bring word worth the God-King's fire.", null, null, P); } catch { }
-            try { starter.AddPlayerLine("trb_reply_blood",  "trb_reply", "lord_pretalk", "Then let the steppe judge us both.",      null, null, P); } catch { }
-            try { starter.AddPlayerLine("trb_reply_leave",  "trb_reply", "close_window", "Ride on. I'll not slow your war.",        null, null, P); } catch { }
+            try { starter.AddPlayerLine("trb_reply_matter", "trb_reply", "lord_pretalk", "I bring word worth the God-King's fire.", null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { starter.AddPlayerLine("trb_reply_blood",  "trb_reply", "lord_pretalk", "Then let the steppe judge us both.",      null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { starter.AddPlayerLine("trb_reply_leave",  "trb_reply", "close_window", "Ride on. I'll not slow your war.",        null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Registers one line per pool entry. Conditions pick the right variant
@@ -53,7 +53,7 @@ namespace AshAndEmber
                         null,
                         priority);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 

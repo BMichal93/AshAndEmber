@@ -147,7 +147,7 @@ namespace AshAndEmber
             try
             {
                 object screen = null;
-                try { screen = TaleWorlds.ScreenSystem.ScreenManager.TopScreen; } catch { }
+                try { screen = TaleWorlds.ScreenSystem.ScreenManager.TopScreen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (screen == null) { _lastScreen = null; _doneThisScreen = false; _gateAttempts = 0; return; }
                 if (!ReferenceEquals(screen, _lastScreen)) { _lastScreen = screen; _doneThisScreen = false; _gateAttempts = 0; }
@@ -198,7 +198,7 @@ namespace AshAndEmber
                 }
                 _stageVmThisPass = null;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // The current stage's view-model, straight off the screen:
@@ -257,7 +257,7 @@ namespace AshAndEmber
                         Walk(item, visited, depth + 1, ref budget, pending);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return;
             }
 
@@ -284,7 +284,7 @@ namespace AshAndEmber
             {
                 object culture = type.GetProperty("Culture", F)?.GetValue(vm);
                 string id = null;
-                try { id = culture?.GetType().GetProperty("StringId")?.GetValue(culture) as string; } catch { }
+                try { id = culture?.GetType().GetProperty("StringId")?.GetValue(culture) as string; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (id == null) return;
 
                 CultureCard card = null;
@@ -302,12 +302,12 @@ namespace AshAndEmber
                 RewriteFeats(vm, type, card.Feats);
                 pending.Remove(id);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void SetStringProp(object vm, Type type, string prop, string value)
         {
-            try { type.GetProperty(prop, F)?.SetValue(vm, value); } catch { }
+            try { type.GetProperty(prop, F)?.SetValue(vm, value); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Rewrites the card's bound feat descriptions: positives in order, then the
@@ -331,17 +331,17 @@ namespace AshAndEmber
                     string desc = isPositive
                         ? (posIdx < lastPositive ? feats[posIdx++] : feats[Math.Max(0, lastPositive - 1)])
                         : negative;
-                    try { ft.GetProperty("Description", F)?.SetValue(feat, desc); } catch { }
+                    try { ft.GetProperty("Description", F)?.SetValue(feat, desc); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Sets a bool property on the stage VM (used to gate "Next"); no-op if absent.
         private static void SetStageBool(object stageVm, string prop, bool value)
         {
             if (stageVm == null) return;
-            try { stageVm.GetType().GetProperty(prop, F)?.SetValue(stageVm, value); } catch { }
+            try { stageVm.GetType().GetProperty(prop, F)?.SetValue(stageVm, value); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Releases the gate: restore CanAdvance to whatever the player's current
@@ -355,7 +355,7 @@ namespace AshAndEmber
                 bool anySelected = (bool)(t.GetProperty("AnyItemSelected", F)?.GetValue(stageVm) ?? false);
                 t.GetProperty("CanAdvance", F)?.SetValue(stageVm, anySelected);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Reference-identity comparer (.NET Framework 4.7.2 has no built-in one).

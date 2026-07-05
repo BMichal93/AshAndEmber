@@ -251,12 +251,12 @@ namespace AshAndEmber
 
                         string correctText = _steps[_position][_correctIdx[_position]];
                         string toast = correct ? "Correct." : $"The rite called for: {correctText}";
-                        try { MBInformationManager.AddQuickInformation(new TextObject(toast)); } catch { }
+                        try { MBInformationManager.AddQuickInformation(new TextObject(toast)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                         _position++;
                         MageKnowledge._deferredInquiry = ShowRecall;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 },
                 null, "", false
             ), false, true);
@@ -292,7 +292,7 @@ namespace AshAndEmber
                 }
                 TalentSystem.RegisterMapCast();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Only announce resonance when the rite was actually attempted.
             if (mult != 1f)
@@ -307,7 +307,7 @@ namespace AshAndEmber
                 InformationManager.DisplayMessage(new InformationMessage(flavor, colour));
             }
 
-            try { ElementMapSpells.Execute(_element, mult); } catch { }
+            try { ElementMapSpells.Execute(_element, mult); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

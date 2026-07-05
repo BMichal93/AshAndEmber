@@ -63,7 +63,7 @@ namespace AshAndEmber
                 if (room <= 0) return;
                 garrison.MemberRoster.AddToCounts(priest, System.Math.Min(AddPerWeek, room));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static CharacterObject Find(string id)

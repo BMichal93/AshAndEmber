@@ -206,7 +206,7 @@ namespace AshAndEmber
             // No rite defined (or somehow a battle-only prayer) — cast plainly.
             if (!HasRite(type))
             {
-                try { MiracleEffects.TryUseMiracle(type, inMission: false); } catch { }
+                try { MiracleEffects.TryUseMiracle(type, inMission: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return;
             }
 
@@ -244,7 +244,7 @@ namespace AshAndEmber
                 true, true,
                 "I am ready.", "Speak it plainly.",
                 () => { MageKnowledge._deferredInquiry = ShowRecall; },
-                () => { try { MiracleEffects.TryUseMiracle(_type, inMission: false); } catch { } }
+                () => { try { MiracleEffects.TryUseMiracle(_type, inMission: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
             ), true, true);
         }
 
@@ -296,12 +296,12 @@ namespace AshAndEmber
                         string toast = correct
                             ? "Correct."
                             : $"The prayer called for: {_steps[_position][_correctIdx[_position]]}";
-                        try { MBInformationManager.AddQuickInformation(new TextObject(toast)); } catch { }
+                        try { MBInformationManager.AddQuickInformation(new TextObject(toast)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                         _position++;
                         MageKnowledge._deferredInquiry = ShowRecall;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 },
                 null, "", false
             ), false, true);
@@ -315,7 +315,7 @@ namespace AshAndEmber
             {
                 // The words scatter — the light does not answer, but the Grace is spent,
                 // just as a botched battle sequence always costs it.
-                try { MiracleInventory.SpendGrace(); } catch { }
+                try { MiracleInventory.SpendGrace(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The words scatter — the light does not answer. [Grace spent]",
                     new Color(0.6f, 0.5f, 0.5f)));
@@ -333,7 +333,7 @@ namespace AshAndEmber
             InformationManager.DisplayMessage(new InformationMessage(flavor, colour));
 
             // The prayer answers — TryUseMiracle handles the gate, spends the Grace, and casts.
-            try { MiracleEffects.TryUseMiracle(_type, inMission: false); } catch { }
+            try { MiracleEffects.TryUseMiracle(_type, inMission: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static string MiracleName(MiracleType type)

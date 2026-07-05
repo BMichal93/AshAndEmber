@@ -47,7 +47,7 @@ namespace AshAndEmber
                                 "The ash spreads.", new Color(0.3f, 0.35f, 0.7f)));
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 else
                 {
@@ -65,7 +65,7 @@ namespace AshAndEmber
                     }
                 }
                 _dailyMapCastCount++;
-                try { AgingSystem.RecordMapCast(); } catch { }
+                try { AgingSystem.RecordMapCast(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             switch (id)
@@ -80,7 +80,7 @@ namespace AshAndEmber
                 case TalentId.ToxicFog:     CastToxicFog(powerMult);     break;
             }
 
-            try { MageKnowledge.RewardCastSkill(); } catch { }
+            try { MageKnowledge.RewardCastSkill(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CastBreakWills(float mult)
@@ -104,7 +104,7 @@ namespace AshAndEmber
                 string infLine = tClan != null ? $" -{(int)infLoss} influence." : "";
                 Msg($"Unsettle — dread settles over {target.Name}. -{morale} morale.{infLine}");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CastInspire(float mult)
@@ -122,14 +122,14 @@ namespace AshAndEmber
                 foreach (var entry in wounded)
                 {
                     int heal = Math.Min(entry.WoundedNumber, healPerTroop);
-                    try { roster.AddToCounts(entry.Character, 0, false, -heal); roused += heal; } catch { }
+                    try { roster.AddToCounts(entry.Character, 0, false, -heal); roused += heal; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 string msg = roused > 0
                     ? $"Kindle — warmth floods your ranks. +{morale} morale, {roused} soldier{(roused != 1 ? "s" : "")} rise from their wounds."
                     : $"Kindle — warmth floods your ranks. +{morale} morale.";
                 Msg(msg);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CastPlague(float mult)
@@ -151,7 +151,7 @@ namespace AshAndEmber
                 target.Village.Hearth = Math.Max(10f, before * (1f - reduction));
                 Msg($"Wither — something old settles over {target.Name}. Hearth reduced by {(int)(reduction * 100f)}%.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CastClairvoyance(float mult)
@@ -205,11 +205,11 @@ namespace AshAndEmber
                                 },
                                 () => { Msg("You know it is coming. That is something."); }));
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     };
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CastExtinguish(float mult)
@@ -234,12 +234,12 @@ namespace AshAndEmber
                 {
                     int idx   = _rng.Next(troops.Count);
                     int wound = _rng.Next(2) == 0 ? 1 : 0;
-                    try { target.MemberRoster.AddToCounts(troops[idx].Character, wound == 1 ? 0 : -1, false, wound); actual++; } catch { }
+                    try { target.MemberRoster.AddToCounts(troops[idx].Character, wound == 1 ? 0 : -1, false, wound); actual++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 target.RecentEventsMorale -= morale;
                 Msg($"Extinguish — {actual} fire{(actual != 1 ? "s" : "")} snuffed in {target.Name}. Their courage breaks. -{morale} morale.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CastFade(float mult)
@@ -265,7 +265,7 @@ namespace AshAndEmber
                         if (!p.IsActive || p == MobileParty.MainParty) continue;
                         try { if (!FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)) continue; } catch { continue; }
                         if ((p.GetPosition2D - playerPos).Length > 80f) continue;
-                        try { p.RecentEventsMorale -= 40f; scattered++; } catch { }
+                        try { p.RecentEventsMorale -= 40f; scattered++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     string tail = scattered > 0
                         ? $" {scattered} nearby enemy {(scattered == 1 ? "party is" : "parties are")} thrown into confusion."
@@ -273,7 +273,7 @@ namespace AshAndEmber
                     Msg($"Fade — the ash rises around you.{tail}");
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static float GetBlightCrimeCost(TalentId id)
@@ -320,19 +320,19 @@ namespace AshAndEmber
                     for (int i = 0; i < toKill && troops.Count > 0; i++)
                     {
                         int idx = _rng.Next(troops.Count);
-                        try { garrison.AddToCounts(troops[idx].Character, -1); killed++; } catch { }
+                        try { garrison.AddToCounts(troops[idx].Character, -1); killed++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
                 // Burn food stores, drop prosperity and security
-                try { target.Town.FoodStocks    -= (int)(150f * mult); }            catch { }
-                try { target.Town.Prosperity    = Math.Max(100f, target.Town.Prosperity - (int)(250f * mult)); } catch { }
-                try { target.Town.Security      = Math.Max(0f,   target.Town.Security   - (int)(25f  * mult)); } catch { }
+                try { target.Town.FoodStocks    -= (int)(150f * mult); }            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { target.Town.Prosperity    = Math.Max(100f, target.Town.Prosperity - (int)(250f * mult)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { target.Town.Security      = Math.Max(0f,   target.Town.Security   - (int)(25f  * mult)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 string killLine = killed > 0 ? $" {killed} garrison soldier{(killed != 1 ? "s" : "")} consumed." : "";
                 Msg($"Ashstorm — fire rains over {target.Name}.{killLine} Food burns. The walls remember it.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CastToxicFog(float mult)
@@ -359,7 +359,7 @@ namespace AshAndEmber
                     settlementsHit.Add(s.Name?.ToString() ?? "?");
 
                     // Kill all militia
-                    try { s.Militia = 0f; } catch { }
+                    try { s.Militia = 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                     // Wound 40–70 % of garrison
                     var garrison = s.Town?.GarrisonParty?.MemberRoster;
@@ -372,7 +372,7 @@ namespace AshAndEmber
                             int toWound = Math.Min(healthy,
                                 (int)(healthy * (0.40f + (float)_rng.NextDouble() * 0.30f) * mult));
                             if (toWound > 0)
-                                try { garrison.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch { }
+                                try { garrison.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     }
 
@@ -396,7 +396,7 @@ namespace AshAndEmber
                         int toWound = Math.Min(healthy,
                             (int)(healthy * (0.20f + (float)_rng.NextDouble() * 0.30f) * mult));
                         if (toWound > 0)
-                            try { party.MemberRoster.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch { }
+                            try { party.MemberRoster.AddToCounts(e.Character, 0, false, toWound); totalWounded += toWound; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     // Track lords and kingdoms for relations/war — only where they exist
                     if (party.LeaderHero != null)
@@ -417,20 +417,20 @@ namespace AshAndEmber
                         int healthy = e.Number - e.WoundedNumber;
                         int toWound = Math.Min(healthy, (int)(healthy * (0.15f + (float)_rng.NextDouble() * 0.15f)));
                         if (toWound > 0)
-                            try { MobileParty.MainParty.MemberRoster.AddToCounts(e.Character, 0, false, toWound); ownWounded += toWound; } catch { }
+                            try { MobileParty.MainParty.MemberRoster.AddToCounts(e.Character, 0, false, toWound); ownWounded += toWound; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
                 // ── Relation penalties (-20 per affected lord) ────────────────────
                 foreach (var lord in affectedLords)
                 {
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -20, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, lord, -20, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 // ── Criminal rating (+50 in every affected kingdom) ──────────────
                 foreach (var targetK in affectedKingdoms)
                 {
-                    try { ChangeCrimeRatingAction.Apply(targetK, 50f, false); } catch { }
+                    try { ChangeCrimeRatingAction.Apply(targetK, 50f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 // ── War risk (30 % per affected non-allied kingdom) ───────────────
@@ -446,7 +446,7 @@ namespace AshAndEmber
                                 && !FactionManager.IsAtWarAgainstFaction(targetK, playerKingdom))
                                 DeclareWarAction.ApplyByDefault(targetK, playerKingdom);
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
@@ -459,7 +459,7 @@ namespace AshAndEmber
                     : " Your men were far enough upwind.";
                 Msg($"The vessel shatters. A yellow-green cloud rolls across the land.{hitLine} Militia dead. {totalWounded} soldiers felled.{ownLine}");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

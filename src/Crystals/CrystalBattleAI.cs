@@ -52,7 +52,7 @@ namespace AshAndEmber
 
             // Daylight check (read once per scan).
             float hour = 12f;
-            try { hour = (float)CampaignTime.Now.CurrentHourInDay; } catch { }
+            try { hour = (float)CampaignTime.Now.CurrentHourInDay; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             bool isDaylight = CrystalMath.IsDaylight(hour);
             if (!isDaylight) return;
 
@@ -72,7 +72,7 @@ namespace AshAndEmber
                     // Situational use: heal-stones want their bearer hurt, offensive
                     // stones want enemies in reach — never spent on empty air.
                     float hpFrac = 1f;
-                    try { hpFrac = a.Health / Math.Max(a.HealthLimit, 1f); } catch { }
+                    try { hpFrac = a.Health / Math.Max(a.HealthLimit, 1f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     int enemiesInRange = CountEnemiesInRange(a, CrystalMath.CrystalUseRange(crystalType));
                     if (!CrystalMath.NpcShouldUse(crystalType, hpFrac, enemiesInRange, (float)_rng.NextDouble()))
                         continue;
@@ -82,7 +82,7 @@ namespace AshAndEmber
                     AnnounceUse(a, hero, crystalType);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Equipment scan ────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 
@@ -121,7 +121,7 @@ namespace AshAndEmber
                     $"{name} activates a {crystal}!",
                     new Color(0.75f, 0.65f, 0.45f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helper ────────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ namespace AshAndEmber
                     float dx = e.Position.x - a.Position.x, dy = e.Position.y - a.Position.y;
                     if (dx * dx + dy * dy > r2) continue;
                     // A bearer doesn't waste a stone on foes a wall already bars.
-                    try { if (ElementWallWards.BlocksCrystal(a.Position, e.Position)) continue; } catch { }
+                    try { if (ElementWallWards.BlocksCrystal(a.Position, e.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     n++;
                 }
                 return n;

@@ -84,11 +84,11 @@ namespace AshAndEmber
                                 if (needsLord) OpenLordTargetUI();
                                 else           OpenSettlementTargetUI();
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Target selection: lords ───────────────────────────────────────────
@@ -156,7 +156,7 @@ namespace AshAndEmber
                         OnLordTargetChosen, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void OnLordTargetChosen(List<InquiryElement> selected)
@@ -169,7 +169,7 @@ namespace AshAndEmber
                 if (target == null) return;
                 ShowConfirmation(target, null);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Target selection: settlements ─────────────────────────────────────
@@ -215,7 +215,7 @@ namespace AshAndEmber
                         OnSettlementTargetChosen, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void OnSettlementTargetChosen(List<InquiryElement> selected)
@@ -228,7 +228,7 @@ namespace AshAndEmber
                 if (target == null) return;
                 ShowConfirmation(null, target);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Confirmation ──────────────────────────────────────────────────────
@@ -290,7 +290,7 @@ namespace AshAndEmber
                         () => CommitScheme(targetHero, targetSett), null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CommitScheme(Hero targetHero, Settlement targetSett)
@@ -304,7 +304,7 @@ namespace AshAndEmber
                     MBInformationManager.AddQuickInformation(
                         new TextObject("That target is currently blocked — the path is not yet clear."));
                     _selectedDef = null;
-                    try { GameMenu.SwitchToMenu("town"); } catch { }
+                    try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     return;
                 }
 
@@ -325,17 +325,17 @@ namespace AshAndEmber
                         MBInformationManager.AddQuickInformation(
                             new TextObject("Insufficient funds — the scheme cannot be arranged."));
                         _selectedDef = null;
-                        try { GameMenu.SwitchToMenu("town"); } catch { }
+                        try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return;
                     }
-                    try { Hero.MainHero.Gold -= goldCost; } catch { }
-                    try { if (Hero.MainHero.Clan != null) Hero.MainHero.Clan.Influence -= infCost; } catch { }
+                    try { Hero.MainHero.Gold -= goldCost; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { if (Hero.MainHero.Clan != null) Hero.MainHero.Clan.Influence -= infCost; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
-                try { ShiftPlayerTrait(DefaultTraits.Honor,       -1); } catch { }
-                try { ShiftPlayerTrait(DefaultTraits.Calculating,  -1); } catch { }
+                try { ShiftPlayerTrait(DefaultTraits.Honor,       -1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ShiftPlayerTrait(DefaultTraits.Calculating,  -1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (_selectedDef.Type == SchemeType.Assassinate)
-                    try { ShiftPlayerTrait(DefaultTraits.Mercy, -1); } catch { }
+                    try { ShiftPlayerTrait(DefaultTraits.Mercy, -1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 var capturedDef  = _selectedDef;
                 var capturedHero = targetHero;
@@ -345,22 +345,22 @@ namespace AshAndEmber
                 // Stamp per-target cooldown NOW so a save-reload before the first phase
                 // cannot bypass the cost and retry the same target for free. The minigame
                 // will overwrite this with the outcome-correct value on resolution.
-                try { SchemeSystem.PreStampTargetCooldown(capturedDef.Type, capturedHero, capturedSett); } catch { }
+                try { SchemeSystem.PreStampTargetCooldown(capturedDef.Type, capturedHero, capturedSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Record the committed operation. If the player reloads before the
                 // Gambit resolves, OnSessionLaunched re-launches it so the costs
                 // already paid are not silently lost.
-                try { SchemeSystem.SetPendingPlayerOperation(capturedDef.Type, capturedHero, capturedSett); } catch { }
+                try { SchemeSystem.SetPendingPlayerOperation(capturedDef.Type, capturedHero, capturedSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                try { GameMenu.SwitchToMenu("town"); } catch { }
+                try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Defer so menu transition completes before the first inquiry opens.
                 MageKnowledge._deferredInquiry = () =>
                 {
-                    try { SchemeMinigame.Begin(capturedDef, capturedHero, capturedSett); } catch { }
+                    try { SchemeMinigame.Begin(capturedDef, capturedHero, capturedSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ShiftPlayerTrait(TraitObject trait, int delta)

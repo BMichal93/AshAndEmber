@@ -1514,5 +1514,81 @@ namespace AshAndEmber.Tests
             // Nearest-t: the closest approach to (5,1) along (0,0)→(10,0) is halfway.
             Assert.AreEqual(0.5f, WallWardMath.SegmentNearestT(0, 0, 10, 0, 5, 1), 0.001f);
         }
+
+        // ── ElementalMath tests (The Kindled) ─────────────────────────────────
+        [Test]
+        public void ElementalMath_BeingResistsItsOwnElement()
+        {
+            // A flame being drinks fire; a stone being shrugs off earth magic.
+            Assert.Less(ElementalMath.ElementDamageMultiplier(ElementalKind.Flame, MagicElement.Fire), 1f);
+            Assert.Less(ElementalMath.ElementDamageMultiplier(ElementalKind.Stone, MagicElement.Earth), 1f);
+            Assert.Less(ElementalMath.ElementDamageMultiplier(ElementalKind.Gale,  MagicElement.Wind),  1f);
+        }
+
+        [Test]
+        public void ElementalMath_BeingBucklesToItsCounter()
+        {
+            // The wheel: fire drowns to water, water is drunk by earth, earth is
+            // worn by wind, wind is burned by fire.
+            Assert.Greater(ElementalMath.ElementDamageMultiplier(ElementalKind.Flame, MagicElement.Water), 1f);
+            Assert.Greater(ElementalMath.ElementDamageMultiplier(ElementalKind.Tide,  MagicElement.Earth), 1f);
+            Assert.Greater(ElementalMath.ElementDamageMultiplier(ElementalKind.Stone, MagicElement.Wind),  1f);
+            Assert.Greater(ElementalMath.ElementDamageMultiplier(ElementalKind.Gale,  MagicElement.Fire),  1f);
+        }
+
+        [Test]
+        public void ElementalMath_FrostMeltsToFireHardest()
+        {
+            // Ice fears fire above all, and shrugs off water.
+            Assert.Greater(ElementalMath.ElementDamageMultiplier(ElementalKind.Frost, MagicElement.Fire), 1.5f);
+            Assert.Less(ElementalMath.ElementDamageMultiplier(ElementalKind.Frost, MagicElement.Water), 1f);
+        }
+
+        [Test]
+        public void ElementalMath_NeutralElementDoesNothing()
+        {
+            // Wind against a flame being is neither its element nor its counter.
+            Assert.AreEqual(1f, ElementalMath.ElementDamageMultiplier(ElementalKind.Flame, MagicElement.Wind), 0.001f);
+        }
+
+        [Test]
+        public void ElementalMath_StoneShattersToBluntTurnsBlades()
+        {
+            Assert.Greater(ElementalMath.PhysicalDamageMultiplier(ElementalKind.Stone, PhysicalHit.Blunt), 1f);
+            Assert.Less   (ElementalMath.PhysicalDamageMultiplier(ElementalKind.Stone, PhysicalHit.Cut),   1f);
+        }
+
+        [Test]
+        public void ElementalMath_FlameLetsSteelPassThrough()
+        {
+            // No physical weakness — flame is unmade by magic, not by the blade.
+            Assert.Less(ElementalMath.PhysicalDamageMultiplier(ElementalKind.Flame, PhysicalHit.Cut),   1f);
+            Assert.Less(ElementalMath.PhysicalDamageMultiplier(ElementalKind.Flame, PhysicalHit.Blunt), 1f);
+        }
+
+        [Test]
+        public void ElementalMath_WildKindMatchesBiome()
+        {
+            Assert.AreEqual(ElementalKind.Frost, ElementalMath.WildKindForBiome("snowy tundra"));
+            Assert.AreEqual(ElementalKind.Sand,  ElementalMath.WildKindForBiome("deep desert dunes"));
+            Assert.AreEqual(ElementalKind.Tide,  ElementalMath.WildKindForBiome("old forest"));
+            Assert.AreEqual(ElementalKind.Gale,  ElementalMath.WildKindForBiome("open steppe"));
+            Assert.AreEqual(ElementalKind.Stone, ElementalMath.WildKindForBiome("mountain root"));
+        }
+
+        [Test]
+        public void ElementalMath_AllKindsHavePositiveHealth()
+        {
+            foreach (ElementalKind k in Enum.GetValues(typeof(ElementalKind)))
+                Assert.Greater(ElementalMath.Health(k), 0f);
+        }
+
+        [Test]
+        public void ElementUltimateMath_SpiritCostsMoreThanOtherUnbindings()
+        {
+            int spirit = ElementUltimateMath.UltimateAgingDays(hasNature: false, MagicElement.Spirit);
+            int fire   = ElementUltimateMath.UltimateAgingDays(hasNature: false, MagicElement.Fire);
+            Assert.Greater(spirit, fire);
+        }
     }
 }

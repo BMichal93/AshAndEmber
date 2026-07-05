@@ -64,8 +64,8 @@ namespace AshAndEmber
         private static void StabiliseSettlement(Settlement s)
         {
             if (s?.Town == null) return;
-            try { s.Town.Loyalty  = 100f; } catch { }
-            try { s.Town.Security = 100f; } catch { }
+            try { s.Town.Loyalty  = 100f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { s.Town.Security = 100f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Whisper network intel ─────────────────────────────────────────────
@@ -167,7 +167,7 @@ namespace AshAndEmber
                         hs = Settlement.All.FirstOrDefault(s => s?.Hideout != null);
                     hideout = hs?.Hideout;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (hideout == null) return null; // no valid hideout → skip to prevent native crash
 
                 // Scatter spawn point around the anchor (radius ≈ 4 map units)
@@ -186,7 +186,7 @@ namespace AshAndEmber
                 // describes, so wipe the bandit-clan template fill first — otherwise
                 // the looter faction's default roster pads it with stray looters.
                 if (exactTroops)
-                    try { party.MemberRoster.Clear(); } catch { }
+                    try { party.MemberRoster.Clear(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Ashen parties march as their own thralls; ordinary bandit bands use
                 // looters. Each falls back through the vanilla bandit troops so the

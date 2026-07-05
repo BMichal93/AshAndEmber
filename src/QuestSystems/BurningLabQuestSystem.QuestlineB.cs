@@ -36,7 +36,7 @@ namespace AshAndEmber
                 $"The Burning Laboratory — the scrolls have been handed over to {factionName}. " +
                 "A sealed box, a payment, a handshake that meant different things to each party. " +
                 "They will read them. What happens next is their decision.");
-            try { _qbQuestLog = new BurningLabQBLog(); _qbQuestLog.StartQuest(); _qbQuestLog.LogStarted(factionName); } catch { }
+            try { _qbQuestLog = new BurningLabQBLog(); _qbQuestLog.StartQuest(); _qbQuestLog.LogStarted(factionName); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickQB()
@@ -85,7 +85,7 @@ namespace AshAndEmber
                     "and burned them. No announcement. No explanation. " +
                     "One of their scholars was seen leaving the court the following morning, carrying only a small pack. " +
                     "Nobody went looking for him.");
-                try { _qbQuestLog?.LogOutcomeDiscard(); _qbQuestLog?.CompleteFail(); } catch { }
+                try { _qbQuestLog?.LogOutcomeDiscard(); _qbQuestLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else if (roll == 1)
             {
@@ -113,7 +113,7 @@ namespace AshAndEmber
                     "The scholars who performed the rite did not come out. Their guards did not go in. " +
                     "Three days later the windows of the tower were dark, then lit by something that was not fire. " +
                     "The grey has found a foothold. It spreads from the inside.");
-                try { _qbQuestLog?.LogOutcomeBad(); } catch { }
+                try { _qbQuestLog?.LogOutcomeBad(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             else
             {
@@ -128,7 +128,7 @@ namespace AshAndEmber
                     "Their armies ride out heavier and stranger than they did before. " +
                     "The fire they found in those scrolls is in their soldiers now. " +
                     "Temporarily. Everything is temporary.");
-                try { _qbQuestLog?.LogOutcomeGood(); } catch { }
+                try { _qbQuestLog?.LogOutcomeGood(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -137,7 +137,7 @@ namespace AshAndEmber
             if (_qbSettlementQueue.Count == 0)
             {
                 Notify("The Burning Laboratory — the grey tide has consumed everything it was given. The faction is no more.");
-                try { _qbQuestLog?.LogBadComplete(); _qbQuestLog?.CompleteFail(); } catch { }
+                try { _qbQuestLog?.LogBadComplete(); _qbQuestLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _qbSubPhase = 9;
                 _phase      = PhaseEnded;
                 return;
@@ -174,7 +174,7 @@ namespace AshAndEmber
                     "The gates opened from the inside. " +
                     $"{_qbSettlementQueue.Count} settlement{(_qbSettlementQueue.Count != 1 ? "s" : "")} remain.");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickQBGoodPathWeekly()
@@ -183,7 +183,7 @@ namespace AshAndEmber
             Kingdom faction = GetKingdom(_qbFactionId);
             if (faction == null || faction.IsEliminated)
             {
-                try { _qbQuestLog?.CompleteFail(); } catch { }
+                try { _qbQuestLog?.CompleteFail(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _phase = PhaseEnded;
                 return;
             }
@@ -213,7 +213,7 @@ namespace AshAndEmber
                     party.MemberRoster.AddToCounts(tier4, QBGoodUnitCount);
                     armiesReinforced++;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             if (armiesReinforced > 0)

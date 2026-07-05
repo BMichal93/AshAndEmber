@@ -83,7 +83,7 @@ namespace AshAndEmber
                     if (days >= 3)
                     {
                         _ashenCaptiveDays.Remove(h.StringId);
-                        try { EndCaptivityAction.ApplyByEscape(h, null); } catch { }
+                        try { EndCaptivityAction.ApplyByEscape(h, null); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         InformationManager.DisplayMessage(new InformationMessage(
                             $"{h.Name} — the cold does not yield to chains. They walked out of captivity in the night.",
                             new Color(0.38f, 0.50f, 0.75f)));
@@ -97,11 +97,11 @@ namespace AshAndEmber
                 foreach (string id in _ashenCaptiveDays.Keys.ToList())
                 {
                     Hero h = null;
-                    try { h = Hero.AllAliveHeroes.FirstOrDefault(x => x.StringId == id); } catch { }
+                    try { h = Hero.AllAliveHeroes.FirstOrDefault(x => x.StringId == id); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (h == null || !h.IsPrisoner) _ashenCaptiveDays.Remove(id);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Mage overexertion → Ashen whisper ────────────────────────────────
@@ -124,7 +124,7 @@ namespace AshAndEmber
                         TryConvertMageToAshen(h, "could feel the cold at the edge of the fire");
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Ashen conversion helper ───────────────────────────────────────────
@@ -136,16 +136,16 @@ namespace AshAndEmber
                 && h.Clan.Kingdom.Clans.Count(c => c != null && !c.IsEliminated) < 2) return;
             try
             {
-                try { ColourLordRegistry.SetAshen(h, true); }              catch { }
-                try { AshenCitySystem.ApplyAshenPersonality(h); }          catch { }
-                try { ColourLordRegistry.SetMage(h, true); }               catch { }
-                try { AshenCitySystem.OnHeroSetAshen(h); }                 catch { }
-                try { MageKnowledge.ApplyAshenAppearance(h); }             catch { }
+                try { ColourLordRegistry.SetAshen(h, true); }              catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { AshenCitySystem.ApplyAshenPersonality(h); }          catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ColourLordRegistry.SetMage(h, true); }               catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { AshenCitySystem.OnHeroSetAshen(h); }                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { MageKnowledge.ApplyAshenAppearance(h); }             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"{h.Name} — {reason}. The fire did not answer. Something colder did.",
                     new Color(0.38f, 0.50f, 0.75f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private void ApplyNpcBattleAging(MapEvent mapEvent)
@@ -157,7 +157,7 @@ namespace AshAndEmber
                     mapEvent.AttackerSide.Parties.Any(p => p.Party == PartyBase.MainParty) ||
                     mapEvent.DefenderSide.Parties.Any(p => p.Party == PartyBase.MainParty);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Age all party leaders who cast spells during this battle.
             foreach (MapEventSide side in new[] { mapEvent.AttackerSide, mapEvent.DefenderSide })
@@ -191,10 +191,10 @@ namespace AshAndEmber
                                         new Color(0.5f, 0.4f, 0.7f)));
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Off-screen battles: ColourLordAI never ran, so _battleCasts is empty.
@@ -217,11 +217,11 @@ namespace AshAndEmber
                                 if (_rng.NextDouble() < 0.80)
                                     ColourLordRegistry.SpendLordLifeExpectancy(leader, 1 + _rng.Next(3));
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return;
             }
 
@@ -254,7 +254,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private void ApplyNpcBattleMoraleBonus(MapEvent mapEvent)
@@ -266,7 +266,7 @@ namespace AshAndEmber
                     mapEvent.AttackerSide.Parties.Any(p => p.Party == PartyBase.MainParty) ||
                     mapEvent.DefenderSide.Parties.Any(p => p.Party == PartyBase.MainParty);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (playerInvolved) return;
 
             foreach (MapEventSide side in new[] { mapEvent.AttackerSide, mapEvent.DefenderSide })
@@ -287,9 +287,9 @@ namespace AshAndEmber
                             if (meparty?.Party?.MobileParty != null)
                                 meparty.Party.MobileParty.RecentEventsMorale += 10f;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -302,7 +302,7 @@ namespace AshAndEmber
                     mapEvent.AttackerSide.Parties.Any(p => p.Party == PartyBase.MainParty) ||
                     mapEvent.DefenderSide.Parties.Any(p => p.Party == PartyBase.MainParty);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (playerInvolved) return;
 
             // Count magic users on each side
@@ -346,7 +346,7 @@ namespace AshAndEmber
                         count++;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return count;
         }
 
@@ -390,7 +390,7 @@ namespace AshAndEmber
                         return true;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 
@@ -424,11 +424,11 @@ namespace AshAndEmber
 
                         if (delta != 0)
                             try { roster.AddToCounts(entry.Character, 0, false, delta); }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

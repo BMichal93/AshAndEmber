@@ -171,7 +171,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 
@@ -192,7 +192,7 @@ namespace AshAndEmber
                 string id = (a.Character as TaleWorlds.CampaignSystem.CharacterObject)?.StringId;
                 if (id != null && _titles.TryGetValue(id, out string title)) return title;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return "Rogue Mage";
         }
 
@@ -288,7 +288,7 @@ namespace AshAndEmber
                     }
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

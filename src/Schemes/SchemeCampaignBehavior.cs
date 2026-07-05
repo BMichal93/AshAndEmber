@@ -41,7 +41,7 @@ namespace AshAndEmber
 
         public override void SyncData(IDataStore store)
         {
-            try { SchemeSystem.Save(store); } catch { }
+            try { SchemeSystem.Save(store); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

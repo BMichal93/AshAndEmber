@@ -56,11 +56,11 @@ namespace AshAndEmber
 
                 if (hero == Hero.MainHero)
                 {
-                    try { CheckAgingMilestone(hero); } catch { }
-                    try { FlushPendingMilestone(); } catch { }
+                    try { CheckAgingMilestone(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { FlushPendingMilestone(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Legacy stub; clear any per-mission knockdown state
@@ -81,7 +81,7 @@ namespace AshAndEmber
             // (PureLogicTests cannot load Hero) and the AgingSystem purity convention.
             float age = 0f;
             try { if (Hero.MainHero != null) age = (float)Hero.MainHero.Age; }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return ComputeBattleAgingCost(totalInputs, hasBattleMageTalent, age);
         }
 
@@ -139,14 +139,14 @@ namespace AshAndEmber
 
                 // Hard floor: float math in the clamp above can drift. Snap back if needed.
                 if ((float)hero.Age < MinAge)
-                    try { hero.SetBirthDay(hero.BirthDay - CampaignTime.Days((int)((MinAge - (float)hero.Age) * 84f) + 1)); } catch { }
+                    try { hero.SetBirthDay(hero.BirthDay - CampaignTime.Days((int)((MinAge - (float)hero.Age) * 84f) + 1)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (hero == Hero.MainHero)
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"The fire gives back — {days} day{(days > 1 ? "s" : "")} younger. Age: {(int)hero.Age}.",
                         new Color(0.9f, 0.6f, 0.3f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Life expectancy (spellcasting cost) ───────────────────────────────
@@ -175,7 +175,7 @@ namespace AshAndEmber
                     new Color(0.7f, 0.5f, 0.3f)));
                 CheckAgeLimit(hero);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         /// Give back life expectancy (Blood, and other life-restoring rites).
@@ -191,7 +191,7 @@ namespace AshAndEmber
                     $"You may yet see {(int)PlayerDeathAge}.",
                     new Color(0.9f, 0.6f, 0.3f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Death at the fire's end ───────────────────────────────────────────
@@ -235,7 +235,7 @@ namespace AshAndEmber
                     new Color(0.6f, 0.5f, 0.35f)));
                 KillCharacterAction.ApplyByOldAge(hero, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         /// <summary>Called on daily tick to check all mage lords for age 100.</summary>
@@ -250,11 +250,11 @@ namespace AshAndEmber
                 if (Hero.MainHero != null && MageKnowledge.IsMage)
                 {
                     CheckAgeLimit(Hero.MainHero);
-                    try { CheckAgingMilestone(Hero.MainHero); } catch { }
-                    try { FlushPendingMilestone(); } catch { }
+                    try { CheckAgingMilestone(Hero.MainHero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { FlushPendingMilestone(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Aging milestones ──────────────────────────────────────────────────
@@ -281,7 +281,7 @@ namespace AshAndEmber
         public static void FlushPendingMilestone()
         {
             if (_pendingMilestoneAge <= 0) return;
-            try { if (Mission.Current != null) return; } catch { }
+            try { if (Mission.Current != null) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (MageKnowledge._deferredInquiry != null) return;
 
             int milestone = _pendingMilestoneAge;
@@ -335,10 +335,10 @@ namespace AshAndEmber
                             button, null,
                             () => { }, null));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── The Ledger of Years ───────────────────────────────────────────────
@@ -395,7 +395,7 @@ namespace AshAndEmber
                     };
                     lines.Append(coldNote);
                 }
-                try { lines.Append(TempleCovenant.LedgerLine()); } catch { }
+                try { lines.Append(TempleCovenant.LedgerLine()); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 lines.Append("\n");
                 return lines.ToString();
             }

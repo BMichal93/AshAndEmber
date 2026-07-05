@@ -54,10 +54,10 @@ namespace AshAndEmber
                         if (party.RecentEventsMorale < WarFeverMoraleFloor)
                             party.RecentEventsMorale = WarFeverMoraleFloor;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Spoils of the Raid — bonus gold on successful village raids ────────
@@ -78,7 +78,7 @@ namespace AshAndEmber
             int bonusGold  = 50 + (partySize / 5) * 5; // 50–(partySize/5)*5, roughly 50-150
             if (bonusGold > 150) bonusGold = 150;
 
-            try { Hero.MainHero?.ChangeHeroGold(bonusGold); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(bonusGold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _raidCooldown = 3; // slight cooldown so back-to-back raids don't stack wildly
 
             InformationManager.DisplayMessage(new InformationMessage(

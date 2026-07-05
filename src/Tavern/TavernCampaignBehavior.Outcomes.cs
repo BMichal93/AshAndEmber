@@ -33,18 +33,18 @@ namespace AshAndEmber
                 return;
             }
 
-            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _roundsDrunk++;
             _totalSpent += cost;
             _lastDrinkCost = cost;
 
             // Holding your drink is its own slow conditioning — a trickle of
             // Athletics XP per round, a touch more for the stronger stuff.
-            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Athletics, 3f + tier); } catch { }
+            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Athletics, 3f + tier); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Athletics check — harder with each round consumed
             int athletics = 0;
-            try { athletics = Hero.MainHero?.GetSkillValue(DefaultSkills.Athletics) ?? 0; } catch { }
+            try { athletics = Hero.MainHero?.GetSkillValue(DefaultSkills.Athletics) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             float drunkPenalty = (_roundsDrunk - 1) * 0.09f;
             float tierBonus    = (tier - 1) * 0.10f;
@@ -78,7 +78,7 @@ namespace AshAndEmber
                     $"Round {_roundsDrunk}. {resultText}");
                 GameMenu.SwitchToMenu("ldm_tavern_result");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void BeginPassOut()
@@ -86,7 +86,7 @@ namespace AshAndEmber
             try
             {
                 // Give athletics XP for making it this far
-                try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Athletics, 80f); } catch { }
+                try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Athletics, 80f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 _soberHoursTotal   = 4f + _rng.Next(5); // 4-8 hours
                 _soberHoursElapsed = 0f;
@@ -94,7 +94,7 @@ namespace AshAndEmber
                 AddMorale(-2f);
                 GameMenu.SwitchToMenu("ldm_tavern_sober_up");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Good outcomes ─────────────────────────────────────────────────────
@@ -197,12 +197,12 @@ namespace AshAndEmber
                 CharacterObject troop = GetRecruitOfTier(tier);
                 if (troop != null)
                 {
-                    try { MobileParty.MainParty.MemberRoster.AddToCounts(troop, 1); } catch { }
+                    try { MobileParty.MainParty.MemberRoster.AddToCounts(troop, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     return $"A {troop.Name} slumped in the corner straightens when your coin hits the table. " +
                            $"\"You hiring?\" You are. They follow you out. (+1 {troop.Name})";
                 }
                 // Fallback if no troop found
-                try { Hero.MainHero?.ChangeHeroGold(30); } catch { }
+                try { Hero.MainHero?.ChangeHeroGold(30); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return "A soldier in the corner offers steady eyes and a steady hand in exchange for a place at your fire. " +
                        "They accept the coin instead when the roster is full. (+30 denars)";
             }
@@ -232,7 +232,7 @@ namespace AshAndEmber
                 if (Hero.MainHero?.Clan != null)
                     Hero.MainHero.Clan.Influence += influence;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             return gossips[_rng.Next(gossips.Length)] + $" (+{(int)influence} influence)";
         }
@@ -243,7 +243,7 @@ namespace AshAndEmber
             int gold = tier == 1 ?  50 + _rng.Next(76)    //  50-125g
                      : tier == 2 ? 200 + _rng.Next(201)   // 200-400g
                                  : 600 + _rng.Next(601);  // 600-1200g
-            try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(gold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return $"A merchant is grateful for your company — or perhaps just drunk enough to be generous. " +
                    $"He presses a purse into your hand before his friends drag him off. (+{gold} denars)";
         }
@@ -262,7 +262,7 @@ namespace AshAndEmber
                            $"You part better than you arrived. (Relation with {lord.Name}: +{bonus})";
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return "A lord's steward buys you a cup — which means the lord noticed you, and found it worth noting. The gesture costs nothing and means something.";
         }
 
@@ -271,7 +271,7 @@ namespace AshAndEmber
             int gold = tier == 1 ?  20 + _rng.Next(41)   //  20-60g
                      : tier == 2 ?  80 + _rng.Next(121)  //  80-200g
                                  : 250 + _rng.Next(251); // 250-500g
-            try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(gold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return $"You find a fat little purse wedged between the bench and the wall. " +
                    $"You wait. Nobody comes back for it. You reason that whoever lost it has had worse nights than you. (+{gold} denars)";
         }
@@ -297,7 +297,7 @@ namespace AshAndEmber
             if (cheated)
             {
                 int lost = Math.Min(bet, Hero.MainHero?.Gold ?? 0);
-                if (lost > 0) try { Hero.MainHero?.ChangeHeroGold(-lost); } catch { }
+                if (lost > 0) try { Hero.MainHero?.ChangeHeroGold(-lost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 string[] lines =
                 {
                     $"You roll well. They roll better. Something about the way the dice land doesn't sit right — but the coin is gone before you can place it. (-{lost} denars)",
@@ -308,7 +308,7 @@ namespace AshAndEmber
             }
             else if (playerRoll > opponentRoll)
             {
-                try { Hero.MainHero?.ChangeHeroGold(bet); } catch { }
+                try { Hero.MainHero?.ChangeHeroGold(bet); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 string[] lines =
                 {
                     $"You roll {playerRoll}. They roll {opponentRoll}. The cup lifts. The table sighs. You collect. (+{bet} denars)",
@@ -320,7 +320,7 @@ namespace AshAndEmber
             else
             {
                 int lost = Math.Min(bet, Hero.MainHero?.Gold ?? 0);
-                if (lost > 0) try { Hero.MainHero?.ChangeHeroGold(-lost); } catch { }
+                if (lost > 0) try { Hero.MainHero?.ChangeHeroGold(-lost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 string[] lines =
                 {
                     $"You roll {playerRoll}. They roll {opponentRoll}. The felt pulls the coin toward them. You sit with it a moment. (-{lost} denars)",
@@ -335,7 +335,7 @@ namespace AshAndEmber
                 MBTextManager.SetTextVariable("TAVERN_RESULT_TEXT", resultText);
                 GameMenu.SwitchToMenu("ldm_tavern_result");
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Dice game as a drinking outcome (random windfall) ─────────────────
@@ -344,7 +344,7 @@ namespace AshAndEmber
             int gold = tier == 1 ?  30 + _rng.Next(51)    //  30-80g
                      : tier == 2 ? 100 + _rng.Next(151)   // 100-250g
                                  : 300 + _rng.Next(401);  // 300-700g
-            try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(gold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             string[] lines =
             {
                 $"A circle of dice-rollers scoots over to make room. The bones roll true all night. (+{gold} denars)",
@@ -357,7 +357,7 @@ namespace AshAndEmber
         private static string OutcomeOldVeteran()
         {
             int xp = 60 + _rng.Next(41); // 60-100
-            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Tactics, xp); } catch { }
+            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(DefaultSkills.Tactics, xp); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             string[] lines =
             {
                 $"A veteran with a scar across his chin and nothing left to prove talks to you for an hour. " +
@@ -375,7 +375,7 @@ namespace AshAndEmber
             int gold = tier == 1 ?  50 + _rng.Next(51)    //  50-100g
                      : tier == 2 ? 150 + _rng.Next(201)   // 150-350g
                                  : 400 + _rng.Next(501);  // 400-900g
-            try { Hero.MainHero?.ChangeHeroGold(gold); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(gold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             string[] lines =
             {
                 $"A drunk merchant produces a rolled paper and calls it a treasure map. You buy it for almost nothing. " +
@@ -396,7 +396,7 @@ namespace AshAndEmber
                      : tier == 2 ?  30 + _rng.Next(91)    //  30-120g
                                  : 100 + _rng.Next(201);  // 100-300g
             gold = Math.Min(gold, Hero.MainHero?.Gold ?? 0);
-            if (gold > 0) try { Hero.MainHero?.ChangeHeroGold(-gold); } catch { }
+            if (gold > 0) try { Hero.MainHero?.ChangeHeroGold(-gold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             AddMorale(-2f);
             string[] lines =
             {
@@ -418,7 +418,7 @@ namespace AshAndEmber
                 if (Hero.MainHero?.Clan != null && Hero.MainHero.Clan.Influence >= influence)
                     Hero.MainHero.Clan.Influence -= influence;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             string[] lines =
             {
                 $"The drink loosens your tongue and you say something about a lord that should have stayed in your head. " +
@@ -445,7 +445,7 @@ namespace AshAndEmber
                            $"(Relation with {notable.Name}: -1)";
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ChangeRelWithRandomHero(-1);
             return "You say the wrong thing to the wrong person. They leave without a word. " +
                    "You suspect this will be remembered. (Relation: -1)";
@@ -464,7 +464,7 @@ namespace AshAndEmber
                     ChangeCrime(5f);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             string[] lines =
             {
                 "A man takes exception to your elbow. Then your face. You give back what you can. " +
@@ -498,7 +498,7 @@ namespace AshAndEmber
                            $"(Relation with {lord.Name}: -2)";
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return "Someone important witnesses something they should not have. The look they give you will not be forgotten.";
         }
 
@@ -535,10 +535,10 @@ namespace AshAndEmber
                             "They will let you out when they feel like it.");
                         GameMenu.SwitchToMenu("ldm_tavern_sober_up");
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return "The watch arrives. You are not in a position to argue. " +
                    "The cell is cold and the night is long. (+15 crime — you will be held until morning)";
         }

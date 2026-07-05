@@ -62,7 +62,7 @@ namespace AshAndEmber
         {
             if (_companionCooldown > 0) return;
             if (_rng.Next(100) >= 25)   return;
-            try { FireCompanionRemark(s); } catch { }
+            try { FireCompanionRemark(s); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Relation tier ─────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ namespace AshAndEmber
         private static RelationTier GetRelationTier(Hero companion)
         {
             int rel = 0;
-            try { rel = (int)companion.GetRelationWithPlayer(); } catch { }
+            try { rel = (int)companion.GetRelationWithPlayer(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (rel <= -50) return RelationTier.VeryNegative;
             if (rel <= -10) return RelationTier.Negative;
             if (rel <=   9) return RelationTier.Neutral;
@@ -102,7 +102,7 @@ namespace AshAndEmber
 
                 ShowQuick(line);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static string GetGeneralVignette()
@@ -207,7 +207,7 @@ namespace AshAndEmber
                 bool ashenActive = false;
                 try { ashenActive = Campaign.Current != null &&
                                     Settlement.All.Any(st => st.IsTown && st.MapFaction?.StringId == "ashen_kingdom"); }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 bool nearWar = false;
                 try
@@ -215,7 +215,7 @@ namespace AshAndEmber
                     if (s?.MapFaction is Kingdom pk)
                         nearWar = Kingdom.All.Any(k => !k.IsEliminated && k != pk && pk.IsAtWarWith(k));
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (valor       >= 1) return PickValor(s, ashenActive, nearWar, agingPlayer, rel);
                 if (mercy       >= 1) return PickMercy(s, ashenActive, rel);
@@ -676,7 +676,7 @@ namespace AshAndEmber
         private static void ShowQuick(string text)
         {
             try { MBInformationManager.AddQuickInformation(new TextObject(text)); }
-            catch { try { InformationManager.DisplayMessage(new InformationMessage(text, _dim)); } catch { } }
+            catch { try { InformationManager.DisplayMessage(new InformationMessage(text, _dim)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
         }
     }
 }

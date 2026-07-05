@@ -49,7 +49,7 @@ namespace AshAndEmber
                     if (s != null) target = s.Name?.ToString() ?? target;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             string msg = hardBlock
                 ? $"Contacts reset — the path to {target} is open again. Assassination may be attempted."
@@ -133,7 +133,7 @@ namespace AshAndEmber
                         if (hs == null) hs = Settlement.All.FirstOrDefault(s => s?.Hideout != null);
                         hideout = hs?.Hideout;
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (hideout == null) continue;
 
                     const float scatter = 5f;
@@ -150,7 +150,7 @@ namespace AshAndEmber
                     party.MemberRoster.AddToCounts(troop, troops);
                     spawned++;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             return spawned;
         }

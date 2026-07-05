@@ -91,7 +91,7 @@ namespace AshAndEmber
                     foreach (var id in ids) _consortIds.Add(id);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try
             {
                 var settled = _processedSettlements.ToList();
@@ -102,43 +102,43 @@ namespace AshAndEmber
                     foreach (var id in settled) _processedSettlements.Add(id);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("TRIBES_InitialRecorded", ref _initialSettlementsRecorded); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("TRIBES_LastFreeRecruitDay", ref _lastFreeRecruitDay); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Session launch ─────────────────────────────────────────────────────
         private static void OnSessionLaunched(CampaignGameStarter starter)
         {
             _recruitCooldowns.Clear();
-            try { SetupGodKing();        } catch { }
-            try { EnforceDivineRule();   } catch { }
-            try { RegisterMenus(starter); } catch { }
+            try { SetupGodKing();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { EnforceDivineRule();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RegisterMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Daily tick ─────────────────────────────────────────────────────────
         private static void OnDailyTick()
         {
-            try { CheckGodKingCapture(); } catch { }
+            try { CheckGodKingCapture(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Weekly tick ────────────────────────────────────────────────────────
         private static void OnWeeklyTick()
         {
-            try { SetupGodKing();             } catch { }
-            try { EnforceDivineRule();        } catch { }
-            try { MaintainGodKingInfluence(); } catch { }
-            try { CapLordInfluence();         } catch { }
-            try { CheckConquestWives();       } catch { }
+            try { SetupGodKing();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { EnforceDivineRule();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MaintainGodKingInfluence(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CapLordInfluence();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CheckConquestWives();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Hero killed — God-King succession ─────────────────────────────────
         private static void OnHeroKilled(Hero victim, Hero killer,
             KillCharacterAction.KillCharacterActionDetail detail, bool showNotification)
         {
-            try { EnforceGodKingSuccession(victim); } catch { }
+            try { EnforceGodKingSuccession(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── No Quarter ────────────────────────────────────────────────────────
@@ -160,14 +160,14 @@ namespace AshAndEmber
                 if ((other  as Kingdom)?.IsEliminated == true) return;
 
                 // Re-declare war immediately — the God-King does not parley.
-                try { DeclareWarAction.ApplyByDefault(tribes, other); } catch { }
+                try { DeclareWarAction.ApplyByDefault(tribes, other); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (TribalCulture.IsPlayerTribal)
                     InformationManager.DisplayMessage(new InformationMessage(
                         "No Quarter — the God-King's word burns through any treaty. The war endures.",
                         new Color(0.85f, 0.35f, 0.15f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Self-Immolation — God-King dies rather than be taken prisoner ────────
@@ -184,13 +184,13 @@ namespace AshAndEmber
                 var godKing = khuzait.Leader;
                 if (godKing == null || !godKing.IsAlive || !godKing.IsPrisoner) return;
 
-                try { KillCharacterAction.ApplyByMurder(godKing, null, false); } catch { }
+                try { KillCharacterAction.ApplyByMurder(godKing, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 InformationManager.DisplayMessage(new InformationMessage(
                     "The God-King would not kneel. He set himself ablaze before his captors could savour the victory.",
                     new Color(0.85f, 0.35f, 0.15f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Blood Succession — oldest son inherits the divine fire ────────────
@@ -225,13 +225,13 @@ namespace AshAndEmber
 
                 if (heir == null) return;
 
-                try { ChangeClanLeaderAction.ApplyWithSelectedNewLeader(rulingClan, heir); } catch { }
+                try { ChangeClanLeaderAction.ApplyWithSelectedNewLeader(rulingClan, heir); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"The God-King is dead. His heir {heir.Name} rises — the divine fire passes to new hands.",
                     new Color(0.85f, 0.45f, 0.2f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Wives of conquest ──────────────────────────────────────────────────
@@ -261,7 +261,7 @@ namespace AshAndEmber
                     AcquireConsort(town);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── God-King setup ─────────────────────────────────────────────────────
@@ -288,14 +288,14 @@ namespace AshAndEmber
                     if (godKing.GetTraitLevel(DefaultTraits.Honor) > -1)
                         godKing.SetTraitLevel(DefaultTraits.Honor, -2);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Seed dark gifts (uses the evil-lord path: DreadPresence + BloodPact
                 // are the most thematically appropriate).
                 try { DarkGiftSystem.SeedNpcGifts(godKing, isAshenLord: false, isEvilLord: true); }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Divine Rule — represented through influence dominance ─────────────
@@ -316,7 +316,7 @@ namespace AshAndEmber
                 if (ruling.Influence < GodKingInfluenceMin)
                     ruling.Influence = GodKingInfluenceMin;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CapLordInfluence()
@@ -336,7 +336,7 @@ namespace AshAndEmber
                         clan.Influence = LordInfluenceCap;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Consort acquisition ────────────────────────────────────────────────
@@ -369,7 +369,7 @@ namespace AshAndEmber
                     $"A woman of {capturedTown.Name} is claimed for the God-King's household. His dominion grows.",
                     new Color(0.85f, 0.45f, 0.2f)));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Free tribal recruitment menu ───────────────────────────────────────
@@ -402,7 +402,7 @@ namespace AshAndEmber
                             MBTextManager.SetTextVariable("TRIBAL_RECRUIT_TEXT",
                                 "Call to the Tribes" + status);
 
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             args.IsEnabled = !onCooldown;
                             return true;
                         }
@@ -429,11 +429,11 @@ namespace AshAndEmber
                             _recruitCooldowns[s.StringId] = (int)CampaignTime.Now.ToDays;
                             _lastFreeRecruitDay           = (int)CampaignTime.Now.ToDays;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

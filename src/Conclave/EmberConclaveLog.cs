@@ -31,8 +31,8 @@ namespace AshAndEmber
             AddLog(new TextObject("The task is complete. The Conclave has taken note."));
         internal void LogFailed(string reason) =>
             AddLog(new TextObject($"The task went unfinished. {reason}"));
-        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch { } }
-        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch { } }
+        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
+        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
     }
 
     // ── Main arc log ───────────────────────────────────────────────────────────
@@ -131,8 +131,8 @@ namespace AshAndEmber
                 "Their records survive them — the full design is readable now. " +
                 "What they planned to control would have consumed them regardless."));
 
-        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch { } }
-        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch { } }
+        internal void CompleteSuccess() { try { CompleteQuestWithSuccess(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
+        internal void CompleteFail()    { try { CompleteQuestWithFail();    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
     }
 
     // ── Mission: The First Binding (eliminate a lord) ──────────────────────────

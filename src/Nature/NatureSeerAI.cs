@@ -112,12 +112,12 @@ namespace AshAndEmber
                             NatureBacklash.ApplyBattle(agent, announce: false);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 SpellEffects.FlashFocusAura(agent, ColorSchool.Nature);
                 NatureEffects.ExecuteNpc(power, agent, agent.Team);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void CacheBattleElements()
@@ -138,7 +138,7 @@ namespace AshAndEmber
                         ?.GetTerrainTypeAtPosition(pos);
                     if (terrain.HasValue) terrainName = terrain.Value.ToString();
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _battleElements = NatureMath.TerrainElements(terrainName);
             }
             catch { _battleElements = new[] { NatureElement.Wind }; }
@@ -157,7 +157,7 @@ namespace AshAndEmber
                     if (jitter > 0f) _cooldowns[h.StringId] = jitter;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ResetCooldown(string heroId)

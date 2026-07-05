@@ -95,8 +95,8 @@ namespace AshAndEmber
             node.LightEntity = SpawnAreaLightRaw(pos + new Vec3(0f, 0f, 0.4f),
                                                  new Vec3(0.42f, 0.32f, 0.18f), 5f);
             _areaEffects.Add(node);
-            try { SpawnNatureBurst(pos, NatureElement.Water, 1.2f); } catch { }
-            try { SpawnNatureBurst(pos, NatureElement.Earth, 1.2f); } catch { }
+            try { SpawnNatureBurst(pos, NatureElement.Water, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnNatureBurst(pos, NatureElement.Earth, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Called from ExecuteBurstFromAgent (when RestoreCount > 0 and player is caster) —
@@ -148,9 +148,9 @@ namespace AshAndEmber
             _barrierSnapshotTime  = -1f;
             foreach (var e in _areaEffects)
             {
-                try { e.LightEntity?.Remove(0); } catch { }
-                try { e.LightEntity2?.Remove(0); } catch { }
-                try { e.LightEntity3?.Remove(0); } catch { }
+                try { e.LightEntity?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { e.LightEntity2?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { e.LightEntity3?.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             foreach (var kvp in _haltedAgents)
             {
@@ -160,12 +160,12 @@ namespace AshAndEmber
                     if (agent?.IsActive() == true && agent.Health > 0f)
                     {
                         bool usingEquip = false;
-                        try { usingEquip = agent.IsUsingGameObject; } catch { }
+                        try { usingEquip = agent.IsUsingGameObject; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         if (!usingEquip)
                             agent.SetMaximumSpeedLimit(10f, false);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             _areaEffects.Clear();
             _haltedAgents.Clear();

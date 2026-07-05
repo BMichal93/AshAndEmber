@@ -2,6 +2,30 @@
 
 ---
 
+## v0.39.0
+
+### The Kindled — elemental beings walk the world
+Where raw magic pools too thick and too long, the land wakes it into a body. **The Kindled** are elemental beings — fire, water, stone, ice, sand and storm given a shape that fights — and they now appear four ways, all built through one shared core so they look and fight the same however they were called:
+- **Roaming the remote wilds.** Small bands wander the far country, each shaped by its land: **Frost-Born** in the northern snows, **Sand-Born** in the deep desert, **the Risen Tide** in the old forests and wetlands, **the Gathered Storm** on the open steppe, **Stone-Born** in the mountain roots. March on one and its bodies wake into elementals for the fight.
+- **Summoned against you.** An enemy mage's **Spirit Unbinding** already calls a champion of the land — it is simply a Kindled, and now shares the same aura and weakness as all the rest.
+- **Waking mid-battle.** A new rare battlefield working, **The Kindling**, lets the ground itself wake a few elementals and take a side.
+- **At your side.** The player's own Spirit Unbinding champion is unified into the same system.
+
+**A living coat.** Each Kindled is wreathed in its element — fire, water, driven snow, storm or churned earth clinging to it as it moves — with a body-hugging glow to match.
+
+**Aggressive by nature.** A being of pooled magic hunts; it never stands and waits. Enemy Kindled advance with their line and are re-roused if their charge lapses, so they close and fight rather than idling.
+
+### Elemental weakness — the old myths were right
+The Kindled **drink their own element and buckle to the one that unmakes them**:
+- **The wheel:** fire is drowned by water, water is drunk by earth, earth is worn by wind, wind is burned by fire. **Ice fears fire above all.** A being shrugs off magic of its own element and takes far more from its counter.
+- **Steel tells too:** **stone and ice shatter under blunt force** but turn a blade; **flame, tide and storm** let weapons pass half-harmless through them and must be unmade with magic instead.
+
+### Balance — the Spirit Unbinding costs more
+The Spirit Unbinding does not spend itself — it leaves a **living champion** fighting for a full minute, worth several men. That standing power now costs **more days of life** than a one-moment nova or gale (Nature still halves it; the Ashen still pay in criminal standing).
+
+### Notes
+- Fully backward compatible: all Kindled state is mission-scoped (cleared with the rest of battle state) except the roaming-band roster, which is persisted under new `ELEM_*` save keys and prunes itself. Old saves load untouched.
+
 ## v0.38.5
 
 ### Lapidary talents — the two dead ones repurposed

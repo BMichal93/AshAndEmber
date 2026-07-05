@@ -33,7 +33,7 @@ namespace AshAndEmber
             {
                 if (s == null || !s.IsTown) continue;
                 string name = null;
-                try { name = s.Name?.ToString(); } catch { }
+                try { name = s.Name?.ToString(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (string.IsNullOrEmpty(name)) continue;
                 if (PortTownNames.Any(p => string.Equals(p, name.Trim(), StringComparison.OrdinalIgnoreCase)))
                     _ports.Add(s);
@@ -46,7 +46,7 @@ namespace AshAndEmber
             foreach (var s in Settlement.All)
             {
                 if (s == null || !s.IsTown) continue;
-                try { if (s.HasPort) _ports.Add(s); } catch { }
+                try { if (s.HasPort) _ports.Add(s); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -80,10 +80,10 @@ namespace AshAndEmber
                     tierSum += healthy * e.Character.Tier;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             float avgTier = troops > 0 ? tierSum / troops : 0f;
             int tactics = 0;
-            try { tactics = party.LeaderHero?.GetSkillValue(DefaultSkills.Tactics) ?? 0; } catch { }
+            try { tactics = party.LeaderHero?.GetSkillValue(DefaultSkills.Tactics) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return SeaMath.FleetStrength(troops, avgTier, tactics, searTheTide);
         }
 
@@ -117,16 +117,16 @@ namespace AshAndEmber
                     int w = Math.Min(healthy, toWound);
                     if (w > 0)
                     {
-                        try { roster.AddToCounts(e.Character, 0, false, w); toWound -= w; affected += w; healthy -= w; } catch { }
+                        try { roster.AddToCounts(e.Character, 0, false, w); toWound -= w; affected += w; healthy -= w; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                     int k = Math.Min(healthy, toKill);
                     if (k > 0)
                     {
-                        try { roster.AddToCounts(e.Character, -k); toKill -= k; affected += k; } catch { }
+                        try { roster.AddToCounts(e.Character, -k); toKill -= k; affected += k; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return affected;
         }
     }

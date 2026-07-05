@@ -27,7 +27,7 @@ namespace AshAndEmber
         private void OnDailyTick()
         {
             if (Campaign.Current == null) return;
-            try { TickAllOrders(); } catch { }
+            try { TickAllOrders(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Hero killed ───────────────────────────────────────────────────────
@@ -53,10 +53,10 @@ namespace AshAndEmber
 
                         RemoveOrderAt(i);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Order processing ──────────────────────────────────────────────────
@@ -65,7 +65,7 @@ namespace AshAndEmber
             // Loyalty is judged against the player's Leadership once per day: a poorly
             // led commander cannot keep distant captains to a task they never chose.
             int leadership = 0;
-            try { leadership = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0; } catch { }
+            try { leadership = Hero.MainHero?.GetSkillValue(DefaultSkills.Leadership) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             int abandonPct = ClanOrdersMath.DailyAbandonChance(leadership);
 
             for (int i = _orderPartyIds.Count - 1; i >= 0; i--)
@@ -88,7 +88,7 @@ namespace AshAndEmber
                             MBInformationManager.AddQuickInformation(new TextObject(
                                 $"{leader} has abandoned your orders and returns to their own counsel."));
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         RemoveOrderAt(i);
                         continue;
                     }
@@ -100,7 +100,7 @@ namespace AshAndEmber
                     if (_orderTypes[i] == "travel") TickTravel(i, party, _orderTargetIds[i]);
                     else if (_orderTypes[i] == "hunt") TickHunt(i, party, _orderTargetIds[i]);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -139,13 +139,13 @@ namespace AshAndEmber
                                 ?? target?.PartyBelongedTo?.CurrentSettlement
                                 ?? target?.HomeSettlement;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
 
                     if (dest != null)
-                        try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                        try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -167,9 +167,9 @@ namespace AshAndEmber
                 }
 
                 // Re-apply movement each day to keep the party on course.
-                try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Hunt ──────────────────────────────────────────────────────────────
@@ -195,10 +195,10 @@ namespace AshAndEmber
                         ?? targetParty?.CurrentSettlement
                         ?? target.HomeSettlement;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (dest != null)
-                    try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                    try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // If already at war, natural map combat handles the engagement — nothing extra needed.
                 bool atWar = false;
@@ -207,18 +207,18 @@ namespace AshAndEmber
                     atWar = party.MapFaction != null && targetParty?.MapFaction != null
                          && FactionManager.IsAtWarAgainstFaction(party.MapFaction, targetParty.MapFaction);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (atWar || targetParty == null) return;
 
                 // Not at war: check proximity for abstract assassination.
                 float distSq = float.MaxValue;
-                try { distSq = (party.GetPosition2D - targetParty.GetPosition2D).LengthSquared; } catch { }
+                try { distSq = (party.GetPosition2D - targetParty.GetPosition2D).LengthSquared; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (distSq <= HuntEngageRange * HuntEngageRange)
                     TryQueueAssassination(party, target);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Abstract assassination inquiry ────────────────────────────────────
@@ -232,8 +232,8 @@ namespace AshAndEmber
 
                 float orderedStr = 0f;
                 float targetStr  = 0f;
-                try { orderedStr = party?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
-                try { targetStr  = target.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
+                try { orderedStr = party?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { targetStr  = target.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 float ratio      = orderedStr > 0f ? orderedStr / Math.Max(1f, targetStr) : 0.5f;
                 int   successPct = (int)Math.Min(85f, Math.Max(10f, ratio * 65f));
@@ -262,14 +262,14 @@ namespace AshAndEmber
                                     MBInformationManager.AddQuickInformation(new TextObject(
                                         $"{leaderName} withdraws into shadow. The hunt continues."));
                                 }
-                                catch { }
+                                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }),
                         true);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ResolveAssassination(string partyId, string targetId, int successPct)
@@ -293,7 +293,7 @@ namespace AshAndEmber
                     if (party != null) ApplyCasualties(party, 0.15f);
                     // OnHeroKilled fires from within ApplyByMurder and handles the
                     // notification + order cleanup — no extra message needed here.
-                    try { KillCharacterAction.ApplyByMurder(target, party?.LeaderHero, false); } catch { }
+                    try { KillCharacterAction.ApplyByMurder(target, party?.LeaderHero, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 else
                 {
@@ -305,14 +305,14 @@ namespace AshAndEmber
                         var rally = Hero.MainHero?.HomeSettlement
                                  ?? Hero.MainHero?.Clan?.Settlements.FirstOrDefault();
                         if (rally != null)
-                            try { party.SetMoveGoToSettlement(rally, MobileParty.NavigationType.Default, false); } catch { }
+                            try { party.SetMoveGoToSettlement(rally, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
 
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"{leader} failed — {target.Name} escaped. Your men took losses and are falling back."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Casualties helper ─────────────────────────────────────────────────
@@ -331,10 +331,10 @@ namespace AshAndEmber
                         if (casualties > 0)
                             roster.AddToCounts(e.Character, -casualties);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

@@ -43,7 +43,7 @@ namespace AshAndEmber
                     case MagicElement.Spirit: NpcFarsight(caster);       blurb = isAshen ? "casts the Void's Sight — power flows to them."                : "casts Farsight — power flows to them."; break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (blurb != null)
             {
@@ -67,7 +67,7 @@ namespace AshAndEmber
                     if (troops.Count > 0)
                     {
                         var entry = troops[_rng.Next(troops.Count)];
-                        try { party.MemberRoster.AddToCounts(entry.Character, 0, false, 1); } catch { }
+                        try { party.MemberRoster.AddToCounts(entry.Character, 0, false, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return;
                     }
                 }
@@ -79,7 +79,7 @@ namespace AshAndEmber
                 if (village != null)
                     village.Village.Hearth = Math.Max(10f, village.Village.Hearth * 0.97f);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Wind — Scattering Gale: an enemy host near the caster is thrown into disorder.
@@ -99,7 +99,7 @@ namespace AshAndEmber
             var targetHero = target.LeaderHero;
             if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
             {
-                try { ColourLordRegistry.SpendLordLifeExpectancy(targetHero, 1); } catch { }
+                try { ColourLordRegistry.SpendLordLifeExpectancy(targetHero, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 string casterName = caster.Name?.ToString() ?? "A mage";
                 string targetName = targetHero.Name?.ToString() ?? "another mage";
                 InformationManager.DisplayMessage(new InformationMessage(
@@ -121,10 +121,10 @@ namespace AshAndEmber
                 foreach (var entry in wounded)
                 {
                     int heal = Math.Min(entry.WoundedNumber, 6);
-                    try { roster.AddToCounts(entry.Character, 0, false, -heal); } catch { }
+                    try { roster.AddToCounts(entry.Character, 0, false, -heal); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Earth — Deeproot Blight: an enemy village's hearth withers.
@@ -150,13 +150,13 @@ namespace AshAndEmber
             var troops = target.MemberRoster.GetTroopRoster()
                 .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
             if (troops.Count == 0) return;
-            try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch { }
+            try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Mage-to-mage interference: crossing a fellow mage lord's fire costs both.
             var targetHero = target.LeaderHero;
             if (targetHero != null && ColourLordRegistry.IsColourLord(targetHero))
             {
-                try { ColourLordRegistry.SpendLordLifeExpectancy(targetHero, 1); } catch { }
+                try { ColourLordRegistry.SpendLordLifeExpectancy(targetHero, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 string casterName = caster.Name?.ToString() ?? "A mage";
                 string targetName = targetHero.Name?.ToString() ?? "another mage";
                 InformationManager.DisplayMessage(new InformationMessage(
@@ -178,7 +178,7 @@ namespace AshAndEmber
                 if (caster.PartyBelongedTo != null)
                     caster.PartyBelongedTo.RecentEventsMorale += 10f;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void Msg(string text) =>
@@ -202,7 +202,7 @@ namespace AshAndEmber
             // Explicitly clear IgnoreByOtherParties so a save/load while faded
             // does not leave the party permanently invisible.
             _fadeDaysRemaining = 0;
-            try { if (MobileParty.MainParty != null) TrySetPartyConcealed(MobileParty.MainParty, false); } catch { }
+            try { if (MobileParty.MainParty != null) TrySetPartyConcealed(MobileParty.MainParty, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

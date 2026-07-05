@@ -37,7 +37,7 @@ namespace AshAndEmber
                 var newBp = AshenVisuals.MakeAshenBodyProperties(hero.BodyProperties);
                 AshenVisuals.SetHeroBodyProperties(hero, newBp);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Spellbook / Grimoire ──────────────────────────────────────────────
@@ -348,7 +348,7 @@ namespace AshAndEmber
                         lines.Add($"  The grey hold {ashenTowns} settlement{(ashenTowns != 1 ? "s" : "")}.{anchor}");
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 try
                 {
@@ -363,14 +363,14 @@ namespace AshAndEmber
                             lines.Add($"  {thin.Name} grows thin — {n} town{(n != 1 ? "s" : "")} left. Their hall burns fewer torches each season.");
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 try
                 {
                     if (CampaignMapEvents.IsLongNight())
                         lines.Add("  The darkness has not lifted. What the Night called has not all gone back.");
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (lines.Count == 0) return "";
                 return "\n── MURMURS  (the cold speaks plainly now) ──────────\n" +

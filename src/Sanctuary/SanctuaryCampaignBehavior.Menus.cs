@@ -34,16 +34,16 @@ namespace AshAndEmber
                             if (!HasSanctuary(Settlement.CurrentSettlement)) return false;
                             string graceNote = $"  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]";
                             MBTextManager.SetTextVariable("SANCT_ENTER_TEXT", "Visit the Sanctuary" + graceNote);
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             args.IsEnabled = true;
                             return true;
                         }
                         catch { return false; }
                     },
-                    args => { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Sub-menu header ────────────────────────────────────────────────
             try
@@ -68,10 +68,10 @@ namespace AshAndEmber
                             : $"The Sanctuary. Candles burn in rows that stretch further than the room should allow.{graceNote}{protNote}{interNote}";
                         MBTextManager.SetTextVariable("SANCT_MENU_HEADER", hdr);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Option 1: Pray for Grace ───────────────────────────────────────
             try
@@ -105,14 +105,14 @@ namespace AshAndEmber
                             int prayHpCost = TalentSystem.Has(TalentId.EmberCovenant) ? 8 : 12;
                             MBTextManager.SetTextVariable("SANCT_GRACE_TEXT",
                                 $"Pray for Grace  (costs {prayHpCost} HP) — [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]{suffix}{coldNote}");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args => DoPrayForGrace());
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Option 2: Take the Warding Seal ───────────────────────────────
             try
@@ -135,14 +135,14 @@ namespace AshAndEmber
                             int wardPreview = TalentSystem.Has(TalentId.UnbrokenWard) ? 21 : 14;
                             MBTextManager.SetTextVariable("SANCT_WARD_TEXT",
                                 $"Take the Warding Seal  (costs 15 HP) — ward against Ashen events for {wardPreview} days{active}{cd}");
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args => DoWardingSeal());
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Option 3: Meditate on the Flame ───────────────────────────────
             try
@@ -150,7 +150,7 @@ namespace AshAndEmber
                 starter.AddGameMenuOption("sanctuary_menu", "sanctuary_meditate_rite", "Meditate on the Flame",
                     args =>
                     {
-                        try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                        try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args =>
@@ -160,31 +160,31 @@ namespace AshAndEmber
                             MageKnowledge.ShowRiteTalentMenu("The Sanctuary",
                                 new[] { TalentId.Gracebound });
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // ── Leave ──────────────────────────────────────────────────────────
             try
             {
                 starter.AddGameMenuOption("sanctuary_menu", "sanctuary_leave", "Leave the Sanctuary",
-                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
-                    args => { try { GameMenu.SwitchToMenu("town"); } catch { } },
+                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return true; },
+                    args => { try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Action: Pray for Grace ─────────────────────────────────────────────
         private static void DoPrayForGrace()
         {
             var hero = Hero.MainHero;
-            if (hero == null) { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } return; }
+            if (hero == null) { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return; }
 
             // Non-lethal HP cost (EmberCovenant reduces it).
             int hpCost = TalentSystem.Has(TalentId.EmberCovenant) ? 8 : 12;
-            try { hero.HitPoints = Math.Max(1, hero.HitPoints - hpCost); } catch { }
+            try { hero.HitPoints = Math.Max(1, hero.HitPoints - hpCost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int honor = 0, mercy = 0, generosity = 0;
             try
@@ -193,7 +193,7 @@ namespace AshAndEmber
                 mercy      = hero.GetTraitLevel(DefaultTraits.Mercy);
                 generosity = hero.GetTraitLevel(DefaultTraits.Generosity);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int graceGain = MiracleMath.GraceGain(honor, mercy, generosity);
             // EmberCovenant: prayer yields twice the Grace.
@@ -217,17 +217,17 @@ namespace AshAndEmber
                         {
                             if (e.Character.IsHero || e.WoundedNumber <= 0) continue;
                             int heal = Math.Max(1, (int)(e.WoundedNumber * 0.25f));
-                            try { party.MemberRoster.AddToCounts(e.Character, 0, false, -heal); totalHealed += heal; } catch { }
+                            try { party.MemberRoster.AddToCounts(e.Character, 0, false, -heal); totalHealed += heal; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         // +20 morale from shared warmth
-                        try { party.RecentEventsMorale += 20f; } catch { }
+                        try { party.RecentEventsMorale += 20f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         string healLine = totalHealed > 0
                             ? $"The Keeping Flame — {totalHealed} of your wounded are mended and the column's courage lifts (+20 morale)."
                             : "The Keeping Flame — the warmth spreads through your column (+20 morale).";
                         InformationManager.DisplayMessage(new InformationMessage(healLine, new Color(0.95f, 0.75f, 0.35f)));
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             _lastPrayerDay       = CurrentCampaignDay();
@@ -247,12 +247,12 @@ namespace AshAndEmber
             try
             {
                 InformationManager.ShowInquiry(new InquiryData("Prayer for Grace", msg, true, false,
-                    "So be it.", "", () => { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } }, null));
+                    "So be it.", "", () => { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }, null));
             }
             catch
             {
                 MBInformationManager.AddQuickInformation(new TextObject(msg.Length > 80 ? msg.Substring(0, 80) + "…" : msg));
-                try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { }
+                try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -260,9 +260,9 @@ namespace AshAndEmber
         private static void DoWardingSeal()
         {
             var hero = Hero.MainHero;
-            if (hero == null) { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } return; }
+            if (hero == null) { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return; }
 
-            try { hero.HitPoints = Math.Max(1, hero.HitPoints - 15); } catch { }
+            try { hero.HitPoints = Math.Max(1, hero.HitPoints - 15); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int wardDays = TalentSystem.Has(TalentId.UnbrokenWard) ? 21 : 14;
             CampaignMapEvents.StartProtection(wardDays);
@@ -271,7 +271,7 @@ namespace AshAndEmber
 
             // Find nearby Ashen parties to show in the result.
             float px = 0f, py = 0f;
-            try { px = MobileParty.MainParty.GetPosition2D.x; py = MobileParty.MainParty.GetPosition2D.y; } catch { }
+            try { px = MobileParty.MainParty.GetPosition2D.x; py = MobileParty.MainParty.GetPosition2D.y; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             var nearbyAshen = MobileParty.All
                 .Where(p =>
                 {
@@ -291,12 +291,12 @@ namespace AshAndEmber
             try
             {
                 InformationManager.ShowInquiry(new InquiryData("Warding Seal", msg, true, false,
-                    "I carry it now.", "", () => { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { } }, null));
+                    "I carry it now.", "", () => { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }, null));
             }
             catch
             {
                 MBInformationManager.AddQuickInformation(new TextObject($"Warding Seal active for {wardDays} days."));
-                try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch { }
+                try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
     }

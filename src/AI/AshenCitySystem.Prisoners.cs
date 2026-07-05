@@ -73,8 +73,8 @@ namespace AshAndEmber
 
                         if (_rng.NextDouble() < AshenYieldChance(hero))
                         {
-                            try { ColourLordRegistry.SetAshen(hero, true); } catch { }
-                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch { }
+                            try { ColourLordRegistry.SetAshen(hero, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { EndCaptivityAction.ApplyByReleasedAfterBattle(hero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             InformationManager.DisplayMessage(new InformationMessage(
                                 $"{hero.Name} has taken the cold. They walk free — and Ashen.",
                                 new Color(0.38f, 0.50f, 0.75f)));
@@ -82,7 +82,7 @@ namespace AshAndEmber
                         else
                         {
                             if (executor == null) continue;
-                            try { KillCharacterAction.ApplyByExecution(hero, executor); } catch { }
+                            try { KillCharacterAction.ApplyByExecution(hero, executor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             InformationManager.DisplayMessage(new InformationMessage(
                                 $"{hero.Name} refused the cold. The Ashen gave them the ending they chose.",
                                 new Color(0.55f, 0.30f, 0.30f)));
@@ -90,10 +90,10 @@ namespace AshAndEmber
 
                         return; // one action per tick — process remaining on next call
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Yield probability for an NPC lord facing the Ashen ultimatum.
@@ -102,8 +102,8 @@ namespace AshAndEmber
         private static double AshenYieldChance(Hero hero)
         {
             int honor = 0, valor = 0;
-            try { honor = hero.GetTraitLevel(DefaultTraits.Honor);  } catch { }
-            try { valor = hero.GetTraitLevel(DefaultTraits.Valor);  } catch { }
+            try { honor = hero.GetTraitLevel(DefaultTraits.Honor);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { valor = hero.GetTraitLevel(DefaultTraits.Valor);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             int resistance = honor + valor; // −4 (both devious+cowardly) … +4 (both honorable+daring)
             return Math.Max(0.10, Math.Min(0.90, 0.50 - resistance * 0.10));
         }
@@ -147,7 +147,7 @@ namespace AshAndEmber
                                 string notableName    = notable.Name?.ToString() ?? "someone";
                                 string settlementName = settlement.Name?.ToString() ?? "your hold";
 
-                                try { KillCharacterAction.ApplyByExecution(notable, executor); } catch { }
+                                try { KillCharacterAction.ApplyByExecution(notable, executor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                                 if (playerSettlement)
                                 {
@@ -164,13 +164,13 @@ namespace AshAndEmber
 
                                 return; // one per daily tick
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Player capture prompt ─────────────────────────────────────────────
@@ -199,16 +199,16 @@ namespace AshAndEmber
                     try
                     {
                         MageKnowledge.SetAshen(true);
-                        try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch { }
-                        try { AshenCitySystem.OnPlayerBecameAshen(); } catch { }
-                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(Hero.MainHero); } catch { }
+                        try { MageKnowledge.ApplyAshenAppearance(Hero.MainHero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { AshenCitySystem.OnPlayerBecameAshen(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { EndCaptivityAction.ApplyByReleasedAfterBattle(Hero.MainHero); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         InformationManager.DisplayMessage(new InformationMessage(
                             "Something ancient settles in you. The warmth you have always carried shifts — " +
                             "not gone, but changed. Cold fire. Grey flame. You are still here. " +
                             "But something that was purely yours is no longer.",
                             new Color(0.35f, 0.35f, 0.75f)));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 },
 
                 () =>
@@ -217,11 +217,11 @@ namespace AshAndEmber
                     try
                     {
                         if (captor != null)
-                            try { KillCharacterAction.ApplyByExecution(Hero.MainHero, captor); } catch { }
+                            try { KillCharacterAction.ApplyByExecution(Hero.MainHero, captor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         else
-                            try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, true); } catch { }
+                            try { KillCharacterAction.ApplyByMurder(Hero.MainHero, null, true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             ), true, true);
         }

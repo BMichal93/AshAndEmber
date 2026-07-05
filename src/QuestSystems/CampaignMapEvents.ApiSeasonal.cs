@@ -48,7 +48,7 @@ namespace AshAndEmber
                 {
                     if (s == null || s.MapFaction != kingdom) continue;
                     if (s.IsVillage && s.Village != null)
-                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     else if (s.IsTown && s.Town != null)
                         try
                         {
@@ -56,7 +56,7 @@ namespace AshAndEmber
                             s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
                             towns++;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -64,7 +64,7 @@ namespace AshAndEmber
                     $"{villages} village{(villages != 1 ? "s" : "")} cannot keep their fires lit. " +
                     $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} halved their stores."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void ForceScorchingSun()
@@ -83,7 +83,7 @@ namespace AshAndEmber
                 {
                     if (s == null || s.MapFaction != kingdom) continue;
                     if (s.IsVillage && s.Village != null)
-                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch { }
+                        try { s.Village.Hearth = Math.Max(10f, s.Village.Hearth * 0.5f); villages++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     else if (s.IsTown && s.Town != null)
                         try
                         {
@@ -91,7 +91,7 @@ namespace AshAndEmber
                             s.Town.FoodStocks = Math.Max(10f, s.Town.FoodStocks * 0.5f);
                             towns++;
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
@@ -99,7 +99,7 @@ namespace AshAndEmber
                     $"The wells in {villages} village{(villages != 1 ? "s" : "")} are low or dry. " +
                     $"{towns} cit{(towns != 1 ? "ies" : "y")} ha{(towns != 1 ? "ve" : "s")} rationed their stores."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TryFireBrokenWill()
@@ -142,7 +142,7 @@ namespace AshAndEmber
                     {
                         if (other == broken || other.IsEliminated) continue;
                         if (!broken.IsAtWarWith(other))
-                            try { DeclareWarAction.ApplyByDefault(broken, other); } catch { }
+                            try { DeclareWarAction.ApplyByDefault(broken, other); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
                 finally { _declaringBrokenWill = false; }

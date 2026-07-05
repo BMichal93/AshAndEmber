@@ -53,16 +53,16 @@ namespace AshAndEmber
                                     : "";
                             MBTextManager.SetTextVariable("DARK_ALTAR_ENTER_TEXT",
                                 "Visit the Dark Altar" + status);
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             args.IsEnabled = true;
                             return true;
                         }
                         catch { return false; }
                     },
-                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } },
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Wasteland Rite (questline — unchanged) ─────────────────────────────
@@ -87,10 +87,10 @@ namespace AshAndEmber
                         }
                         catch { return false; }
                     },
-                    args => { try { AshenQuestSystem.ShowWastelandRiteDialog(Settlement.CurrentSettlement); } catch { } },
+                    args => { try { AshenQuestSystem.ShowWastelandRiteDialog(Settlement.CurrentSettlement); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     false, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Main altar menu ────────────────────────────────────────────────────
@@ -130,10 +130,10 @@ namespace AshAndEmber
                           + "It does not ask your name. It already knows what you are willing to give."
                           + giftList + activeNote);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Buy gift option
             try
@@ -157,14 +157,14 @@ namespace AshAndEmber
                             MBTextManager.SetTextVariable("DARK_ALTAR_BUY_TEXT",
                                 $"Offer blood for a Dark Gift  (costs {costStr}){lockNote}{discountNote}");
                             args.IsEnabled = qualifies;
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("dark_altar_buy"); } catch { } });
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_buy"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Harden-the-heart option — spill a prisoner's blood to earn the cruelty
             // (Merciless) the gifts require, for players whose heart is still too warm.
@@ -177,8 +177,8 @@ namespace AshAndEmber
                         {
                             var h = Hero.MainHero;
                             int mercy = 0, honor = 0;
-                            try { mercy = h?.GetTraitLevel(DefaultTraits.Mercy) ?? 0; } catch { }
-                            try { honor = h?.GetTraitLevel(DefaultTraits.Honor) ?? 0; } catch { }
+                            try { mercy = h?.GetTraitLevel(DefaultTraits.Mercy) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { honor = h?.GetTraitLevel(DefaultTraits.Honor) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             bool alreadyDark = mercy <= -1 || honor <= -1;
                             bool canHarden   = DarkGiftSystem.CanHardenHeart();
                             string note = !canHarden
@@ -189,9 +189,9 @@ namespace AshAndEmber
                             MBTextManager.SetTextVariable("DARK_ALTAR_HARDEN_TEXT",
                                 "Spill a prisoner's blood to harden your heart (Mercy)" + note);
                             args.IsEnabled = canHarden;
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args =>
@@ -204,10 +204,10 @@ namespace AshAndEmber
                                     ok ? new Color(0.3f, 0.35f, 0.7f) : new Color(0.7f, 0.6f, 0.6f)));
                             GameMenu.SwitchToMenu("dark_altar_main");
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Break-an-oath option — the other road to the gate: spill blood over a
             // false oath to drive Honour down toward Devious.
@@ -220,8 +220,8 @@ namespace AshAndEmber
                         {
                             var h = Hero.MainHero;
                             int mercy = 0, honor = 0;
-                            try { mercy = h?.GetTraitLevel(DefaultTraits.Mercy) ?? 0; } catch { }
-                            try { honor = h?.GetTraitLevel(DefaultTraits.Honor) ?? 0; } catch { }
+                            try { mercy = h?.GetTraitLevel(DefaultTraits.Mercy) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { honor = h?.GetTraitLevel(DefaultTraits.Honor) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             bool alreadyDark = mercy <= -1 || honor <= -1;
                             bool canDarken   = DarkGiftSystem.CanHardenHonor();
                             string note = !canDarken
@@ -232,9 +232,9 @@ namespace AshAndEmber
                             MBTextManager.SetTextVariable("DARK_ALTAR_HONOR_TEXT",
                                 "Swear a false oath over the dead to break your honour (Honour)" + note);
                             args.IsEnabled = canDarken;
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
                     args =>
@@ -247,10 +247,10 @@ namespace AshAndEmber
                                     ok ? new Color(0.3f, 0.35f, 0.7f) : new Color(0.7f, 0.6f, 0.6f)));
                             GameMenu.SwitchToMenu("dark_altar_main");
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Renounce gift option
             try
@@ -266,24 +266,24 @@ namespace AshAndEmber
                                 MBTextManager.SetTextVariable("DARK_ALTAR_RENOUNCE_INFO",
                                     "  [You carry no dark gifts]");
                             }
-                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch { }
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         return true;
                     },
-                    args => { try { GameMenu.SwitchToMenu("dark_altar_renounce"); } catch { } });
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_renounce"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Leave
             try
             {
                 starter.AddGameMenuOption("dark_altar_main", "dark_altar_leave", "Leave the Altar",
-                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
-                    args => { try { GameMenu.SwitchToMenu("town"); } catch { } },
+                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return true; },
+                    args => { try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Buy gift submenu ───────────────────────────────────────────────────
@@ -294,7 +294,7 @@ namespace AshAndEmber
                 starter.AddGameMenu("dark_altar_buy", "Choose the gift you would take from the darkness. Each carries its own hunger.",
                     args => { });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             foreach (var gift in DarkGiftSystem.AllGifts)
             {
@@ -331,25 +331,25 @@ namespace AshAndEmber
 
                                 MBTextManager.SetTextVariable($"DARK_GIFT_BUY_{(int)capturedGift}",
                                     $"{DarkGiftSystem.GetGiftName(capturedGift)}{ownedNote}  ({costStr})  — {DarkGiftSystem.GetGiftMechanic(capturedGift)}");
-                                try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                                try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             return true;
                         },
                         args => DoBuyGift(capturedGift));
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Back
             try
             {
                 starter.AddGameMenuOption("dark_altar_buy", "dark_altar_buy_back", "Step away",
-                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
-                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } },
+                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return true; },
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Renounce submenu ───────────────────────────────────────────────────
@@ -361,7 +361,7 @@ namespace AshAndEmber
                     "The altar does not refuse. It simply takes back what it gave, and leaves you lighter for it — though not cleaner.",
                     args => { });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             foreach (var gift in DarkGiftSystem.AllGifts)
             {
@@ -382,25 +382,25 @@ namespace AshAndEmber
                                     : "";
                                 MBTextManager.SetTextVariable($"DARK_GIFT_RENOUNCE_{(int)capturedGift}",
                                     $"Renounce: {DarkGiftSystem.GetGiftName(capturedGift)}{stackNote}");
-                                try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch { }
+                                try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }
                             catch { return false; }
                             return true;
                         },
                         args => DoRenounceGift(capturedGift));
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Back
             try
             {
                 starter.AddGameMenuOption("dark_altar_renounce", "dark_altar_renounce_back", "Leave",
-                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch { } return true; },
-                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } },
+                    args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return true; },
+                    args => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────
@@ -417,7 +417,7 @@ namespace AshAndEmber
             {
                 ShowDialog("The altar is unmoved.",
                     $"The stone takes nothing. {error}",
-                    () => { try { GameMenu.SwitchToMenu("dark_altar_buy"); } catch { } });
+                    () => { try { GameMenu.SwitchToMenu("dark_altar_buy"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } });
                 return;
             }
 
@@ -431,7 +431,7 @@ namespace AshAndEmber
 
             ShowDialog($"The Altar Accepts — {DarkGiftSystem.GetGiftName(gift)}",
                 $"{lore}\n\n{mech}{blockNote}",
-                () => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } });
+                () => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } });
         }
 
         // ── Renounce action ────────────────────────────────────────────────────
@@ -444,7 +444,7 @@ namespace AshAndEmber
                 $"You press your hands to the stone and name what you are giving back. "
               + $"The {name} withdraws from you like a tide pulling sand. "
               + "You are smaller for it. Perhaps that is the point.",
-                () => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch { } });
+                () => { try { GameMenu.SwitchToMenu("dark_altar_main"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } });
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────
@@ -460,7 +460,7 @@ namespace AshAndEmber
             {
                 string brief = body.Length > 80 ? body.Substring(0, 80) + "…" : body;
                 MBInformationManager.AddQuickInformation(new TextObject(brief));
-                try { onClose?.Invoke(); } catch { }
+                try { onClose?.Invoke(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
     }

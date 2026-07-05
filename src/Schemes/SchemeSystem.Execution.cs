@@ -37,17 +37,17 @@ namespace AshAndEmber
                 int skill = instigator.GetSkillValue(def.Skill);
                 chance += skill / 600f * 0.30f;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Security penalty for settlement targets
             if (targetSettlement?.Town != null)
-                try { chance -= targetSettlement.Town.Security / 400f; } catch { }
+                try { chance -= targetSettlement.Town.Security / 400f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Clan-tier penalty (lower than before so high-tier targets are hard but not impossible)
             if (targetHero?.Clan != null)
-                try { chance -= targetHero.Clan.Tier * 0.025f; } catch { }
+                try { chance -= targetHero.Clan.Tier * 0.025f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             else if (targetSettlement?.OwnerClan != null)
-                try { chance -= targetSettlement.OwnerClan.Tier * 0.02f; } catch { }
+                try { chance -= targetSettlement.OwnerClan.Tier * 0.02f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Ashen targets resist mortal scheming — cold fire does not yield
             bool isAshenTarget = (targetHero != null && ColourLordRegistry.IsAshenLord(targetHero))
@@ -90,7 +90,7 @@ namespace AshAndEmber
                         MBInformationManager.AddQuickInformation(
                             new TextObject("The fire answers. For the next day, all your schemes cost half their price."));
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
         }
@@ -113,14 +113,14 @@ namespace AshAndEmber
                         if (targetHero == Hero.MainHero)
                         {
                             // Player cannot be killed by assassination — wounded instead.
-                            try { targetHero.MakeWounded(); } catch { }
+                            try { targetHero.MakeWounded(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Notify(s,
                                 "An assassin found you in the night. The blade missed the mark — you are wounded, not dead. Watch your back.",
                                 col);
                         }
                         else
                         {
-                            try { KillCharacterAction.ApplyByMurder(targetHero, null, false); } catch { }
+                            try { KillCharacterAction.ApplyByMurder(targetHero, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             Notify(s,
                                 $"Done. {tAss} was found dead this morning — no witnesses, no clear wound.",
                                 col);
@@ -131,7 +131,7 @@ namespace AshAndEmber
                     case SchemeType.SpreadTerror:
                         if (targetSett?.Town == null) break;
                         float drop = 25f + _rng.Next(20);
-                        try { targetSett.Town.Security = Math.Max(0f, targetSett.Town.Security - drop); } catch { }
+                        try { targetSett.Town.Security = Math.Max(0f, targetSett.Town.Security - drop); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"Violence erupts across {targetSett.Name}. Security falls sharply.",
                             col);
@@ -154,7 +154,7 @@ namespace AshAndEmber
                                 if (killed >= toKill) break;
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"Sickness swept the barracks of {targetSett.Name}. {killed} militia are dead.",
                             col);
@@ -163,8 +163,8 @@ namespace AshAndEmber
                     // ── Stage Coup ────────────────────────────────────────────
                     case SchemeType.StageCoup:
                         if (targetSett?.Town == null) break;
-                        try { targetSett.Town.Loyalty  = Math.Max(0f, targetSett.Town.Loyalty  - 40f); } catch { }
-                        try { targetSett.Town.Security = Math.Max(0f, targetSett.Town.Security - 35f); } catch { }
+                        try { targetSett.Town.Loyalty  = Math.Max(0f, targetSett.Town.Loyalty  - 40f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { targetSett.Town.Security = Math.Max(0f, targetSett.Town.Security - 35f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"The garrison officers took the coin and stepped aside. Loyalty collapses in {targetSett.Name}.",
                             col);
@@ -173,8 +173,8 @@ namespace AshAndEmber
                     // ── Spread Rumors ─────────────────────────────────────────
                     case SchemeType.SpreadRumors:
                         if (targetSett?.Town == null) break;
-                        try { targetSett.Town.Loyalty    = Math.Max(0f,  targetSett.Town.Loyalty    - 15f); } catch { }
-                        try { targetSett.Town.Prosperity = Math.Max(10f, targetSett.Town.Prosperity * 0.92f); } catch { }
+                        try { targetSett.Town.Loyalty    = Math.Max(0f,  targetSett.Town.Loyalty    - 15f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { targetSett.Town.Prosperity = Math.Max(10f, targetSett.Town.Prosperity * 0.92f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"Whispers have taken hold in {targetSett.Name}. Loyalty and prosperity fall.",
                             col);
@@ -183,8 +183,8 @@ namespace AshAndEmber
                     // ── Burn Storage ──────────────────────────────────────────
                     case SchemeType.BurnStorage:
                         if (targetSett?.Town == null) break;
-                        try { targetSett.Town.FoodStocks  = Math.Max(10f, targetSett.Town.FoodStocks  * 0.50f); } catch { }
-                        try { targetSett.Town.Prosperity  = Math.Max(10f, targetSett.Town.Prosperity  * 0.85f); } catch { }
+                        try { targetSett.Town.FoodStocks  = Math.Max(10f, targetSett.Town.FoodStocks  * 0.50f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { targetSett.Town.Prosperity  = Math.Max(10f, targetSett.Town.Prosperity  * 0.85f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"Warehouses burned through the night in {targetSett.Name}. Half the food stocks are lost.",
                             col);
@@ -207,7 +207,7 @@ namespace AshAndEmber
                                 if (deserted >= toDesert) break;
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"{deserted} soldiers left their posts in {targetSett.Name}. The garrison is weakened.",
                             col);
@@ -219,7 +219,7 @@ namespace AshAndEmber
                         string tForg = targetHero.Name?.ToString() ?? "the lord";
                         Hero factionLeader = targetHero.Clan?.Kingdom?.Leader;
                         if (factionLeader != null && factionLeader != targetHero && factionLeader.IsAlive)
-                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(targetHero, factionLeader, -55, false); } catch { }
+                            try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(targetHero, factionLeader, -55, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"Forged letters reached {(factionLeader?.Name?.ToString() ?? "the faction leader")}. {tForg}'s standing with their lord is shaken.",
                             col);
@@ -238,11 +238,11 @@ namespace AshAndEmber
                                     if (e.Character.IsHero) continue;
                                     int toWound = Math.Max(1, (e.Number - e.WoundedNumber) / 5);
                                     if (toWound <= 0) continue;
-                                    try { targetHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                                    try { targetHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 }
                             }
                         }
-                        catch { }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"The blade bloodied {tHire}'s escort and broke off. The warband is wounded and shaken.",
                             col);
@@ -255,9 +255,9 @@ namespace AshAndEmber
                         string cAcc  = targetHero.Clan.Name?.ToString() ?? "their clan";
                         // 5% flat renown loss, floor 50 — meaningful at any clan size
                         float renown = Math.Max(50f, targetHero.Clan.Renown * 0.05f);
-                        try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - renown); } catch { }
+                        try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - renown); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         // Also damage relations between instigator and target (they'll suspect someone)
-                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -20, false); } catch { }
+                        try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -20, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"Slander reached the right ears. {cAcc}'s renown takes a visible hit.",
                             col);
@@ -270,10 +270,10 @@ namespace AshAndEmber
                         string cVipr  = targetHero.Clan.Name?.ToString() ?? "their clan";
                         // Target loses 7% renown (floor 50) — more than FalseAccusations, justified by the king's direct involvement
                         float viprLoss = Math.Max(50f, targetHero.Clan.Renown * 0.07f);
-                        try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - viprLoss); } catch { }
+                        try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - viprLoss); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         // Instigator clan gains renown — the contrast is the point
                         float viprGain = 30f + _rng.Next(21); // 30–50
-                        try { if (instigator.Clan != null) instigator.Clan.Renown += viprGain; } catch { }
+                        try { if (instigator.Clan != null) instigator.Clan.Renown += viprGain; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"The king's ear was turned against {cVipr}. Their renown falls; {inst}'s rises.",
                             col);
@@ -286,14 +286,14 @@ namespace AshAndEmber
                         string scatterKingdomName = scatterKingdom.Name?.ToString() ?? "the kingdom";
                         int partyCount = 5 + _rng.Next(4); // 5–8 parties
                         int scatterSpawned = 0;
-                        try { scatterSpawned = SpawnBanditsInKingdom(scatterKingdom, partyCount); } catch { }
+                        try { scatterSpawned = SpawnBanditsInKingdom(scatterKingdom, partyCount); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
                             $"{scatterSpawned} bandit parties now roam {scatterKingdomName}'s roads. Their lords will spend weeks chasing shadows.",
                             col);
                         break;
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Award skill XP to the instigator on any successful scheme.
             try
@@ -302,7 +302,7 @@ namespace AshAndEmber
                 if (def?.Skill != null && def.SkillXp > 0)
                     instigator.HeroDeveloper?.AddSkillXp(def.Skill, def.SkillXp);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Failure effects ───────────────────────────────────────────────────
@@ -320,13 +320,13 @@ namespace AshAndEmber
                 if (targetHero != null && targetHero.IsAlive && targetHero != instigator)
                 {
                     int tDelta = -(50 + _rng.Next(21)); // −50 to −70
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, tDelta, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, tDelta, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 Hero king = instigator.Clan?.Kingdom?.Leader;
                 if (king != null && king.IsAlive && king != instigator && king != targetHero)
                 {
                     int kDelta = -(30 + _rng.Next(21)); // −30 to −50
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, king, kDelta, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, king, kDelta, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 Notify(s,
                     $"EXPOSED — {tVFail} learned of the plot before the king did. Relations with both have suffered.",
@@ -359,11 +359,11 @@ namespace AshAndEmber
                                 if (e.Character.IsHero) continue;
                                 int toWound = Math.Max(1, (e.Number - e.WoundedNumber) / 6);
                                 if (toWound <= 0) continue;
-                                try { targetHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch { }
+                                try { targetHero.PartyBelongedTo.MemberRoster.AddToCounts(e.Character, 0, false, toWound); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }
                         }
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     if (s.IsPlayer)
                         Notify(s,
                             $"The blade reached {tName}'s escort but fled before finishing. The lord lives; the coin is spent.",
@@ -392,7 +392,7 @@ namespace AshAndEmber
                 if (s.IsPlayer && targetKingdom != null && !targetKingdom.IsEliminated)
                 {
                     float crimeDelta = 30f + _rng.Next(31); // 30–60
-                    try { ChangeCrimeRatingAction.Apply(targetKingdom, crimeDelta, false); } catch { }
+                    try { ChangeCrimeRatingAction.Apply(targetKingdom, crimeDelta, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 // Relations penalty with target / settlement owner
@@ -403,7 +403,7 @@ namespace AshAndEmber
                 if (penaltyTarget != null && penaltyTarget.IsAlive && penaltyTarget != instigator)
                 {
                     int relDelta = -(60 + _rng.Next(21)); // −60 to −80
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, penaltyTarget, relDelta, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, penaltyTarget, relDelta, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 // War declaration: assassination or coup caught, 40% chance, different kingdoms
@@ -416,7 +416,7 @@ namespace AshAndEmber
                         && !instigKingdom.IsEliminated && !targetKingdom.IsEliminated
                         && !instigKingdom.IsAtWarWith(targetKingdom))
                     {
-                        try { DeclareWarAction.ApplyByDefault(instigKingdom, targetKingdom); } catch { }
+                        try { DeclareWarAction.ApplyByDefault(instigKingdom, targetKingdom); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     }
                 }
 
@@ -432,7 +432,7 @@ namespace AshAndEmber
                     $"EXPOSED — {inst}'s plot against {tName} is known.{ownerLine} Crime rating rises; relations plummet. {consequence}",
                     new Color(0.80f, 0.20f, 0.18f));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }

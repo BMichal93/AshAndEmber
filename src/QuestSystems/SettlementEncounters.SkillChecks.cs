@@ -354,7 +354,7 @@ namespace AshAndEmber
         {
             _poorKnightCooldown = 60; // long cooldown so this doesn't repeat constantly
             bool hasTournament = false;
-            try { hasTournament = s.Town?.HasTournament ?? false; } catch { }
+            try { hasTournament = s.Town?.HasTournament ?? false; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             string context = hasTournament
                 ? "The tournament yard is buzzing with preparations when you spot him"
                 : "You notice him near the training ground";
@@ -394,7 +394,7 @@ namespace AshAndEmber
                                 var cataphract = MBObjectManager.Instance.GetObject<CharacterObject>("imperial_elite_cataphract")
                                              ?? MBObjectManager.Instance.GetObject<CharacterObject>("empire_cataphract");
                                 if (cataphract != null)
-                                    try { MobileParty.MainParty.MemberRoster.AddToCounts(cataphract, 1); } catch { }
+                                    try { MobileParty.MainParty.MemberRoster.AddToCounts(cataphract, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 ChangeRenown(10f);
                                 Msg("Against every expectation in that yard, he wins. Not through luck — through something prepared and stubborn. " +
                                     "He comes to you afterward, the new armour bloodied and proving its worth, and asks to ride with you. " +
@@ -483,7 +483,7 @@ namespace AshAndEmber
                             {
                                 ChangeRelWithOwner(s, -20);
                                 var kingdom = s.MapFaction as TaleWorlds.CampaignSystem.Kingdom;
-                                if (kingdom != null) try { ChangeCrimeRatingAction.Apply(kingdom, 20f, false); } catch { }
+                                if (kingdom != null) try { ChangeCrimeRatingAction.Apply(kingdom, 20f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                                 Msg("You stand up. So do his men. What follows is not the clean confrontation you intended — " +
                                     "it is a tavern brawl with a lord's hired muscle, and you come out of it reported to the guard for disturbing the peace. " +
                                     "On the positive side: the girl got out during the noise. " +
@@ -495,7 +495,7 @@ namespace AshAndEmber
                             ChangeRelWithOwner(s, -5);
                             {
                                 var kingdom = s.MapFaction as TaleWorlds.CampaignSystem.Kingdom;
-                                if (kingdom != null) try { ChangeCrimeRatingAction.Apply(kingdom, 10f, false); } catch { }
+                                if (kingdom != null) try { ChangeCrimeRatingAction.Apply(kingdom, 10f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             }
                             Msg("The guard arrives before long. They apologise to the lord for the interruption. " +
                                 "They ask you to come with them for questioning about what you saw and why you sent for them. " +

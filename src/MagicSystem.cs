@@ -26,42 +26,43 @@ namespace AshAndEmber
             // Reset all in-mission static state that may be stale from a previous
             // game session running in the same process (save load without restart).
             // ClearAreaEffects / ClearSelfEffects are internally try/catch'd.
-            try { SpellEffects.ClearAreaEffects();   } catch { }
-            try { SpellEffects.ClearSelfEffects();   } catch { }
-            try { SpellEffects.ClearGlows();         } catch { }
-            try { SpellEffects.ClearMoves();         } catch { }
-            try { SpellEffects.ClearPendingDeaths(); } catch { }
-            try { SpellEffects.ClearAnimTimers();    } catch { }
-            try { SpellEffects.ClearCastLoops();     } catch { }
-            try { SpellEffects.ClearWard();          } catch { }
-            try { SpellEffects.ClearStoneskin();     } catch { }
-            try { SpellEffects.ClearSunder();        } catch { }
-            try { SpellEffects.ClearChar();          } catch { }
-            try { SpellEffects.ClearReflect();       } catch { }
-            try { SpellEffects.ClearAttackWeaken();  } catch { }
-            try { SpellEffects.ClearScorch();        } catch { }
-            try { SpellEffects.ClearAshmark();       } catch { }
-            try { SpellEffects.ClearInnerFireHeat(); } catch { }
-            try { SpellEffects.ClearMagicMemory();           } catch { }
-            try { SpellEffects.ClearDarkGiftsBattleState();  } catch { }
-            try { MagicInputHandler.ResetInputState();        } catch { }
-            try { ElementWallWards.Clear();              } catch { }
-            try { ElementSpellEffects.ClearBattleState();} catch { }
-            try { ElementUltimates.ClearBattleState();   } catch { }
-            try { MiracleEffects.ClearBattleState();     } catch { }
-            try { MiracleBattleAI.Reset();               } catch { }
-            try { MiracleInputHandler.ResetInputState(); } catch { }
-            try { NatureEffects.ClearBattleState();      } catch { }
-            try { NatureCharge.ClearForMission();        } catch { }
-            try { NatureChargeBar.Reset();               } catch { }
-            try { NatureSeerAI.ClearCooldowns();         } catch { }
-            try { NatureInputHandler.ResetInputState();  } catch { }
-            try { ColourLordAI.ClearCooldowns();        } catch { }
-            try { ColourLordAI.FlushBattleCasts();      } catch { }
-            try { BanditMageAI.OnMissionEnd();           } catch { }
-            try { AshenSceneTone.Reset();                } catch { }
-            try { BattleWhispers.Reset();                } catch { }
-            try { AshenVisuals.Reset();                  } catch { }
+            try { SpellEffects.ClearAreaEffects();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearSelfEffects();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearGlows();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearMoves();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearPendingDeaths(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearAnimTimers();    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearCastLoops();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearWard();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearStoneskin();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearSunder();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearChar();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearReflect();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearAttackWeaken();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearScorch();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearAshmark();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearInnerFireHeat(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearMagicMemory();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearDarkGiftsBattleState();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MagicInputHandler.ResetInputState();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementWallWards.Clear();              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementSpellEffects.ClearBattleState();} catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementUltimates.ClearBattleState();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementalBeings.ClearBattleState();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MiracleEffects.ClearBattleState();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MiracleBattleAI.Reset();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MiracleInputHandler.ResetInputState(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureEffects.ClearBattleState();      } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureCharge.ClearForMission();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureChargeBar.Reset();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureSeerAI.ClearCooldowns();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureInputHandler.ResetInputState();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ColourLordAI.ClearCooldowns();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ColourLordAI.FlushBattleCasts();      } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { BanditMageAI.OnMissionEnd();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenSceneTone.Reset();                } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { BattleWhispers.Reset();                } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenVisuals.Reset();                  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
@@ -79,18 +80,20 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new MiracleCampaignBehavior());
                 campaignStarter.AddBehavior(new NatureCampaignBehavior());
                 campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
+                campaignStarter.AddBehavior(new ElementalWildsBehavior());
                 campaignStarter.AddBehavior(new TribalKingdomBehavior());
                 campaignStarter.AddBehavior(new CreationBackstoryRework());
-                try { AshenDialogue.Register(campaignStarter);    } catch { }
-                try { ArenicosDialogue.Register(campaignStarter); } catch { }
-                try { TempleDialogue.Register(campaignStarter);   } catch { }
-                try { TribesDialogue.Register(campaignStarter);   } catch { }
-                try { NorthmenDialogue.Register(campaignStarter); } catch { }
-                try { DunebornDialogue.Register(campaignStarter); } catch { }
-                try { SchemeSystem.Initialize();              } catch { }
-                try { ExchangeCampaignBehavior.ResetState();  } catch { }
-                try { SeaCampaignBehavior.ResetForNewGame();  } catch { }
-                try { ClanOrdersCampaignBehavior.ResetForNewGame(); } catch { }
+                try { AshenDialogue.Register(campaignStarter);    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ArenicosDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { TempleDialogue.Register(campaignStarter);   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { TribesDialogue.Register(campaignStarter);   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NorthmenDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { DunebornDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SchemeSystem.Initialize();              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ExchangeCampaignBehavior.ResetState();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SeaCampaignBehavior.ResetForNewGame();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ClanOrdersCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ElementalWildsBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -101,10 +104,10 @@ namespace AshAndEmber
         public override void OnGameInitializationFinished(Game game)
         {
             base.OnGameInitializationFinished(game);
-            try { AshenCitySystem.ApplyTempleCultureTexts();        } catch { }
-            try { AshenCitySystem.ApplyTribalCultureTexts();       } catch { }
-            try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch { }
-            try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch { }
+            try { AshenCitySystem.ApplyTempleCultureTexts();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenCitySystem.ApplyTribalCultureTexts();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Re-applies the Templar culture text while still in the menu / intro-video /
@@ -113,22 +116,22 @@ namespace AshAndEmber
         private static void EnsureTempleCultureTextPreGame()
         {
             object st = null;
-            try { st = GameStateManager.Current?.ActiveState; } catch { }
+            try { st = GameStateManager.Current?.ActiveState; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             bool preGame = Campaign.Current == null
                 || st is TaleWorlds.CampaignSystem.CharacterCreationContent.CharacterCreationState
                 || st is VideoPlaybackState;
             if (preGame)
             {
-                try { AshenCitySystem.ApplyTempleCultureTexts();        } catch { }
-                try { AshenCitySystem.ApplyTribalCultureTexts();       } catch { }
-                try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch { }
-                try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch { }
+                try { AshenCitySystem.ApplyTempleCultureTexts();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { AshenCitySystem.ApplyTribalCultureTexts();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // The character-creation culture cards cache their name when built, so
                 // the text override above never reaches them — rename the card directly.
-                try { TempleCultureCardFixer.TickTryFix(); } catch { }
+                try { TempleCultureCardFixer.TickTryFix(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // The backstory option VMs cache their labels the same way (they only
                 // re-read on hover) — keep them synced with the narrative rewrites.
-                try { NarrativeStageTextFixer.TickTryFix(); } catch { }
+                try { NarrativeStageTextFixer.TickTryFix(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -146,22 +149,22 @@ namespace AshAndEmber
             // is cheap and idempotent, so re-apply it every frame through the
             // pre-campaign flow, and do it BEFORE SkipIntroVideos hands off to the
             // character-creation screen, so the card is guaranteed to read "Templars".
-            try { EnsureTempleCultureTextPreGame(); } catch { }
+            try { EnsureTempleCultureTextPreGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Runs before the campaign gate below so it also fires at the main menu and
             // during the new-game flow, where Campaign.Current is still null.
-            try { SkipIntroVideos(); } catch { }
-            try { AshEmberSplash.Tick(dt); } catch { }
-            try { AshEmberLoreIntro.Tick(dt); } catch { }
-            try { AshEmberLoadingScreen.Tick(dt); } catch { }
+            try { SkipIntroVideos(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshEmberSplash.Tick(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshEmberLoreIntro.Tick(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshEmberLoadingScreen.Tick(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
                 if (Campaign.Current == null || Mission.Current != null) return;
-                try { MagicInputHandler.Tick(inMission: false); } catch { }
-                try { MiracleInputHandler.Tick(inMission: false); } catch { }
-                try { NatureInputHandler.Tick(inMission: false);  } catch { }
-                try { ActiveEffectManager.MapTick(dt); } catch { }
+                try { MagicInputHandler.Tick(inMission: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { MiracleInputHandler.Tick(inMission: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureInputHandler.Tick(inMission: false);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ActiveEffectManager.MapTick(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Codex of the Inner Fire — Left Alt + L opens the learning menu on the map.
                 try
@@ -174,7 +177,7 @@ namespace AshAndEmber
                         MageKnowledge._deferredInquiry = MagicLearning.ShowCodex;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Litany of Devotions — Left Shift + L opens the Grace talent list on the
                 // map, for the faithful (not mages, not the land-attuned, not the dark).
@@ -188,7 +191,7 @@ namespace AshAndEmber
                         MageKnowledge._deferredInquiry = MiracleTalents.ShowCodex;
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Ctrl+Shift+F10 — toggle scheme debug mode
                 try
@@ -204,7 +207,7 @@ namespace AshAndEmber
                                 : "[DEBUG] Schemes: normal mode restored."));
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Ctrl+Shift+F11 — debug combat trigger: warp nearest hostile to player (or spawn one)
                 try
@@ -216,7 +219,7 @@ namespace AshAndEmber
                         DebugTriggerCombat();
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Ctrl+Shift+F12 — debug grant: 100 fp, all dark gifts, max grace,
                 // all nature talents, and one of each crystal. Nature must be granted
@@ -230,9 +233,9 @@ namespace AshAndEmber
                         DebugGrantAll();
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Skips TaleWorlds' intro cinematics — the logo reels at launch and, more
@@ -249,7 +252,7 @@ namespace AshAndEmber
                 if (active is VideoPlaybackState video)
                     video.OnVideoFinished();
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
 
@@ -275,7 +278,7 @@ namespace AshAndEmber
                             .FirstOrDefault();
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (enemy != null)
                 {
@@ -290,12 +293,12 @@ namespace AshAndEmber
                         CampaignMapEvents.SpawnAshenAmbushNear(
                             main.GetPosition2D + new Vec2(0.1f, 0f), 30, 0f);
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
                         "[DEBUG] No hostile found — Ashen ambush spawned nearby."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void DebugGrantAll()
@@ -313,7 +316,7 @@ namespace AshAndEmber
                 TalentSystem.GrantFree(TalentId.NatureDeepEarth,  hero);
                 TalentSystem.GrantFree(TalentId.NatureDawnCall,   hero);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // 2. All Dark Gifts (DarkSpirit stacks to 3, grant it three times).
             try
@@ -332,13 +335,13 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // 3. Max grace — set directly because dark gifts would otherwise block AddGrace.
-            try { MiracleInventory._grace = MiracleMath.GraceCap(); } catch { }
+            try { MiracleInventory._grace = MiracleMath.GraceCap(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // 4. 100 focus points.
-            try { hero.HeroDeveloper.UnspentFocusPoints += 100; } catch { }
+            try { hero.HeroDeveloper.UnspentFocusPoints += 100; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // 5. One of every crystal into the player party's inventory.
             try
@@ -353,7 +356,7 @@ namespace AshAndEmber
                     }
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             MBInformationManager.AddQuickInformation(new TaleWorlds.Localization.TextObject(
                 "[DEBUG] Granted: 100 focus points, all Dark Gifts, max Grace, all Nature talents, all crystals."));
@@ -378,6 +381,7 @@ namespace AshAndEmber
             ElementWallWards.Tick(dt);
             ElementSpellEffects.Tick(dt);
             ElementUltimates.Tick(dt);
+            ElementalBeings.TickAuras(dt);
             CrystalEffects.MissionTick(dt);
             CrystalBattleAI.MissionTick(dt);
             MiracleInputHandler.Tick(inMission: true);
@@ -419,45 +423,46 @@ namespace AshAndEmber
 
         protected override void OnEndMission()
         {
-            try { SpellEffects.ClearAnimTimers();    } catch { }
-            try { SpellEffects.ClearCastLoops();     } catch { }
-            try { SpellEffects.ClearPendingDeaths(); } catch { }
-            try { SpellEffects.ClearAreaEffects();   } catch { }
-            try { SpellEffects.ClearMissile();       } catch { }
-            try { SpellEffects.ClearWard();          } catch { }
-            try { SpellEffects.ClearStoneskin();     } catch { }
-            try { SpellEffects.ClearSunder();        } catch { }
-            try { SpellEffects.ClearChar();          } catch { }
-            try { SpellEffects.ClearReflect();       } catch { }
-            try { SpellEffects.ClearAttackWeaken();  } catch { }
-            try { SpellEffects.ClearScorch();        } catch { }
-            try { SpellEffects.ClearAshmark();       } catch { }
-            try { SpellEffects.ClearInnerFireHeat(); } catch { }
-            try { SpellEffects.ClearMagicMemory();         } catch { }
-            try { SpellEffects.ClearDarkGiftsBattleState(); } catch { }
-            try { SpellEffects.ClearFocusVisuals();  } catch { }
-            try { SpellEffects.ClearGlows();         } catch { }
-            try { SpellEffects.ClearColourCooldown();} catch { }
-            try { SpellEffects.ClearMoves();         } catch { }
-            try { ColourLordAI.ClearCooldowns();            } catch { }
-            try { BanditMageAI.OnMissionEnd();             } catch { }
-            try { AgingSystem.ClearKnockdowns();           } catch { }
-            try { ActiveEffectManager.ClearMissionEffects(); } catch { }
-            try { ElementMagicInput.ResetInputState();       } catch { }
-            try { MagicInputHandler.ResetInputState();       } catch { }
-            try { CrystalEffects.ClearBattleState();           } catch { }
-            try { CrystalBattleAI.Reset();                    } catch { }
-            try { ElementWallWards.Clear();                   } catch { }
-            try { ElementSpellEffects.ClearBattleState();     } catch { }
-            try { ElementUltimates.ClearBattleState();        } catch { }
-            try { NatureEffects.ClearBattleState();           } catch { }
-            try { NatureCharge.ClearForMission();             } catch { }
-            try { NatureChargeBar.Reset();                    } catch { }
-            try { NatureSeerAI.ClearCooldowns();              } catch { }
-            try { NatureInputHandler.ResetInputState();       } catch { }
-            try { BattleEvents.OnMissionEnd();               } catch { }
-            try { AshenSceneTone.Reset();                    } catch { }
-            try { BattleWhispers.Reset();                    } catch { }
+            try { SpellEffects.ClearAnimTimers();    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearCastLoops();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearPendingDeaths(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearAreaEffects();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearMissile();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearWard();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearStoneskin();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearSunder();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearChar();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearReflect();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearAttackWeaken();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearScorch();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearAshmark();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearInnerFireHeat(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearMagicMemory();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearDarkGiftsBattleState(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearFocusVisuals();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearGlows();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearColourCooldown();} catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ClearMoves();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ColourLordAI.ClearCooldowns();            } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { BanditMageAI.OnMissionEnd();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AgingSystem.ClearKnockdowns();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ActiveEffectManager.ClearMissionEffects(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementMagicInput.ResetInputState();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MagicInputHandler.ResetInputState();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CrystalEffects.ClearBattleState();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CrystalBattleAI.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementWallWards.Clear();                   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementSpellEffects.ClearBattleState();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementUltimates.ClearBattleState();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementalBeings.ClearBattleState();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureEffects.ClearBattleState();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureCharge.ClearForMission();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureChargeBar.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureSeerAI.ClearCooldowns();              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { NatureInputHandler.ResetInputState();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { BattleEvents.OnMissionEnd();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenSceneTone.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { BattleWhispers.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void OnAgentBuild(Agent agent, Banner banner)
@@ -465,12 +470,15 @@ namespace AshAndEmber
             // Witchy-ashen look (grey skin, cold-blue eyes, ragged armour
             // elements) for Ashen Spawn units, Ashen kingdom soldiers and
             // Ashen heroes.
-            try { AshenVisuals.TryApply(agent); } catch { }
+            try { AshenVisuals.TryApply(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // All non-hero soldiers fighting for the Ashen (kingdom or Ashen player)
             // are called "Ashen Warrior" in battle — they have abandoned their old names.
-            try { AshenVisuals.TryRenameToAshenWarrior(agent); } catch { }
+            try { AshenVisuals.TryRenameToAshenWarrior(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Dark Gifts: apply persistent contour to player if gifts are active.
-            try { SpellEffects.ApplyDarkGiftAgentBuild(agent); } catch { }
+            try { SpellEffects.ApplyDarkGiftAgentBuild(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // The Kindled: if the player marched on a wild elemental band, remake
+            // the enemy bodies into that kind (aura + weakness). No-op otherwise.
+            try { ElementalBeings.ConvertBattleAgent(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
@@ -478,20 +486,23 @@ namespace AshAndEmber
         {
             // Reflect enchantment: melee hits only — ranged weapons are excluded.
             bool isMeleeHit = true;
-            try { isMeleeHit = affectorWeapon.IsEmpty || !(affectorWeapon.CurrentUsageItem?.IsRangedWeapon ?? false); } catch { }
+            try { isMeleeHit = affectorWeapon.IsEmpty || !(affectorWeapon.CurrentUsageItem?.IsRangedWeapon ?? false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (isMeleeHit)
-                try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+                try { SpellEffects.TryApplyReflect(affectedAgent, affectorAgent, blow.InflictedDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // The Unbinding (element ultimates): a struck flyer falls, a struck
             // channelling lord loses the working, the stone mantle drinks most of
             // the blow, and rain-soaked bowstrings cost a ranged hit its bite.
-            try { ElementUltimates.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
+            try { ElementUltimates.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // The Kindled: stone and ice shatter under blunt force; blades pass
+            // half-harmless through flame, tide and storm. Corrected after the blow.
+            try { ElementalBeings.OnWeaponHit(affectedAgent, affectorAgent, blow.DamageType, blow.InflictedDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Sunder enchantment: applies to all hits (attacker is globally weakened).
-            try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
+            try { SpellEffects.TryApplyAttackWeakening(affectedAgent, affectorAgent, blow.InflictedDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Dark Gifts: passive on-hit effects for attacker and defender.
-            try { SpellEffects.ApplyDarkGiftAttackEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
-            try { SpellEffects.ApplyDarkGiftDefenseEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch { }
-            try { MiracleEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch { }
-            try { CrystalEffects.OnCrystalHit(affectedAgent, affectorAgent, affectorWeapon, blow.InflictedDamage); } catch { }
+            try { SpellEffects.ApplyDarkGiftAttackEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.ApplyDarkGiftDefenseEffects(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MiracleEffects.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CrystalEffects.OnCrystalHit(affectedAgent, affectorAgent, affectorWeapon, blow.InflictedDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Nature resistance (reserved for future barrier talents): OnAgentHit fires after
             // damage is applied; heal back the mitigated portion against real weapon hits.
             try
@@ -505,7 +516,7 @@ namespace AshAndEmber
                         affectedAgent.Health = Math.Min(affectedAgent.HealthLimit, affectedAgent.Health + mitigated);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent,
@@ -516,13 +527,13 @@ namespace AshAndEmber
                 if (affectedAgent == null || affectedAgent.IsMount) return;
                 if (agentState != AgentState.Killed) return;
                 // Blood Pact gift: heal killer on kill (player and gifted NPC lords)
-                try { SpellEffects.ApplyDarkGiftKillEffects(affectedAgent, affectorAgent); } catch { }
+                try { SpellEffects.ApplyDarkGiftKillEffects(affectedAgent, affectorAgent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Ember passive (legacy): a kill sometimes repays the fire's debt
                 if (affectorAgent == Agent.Main && MageKnowledge.IsMage && TalentSystem.Has(TalentId.Ember))
                     if (_rng.NextDouble() < 0.10)
                         AgingSystem.RestoreLifeExpectancy(Hero.MainHero, 1);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

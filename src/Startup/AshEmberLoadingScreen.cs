@@ -67,7 +67,7 @@ namespace AshAndEmber
             }
             catch
             {
-                try { Hide(); } catch { }
+                try { Hide(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -83,13 +83,13 @@ namespace AshAndEmber
                 var state = GameStateManager.Current?.ActiveState;
                 if (state is InitialState) return false;
 
-                try { if (LoadingWindow.IsLoadingWindowActive) return true; } catch { }
+                try { if (LoadingWindow.IsLoadingWindowActive) return true; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (state != null &&
                     state.GetType().Name.IndexOf("Loading", StringComparison.OrdinalIgnoreCase) >= 0)
                     return true;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 
@@ -113,15 +113,15 @@ namespace AshAndEmber
             {
                 // Remove from the screen we added to, and from the current top screen
                 // in case the stack changed mid-load — whichever still holds it.
-                try { if (_hostScreen != null && _hostScreen.HasLayer(_layer)) _hostScreen.RemoveLayer(_layer); } catch { }
+                try { if (_hostScreen != null && _hostScreen.HasLayer(_layer)) _hostScreen.RemoveLayer(_layer); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try
                 {
                     var top = ScreenManager.TopScreen;
                     if (top != null && top != _hostScreen && top.HasLayer(_layer)) top.RemoveLayer(_layer);
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            try { _layer?.ReleaseMovie(_movie); } catch { }
+            try { _layer?.ReleaseMovie(_movie); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _layer      = null;
             _hostScreen = null;
             _vm         = null;

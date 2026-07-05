@@ -47,7 +47,7 @@ namespace AshAndEmber
             try
             {
                 object screen = null;
-                try { screen = TaleWorlds.ScreenSystem.ScreenManager.TopScreen; } catch { }
+                try { screen = TaleWorlds.ScreenSystem.ScreenManager.TopScreen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (screen == null) return;
                 if (screen.GetType().Name.IndexOf("CharacterCreation", StringComparison.OrdinalIgnoreCase) < 0) return;
 
@@ -63,7 +63,7 @@ namespace AshAndEmber
                 if (ds != null) Walk(ds, visited, 0, ref budget);
                 else            Walk(screen, visited, 0, ref budget);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void Walk(object obj, HashSet<object> visited, int depth, ref int budget)
@@ -90,7 +90,7 @@ namespace AshAndEmber
                         Walk(item, visited, depth + 1, ref budget);
                     }
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 return;
             }
 
@@ -125,7 +125,7 @@ namespace AshAndEmber
                 SyncStringProp(vm, type, "ActionText",      text);
                 SyncStringProp(vm, type, "DescriptionText", desc);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void SyncStringProp(object vm, Type type, string prop, string value)
@@ -138,7 +138,7 @@ namespace AshAndEmber
                 if (p.GetValue(vm) as string == value) return;
                 p.SetValue(vm, value);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Reference-identity comparer (.NET Framework 4.7.2 has no built-in one).

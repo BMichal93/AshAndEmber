@@ -26,17 +26,17 @@ namespace AshAndEmber
         private static void Msg(string text, Color c)
         {
             try { MBInformationManager.AddQuickInformation(new TextObject(text)); }
-            catch { try { InformationManager.DisplayMessage(new InformationMessage(text, c)); } catch { } }
+            catch { try { InformationManager.DisplayMessage(new InformationMessage(text, c)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
         }
 
         private static void AddMorale(float delta)
         {
-            try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += delta; } catch { }
+            try { if (MobileParty.MainParty != null) MobileParty.MainParty.RecentEventsMorale += delta; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void AgePlayer(int days)
         {
-            try { AgingSystem.AgeHero(Hero.MainHero, days); } catch { }
+            try { AgingSystem.AgeHero(Hero.MainHero, days); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ShiftTrait(TraitObject trait, int delta)
@@ -50,7 +50,7 @@ namespace AshAndEmber
                 string sign = delta >= 0 ? "+" : "";
                 Msg($"({trait.Name} {sign}{delta})", delta >= 0 ? GoodColor : DimColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static bool ChangeGold(int amount)
@@ -60,7 +60,7 @@ namespace AshAndEmber
                 Msg($"Not enough gold. (Need {-amount}, have {Hero.MainHero?.Gold ?? 0})", BadColor);
                 return false;
             }
-            try { Hero.MainHero?.ChangeHeroGold(amount); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(amount); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return true;
         }
 
@@ -75,7 +75,7 @@ namespace AshAndEmber
                     Msg($"({sign}{amount:F0} renown)", GoodColor);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ChangeCrime(float amount)
@@ -86,7 +86,7 @@ namespace AshAndEmber
                 if (kingdom != null)
                     ChangeCrimeRatingAction.Apply(kingdom, amount, true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ChangeRelWithOwner(Settlement s, int delta)
@@ -101,7 +101,7 @@ namespace AshAndEmber
                     Msg($"(Relation with {owner.Name}: {sign}{delta})", delta >= 0 ? GoodColor : BadColor);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void ChangeRelWithRandomLord(int delta)
@@ -117,7 +117,7 @@ namespace AshAndEmber
                 string sign = delta >= 0 ? "+" : "";
                 Msg($"(Relation with {lord.Name}: {sign}{delta})", delta >= 0 ? GoodColor : BadColor);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static string GoldStr(int amount)

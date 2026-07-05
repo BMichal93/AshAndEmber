@@ -29,7 +29,7 @@ namespace AshAndEmber
                 Msg("You don't have the coin to loosen anyone's tongue tonight.", BadColor);
                 return;
             }
-            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             var rumors = BuildRumors();
             string body = string.Join("\n\n", rumors);
@@ -42,25 +42,25 @@ namespace AshAndEmber
                     true, false,
                     "Much obliged.",
                     "",
-                    () => { try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { } },
+                    () => { try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     null
                 ));
             }
             catch
             {
-                try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch { }
+                try { GameMenu.SwitchToMenu("ldm_tavern_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
         private static List<string> BuildRumors()
         {
             var buckets = new List<string>();
-            try { AddWarRumor(buckets); }        catch { }
-            try { AddDeclineRumor(buckets); }    catch { }
-            try { AddAshenRumor(buckets); }      catch { }
-            try { AddProsperityRumor(buckets); } catch { }
-            try { AddCaptiveRumor(buckets); }    catch { }
-            try { AddSeasonRumor(buckets); }     catch { }
+            try { AddWarRumor(buckets); }        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AddDeclineRumor(buckets); }    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AddAshenRumor(buckets); }      catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AddProsperityRumor(buckets); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AddCaptiveRumor(buckets); }    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AddSeasonRumor(buckets); }     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Shuffle what world-state produced
             for (int i = buckets.Count - 1; i > 0; i--)
@@ -131,7 +131,7 @@ namespace AshAndEmber
             if (Campaign.Current == null) return;
             int ashenTowns = 0;
             try { ashenTowns = Settlement.All.Count(s => s.IsTown && s.MapFaction?.StringId == "ashen_kingdom"); }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (ashenTowns == 0) return;
             string anchor = Settlement.All
                 .Where(s => s.IsTown && s.MapFaction?.StringId == "ashen_kingdom" && s.Town != null)
@@ -277,7 +277,7 @@ namespace AshAndEmber
         internal static int EveningCost()
         {
             int size = 1;
-            try { size = Math.Max(1, MobileParty.MainParty?.MemberRoster?.TotalManCount ?? 1); } catch { }
+            try { size = Math.Max(1, MobileParty.MainParty?.MemberRoster?.TotalManCount ?? 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return Math.Max(50, size * 10);
         }
 
@@ -289,7 +289,7 @@ namespace AshAndEmber
                 Msg("You don't have the coin to treat the whole party tonight.", BadColor);
                 return;
             }
-            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             var pool = _eveningBanter.OrderBy(_ => _rng.Next()).ToList();
             _innStayLine1 = pool.Count > 0 ? pool[0] : "The fire in the hearth holds the dark at bay.";
@@ -298,7 +298,7 @@ namespace AshAndEmber
             _innStayHoursElapsed = 0f;
             _innStayDone         = false;
 
-            try { GameMenu.SwitchToMenu("ldm_inn_stay_menu"); } catch { }
+            try { GameMenu.SwitchToMenu("ldm_inn_stay_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── The old green (rare nature weeds) ─────────────────────────────────
@@ -315,7 +315,7 @@ namespace AshAndEmber
                 Msg("You haven't the coin for a pouch of the old green.", BadColor);
                 return;
             }
-            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch { }
+            try { Hero.MainHero?.ChangeHeroGold(-cost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // The toll on the body: ten percent of your full health, never lethal.
             int hpLoss = 0;
@@ -328,10 +328,10 @@ namespace AshAndEmber
                     h.HitPoints = Math.Max(1, h.HitPoints - hpLoss);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // The gift: a day's communion with the living world.
-            try { NatureKnowledge.GrantWeedBlessing(24.0); } catch { }
+            try { NatureKnowledge.GrantWeedBlessing(24.0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // …and the drowse. A few tired hours pass (reuses the wait menu).
             _weedRest          = true;
@@ -351,12 +351,12 @@ namespace AshAndEmber
                     "down. You are tired. You are also, briefly, part of it all.\n\n" +
                     $"[−{hpLoss} health · for one day, 30% of your nature draws cost the land nothing]",
                     true, false, "Let it take you.", "",
-                    () => { try { GameMenu.SwitchToMenu("ldm_tavern_sober_up"); } catch { } },
+                    () => { try { GameMenu.SwitchToMenu("ldm_tavern_sober_up"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     null));
             }
             catch
             {
-                try { GameMenu.SwitchToMenu("ldm_tavern_sober_up"); } catch { }
+                try { GameMenu.SwitchToMenu("ldm_tavern_sober_up"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 

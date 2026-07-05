@@ -23,7 +23,7 @@ namespace AshAndEmber
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             RegisterDialogue(starter);
-            try { ReassertAllOrders(); } catch { }
+            try { ReassertAllOrders(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Dialogue lines ────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ namespace AshAndEmber
                     "I have orders for you.",
                     CondIsClanPartyLeader, CaptureOrderLeader, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // NPC acknowledgement
             try
@@ -51,7 +51,7 @@ namespace AshAndEmber
                     "Your word is my road, {PLAYER_FIRST_NAME}. What do you need of me?",
                     null, null, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Branch: travel to a settlement
             try
@@ -62,11 +62,11 @@ namespace AshAndEmber
                     null,
                     () =>
                     {
-                        try { MageKnowledge._deferredInquiry = OpenTravelFactionFilter; } catch { }
+                        try { MageKnowledge._deferredInquiry = OpenTravelFactionFilter; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Branch: hunt a named lord
             try
@@ -77,11 +77,11 @@ namespace AshAndEmber
                     null,
                     () =>
                     {
-                        try { MageKnowledge._deferredInquiry = OpenHuntFactionFilter; } catch { }
+                        try { MageKnowledge._deferredInquiry = OpenHuntFactionFilter; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     },
                     P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Branch: show / cancel current order
             try
@@ -91,7 +91,7 @@ namespace AshAndEmber
                     "Report your current orders.",
                     CondHasOrder, null, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -100,7 +100,7 @@ namespace AshAndEmber
                     "{CLANORD_STATUS_TEXT}",
                     null, BuildStatusText, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -109,7 +109,7 @@ namespace AshAndEmber
                     "Stand down. I am rescinding those orders.",
                     null, CancelCurrentOrder, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -118,7 +118,7 @@ namespace AshAndEmber
                     "Understood. We return to our own counsel until you call again.",
                     null, null, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try
             {
@@ -127,7 +127,7 @@ namespace AshAndEmber
                     "Carry on.",
                     null, null, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Branch: nothing
             try
@@ -137,7 +137,7 @@ namespace AshAndEmber
                     "Nothing for now. Carry on.",
                     null, null, P);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Conditions ────────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ namespace AshAndEmber
 
         private static void CaptureOrderLeader()
         {
-            try { _pendingLeaderHeroId = Hero.OneToOneConversationHero?.StringId; } catch { }
+            try { _pendingLeaderHeroId = Hero.OneToOneConversationHero?.StringId; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // {PLAYER_FIRST_NAME} is not an engine-registered conversation token, so
             // set it explicitly for the acknowledgement line below.
@@ -183,7 +183,7 @@ namespace AshAndEmber
                 var first = Hero.MainHero?.FirstName ?? Hero.MainHero?.Name;
                 if (first != null) MBTextManager.SetTextVariable("PLAYER_FIRST_NAME", first);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void BuildStatusText()
@@ -229,7 +229,7 @@ namespace AshAndEmber
                 if (h?.PartyBelongedTo != null)
                     ClearOrder(h.PartyBelongedTo);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Faction filter ────────────────────────────────────────────────────
@@ -280,11 +280,11 @@ namespace AshAndEmber
                                     : Kingdom.All.FirstOrDefault(k => k.StringId == kid);
                                 OpenTravelTargetUI();
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void OpenHuntFactionFilter()
@@ -335,11 +335,11 @@ namespace AshAndEmber
                                     : Kingdom.All.FirstOrDefault(k => k.StringId == kid);
                                 OpenHuntTargetUI();
                             }
-                            catch { }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Settlement target picker ──────────────────────────────────────────
@@ -379,7 +379,7 @@ namespace AshAndEmber
                         OnTravelTargetChosen, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void OnTravelTargetChosen(List<InquiryElement> selected)
@@ -394,12 +394,12 @@ namespace AshAndEmber
                 if (party == null) return;
 
                 SetOrder(party, "travel", dest.StringId);
-                try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"{party.LeaderHero?.Name} sets out for {dest.Name}."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Lord target picker ────────────────────────────────────────────────
@@ -409,7 +409,7 @@ namespace AshAndEmber
             {
                 MobileParty orderedParty = FindOrderLeaderParty();
                 float orderedStrength = 0f;
-                try { orderedStrength = orderedParty?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
+                try { orderedStrength = orderedParty?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 var lords = Hero.AllAliveHeroes
                     .Where(h => h.IsLord && h.IsAlive && !h.IsChild && !h.IsPrisoner
@@ -432,7 +432,7 @@ namespace AshAndEmber
                 var elements = lords.Select(h =>
                 {
                     float targetStr = 0f;
-                    try { targetStr = h.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
+                    try { targetStr = h.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     bool risky = orderedStrength > 0f && targetStr > orderedStrength * 1.5f;
 
                     string label = $"{h.Name}  [{h.Clan?.Name}]{(risky ? "  [RISKY]" : "")}";
@@ -452,7 +452,7 @@ namespace AshAndEmber
                         OnHuntTargetChosen, null),
                     true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void OnHuntTargetChosen(List<InquiryElement> selected)
@@ -468,8 +468,8 @@ namespace AshAndEmber
 
                 float orderedStr = 0f;
                 float targetStr  = 0f;
-                try { orderedStr = party?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
-                try { targetStr  = target.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch { }
+                try { orderedStr = party?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { targetStr  = target.PartyBelongedTo?.GetTotalLandStrengthWithFollowers() ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 bool isRisky = orderedStr > 0f && targetStr > orderedStr * 1.5f;
 
@@ -498,16 +498,16 @@ namespace AshAndEmber
                         ?? target.PartyBelongedTo?.CurrentSettlement
                         ?? target.HomeSettlement;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 SetOrder(party, "hunt", target.StringId);
                 if (dest != null)
-                    try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch { }
+                    try { party.SetMoveGoToSettlement(dest, MobileParty.NavigationType.Default, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"{party.LeaderHero?.Name} rides to hunt {target.Name}."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Helper ────────────────────────────────────────────────────────────

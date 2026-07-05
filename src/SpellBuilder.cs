@@ -318,7 +318,7 @@ namespace AshAndEmber
                 if (party == null) return;
                 LivingEnergy.DrawFire(party.GetPosition2D, totalInputs, announce: true);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

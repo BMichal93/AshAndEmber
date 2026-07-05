@@ -17,7 +17,7 @@ namespace AshAndEmber
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
-            try { AshenRuinMenus.OnSessionLaunched(starter); } catch { }
+            try { AshenRuinMenus.OnSessionLaunched(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void SyncData(IDataStore dataStore) { }

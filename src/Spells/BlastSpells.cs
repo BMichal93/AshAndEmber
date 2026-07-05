@@ -56,7 +56,7 @@ namespace AshAndEmber
                     targets.Add(a);
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             ColorSchool glowColor = cast.VisualColor;
             SpawnConeLights(caster.Position, fwd, glowColor, 3f, range);
@@ -93,7 +93,7 @@ namespace AshAndEmber
                     BeginAgentGlow(a, glowColor, 2.5f);
                     affected++;
                 }
-                catch { }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
 
             // Scatter surviving enemies outward — units inside and just beyond the

@@ -228,7 +228,7 @@ namespace AshAndEmber
                 if (mobile != null && FireWorshippersSystem.IsAshenSpawn(mobile)) return true;
                 if (party.MapFaction?.StringId == AshenKingdomId) return true;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 
@@ -251,7 +251,7 @@ namespace AshAndEmber
             {
                 TryUpdateAgentBodyProperties(agent, MakeAshenBodyProperties(agent.BodyPropertiesValue));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Cold ash-grey / frost-blue clothing tint. Unlike the face-key transform
             // above — whose exact colour-bit layout drifts between game builds and may
@@ -263,7 +263,7 @@ namespace AshAndEmber
                 agent.SetClothingColor1(ClothAshGrey);
                 agent.SetClothingColor2(ClothColdBlue);
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (includeArmour)
                 TryApplyAshenArmour(agent);
@@ -310,7 +310,7 @@ namespace AshAndEmber
                 if (changed)
                     refresh.Invoke(agent, new object[] { eq });
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── In-battle unit rename ─────────────────────────────────────────────
@@ -335,7 +335,7 @@ namespace AshAndEmber
                     _agentNameField = field;
             }
             if (_agentNameField == null) return;
-            try { _agentNameField.SetValue(agent, new TextObject("Ashen Warrior")); } catch { }
+            try { _agentNameField.SetValue(agent, new TextObject("Ashen Warrior")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static bool ShouldRenameAshenAgent(Agent agent)
@@ -351,7 +351,7 @@ namespace AshAndEmber
 
                 if (party.MapFaction?.StringId == AshenKingdomId) return true;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 

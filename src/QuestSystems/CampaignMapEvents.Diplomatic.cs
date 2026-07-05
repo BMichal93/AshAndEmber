@@ -40,7 +40,7 @@ namespace AshAndEmber
             foreach (var h in clan.Heroes)
             {
                 if (h == null || !h.IsAlive || h.IsChild || h == Hero.MainHero) continue;
-                try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, h, delta, false); } catch { }
+                try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(Hero.MainHero, h, delta, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -114,7 +114,7 @@ namespace AshAndEmber
 
                 if (goesToWar)
                 {
-                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"A Slight at Court — {lordB} of {nameB} turned away {nameA}'s envoy in the great hall " +
                         $"and had words said in front of witnesses that could not be unsaid. " +
@@ -123,14 +123,14 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -15, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -15, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"A Slight at Court — {lordB} of {nameB} turned away {nameA}'s envoy, " +
                         $"but {lordA} chose restraint over retaliation. " +
                         $"The humiliation is remembered. The border is quieter than it should be."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 25: Border Torches ──────────────────────────────────────────
@@ -156,7 +156,7 @@ namespace AshAndEmber
 
                 if (goesToWar)
                 {
-                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Border Torches — villages on the border between {nameA} and {nameB} " +
                         $"burned in the night. Both sides blame the other. " +
@@ -165,14 +165,14 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -10, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -10, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"Border Torches — villages between {nameA} and {nameB} burned. " +
                         $"Accusations flew on both sides. {lordA} and {lordB} pulled back from the edge, " +
                         $"though neither believes the other's denials. The border is tense. The ashes are still warm."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 26: A Debt in Blood ─────────────────────────────────────────
@@ -198,7 +198,7 @@ namespace AshAndEmber
 
                 if (goesToWar)
                 {
-                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"A Debt in Blood — a {nameA} envoy was found dead in {nameB} territory, " +
                         $"his seal broken and his escort nowhere to be found. " +
@@ -207,14 +207,14 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -20, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -20, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"A Debt in Blood — a {nameA} envoy was found dead in {nameB} territory. " +
                         $"{lordB} opened an inquiry and sent condolences. {lordA} accepted both, barely. " +
                         $"The truth may never surface. The suspicion will not leave."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 27: The Broken Betrothal ───────────────────────────────────
@@ -242,7 +242,7 @@ namespace AshAndEmber
 
                 if (goesToWar)
                 {
-                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"The Broken Betrothal — the marriage between {nameA} and {nameB} was called off " +
                         $"before the ink was dry on the compact. The insult was too great and the timing too suspicious. " +
@@ -251,7 +251,7 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -15, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -15, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"The Broken Betrothal — the marriage between {nameA} and {nameB} fell apart before it began. " +
                         $"Gifts were quietly returned. No one mentioned it at court. " +
@@ -259,7 +259,7 @@ namespace AshAndEmber
                         $"The alliance is over. War was avoided, this time."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 28: The Treasonous Scroll ───────────────────────────────────
@@ -286,7 +286,7 @@ namespace AshAndEmber
 
                 if (goesToWar)
                 {
-                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch { }
+                    try { DeclareWarAction.ApplyByDefault(ka, kb); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"The Treasonous Scroll — letters surfaced in {nameA} proving, or appearing to prove, " +
                         $"that {nameB} agents have been buying lords and poisoning counsel inside the court. " +
@@ -295,7 +295,7 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -20, false); } catch { }
+                    try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(la, lb, -20, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     MBInformationManager.AddQuickInformation(new TextObject(
                         $"The Treasonous Scroll — letters surfaced in {nameA} alleging {nameB} spies " +
                         $"inside the court. {lordB} denied everything and offered to open his archives. " +
@@ -303,7 +303,7 @@ namespace AshAndEmber
                         $"Both crowns know the investigation will find nothing. Both crowns remember."));
                 }
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Event 23: Embers of Hope ──────────────────────────────────────────
@@ -352,7 +352,7 @@ namespace AshAndEmber
                         MakePeaceAction.Apply(a, b);
                         peacedNames.Add($"{a.Name} and {b.Name}");
                     }
-                    catch { }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
 
                 if (peacedNames.Count == 0) return;
@@ -364,7 +364,7 @@ namespace AshAndEmber
                     $"Banners are lowered and bitter words withdrawn: " +
                     $"{peacedNames.Count} war{(peacedNames.Count != 1 ? "s" : "")} end{(peacedNames.Count == 1 ? "s" : "")}: {conflicts}."));
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
     }
