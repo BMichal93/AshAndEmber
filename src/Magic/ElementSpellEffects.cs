@@ -64,12 +64,19 @@ namespace AshAndEmber
                 {
                     ig.TickTimer = 1f;
                     if (!SpellEffects.IsWarded(ig.Target))
-                        try { SpellEffects.DamageAgent(ig.Target, ig.Dps, ColorSchool.Red, ig.Source); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        // Element-typed so the burn obeys the weakness wheel: living
+                        // flame keeps melting a Frost-Born (×2.2), the Ashen cold
+                        // reads as Water and drowns a Flame-Born. Ordinary men take
+                        // it straight (×1). The Kindled cannot be casually ignited.
+                        try { SpellEffects.DamageAgent(ig.Target, ig.Dps, ColorSchool.Red, ig.Source,
+                                ig.Ashen ? MagicElement.Water : MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     try
                     {
                         Vec3 at = ig.Target.Position + new Vec3(0f, 0f, 0.5f);
-                        if (ig.Ashen) SpellEffects.SpawnTempSnowParticle(at, 0.9f);
-                        else          SpellEffects.SpawnTempFireParticle(at, 0.9f);
+                        // A real, visible pillar of flame that clings to the burning
+                        // body — two stacked wisps so the burn READS at a glance.
+                        if (ig.Ashen) { SpellEffects.SpawnTempSnowParticle(at, 1.4f); SpellEffects.SpawnTempSnowParticle(at + new Vec3(0f, 0f, 0.5f), 1.0f); }
+                        else          { SpellEffects.SpawnTempFireParticle(at, 1.4f); SpellEffects.SpawnTempFireParticle(at + new Vec3(0f, 0f, 0.5f), 1.0f); }
                     }
                     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
@@ -118,8 +125,8 @@ namespace AshAndEmber
         }
 
         // ── Magnitudes ──────────────────────────────────────────────────────────
-        private const float FireConeRange   = 9f;
-        private const float FireConeDot      = 0.5f;   // ~60° half-cone
+        private const float FireConeRange   = 13f;     // base reach of an instant cone (charge lances it further)
+        private const float FireConeDot      = 0.40f;  // ~66° half-cone — a broad sheet of flame, not a thin lance
         private const float FireConeDamage   = 44f;    // the bruiser — highest single hit
         private const float FireWallRange    = 6f;
         private const float FireWallWidth    = 4f;

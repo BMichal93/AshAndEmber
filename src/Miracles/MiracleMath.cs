@@ -106,7 +106,7 @@ namespace AshAndEmber
         public const float GuidanceSpeedDurSec    = 15f;
         public const float GuidanceSpeedRadius    = 12f;
 
-        public const float AegisResistFrac  = 0.30f;
+        public const float AegisResistFrac  = 0.25f;  // trimmed from 0.30 — a reusable Grace ward at 30% was the strongest defensive option in the mod
         public const float AegisDurationSec = 18f;
 
         public const float PyreJudgementReach  = 8f;   // metres ahead the pillar falls

@@ -96,6 +96,7 @@
     <Compile Include="Elementals\ElementalBeings.cs"/>
     <Compile Include="Elementals\ElementalFactory.cs"/>
     <Compile Include="Elementals\ElementalWildsBehavior.cs"/>
+    <Compile Include="Elementals\ElementalDialogue.cs"/>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="Magic\ElementMagicMath.cs"/>
     <Compile Include="Magic\ElementUltimateMath.cs"/>

@@ -175,15 +175,19 @@ namespace AshAndEmber
 
             bool solarFlare = TalentSystem.Has(TalentId.SolarFlare);
 
-            // A visible pulse of the crystal's stored light at the caster — EVERY
-            // use, whether or not anything stands in range. The crystal works like
-            // any other magic: it always looses its light and reports the cast.
+            // A strong, unmistakable pulse of the crystal's stored light at the
+            // caster — EVERY use, whether or not anything stands in range. The
+            // crystal works like any other magic: it ALWAYS looses its light (a
+            // harmless bloom when no foe is near) and reports the cast, so a use is
+            // never a silent no-op even swinging into empty air.
             var def = CrystalCatalog.Get(type);
             try
             {
-                Vec3 at = caster.Position + new Vec3(0f, 0f, 1f);
-                SpellEffects.SpawnImpactBurst(at, def.GlowColor, 1.2f);
-                SpellEffects.SpawnTempLight(at, def.GlowColor, 8f, 1.0f);
+                Vec3 at     = caster.Position + new Vec3(0f, 0f, 1f);
+                Vec3 ground = caster.Position + new Vec3(0f, 0f, 0.1f);
+                SpellEffects.SpawnImpactBurst(at, def.GlowColor, 2.6f);
+                SpellEffects.SpawnImpactBurst(ground, def.GlowColor, 3.2f);   // a bloom on the ground around the bearer
+                SpellEffects.SpawnTempLight(at, def.GlowColor, 11f, 1.2f);
                 SpellEffects.TryCastSound(caster.Position, def.GlowColor);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

@@ -166,7 +166,7 @@ namespace AshAndEmber
             new SchemeDefinition(SchemeType.BribeSoldiers,
                 "Bribe Soldiers",
                 "A portion of the garrison deserts. They scatter — no one joins you, they simply leave.",
-                2200, 40, 0.32f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 750),
+                2200, 40, 0.38f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 750),
 
             new SchemeDefinition(SchemeType.BurnStorage,
                 "Burn a Storage",

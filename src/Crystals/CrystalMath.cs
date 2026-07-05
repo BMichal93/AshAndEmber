@@ -52,8 +52,10 @@ namespace AshAndEmber
         public const float EmberDamage = 35f;
 
         // ── Rimeshard — frost pulse (enemy slow) ─────────────────────────────
+        // The dedicated crowd-slow: it does no damage, so it must excel at its one
+        // job — the deepest slow of any crystal (Duskstone's slow is shallower).
         public const float RimeRadius      = 5f;
-        public const float RimeSlowMult    = 0.70f; // 70 % of normal speed (30 % slow)
+        public const float RimeSlowMult    = 0.60f; // 60 % of normal speed (40 % slow)
         public const float RimeDurationSec = 5f;
 
         // ── Veilstone — veil grasp (single random enemy in extended range) ──────
@@ -70,8 +72,10 @@ namespace AshAndEmber
         public const float StormMoraleDrain = 15f;
 
         // ── Duskstone — despair wave (morale drain + slow) ────────────────────
+        // The dedicated morale-breaker: its slow is deliberately shallower than
+        // Rimeshard's; its bite is the heavy morale drain (routs a wavering line).
         public const float DuskRadius      = 5f;
-        public const float DuskMoraleDrain = 18f;
+        public const float DuskMoraleDrain = 25f;
         public const float DuskSlowMult    = 0.80f; // 80 % of normal speed (20 % slow)
         public const float DuskDurationSec = 5f;
 

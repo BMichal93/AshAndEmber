@@ -136,6 +136,15 @@ namespace AshAndEmber
         public const float AuraIntervalSeconds = 0.35f;
         public const float AuraLodMetres       = 40f;   // beyond this, emit half as often
 
+        // ── The Kindled's attack (it fights with its element, not a weapon) ──────
+        // On this cooldown, a Kindled looses a small cone of its OWN element at a
+        // foe within reach and roughly ahead. Weaker than a mage's drawn cast (it
+        // is instinct, not a working) but relentless — a whole band is a storm of it.
+        public const float AttackCooldownSeconds = 4.5f;
+        public const float AttackCooldownJitter  = 2.0f;   // ± spread so a band does not volley in lockstep
+        public const float AttackRangeMetres     = 11f;    // must have a foe this close to bother loosing
+        public const float AttackPower           = 0.55f;  // small: just above an instant flick
+
         // ── Wild spawns (roaming the remote wilds) ──────────────────────────────
         // What the land breeds where magic pools. Keyed off a lower-cased biome /
         // terrain hint (Bannerlord's face-terrain names, or a settlement culture).

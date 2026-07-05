@@ -583,5 +583,38 @@
     </skills>
   </NPCCharacter>
 
+  <!-- ═══════════════════════════════════════════════════════════════════
+       THE KINDLED — an elemental being. A bare, weaponless, armourless
+       humanoid the land wakes where raw magic pools. ElementalBeings wreathes
+       it in its element (fire / water / stone / storm), drives its weakness,
+       and forces it to charge; it carries no steel and throws no stones.
+       Seeded into wild bands (ElementalWildsBehavior) and summoned through
+       ElementalFactory. Body key is fixed (min==max) so every Kindled shares
+       one bare, uniform shape rather than looking like an individual person.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <NPCCharacter id="elemental_being"
+                name="{=elemental_being_name}Elemental"
+                age="24"
+                level="30"
+                culture="Culture.looter"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="true">
+    <face>
+      <BodyPropertiesMin version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
+      <BodyPropertiesMax version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="150"/>
+      <skill id="OneHanded"  value="80"/>
+    </skills>
+  </NPCCharacter>
+
 </NPCCharacters>
 

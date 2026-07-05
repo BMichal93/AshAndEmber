@@ -24,7 +24,7 @@ namespace AshAndEmber
     public enum DarkGiftId
     {
         IronVeil      = 0,  // Permanent armour bonus — 10% incoming damage reduction
-        DarkStrike    = 1,  // On melee hit: weapon erupts for 20 bonus dark damage
+        DarkStrike    = 1,  // On melee hit: weapon erupts for +25% bonus dark damage
         SoulMirror    = 2,  // When struck in melee: reflect 20% of incoming damage
         DarkSpirit    = 3,  // On battle start: dark spirit(s) orbit and damage enemies (up to 3)
         HorseKiller   = 4,  // Every horse within 5 m dies
@@ -476,7 +476,7 @@ namespace AshAndEmber
             DarkGiftId.IronVeil =>
                 "Passive. Reduces all incoming damage by 10%.",
             DarkGiftId.DarkStrike =>
-                "Passive. Each of your melee hits erupts for an additional 20 dark damage.",
+                "Passive. Each of your melee hits erupts for an additional 25% dark damage.",
             DarkGiftId.SoulMirror =>
                 "Passive. Melee hits against you reflect 20% of inflicted damage back at the attacker.",
             DarkGiftId.DarkSpirit =>

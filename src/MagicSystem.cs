@@ -84,6 +84,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new TribalKingdomBehavior());
                 campaignStarter.AddBehavior(new CreationBackstoryRework());
                 try { AshenDialogue.Register(campaignStarter);    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ElementalDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ArenicosDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { TempleDialogue.Register(campaignStarter);   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { TribesDialogue.Register(campaignStarter);   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

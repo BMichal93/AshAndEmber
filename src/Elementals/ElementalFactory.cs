@@ -6,10 +6,11 @@
 // spawner: the Spirit Unbinding's champion, a battle's Kindling, and (later) any
 // mage's summon, so a Kindled looks and fights the same however it was called.
 //
-// A body of raw magic still carries a weapon (the aura + glow sell the element;
-// a weaponless agent's melee AI is unreliable, and reliability wins here). It is
-// tinted to its element, made several men tough, dropped onto a team, and told
-// to CHARGE — a being of pooled magic does not stand and wait.
+// A Kindled carries no steel and wears no armour — it is the bare "elemental_being"
+// troop (troops.xml), made several men tough, dropped onto a team, and told to
+// CHARGE. It does not rely on a weapon to fight: ElementalBeings looses a small
+// cone of its OWN element on a cooldown (the aura + glow sell it between blasts),
+// so a being of pooled magic attacks with pooled magic, not a looter's club.
 // =============================================================================
 
 using System;
@@ -35,8 +36,12 @@ namespace AshAndEmber
             {
                 if (Mission.Current == null || team == null) return null;
 
+                // The bare, weaponless, renamed "Elemental" body (troops.xml). Falls
+                // back to a looter only if that troop failed to load, so a Kindled is
+                // never left as a nameless crash.
                 CharacterObject troop =
-                    MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
+                    MBObjectManager.Instance.GetObject<CharacterObject>("elemental_being")
+                 ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider");
                 if (troop == null) return null;

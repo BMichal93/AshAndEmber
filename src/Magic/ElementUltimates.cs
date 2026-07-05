@@ -83,6 +83,7 @@ namespace AshAndEmber
             public ElementalKind Kind;
             public bool  Ashen;
             public float VisualTimer;
+            public bool  Player;   // true = the PLAYER's summon (gates the one-at-a-time cap)
         }
         private static readonly List<Champion> _champions = new List<Champion>();
 
@@ -114,7 +115,25 @@ namespace AshAndEmber
         // PLAYER ENTRY (called by ElementMagicInput on the Attack+Block chord)
         // =====================================================================
 
-        public static bool PlayerCanUnbind(MagicElement el) => !_playerUsed.Contains(el);
+        // Most Unbindings are one-per-element-per-battle. The SPIRIT summon is the
+        // exception: it is gated on whether the player's champion is still ALIVE, so
+        // you may raise another only once the first has fallen (or its time ran out)
+        // — never two at once. This stops the summon being spammed into an army.
+        public static bool PlayerCanUnbind(MagicElement el)
+            => el == MagicElement.Spirit ? !PlayerHasLiveChampion() : !_playerUsed.Contains(el);
+
+        // True while a player-summoned champion is still standing on the field.
+        private static bool PlayerHasLiveChampion()
+        {
+            for (int i = 0; i < _champions.Count; i++)
+            {
+                var c = _champions[i];
+                if (c == null || !c.Player) continue;
+                try { if (c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f) return true; }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            return false;
+        }
 
         // Executes the loaded element's Unbinding for the player. Returns true
         // when the working actually fired (the caller then applies the aging
@@ -122,7 +141,7 @@ namespace AshAndEmber
         public static bool CastPlayerUltimate(MagicElement el, Agent caster)
         {
             if (caster == null || !caster.IsActive()) return false;
-            if (_playerUsed.Contains(el)) return false;
+            if (!PlayerCanUnbind(el)) return false;
             // The wind will not carry horse and rider — and teleporting a mounted
             // RIDER out of the saddle is the desync class this mod never risks.
             // Refused BEFORE the once-per-battle is spent; the charge stays drawn.
@@ -131,7 +150,9 @@ namespace AshAndEmber
                 Msg("The wind will not carry horse and rider — take wing on your own feet.");
                 return false;
             }
-            _playerUsed.Add(el);
+            // Spirit is gated on its champion being alive (see PlayerCanUnbind), not
+            // marked spent — so the player may raise a fresh one after this dies.
+            if (el != MagicElement.Spirit) _playerUsed.Add(el);
             bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             Msg($"{ElementUltimateMath.UltimateName(el, ashen)} — the " +
                 $"{(ashen ? ElementMagicMath.AshenElementName(el) : ElementMagicMath.ElementName(el))} is unbound!");
@@ -743,7 +764,7 @@ namespace AshAndEmber
                 _champions.Add(new Champion
                 {
                     Elemental = elemental, Remaining = ElementUltimateMath.ElementalSeconds,
-                    Kind = kind, Ashen = ashen,
+                    Kind = kind, Ashen = ashen, Player = caster == Agent.Main,
                 });
                 Msg($"The land answers — a {ElementUltimateMath.ElementalName(kind)} rises to fight beside " +
                     (caster == Agent.Main ? "you." : "its summoner."));

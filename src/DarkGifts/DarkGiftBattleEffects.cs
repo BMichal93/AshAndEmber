@@ -290,12 +290,14 @@ namespace AshAndEmber
                 ? DarkGiftSystem.HasGift(DarkGiftId.SoulDrain)
                 : DarkGiftSystem.NpcHasGift(npcHero, DarkGiftId.SoulDrain);
 
-            // DarkStrike — bonus dark damage + black-red flash on victim
-            if (hasDarkStrike)
+            // DarkStrike — bonus dark damage scaled to the blow (25%) + black-red
+            // flash on victim. Scaling off the hit (like Iron Veil / Soul Mirror
+            // below) keeps a fast weapon from turning a flat bonus into runaway DPS.
+            if (hasDarkStrike && inflictedDamage > 0)
             {
                 try
                 {
-                    DamageAgent(victim, 20f);
+                    DamageAgent(victim, inflictedDamage * 0.25f);
                     BeginAgentGlowRaw(victim, new Color(0.6f, 0f, 0.08f).ToUnsignedInteger(), 0.35f);
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

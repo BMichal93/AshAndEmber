@@ -68,7 +68,7 @@ namespace AshAndEmber
                 TradeGoodId = "salt",
                 Name        = "Rimeshard",
                 GlowColor   = ColorSchool.Blue,
-                EffectDesc  = "Frost pulse: slows all enemies within 5 m by 30 % for 5 seconds.",
+                EffectDesc  = "Frost pulse: slows all enemies within 5 m by 40 % for 5 seconds.",
                 Lore        = "This one grew in a cold vein — too deep, too dark for proper sunlight. "
                             + "It learned to hold cold instead. What it releases is not warmth but its absence: "
                             + "a stillness that settles over everything nearby and makes motion feel like argument.",
@@ -104,7 +104,7 @@ namespace AshAndEmber
                 TradeGoodId = "grain",
                 Name        = "Duskstone",
                 GlowColor   = ColorSchool.Ashen,
-                EffectDesc  = "Despair wave: drains 18 morale and slows enemies within 5 m by 20 % for 5 seconds.",
+                EffectDesc  = "Despair wave: drains 25 morale and slows enemies within 5 m by 20 % for 5 seconds.",
                 Lore        = "It looks like ash pressed into glass. It grew in the penumbra of underground caverns "
                             + "where sunlight arrives only as rumour. "
                             + "What it releases is not warmth but the memory of its absence: a grey weight that settles on the will.",

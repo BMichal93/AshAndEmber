@@ -148,8 +148,12 @@ namespace AshAndEmber
                 if (party == null) return null;
 
                 try { party.MemberRoster.Clear(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // Seed the band with the bare, weaponless "Elemental" troop so it
+                // reads as the Kindled on the map and in battle — no looter mesh, no
+                // thrown stones. Falls back to bandits only if the troop failed to load.
                 CharacterObject troop =
-                    MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
+                    MBObjectManager.Instance.GetObject<CharacterObject>("elemental_being")
+                 ?? MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider");
                 if (troop == null) return null;

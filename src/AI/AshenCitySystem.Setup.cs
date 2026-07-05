@@ -40,10 +40,20 @@ namespace AshAndEmber
                     Clan clan = settlement.OwnerClan;
                     if (clan == null) continue;
 
-                    // Skip clans that own settlements outside our target list —
-                    // those extra settlements (Vercheng, Balagad, etc.) must not be dragged in.
-                    bool hasNonTarget = clan.Settlements.Any(s =>
-                        (s.IsTown || s.IsCastle) &&
+                    // Only a clan that holds NOTHING but target settlements may be
+                    // turned wholly Ashen. Skip otherwise, for two reasons:
+                    //   • the clan also holds ordinary towns (e.g. the Khuzait ruling
+                    //     clan holds Tepes Castle AND Makeb + Chaikand) — converting it
+                    //     drags its Tribes cities into the cold; and
+                    //   • the holdings list is not yet populated on this call. Reading
+                    //     an empty list as "pure target" (Any()==false) was wrongly
+                    //     converting the whole clan — the day-1 grey-cities bug.
+                    // In both cases the target settlement is still claimed on its own by
+                    // the second pass below; we simply never convert the whole clan.
+                    var clanHoldings = clan.Settlements
+                        .Where(s => s.IsTown || s.IsCastle).ToList();
+                    if (clanHoldings.Count == 0) continue;   // holdings not ready — do not risk it
+                    bool hasNonTarget = clanHoldings.Any(s =>
                         !_targetSettlementNames.Any(n =>
                             s.Name.ToString().IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0));
                     if (hasNonTarget) continue;
@@ -99,6 +109,12 @@ namespace AshAndEmber
             {
                 try { DeclareWarWithAllKingdoms(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ApplyAshenLookToSettlementHeroes(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // Belt-and-suspenders: immediately hand back any non-target town the
+                // setup left in Ashen hands, so the player never opens the map to a
+                // Tribes city (Makeb, Chaikand, …) wrongly greyed. The daily tick also
+                // enforces this, but that first fires only after a day has passed —
+                // running it here fixes the day-1 view.
+                try { ReleaseNonTargetSettlements(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _initialized = true;
             }
         }

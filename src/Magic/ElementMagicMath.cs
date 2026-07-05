@@ -82,9 +82,11 @@ namespace AshAndEmber
         // fully-charged cone leaves every struck foe BURNING (the Ashen cold clings
         // as deep frost — same toll, colder face). The burn scales with the charge,
         // so a snap flick ignites nothing and spam gains nothing: at full draw the
-        // cone's 44 plus the burn's 12/s × 5 s (= 60) finishes an unarmoured man
-        // over the seconds that follow, and leaves an armoured one crippled.
-        public const float IgniteMaxDps  = 12f;
+        // cone's 44 plus the burn's 18/s × 5 s (= 90) finishes an unarmoured man
+        // over the seconds that follow, and leaves an armoured one crippled. The
+        // burn is element-typed (see ElementSpellEffects.Tick), so it BITES the
+        // fire-weak Kindled — a Frost-Born keeps taking ×2.2 fire as it melts.
+        public const float IgniteMaxDps  = 18f;
         public const float IgniteSeconds = 5f;
         public static float IgniteDps(float power) => IgniteMaxDps * ChargeFraction(power);
 

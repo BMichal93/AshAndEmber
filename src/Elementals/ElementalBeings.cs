@@ -38,7 +38,10 @@ namespace AshAndEmber
             public Agent Agent;
             public ElementalKind Kind;
             public float AuraTimer;
+            public float AttackTimer;   // seconds until this Kindled next looses its element
         }
+
+        private static readonly Random _rng = new Random();
 
         private static readonly List<Being> _beings = new List<Being>();
         private static readonly Dictionary<Agent, ElementalKind> _kindOf = new Dictionary<Agent, ElementalKind>();
@@ -57,7 +60,12 @@ namespace AshAndEmber
             if (agent == null) return;
             if (_kindOf.ContainsKey(agent)) { _kindOf[agent] = kind; return; }
             _kindOf[agent] = kind;
-            _beings.Add(new Being { Agent = agent, Kind = kind, AuraTimer = 0f });
+            _beings.Add(new Being
+            {
+                Agent = agent, Kind = kind, AuraTimer = 0f,
+                // Stagger the first blast so a freshly-woken band does not volley as one.
+                AttackTimer = (float)(_rng.NextDouble() * ElementalMath.AttackCooldownSeconds),
+            });
         }
 
         public static bool IsElemental(Agent agent)
@@ -143,6 +151,17 @@ namespace AshAndEmber
 
                 if (reAggro) ReRouse(b.Agent);
 
+                // The Kindled fights with its element: on a cooldown, loose a small
+                // cone of its own kind at a foe within reach. This is how a
+                // weaponless being of raw magic actually kills — no club, no stones.
+                b.AttackTimer -= dt;
+                if (b.AttackTimer <= 0f)
+                {
+                    b.AttackTimer = ElementalMath.AttackCooldownSeconds
+                                  + (float)((_rng.NextDouble() - 0.5) * 2.0 * ElementalMath.AttackCooldownJitter);
+                    TryLooseElement(b.Agent, b.Kind);
+                }
+
                 b.AuraTimer -= dt;
                 if (b.AuraTimer > 0f) continue;
                 b.AuraTimer = interval;
@@ -160,6 +179,36 @@ namespace AshAndEmber
                 Formation form = agent.Formation;
                 if (form != null)
                     try { form.SetMovementOrder(MovementOrder.MovementOrderCharge); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Loose a small cone of the being's own element, but only when a living
+        // enemy stands within reach — no point spraying fire at empty ground. The
+        // cone flies in the body's facing direction; a charging Kindled faces its
+        // prey, so it lands. Reuses the exact player cast path (weakness wheel,
+        // walls, wards) at a low, instinctive power.
+        private static void TryLooseElement(Agent agent, ElementalKind kind)
+        {
+            try
+            {
+                if (agent == null || !agent.IsActive() || agent.Team == null) return;
+                if (Mission.Current == null) return;
+                if (Mission.Current.CurrentState != Mission.State.Continuing) return;
+
+                Vec3 pos = agent.Position;
+                float r2 = ElementalMath.AttackRangeMetres * ElementalMath.AttackRangeMetres;
+                bool foeInReach = false;
+                foreach (Agent a in Mission.Current.Agents)
+                {
+                    if (a == null || !a.IsActive() || a.IsMount || a.Team == null) continue;
+                    if (!agent.Team.IsEnemyOf(a.Team)) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy <= r2) { foeInReach = true; break; }
+                }
+                if (!foeInReach) return;
+
+                ElementSpellEffects.CastAttack(ElementalMath.ElementOf(kind), agent, ElementalMath.AttackPower);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
