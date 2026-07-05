@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AshAndEmber.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+876635e2d94cc8def810f4cf04f03c9bdfc644a6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+205e59efea81b3f7b296df9a10ce816c066f5f3a")]
 [assembly: System.Reflection.AssemblyProductAttribute("AshAndEmber.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AshAndEmber.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

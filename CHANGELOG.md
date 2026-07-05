@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+---
+
+## v0.40.0
+
 ### The Kindled — a true elemental body, and magic that bites
 - **No more looters.** The Kindled are now a dedicated bare, weaponless, armourless **"Elemental"** troop — no looter clothes, no stolen kit, and **they no longer hurl stones**. Wild bands and every summon build from it, so a Kindled reads as walking fire or stone, not a ragged bandit.
 - **They fight with their element.** Instead of a club, a Kindled looses a **small cone of its own element** on a cooldown — a Flame-Born throws fire, a Stone-Born heaves earth, a Frost-Born a wave of cold. A whole band is a storm of it.
