@@ -122,11 +122,11 @@ namespace AshAndEmber
                 "again. Release Alt to stop."), true);
 
             AddLog(new TextObject(
-                "MAGIC · THE FIVE ELEMENTS (in battle) — FIRE: a cone of fire / a wall of fire. " +
-                "WIND: a blast that hurls and slows / a wall of wind that turns arrows aside and bogs " +
-                "down all who cross. EARTH: a burst of rooting stone / a stone wall. WATER: a slowing " +
-                "wave / a barrier of mist. SPIRIT: strike fear into men and horses and shout a stray " +
-                "order into their ranks / a wall that heartens your own and mends them a little."), true);
+                "MAGIC · THE FIVE ELEMENTS (in battle) — FIRE: a bolt that bursts on impact / a wall of fire. " +
+                "WIND: a forward gust that hurls and slows / a wall of wind that turns arrows aside and bogs " +
+                "down all who cross. EARTH: a forward line of rooting stone / a stone wall. WATER: a forward " +
+                "slowing wave / a barrier of mist. SPIRIT: strike fear into men and horses all around and shout " +
+                "a stray order into their ranks / a wall that heartens your own and mends them a little."), true);
 
             AddLog(new TextObject(
                 "MAGIC · THE UNBINDING — Draw an element to its FULLEST (about seven seconds), then press " +

@@ -141,33 +141,37 @@ namespace AshAndEmber
             finally { _currentAttackElement = null; }
         }
 
-        // Wind · Gale — 360° knockback + damage; a ring of blown dust.
+        // Wind · Gale — a forward GUST: knockback + slow driven out in a broad wedge
+        // the caster faces (a stream of driven air, not a 360° ring).
         private static void BattleGale(Agent caster, Vec3 pos, Team team)
         {
-            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f, 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { SpawnEruptionRing(pos, NatureElement.Wind, NatureMath.GaleRadius * 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            // On desert sand the gale whips up a ring of stinging dust.
+            Vec3 fwd = caster.LookDirection.NormalizedCopy();
+            float halfAngle = NatureMath.GaleConeAngleDeg * 0.5f * (float)(Math.PI / 180.0);
+            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.GaleRadius, NatureElement.Wind, 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnEruptionCone(pos, fwd, NatureElement.Wind, NatureMath.GaleRadius); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // On desert sand the gust drives a plume of stinging dust down its line.
             try
             {
                 if (SpellEffects.SceneIsDesert())
-                    for (int i = 0; i < 8; i++)
+                    for (int i = 1; i <= 5; i++)
                     {
-                        double an = Math.PI * 2.0 * i / 8;
-                        Vec3 dp = pos + new Vec3((float)Math.Cos(an), (float)Math.Sin(an), 0.2f)
-                                      * (NatureMath.GaleRadius * 0.5f);
+                        Vec3 dp = pos + fwd * (NatureMath.GaleRadius * (i / 5f)) + new Vec3(0f, 0f, 0.2f);
                         SpellEffects.SpawnNatureBurst(dp, NatureElement.Earth, 0.8f);
                     }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ForEachEnemyInRadius(pos, NatureMath.GaleRadius, team, enemy =>
             {
+                Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
+                if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;   // outside the gust
                 // Walls of flame and standing water devour a gale that crosses them.
                 try { if (ElementWallWards.BlocksPath(MagicElement.Wind, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
                 ApplyDamage(enemy, caster, NatureMath.GaleDamage, DamageTypes.Invalid);
                 try
                 {
-                    Vec3 dir = (enemy.Position - pos).NormalizedCopy();
+                    // The gust drives foes AHEAD of the caster, not merely outward.
+                    Vec3 dir = (toEnemy + fwd).NormalizedCopy();
                     KnockbackAgent(enemy, enemy.Position + dir * NatureMath.GaleKnockback);
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -185,13 +189,18 @@ namespace AshAndEmber
                 Msg($"{NatureMath.PowerName(NatureMath.SupportPower(el))} — the land rises before you.", NatureColor);
         }
 
-        // Earth · Entangle — roots erupt in an AoE: damage + immobilise; root ring.
+        // Earth · Entangle — a forward LINE of erupting roots: damage + immobilise
+        // in a narrow ridge the caster faces (no longer a 360° AoE ring).
         private static void BattleEntangle(Agent caster, Vec3 pos, Team team)
         {
-            try { SpellEffects.SpawnNatureRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f, 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { SpawnEruptionRing(pos, NatureElement.Earth, NatureMath.EntangleRadius * 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            ForEachEnemyInRadius(pos, NatureMath.EntangleRadius, team, enemy =>
+            Vec3 fwd = caster.LookDirection.NormalizedCopy();
+            float halfAngle = NatureMath.EntangleConeAngleDeg * 0.5f * (float)(Math.PI / 180.0);
+            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.EntangleRange, NatureElement.Earth, 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnEruptionCone(pos, fwd, NatureElement.Earth, NatureMath.EntangleRange); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            ForEachEnemyInRadius(pos, NatureMath.EntangleRange, team, enemy =>
             {
+                Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
+                if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;   // off the line of roots
                 // A wall of driven wind scatters flung stone before it lands.
                 try { if (ElementWallWards.BlocksPath(MagicElement.Earth, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds

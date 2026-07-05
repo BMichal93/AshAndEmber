@@ -2,20 +2,21 @@
 // ASH AND EMBER — Magic/ElementSpellEffects.cs
 //
 // Battle effects for the unified elemental magic. Each element has an ATTACK
-// (released with the attack input) and a WALL (released with block).
+// (released with the attack input) and a WALL (released with block). Every
+// attack has its OWN silhouette so the five elements read apart at a glance:
 //
-//   Fire   — cone of fire          / wall of fire
-//   Wind   — wind blast (Gale)      / wall of wind  (blocks missiles, slows)   ┐ reuse the
-//   Earth  — burst of earth         / stone wall (Thornwall)                    │ existing
-//   Water  — slowing wave (Torrent) / mist wall                                 ┘ nature effects
-//   Spirit — panic men & horses,    / wall that lifts allies' morale and
-//            and issue a random       mends them a little
-//            order
+//   Fire   — bolt that EXPLODES on impact / wall of fire        (flying missile)
+//   Wind   — forward gust/stream           / wall of wind (blocks missiles, slows)
+//   Earth  — forward line of erupting roots / stone wall (Thornwall)
+//   Water  — forward slowing wave (cone)    / mist wall
+//   Spirit — nova: panic men & horses and   / wall that lifts allies' morale
+//            issue a random order              and mends them a little
 //
-// Wind/Earth/Water reuse NatureEffects (un-gated NPC path) so the nice existing
-// visuals carry over; Fire and Spirit are implemented here. Aging and the
-// free-hand / weight / Steel gates are handled by ElementMagicInput, so these
-// methods just apply the effect.
+// Wind/Earth/Water reuse NatureEffects (un-gated NPC path) so the existing
+// visuals carry over — the Wind gust and Earth line are shaped there too (see
+// NatureEffects.BattleGale / BattleEntangle). Fire (a flying bolt) and Spirit
+// (a nova) are implemented here. Aging and the free-hand / weight / Steel gates
+// are handled by ElementMagicInput, so these methods just apply the effect.
 // =============================================================================
 
 using System;
@@ -46,10 +47,31 @@ namespace AshAndEmber
         }
         private static readonly List<Ignition> _ignitions = new List<Ignition>();
 
-        public static void ClearBattleState() => _ignitions.Clear();
+        // ── Flying fire bolts (the Fire attack) ─────────────────────────────────
+        // A fast projectile that travels forward and BURSTS on the first foe it
+        // reaches (or at the end of its flight), scattering fire in a blast. One
+        // entry per bolt in flight; ticked from Tick, cleared with battle state.
+        private class FireBolt
+        {
+            public Vec3  Position;
+            public Vec3  Forward;
+            public float TravelLeft;
+            public Agent Caster;
+            public Team  CasterTeam;
+            public float Power;
+            public bool  Ashen;
+            public float TrailTimer;
+            public const float Speed        = 30f;   // m/s
+            public const float DetectRadius = 1.6f;  // how close a foe must be to trigger the burst
+            public const float TrailInterval = 0.03f;
+        }
+        private static readonly List<FireBolt> _bolts = new List<FireBolt>();
+
+        public static void ClearBattleState() { _ignitions.Clear(); _bolts.Clear(); }
 
         public static void Tick(float dt)
         {
+            TickBolts(dt);
             if (_ignitions.Count == 0) return;
             for (int i = _ignitions.Count - 1; i >= 0; i--)
             {
@@ -125,9 +147,9 @@ namespace AshAndEmber
         }
 
         // ── Magnitudes ──────────────────────────────────────────────────────────
-        private const float FireConeRange   = 13f;     // base reach of an instant cone (charge lances it further)
-        private const float FireConeDot      = 0.40f;  // ~66° half-cone — a broad sheet of flame, not a thin lance
-        private const float FireConeDamage   = 44f;    // the bruiser — highest single hit
+        private const float FireBoltRange    = 22f;    // how far the bolt flies (a full charge lances it further)
+        private const float FireBoltDamage   = 44f;    // blast core, ×power — the bruiser, highest single hit
+        private const float FireBoltRadius   = 3.5f;   // burst radius on impact
         private const float FireWallRange    = 6f;
         private const float FireWallWidth    = 4f;
         private const float FireWallDamage   = 14f;    // contact hit as the flame front sweeps up
@@ -153,7 +175,7 @@ namespace AshAndEmber
                 try { power *= ElementUltimates.FireDampAt(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             switch (el)
             {
-                case MagicElement.Fire:   FireCone(caster, power);  break;
+                case MagicElement.Fire:   FireMissile(caster, power);  break;
                 case MagicElement.Wind:   NatureEffects.ExecuteNpc(NaturePower.Gale,     caster, caster.Team, power); break;
                 case MagicElement.Earth:  NatureEffects.ExecuteNpc(NaturePower.Entangle, caster, caster.Team, power); break;
                 case MagicElement.Water:  NatureEffects.ExecuteNpc(NaturePower.Torrent,  caster, caster.Team, power); break;
@@ -184,40 +206,122 @@ namespace AshAndEmber
         }
 
         // ── Fire ────────────────────────────────────────────────────────────────
-        // A cone of fire scorches everything the caster faces.
-        private static void FireCone(Agent caster, float power)
+        // A bolt of fire is hurled forward; it bursts on the first foe it reaches
+        // (or at the end of its flight), scattering flame in a blast. A fuller draw
+        // sends it further and hits harder.
+        private static void FireMissile(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
-            try { pos = caster.Position; fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
+            try { pos = caster.Position + new Vec3(0f, 0f, 1.2f); fwd = caster.LookDirection; fwd.z = 0f; if (fwd.Length < 0.01f) return; fwd.Normalize(); }
             catch { return; }
             bool ashen = CasterAshen(caster);
-            Vec3 rgb = Palette(MagicElement.Fire, ashen);
-            // A fully-drawn cone lances far further than an instant flick.
-            float range = ElementMagicMath.ConeRange(FireConeRange, power);
-            int hit = 0;
-            foreach (Agent a in EnemiesNear(caster, range))
+            Vec3 rgb   = Palette(MagicElement.Fire, ashen);
+            Vec3 start = pos + fwd * 1.5f;
+            _bolts.Add(new FireBolt
             {
-                Vec3 to = a.Position - pos; to.z = 0f;
-                float len = to.Length; if (len < 0.01f) continue;
-                if (Vec3.DotProduct(fwd, to * (1f / len)) < FireConeDot) continue;   // outside the cone
+                Position   = start,
+                Forward    = fwd,
+                // A fully-drawn bolt lances far further than an instant flick.
+                TravelLeft = ElementMagicMath.ConeRange(FireBoltRange, power),
+                Caster     = caster,
+                CasterTeam = caster.Team,
+                Power      = power,
+                Ashen      = ashen,
+            });
+            // A gout of flame leaves the caster's hand as the bolt is loosed.
+            FireBloom(start, ashen, rgb, 1.2f, false);
+            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Advance every bolt in flight, trailing fire; burst on contact or at range's end.
+        private static void TickBolts(float dt)
+        {
+            if (_bolts.Count == 0) return;
+            Mission mission; try { mission = Mission.Current; } catch { _bolts.Clear(); return; }
+            if (mission == null) { _bolts.Clear(); return; }
+
+            for (int i = _bolts.Count - 1; i >= 0; i--)
+            {
+                FireBolt b = _bolts[i];
+                float moved = FireBolt.Speed * dt;
+                b.Position   += b.Forward * moved;
+                b.TravelLeft -= moved;
+
+                // A living trail of fire clings behind the bolt (the Ashen cold shows pale).
+                b.TrailTimer -= dt;
+                if (b.TrailTimer <= 0f)
+                {
+                    b.TrailTimer = FireBolt.TrailInterval;
+                    try
+                    {
+                        if (b.Ashen) SpellEffects.SpawnTempSnowParticle(b.Position, 1.0f);
+                        else         SpellEffects.SpawnTempFireParticle(b.Position, 1.0f);
+                    }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    SpawnLight(b.Position, Palette(MagicElement.Fire, b.Ashen), 1.2f);
+                }
+
+                // Burst on the first live enemy the bolt reaches.
+                Agent struck = FirstEnemyNear(b.CasterTeam, b.Caster, b.Position, FireBolt.DetectRadius, mission);
+                if (struck != null) { ExplodeBolt(b, b.Position); _bolts.RemoveAt(i); continue; }
+                if (b.TravelLeft <= 0f) { ExplodeBolt(b, b.Position); _bolts.RemoveAt(i); }
+            }
+        }
+
+        // The bolt bursts: fire scatters in a blast, scorching and igniting foes
+        // caught in it and charring timber, just as the old cone did at its throat.
+        private static void ExplodeBolt(FireBolt b, Vec3 at)
+        {
+            Vec3 rgb = Palette(MagicElement.Fire, b.Ashen);
+            foreach (Agent a in EnemiesNearPos(b.CasterTeam, b.Caster, at, FireBoltRadius))
+            {
                 if (SpellEffects.IsWarded(a)) continue;
-                // A wall of standing water between caster and mark drinks the fire.
-                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, pos, a.Position, out _)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                try { SpellEffects.DamageAgent(a, FireConeDamage * power, ColorSchool.Red, caster, MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // A wall of standing water between the burst and the mark drinks the fire.
+                try { if (ElementWallWards.BlocksPath(MagicElement.Fire, at, a.Position, out _)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.DamageAgent(a, FireBoltDamage * b.Power, ColorSchool.Red, b.Caster, MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // A deep draw sets the mark alight — the burn finishes what the
                 // strike began (the Ashen cold clings on as deep frost instead).
-                try { Ignite(a, caster, power, ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                FireBloom(a.Position, ashen, rgb, 1.0f, false);
-                hit++;
+                try { Ignite(a, b.Caster, b.Power, b.Ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                FireBloom(a.Position, b.Ashen, rgb, 1.0f, false);
             }
-            // Timber burns: siege engines and gates in the cone's throat char under
-            // the same fire (the cold splits the frozen grain just as surely).
-            try { SpellEffects.DamageBurnableStructures(pos + fwd * (range * 0.5f), range * 0.6f, SiegeConeDamage * power, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            // A living eruption of flame lances out along the cone; the Ashen show
-            // only the cold's pale light. Trailing blooms mark the deeper reach.
-            FireBloom(pos + fwd * (range * 0.5f), ashen, rgb, 3f, true);
-            FireBloom(pos + fwd * (range * 0.85f), ashen, rgb, 2f, false);
-            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Fire, ashen), 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Timber burns: siege engines and gates in the blast char under the same
+            // fire (the cold splits the frozen grain just as surely).
+            try { SpellEffects.DamageBurnableStructures(at, FireBoltRadius + 0.5f, SiegeConeDamage * b.Power, b.Caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // A living eruption of flame; the Ashen show only the cold's pale light.
+            FireBloom(at, b.Ashen, rgb, 3f, true);
+            try { SpellEffects.RecordMagicCast(at); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Nearest enemy within `radius` of an arbitrary point (bolt-centred, not
+        // caster-centred like EnemiesNear); null if none. Ignores mounts.
+        private static Agent FirstEnemyNear(Team casterTeam, Agent caster, Vec3 at, float radius, Mission mission)
+        {
+            float r2 = radius * radius;
+            List<Agent> agents;
+            try { agents = mission.Agents.ToList(); } catch { return null; }
+            foreach (Agent a in agents)
+            {
+                if (a == caster || !a.IsActive() || a.IsMount) continue;
+                if (casterTeam != null && a.Team == casterTeam) continue;
+                float dx = a.Position.x - at.x, dy = a.Position.y - at.y, dz = a.Position.z - at.z;
+                if (dx * dx + dy * dy + dz * dz <= r2) return a;
+            }
+            return null;
+        }
+
+        // All enemies within `radius` of an arbitrary point (the burst centre).
+        private static IEnumerable<Agent> EnemiesNearPos(Team casterTeam, Agent caster, Vec3 at, float radius)
+        {
+            float r2 = radius * radius;
+            List<Agent> agents;
+            try { agents = Mission.Current.Agents.ToList(); } catch { yield break; }
+            foreach (Agent a in agents)
+            {
+                if (a == caster || !a.IsActive() || a.IsMount) continue;
+                if (casterTeam != null && a.Team == casterTeam) continue;
+                float dx = a.Position.x - at.x, dy = a.Position.y - at.y, dz = a.Position.z - at.z;
+                if (dx * dx + dy * dy + dz * dz <= r2) yield return a;
+            }
         }
 
         // A wall of fire just ahead — burns those who stand in its line. Thrown

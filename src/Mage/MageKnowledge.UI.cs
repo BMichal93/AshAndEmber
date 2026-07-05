@@ -62,23 +62,24 @@ namespace AshAndEmber
             string desc =
                 AgingSystem.BuildLedgerText() +
                 "── THE CASTING, IN BRIEF ────────────────────────────\n" +
-                "  Hold Left Alt → stand still and DRAW → Attack looses a cone,\n" +
+                "  Hold Left Alt → stand still and DRAW → Attack looses your element,\n" +
                 "  Block raises a wall → release Alt to stop.\n" +
                 "  The longer you hold, the harder it strikes (full at ~7 s);\n" +
                 "  hold too long (~15 s) and the charge disperses. Keep a hand free.\n" +
                 "  Fire is loaded by default. Tap W / A / S / D to load a learned\n" +
                 "  element — W Wind · S Earth · A Water · D Spirit.\n" +
                 "  (Full gestures, miracles and crystals: your Codex of Hand and Voice.)\n\n" +
-                "── THE FIVE ELEMENTS  (Attack = cone · Block = wall) ─\n" +
-                "  Fire    — a cone of fire            / a wall of fire\n" +
-                "  Wind    — a blast that hurls & slows / a wall that turns arrows\n" +
-                "  Earth   — a burst of rooting stone   / a stone wall\n" +
-                "  Water   — a slowing wave             / a barrier of mist\n" +
-                "  Spirit  — fear men & horses, a stray / a wall that heartens\n" +
-                "            order into their ranks       and mends your own\n" +
-                "  A longer draw makes every element strike harder — and a DEEP\n" +
-                "  draw of Fire sets its marks ALIGHT: they keep burning (up to\n" +
-                "  ~12/s for 5 s at full charge; a snap flick ignites nothing).\n" +
+                "── THE FIVE ELEMENTS  (each strikes its own way · Block = wall) ─\n" +
+                "  Fire    — a bolt that BURSTS on impact / a wall of fire\n" +
+                "  Wind    — a forward gust that hurls & slows / a wall that turns arrows\n" +
+                "  Earth   — a forward line of rooting stone   / a stone wall\n" +
+                "  Water   — a forward slowing wave            / a barrier of mist\n" +
+                "  Spirit  — fear men & horses all around, a  / a wall that heartens\n" +
+                "            stray order into their ranks        and mends your own\n" +
+                "  A longer draw makes every element strike harder — Fire flies\n" +
+                "  further — and a DEEP draw of Fire sets its marks ALIGHT: they\n" +
+                "  keep burning (up to ~18/s for 5 s at full charge; a snap flick\n" +
+                "  ignites nothing).\n" +
                 "  The Ashen cold clings on as deep frost — the same toll.\n\n" +
                 "── WALLS WARD  (while they stand) ───────────────────\n" +
                 "  Fire   — devours any gale that crosses it; horses shy from flame.\n" +
@@ -98,8 +99,8 @@ namespace AshAndEmber
                 "  Water on stone  — the broken wave churns the ground to MUD:\n" +
                 "                    a bogging patch that slows all who cross it,\n" +
                 "                    charging cavalry worst of all.\n" +
-                "  Fire on timber  — siege engines and castle GATES burn: a cone\n" +
-                "                    scorches them, a standing fire gnaws at them.\n" +
+                "  Fire on timber  — siege engines and castle GATES burn: a bursting\n" +
+                "                    bolt scorches them, a standing fire gnaws at them.\n" +
                 "                    (The Ashen cold splits the frozen grain.)\n" +
                 "  Horses and flame — no horse will hold a burning line.\n\n" +
                 "── BATTLE COST  (life expectancy — flat per cast) ────\n" +

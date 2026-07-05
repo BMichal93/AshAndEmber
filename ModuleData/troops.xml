@@ -14,7 +14,7 @@
                 name="{=fire_devotee_name}Fire Devotee"
                 age="25"
                 level="8"
-                culture="Culture.looter"
+                culture="Culture.looters"
                 default_group="Infantry"
                 occupation="Bandit"
                 is_basic_troop="false"
@@ -55,7 +55,7 @@
                 name="{=fire_zealot_name}Fire Zealot"
                 age="25"
                 level="16"
-                culture="Culture.looter"
+                culture="Culture.looters"
                 default_group="Infantry"
                 occupation="Bandit"
                 is_basic_troop="false"
@@ -95,7 +95,7 @@
                 name="{=ember_caller_name}Ember Caller"
                 age="25"
                 level="16"
-                culture="Culture.looter"
+                culture="Culture.looters"
                 default_group="Ranged"
                 occupation="Bandit"
                 is_basic_troop="false"
@@ -136,7 +136,7 @@
                 name="{=ember_shaman_name}Ember Sorcerer"
                 age="25"
                 level="26"
-                culture="Culture.looter"
+                culture="Culture.looters"
                 default_group="Ranged"
                 occupation="Bandit"
                 is_basic_troop="false"
@@ -592,22 +592,30 @@
        is fixed (min==max) so every Kindled shares one bare, uniform shape
        rather than looking like an individual person.
 
-       The equipment roster must NEVER be left empty. A troop with no equipment
-       has a null FirstBattleEquipment, and when the player catches a wild band
-       the engine opens the ordinary caught-party conversation (silenced to "..."
-       by ElementalDialogue) — building that conversation agent dereferences the
-       null equipment and hard-crashes the game (NRE in
-       ConversationManager.SetupAndStartMapConversation). So the Kindled wears a
-       single drab, weaponless garment: enough to render a clothed shape under
-       the elemental aura, never a looter's club or thrown stones. (The battle
-       factory guards the same null with `FirstBattleEquipment ?? Equipment`.)
+       CULTURE MUST BE "Culture.looters" (plural). The base game's bandit culture
+       id is "looters"; "Culture.looter" (singular) does NOT resolve, and an
+       unresolved culture is a placeholder with a null Name. When the player
+       catches a heroless wild band, the engine opens the ordinary caught-party
+       conversation (silenced to "..." by ElementalDialogue) and its very first
+       line does string.Concat(... character.Culture ...), which calls
+       CultureObject.ToString() → Name.ToString() → NRE, hard-crashing the game
+       (ConversationManager.StartNew). This is why the Kindled crashed when it
+       became its own troop but worked while the band was made of real looters
+       (the real "looter" troop is culture "looters", valid). The same typo is in
+       the Fire Worshipper troops below — any heroless band of them crashes the
+       same way. It only bites HEROLESS parties: a hero leader is the conversation
+       partner instead, so its (valid) culture is used.
+
+       Equipment stays a single drab, weaponless garment: a conversable troop
+       should carry a body, and the battle factory already guards a null
+       FirstBattleEquipment with `FirstBattleEquipment ?? Equipment`.
        ═══════════════════════════════════════════════════════════════════ -->
 
   <NPCCharacter id="elemental_being"
                 name="{=elemental_being_name}Elemental"
                 age="24"
                 level="30"
-                culture="Culture.looter"
+                culture="Culture.looters"
                 default_group="Infantry"
                 occupation="Bandit"
                 is_basic_troop="false"
@@ -617,8 +625,7 @@
       <BodyPropertiesMax version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
     </face>
     <Equipments>
-      <!-- Weaponless by design; a plain garment only, so the body renders and
-           FirstBattleEquipment is never null (see the note above). -->
+      <!-- Weaponless by design; a plain garment only, so the body renders. -->
       <EquipmentRoster>
         <equipment slot="Body" id="Item.rough_tied_armor"/>
         <equipment slot="Leg"  id="Item.strapped_leather_boots"/>

@@ -283,13 +283,15 @@ namespace AshAndEmber
         }
 
         // ── Tactical element selection ───────────────────────────────────────────
-        // Each situation has an ordered preference of elements. Fire and Water are
-        // forward cones (best on a target ahead); Wind and Earth strike all around
-        // (best when surrounded); Water and Earth break a cavalry charge (knockback /
-        // root); Spirit is pure control and never endangers friends. A lord throws
-        // the first element he KNOWS that fits — Fire is always known as a fallback.
+        // Each situation has an ordered preference of elements. Every damage element
+        // now strikes FORWARD (Fire a bursting bolt, Water a wave, Wind a gust, Earth
+        // a line of roots) — best on a target ahead; only Spirit is all-around (pure
+        // control, 0 damage, never endangers friends). Water and Earth break a cavalry
+        // charge (knockback / root). A lord throws the first element he KNOWS that fits
+        // — Fire is always known as a fallback. When surrounded, the all-around Spirit
+        // leads, then forward damage aimed at the densest front.
         private static readonly MagicElement[] _prefSurrounded =
-            { MagicElement.Wind, MagicElement.Earth, MagicElement.Spirit, MagicElement.Water, MagicElement.Fire };
+            { MagicElement.Spirit, MagicElement.Fire, MagicElement.Earth, MagicElement.Wind, MagicElement.Water };
         private static readonly MagicElement[] _prefChargeBreak =
             { MagicElement.Water, MagicElement.Earth, MagicElement.Wind, MagicElement.Fire, MagicElement.Spirit };
         private static readonly MagicElement[] _prefCluster =
@@ -313,11 +315,13 @@ namespace AshAndEmber
         {
             switch (el)
             {
+                // Every damage element strikes forward now (Fire bolt, Water wave,
+                // Wind gust, Earth line) — safe only with a clean lane ahead.
                 case MagicElement.Fire:
-                case MagicElement.Water:  return forwardSafe;  // forward cones
+                case MagicElement.Water:
                 case MagicElement.Wind:
-                case MagicElement.Earth:  return aroundSafe;   // strike all around
-                default:                  return true;         // Spirit — control only, 0 damage
+                case MagicElement.Earth:  return forwardSafe;
+                default:                  return true;         // Spirit — all-around control, 0 damage
             }
         }
 
@@ -332,11 +336,11 @@ namespace AshAndEmber
                 // even without a clean lane; patient lords hold fire until it's safe.
                 bool reckless = isAshen || emergency || temper == CasterTemper.Impulsive;
 
-                // A lord does not throw a cone into a wall that drinks it: probe the
-                // forward lane against the standing wards (fire dies on mist, the
-                // wave breaks on stone). Recklessness is courage, not blindness —
-                // every temper respects physics. Radial workings (Wind/Earth) are
-                // warded per-target, so they need no lane probe.
+                // A lord does not throw a forward working into a wall that drinks it:
+                // probe the forward lane against the standing wards (fire dies on mist,
+                // the wave breaks on stone, a gale on flame, flung stone on wind).
+                // Recklessness is courage, not blindness — every temper respects
+                // physics. Only Spirit's dread passes every wall, so it skips the probe.
                 Vec3 fwdProbe = default(Vec3);
                 bool probeOk = false;
                 try
@@ -351,7 +355,7 @@ namespace AshAndEmber
                 foreach (var el in Preference(sit))
                 {
                     if (!known.Contains(el)) continue;
-                    if (probeOk && (el == MagicElement.Fire || el == MagicElement.Water)
+                    if (probeOk && el != MagicElement.Spirit
                         && ElementWallWards.IsPathWarded(el, agent.Position, fwdProbe)) continue;
                     if (reckless || ElementFits(el, forwardSafe, aroundSafe)) { pick = el; break; }
                 }

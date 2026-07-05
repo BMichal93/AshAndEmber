@@ -66,7 +66,19 @@ Each registration is wrapped in its own try/catch for mod-conflict safety.
 
 ### Spell Cast Pipeline
 
-**Current (player):** `ElementMagicInput.Tick` reads Focus + direction + a stand-still charge, then `ElementSpellEffects` / `ElementWallWards` / `ElementUltimates` resolve the attack cone, wall, or ultimate. Life-cost is **flat** (the charge buys power, not a cheaper cast); the Nature discipline lowers it, and the Ashen pay in criminal standing.
+**Current (player):** `ElementMagicInput.Tick` reads Focus + direction + a stand-still charge, then `ElementSpellEffects` / `ElementWallWards` / `ElementUltimates` resolve the attack, wall, or ultimate. Life-cost is **flat** (the charge buys power, not a cheaper cast); the Nature discipline lowers it, and the Ashen pay in criminal standing.
+
+**Attack forms (per element — each has its own silhouette so they read apart):**
+
+| Element | Attack shape | Implemented in |
+|---|---|---|
+| Fire | **Flying bolt that explodes on impact** (bursts on first foe reached or at range's end) | `ElementSpellEffects.FireMissile` + `TickBolts`/`ExplodeBolt` (the `_bolts` list, ticked from `Tick`) |
+| Wind | **Forward gust/stream** (broad wedge, knockback drives foes ahead) | `NatureEffects.BattleGale` (shared source) |
+| Earth | **Forward line of erupting roots** (narrow ridge, damage + root) | `NatureEffects.BattleEntangle` (shared source) |
+| Water | **Forward slowing wave** (cone) | `NatureEffects.BattleTorrent` (shared source) |
+| Spirit | **Nova** (radial panic + random enemy order) | `ElementSpellEffects.SpiritPanic` |
+
+`CastAttack(el, caster, power)` is the single dispatch choke point — the player (`ElementMagicInput`), NPC lords (`ColourLordAI`), and the Kindled (`ElementalBeings`) all cast through it, so changing an attack shape there is automatically NPC-parity-correct. **Wind/Earth/Water still delegate to the shared `NatureEffects` (Gale/Entangle/Torrent), which the Living Ember nature discipline also casts** (`NatureSeerAI`, the nature input handler — both still live in `MagicSystem`), so reshaping them there deliberately reshapes the nature-discipline versions too (consistent with the "one magic" unification). The fire bolt is a self-contained projectile (no legacy `SpellCast`/`Agent.Main` dependency) so it works for any caster; it trails fire each tick and is cleared with the rest of battle state via `ElementSpellEffects.ClearBattleState`.
 
 **Legacy (NPC and underlying effects):**
 ```

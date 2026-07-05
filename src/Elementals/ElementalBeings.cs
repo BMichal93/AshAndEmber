@@ -209,19 +209,20 @@ namespace AshAndEmber
                 }
                 if (nearest == null) return;   // no foe within reach — don't loose into empty ground
 
-                // Fire and Water throw a forward CONE, so only loose them when the foe
-                // is actually ahead (a charging Kindled usually is) — otherwise the
-                // cone sails past behind it. Earth and Wind erupt in a ring around the
-                // body, so they land on anything in reach regardless of facing.
+                // Every damage element now strikes FORWARD (Fire a bursting bolt, Water
+                // a wave, Wind a gust, Earth a line of roots), so only loose it when the
+                // foe is actually ahead (a charging Kindled usually is) — otherwise the
+                // working sails past behind it. Only Spirit is all-around, and the
+                // Kindled do not wield it.
                 MagicElement el = ElementalMath.ElementOf(kind);
-                if (el == MagicElement.Fire || el == MagicElement.Water)
+                if (el != MagicElement.Spirit)
                 {
                     Vec3 fwd = agent.LookDirection; fwd.z = 0f;
                     Vec3 to  = nearest.Position - pos; to.z = 0f;
                     float fl = fwd.Length, tl = to.Length;
                     if (fl > 0.01f && tl > 0.01f &&
                         Vec3.DotProduct(fwd * (1f / fl), to * (1f / tl)) < 0.2f)
-                        return;   // foe is not ahead — hold the cone this beat
+                        return;   // foe is not ahead — hold the working this beat
                 }
 
                 ElementSpellEffects.CastAttack(el, agent, ElementalMath.AttackPower);

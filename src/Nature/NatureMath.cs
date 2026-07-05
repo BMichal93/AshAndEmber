@@ -188,14 +188,19 @@ namespace AshAndEmber
         public static double NpcDailyUseChance()  => 0.015;
 
         // ── Battle effect constants ─────────────────────────────────────────────
-        // Wind · Gale — the sweeper: widest area (360°), knockback + slow; hits all
-        public const float GaleRadius     = 10f;
-        public const float GaleDamage     = 30f;
-        public const float GaleKnockback  = 4f;
-        public const float GaleSlowMult   = 0.80f;
-        public const float GaleSlowSec    = 5f;
-        // Earth · Entangle — the jailer: moderate damage + a long hard root
-        public const float EntangleRadius   = 6f;
+        // Wind · Gale — the pusher: a forward GUST/stream, knockback + slow; hits
+        // everything in a broad wedge the caster faces (no longer a 360° ring).
+        public const float GaleRadius       = 10f;   // reach of the gust
+        public const float GaleConeAngleDeg = 55f;   // full wedge width — a driving stream, not a ring
+        public const float GaleDamage       = 30f;
+        public const float GaleKnockback    = 4f;
+        public const float GaleSlowMult     = 0.80f;
+        public const float GaleSlowSec      = 5f;
+        // Earth · Entangle — the jailer: a forward LINE of erupting roots, moderate
+        // damage + a long hard root (a narrow ridge the caster faces, not an AoE ring).
+        public const float EntangleRange      = 11f;  // how far the line of roots erupts
+        public const float EntangleConeAngleDeg = 42f; // narrow — a ridge, not a fan
+        public const float EntangleRadius   = 6f;      // kept for save/visual compat (ring-scaled effects)
         public const float EntangleDamage   = 32f;
         public const float EntangleRootSec  = 4f;
         public const float EntangleStaggerSec = 0.4f;  // brief caster pause

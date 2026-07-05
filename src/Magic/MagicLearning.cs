@@ -159,8 +159,8 @@ namespace AshAndEmber
         {
             switch (p)
             {
-                case MagePower.Wind:   return "Wield the Wind — a blast that hurls and slows, and a wall of wind that turns aside arrows and bogs down all who cross it.";
-                case MagePower.Earth:  return "Wield the Earth — a burst of stone that roots those it catches, and a stone wall raised from the ground.";
+                case MagePower.Wind:   return "Wield the Wind — a forward gust that hurls and slows all it drives before it, and a wall of wind that turns aside arrows and bogs down all who cross it.";
+                case MagePower.Earth:  return "Wield the Earth — a forward line of erupting stone that roots those it catches, and a stone wall raised from the ground.";
                 case MagePower.Water:  return "Wield Water — a slowing wave that drags at the foe, and a barrier of mist.";
                 case MagePower.Spirit: return "Wield Spirit — strike fear into men and horses and shout a stray order into their ranks, and raise a wall that heartens your own and mends them a little.";
                 case MagePower.Steel:  return "Steel — shape the fire with a weapon still in your hand, and bear twice the armour before the channel smothers.";
