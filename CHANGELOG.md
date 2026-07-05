@@ -23,6 +23,11 @@ The Kindled **drink their own element and buckle to the one that unmakes them**:
 ### Balance — the Spirit Unbinding costs more
 The Spirit Unbinding does not spend itself — it leaves a **living champion** fighting for a full minute, worth several men. That standing power now costs **more days of life** than a one-moment nova or gale (Nature still halves it; the Ashen still pay in criminal standing).
 
+### Making sure you actually meet them
+- Wild bands are now **large enough to persist and roam** (they carry lesser thralls alongside the true Kindled) and are **set travelling toward the nearest town** the moment they wake, so they cross the roads where you can find them rather than sitting in the deep wilds. A band's birth is announced as a rumour in the message feed.
+- In a fight, only a capped number of a band's bodies (up to 8) wake into full elementals — the rest march as ordinary thralls, so a large band is dangerous, not an unbeatable wall of 400-HP beings.
+- **Debug:** `Ctrl+Shift+F9` spawns a random Kindled band right beside you, ready to engage — the quick way to see them in action.
+
 ### Notes
 - Fully backward compatible: all Kindled state is mission-scoped (cleared with the rest of battle state) except the roaming-band roster, which is persisted under new `ELEM_*` save keys and prunes itself. Old saves load untouched.
 

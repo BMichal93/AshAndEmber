@@ -152,13 +152,19 @@ namespace AshAndEmber
             return ElementalKind.Stone;   // the world's default answer
         }
 
-        // Roaming-party sizing (in-battle bodies, no ×10 map scaling).
-        public const int   WildPartyMinBodies = 3;
-        public const int   WildPartyMaxBodies = 6;
-        // Per remote-party daily roll: how likely raw magic wakes a new band.
-        public const float WildDailySpawnChance = 0.04f;
+        // Roaming-party sizing. A band must be big enough to persist and roam
+        // (the engine culls near-empty parties and they never travel far enough
+        // to be found), so it carries lesser thralls alongside the true Kindled.
+        public const int   WildPartyMinBodies = 14;
+        public const int   WildPartyMaxBodies = 22;
+        // …but only this many of a band's bodies wake into full elementals in a
+        // fight — the rest march as ordinary thralls. Keeps the battle dangerous
+        // without fielding twenty 400-HP beings at once.
+        public const int   MaxConvertedPerBattle = 8;
+        // Per daily roll: how likely raw magic wakes a new band somewhere.
+        public const float WildDailySpawnChance = 0.10f;
         // Never let the world drown in them.
-        public const int   WildMaxLivingBands   = 6;
+        public const int   WildMaxLivingBands   = 8;
 
         // ── Battle reinforcement (The Kindling) ─────────────────────────────────
         public const float KindlingBattleChance = 0.03f;   // per battle, like other events

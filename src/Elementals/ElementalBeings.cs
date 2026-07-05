@@ -47,6 +47,9 @@ namespace AshAndEmber
         // OnAgentBuild hook knows to remake the enemy bodies into that kind. Null
         // in every ordinary battle. Cleared at mission end.
         public static ElementalKind? PendingBattleKind = null;
+        // How many enemy bodies have already woken this battle — capped so a big
+        // band fields a dangerous knot of Kindled, not a whole elemental army.
+        private static int _convertedThisBattle = 0;
 
         // ── Registry ─────────────────────────────────────────────────────────────
         public static void Register(Agent agent, ElementalKind kind)
@@ -72,6 +75,7 @@ namespace AshAndEmber
             _beings.Clear();
             _kindOf.Clear();
             PendingBattleKind = null;
+            _convertedThisBattle = 0;
         }
 
         // ── Wild-band conversion (called from OnAgentBuild) ──────────────────────
@@ -83,6 +87,7 @@ namespace AshAndEmber
         public static void ConvertBattleAgent(Agent agent)
         {
             if (PendingBattleKind == null || agent == null || !agent.IsActive()) return;
+            if (_convertedThisBattle >= ElementalMath.MaxConvertedPerBattle) return;
             if (agent.IsMount || agent.IsPlayerControlled) return;
             try { if (agent.IsHero) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Only the side that ISN'T the player's becomes elemental.
@@ -93,7 +98,9 @@ namespace AshAndEmber
                     (agent.Team == pt || agent.Team.IsPlayerAlly)) return;
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            _convertedThisBattle++;
             Register(agent, PendingBattleKind.Value);
+            try { ElementalFactory.SetAggressive(agent, agent.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { agent.HealthLimit = Math.Max(agent.HealthLimit, ElementalMath.Health(PendingBattleKind.Value)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { agent.Health = agent.HealthLimit; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }

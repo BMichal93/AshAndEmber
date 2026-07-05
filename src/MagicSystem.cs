@@ -221,6 +221,18 @@ namespace AshAndEmber
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
+                // Ctrl+Shift+F9 — debug: spawn a Kindled (elemental) band beside the player
+                try
+                {
+                    if (TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftControl)
+                     && TaleWorlds.InputSystem.Input.IsKeyDown(TaleWorlds.InputSystem.InputKey.LeftShift)
+                     && TaleWorlds.InputSystem.Input.IsKeyPressed(TaleWorlds.InputSystem.InputKey.F9))
+                    {
+                        ElementalWildsBehavior.DebugSpawnNearPlayer();
+                    }
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
                 // Ctrl+Shift+F12 — debug grant: 100 fp, all dark gifts, max grace,
                 // all nature talents, and one of each crystal. Nature must be granted
                 // before dark gifts because GrantGift clears grace as a side effect.

@@ -21,6 +21,9 @@ namespace AshAndEmber
     ///  - It de-duplicates by failure site + exception, so a method that throws
     ///    every frame (e.g. inside a mission tick) is recorded once, not spammed
     ///    to death. A hard cap bounds both memory and file growth.
+    ///  - It self-limits on disk: entries older than 30 days are pruned once at
+    ///    session start, and the file is archived to <c>.old</c> past 5 MB, so we
+    ///    never hoard more than a month of history.
     /// </summary>
     public static class ModLog
     {
@@ -34,6 +37,10 @@ namespace AshAndEmber
         // If an existing log is larger than this at startup it is archived once,
         // so the file cannot grow forever across many sessions.
         private const long MaxFileBytes = 5 * 1024 * 1024;
+
+        // Entries older than this are pruned once at startup, so the log never
+        // hoards more than a month of history.
+        private const int MaxRetentionDays = 30;
 
         private static string _path;
         private static bool _initTried;
@@ -139,6 +146,7 @@ namespace AshAndEmber
                 Directory.CreateDirectory(dir);
                 string path = Path.Combine(dir, "errors.log");
 
+                PruneOldEntries(path);
                 ArchiveIfLarge(path);
 
                 File.AppendAllText(
@@ -155,6 +163,74 @@ namespace AshAndEmber
                 _disabled = true;
                 return false;
             }
+        }
+
+        // Rewrites the log keeping only records stamped within the last
+        // MaxRetentionDays. Every record begins with a "[yyyy-MM-dd HH:mm:ss]"
+        // stamp (an entry, a warn line, or a session banner); indented follow-on
+        // lines — stack traces, inner exceptions — inherit their record's fate.
+        // Runs once per session, before the new banner is appended.
+        private static void PruneOldEntries(string path)
+        {
+            try
+            {
+                if (!File.Exists(path))
+                    return;
+
+                DateTime cutoff = DateTime.Now.AddDays(-MaxRetentionDays);
+                string[] lines = File.ReadAllLines(path, Encoding.UTF8);
+
+                var kept = new List<string>(lines.Length);
+                bool keepCurrent = true;   // undated leading lines are kept
+                bool prunedAny = false;
+
+                foreach (string line in lines)
+                {
+                    DateTime stamp;
+                    if (TryReadStamp(line, out stamp))
+                        keepCurrent = stamp >= cutoff;   // start of a new record
+
+                    if (keepCurrent)
+                        kept.Add(line);
+                    else
+                        prunedAny = true;
+                }
+
+                if (prunedAny)
+                    File.WriteAllLines(path, kept, Encoding.UTF8);
+            }
+            catch
+            {
+                // Non-fatal — a failed prune just leaves the old file in place.
+            }
+        }
+
+        // A record-leading line carries its stamp in the first "[...]" span:
+        // "[2026-07-05 14:03:22]  File.cs:1 Method" or the session banner
+        // "==== ... started [2026-07-05 14:03:22] ====". Anything else (indented
+        // detail, blanks) has no leading stamp and returns false.
+        private static bool TryReadStamp(string line, out DateTime stamp)
+        {
+            stamp = default(DateTime);
+            if (string.IsNullOrEmpty(line))
+                return false;
+
+            char first = line[0];
+            if (first != '[' && first != '=')
+                return false;   // indented continuation line — cheap reject
+
+            int open = line.IndexOf('[');
+            if (open < 0)
+                return false;
+            int close = line.IndexOf(']', open + 1);
+            if (close < 0)
+                return false;
+
+            string raw = line.Substring(open + 1, close - open - 1);
+            return DateTime.TryParseExact(
+                raw, "yyyy-MM-dd HH:mm:ss",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out stamp);
         }
 
         private static void ArchiveIfLarge(string path)

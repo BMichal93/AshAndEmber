@@ -83,31 +83,61 @@ namespace AshAndEmber
                 PruneDead();
                 if (_bandKind.Count >= ElementalMath.WildMaxLivingBands) return;
                 if (_rng.NextDouble() >= ElementalMath.WildDailySpawnChance) return;
-                SpawnWildBand();
+
+                // Breed at a random hideout's land — remote, but the band is then
+                // set roaming toward the nearest town so it travels the roads where
+                // the player can actually find it.
+                var hideouts = Settlement.All.Where(s => s?.Hideout != null).ToList();
+                if (hideouts.Count == 0) return;
+                Settlement home = hideouts[_rng.Next(hideouts.Count)];
+                SpawnBand(home.GetPosition2D, ElementalMath.WildKindForBiome(BiomeHint(home)), roam: true, announce: true);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        private void SpawnWildBand()
+        // Force-spawn a band right beside the player, ready to engage — the
+        // reliable way to SEE the Kindled without waiting for the wilds to breed
+        // one and wander it into view. Bound to Ctrl+Shift+F9.
+        public static void DebugSpawnNearPlayer()
+        {
+            try
+            {
+                var main = MobileParty.MainParty;
+                if (main == null) return;
+                ElementalKind kind = (ElementalKind)_rng.Next(6);   // any of the six
+                var party = new ElementalWildsBehavior().SpawnBand(
+                    main.GetPosition2D + new Vec2(0.15f, 0f), kind, roam: false, announce: false);
+                Announce(party == null
+                    ? "[DEBUG] Kindled spawn FAILED — no bandit clan/hideout/troop available."
+                    : $"[DEBUG] {ElementUltimateMath.ElementalName(kind)} band spawned beside you — engage it.");
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Shared spawner. Returns the party (or null on any failure).
+        private MobileParty SpawnBand(Vec2 anchor, ElementalKind kind, bool roam, bool announce)
         {
             try
             {
                 Clan banditClan = Clan.BanditFactions.FirstOrDefault(c => c != null && !c.IsEliminated);
-                if (banditClan == null) return;
+                if (banditClan == null) return null;
                 var pt = banditClan.DefaultPartyTemplate;
-                if (pt == null) return;
+                if (pt == null) return null;
 
-                // Breed in the remote wilds — a random hideout is as far from the
-                // roads as the world gets. Its land decides the element.
-                var hideouts = Settlement.All.Where(s => s?.Hideout != null).ToList();
-                if (hideouts.Count == 0) return;
-                Settlement home = hideouts[_rng.Next(hideouts.Count)];
-                Hideout hideout = home.Hideout;
+                // A home hideout is mandatory — a null one crashes the post-battle
+                // loot screen. Prefer the clan's own, else the nearest in the world.
+                Hideout hideout = null;
+                try
+                {
+                    Settlement hs = banditClan.Settlements.FirstOrDefault(s => s?.Hideout != null)
+                        ?? Settlement.All.Where(s => s?.Hideout != null)
+                            .OrderBy(s => (s.GetPosition2D - anchor).LengthSquared).FirstOrDefault();
+                    hideout = hs?.Hideout;
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (hideout == null) return null;
 
-                ElementalKind kind = ElementalMath.WildKindForBiome(BiomeHint(home));
-
-                Vec2 anchor = home.GetPosition2D;
-                const float scatter = 5f;
+                const float scatter = 3f;
                 Vec2 spawnPos = anchor + new Vec2(
                     (float)(_rng.NextDouble() - 0.5) * scatter * 2f,
                     (float)(_rng.NextDouble() - 0.5) * scatter * 2f);
@@ -115,14 +145,14 @@ namespace AshAndEmber
 
                 string partyId = "elem_wild_" + _rng.Next(999999).ToString("D6");
                 MobileParty party = BanditPartyComponent.CreateBanditParty(partyId, banditClan, hideout, false, pt, cvec);
-                if (party == null) return;
+                if (party == null) return null;
 
                 try { party.MemberRoster.Clear(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 CharacterObject troop =
                     MBObjectManager.Instance.GetObject<CharacterObject>("mountain_bandit")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("looter")
                  ?? MBObjectManager.Instance.GetObject<CharacterObject>("sea_raider");
-                if (troop == null) return; // no troop to seed the band with
+                if (troop == null) return null;
 
                 int bodies = ElementalMath.WildPartyMinBodies
                            + _rng.Next(ElementalMath.WildPartyMaxBodies - ElementalMath.WildPartyMinBodies + 1);
@@ -130,7 +160,50 @@ namespace AshAndEmber
 
                 try { party.Party.SetCustomName(new TextObject(ElementUltimateMath.ElementalName(kind))); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _bandKind[party.StringId] = (int)kind;
+
+                // Kick it out of the hideout onto the roads so it is actually
+                // encountered, rather than sitting where it was bred.
+                if (roam)
+                {
+                    try
+                    {
+                        Settlement town = Settlement.All
+                            .Where(s => s != null && s.IsTown)
+                            .OrderBy(s => (s.GetPosition2D - spawnPos).LengthSquared)
+                            .Skip(1 + _rng.Next(3)).FirstOrDefault()
+                            ?? Settlement.All.FirstOrDefault(s => s != null && s.IsTown);
+                        if (town != null)
+                            party.SetMoveGoToSettlement(town, MobileParty.NavigationType.Default, false);
+                    }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+
+                if (announce) AnnounceBirth(kind, spawnPos);
+                return party;
             }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); return null; }
+        }
+
+        // A quiet rumour in the message feed when a band wakes — atmospheric, and
+        // it doubles as confirmation the spawn actually fired.
+        private static void AnnounceBirth(ElementalKind kind, Vec2 where)
+        {
+            string line;
+            switch (kind)
+            {
+                case ElementalKind.Flame: line = "Word comes of a fire that walks — the Kindled stir in the wilds."; break;
+                case ElementalKind.Frost: line = "Herdsmen speak of shapes of ice moving in the northern snows."; break;
+                case ElementalKind.Sand:  line = "The deep desert breeds a walking dune — the Sand-Born rise."; break;
+                case ElementalKind.Tide:  line = "The old wetlands churn — the Risen Tide takes a shape that hunts."; break;
+                case ElementalKind.Gale:  line = "A storm gathers itself into a body on the open steppe."; break;
+                default:                  line = "The mountains give up a Stone-Born — old rock, walking."; break;
+            }
+            Announce(line);
+        }
+
+        private static void Announce(string text)
+        {
+            try { InformationManager.DisplayMessage(new InformationMessage(text, new TaleWorlds.Library.Color(0.65f, 0.55f, 0.95f))); }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
