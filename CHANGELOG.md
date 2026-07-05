@@ -8,6 +8,7 @@
 - **No more looters.** The Kindled are now a dedicated bare, weaponless, armourless **"Elemental"** troop — no looter clothes, no stolen kit, and **they no longer hurl stones**. Wild bands and every summon build from it, so a Kindled reads as walking fire or stone, not a ragged bandit.
 - **They fight with their element.** Instead of a club, a Kindled looses a **small cone of its own element** on a cooldown — a Flame-Born throws fire, a Stone-Born heaves earth, a Frost-Born a wave of cold. A whole band is a storm of it.
 - **No parley.** Wild elemental bands **cannot be talked to** on the map — like the Ashen, every conversation is answered with silence and closed. You meet them with magic or you leave.
+- **Fixed a crash when marching on a wild band.** Engaging the Kindled on the map could hard-crash the game the instant the encounter began — the silenced meeting-conversation could not build a body for a troop that wore nothing at all. The Kindled now wear a single drab, weaponless garment beneath their aura, so the meeting resolves and the fight begins.
 
 ### Magic that lands
 - **Fire's burn is real now.** A fully-drawn cone leaves its mark **burning harder (18/s for 5s)** with a visible pillar of flame, and the burn is **element-typed** — it keeps melting a Frost-Born (×2.2) and drowns a Flame-Born when thrown as Ashen cold, rather than ignoring the weakness wheel.

@@ -198,17 +198,33 @@ namespace AshAndEmber
 
                 Vec3 pos = agent.Position;
                 float r2 = ElementalMath.AttackRangeMetres * ElementalMath.AttackRangeMetres;
-                bool foeInReach = false;
+                Agent nearest = null; float bestD2 = r2;
                 foreach (Agent a in Mission.Current.Agents)
                 {
                     if (a == null || !a.IsActive() || a.IsMount || a.Team == null) continue;
                     if (!agent.Team.IsEnemyOf(a.Team)) continue;
                     float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
-                    if (dx * dx + dy * dy <= r2) { foeInReach = true; break; }
+                    float d2 = dx * dx + dy * dy;
+                    if (d2 <= bestD2) { bestD2 = d2; nearest = a; }
                 }
-                if (!foeInReach) return;
+                if (nearest == null) return;   // no foe within reach — don't loose into empty ground
 
-                ElementSpellEffects.CastAttack(ElementalMath.ElementOf(kind), agent, ElementalMath.AttackPower);
+                // Fire and Water throw a forward CONE, so only loose them when the foe
+                // is actually ahead (a charging Kindled usually is) — otherwise the
+                // cone sails past behind it. Earth and Wind erupt in a ring around the
+                // body, so they land on anything in reach regardless of facing.
+                MagicElement el = ElementalMath.ElementOf(kind);
+                if (el == MagicElement.Fire || el == MagicElement.Water)
+                {
+                    Vec3 fwd = agent.LookDirection; fwd.z = 0f;
+                    Vec3 to  = nearest.Position - pos; to.z = 0f;
+                    float fl = fwd.Length, tl = to.Length;
+                    if (fl > 0.01f && tl > 0.01f &&
+                        Vec3.DotProduct(fwd * (1f / fl), to * (1f / tl)) < 0.2f)
+                        return;   // foe is not ahead — hold the cone this beat
+                }
+
+                ElementSpellEffects.CastAttack(el, agent, ElementalMath.AttackPower);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }

@@ -584,13 +584,23 @@
   </NPCCharacter>
 
   <!-- ═══════════════════════════════════════════════════════════════════
-       THE KINDLED — an elemental being. A bare, weaponless, armourless
-       humanoid the land wakes where raw magic pools. ElementalBeings wreathes
-       it in its element (fire / water / stone / storm), drives its weakness,
-       and forces it to charge; it carries no steel and throws no stones.
-       Seeded into wild bands (ElementalWildsBehavior) and summoned through
-       ElementalFactory. Body key is fixed (min==max) so every Kindled shares
-       one bare, uniform shape rather than looking like an individual person.
+       THE KINDLED — an elemental being. A bare, weaponless humanoid the land
+       wakes where raw magic pools. ElementalBeings wreathes it in its element
+       (fire / water / stone / storm), drives its weakness, and forces it to
+       charge; it carries no steel and throws no stones. Seeded into wild bands
+       (ElementalWildsBehavior) and summoned through ElementalFactory. Body key
+       is fixed (min==max) so every Kindled shares one bare, uniform shape
+       rather than looking like an individual person.
+
+       The equipment roster must NEVER be left empty. A troop with no equipment
+       has a null FirstBattleEquipment, and when the player catches a wild band
+       the engine opens the ordinary caught-party conversation (silenced to "..."
+       by ElementalDialogue) — building that conversation agent dereferences the
+       null equipment and hard-crashes the game (NRE in
+       ConversationManager.SetupAndStartMapConversation). So the Kindled wears a
+       single drab, weaponless garment: enough to render a clothed shape under
+       the elemental aura, never a looter's club or thrown stones. (The battle
+       factory guards the same null with `FirstBattleEquipment ?? Equipment`.)
        ═══════════════════════════════════════════════════════════════════ -->
 
   <NPCCharacter id="elemental_being"
@@ -607,7 +617,11 @@
       <BodyPropertiesMax version="4" age="24.0" weight="0.5" build="1.0" key="0000000000000000"/>
     </face>
     <Equipments>
+      <!-- Weaponless by design; a plain garment only, so the body renders and
+           FirstBattleEquipment is never null (see the note above). -->
       <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
       </EquipmentRoster>
     </Equipments>
     <skills>

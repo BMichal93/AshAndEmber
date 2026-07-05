@@ -449,9 +449,13 @@
     </skills>
   </NPCCharacter>
 
-  <!-- THE KINDLED — a bare, weaponless, armourless elemental being. Wreathed
-       in its element and driven to charge by ElementalBeings; carries no steel
-       and throws no stones. Seeded into wild bands / summoned by ElementalFactory. -->
+  <!-- THE KINDLED — a bare, weaponless elemental being. Wreathed in its element
+       and driven to charge by ElementalBeings; carries no steel and throws no
+       stones. Seeded into wild bands / summoned by ElementalFactory. The
+       equipment roster must NEVER be empty: a null FirstBattleEquipment crashes
+       the caught-party conversation (NRE in SetupAndStartMapConversation) when
+       the player engages a wild band. So it wears a single drab, weaponless
+       garment — enough to render under the aura, never a weapon. -->
   <NPCCharacter id="elemental_being"
                 name="{=elemental_being_name}Elemental"
                 age="24"
@@ -467,6 +471,8 @@
     </face>
     <Equipments>
       <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
       </EquipmentRoster>
     </Equipments>
     <skills>
