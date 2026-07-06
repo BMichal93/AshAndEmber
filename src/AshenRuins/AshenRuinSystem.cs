@@ -959,7 +959,27 @@ namespace AshAndEmber
 
                 case RewardType.AncientGrimoire:
                     GrantAllGrimoireFragments(header); break;
+
+                case RewardType.MagicCrystal:
+                    GrantMagicCrystal(header); break;
             }
+        }
+
+        private static void GrantMagicCrystal(string header)
+        {
+            var defs = CrystalCatalog.All;
+            var def  = defs[_rng.Next(defs.Count)];
+            try
+            {
+                var item   = TaleWorlds.ObjectSystem.MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
+                var roster = MobileParty.MainParty?.ItemRoster;
+                if (item != null && roster != null) roster.AddToCounts(item, 1);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{header} A {def.Name} rests among the ash, its lattice somehow unbroken.",
+                new Color(0.75f, 0.55f, 0.85f)));
         }
 
         private static void GrantGrimoireFragment(string header)

@@ -1399,6 +1399,66 @@ namespace AshAndEmber.Tests
                            CrystalMath.CrystalUseRange(CrystalType.Embershard));
         }
 
+        // ── CrystalCatalog — five new crystals ────────────────────────────────────
+
+        [Test]
+        public void CrystalCatalog_AllElevenCrystalsResolve()
+        {
+            Assert.AreEqual(11, CrystalCatalog.All.Count);
+            foreach (CrystalType t in System.Enum.GetValues(typeof(CrystalType)))
+            {
+                var def = CrystalCatalog.Get(t);
+                Assert.AreEqual(t, def.Type);
+                Assert.IsTrue(CrystalCatalog.IsCrystalItemId(def.ItemId));
+                Assert.IsTrue(CrystalCatalog.TryGetByItemId(def.ItemId, out var found));
+                Assert.AreEqual(t, found.Type);
+            }
+        }
+
+        [Test]
+        public void CrystalMath_Thornveil_IsDeepestSlowButShortestDuration()
+        {
+            // The root is far deeper than any partial slow...
+            Assert.Less(CrystalMath.ThornRootMult, CrystalMath.RimeSlowMult);
+            Assert.Less(CrystalMath.ThornRootMult, CrystalMath.VeilSlowMult);
+            Assert.Less(CrystalMath.ThornRootMult, CrystalMath.DuskSlowMult);
+            // ...and its damage is the lowest of the single-target stones (the
+            // control is the point, not the hit).
+            Assert.Less(CrystalMath.ThornDamage, CrystalMath.VeilDamage);
+        }
+
+        [Test]
+        public void CrystalMath_Willowisp_HitsHarderThanAoEMoraleDrains()
+        {
+            Assert.Greater(CrystalMath.WillowMoraleDrain, CrystalMath.StormMoraleDrain);
+            Assert.Greater(CrystalMath.WillowMoraleDrain, CrystalMath.DuskMoraleDrain);
+            // Reaches as far as Veilstone — both are reach-out-to-one stones.
+            Assert.AreEqual(CrystalMath.VeilRange, CrystalMath.WillowRange, 0.0001f);
+            Assert.AreEqual(CrystalMath.WillowRange, CrystalMath.CrystalUseRange(CrystalType.Willowisp), 0.0001f);
+        }
+
+        [Test]
+        public void CrystalMath_Bloodstone_LifestealReturnsHalfDamageDealt()
+        {
+            float totalDealt = CrystalMath.BloodDamage * 3; // three enemies struck
+            float healed = totalDealt * CrystalMath.BloodLifestealFrac;
+            Assert.AreEqual(totalDealt * 0.5f, healed, 0.0001f);
+        }
+
+        [Test]
+        public void CrystalMath_Zephyrglass_HastensAboveNormalSpeed()
+        {
+            Assert.Greater(CrystalMath.ZephyrHasteMult, 1f);
+        }
+
+        [Test]
+        public void CrystalMath_Aegisstone_IsTreatedAsHealingForNpcUse()
+        {
+            Assert.IsTrue(CrystalMath.IsHealingCrystal(CrystalType.Aegisstone));
+            Assert.IsTrue(CrystalMath.NpcShouldUse(CrystalType.Aegisstone, 0.30f, 0, 0.1f));
+            Assert.IsFalse(CrystalMath.NpcShouldUse(CrystalType.Aegisstone, 0.90f, 0, 0.1f));
+        }
+
         // ── MiracleMath battle selection (right miracle for the moment) ───────────
 
         [Test]

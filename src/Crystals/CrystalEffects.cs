@@ -38,6 +38,8 @@ namespace AshAndEmber
         private static readonly Dictionary<Agent, float> _rimeSlow = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _veilSlow = new Dictionary<Agent, float>();
         private static readonly Dictionary<Agent, float> _duskSlow = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _thornRoot   = new Dictionary<Agent, float>();
+        private static readonly Dictionary<Agent, float> _zephyrHaste = new Dictionary<Agent, float>();
 
         // ── Crystal missile state ──────────────────────────────────────────────
         private class CrystalMissileState
@@ -64,6 +66,8 @@ namespace AshAndEmber
             _rimeSlow.Clear();
             _veilSlow.Clear();
             _duskSlow.Clear();
+            _thornRoot.Clear();
+            _zephyrHaste.Clear();
             _prevAttackDown = false;
             _crystalMissiles.Clear();
         }
@@ -164,6 +168,32 @@ namespace AshAndEmber
                 }
                 else _duskSlow[kvp.Key] = left;
             }
+
+            // Expire Thornveil root.
+            foreach (var kvp in _thornRoot.ToList())
+            {
+                float left = kvp.Value - dt;
+                if (left <= 0f || !kvp.Key.IsActive())
+                {
+                    _thornRoot.Remove(kvp.Key);
+                    if (kvp.Key.IsActive())
+                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+                else _thornRoot[kvp.Key] = left;
+            }
+
+            // Expire Zephyrglass haste.
+            foreach (var kvp in _zephyrHaste.ToList())
+            {
+                float left = kvp.Value - dt;
+                if (left <= 0f || !kvp.Key.IsActive())
+                {
+                    _zephyrHaste.Remove(kvp.Key);
+                    if (kvp.Key.IsActive())
+                        try { kvp.Key.SetMaximumSpeedLimit(1f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+                else _zephyrHaste[kvp.Key] = left;
+            }
         }
 
         // ── Effect dispatch ────────────────────────────────────────────────────
@@ -200,6 +230,11 @@ namespace AshAndEmber
                 case CrystalType.Veilstone:    EffectVeilstone(caster, solarFlare);   break;
                 case CrystalType.Stormcrystal: EffectStormcrystal(caster, solarFlare);break;
                 case CrystalType.Duskstone:    EffectDuskstone(caster, solarFlare);   break;
+                case CrystalType.Thornveil:    EffectThornveil(caster, solarFlare);   break;
+                case CrystalType.Aegisstone:   EffectAegisstone(caster, solarFlare);  break;
+                case CrystalType.Willowisp:    EffectWillowisp(caster, solarFlare);   break;
+                case CrystalType.Bloodstone:   EffectBloodstone(caster, solarFlare);  break;
+                case CrystalType.Zephyrglass:  EffectZephyrglass(caster);             break;
             }
 
             // Player-only lapidary talents: Mending Light heals the bearer on every
@@ -425,6 +460,197 @@ namespace AshAndEmber
                 ColorSchool.Ashen);
         }
 
+        // ── Thornveil ─────────────────────────────────────────────────────────
+
+        private static void EffectThornveil(Agent caster, bool solarFlare)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+            float r  = solarFlare ? CrystalMath.SolarFlareRadius(CrystalMath.ThornRange) : CrystalMath.ThornRange;
+            float r2 = r * r;
+
+            var candidates = new List<Agent>();
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == caster) continue;
+                    if (caster.Team != null && a.Team == caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    candidates.Add(a);
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Green, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            if (candidates.Count == 0)
+            {
+                Announce(caster, "Thornveil — the roots find nothing to grasp.", ColorSchool.Green);
+                return;
+            }
+
+            var target = candidates[_rng.Next(candidates.Count)];
+            try { SpellEffects.DamageAgent(target, CrystalMath.ThornDamage * Potency(caster), ColorSchool.Green, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            _thornRoot[target] = CrystalMath.ThornRootDurationSec;
+            try { target.SetMaximumSpeedLimit(CrystalMath.ThornRootMult, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            Announce(caster,
+                $"Thornveil — root grasp ({target.Name} struck for {(int)CrystalMath.ThornDamage} HP, rooted for {(int)CrystalMath.ThornRootDurationSec} s).",
+                ColorSchool.Green);
+        }
+
+        // ── Aegisstone ────────────────────────────────────────────────────────
+
+        private static void EffectAegisstone(Agent caster, bool solarFlare)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+            float r  = solarFlare ? CrystalMath.SolarFlareRadius(CrystalMath.AegisRadius) : CrystalMath.AegisRadius;
+            float r2 = r * r;
+
+            try { SpellEffects.HealAgent(caster, CrystalMath.AegisSelfHeal * Potency(caster)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.White, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            int pushed = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == caster) continue;
+                    if (caster.Team != null && a.Team == caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    Vec3 away = (a.Position - pos);
+                    away = away.LengthSquared > 0.001f ? away.NormalizedCopy() : new Vec3(1f, 0f, 0f);
+                    try { NatureEffects.KnockbackAgent(a, a.Position + away * CrystalMath.AegisKnockback); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    pushed++;
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            Announce(caster, pushed > 0
+                ? $"Aegisstone — bulwark pulse (+{(int)CrystalMath.AegisSelfHeal} HP, {pushed} enemies hurled back)."
+                : $"Aegisstone — bulwark pulse (+{(int)CrystalMath.AegisSelfHeal} HP, no enemies nearby).",
+                ColorSchool.White);
+        }
+
+        // ── Willowisp ─────────────────────────────────────────────────────────
+
+        private static void EffectWillowisp(Agent caster, bool solarFlare)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+            float r  = solarFlare ? CrystalMath.SolarFlareRadius(CrystalMath.WillowRange) : CrystalMath.WillowRange;
+            float r2 = r * r;
+
+            var candidates = new List<Agent>();
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == caster) continue;
+                    if (caster.Team != null && a.Team == caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    candidates.Add(a);
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            if (candidates.Count == 0)
+            {
+                Announce(caster, "Willowisp — the whisper finds no mind to touch.", ColorSchool.Nature);
+                return;
+            }
+
+            var target = candidates[_rng.Next(candidates.Count)];
+            try { target.ChangeMorale(-CrystalMath.WillowMoraleDrain); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            Announce(caster,
+                $"Willowisp — dread whisper ({target.Name}'s nerve shatters, −{(int)CrystalMath.WillowMoraleDrain} morale).",
+                ColorSchool.Nature);
+        }
+
+        // ── Bloodstone ────────────────────────────────────────────────────────
+
+        private static void EffectBloodstone(Agent caster, bool solarFlare)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+            float r = solarFlare ? CrystalMath.SolarFlareRadius(CrystalMath.BloodRadius) : CrystalMath.BloodRadius;
+            float r2 = r * r;
+            int hit = 0;
+            float totalDealt = 0f;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || a == caster) continue;
+                    if (caster.Team != null && a.Team == caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    try { if (ElementWallWards.BlocksCrystal(pos, a.Position)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    float dmg = CrystalMath.BloodDamage * Potency(caster);
+                    try { SpellEffects.DamageAgent(a, dmg, ColorSchool.Red, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    totalDealt += dmg;
+                    hit++;
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            if (totalDealt > 0f)
+                try { SpellEffects.HealAgent(caster, totalDealt * CrystalMath.BloodLifestealFrac); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Red, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            Announce(caster, hit > 0
+                ? $"Bloodstone — vampiric burst ({hit} enemies struck, +{(int)(totalDealt * CrystalMath.BloodLifestealFrac)} HP returned)."
+                : "Bloodstone — vampiric burst (no enemies in range).",
+                ColorSchool.Red);
+        }
+
+        // ── Zephyrglass ───────────────────────────────────────────────────────
+
+        // Support effect — does not scale with Solar Flare (Sunstone's heal doesn't either).
+        private static void EffectZephyrglass(Agent caster)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+            float r2 = CrystalMath.ZephyrRadius * CrystalMath.ZephyrRadius;
+
+            _zephyrHaste[caster] = CrystalMath.ZephyrDurationSec;
+            try { caster.SetMaximumSpeedLimit(CrystalMath.ZephyrHasteMult, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            int hastened = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == caster || !a.IsActive() || a.IsMount) continue;
+                    if (caster.Team == null || a.Team != caster.Team) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+                    _zephyrHaste[a] = CrystalMath.ZephyrDurationSec;
+                    try { a.SetMaximumSpeedLimit(CrystalMath.ZephyrHasteMult, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    hastened++;
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            int hastePct = (int)((CrystalMath.ZephyrHasteMult - 1f) * 100f);
+            Announce(caster, hastened > 0
+                ? $"Zephyrglass — quickening light (you and {hastened} allies, +{hastePct} % speed for {(int)CrystalMath.ZephyrDurationSec} s)."
+                : $"Zephyrglass — quickening light (+{hastePct} % speed for {(int)CrystalMath.ZephyrDurationSec} s, no allies nearby).",
+                ColorSchool.Yellow);
+        }
+
         // ── Crystal missile tick ──────────────────────────────────────────────
 
         private static void TickCrystalMissile(float dt)
@@ -607,6 +833,9 @@ namespace AshAndEmber
                 case ColorSchool.Blue:   return new Color(0.35f, 0.65f, 0.95f);
                 case ColorSchool.Purple: return new Color(0.70f, 0.40f, 0.90f);
                 case ColorSchool.Orange: return new Color(0.95f, 0.60f, 0.20f);
+                case ColorSchool.Green:  return new Color(0.35f, 0.75f, 0.35f);
+                case ColorSchool.White:  return new Color(0.90f, 0.90f, 0.85f);
+                case ColorSchool.Nature: return new Color(0.55f, 0.80f, 0.55f);
                 default:                 return new Color(0.60f, 0.60f, 0.65f); // Ashen / default
             }
         }

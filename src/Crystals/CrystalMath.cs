@@ -79,6 +79,40 @@ namespace AshAndEmber
         public const float DuskSlowMult    = 0.80f; // 80 % of normal speed (20 % slow)
         public const float DuskDurationSec = 5f;
 
+        // ── Thornveil — root grasp (single random enemy, near-total immobilise) ──
+        // The deepest of any crystal's slows — a near-full root — but brief and
+        // narrower in reach than Veilstone, and its damage is the lowest of the
+        // single-target stones since the control is the point.
+        public const float ThornRange           = 10f;
+        public const float ThornDamage          = 25f;
+        public const float ThornRootMult        = 0.05f; // 5 % of normal speed — a near-total root
+        public const float ThornRootDurationSec = 3f;
+
+        // ── Aegisstone — bulwark pulse (self heal + AoE knockback) ────────────
+        // The one purely defensive crystal: no damage at all, just breathing room
+        // and a modest mend when the bearer is boxed in.
+        public const float AegisRadius    = 5f;
+        public const float AegisSelfHeal  = 20f;
+        public const float AegisKnockback = 4f; // metres — matches Gale's knockback scale
+
+        // ── Willowisp — dread whisper (single random enemy, morale only) ──────
+        // No damage and no slow — it spends its whole potency on one enemy's
+        // nerve, a single hit far heavier than either AoE morale-breaker.
+        public const float WillowRange       = 12f; // matches Veilstone's reach
+        public const float WillowMoraleDrain = 40f;
+
+        // ── Bloodstone — vampiric burst (AoE damage, lifesteal to caster) ─────
+        public const float BloodRadius        = 4f;
+        public const float BloodDamage        = 25f;
+        public const float BloodLifestealFrac = 0.5f; // half of total damage dealt returns as healing
+
+        // ── Zephyrglass — quickening light (AoE haste, caster + allies) ───────
+        // The only crystal that helps allies move rather than enemies move less;
+        // does not scale with Solar Flare (support effects don't, per Sunstone).
+        public const float ZephyrRadius      = 5f;
+        public const float ZephyrHasteMult   = 1.30f; // 30 % faster
+        public const float ZephyrDurationSec = 6f;
+
         // ── Seeding odds for lords ────────────────────────────────────────────
         public const float LordSeedChance = 0.05f; // 5 % flat
 
@@ -99,12 +133,17 @@ namespace AshAndEmber
         // roll: the Sunstone heals, so it wants its bearer hurt; every other crystal
         // is offensive/control, so it wants enemies in reach. `roll` in [0,1) gates
         // the base eagerness so use stays occasional even when the situation fits.
-        public static bool IsHealingCrystal(CrystalType type) => type == CrystalType.Sunstone;
+        public static bool IsHealingCrystal(CrystalType type) =>
+            type == CrystalType.Sunstone || type == CrystalType.Aegisstone;
 
-        // The reach at which a crystal has worthwhile targets — the Veilstone reaches
-        // far, the rest are short-range AoE.
+        // The reach at which a crystal has worthwhile targets — the reach-out-to-one
+        // stones (Veilstone, Willowisp) look further than the short-range AoE stones.
         public static float CrystalUseRange(CrystalType type)
-            => type == CrystalType.Veilstone ? VeilRange : 10f;
+        {
+            if (type == CrystalType.Veilstone) return VeilRange;
+            if (type == CrystalType.Willowisp)  return WillowRange;
+            return 10f;
+        }
 
         public static bool NpcShouldUse(CrystalType type, float hpFrac, int enemiesInRange, float roll)
         {

@@ -50,6 +50,7 @@ namespace AshAndEmber
         AshenCrownFragment, // collect 3 → bonus 3 focus pts
         VoidCrystal,        // player chooses: 5000 gold or 20 days reclaimed
         AncientGrimoire,    // grants ALL remaining un-owned Lost Forms
+        MagicCrystal,       // grants one random formed crystal (see CrystalCatalog)
     }
 
     public class RuinChallenge
@@ -111,7 +112,7 @@ namespace AshAndEmber
                 Tier      = RuinTier.Easy,
                 Challenges = new[] { Ch(ChallengeType.BloodLock), Ch(ChallengeType.VisionChamber) },
                 MainReward    = Rew(RewardType.FocusPoints, 1),
-                PartialReward = Rew(RewardType.RenownBurst, 10),
+                PartialReward = Rew(RewardType.MagicCrystal),
             },
             new RuinDef
             {
@@ -164,7 +165,7 @@ namespace AshAndEmber
                 Tier      = RuinTier.Standard,
                 Challenges = new[] { Ch(ChallengeType.SerpentNest), Ch(ChallengeType.AncientTrap), Ch(ChallengeType.AshenSentinel) },
                 MainReward    = Rew(RewardType.AgingReclaim, 7),
-                PartialReward = Rew(RewardType.AgingReclaim, 3),
+                PartialReward = Rew(RewardType.MagicCrystal),
             },
             new RuinDef
             {
@@ -214,7 +215,7 @@ namespace AshAndEmber
                 Tier      = RuinTier.Standard,
                 Challenges = new[] { Ch(ChallengeType.BloodLock), Ch(ChallengeType.RiddleGate), Ch(ChallengeType.SpectralGuardian) },
                 MainReward    = Rew(RewardType.GrimoireFragment),
-                PartialReward = Rew(RewardType.FocusPoints, 1),
+                PartialReward = Rew(RewardType.MagicCrystal),
             },
             new RuinDef
             {
@@ -224,7 +225,7 @@ namespace AshAndEmber
                 Tier      = RuinTier.Standard,
                 Challenges = new[] { Ch(ChallengeType.SerpentNest), Ch(ChallengeType.AncientTrap), Ch(ChallengeType.VisionChamber) },
                 MainReward    = Rew(RewardType.AgingReclaim, 10),
-                PartialReward = Rew(RewardType.AgingReclaim, 4),
+                PartialReward = Rew(RewardType.MagicCrystal),
             },
             new RuinDef
             {
@@ -267,7 +268,7 @@ namespace AshAndEmber
                 Tier      = RuinTier.Brutal,
                 Challenges = new[] { Ch(ChallengeType.CollapsingChamber), Ch(ChallengeType.SpectralGuardian), Ch(ChallengeType.SleepingGiant) },
                 MainReward    = Rew(RewardType.AgingReclaim, 10),
-                PartialReward = Rew(RewardType.RenownBurst, 60),
+                PartialReward = Rew(RewardType.MagicCrystal),
             },
             new RuinDef
             {
@@ -275,7 +276,7 @@ namespace AshAndEmber
                 RuinName  = "The Bone Labyrinth",
                 EntryLore = "A labyrinth of mortared bone. The bones are not scattered — they are load-bearing. Someone built with them.",
                 Tier      = RuinTier.Brutal,
-                Challenges = new[] { Ch(ChallengeType.AncientTrap), Ch(ChallengeType.AncientTrap), Ch(ChallengeType.SerpentNest), Ch(ChallengeType.RiddleGate) },
+                Challenges = new[] { Ch(ChallengeType.PoisonedAir), Ch(ChallengeType.AncientTrap), Ch(ChallengeType.SerpentNest), Ch(ChallengeType.RiddleGate) },
                 MainReward    = Rew(RewardType.RenownBurst, 200),
                 PartialReward = Rew(RewardType.RenownBurst, 60),
             },
@@ -298,7 +299,7 @@ namespace AshAndEmber
                 Tier      = RuinTier.Brutal,
                 Challenges = new[] { Ch(ChallengeType.TemporalCrack), Ch(ChallengeType.BloodLock), Ch(ChallengeType.VisionChamber) },
                 MainReward    = Rew(RewardType.AgingReclaim, 8),  // resolved dynamically
-                PartialReward = Rew(RewardType.FocusPoints, 1),
+                PartialReward = Rew(RewardType.MagicCrystal),
             },
             new RuinDef
             {
@@ -373,7 +374,7 @@ namespace AshAndEmber
                     Ch(ChallengeType.SealedMemory),
                 },
                 MainReward    = Rew(RewardType.AncientGrimoire),
-                PartialReward = Rew(RewardType.FocusPoints, 2),
+                PartialReward = Rew(RewardType.VoidCrystal),
             },
             new RuinDef
             {
@@ -405,7 +406,7 @@ namespace AshAndEmber
                     Ch(ChallengeType.BloodLock),
                 },
                 MainReward    = Rew(RewardType.AshenCrownFragment),
-                PartialReward = Rew(RewardType.AgingReclaim, 5),
+                PartialReward = Rew(RewardType.MagicCrystal),
             },
         };
     }
