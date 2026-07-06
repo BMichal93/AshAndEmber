@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Five new crystals, and the ruins remember them
+- **Five new crystals**: **Thornveil** (roots one foe near-solid), **Aegisstone** (heals you and hurls nearby enemies back), **Willowisp** (shatters one foe's nerve from range), **Bloodstone** (AoE damage that feeds half of it back to you as healing), and **Zephyrglass** (hastens you and nearby allies). Formed at the Crystalline Chamber and seeded onto lords exactly like the original six.
+- **Ashen Ruins now sometimes yield a formed crystal** as a retreat/partial reward — seven of the twenty-eight ruins carry one.
+- **Void Crystal** and the **Poisoned Air** trial — both fully built but never actually placed in any ruin — are now live (The Heart of the Void; The Bone Labyrinth, replacing a duplicated trap room there).
+- Fixed a stale item description: Veilstone's in-game text described a speed buff it has never actually cast; it now matches its real "veil grasp" effect.
+
 ---
 
 ## v0.40.0
