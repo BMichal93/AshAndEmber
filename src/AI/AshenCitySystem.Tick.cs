@@ -51,6 +51,11 @@ namespace AshAndEmber
             // Once the world is rekindled, the Ashen cease to exist.
             if (DragonQuestSystem.WorldRekindled) return;
 
+            // Undo any wrongly-converted ruling clan BEFORE the war / clan-eject logic,
+            // or that logic would keep dragging it back into the cold. No-op when healthy.
+            HealMisconvertedClans();
+            if (_ashenClanIds.Count == 0) return;
+
             EnsureKingdomAlive();
 
             // Apply Ashen settlement names and Holy Temple kingdom rename on first

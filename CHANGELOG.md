@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### Fixes
+- **The Ashen no longer swallow a faction's ruler on a reload.** Raganvad's ruling clan holds Mazhadan Castle (a rightful Ashen keep) alongside his own capital towns Varcheg and Balgard. The cold-city setup, reading the clan's still-forming holdings, could sweep the whole ruling house into the Ashen — and on the next load his towns fell grey and Raganvad found himself locked in the Ashen's endless war against everyone. A faction's **ruling clan is now barred from conversion by identity** (never by the fragile timing of its holdings list), and a **self-healing pass on every load** frees any ruler an earlier build already dragged in, restoring his towns and his throne. The pass is a strict no-op on a healthy save.
+- **"Notes for the Adventurer" survives a reload.** If the engine concluded the reference journal entry across a save/load, a fresh, live copy is now written in its place rather than leaving only the dead one.
+
 ---
 
 ## v0.40.0

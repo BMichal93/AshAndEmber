@@ -36,7 +36,12 @@ namespace AshAndEmber
             try
             {
                 if (Campaign.Current == null) return;
+                // A quest that deserialised finalized (the engine can conclude/fail a
+                // custom log across a save/load) must be treated as absent so a fresh,
+                // live entry is created — otherwise the Journal is left with only the
+                // dead "failed" copy of Notes for the Adventurer.
                 bool present = _log != null
+                    && !_log.IsFinalized
                     && Campaign.Current.QuestManager?.Quests?.Contains(_log) == true;
                 if (!present) { _log = null; EnsureLog(); return; }
                 // Present already: an older save may hold a shorter/outdated copy of
