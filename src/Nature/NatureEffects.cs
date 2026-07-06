@@ -141,12 +141,33 @@ namespace AshAndEmber
             finally { _currentAttackElement = null; }
         }
 
+        // A flat, horizontal facing from the caster's look direction. The raw
+        // LookDirection carries pitch — aiming at the ground (natural without a
+        // crosshair) would tilt a forward cone off the foes standing on it. These
+        // are ground wedges, so only azimuth should matter; drop the vertical.
+        private static Vec3 GroundFacing(Agent caster)
+        {
+            Vec3 f = caster.LookDirection; f.z = 0f;
+            if (f.Length < 0.01f) return new Vec3(0f, 1f, 0f);
+            return f.NormalizedCopy();
+        }
+
+        // Is `target` inside the horizontal wedge of half-angle `cosHalf` (its
+        // cosine) opening along `fwdFlat` from `from`? Both facing and bearing are
+        // flattened to the ground plane so a foe's elevation never sways the test.
+        private static bool InGroundCone(Vec3 fwdFlat, Vec3 from, Vec3 target, float cosHalf)
+        {
+            Vec3 d = target - from; d.z = 0f;
+            if (d.Length < 0.01f) return true;   // on top of the caster — always caught
+            return Vec3.DotProduct(fwdFlat, d.NormalizedCopy()) >= cosHalf;
+        }
+
         // Wind · Gale — a forward GUST: knockback + slow driven out in a broad wedge
         // the caster faces (a stream of driven air, not a 360° ring).
         private static void BattleGale(Agent caster, Vec3 pos, Team team)
         {
-            Vec3 fwd = caster.LookDirection.NormalizedCopy();
-            float halfAngle = NatureMath.GaleConeAngleDeg * 0.5f * (float)(Math.PI / 180.0);
+            Vec3 fwd = GroundFacing(caster);
+            float cosHalf = (float)Math.Cos(NatureMath.GaleConeAngleDeg * 0.5f * (Math.PI / 180.0));
             try { SpawnWindGust(pos, fwd, NatureMath.GaleRadius); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // On desert sand the gust drives a plume of stinging dust down its line.
             try
@@ -161,8 +182,8 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ForEachEnemyInRadius(pos, NatureMath.GaleRadius, team, enemy =>
             {
+                if (!InGroundCone(fwd, pos, enemy.Position, cosHalf)) return;   // outside the gust
                 Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
-                if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;   // outside the gust
                 // Walls of flame and standing water devour a gale that crosses them.
                 try { if (ElementWallWards.BlocksPath(MagicElement.Wind, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
@@ -195,14 +216,13 @@ namespace AshAndEmber
         // in a narrow ridge the caster faces (no longer a 360° AoE ring).
         private static void BattleEntangle(Agent caster, Vec3 pos, Team team)
         {
-            Vec3 fwd = caster.LookDirection.NormalizedCopy();
-            float halfAngle = NatureMath.EntangleConeAngleDeg * 0.5f * (float)(Math.PI / 180.0);
+            Vec3 fwd = GroundFacing(caster);
+            float cosHalf = (float)Math.Cos(NatureMath.EntangleConeAngleDeg * 0.5f * (Math.PI / 180.0));
             try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.EntangleRange, NatureElement.Earth, 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpawnEruptionCone(pos, fwd, NatureElement.Earth, NatureMath.EntangleRange); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             ForEachEnemyInRadius(pos, NatureMath.EntangleRange, team, enemy =>
             {
-                Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
-                if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;   // off the line of roots
+                if (!InGroundCone(fwd, pos, enemy.Position, cosHalf)) return;   // off the line of roots
                 // A wall of driven wind scatters flung stone before it lands.
                 try { if (ElementWallWards.BlocksPath(MagicElement.Earth, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 if (SpellEffects.IsWarded(enemy)) return;   // the golden ward holds
@@ -217,8 +237,8 @@ namespace AshAndEmber
         // Water · Torrent — forward cone: damage + knockback that breaks formation.
         private static void BattleTorrent(Agent caster, Vec3 pos, Team team)
         {
-            Vec3 fwd = caster.LookDirection.NormalizedCopy();
-            float halfAngle = NatureMath.TorrentAngleDeg * 0.5f * (float)(Math.PI / 180.0);
+            Vec3 fwd = GroundFacing(caster);
+            float cosHalf = (float)Math.Cos(NatureMath.TorrentAngleDeg * 0.5f * (Math.PI / 180.0));
             try { SpellEffects.SpawnNatureLine(pos, pos + fwd * NatureMath.TorrentRange, NatureElement.Water, 2.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpawnEruptionCone(pos, fwd, NatureElement.Water, NatureMath.TorrentRange); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
@@ -234,8 +254,8 @@ namespace AshAndEmber
 
             ForEachEnemyInRadius(pos, NatureMath.TorrentRange, team, enemy =>
             {
+                if (!InGroundCone(fwd, pos, enemy.Position, cosHalf)) return;
                 Vec3 toEnemy = (enemy.Position - pos).NormalizedCopy();
-                if (Vec3.DotProduct(fwd, toEnemy) < Math.Cos(halfAngle)) return;
                 // A standing dam of stone breaks the wave before it strikes.
                 try { if (ElementWallWards.BlocksPath(MagicElement.Water, pos, enemy.Position, out _)) return; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ElementSpellEffects.QuenchIgnition(enemy); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

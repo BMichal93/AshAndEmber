@@ -285,7 +285,11 @@ namespace AshAndEmber
         {
             if (caster == null || !caster.IsActive()) return;
 
-            Vec3 fwd = caster.LookDirection.NormalizedCopy();
+            // Fly the shard level: the raw look direction carries pitch, so aiming
+            // at the ground (natural without a crosshair) would plunge it short of
+            // distant foes. Flatten to the horizontal so its reach matches its range.
+            Vec3 fwd = caster.LookDirection; fwd.z = 0f;
+            fwd = fwd.Length < 0.01f ? new Vec3(0f, 1f, 0f) : fwd.NormalizedCopy();
             Vec3 startPos = caster.Position + fwd * 1.5f + new Vec3(0f, 0f, 1.2f);
 
             float range = solarFlare

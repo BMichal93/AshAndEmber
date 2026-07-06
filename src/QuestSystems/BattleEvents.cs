@@ -56,7 +56,7 @@ namespace AshAndEmber
         public const float ChanceLastLight     = 0.03f;
         public const float ChanceAshenGround   = 0.04f;
         public const float ChanceFrenzy        = 0.04f;
-        public const float ChanceKindling      = 0.03f; // raw magic wakes into elementals
+        public const float ChanceKindling      = 0.012f; // raw magic wakes into elementals — kept rare; 3 charged bodies swing a fight hard
 
         public const float CinderRainInterval  = 20f;   // seconds between damage ticks
         public const float EmberTitheInterval  = 20f;

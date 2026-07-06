@@ -62,7 +62,8 @@ namespace AshAndEmber
             public bool  Ashen;
             public float TrailTimer;
             public const float Speed        = 30f;   // m/s
-            public const float DetectRadius = 1.6f;  // how close a foe must be to trigger the burst
+            public const float DetectRadius = 2.4f;  // horizontal reach at which a foe trips the burst
+            public const float DetectHeight = 3.0f;  // vertical band (foot-to-mounted) the trigger spans
             public const float TrailInterval = 0.03f;
         }
         private static readonly List<FireBolt> _bolts = new List<FireBolt>();
@@ -262,7 +263,7 @@ namespace AshAndEmber
                 }
 
                 // Burst on the first live enemy the bolt reaches.
-                Agent struck = FirstEnemyNear(b.CasterTeam, b.Caster, b.Position, FireBolt.DetectRadius, mission);
+                Agent struck = FirstEnemyNear(b.CasterTeam, b.Caster, b.Position, FireBolt.DetectRadius, mission, FireBolt.DetectHeight);
                 if (struck != null) { ExplodeBolt(b, b.Position); _bolts.RemoveAt(i); continue; }
                 if (b.TravelLeft <= 0f) { ExplodeBolt(b, b.Position); _bolts.RemoveAt(i); }
             }
@@ -292,9 +293,14 @@ namespace AshAndEmber
             try { SpellEffects.RecordMagicCast(at); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // Nearest enemy within `radius` of an arbitrary point (bolt-centred, not
+        // First live enemy whose feet fall within `radius` *horizontally* of the
+        // bolt and inside a vertical band `height` tall (bolt-centred, not
         // caster-centred like EnemiesNear); null if none. Ignores mounts.
-        private static Agent FirstEnemyNear(Team casterTeam, Agent caster, Vec3 at, float radius, Mission mission)
+        // A flat 3-D sphere check missed most foes: the bolt flies at chest height
+        // (~1.2 m) while Agent.Position sits at the feet, so a 1.6 m sphere left only
+        // ~1 m of usable horizontal room and the bolt overflew looters, then burst in
+        // empty ground at max range. Measuring horizontally with a tall band fixes it.
+        private static Agent FirstEnemyNear(Team casterTeam, Agent caster, Vec3 at, float radius, Mission mission, float height)
         {
             float r2 = radius * radius;
             List<Agent> agents;
@@ -303,8 +309,10 @@ namespace AshAndEmber
             {
                 if (a == caster || !a.IsActive() || a.IsMount) continue;
                 if (casterTeam != null && a.Team == casterTeam) continue;
-                float dx = a.Position.x - at.x, dy = a.Position.y - at.y, dz = a.Position.z - at.z;
-                if (dx * dx + dy * dy + dz * dz <= r2) return a;
+                float dz = a.Position.z - at.z;
+                if (dz < -height || dz > height) continue;
+                float dx = a.Position.x - at.x, dy = a.Position.y - at.y;
+                if (dx * dx + dy * dy <= r2) return a;
             }
             return null;
         }
@@ -319,8 +327,10 @@ namespace AshAndEmber
             {
                 if (a == caster || !a.IsActive() || a.IsMount) continue;
                 if (casterTeam != null && a.Team == casterTeam) continue;
-                float dx = a.Position.x - at.x, dy = a.Position.y - at.y, dz = a.Position.z - at.z;
-                if (dx * dx + dy * dy + dz * dz <= r2) yield return a;
+                // Horizontal reach only: the burst can occur at chest height, and a
+                // 3-D check against a foe's feet would shave the effective radius.
+                float dx = a.Position.x - at.x, dy = a.Position.y - at.y;
+                if (dx * dx + dy * dy <= r2) yield return a;
             }
         }
 

@@ -2,7 +2,15 @@
 
 ---
 
-## Unreleased
+## v0.41.0
+
+### Spells that actually land
+- **Fire now hits what you aim at.** The fire bolt flew at chest height but only burst when a foe came within a tight sphere measured against their feet — so it routinely sailed over looters and detonated in empty ground at the end of its flight. It now bursts on a generous horizontal reach as it *reaches* a foe, and the blast catches the cluster.
+- **The Wind, Earth and Water cones no longer miss when you look at the ground.** Without a crosshair you naturally aim down at nearby foes; the cones were measured off your full look direction (pitch included), so aiming down tilted the whole wedge off the enemies in front of you — Entangle's narrow ridge whiffed with barely 20° of downward look. The wedges are now flat ground fans decided by facing alone. NPC nature-casters share the fix.
+- **Embershard crystals fly level**, so a downward-aimed throw no longer plunges short of distant foes.
+
+### Fixes
+- **The Kindling is now rarer.** Raw magic waking three charged elementals mid-battle could swing a small fight hard; its per-battle chance is cut from 3% to ~1.2% so it stays a memorable surprise rather than a balance-warping regular.
 
 ### The Undivided Flame — the fifth-trait ultimate
 - Two new Grace miracles answer only once all five personality traits (Mercy, Valor, Honor, Generosity, Calculating) are held at +1 or higher **at once**, rather than a single trait: **The Undivided Flame** (battle) — a nova that wards and mends your line while burning through the Ashen's cold and the Kindled's untempered wildness far harder than anything else it touches — and **The Reckoning** (map) — strikes the nearest Ashen banners and wild elemental bands within reach. The Undivided Flame is cast with a longer, deliberate 8-direction gesture instead of the usual 6; The Reckoning is chosen from the map litany like any other prayer. Both cost **2 Grace** instead of the usual 1, win or fizzle — they're strong enough to ask double the toll.

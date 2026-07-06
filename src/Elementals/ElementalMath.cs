@@ -176,7 +176,9 @@ namespace AshAndEmber
         public const int   WildMaxLivingBands   = 8;
 
         // ── Battle reinforcement (The Kindling) ─────────────────────────────────
-        public const float KindlingBattleChance = 0.03f;   // per battle, like other events
+        // NOTE: the live per-battle roll is BattleEvents.ChanceKindling; this
+        // mirror is kept only for reference — keep the two in sync if either moves.
+        public const float KindlingBattleChance = 0.012f;  // per battle — kept rare (3 charged bodies swing a fight)
         public const int   KindlingBodies        = 3;
     }
 }
