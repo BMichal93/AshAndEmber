@@ -1019,16 +1019,31 @@ namespace AshAndEmber.Tests
         public void ElementMagicMath_PowerMult_InstantWeak_CapFull_ClampsPastCap()
         {
             Assert.AreEqual(ElementMagicMath.MinPower, ElementMagicMath.PowerMult(0f), 0.0001f);
-            Assert.AreEqual(ElementMagicMath.MaxPower, ElementMagicMath.PowerMult(ElementMagicMath.MaxDrawSeconds), 0.0001f);
-            // Past the cap gives no further power.
-            Assert.AreEqual(ElementMagicMath.MaxPower, ElementMagicMath.PowerMult(20f), 0.0001f);
-            // Monotonic: a longer draw is never weaker.
-            Assert.IsTrue(ElementMagicMath.PowerMult(5f) > ElementMagicMath.PowerMult(0f));
-            Assert.IsTrue(ElementMagicMath.PowerMult(10f) > ElementMagicMath.PowerMult(5f));
+            // Monotonic within the ramp: a longer draw is never weaker (sample as
+            // fractions of the cap so this holds whatever FullChargeSeconds is set to).
+            float third = ElementMagicMath.FullChargeSeconds / 3f;
+            Assert.IsTrue(ElementMagicMath.PowerMult(third)     > ElementMagicMath.PowerMult(0f));
+            Assert.IsTrue(ElementMagicMath.PowerMult(2f * third) > ElementMagicMath.PowerMult(third));
             // Full power is reached at FullChargeSeconds and holds through the grace
-            // window up to the disperse threshold — so full strength is attainable.
+            // window up to the overchannel threshold.
             Assert.AreEqual(ElementMagicMath.MaxPower, ElementMagicMath.PowerMult(ElementMagicMath.FullChargeSeconds), 0.0001f);
-            Assert.IsTrue(ElementMagicMath.FullChargeSeconds < ElementMagicMath.MaxDrawSeconds);
+            Assert.AreEqual(ElementMagicMath.MaxPower,
+                ElementMagicMath.PowerMult(ElementMagicMath.OverchannelSeconds - 0.1f), 0.0001f);
+            Assert.IsTrue(ElementMagicMath.FullChargeSeconds < ElementMagicMath.OverchannelSeconds);
+            Assert.IsTrue(ElementMagicMath.OverchannelSeconds < ElementMagicMath.MaxDrawSeconds);
+        }
+
+        [Test]
+        public void ElementMagicMath_Overchannel_DoublesPower_AtThreshold()
+        {
+            // Below the threshold: capped at full. At/after it: the doubled working,
+            // and it stays doubled all the way to the disperse point.
+            Assert.IsFalse(ElementMagicMath.IsOverchannelled(ElementMagicMath.OverchannelSeconds - 0.1f));
+            Assert.IsTrue(ElementMagicMath.IsOverchannelled(ElementMagicMath.OverchannelSeconds));
+            float doubled = ElementMagicMath.MaxPower * ElementMagicMath.OverchannelMult;
+            Assert.AreEqual(doubled, ElementMagicMath.PowerMult(ElementMagicMath.OverchannelSeconds), 0.0001f);
+            Assert.AreEqual(doubled, ElementMagicMath.PowerMult(ElementMagicMath.MaxDrawSeconds), 0.0001f);
+            Assert.AreEqual(doubled, ElementMagicMath.PowerMult(20f), 0.0001f);
         }
 
         [Test]
@@ -1451,6 +1466,34 @@ namespace AshAndEmber.Tests
             Assert.GreaterOrEqual(NpcCastPlanner.CastPower(NpcCastPlanner.BaseHarass, 0f, CasterTemper.Calculating, true),
                                   NpcCastPlanner.EmergencyFloor,
                                   "survival trumps thrift regardless of the situational base");
+        }
+
+        [Test]
+        public void NpcCastPlanner_Overchannel_DoublesPower()
+        {
+            // The doubling matches the player's overchannel multiplier and exceeds
+            // the normal 1.2 clamp on purpose.
+            float doubled = NpcCastPlanner.Overchannelled(1.0f);
+            Assert.AreEqual(ElementMagicMath.OverchannelMult, doubled, 0.001f);
+            Assert.Greater(NpcCastPlanner.Overchannelled(1.2f), 1.2f);
+        }
+
+        [Test]
+        public void NpcCastPlanner_OverchannelChance_RecklessAndDesperateHigher_OldMiserRefuses()
+        {
+            // An old lord (short on years) will not gamble the extra life — unless
+            // survival is on the line.
+            Assert.AreEqual(0f, NpcCastPlanner.OverchannelChance(CasterTemper.Calculating, 0.1f, emergency: false), 0.0001f);
+            Assert.Greater(NpcCastPlanner.OverchannelChance(CasterTemper.Calculating, 0.1f, emergency: true), 0f);
+            // Impulsive lords overchannel more freely than calculating ones.
+            Assert.Greater(NpcCastPlanner.OverchannelChance(CasterTemper.Impulsive,  1f, false),
+                           NpcCastPlanner.OverchannelChance(CasterTemper.Calculating, 1f, false));
+            // Emergencies raise the odds for any temper.
+            Assert.Greater(NpcCastPlanner.OverchannelChance(CasterTemper.Balanced, 1f, true),
+                           NpcCastPlanner.OverchannelChance(CasterTemper.Balanced, 1f, false));
+            // ShouldOverchannel is a straight roll against the chance.
+            Assert.IsTrue(NpcCastPlanner.ShouldOverchannel(CasterTemper.Impulsive, 1f, true, 0f));
+            Assert.IsFalse(NpcCastPlanner.ShouldOverchannel(CasterTemper.Calculating, 0.1f, false, 0.0f));
         }
 
         [Test]

@@ -8,7 +8,7 @@
 // Water and Spirit are each learned, as are the three disciplines:
 //   • Steel  — cast with a weapon in hand, and double the weight you can bear.
 //   • Blood  — executing a lord gives back some of the years the fire has burned.
-//   • Nature — drawing slowly and in tune with the land (the full ~7s) makes a
+//   • Nature — drawing slowly and in tune with the land (the full ~5s) makes a
 //              working cost far less, as the old seers' attunement once did.
 //
 // These are learned through the talent system (focus points) or from a teacher,

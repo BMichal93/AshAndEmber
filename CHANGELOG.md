@@ -4,6 +4,11 @@
 
 ## v0.41.0
 
+### Magic charges faster, hits harder, and lingers in the hand
+- **A full-power draw now peaks in 5 seconds instead of 7**, so a fully-charged cone, wall, or Unbinding is far easier to land in the churn of a fight. The power ceiling for a *normal* draw is unchanged — you simply reach it sooner. Everything that scales off the draw (damage, cone reach, wall depth, the ultimate's full-charge gate) follows automatically.
+- **Overchannel — the doubled working.** Keep pouring past **~10 seconds** and the draw *overchannels*: the working strikes **twice as hard**. You then have until ~15 s to loose it before the gathered power disperses. **NPC mage-lords overchannel too** — recklessly-tempered and desperate lords most, the old and cautious rarely, and never when their remaining years are too short to spend (unless survival demands it). A whisper announces both the full charge and the overchannel.
+- **The charge lingers after you release Focus.** Let go of Alt/LB with a charge still drawn and it now stays in your hand for **~4 seconds** — loose it with a lone Attack or Block, or re-take Focus to keep drawing where you left off. You no longer have to release in the same instant you stop drawing.
+
 ### Spells that actually land
 - **Fire now hits what you aim at.** The fire bolt flew at chest height but only burst when a foe came within a tight sphere measured against their feet — so it routinely sailed over looters and detonated in empty ground at the end of its flight. It now bursts on a generous horizontal reach as it *reaches* a foe, and the blast catches the cluster.
 - **The Wind, Earth and Water cones no longer miss when you look at the ground.** Without a crosshair you naturally aim down at nearby foes; the cones were measured off your full look direction (pitch included), so aiming down tilted the whole wedge off the enemies in front of you — Entangle's narrow ridge whiffed with barely 20° of downward look. The wedges are now flat ground fans decided by facing alone. NPC nature-casters share the fix.

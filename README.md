@@ -154,8 +154,11 @@ All these paths are **mutually exclusive** — Inner Fire, Grace, Nature, and th
 ### How casting works
 
 1. **Hold the focus key.** Fire is loaded by default; tap a direction to load a learned element.
-2. **Stand still and draw.** The longer you hold (up to ~10 s), the **stronger** the working — there is no minimum, so an instant release is allowed but weak. Hold the full ten seconds without releasing and the charge **disperses**.
+2. **Stand still and draw.** The longer you hold (up to ~5 s), the **stronger** the working — power peaks at five seconds.
+   - **Overchannel:** keep pouring past **~10 s** and the working **overchannels** — it strikes **twice as hard**. You then have until ~15 s to loose it before the charge **disperses**. NPC mage-lords overchannel too (recklessly-tempered and desperate ones most).
+   - There is no minimum, so an instant release is allowed but weak.
 3. **Attack** looses the element's cone; **Block** raises its wall.
+4. **The charge lingers.** Let go of Focus with a charge drawn and it **stays in your hand for ~4 seconds** — loose it with a lone Attack/Block, or re-take Focus to keep drawing. You no longer have to release the instant you stop drawing.
 
 The life-cost of a cast is **flat** — the draw buys power, never a cheaper cast. The **Nature** discipline lowers that flat cost; the Ashen pay in criminal standing instead of years.
 

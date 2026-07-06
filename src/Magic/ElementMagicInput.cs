@@ -9,7 +9,7 @@
 //   DRAW for at least ~3 s, then ATTACK (left mouse / right trigger) looses the
 //   element's cone, or BLOCK (right mouse / left trigger) raises its wall.
 //
-//   The longer you draw (up to ~7 s) the STRONGER the working — a charged cone
+//   The longer you draw (up to ~5 s) the STRONGER the working — a charged cone
 //   reaches further and a charged wall thickens into a filled rectangle; the
 //   aging toll is flat either way. Hold past ~15 s and the charge disperses.
 //   Casting needs a free hand and light armour — unless
@@ -47,6 +47,13 @@ namespace AshAndEmber
         private const  float StillSpeed       = 0.3f;
         private static bool  _readyAnnounced;
         private static bool  _fullAnnounced;       // "fully charged" said once per draw
+        private static bool  _overAnnounced;       // "overchannelled" said once per draw
+
+        // Held charge: after you release Focus with a charge still drawn, the working
+        // LINGERS in the hand for HeldChargeSeconds — you may loose it (Attack/Block)
+        // or re-take Focus to keep drawing, instead of the charge vanishing at once.
+        private static float _heldTimer;           // >0: a drawn charge lingers, hands free
+        private const  float HeldChargeSeconds = 4f;
 
         // Charging visual: element-specific particles engulf the caster while they
         // draw, refreshed on a short interval and re-emitted the instant the loaded
@@ -79,6 +86,8 @@ namespace AshAndEmber
             _reminder = 0f;
             _readyAnnounced = false;
             _fullAnnounced = false;
+            _overAnnounced = false;
+            _heldTimer = 0f;
             _visualTimer = 0f;
             _lastVisualElement = null;
             InputSuppressed = false;
@@ -108,10 +117,18 @@ namespace AshAndEmber
             {
                 if (!_wasFocusing)
                 {
-                    MageElementKnowledge.ResetLoaded();
-                    _drawTime = 0f;
-                    _readyAnnounced = false;
-                    _fullAnnounced = false;
+                    // Re-taking Focus while a charge still lingers RESUMES it — keep
+                    // the drawn power and the loaded element, just cancel the linger.
+                    bool resuming = _heldTimer > 0f;
+                    _heldTimer = 0f;
+                    if (!resuming)
+                    {
+                        MageElementKnowledge.ResetLoaded();
+                        _drawTime = 0f;
+                        _readyAnnounced = false;
+                        _fullAnnounced = false;
+                        _overAnnounced = false;
+                    }
                     _visualTimer = 0f;
                     _lastVisualElement = null;   // force an immediate first pulse
                     try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -123,7 +140,7 @@ namespace AshAndEmber
                 // Draw the charge while standing still with hands and armour free
                 // (Steel waives the hand and weight limits). The draw builds POWER,
                 // not cost: release at once for a weak working, or hold to strengthen
-                // it — full at ~7 s, but hold ~15 s and the charge disperses.
+                // it — full at ~5 s, but hold ~15 s and the charge disperses.
                 string reason = ChannelBlockReason();
                 if (reason == null)
                 {
@@ -136,13 +153,19 @@ namespace AshAndEmber
                     if (!_fullAnnounced && ElementMagicMath.IsFullyCharged(_drawTime))
                     {
                         _fullAnnounced = true;
-                        Msg($"{MageElementKnowledge.LoadedName()} fully charged — release now, or press Attack and Block together to UNBIND it.");
+                        Msg($"{MageElementKnowledge.LoadedName()} fully charged — release now, keep holding to OVERCHANNEL, or press Attack and Block together to UNBIND it.");
+                    }
+                    if (!_overAnnounced && ElementMagicMath.IsOverchannelled(_drawTime))
+                    {
+                        _overAnnounced = true;
+                        Msg($"{MageElementKnowledge.LoadedName()} OVERCHANNELS — loose it now for a doubled working, before it slips away.");
                     }
                     if (_drawTime >= ElementMagicMath.MaxDrawSeconds)
                     {
                         _drawTime = 0f;
                         _readyAnnounced = false;
                         _fullAnnounced = false;
+                        _overAnnounced = false;
                         Msg("The charge slips away — draw again.");
                     }
                     TickChargeVisual(dt);
@@ -152,6 +175,7 @@ namespace AshAndEmber
                     _drawTime = 0f;
                     _readyAnnounced = false;
                     _fullAnnounced = false;
+                    _overAnnounced = false;
                     _lastVisualElement = null;   // re-emit when drawing resumes
                     _reminder -= dt;
                     if (_reminder <= 0f) { Msg(reason); _reminder = ReminderInterval; }
@@ -188,6 +212,8 @@ namespace AshAndEmber
             }
             else if (_wasFocusing)
             {
+                _wasFocusing = false;
+                _prevAtk = _prevBlk = false;
                 // Focus released with a press still buffered: commit it now, or a
                 // tap in the chord window's last instant would be silently lost.
                 if (_pendingForm != null)
@@ -195,17 +221,64 @@ namespace AshAndEmber
                     CastForm form = _pendingForm.Value;
                     _pendingForm = null; _pendingTimer = 0f;
                     TryCast(form);
+                    EndFocusFully();
                 }
-                _wasFocusing = false;
-                _drawTime = 0f;
-                _prevAtk = _prevBlk = false;
-                _readyAnnounced = false;
-                _fullAnnounced = false;
-                _lastVisualElement = null;
-                try { if (Agent.Main != null) SpellEffects.EndCastLoop(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                // Clears the body contour glow left by the charge visual.
-                try { if (Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // Nothing loosed, but a charge is drawn: let it LINGER in the hand
+                // so you can aim, move a step, then loose it — instead of having to
+                // release in the same instant you stop drawing.
+                else if (_drawTime > 0.05f)
+                {
+                    _heldTimer = HeldChargeSeconds;
+                    Msg($"{MageElementKnowledge.LoadedName()} lingers in your hand — Attack/Block to loose it, or re-focus to keep drawing (~{HeldChargeSeconds:0}s).");
+                    // Visuals stay lit to signal the held charge; TickChargeVisual
+                    // keeps pulsing it from the held branch below.
+                }
+                else EndFocusFully();
             }
+            // The charge lingers after Focus is released: loose it with a lone
+            // Attack/Block (no Focus needed), or let it slip after HeldChargeSeconds.
+            else if (_heldTimer > 0f)
+            {
+                _heldTimer -= dt;
+                TickChargeVisual(dt);
+
+                bool atk = Input.IsKeyDown(InputKey.LeftMouseButton)  || Input.IsKeyDown(InputKey.ControllerRTrigger);
+                bool blk = Input.IsKeyDown(InputKey.RightMouseButton) || Input.IsKeyDown(InputKey.ControllerLTrigger);
+                bool atkEdge = atk && !_prevAtk;
+                bool blkEdge = blk && !_prevBlk;
+                if (atkEdge || blkEdge)
+                {
+                    string reason = ChannelBlockReason();
+                    if (reason != null) { Msg(reason); }   // keep the charge; loose it standing still
+                    else
+                    {
+                        TryCast(atkEdge ? CastForm.Attack : CastForm.Wall);
+                        EndFocusFully();
+                    }
+                }
+                else if (_heldTimer <= 0f)
+                {
+                    Msg("The charge slips away — draw again.");
+                    EndFocusFully();
+                }
+                _prevAtk = atk; _prevBlk = blk;
+            }
+        }
+
+        // Tear down a focus/held session: spend nothing, drop the charge and clear
+        // the aura. Called when a cast has fired, when the linger lapses, or when
+        // Focus is released with no charge to keep.
+        private static void EndFocusFully()
+        {
+            _drawTime = 0f;
+            _heldTimer = 0f;
+            _readyAnnounced = false;
+            _fullAnnounced = false;
+            _overAnnounced = false;
+            _lastVisualElement = null;
+            try { if (Agent.Main != null) SpellEffects.EndCastLoop(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Clears the body contour glow left by the charge visual.
+            try { if (Agent.Main != null) SpellEffects.EndFocusVisual(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Emit the element's charging visual on a short interval, and immediately
@@ -319,6 +392,7 @@ namespace AshAndEmber
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
             _fullAnnounced = false;
+            _overAnnounced = false;
         }
 
         // The Attack+Block chord — THE UNBINDING, the loaded element's ultimate.
@@ -356,6 +430,7 @@ namespace AshAndEmber
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
             _fullAnnounced = false;
+            _overAnnounced = false;
         }
 
         // Aging "burns through" like fire; the Ashen pay in criminal standing instead.

@@ -79,6 +79,33 @@ namespace AshAndEmber
             return p < 0.35f ? 0.35f : p > 1.2f ? 1.2f : p;
         }
 
+        // ── Overchannel (the doubled working) ─────────────────────────────────────
+        // A lord may pour everything into one cast for a doubled effect — the same
+        // overchannel the player reaches by holding the draw. It costs twice the
+        // life, so a lord short on years won't risk it unless survival demands it.
+        // Chance rises with recklessness of temper and with desperation.
+        public static float OverchannelChance(CasterTemper temper, float lifeFrac, bool emergency)
+        {
+            if (!emergency && Clamp01(lifeFrac) < 0.35f) return 0f; // too old to gamble the years
+            float baseChance;
+            switch (temper)
+            {
+                case CasterTemper.Impulsive:   baseChance = 0.25f; break; // holds little back
+                case CasterTemper.Calculating: baseChance = 0.05f; break; // a miser with his fire
+                default:                        baseChance = 0.12f; break;
+            }
+            if (emergency) baseChance += 0.25f;   // desperate lords spend everything
+            return baseChance > 0.8f ? 0.8f : baseChance;
+        }
+
+        // Roll `roll` (0..1) against the overchannel chance.
+        public static bool ShouldOverchannel(CasterTemper temper, float lifeFrac, bool emergency, float roll)
+            => roll < OverchannelChance(temper, lifeFrac, emergency);
+
+        // Double an already-decided cast power (bypasses the normal 1.2 clamp — the
+        // overchannel is meant to exceed it).
+        public static float Overchannelled(float basePower) => basePower * ElementMagicMath.OverchannelMult;
+
         // How far a temper will stretch his casting cadence when near burnout.
         public static float MaxCooldownStretch(CasterTemper temper)
         {

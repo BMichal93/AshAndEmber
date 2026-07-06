@@ -373,7 +373,13 @@ namespace AshAndEmber
                     ? (isFalseEmperor ? 1.2f : 1.0f)   // boss tier overcharges, pays no life
                     : NpcCastPlanner.CastPower(situationBase, lifeFrac, temper, emergency);
 
-                AnnounceEnemyCast(agent, hero, ElementBlurb(chosen, CastForm.Attack));
+                // A lord may OVERCHANNEL — pour everything into one working for a
+                // doubled effect, exactly as the player does by holding the draw.
+                bool overchannel = NpcCastPlanner.ShouldOverchannel(temper, lifeFrac, emergency, (float)_rng.NextDouble());
+                if (overchannel) power = NpcCastPlanner.Overchannelled(power);
+
+                AnnounceEnemyCast(agent, hero, ElementBlurb(chosen, CastForm.Attack)
+                    + (overchannel ? " — the working OVERCHANNELS, doubled and wild" : ""));
                 SetCooldown(hero);
                 RecordCast(hero, CastForm.Attack);
                 SpellEffects.QueueNpcCastWithWindup(agent, () =>

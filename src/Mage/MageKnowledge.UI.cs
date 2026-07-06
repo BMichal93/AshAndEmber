@@ -64,8 +64,10 @@ namespace AshAndEmber
                 "── THE CASTING, IN BRIEF ────────────────────────────\n" +
                 "  Hold Left Alt → stand still and DRAW → Attack looses your element,\n" +
                 "  Block raises a wall → release Alt to stop.\n" +
-                "  The longer you hold, the harder it strikes (full at ~7 s);\n" +
-                "  hold too long (~15 s) and the charge disperses. Keep a hand free.\n" +
+                "  The longer you hold, the harder it strikes (full at ~5 s; hold past\n" +
+                "  ~10 s to OVERCHANNEL — doubled — then ~15 s and it disperses).\n" +
+                "  Release Alt with a charge drawn and it LINGERS ~4 s: loose it with\n" +
+                "  Attack/Block, or re-focus to keep drawing. Keep a hand free.\n" +
                 "  Fire is loaded by default. Tap W / A / S / D to load a learned\n" +
                 "  element — W Wind · S Earth · A Water · D Spirit.\n" +
                 "  (Full gestures, miracles and crystals: your Codex of Hand and Voice.)\n\n" +

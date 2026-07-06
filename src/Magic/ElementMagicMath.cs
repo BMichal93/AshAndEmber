@@ -32,18 +32,23 @@ namespace AshAndEmber
         // ── Draw / charge → POWER ────────────────────────────────────────────────
         // No minimum: you may release instantly. The draw sets power, from a weak
         // instant cast up to FULL strength at FullChargeSeconds — then it holds at
-        // full through a short grace window before the charge finally DISPERSES at
-        // MaxDrawSeconds. That window is when the working is at its most potent.
-        public const float FullChargeSeconds = 7f;    // power reaches its peak here
+        // full through a grace window, and a caster who keeps pouring reaches the
+        // OVERCHANNEL at OverchannelSeconds: the working strikes twice as hard.
+        // Held past MaxDrawSeconds, the charge finally DISPERSES and is lost.
+        public const float FullChargeSeconds  = 5f;    // power reaches its peak here
+        public const float OverchannelSeconds = 10f;   // keep drawing and the working overchannels
         public const float MaxDrawSeconds     = 15f;   // held this long, the charge disperses
         public const float MinPower           = 0.5f;  // strength of an instant (0 s) cast
         public const float MaxPower           = 1.0f;  // strength once fully charged
+        public const float OverchannelMult    = 2.0f;  // an overchannelled working strikes this much harder
 
         // Power multiplier for a cast released after `drawSeconds` of drawing.
-        // Linear from MinPower at 0 s up to MaxPower at FullChargeSeconds, then flat
-        // at MaxPower until the charge disperses.
+        // Linear from MinPower at 0 s up to MaxPower at FullChargeSeconds; holds at
+        // MaxPower through the grace window; then jumps to the overchannel (MaxPower
+        // × OverchannelMult) once OverchannelSeconds is reached.
         public static float PowerMult(float drawSeconds)
         {
+            if (drawSeconds >= OverchannelSeconds) return MaxPower * OverchannelMult;
             float t = drawSeconds <= 0f ? 0f
                     : drawSeconds >= FullChargeSeconds ? 1f
                     : drawSeconds / FullChargeSeconds;
@@ -53,6 +58,9 @@ namespace AshAndEmber
         // True once the draw has reached full strength (used to announce "fully
         // charged" and to unlock the charged cone-range / rectangular-wall shapes).
         public static bool IsFullyCharged(float drawSeconds) => drawSeconds >= FullChargeSeconds;
+
+        // True once the draw has been held into the overchannel — the doubled working.
+        public static bool IsOverchannelled(float drawSeconds) => drawSeconds >= OverchannelSeconds;
 
         // 0 at an instant release, 1 at full charge — the normalised charge level,
         // independent of MinPower. Effects use it to grow a cone's reach or turn a

@@ -120,11 +120,14 @@ namespace AshAndEmber
                 "physical-and-spiritual root of the art. To draw another element you have LEARNED, tap " +
                 "W (Wind) · S (Earth) · A (Water) · D (Spirit) — gamepad: flick the left stick up / down / " +
                 "left / right. Stand STILL, with a hand free and your armour light, and DRAW — the " +
-                "longer you hold, the HARDER the working strikes, to full strength at about ten seconds. " +
+                "longer you hold, the HARDER the working strikes, to full strength at about FIVE seconds. " +
                 "There is no minimum: release at once for a weak, instant cast. Then ATTACK (left mouse / " +
                 "right trigger) looses its cone, or BLOCK (right mouse / left trigger) raises its wall. " +
-                "Hold the full ten seconds without releasing and the gathered power DISPERSES — begin " +
-                "again. Release Alt to stop."), true);
+                "Keep pouring past about TEN seconds and the working OVERCHANNELS — it strikes TWICE as " +
+                "hard; but hold past about fifteen seconds and the gathered power DISPERSES — begin again. " +
+                "Release Focus with a charge still drawn and it LINGERS in your hand for a few seconds — " +
+                "loose it with a lone Attack or Block, or re-focus to keep drawing — so you need not " +
+                "release the instant you stop drawing. Release Alt to stop."), true);
 
             AddLog(new TextObject(
                 "MAGIC · THE FIVE ELEMENTS (in battle) — FIRE: a bolt that bursts on impact / a wall of fire. " +
@@ -134,7 +137,7 @@ namespace AshAndEmber
                 "a stray order into their ranks / a wall that heartens your own and mends them a little."), true);
 
             AddLog(new TextObject(
-                "MAGIC · THE UNBINDING — Draw an element to its FULLEST (about seven seconds), then press " +
+                "MAGIC · THE UNBINDING — Draw an element to its FULLEST (about five seconds), then press " +
                 "ATTACK and BLOCK TOGETHER to unbind it: each element's ultimate working, once per element " +
                 "per battle, at a steep flat toll (twelve days). FIRE: a nova — everything around you burns, " +
                 "horses bolt, siege timber chars, a burning ring remains. WIND: the gale carries YOU — fly " +
