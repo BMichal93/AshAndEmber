@@ -104,21 +104,26 @@ namespace AshAndEmber
             }
 
             // Inventory + trait gate
-            if (!MiracleInventory.HasGrace)
+            if (MiracleInventory.Grace < def.GraceCost)
             {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "You carry no Grace. Pray at a Sanctuary first.", GraceColor));
+                string lackMsg = def.GraceCost > 1
+                    ? $"{def.Name} asks {def.GraceCost} Grace; you carry {MiracleInventory.Grace}. Pray at a Sanctuary first."
+                    : "You carry no Grace. Pray at a Sanctuary first.";
+                InformationManager.DisplayMessage(new InformationMessage(lackMsg, GraceColor));
                 return false;
             }
             if (!PlayerMeetsTrait(def))
             {
-                MiracleInventory.SpendGrace(); // gate failure still costs Grace
+                MiracleInventory.SpendGrace(def.GraceCost); // gate failure still costs the full toll
+                string why = def.RequiresAllTraits
+                    ? "You do not yet hold all five virtues at once."
+                    : $"You are not {def.TraitName} enough.";
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"{def.Name} — the light does not answer. You are not {def.TraitName} enough. [Grace spent]",
+                    $"{def.Name} — the light does not answer. {why} [{def.GraceCost} Grace spent]",
                     GraceColor));
                 return false;
             }
-            MiracleInventory.SpendGrace();
+            MiracleInventory.SpendGrace(def.GraceCost);
 
             if (inMission)
             {

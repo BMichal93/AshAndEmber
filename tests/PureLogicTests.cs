@@ -926,6 +926,38 @@ namespace AshAndEmber.Tests
             Assert.IsTrue(MiracleCatalog.Get(MiracleType.Reckoning).RequiresAllTraits);
         }
 
+        [Test]
+        public void MiracleCatalog_UndividedFlameAndReckoning_CostTwoGrace()
+        {
+            Assert.AreEqual(2, MiracleCatalog.Get(MiracleType.UndividedFlame).GraceCost);
+            Assert.AreEqual(2, MiracleCatalog.Get(MiracleType.Reckoning).GraceCost);
+        }
+
+        [Test]
+        public void MiracleCatalog_OrdinaryMiracles_CostOneGrace()
+        {
+            Assert.AreEqual(1, MiracleCatalog.Get(MiracleType.MercyMend).GraceCost);
+            Assert.AreEqual(1, MiracleCatalog.Get(MiracleType.InsightPyre).GraceCost);
+        }
+
+        [Test]
+        public void MiracleInventory_SpendGrace_Amount_FailsWithoutEnough()
+        {
+            MiracleInventory.ResetForNewGame();
+            MiracleInventory.AddGrace(1);
+            Assert.IsFalse(MiracleInventory.SpendGrace(2));
+            Assert.AreEqual(1, MiracleInventory.Grace);
+        }
+
+        [Test]
+        public void MiracleInventory_SpendGrace_Amount_SucceedsWithEnough()
+        {
+            MiracleInventory.ResetForNewGame();
+            MiracleInventory.AddGrace(3);
+            Assert.IsTrue(MiracleInventory.SpendGrace(2));
+            Assert.AreEqual(1, MiracleInventory.Grace);
+        }
+
         // ── SanctuaryMath: the Long Vigil (raise a trait for gold or blood) ────
 
         [Test]

@@ -65,6 +65,11 @@ namespace AshAndEmber
 
         public string Context => UsableInBattle ? "battle only" : "field only";
 
+        // The Undivided Flame / The Reckoning ask a heavier toll than an ordinary
+        // prayer — twice the Grace, win or fizzle, matching how much rarer their
+        // gate is to meet in the first place.
+        public int GraceCost => RequiresAllTraits ? 2 : 1;
+
         // Shown on the litany so the player knows which virtue unlocks it.
         public string GateNote => RequiresAllTraits ? "[all five virtues +1]" : $"[{TraitName} +1]";
 

@@ -177,15 +177,27 @@ namespace AshAndEmber
                 SpendAndFizzle($"The form is incomplete ({_seqBuffer.Length}/{MiracleMath.SequenceLength}). The power slips away.");
                 return;
             }
-            if (_seqBuffer.Length > MiracleMath.SequenceLength && _seqBuffer.Length < MiracleMath.UltimateSequenceLength)
+            if (_seqBuffer.Length > MiracleMath.SequenceLength)
             {
-                SpendAndFizzle($"The greater working is incomplete ({_seqBuffer.Length}/{MiracleMath.UltimateSequenceLength}). The power slips away.");
-                return;
+                // Anything past the sixth tap is a deliberate reach for the greater
+                // working, which asks its own (heavier) toll up front.
+                int ultimateCost = UltimateGraceCost;
+                if (MiracleInventory.Grace < ultimateCost)
+                {
+                    Fizzle($"The greater working asks {ultimateCost} Grace; you carry {MiracleInventory.Grace}. The power slips away untouched.");
+                    return;
+                }
+                if (_seqBuffer.Length < MiracleMath.UltimateSequenceLength)
+                {
+                    SpendAndFizzle($"The greater working is incomplete ({_seqBuffer.Length}/{MiracleMath.UltimateSequenceLength}). The power slips away.", ultimateCost);
+                    return;
+                }
             }
 
             if (!MiracleMath.TryMatchSequence(_seqBuffer, out MiracleType type))
             {
-                SpendAndFizzle($"No miracle answers the sequence '{_seqBuffer}'. The power slips through your fingers.");
+                int cost = _seqBuffer.Length == MiracleMath.UltimateSequenceLength ? UltimateGraceCost : 1;
+                SpendAndFizzle($"No miracle answers the sequence '{_seqBuffer}'. The power slips through your fingers.", cost);
                 return;
             }
 
@@ -196,12 +208,12 @@ namespace AshAndEmber
                 if (def.Type != type) continue;
                 if (inMission && !def.UsableInBattle)
                 {
-                    SpendAndFizzle($"{def.Name} answers only on the open road, not amid the clash of battle.");
+                    SpendAndFizzle($"{def.Name} answers only on the open road, not amid the clash of battle.", def.GraceCost);
                     return;
                 }
                 if (!inMission && !def.UsableOnMap)
                 {
-                    SpendAndFizzle($"{def.Name} answers only in the heat of battle.");
+                    SpendAndFizzle($"{def.Name} answers only in the heat of battle.", def.GraceCost);
                     return;
                 }
                 break;
@@ -210,9 +222,13 @@ namespace AshAndEmber
             MiracleEffects.TryUseMiracle(type, inMission);
         }
 
-        private static void SpendAndFizzle(string msg)
+        private static int UltimateGraceCost => MiracleCatalog.Get(MiracleType.UndividedFlame).GraceCost;
+
+        private static void SpendAndFizzle(string msg) => SpendAndFizzle(msg, 1);
+
+        private static void SpendAndFizzle(string msg, int amount)
         {
-            MiracleInventory.SpendGrace();
+            MiracleInventory.SpendGrace(amount);
             Fizzle(msg);
         }
 
@@ -276,7 +292,8 @@ namespace AshAndEmber
                 string keys  = SequenceToKeys(def.Sequence);
                 string stick = SequenceToStick(def.Sequence);
                 string gate  = string.IsNullOrEmpty(def.GateNote) ? "" : "  " + def.GateNote;
-                string label = $"{def.Name}   [Ctrl + {keys}]   ({def.Context}){gate}";
+                string costNote = def.GraceCost != 1 ? $"  [{def.GraceCost} Grace]" : "";
+                string label = $"{def.Name}   [Ctrl + {keys}]   ({def.Context}){gate}{costNote}";
                 string controls = $"Keyboard: hold Ctrl + {keys}\nController: hold RB + flick left stick {stick}";
                 string hint  = $"{controls}\n\n{def.Effect}\n\n{def.Flavour}";
                 if (!gateMet)
@@ -285,9 +302,9 @@ namespace AshAndEmber
             }
 
             string title = $"Miracles  [Grace: {MiracleInventory.Grace}/{MiracleMath.GraceCap()}]";
-            string body  = "Choose a prayer to offer on the march. Each costs 1 Grace. " +
-                  "Recall its rite truly and the light answers in full; let the words " +
-                  "scatter and the Grace is spent for nothing.";
+            string body  = "Choose a prayer to offer on the march. Most cost 1 Grace — the rarer " +
+                  "workings cost more, shown beside their name. Recall its rite truly and the " +
+                  "light answers in full; let the words scatter and the Grace is spent for nothing.";
 
             try
             {
@@ -336,9 +353,10 @@ namespace AshAndEmber
                 if (!usableHere) continue;
                 bool gateMet = MiracleEffects.PlayerMeetsTrait(def);
                 string keys  = SequenceToKeys(def.Sequence);
+                string costNote = def.GraceCost != 1 ? $"   ({def.GraceCost} Grace)" : "";
                 sb.AppendLine(gateMet
-                    ? $"{def.Name}   [Ctrl + {keys}]"
-                    : $"{def.Name}   [locked — {def.GateExplanation}]");
+                    ? $"{def.Name}   [Ctrl + {keys}]{costNote}"
+                    : $"{def.Name}   [locked — {def.GateExplanation}]{costNote}");
                 if (!string.IsNullOrEmpty(def.Effect)) sb.AppendLine("   " + def.Effect);
                 sb.AppendLine();
                 shown++;
