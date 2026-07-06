@@ -49,12 +49,6 @@ namespace AshAndEmber
         private static bool  _fullAnnounced;       // "fully charged" said once per draw
         private static bool  _overAnnounced;       // "overchannelled" said once per draw
 
-        // Held charge: after you release Focus with a charge still drawn, the working
-        // LINGERS in the hand for HeldChargeSeconds — you may loose it (Attack/Block)
-        // or re-take Focus to keep drawing, instead of the charge vanishing at once.
-        private static float _heldTimer;           // >0: a drawn charge lingers, hands free
-        private const  float HeldChargeSeconds = 4f;
-
         // Charging visual: element-specific particles engulf the caster while they
         // draw, refreshed on a short interval and re-emitted the instant the loaded
         // element changes (so switching W/S/A/D swaps flames for vines, splashes…).
@@ -87,7 +81,6 @@ namespace AshAndEmber
             _readyAnnounced = false;
             _fullAnnounced = false;
             _overAnnounced = false;
-            _heldTimer = 0f;
             _visualTimer = 0f;
             _lastVisualElement = null;
             InputSuppressed = false;
@@ -117,18 +110,11 @@ namespace AshAndEmber
             {
                 if (!_wasFocusing)
                 {
-                    // Re-taking Focus while a charge still lingers RESUMES it — keep
-                    // the drawn power and the loaded element, just cancel the linger.
-                    bool resuming = _heldTimer > 0f;
-                    _heldTimer = 0f;
-                    if (!resuming)
-                    {
-                        MageElementKnowledge.ResetLoaded();
-                        _drawTime = 0f;
-                        _readyAnnounced = false;
-                        _fullAnnounced = false;
-                        _overAnnounced = false;
-                    }
+                    MageElementKnowledge.ResetLoaded();
+                    _drawTime = 0f;
+                    _readyAnnounced = false;
+                    _fullAnnounced = false;
+                    _overAnnounced = false;
                     _visualTimer = 0f;
                     _lastVisualElement = null;   // force an immediate first pulse
                     try { if (Agent.Main != null) SpellEffects.BeginCastLoop(Agent.Main); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -223,55 +209,16 @@ namespace AshAndEmber
                     TryCast(form);
                     EndFocusFully();
                 }
-                // Nothing loosed, but a charge is drawn: let it LINGER in the hand
-                // so you can aim, move a step, then loose it — instead of having to
-                // release in the same instant you stop drawing.
-                else if (_drawTime > 0.05f)
-                {
-                    _heldTimer = HeldChargeSeconds;
-                    Msg($"{MageElementKnowledge.LoadedName()} lingers in your hand — Attack/Block to loose it, or re-focus to keep drawing (~{HeldChargeSeconds:0}s).");
-                    // Visuals stay lit to signal the held charge; TickChargeVisual
-                    // keeps pulsing it from the held branch below.
-                }
+                // Nothing loosed: releasing Focus drops the charge at once.
                 else EndFocusFully();
-            }
-            // The charge lingers after Focus is released: loose it with a lone
-            // Attack/Block (no Focus needed), or let it slip after HeldChargeSeconds.
-            else if (_heldTimer > 0f)
-            {
-                _heldTimer -= dt;
-                TickChargeVisual(dt);
-
-                bool atk = Input.IsKeyDown(InputKey.LeftMouseButton)  || Input.IsKeyDown(InputKey.ControllerRTrigger);
-                bool blk = Input.IsKeyDown(InputKey.RightMouseButton) || Input.IsKeyDown(InputKey.ControllerLTrigger);
-                bool atkEdge = atk && !_prevAtk;
-                bool blkEdge = blk && !_prevBlk;
-                if (atkEdge || blkEdge)
-                {
-                    string reason = ChannelBlockReason();
-                    if (reason != null) { Msg(reason); }   // keep the charge; loose it standing still
-                    else
-                    {
-                        TryCast(atkEdge ? CastForm.Attack : CastForm.Wall);
-                        EndFocusFully();
-                    }
-                }
-                else if (_heldTimer <= 0f)
-                {
-                    Msg("The charge slips away — draw again.");
-                    EndFocusFully();
-                }
-                _prevAtk = atk; _prevBlk = blk;
             }
         }
 
-        // Tear down a focus/held session: spend nothing, drop the charge and clear
-        // the aura. Called when a cast has fired, when the linger lapses, or when
-        // Focus is released with no charge to keep.
+        // Tear down a focus session: spend nothing, drop the charge and clear the
+        // aura. Called when a cast has fired, or when Focus is released.
         private static void EndFocusFully()
         {
             _drawTime = 0f;
-            _heldTimer = 0f;
             _readyAnnounced = false;
             _fullAnnounced = false;
             _overAnnounced = false;

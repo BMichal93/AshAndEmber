@@ -84,23 +84,15 @@ namespace AshAndEmber
                 // b) Mother gives old family trinket — teaches random talent
                 MageKnowledge._deferredInquiry = () =>
                 {
-                    var available = TalentSystem.All
-                        .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id))
-                        .ToList();
-
-                    string talentLine = available.Count > 0
-                        ? $"Something shifts in you as you handle it — the shape of {available[_rng.Next(available.Count)].Name}, given without ceremony."
-                        : "Something shifts in you as you handle it. The fire turns back once and finds its own edge.";
-
-                    if (available.Count > 0)
+                    string talentLine;
+                    if (MagicLearning.TryGrantRandomUnknown(_rng, out string trinketLearned))
                     {
-                        var pick = available[_rng.Next(available.Count)];
-                        TalentSystem.GrantFree(pick.Id, Hero.MainHero);
-                        talentLine = $"Something shifts in you as you handle it — the shape of {pick.Name}, given without ceremony.";
+                        talentLine = $"Something shifts in you as you handle it — the shape of {trinketLearned}, given without ceremony.";
                     }
                     else
                     {
                         ChangeRenown(12f);
+                        talentLine = "Something shifts in you as you handle it. The fire turns back once and finds its own edge.";
                     }
 
                     MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(

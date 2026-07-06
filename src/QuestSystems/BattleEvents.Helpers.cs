@@ -38,6 +38,22 @@ namespace AshAndEmber
 
         private static bool Roll(float chance) => _rng.NextDouble() < chance;
 
+        // Snap a scattered point down onto the scene surface. Field-hazard patches
+        // (Cinder Rain, Tremor) damage by 3-D distance, so a point left floating a
+        // few metres above the ground would sit harmlessly over the fighters' heads.
+        private static void SnapToGround(ref Vec3 pos)
+        {
+            try
+            {
+                var scene = Mission.Current?.Scene;
+                if (scene == null) return;
+                float gz = pos.z;
+                scene.GetHeightAtPoint(pos.AsVec2, BodyFlags.CommonCollisionExcludeFlagsForAgent, ref gz);
+                pos.z = gz;
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
         // Average position of all active non-mount agents across the whole field.
         private static Vec3 GetFieldCentre()
         {

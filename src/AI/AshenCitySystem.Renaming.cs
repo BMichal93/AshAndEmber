@@ -180,6 +180,7 @@ namespace AshAndEmber
                 SetKingdomField(vlandia,
                     new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("High Templar"));
+                SetKingdomEncyclopediaText(vlandia, _templeLore);
 
                 // The Vlandian culture IS the Templar order — rename the culture so a
                 // character's background reads "Templar" rather than "Vlandian"
@@ -226,12 +227,7 @@ namespace AshAndEmber
                 if (mgr == null) return false;
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "vlandia", "The Holy Temple");
-                SetCultureVariation(mgr, "str_culture_description", "vlandia",
-                    "Once they were lords of the western marches, bound to no altar and no god but conquest. " +
-                    "When the grey march first came down from the north, the Empire turned east and left them " +
-                    "to face it alone. They held. In the silence that followed, they made a covenant with the " +
-                    "fire inside them — not as weapon, but as vow. The Templars are what that vow became. " +
-                    "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.");
+                SetCultureVariation(mgr, "str_culture_description", "vlandia", _templeLore);
                 RelabelCulturalFeats("vlandia", _templeFeats, ref _templeFeatsRelabeled);
                 return true;
             }
@@ -271,6 +267,7 @@ namespace AshAndEmber
                 SetKingdomField(khuzait,
                     new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("God-King"));
+                SetKingdomEncyclopediaText(khuzait, _tribalLore);
 
                 RenameTribalCulture();
             }
@@ -305,15 +302,7 @@ namespace AshAndEmber
                 if (mgr == null) return false;
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "khuzait", "Tribes of the East");
-                SetCultureVariation(mgr, "str_culture_description", "khuzait",
-                    "They came from the eastern steppe — a hundred warring clans who forgot how to stop fighting " +
-                    "until the God-King put his hand on the sky and turned three chieftains to ash. " +
-                    "The rest knelt. Now the Tribes ride as one, not because they love their king, " +
-                    "but because they love war, and he alone has shown them how to win it. " +
-                    "He wields fire the way other men wield iron. He does not negotiate. " +
-                    "He takes wives from every city his horsemen put to tribute. " +
-                    "He is watching the Empire bleed itself empty, and he is patient. " +
-                    "The Tribes do not seek peace. They seek the next horizon.");
+                SetCultureVariation(mgr, "str_culture_description", "khuzait", _tribalLore);
                 RelabelCulturalFeats("khuzait", _tribalFeats, ref _tribalFeatsRelabeled);
                 return true;
             }
@@ -353,6 +342,44 @@ namespace AshAndEmber
         private static bool _templeFeatsRelabeled;
         private static bool _tribalFeatsRelabeled;
         private static bool _dunebornFeatsRelabeled;
+
+        // ── Faction lore blurbs ────────────────────────────────────────────────
+        // Shared by the character-creation culture card (str_culture_description)
+        // and the N-key encyclopedia kingdom page (Kingdom.EncyclopediaText) so the
+        // two never drift apart. One source of truth per faction.
+        private const string _templeLore =
+            "Once they were lords of the western marches, bound to no altar and no god but conquest. " +
+            "When the grey march first came down from the north, the Empire turned east and left them " +
+            "to face it alone. They held. In the silence that followed, they made a covenant with the " +
+            "fire inside them — not as weapon, but as vow. The Templars are what that vow became. " +
+            "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.";
+        private const string _tribalLore =
+            "They came from the eastern steppe — a hundred warring clans who forgot how to stop fighting " +
+            "until the God-King put his hand on the sky and turned three chieftains to ash. " +
+            "The rest knelt. Now the Tribes ride as one, not because they love their king, " +
+            "but because they love war, and he alone has shown them how to win it. " +
+            "He wields fire the way other men wield iron. He does not negotiate. " +
+            "He takes wives from every city his horsemen put to tribute. " +
+            "He is watching the Empire bleed itself empty, and he is patient. " +
+            "The Tribes do not seek peace. They seek the next horizon.";
+        private const string _northmenLore =
+            "The Northmen hold the cold edge of the world, where the forest gives way to ice and the " +
+            "winter nights run longest. They are a hard folk — raiders and shipwrights, sworn to oath, " +
+            "blood-feud, and the long memory of their kings. But what truly shapes them is the war that " +
+            "never ends. Out of the deeper north press the Ashen — the dead-cold lords who neither age " +
+            "nor tire — and it falls to the Northmen to stand in the gap. Every hall keeps its watch-fires " +
+            "burning; every child learns the axe before the plough. They do not expect to break the cold. " +
+            "They expect to hold the line — one more winter, and the next.";
+        private const string _dunebornLore =
+            "The desert does not forgive, and the Duneborn stopped asking it to. Once they kept the same " +
+            "covenant with the inner fire as every tribe beneath the sun — a warmth earned, a debt honoured. " +
+            "Then came the long drought: three generations of cracked wells and a sun that gave nothing back " +
+            "for what it took, and the fire-covenant went dry along with everything else. In the black-glass " +
+            "caverns beneath the dunes, where no torch had ever burned, the first Duneborn found something " +
+            "older than fire and far hungrier — a power that asked no devotion, only blood, and did not care " +
+            "what was done with what it gave. They do not call it a god. They call it patient. Every great " +
+            "house keeps its bargain quiet and its knives quieter, for the desert has always kept its own " +
+            "secrets better than any temple ever kept its.";
 
         // Relabels a culture's feat descriptions: positives in order, then the negative.
         // `zeroPositiveIndex` additionally REMOVES the effect of the n-th positive
@@ -435,6 +462,7 @@ namespace AshAndEmber
                 SetKingdomField(sturgia,
                     new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("Jarl"));
+                SetKingdomEncyclopediaText(sturgia, _northmenLore);
 
                 RenameNorthmenCulture();
             }
@@ -458,6 +486,7 @@ namespace AshAndEmber
                 SetKingdomField(aserai,
                     new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("Sheikh"));
+                SetKingdomEncyclopediaText(aserai, _dunebornLore);
 
                 RenameDunebornCulture();
             }
@@ -478,14 +507,7 @@ namespace AshAndEmber
                 if (mgr == null) return false;
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "Northmen");
-                SetCultureVariation(mgr, "str_culture_description", "sturgia",
-                    "The Northmen hold the cold edge of the world, where the forest gives way to ice and the " +
-                    "winter nights run longest. They are a hard folk — raiders and shipwrights, sworn to oath, " +
-                    "blood-feud, and the long memory of their kings. But what truly shapes them is the war that " +
-                    "never ends. Out of the deeper north press the Ashen — the dead-cold lords who neither age " +
-                    "nor tire — and it falls to the Northmen to stand in the gap. Every hall keeps its watch-fires " +
-                    "burning; every child learns the axe before the plough. They do not expect to break the cold. " +
-                    "They expect to hold the line — one more winter, and the next.");
+                SetCultureVariation(mgr, "str_culture_description", "sturgia", _northmenLore);
                 return true;
             }
             catch { return false; }
@@ -521,16 +543,7 @@ namespace AshAndEmber
                 if (mgr == null) return false;
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "aserai", "Duneborn");
-                SetCultureVariation(mgr, "str_culture_description", "aserai",
-                    "The desert does not forgive, and the Duneborn stopped asking it to. Once they kept the same " +
-                    "covenant with the inner fire as every tribe beneath the sun — a warmth earned, a debt honoured. " +
-                    "Then came the long drought: three generations of cracked wells and a sun that gave nothing back " +
-                    "for what it took, and the fire-covenant went dry along with everything else. In the black-glass " +
-                    "caverns beneath the dunes, where no torch had ever burned, the first Duneborn found something " +
-                    "older than fire and far hungrier — a power that asked no devotion, only blood, and did not care " +
-                    "what was done with what it gave. They do not call it a god. They call it patient. Every great " +
-                    "house keeps its bargain quiet and its knives quieter, for the desert has always kept its own " +
-                    "secrets better than any temple ever kept its.");
+                SetCultureVariation(mgr, "str_culture_description", "aserai", _dunebornLore);
                 RelabelCulturalFeats("aserai", _dunebornFeats, ref _dunebornFeatsRelabeled,
                     zeroPositiveIndex: 0);   // Blood Tithe replaces the caravan bonus outright
                 return true;
@@ -594,6 +607,16 @@ namespace AshAndEmber
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
+        }
+
+        // Overwrites the N-key encyclopedia kingdom page body (Kingdom.EncyclopediaText,
+        // an auto-property). Set the backing field directly to match SetKingdomField.
+        private static void SetKingdomEncyclopediaText(Kingdom kingdom, string lore)
+        {
+            if (kingdom == null || string.IsNullOrEmpty(lore)) return;
+            SetKingdomField(kingdom,
+                new[] { "<EncyclopediaText>k__BackingField", "_encyclopediaText" },
+                new TextObject(lore));
         }
 
         // ── Vlandian troop rename ─────────────────────────────────────────────

@@ -20,24 +20,26 @@ namespace AshAndEmber
         {
             const int P = 190; // below ArenicosDialogue (210) and AshenDialogue (200), above vanilla (100)
 
-            RegisterPool(starter, "trb_start",    "start",                "trb_reply",     _openings,  P);
-            RegisterPool(starter, "trb_pretalk",  "lord_pretalk",         "trb_reply",     _pretalks,  P);
+            // Flavour greeting only — route straight into the normal vanilla lord
+            // options hub (hero_main_options) so Tribes lords keep every standard
+            // interaction (tasks, barter, war/peace, recruitment). Gated on HasMet
+            // so first-meeting introductions still run through vanilla untouched.
+            RegisterPool(starter, "trb_start",    "start",                "hero_main_options", _openings, P, requireMet: true);
+
+            // Text-only flavour on flows vanilla already ends by closing the window
+            // (prisoner chat) or on legacy/unreachable tokens. These never divert
+            // the normal conversation hub.
             RegisterPool(starter, "trb_barter",   "lord_barter_question", "close_window",  _barters,   P);
             RegisterPool(starter, "trb_defeat1",  "defeated_lord_start_1","close_window",  _defeats1,  P);
             RegisterPool(starter, "trb_defeat2",  "defeated_lord_start_2","close_window",  _defeats2,  P);
-            RegisterPool(starter, "trb_special",  "lord_special_request", "close_window",  _specials,  P);
             RegisterPool(starter, "trb_prisoner", "prisoner_chat",        "close_window",  _prisoners, P);
-
-            try { starter.AddPlayerLine("trb_reply_matter", "trb_reply", "lord_pretalk", "I bring word worth the God-King's fire.", null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { starter.AddPlayerLine("trb_reply_blood",  "trb_reply", "lord_pretalk", "Then let the steppe judge us both.",      null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { starter.AddPlayerLine("trb_reply_leave",  "trb_reply", "close_window", "Ride on. I'll not slow your war.",        null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Registers one line per pool entry. Conditions pick the right variant
         // at conversation time based on the interlocutor's StringId hash.
         private static void RegisterPool(CampaignGameStarter starter,
             string idPrefix, string inputToken, string outputToken,
-            string[] pool, int priority)
+            string[] pool, int priority, bool requireMet = false)
         {
             for (int i = 0; i < pool.Length; i++)
             {
@@ -49,7 +51,7 @@ namespace AshAndEmber
                         $"{idPrefix}_{variant}",
                         inputToken, outputToken,
                         text,
-                        () => IsTribesVariant(variant, pool.Length),
+                        () => IsTribesVariant(variant, pool.Length, requireMet),
                         null,
                         priority);
                 }
@@ -57,13 +59,14 @@ namespace AshAndEmber
             }
         }
 
-        private static bool IsTribesVariant(int variant, int poolSize)
+        private static bool IsTribesVariant(int variant, int poolSize, bool requireMet)
         {
             try
             {
                 var h = Hero.OneToOneConversationHero;
                 if (h == null || ColourLordRegistry.IsAshenLord(h)) return false;
                 if (!h.IsLord) return false;   // lord dialogue only — never notables or wanderers
+                if (requireMet && !h.HasMet) return false; // let vanilla handle the first-meeting introduction
                 if (h.MapFaction?.StringId != "khuzait") return false;
                 int idx = Math.Abs(DeterministicHash(h.StringId ?? h.Name?.ToString() ?? "")) % poolSize;
                 return idx == variant;
@@ -92,15 +95,6 @@ namespace AshAndEmber
             "You stand before a warrior of the God-King's own blood-oath. There is no peace here — only how you spend your breath.",
         };
 
-        private static readonly string[] _pretalks =
-        {
-            "You return. The God-King's eye missed nothing the first time either.",
-            "Still breathing. Good — I was not finished deciding about you.",
-            "Speak fast. The steppe rewards neither hesitation nor a second visit wasted.",
-            "The Tribes remember faces, stranger. Yours I have not yet decided to keep.",
-            "Twice now you have spent my patience. Make this count.",
-        };
-
         private static readonly string[] _barters =
         {
             "Coin? The Tribes take what they want — we do not buy it back.",
@@ -120,13 +114,6 @@ namespace AshAndEmber
             "One fall does not end a war the God-King already won in his heart.",
             "Kill me or don't. Either way, the steppe outlives the both of us.",
             "You wear my blood on your blade now. Few earn that much — carry it proudly.",
-        };
-
-        private static readonly string[] _specials =
-        {
-            "Bring your offer to the God-King's own court, if you dare stand before his fire.",
-            "The Tribes do not haggle over such things. Bring enough to matter, or bring nothing at all.",
-            "That is a question for the God-King's flame, not for mine.",
         };
 
         private static readonly string[] _prisoners =

@@ -446,15 +446,10 @@ namespace AshAndEmber
                             case "keep":
                                 if (MageKnowledge.IsMage && !MageKnowledge.IsAshen)
                                 {
-                                    var available = TalentSystem.All
-                                        .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id))
-                                        .ToList();
-                                    if (available.Count > 0)
+                                    if (MagicLearning.TryGrantRandomUnknown(_rng, out string childLearned))
                                     {
-                                        var pick = available[_rng.Next(available.Count)];
-                                        TalentSystem.GrantFree(pick.Id, Hero.MainHero);
                                         Msg($"One morning she places her hand on your arm and holds it there for a moment. " +
-                                            $"Something passes — not words, not instruction, but the shape of {pick.Name}, " +
+                                            $"Something passes — not words, not instruction, but the shape of {childLearned}, " +
                                             $"given the way children give things: completely and without understanding the value.", FireColor);
                                     }
                                     else

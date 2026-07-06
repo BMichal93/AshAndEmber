@@ -38,6 +38,25 @@ namespace AshAndEmber
         public static bool IsAshenSettlement(Settlement settlement) =>
             settlement != null && _settlementClanMap.ContainsKey(settlement.StringId);
 
+        // Returns a living Ashen clan for adopting orphan Ashen creatures (e.g. the
+        // Ashen Spawn bandit bands) so they share the Ashen faction and culture —
+        // giving them the Ashen banner/culture instead of the looters', and stopping
+        // them from ever fighting their own kind. Returns null before the Ashen have
+        // risen (no clans yet); callers must handle that and leave the party a bandit.
+        public static Clan GetAshenClan()
+        {
+            try
+            {
+                foreach (var id in _ashenClanIds)
+                {
+                    var clan = Clan.All.FirstOrDefault(c => c != null && c.StringId == id && !c.IsEliminated);
+                    if (clan != null) return clan;
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            return null;
+        }
+
         // ── Save / Load ───────────────────────────────────────────────────────
         public static void Save(IDataStore store)
         {
@@ -85,6 +104,8 @@ namespace AshAndEmber
             // clearing it here guarantees the next daily tick re-applies the Ashen
             // names on every load, not just on a fresh process.
             _settlementsRenamed = false;
+            // Kingdom names likewise revert to XML each session; re-apply next launch.
+            _kingdomsRenamed    = false;
 
             // Set grace periods so heavy campaign actions never fire on the
             // first daily ticks after loading (avoids stacking ChangeOwner /

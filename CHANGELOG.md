@@ -2,7 +2,45 @@
 
 ---
 
-## v0.41.0
+## Unreleased
+
+### The cursed field is more alive
+- **The battlefield events are reworked, and four new ones join them.** The randomised curses that can grip a battle have been overhauled for less "everyone takes damage at once" and more terrain you have to fight around.
+  - **Cinder Rain** no longer smites every fighter at once. Cinders now fall in scattered, lingering patches of fire that burn *whoever stands in them* — friend or foe — so the field becomes a hazard to read and move around, not a blanket toll.
+  - **Ember Tithe is retired.**
+  - **Last Light works again.** The "midnight" darkness leaned on a scene setter that did nothing mid-battle; the dark now falls as a deep, dense fog, with the scattered fires and the lit Ashen the only things you can see by.
+  - **Frenzy loses its flames.** The all-charge bloodlust no longer scatters fire textures across the ground — it reads as crimson chaos (red glow, red haze), not a blaze.
+  - **Storm** (new): a gale sweeps the field and arrows, bolts and thrown weapons flop out of the air — ranged is all but useless while it holds. Gusts shove fighters down-wind.
+  - **Tremor** (new): the ground heaves. Quakes erupt across the field, blunting and staggering everyone caught in them, and churn the broken earth to bogging mud.
+  - **Deluge** (new): a drowning rain quenches every fire on the field (a cold counter to Cinder Rain and any fire-caster) and drags everyone down to a wading pace.
+  - **Madness** (new): reason breaks — every few seconds one common soldier on each side turns and takes up the enemy's cause. Heroes and lords keep their wits.
+  - The Rising, Dread, Ashen Ground and The Kindling are unchanged.
+- **You can't retreat to shake off a curse.** The rolled event set is now locked for a full game day: retreating and re-engaging the same battle re-applies the exact same events instead of rerolling them away. A new day (or a new/loaded game) rolls fresh.
+
+### The fire blast reads as a hit
+- **Magic strikes now show they landed.** Spell damage was applied by silently draining a foe's health — no flinch, no blood, no cry, no floating damage number — so a fire blast that *did* connect read as a clean miss. The fire bolt's burst now lands as a real blow: the struck foe reacts, bleeds, and the damage number floats up. Heroes are still never killed by a spell.
+- **The fire bolt bursts on a more forgiving reach** (2.4 m → 3.2 m), so a near miss still detonates on the enemy instead of sailing past.
+
+### The Ashen Spawn are truly Ashen
+- **Ashen Spawn now wear the Ashen colours, not the looters'.** The roaming Spawn bands were born as ordinary looter bandits and so carried the *Looters* culture on their banner and encyclopedia page. Once the Ashen have risen, a new Spawn band is now adopted into an Ashen clan — taking the Ashen faction and culture. (Bands that spawn before the Ashen exist stay ordinary bandits, exactly as before.)
+- **Ashen Spawn no longer turn on their own kind.** Because they now share the Ashen faction, Spawn bands and Ashen lords will never fight each other. They remain every bit as hostile to the living — the Ashen are at war with all the realms of the world.
+
+### You can talk to lords again
+- **Duneborn, Northmen, Tribes, and Holy Temple lords now hold a normal conversation.** Their flavourful faction greetings had hijacked the whole dialogue: the opening led to three custom lines, two of which looped back into nothing and the third dumped you at the encounter (pre-battle) screen — which still named them "Aserai". The greeting now flows straight into the standard lord options hub, so every normal interaction (tasks, barter, marriage, war and peace, recruitment, mercenary service) is available again — only the opening line keeps its faction flavour. First-meeting introductions once again run through the vanilla flow untouched, so these lords are properly "met". (The silent, unbargaining Ashen are unchanged — their wordless "..." is intentional.)
+
+### Fixes
+- **The Duneborn realm is named the Duneborn from the first frame.** The kingdom rename (Aserai → the Duneborn, and likewise Sturgia → Northmen, Khuzait → Tribes, Vlandia → the Holy Temple) was tied to the Ashen having already risen, so early in a campaign menus and war declarations still read "Aserai". The realm renames now run every session regardless of the Ashen, so the correct names show immediately.
+
+---
+
+## v0.43.0
+
+### The Ashen hold their walls
+- **Ashen garrisons are larger and deadlier.** Their cities now keep a floor of **750** defenders (up from 500) and castles **450** (up from 300), and the standing mix is reweighted toward veterans — **30% Warrior / 40% Warden / 30% Revenant** (was 50/35/15). Imperial armies that used to grind an Ashen town open in a single push will now bleed for every metre of wall. NPC-owned and player-facing sieges both feel the change.
+
+---
+
+## v0.42.0
 
 ### Magic charges faster, hits harder, and lingers in the hand
 - **A full-power draw now peaks in 5 seconds instead of 7**, so a fully-charged cone, wall, or Unbinding is far easier to land in the churn of a fight. The power ceiling for a *normal* draw is unchanged — you simply reach it sooner. Everything that scales off the draw (damage, cone reach, wall depth, the ultimate's full-charge gate) follows automatically.

@@ -1,6 +1,7 @@
 // =============================================================================
 // ASH AND EMBER — BattleEvents.Events.cs
-// The seven battle events (Cinder Rain, Ember Tithe, Rising, Dread, …).
+// The battle events (Cinder Rain, Rising, Dread, Last Light, Ashen Ground,
+// Frenzy, Kindling, Storm, Tremor, Deluge, Madness).
 // Partial of BattleEvents (shared state lives in BattleEvents.cs).
 // =============================================================================
 
@@ -21,63 +22,36 @@ namespace AshAndEmber
     public static partial class BattleEvents
     {
         // ── Event: Cinder Rain ────────────────────────────────────────────────
-        // All non-Ashen agents take PeriodicDamage HP of damage.
+        // Cinders fall from a burning sky in scattered patches. Each patch is a
+        // lingering, IMPARTIAL fire (CasterTeam null) that burns whoever stands in
+        // it — no longer a blanket strike on every fighter at once, but a field
+        // sown with hazards to fight around.
         private static void FireCinderRain()
         {
             if (Mission.Current == null) return;
-            var victims = new List<Agent>();
-            foreach (var agent in Mission.Current.Agents.ToList())
-            {
-                if (!agent.IsActive() || agent.IsMount) continue;
-                if (IsAshenAgent(agent)) continue;
-                SpellEffects.DamageAgent(agent, PeriodicDamage);
-                victims.Add(agent);
-            }
-            // Impact: big fire strike + explosion burst at up to 8 victim positions
-            for (int i = 0; i < Math.Min(8, victims.Count); i++)
-            {
-                var a = victims[_rng.Next(victims.Count)];
-                Vec3 pos = a.Position + new Vec3((float)(_rng.NextDouble() - 0.5) * 2f,
-                                                 (float)(_rng.NextDouble() - 0.5) * 2f, 0f);
-                try { SpellEffects.SpawnBigFireParticle(pos, CinderRainInterval * 0.55f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                try { SpellEffects.SpawnExplosionParticle(pos, CinderRainInterval * 0.35f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            }
-            // Sky layer: stacked fire columns at multiple heights simulate fire streaks descending
             Vec3 centre = GetFieldCentre();
-            SpawnFireRainLayer(centre, 32f, 14);
-            // Atmospheric: burning-sky fog + wide ground fire field + aerial glow
-            ApplyFog(new Vec3(0.90f, 0.28f, 0.04f), 0.004f);
-            SpawnGroundFireField(centre, 35f, 6, ColorSchool.Red, CinderRainInterval * 0.80f);
-            SpawnAerialGlow(centre, 30f, 14f, 3, ColorSchool.Orange, CinderRainInterval * 0.80f);
-        }
+            if (centre == Vec3.Zero) return;
 
-        // ── Event: Ember Tithe ────────────────────────────────────────────────
-        // All Ashen agents take PeriodicDamage HP of damage but gain +10 morale
-        // (the ritual price they embrace fuels their resolve).
-        private static void FireEmberTithe()
-        {
-            if (Mission.Current == null) return;
-            var victims = new List<Agent>();
-            foreach (var agent in Mission.Current.Agents.ToList())
+            int patches = CinderPatchMin + _rng.Next(CinderPatchMax - CinderPatchMin + 1);
+            for (int i = 0; i < patches; i++)
             {
-                if (!agent.IsActive() || agent.IsMount) continue;
-                if (!IsAshenAgent(agent)) continue;
-                SpellEffects.DamageAgent(agent, PeriodicDamage);
-                // The Ashen embrace the tithe — pain fuels their resolve
-                try { agent.SetMorale(Math.Min(100f, agent.GetMorale() + 10f)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                victims.Add(agent);
+                double angle = _rng.NextDouble() * Math.PI * 2;
+                float  dist  = (float)(_rng.NextDouble() * CinderSpread);
+                Vec3   pos   = centre + new Vec3((float)Math.Cos(angle) * dist,
+                                                 (float)Math.Sin(angle) * dist, 0f);
+                SnapToGround(ref pos);
+                // A lingering burning patch that damages anyone in it (team null).
+                try { SpellEffects.SpawnFirePatch(pos, CinderPatchDamage, null); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // A cinder streaks down out of the sky onto the patch.
+                try { SpellEffects.SpawnBigFireParticle(pos + new Vec3(0f, 0f, 10f), CinderRainInterval * 0.35f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnExplosionParticle(pos, CinderRainInterval * 0.30f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            // Inner-fire glow on each burning Ashen agent: bodies lit with amber resolve
-            foreach (var a in victims.Take(6))
-                try { SpellEffects.BeginAgentGlow(a, ColorSchool.Yellow, EmberTitheInterval * 0.65f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            // Atmospheric: ritual circle lights + amber pulse above the Ashen position
-            if (_ashenTeam != null)
-            {
-                Vec3 ashenCentre = GetTeamCentroid(_ashenTeam);
-                try { SpellEffects.SpawnCircleLights(ashenCentre, ColorSchool.Yellow, 10f, EmberTitheInterval * 0.80f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                SpawnAerialGlow(ashenCentre, 20f, 10f, 3, ColorSchool.Yellow, EmberTitheInterval * 0.80f);
-                SpawnGroundFireField(ashenCentre, 12f, 4, ColorSchool.Orange, EmberTitheInterval * 0.80f);
-            }
+            // Sky layer: stacked fire columns read as cinders descending.
+            SpawnFireRainLayer(centre, 32f, 14);
+            // Atmospheric: burning-sky fog + aerial glow (no blanket ground fire —
+            // the damaging patches above already carry the flame).
+            ApplyFog(new Vec3(0.90f, 0.28f, 0.04f), 0.004f);
+            SpawnAerialGlow(centre, 30f, 14f, 3, ColorSchool.Orange, CinderRainInterval * 0.80f);
         }
 
         // ── Event: The Rising ─────────────────────────────────────────────────
@@ -141,15 +115,15 @@ namespace AshAndEmber
         }
 
         // ── Event: Last Light ─────────────────────────────────────────────────
-        // Sets scene time-of-day to midnight, drains morale from non-Ashen
-        // agents and boosts Ashen agents. Fires once.
-        // NOTE: Scene.TimeOfDay setter API varies by Bannerlord version;
-        //       wrapped in try/catch so a missing API fails silently.
+        // The sun dies: non-Ashen morale drains, the Ashen are lifted and lit like
+        // beacons. Fires once.
+        // NOTE: the Scene.TimeOfDay setter is unreliable mid-mission (the skybox is
+        //       baked, so it changed nothing) — the darkness is driven by dense
+        //       dark fog and the only remaining light is the fires we scatter.
         private static void FireLastLight()
         {
-            // Last Light always overrides the sky — it's the defining one-shot event.
+            // Last Light owns the sky — bar periodic events from re-tinting it.
             _skySet = true;
-            try { Mission.Current?.Scene.TimeOfDay = 23f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             int blinded = 0;
             int empowered = 0;
@@ -192,8 +166,10 @@ namespace AshAndEmber
                                              (float)(_rng.NextDouble() - 0.5) * 30f, 0f);
                 try { SpellEffects.SpawnBigFireParticle(pos, 60f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            // Atmospheric: fire-lit midnight fog, wide ground fire, burning-sky aerial glow
-            ApplyFog(new Vec3(0.80f, 0.22f, 0.05f), 0.005f); // fire-lit night
+            // Atmospheric: deep, dense near-black fog swallows the field (this is
+            // what actually darkens it), lit only by the scattered fires and the
+            // Ashen beacons; a low red aerial glow keeps the sky from going flat.
+            ApplyFog(new Vec3(0.05f, 0.05f, 0.09f), 0.020f, 1.6f); // drowning dark
             SpawnGroundFireField(centre, 40f, 10, ColorSchool.Orange, 60f);
             SpawnAerialGlow(centre, 40f, 18f, 6, ColorSchool.Red, 60f);
             MBInformationManager.AddQuickInformation(new TextObject(
@@ -261,25 +237,18 @@ namespace AshAndEmber
                     try { SpellEffects.BeginAgentGlow(agent, ColorSchool.Red, FrenzyInterval * 0.55f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
             }
-            // Impact bursts erupt across the field as lines break and chaos spreads
+            // Chaos flashes across the field as lines break — pure red light, no
+            // fire textures (Frenzy is bloodlust, not a blaze).
             Vec3 centre = GetFieldCentre();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 6; i++)
             {
                 Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 25f,
                                              (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
-                try { SpellEffects.SpawnImpactBurst(pos, ColorSchool.Red, FrenzyInterval * 0.55f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempLight(pos + new Vec3(0f, 0f, 1f), ColorSchool.Red, 8f, FrenzyInterval * 0.55f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            // Scattered fires mark the lines breaking into chaos
-            for (int i = 0; i < 5; i++)
-            {
-                Vec3 pos = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 25f,
-                                             (float)(_rng.NextDouble() - 0.5) * 25f, 0f);
-                try { SpellEffects.SpawnTempFireParticle(pos, FrenzyInterval * 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            }
-            // Atmospheric: red chaos fog, wide ground fire, aerial crimson glow
-            ApplyFog(new Vec3(0.85f, 0.15f, 0.05f), 0.003f); // blood-red fog
-            SpawnGroundFireField(centre, 38f, 7, ColorSchool.Red, FrenzyInterval * 0.80f);
-            SpawnAerialGlow(centre, 32f, 12f, 4, ColorSchool.Orange, FrenzyInterval * 0.80f);
+            // Atmospheric: red chaos fog + crimson aerial glow (no ground fire).
+            ApplyFog(new Vec3(0.85f, 0.15f, 0.05f), 0.003f); // blood-red haze
+            SpawnAerialGlow(centre, 32f, 12f, 4, ColorSchool.Red, FrenzyInterval * 0.80f);
             MBInformationManager.AddQuickInformation(new TextObject(
                 "Frenzy — no one can hold the line. All charge."));
         }
@@ -335,6 +304,192 @@ namespace AshAndEmber
                     "The Kindling — the ground itself wakes and takes a side.")); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // ── Event: Storm ──────────────────────────────────────────────────────
+        // A gale sweeps the field. The engine missile modifiers are driven near
+        // zero so arrows, bolts and thrown weapons flop out of the air; a gust
+        // shoves a handful of fighters down-wind each fire.
+        private static void FireStorm()
+        {
+            var m = Mission.Current;
+            if (m == null) return;
+
+            // Re-assert the missile choke each gust (cheap, idempotent) in case
+            // another system touched the modifiers.
+            ArmStormMissiles();
+
+            Vec3 centre = GetFieldCentre();
+            // Driven dust sweeping across the field along the wind line.
+            for (int i = 0; i < 10; i++)
+            {
+                Vec3 p = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 60f,
+                                           (float)(_rng.NextDouble() - 0.5) * 60f, 0f);
+                try { SpellEffects.SpawnTempSmokeWisp(p + new Vec3(0f, 0f, 1.2f), 1.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+
+            // The gust shoves a few fighters down-wind and staggers them.
+            var caught = new List<Agent>();
+            foreach (var a in m.Agents.ToList())
+            {
+                if (!a.IsActive() || a.IsMount || !a.IsHuman) continue;
+                caught.Add(a);
+            }
+            for (int i = 0; i < Math.Min(StormGustVictims, caught.Count); i++)
+            {
+                var a = caught[_rng.Next(caught.Count)];
+                try { NatureEffects.KnockbackAgent(a, a.Position + _stormDir * StormGustPush); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(a, 0.7f, StormInterval * 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempSmokeWisp(a.Position + new Vec3(0f, 0f, 1.0f), 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+
+            // Atmospheric: pale grey storm haze.
+            ApplyFog(new Vec3(0.55f, 0.58f, 0.65f), 0.004f);
+        }
+
+        // Drive the engine's missile speed/range modifiers near zero so no ranged
+        // weapon carries. A fresh mission resets these, so no teardown is needed.
+        private static void ArmStormMissiles()
+        {
+            var m = Mission.Current;
+            if (m == null) return;
+            try { m.SetBowMissileSpeedModifier(StormMissileSpeed);      } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { m.SetCrossbowMissileSpeedModifier(StormMissileSpeed); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { m.SetThrowingMissileSpeedModifier(StormMissileSpeed); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { m.SetMissileRangeModifier(StormMissileRange);         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // ── Event: Tremor ─────────────────────────────────────────────────────
+        // The ground heaves. Several quakes erupt across the field, blunting and
+        // staggering everyone in each radius (both sides), and churn the broken
+        // earth to bogging mud that slows all who cross it.
+        private static void FireTremor()
+        {
+            var m = Mission.Current;
+            if (m == null) return;
+            Vec3 centre = GetFieldCentre();
+            if (centre == Vec3.Zero) return;
+
+            int quakes = TremorQuakeMin + _rng.Next(TremorQuakeMax - TremorQuakeMin + 1);
+            for (int q = 0; q < quakes; q++)
+            {
+                double angle = _rng.NextDouble() * Math.PI * 2;
+                float  dist  = (float)(_rng.NextDouble() * TremorSpread);
+                Vec3   pos   = centre + new Vec3((float)Math.Cos(angle) * dist,
+                                                 (float)Math.Sin(angle) * dist, 0f);
+                SnapToGround(ref pos);
+
+                // Eruption + lingering mud (impartial slow).
+                try { SpellEffects.SpawnBurstExplosion(pos, ColorSchool.Nature, 6f, TremorInterval * 0.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnMudPatch(pos); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+                float r2 = TremorRadius * TremorRadius;
+                foreach (var a in m.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount) continue;
+                    if ((a.Position - pos).LengthSquared > r2) continue;
+                    try { SpellEffects.DamageAgent(a, TremorDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    // Thrown off their feet — held a beat as the ground bucks.
+                    try { NatureEffects.ApplySpeedToken(a, 0f, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+            }
+            // Atmospheric: settling dust haze.
+            ApplyFog(new Vec3(0.42f, 0.36f, 0.26f), 0.004f);
+            MBInformationManager.AddQuickInformation(new TextObject(
+                "Tremor — the earth heaves and will not be still."));
+        }
+
+        // ── Event: Deluge ─────────────────────────────────────────────────────
+        // A drowning rain. Every fire on the field is quenched (patches, fire
+        // walls, burning men), and the sodden ground drags at everyone — all wade
+        // at reduced speed. A cold counter to Cinder Rain and any fire-caster.
+        private static void FireDeluge()
+        {
+            var m = Mission.Current;
+            if (m == null) return;
+            Vec3 centre = GetFieldCentre();
+            if (centre == Vec3.Zero) return;
+
+            // One broad sweep douses field-fire patches and fire-wall wards.
+            try { SpellEffects.QuenchFireAt(centre, DelugeQuenchRadius); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            foreach (var a in m.Agents.ToList())
+            {
+                if (!a.IsActive() || a.IsMount || !a.IsHuman) continue;
+                // Douse a burning man and drag him down to a wading pace.
+                try { ElementSpellEffects.QuenchIgnition(a); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(a, DelugeSlowMult, DelugeInterval * 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+
+            // Rain made visible: water bursts scattered across the field.
+            for (int i = 0; i < 10; i++)
+            {
+                Vec3 p = centre + new Vec3((float)(_rng.NextDouble() - 0.5) * 60f,
+                                           (float)(_rng.NextDouble() - 0.5) * 60f, 0f);
+                try { SpellEffects.SpawnNatureBurst(p + new Vec3(0f, 0f, 0.3f), NatureElement.Water, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            // Atmospheric: cold blue-grey downpour haze.
+            ApplyFog(new Vec3(0.30f, 0.42f, 0.60f), 0.005f);
+        }
+
+        // ── Event: Madness ────────────────────────────────────────────────────
+        // Reason breaks. One common (non-hero) fighter on each side turns on its
+        // own and joins an enemy team. Heroes and lords keep their wits — only the
+        // rank and file are taken.
+        private static void FireMadness()
+        {
+            var m = Mission.Current;
+            if (m == null) return;
+
+            var teams = new List<Team>();
+            try { foreach (var t in m.Teams) if (t != null) teams.Add(t); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (teams.Count < 2) return;
+
+            // Choose a victim per team FIRST (before any reassignment), so a unit
+            // just turned cannot be picked again and sent straight back.
+            var swaps = new List<(Agent victim, Team dest)>();
+            foreach (var team in teams)
+            {
+                var pool = new List<Agent>();
+                foreach (var a in m.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount || !a.IsHuman || a.IsHero) continue;
+                    if (a.Team != team) continue;
+                    pool.Add(a);
+                }
+                if (pool.Count == 0) continue;
+
+                var enemies = new List<Team>();
+                foreach (var t in teams)
+                {
+                    if (t == team) continue;
+                    bool foe = false;
+                    try { foe = t.IsEnemyOf(team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    if (foe) enemies.Add(t);
+                }
+                if (enemies.Count == 0) continue;
+
+                swaps.Add((pool[_rng.Next(pool.Count)], enemies[_rng.Next(enemies.Count)]));
+            }
+
+            int turned = 0;
+            foreach (var (victim, dest) in swaps)
+            {
+                try
+                {
+                    // A spirit-touched flash as the mind gives way, then the turn.
+                    try { SpellEffects.SpawnBurstExplosion(victim.Position, ColorSchool.Purple, 3f, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { SpellEffects.BeginAgentGlow(victim, ColorSchool.Purple, 5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    victim.SetTeam(dest, false);
+                    turned++;
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            if (turned > 0)
+                MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Madness — {turned} turn on their own and take up the enemy's cause."));
         }
 
         private static int SpawnRisingUnits(int count)

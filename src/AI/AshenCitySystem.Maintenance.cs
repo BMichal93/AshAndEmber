@@ -87,7 +87,7 @@ namespace AshAndEmber
             int current = garrison.MemberRoster.TotalManCount;
             if (current >= min) return;
 
-            // Mixed garrison: 50% warrior, 35% warden, 15% revenant.
+            // Mixed garrison: 30% warrior, 40% warden, 30% revenant.
             try
             {
                 var warrior  = MBObjectManager.Instance?.GetObject<CharacterObject>("ashen_warrior");
@@ -97,8 +97,8 @@ namespace AshAndEmber
                 int toAdd = min - current;
                 if (warrior != null && warden != null && revenant != null)
                 {
-                    int revenantCount = toAdd * 15 / 100;
-                    int wardenCount   = toAdd * 35 / 100;
+                    int revenantCount = toAdd * 30 / 100;
+                    int wardenCount   = toAdd * 40 / 100;
                     int warriorCount  = toAdd - wardenCount - revenantCount;
                     if (warriorCount  > 0) garrison.MemberRoster.AddToCounts(warrior,  warriorCount);
                     if (wardenCount   > 0) garrison.MemberRoster.AddToCounts(warden,   wardenCount);

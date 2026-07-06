@@ -136,21 +136,9 @@ namespace AshAndEmber
                     {
                         case "a":
                             AgePlayer(1);
-                            if (TalentSystem.PurchasedCount < 6)
+                            if (MagicLearning.TryGrantRandomUnknown(_rng, out string seerLearned))
                             {
-                                var available = TalentSystem.All
-                                    .Where(t => t.Id != TalentId.Gift && !TalentSystem.Has(t.Id))
-                                    .ToList();
-                                if (available.Count > 0)
-                                {
-                                    var pick = available[_rng.Next(available.Count)];
-                                    TalentSystem.GrantFree(pick.Id, Hero.MainHero);
-                                    Msg($"You sit with him for an hour. He speaks around the edges of things you were already reaching toward. By the time the village lanterns are lit, something has opened in you — the shape of {pick.Name}, given without ceremony.", FireColor);
-                                }
-                                else
-                                {
-                                    Msg("You sit with him for an hour. He tells you what he knows. It is less than you hoped and more than you can use right now.", FireColor);
-                                }
+                                Msg($"You sit with him for an hour. He speaks around the edges of things you were already reaching toward. By the time the village lanterns are lit, something has opened in you — the shape of {seerLearned}, given without ceremony.", FireColor);
                             }
                             else
                             {

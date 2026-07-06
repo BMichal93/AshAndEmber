@@ -28,10 +28,31 @@ namespace AshAndEmber
         // the case where the Ashen clans were not yet established at launch.
         public static void EnsureSessionRenames()
         {
+            if (DragonQuestSystem.WorldRekindled) return;  // the Ashen no longer exist
+
+            // The kingdom / culture / troop renames rebrand the four vanilla realms
+            // (Holy Temple, Tribes, Northmen, Duneborn) and are INDEPENDENT of whether
+            // the Ashen have risen yet — so they must run every session even before any
+            // Ashen clan exists. Otherwise, early in a campaign, the Aserai kingdom (and
+            // the others) would still show their vanilla names in menus and war text.
+            EnsureKingdomRenames();
+
+            // The Ashen settlement rename genuinely needs the Ashen clans to exist.
             if (_settlementsRenamed) return;
             if (_ashenClanIds.Count == 0) return;          // clans not established yet
-            if (DragonQuestSystem.WorldRekindled) return;  // the Ashen no longer exist
             try { RenameAshenSettlements();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            _settlementsRenamed = true;
+        }
+
+        // Rebrands the four vanilla kingdoms and their troops (Holy Temple, Tribes,
+        // Northmen, Duneborn) once per session. Kept separate from the Ashen-gated
+        // settlement rename so the realm names are correct from the first frame, even
+        // in a game where the Ashen have not yet risen. Idempotent; the individual
+        // rename helpers no-op when already applied.
+        public static void EnsureKingdomRenames()
+        {
+            if (_kingdomsRenamed) return;
+            if (DragonQuestSystem.WorldRekindled) return;
             try { RenameHolyTempleKingdom();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { RenameVlandianTroops();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { TempleCulture.SetupTempleKingdom(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -41,7 +62,7 @@ namespace AshAndEmber
             try { RenameSturgianTroops();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { RenameDunebornKingdom();            } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { RenameAseraiTroops();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            _settlementsRenamed = true;
+            _kingdomsRenamed = true;
         }
 
         // ── Daily tick ────────────────────────────────────────────────────────

@@ -20,24 +20,26 @@ namespace AshAndEmber
         {
             const int P = 190; // below ArenicosDialogue (210) and AshenDialogue (200), above vanilla (100)
 
-            RegisterPool(starter, "nor_start",    "start",                "nor_reply",     _openings,  P);
-            RegisterPool(starter, "nor_pretalk",  "lord_pretalk",         "nor_reply",     _pretalks,  P);
+            // Flavour greeting only — route straight into the normal vanilla lord
+            // options hub (hero_main_options) so Northmen lords keep every standard
+            // interaction (tasks, barter, war/peace, recruitment). Gated on HasMet
+            // so first-meeting introductions still run through vanilla untouched.
+            RegisterPool(starter, "nor_start",    "start",                "hero_main_options", _openings, P, requireMet: true);
+
+            // Text-only flavour on flows vanilla already ends by closing the window
+            // (prisoner chat) or on legacy/unreachable tokens. These never divert
+            // the normal conversation hub.
             RegisterPool(starter, "nor_barter",   "lord_barter_question", "close_window",  _barters,   P);
             RegisterPool(starter, "nor_defeat1",  "defeated_lord_start_1","close_window",  _defeats1,  P);
             RegisterPool(starter, "nor_defeat2",  "defeated_lord_start_2","close_window",  _defeats2,  P);
-            RegisterPool(starter, "nor_special",  "lord_special_request", "close_window",  _specials,  P);
             RegisterPool(starter, "nor_prisoner", "prisoner_chat",        "close_window",  _prisoners, P);
-
-            try { starter.AddPlayerLine("nor_reply_business", "nor_reply", "lord_pretalk", "I've business worth your time.",       null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { starter.AddPlayerLine("nor_reply_respect",  "nor_reply", "lord_pretalk", "You've my respect, plain as that.",    null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { starter.AddPlayerLine("nor_reply_leave",    "nor_reply", "close_window", "I'll leave you to the watch.",         null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Registers one line per pool entry. Conditions pick the right variant
         // at conversation time based on the interlocutor's StringId hash.
         private static void RegisterPool(CampaignGameStarter starter,
             string idPrefix, string inputToken, string outputToken,
-            string[] pool, int priority)
+            string[] pool, int priority, bool requireMet = false)
         {
             for (int i = 0; i < pool.Length; i++)
             {
@@ -49,7 +51,7 @@ namespace AshAndEmber
                         $"{idPrefix}_{variant}",
                         inputToken, outputToken,
                         text,
-                        () => IsNorthmenVariant(variant, pool.Length),
+                        () => IsNorthmenVariant(variant, pool.Length, requireMet),
                         null,
                         priority);
                 }
@@ -57,13 +59,14 @@ namespace AshAndEmber
             }
         }
 
-        private static bool IsNorthmenVariant(int variant, int poolSize)
+        private static bool IsNorthmenVariant(int variant, int poolSize, bool requireMet)
         {
             try
             {
                 var h = Hero.OneToOneConversationHero;
                 if (h == null || ColourLordRegistry.IsAshenLord(h)) return false;
                 if (!h.IsLord) return false;   // lord dialogue only — never notables or wanderers
+                if (requireMet && !h.HasMet) return false; // let vanilla handle the first-meeting introduction
                 if (h.MapFaction?.StringId != "sturgia") return false;
                 int idx = Math.Abs(DeterministicHash(h.StringId ?? h.Name?.ToString() ?? "")) % poolSize;
                 return idx == variant;
@@ -92,15 +95,6 @@ namespace AshAndEmber
             "You've crossed half the north to find me. It had better be worth the walk.",
         };
 
-        private static readonly string[] _pretalks =
-        {
-            "Back again. Good — I like a man who finishes what he starts. What is it?",
-            "Speak plainly, same as before. I've no more patience for riddles now than then.",
-            "The line holds another day. What do you need of me?",
-            "You're still standing. That says something about you. Go on.",
-            "Say it straight. I've a watch to stand before dark.",
-        };
-
         private static readonly string[] _barters =
         {
             "I don't haggle. Name your need straight, or don't name it at all.",
@@ -120,13 +114,6 @@ namespace AshAndEmber
             "The line doesn't fall because one man does. Others will hold it after me.",
             "You've earned this. I'll say it plainly, and mean it.",
             "I've faced worse than you and colder things than death. Do what you came to do.",
-        };
-
-        private static readonly string[] _specials =
-        {
-            "Bring it to the hall. Matters like that aren't settled on open ground.",
-            "That's a heavier ask than it sounds. Give me time to weigh it honestly.",
-            "I'll not promise what I can't deliver. Let me think on it plainly.",
         };
 
         private static readonly string[] _prisoners =

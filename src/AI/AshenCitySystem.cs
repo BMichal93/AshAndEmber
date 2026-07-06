@@ -60,6 +60,7 @@ namespace AshAndEmber
         private static bool     _declaringWar        = false;
         private static bool     _ownershipInitDone   = false;
         private static bool     _settlementsRenamed  = false;
+        private static bool     _kingdomsRenamed     = false;
         private static readonly Random _rng  = new Random();
         private const  int      AppearanceTickInterval = 30;
 
@@ -80,8 +81,8 @@ namespace AshAndEmber
         private const  int PrisonerInterval   = 2;
         private const  int LordPartyInterval  = 7;
 
-        private const int    MinGarrisonCity   = 500;
-        private const int    MinGarrisonCastle = 300;
+        private const int    MinGarrisonCity   = 750;
+        private const int    MinGarrisonCastle = 450;
         private const int    MinLordPartySize  = 120;
         private const int    MinHeroGold       = 150_000;
         private const string AshenKingdomId    = "ashen_kingdom";
@@ -150,6 +151,7 @@ namespace AshAndEmber
             _conqueredDays.Clear();
             _appearanceDayCounter = 0;
             _settlementsRenamed   = false;
+            _kingdomsRenamed      = false;
             _warThrottle      = 0;
             _clanThrottle     = 0;
             _villageThrottle  = 0;

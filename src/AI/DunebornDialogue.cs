@@ -20,24 +20,26 @@ namespace AshAndEmber
         {
             const int P = 190; // below ArenicosDialogue (210) and AshenDialogue (200), above vanilla (100)
 
-            RegisterPool(starter, "dun_start",    "start",                "dun_reply",     _openings,  P);
-            RegisterPool(starter, "dun_pretalk",  "lord_pretalk",         "dun_reply",     _pretalks,  P);
+            // Flavour greeting only — route straight into the normal vanilla lord
+            // options hub (hero_main_options) so Duneborn lords keep every standard
+            // interaction (tasks, barter, war/peace, recruitment). Gated on HasMet
+            // so first-meeting introductions still run through vanilla untouched.
+            RegisterPool(starter, "dun_start",    "start",                "hero_main_options", _openings, P, requireMet: true);
+
+            // Text-only flavour on flows vanilla already ends by closing the window
+            // (prisoner chat) or on legacy/unreachable tokens. These never divert
+            // the normal conversation hub.
             RegisterPool(starter, "dun_barter",   "lord_barter_question", "close_window",  _barters,   P);
             RegisterPool(starter, "dun_defeat1",  "defeated_lord_start_1","close_window",  _defeats1,  P);
             RegisterPool(starter, "dun_defeat2",  "defeated_lord_start_2","close_window",  _defeats2,  P);
-            RegisterPool(starter, "dun_special",  "lord_special_request", "close_window",  _specials,  P);
             RegisterPool(starter, "dun_prisoner", "prisoner_chat",        "close_window",  _prisoners, P);
-
-            try { starter.AddPlayerLine("dun_reply_matter", "dun_reply", "lord_pretalk", "I have a matter that may interest you.", null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { starter.AddPlayerLine("dun_reply_wary",   "dun_reply", "lord_pretalk", "I won't pretend to trust you.",          null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { starter.AddPlayerLine("dun_reply_leave",  "dun_reply", "close_window", "I'll leave you to your calculations.",   null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Registers one line per pool entry. Conditions pick the right variant
         // at conversation time based on the interlocutor's StringId hash.
         private static void RegisterPool(CampaignGameStarter starter,
             string idPrefix, string inputToken, string outputToken,
-            string[] pool, int priority)
+            string[] pool, int priority, bool requireMet = false)
         {
             for (int i = 0; i < pool.Length; i++)
             {
@@ -49,7 +51,7 @@ namespace AshAndEmber
                         $"{idPrefix}_{variant}",
                         inputToken, outputToken,
                         text,
-                        () => IsDunebornVariant(variant, pool.Length),
+                        () => IsDunebornVariant(variant, pool.Length, requireMet),
                         null,
                         priority);
                 }
@@ -57,13 +59,14 @@ namespace AshAndEmber
             }
         }
 
-        private static bool IsDunebornVariant(int variant, int poolSize)
+        private static bool IsDunebornVariant(int variant, int poolSize, bool requireMet)
         {
             try
             {
                 var h = Hero.OneToOneConversationHero;
                 if (h == null || ColourLordRegistry.IsAshenLord(h)) return false;
                 if (!h.IsLord) return false;   // lord dialogue only — never notables or wanderers
+                if (requireMet && !h.HasMet) return false; // let vanilla handle the first-meeting introduction
                 if (h.MapFaction?.StringId != "aserai") return false;
                 int idx = Math.Abs(DeterministicHash(h.StringId ?? h.Name?.ToString() ?? "")) % poolSize;
                 return idx == variant;
@@ -92,15 +95,6 @@ namespace AshAndEmber
             "I have already decided three things about you. Say something to change my mind, or don't bother.",
         };
 
-        private static readonly string[] _pretalks =
-        {
-            "You return. I confess I did not expect that — or perhaps I did. Speak.",
-            "The sand remembers footsteps longer than most men remember debts. What do you want this time?",
-            "I have thought of you since we last spoke. Not fondly. Not unfondly. Go on.",
-            "Say it plainly, if such a thing is in your nature. I will hear the rest regardless.",
-            "You are still useful to me. That is the only reason this conversation continues.",
-        };
-
         private static readonly string[] _barters =
         {
             "Coin is a crude language. I prefer debts — they last longer, and I collect them at my leisure.",
@@ -120,13 +114,6 @@ namespace AshAndEmber
             "Defeat is only ever temporary, for men who plan as I do. Enjoy this while it lasts.",
             "You have my measure now — a dangerous thing to hold. Be careful what you do with it.",
             "I concede the field, not the account. We are far from settled, you and I.",
-        };
-
-        private static readonly string[] _specials =
-        {
-            "That request has weight to it. I will need to consider what it truly costs you before I answer.",
-            "Bring that to me somewhere the sand cannot listen. Some bargains are not made in daylight.",
-            "I know already what you are asking. Whether I will admit it is a different matter.",
         };
 
         private static readonly string[] _prisoners =

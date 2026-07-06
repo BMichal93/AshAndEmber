@@ -262,29 +262,35 @@ namespace AshAndEmber.Tests
         public void BattleEvents_AllChanceConstants_AreInValidRange()
         {
             Assert.IsTrue(BattleEvents.ChanceCinderRain  is >= 0f and <= 1f);
-            Assert.IsTrue(BattleEvents.ChanceEmberTithe  is >= 0f and <= 1f);
             Assert.IsTrue(BattleEvents.ChanceTheRising   is >= 0f and <= 1f);
             Assert.IsTrue(BattleEvents.ChanceDread       is >= 0f and <= 1f);
             Assert.IsTrue(BattleEvents.ChanceLastLight   is >= 0f and <= 1f);
             Assert.IsTrue(BattleEvents.ChanceAshenGround is >= 0f and <= 1f);
             Assert.IsTrue(BattleEvents.ChanceFrenzy      is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceStorm       is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceTremor      is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceDeluge      is >= 0f and <= 1f);
+            Assert.IsTrue(BattleEvents.ChanceMadness     is >= 0f and <= 1f);
         }
 
         [Test]
         public void BattleEvents_AllIntervalConstants_ArePositive()
         {
             Assert.Greater(BattleEvents.CinderRainInterval,  0f);
-            Assert.Greater(BattleEvents.EmberTitheInterval,  0f);
             Assert.Greater(BattleEvents.TheRisingInterval,   0f);
             Assert.Greater(BattleEvents.AshenGroundInterval, 0f);
             Assert.Greater(BattleEvents.FrenzyInterval,      0f);
+            Assert.Greater(BattleEvents.StormInterval,       0f);
+            Assert.Greater(BattleEvents.TremorInterval,      0f);
+            Assert.Greater(BattleEvents.DelugeInterval,      0f);
+            Assert.Greater(BattleEvents.MadnessInterval,     0f);
             Assert.Greater(BattleEvents.OneShotDelay,        0f);
         }
 
         [Test]
-        public void BattleEvents_PeriodicDamage_IsPositive()
+        public void BattleEvents_TremorDamage_IsPositive()
         {
-            Assert.Greater(BattleEvents.PeriodicDamage, 0f);
+            Assert.Greater(BattleEvents.TremorDamage, 0f);
         }
 
         [Test]

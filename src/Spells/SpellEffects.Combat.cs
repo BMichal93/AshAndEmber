@@ -176,6 +176,70 @@ namespace AshAndEmber
             else try { target.Health = newHealth; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
+        // As DamageAgent, but delivers the hurt as a REAL engine blow so the mark
+        // visibly reacts — the floating damage number, the flinch, the blood, the
+        // pained cry — instead of its health silently ticking down. Use this for
+        // player-facing magic strikes (the fire blast) where the caster needs to SEE
+        // the hit land. Heroes are still spared the killing blow (clamped to 1 HP),
+        // matching DamageAgent. Multipliers (elemental wheel, Cinder Shell, Sunder)
+        // are applied here, then baked into the blow with DamageCalculated = true so
+        // the engine does not recompute them.
+        public static void DamageAgentVisible(Agent target, float damage, Agent owner = null,
+            MagicElement? attackElement = null)
+        {
+            if (target == null || !target.IsActive() || damage <= 0f) return;
+
+            if (attackElement.HasValue)
+                try { damage *= ElementalBeings.IncomingElementMultiplier(target, attackElement.Value); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (_stoneskinAgents.TryGetValue(target, out var skin) && skin.Remaining > 0f)
+                damage *= (1f - Math.Min(0.5f, skin.BonusArmor / 100f));
+            if (_sunderedAgents.TryGetValue(target, out var sunder) && sunder.Remaining > 0f)
+                damage *= (1f + Math.Min(0.50f, sunder.BonusVuln / 100f));
+            if (damage <= 0f) return;
+
+            // Heroes never fall to a spell — cap the blow so at least 1 HP remains.
+            if (target.IsHero)
+                try { damage = Math.Min(damage, Math.Max(0f, target.Health - 1f)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (damage <= 0f) return;
+
+            try
+            {
+                Vec3 hitPos = target.Position + new Vec3(0f, 0f, 1.0f);
+                Vec3 dir; try { dir = target.Position - (owner?.Position ?? target.Position); dir.z = 0f; if (dir.Length < 0.01f) dir = new Vec3(0f, 1f, 0f); dir.Normalize(); } catch { dir = new Vec3(0f, 1f, 0f); }
+
+                Blow blow = new Blow(owner?.Index ?? -1);
+                blow.DamageType       = DamageTypes.Blunt;
+                blow.BoneIndex        = 0;
+                blow.BaseMagnitude    = damage;
+                blow.InflictedDamage  = (int)damage;
+                blow.GlobalPosition   = hitPos;
+                blow.Direction        = dir;
+                blow.SwingDirection   = dir;
+                blow.DamageCalculated = true;
+                blow.VictimBodyPart   = BoneBodyPartType.Chest;
+                blow.StrikeType       = StrikeType.Swing;
+                blow.AttackType       = AgentAttackType.Standard;
+                blow.WeaponRecord     = new BlowWeaponRecord();
+
+                AttackCollisionData acd = AttackCollisionData.GetAttackCollisionDataForDebugPurpose(
+                    false, false, false, true, false, false, false, false, false, false, false, false,
+                    CombatCollisionResult.StrikeAgent, -1, (int)StrikeType.Swing, (int)DamageTypes.Blunt,
+                    0, BoneBodyPartType.Chest, -1, Agent.UsageDirection.AttackDown, -1,
+                    CombatHitResultFlags.NormalHit, 0.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f,
+                    new Vec3(0f, 0f, 1f), dir, hitPos, Vec3.Zero, Vec3.Zero, Vec3.Zero, new Vec3(0f, 0f, 1f));
+
+                target.RegisterBlow(blow, in acd);
+            }
+            catch (System.Exception logEx)
+            {
+                AshAndEmber.ModLog.Error(logEx);
+                // Fallback: if the blow could not be registered, fail safe to the
+                // silent health drain so the strike is never simply lost. Multipliers
+                // are already baked into `damage`, so pass no element (no re-scaling).
+                try { DamageAgent(target, damage, ColorSchool.Red, owner, null); } catch (System.Exception logEx2) { AshAndEmber.ModLog.Error(logEx2); }
+            }
+        }
+
         public static void HealAgent(Agent target, float amount)
         {
             if (target == null || !target.IsActive()) return;

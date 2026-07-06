@@ -62,7 +62,7 @@ namespace AshAndEmber
             public bool  Ashen;
             public float TrailTimer;
             public const float Speed        = 30f;   // m/s
-            public const float DetectRadius = 2.4f;  // horizontal reach at which a foe trips the burst
+            public const float DetectRadius = 3.2f;  // horizontal reach at which a foe trips the burst (forgiving — a near miss still bursts)
             public const float DetectHeight = 3.0f;  // vertical band (foot-to-mounted) the trigger spans
             public const float TrailInterval = 0.03f;
         }
@@ -279,7 +279,10 @@ namespace AshAndEmber
                 if (SpellEffects.IsWarded(a)) continue;
                 // A wall of standing water between the burst and the mark drinks the fire.
                 try { if (ElementWallWards.BlocksPath(MagicElement.Fire, at, a.Position, out _)) continue; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                try { SpellEffects.DamageAgent(a, FireBoltDamage * b.Power, ColorSchool.Red, b.Caster, MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // A visible blow — the struck foe flinches, bleeds, and the damage
+                // number floats up, so the caster SEES the blast connect (the burst
+                // was landing silently before, and read as a miss).
+                try { SpellEffects.DamageAgentVisible(a, FireBoltDamage * b.Power, b.Caster, MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // A deep draw sets the mark alight — the burn finishes what the
                 // strike began (the Ashen cold clings on as deep frost instead).
                 try { Ignite(a, b.Caster, b.Power, b.Ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

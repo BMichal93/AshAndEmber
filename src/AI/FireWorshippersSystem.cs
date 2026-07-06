@@ -84,6 +84,7 @@ namespace AshAndEmber
                     TryRenameParty(party, "Ashen Spawn");
                     _ashenSpawnIds.Add(party.StringId);
                     InjectCustomTroops(party, "ashen_thrall", 3 + _rng.Next(5));
+                    AdoptIntoAshenFaction(party);
                 }
                 else
                 {
@@ -140,6 +141,26 @@ namespace AshAndEmber
             _ashenSpawnIds.Add(party.StringId);
             InjectCustomTroops(party, "ashen_thrall",  3 + _rng.Next(6));
             InjectCustomTroops(party, "ashen_invoker", 1 + _rng.Next(3));
+            AdoptIntoAshenFaction(party);
+        }
+
+        // Re-homes an Ashen Spawn band from its birth bandit clan (the looters, whose
+        // culture the party would otherwise wear) into a living Ashen clan. This gives
+        // the band the Ashen faction and culture — so it flies the Ashen colours and,
+        // sharing the Ashen kingdom, never turns on its own kind. The Ashen kingdom
+        // is at constant war with everyone else, so the band stays every bit as
+        // hostile to the living as before. A no-op before the Ashen have risen (no
+        // clan yet), leaving the band an ordinary bandit party — backward-compatible.
+        private static void AdoptIntoAshenFaction(MobileParty party)
+        {
+            try
+            {
+                if (party == null) return;
+                Clan ashenClan = AshenCitySystem.GetAshenClan();
+                if (ashenClan != null)
+                    party.ActualClan = ashenClan;
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Drops ids of parties that no longer exist so the sets (and the save

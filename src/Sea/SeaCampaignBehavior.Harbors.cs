@@ -111,7 +111,7 @@ namespace AshAndEmber
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            // ── Call the Emberwind (mages) ──────────────────────────────────
+            // ── Call the Windward (Wind element) ────────────────────────────
             try
             {
                 starter.AddGameMenuOption("sea_harbor", "sea_emberwind", "{SEA_WIND_TEXT}",
@@ -119,12 +119,12 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            if (!MageKnowledge.IsMage) return false;
+                            if (!MageElementKnowledge.HasElement(MagicElement.Wind)) return false;
                             if (_emberwindCalled) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("SEA_WIND_TEXT",
                                 _emberwindCalled
-                                    ? "Call the Emberwind  [already called — it waits in the rigging]"
-                                    : $"Call the Emberwind ({SeaMath.EmberwindAgingDays} days aging) — halve the next crossing and ward it against storms");
+                                    ? "Call the wind  [already called — it waits in the rigging]"
+                                    : $"Call the wind ({SeaMath.EmberwindAgingDays} days aging) — halve the next crossing and ward it against storms");
                             try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch { return false; }
@@ -138,7 +138,7 @@ namespace AshAndEmber
                             AgingSystem.AgeHero(Hero.MainHero, SeaMath.EmberwindAgingDays);
                             _emberwindCalled = true;
                             MBInformationManager.AddQuickInformation(new TextObject(
-                                "You breathe a thread of the Inner Fire into the sky. The pennants snap taut toward open water."));
+                                "You reach into the air over the quay and pull. The pennants snap taut toward open water and hold there."));
                             try { GameMenu.SwitchToMenu("sea_harbor"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -146,7 +146,7 @@ namespace AshAndEmber
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            // ── Still the Waters (mages) ──────────────────────────────────
+            // ── Still the Waters (Water element) ────────────────────────────
             try
             {
                 starter.AddGameMenuOption("sea_harbor", "sea_still_waters", "{SEA_STILL_TEXT}",
@@ -154,7 +154,7 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            if (!MageKnowledge.IsMage) return false;
+                            if (!MageElementKnowledge.HasElement(MagicElement.Water)) return false;
                             bool canAfford = Hero.MainHero.HitPoints > SeaMath.StillWatersHpCost + 10;
                             if (_stillWatersCalled || !canAfford) args.IsEnabled = false;
                             MBTextManager.SetTextVariable("SEA_STILL_TEXT",
