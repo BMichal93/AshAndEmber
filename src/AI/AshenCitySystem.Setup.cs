@@ -40,15 +40,16 @@ namespace AshAndEmber
                     Clan clan = settlement.OwnerClan;
                     if (clan == null) continue;
 
-                    // Never convert a KINGDOM'S RULING CLAN. A ruler (e.g. Raganvad, who
-                    // rules Sturgia yet holds Mazhadan Castle — a target — alongside his
-                    // own Varcheg and Balgard) would drag his ordinary capital-towns into
-                    // the cold and, on a reload, be ejected from his own kingdom into the
+                    // Never convert a clan that plainly belongs elsewhere: a kingdom's
+                    // ruling clan, or a clan whose ancestral seat is an ordinary non-Ashen
+                    // town (e.g. Raganvad, who rules Sturgia from Varcheg yet also holds
+                    // Mazhadan Castle — a target). Converting such a clan drags its capital
+                    // towns into the cold and, on a reload, rips a faction's ruler into the
                     // permanently-warring Ashen — the grey-Varcheg / "Raganvad declares war
-                    // on everyone" bug. Rulers are excluded by identity here (independent of
-                    // the fragile holdings-enumeration timing below); the target settlement
-                    // he holds is still claimed on its own by the second pass.
-                    if (IsRulingClanOfNonAshenKingdom(clan)) continue;
+                    // on everyone" bug. Both are stable identity signals, independent of the
+                    // fragile holdings-enumeration timing below; the one target settlement
+                    // such a clan holds is still claimed on its own by the second pass.
+                    if (BelongsOutsideTheCold(clan)) continue;
 
                     // Only a clan that holds NOTHING but target settlements may be
                     // turned wholly Ashen. Skip otherwise, for two reasons:
@@ -130,8 +131,6 @@ namespace AshAndEmber
         }
 
         // True if the clan is the ruling clan of a living, non-Ashen kingdom.
-        // Such a clan (a faction ruler like Raganvad) must never be swept wholesale
-        // into the Ashen, even when it happens to hold one target settlement.
         private static bool IsRulingClanOfNonAshenKingdom(Clan clan)
         {
             try
@@ -145,13 +144,33 @@ namespace AshAndEmber
             catch { return false; }
         }
 
-        // ── Self-heal: undo a wrongly-converted ruling clan ───────────────────
-        // Enforces the invariant that every clan in the Ashen set holds ONLY target
-        // settlements. A ruler dragged in by an earlier build (e.g. Raganvad, whose
-        // Varcheg and Balgard then show grey while he stands at war with everyone)
-        // owns non-target towns and violates it. This is a strict no-op on a healthy
-        // save — it only acts when the invariant is actually broken — so it is safe to
-        // run every load. Called early in DailyTick, before the war / clan-eject logic.
+        // True for a clan that must never be swept wholesale into the Ashen: a kingdom's
+        // ruling clan, OR a clan whose ancestral seat (InitialHomeSettlement) is an
+        // ordinary, non-Ashen town/castle. Every rightful Ashen clan is seated in a target
+        // city (Tyal, Sibir, Omor, Varnovapol …); Raganvad's seat is Varcheg, so he is
+        // excluded here regardless of the target castle he also holds. Both are stable
+        // identity signals, independent of holdings-enumeration timing.
+        private static bool BelongsOutsideTheCold(Clan clan)
+        {
+            if (clan == null) return false;
+            if (IsRulingClanOfNonAshenKingdom(clan)) return true;
+            try
+            {
+                var home = clan.InitialHomeSettlement;
+                if (home != null && (home.IsTown || home.IsCastle) && !IsTargetSettlement(home))
+                    return true;
+            }
+            catch { }
+            return false;
+        }
+
+        // ── Self-heal: undo a wrongly-converted clan ──────────────────────────
+        // Frees any clan an earlier build swept into the Ashen that plainly belongs
+        // outside it — keyed on the STABLE ancestral seat, so it catches Raganvad even
+        // though he still holds Mazhadan Castle (a target), and it never fires on a
+        // rightful Ashen clan (whose seat is always a target city) no matter what it has
+        // conquered or lost. A strict no-op on a healthy save. Called early in DailyTick,
+        // before the war / clan-eject logic that would otherwise keep dragging it back.
         internal static void HealMisconvertedClans()
         {
             if (_ashenClanIds.Count == 0) return;
@@ -162,33 +181,42 @@ namespace AshAndEmber
                     var clan = Clan.All.FirstOrDefault(c => c.StringId == clanId);
                     if (clan == null || clan.IsEliminated) continue;
 
-                    var townsOrCastles = clan.Settlements.Where(s => s.IsTown || s.IsCastle).ToList();
-                    if (townsOrCastles.Count == 0) continue; // holdings not ready — never risk a false heal
+                    // Only act on the stable-seat signal. If the seat is unknown, never risk it.
+                    var home = clan.InitialHomeSettlement;
+                    if (home == null || !(home.IsTown || home.IsCastle)) continue;
+                    if (IsTargetSettlement(home)) continue;   // rightful Ashen clan — leave alone
 
-                    bool ownsNonTarget = townsOrCastles.Any(s => !IsTargetSettlement(s));
-                    bool ownsTarget    = townsOrCastles.Any(IsTargetSettlement);
-                    // A legitimate Ashen clan holds at least one target and no ordinary town.
-                    // Require BOTH signals of a misconversion so a legit clan holding a
-                    // freshly-conquered non-target town (handed back by ReleaseNonTargetSettlements
-                    // within the day) is never wrongly un-converted.
-                    if (!ownsNonTarget || ownsTarget) continue;
-
-                    // This clan was wrongly converted. Fully undo it.
+                    // Wrongly converted. Remove from the cold's rolls first so the heir search
+                    // and the eject/rejoin logic no longer count this clan as Ashen.
                     _ashenClanIds.Remove(clanId);
+
+                    // Keep any RIGHTFUL Ashen ground it was handed (e.g. Mazhadan Castle) in the
+                    // cold's hands by passing it to a remaining Ashen clan; drop the rest of its
+                    // rows so its own capital towns revert with it.
+                    var ashenHeir = Clan.All.FirstOrDefault(c => _ashenClanIds.Contains(c.StringId) && !c.IsEliminated);
+                    var heirLord  = ashenHeir?.Leader ?? ashenHeir?.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
+                    foreach (var s in clan.Settlements.Where(x => (x.IsTown || x.IsCastle) && IsTargetSettlement(x)).ToList())
+                    {
+                        if (heirLord != null && !s.IsUnderSiege)
+                        {
+                            try { ChangeOwnerOfSettlementAction.ApplyByDefault(heirLord, s); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            _settlementClanMap[s.StringId] = ashenHeir.StringId;
+                        }
+                        else _settlementClanMap.Remove(s.StringId);
+                    }
                     foreach (var kvp in _settlementClanMap.Where(k => k.Value == clanId).ToList())
                         _settlementClanMap.Remove(kvp.Key);
 
                     foreach (Hero h in clan.Heroes.Where(h => h.IsAlive).ToList())
                         try { ColourLordRegistry.SetAshen(h, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                    // Restore the clan to a living kingdom of its own culture so its towns
-                    // fly a banner again (instead of the grey of an independent clan locked
-                    // in the Ashen's endless war). If none exists, leaving it independent is
-                    // still an improvement over Ashen membership.
+                    // Return the clan to a living kingdom of its own culture so its towns fly a
+                    // banner again instead of the grey of an independent clan trapped in the
+                    // Ashen's endless war. Independence is still better than Ashen if none exists.
                     RestoreClanToCultureKingdom(clan);
 
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"{clan.Name} — the cold's hold breaks. They were never truly Ashen.",
+                        $"{clan.Name} — the cold's false hold breaks. They were never truly Ashen.",
                         new Color(0.6f, 0.7f, 0.85f)));
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -200,15 +228,35 @@ namespace AshAndEmber
             try
             {
                 if (clan == null) return;
-                if (clan.Kingdom != null && clan.Kingdom.StringId == AshenKingdomId)
-                    try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-
-                if (clan.Kingdom != null && clan.Kingdom.StringId != AshenKingdomId) return; // already re-homed
+                Kingdom old = clan.Kingdom;
+                if (old != null && old.StringId != AshenKingdomId) return; // already re-homed elsewhere
 
                 var home = Kingdom.All.FirstOrDefault(k => !k.IsEliminated
                     && k.StringId != AshenKingdomId && k.Culture == clan.Culture && k.RulingClan != null);
-                if (home == null) return;
-                try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, home, CampaignTime.Now, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                var stay = CampaignTime.Now + CampaignTime.Years(1000);
+
+                if (home == null)
+                {
+                    // No living home realm of its culture — at least free it from the cold.
+                    if (old != null)
+                        try { ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    return;
+                }
+
+                // Prefer the atomic defection path so the clan's towns change banners cleanly
+                // instead of flashing through an ownerless grey state (mirrors MoveClanInto).
+                try
+                {
+                    if (old != null && !old.IsEliminated)
+                        ChangeKingdomAction.ApplyByJoinToKingdomByDefection(clan, old, home, stay, false);
+                    else
+                        ChangeKingdomAction.ApplyByJoinToKingdom(clan, home, stay, false);
+                }
+                catch
+                {
+                    try { if (clan.Kingdom != null) ChangeKingdomAction.ApplyByLeaveKingdom(clan, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { ChangeKingdomAction.ApplyByJoinToKingdom(clan, home, stay, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
