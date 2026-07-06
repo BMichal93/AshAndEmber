@@ -15,6 +15,11 @@
 // with the Fire. If a line reads like a deity deciding someone's worth,
 // rewrite it so the caster (or their own conviction) is doing the deciding.
 //
+// Two further miracles (The Undivided Flame, battle; The Reckoning, map) answer
+// only once all five traits are held at the gate at once — RequiresAllTraits —
+// rather than a single trait. Their damage leans hard on the two things that
+// resist the Fire: the Ashen's cold, and the Kindled's untempered wildness.
+//
 // Pure data — no TaleWorlds types. The sequence string mirrors the MiracleMath
 // constants so the input handler and the menu show the same notation.
 // =============================================================================
@@ -39,13 +44,18 @@ namespace AshAndEmber
         GraceBounty   = 7,  // Generosity — map:    bounty (food + morale)
         InsightPyre   = 8,  // Calculating — battle: pillar of judgement
         InsightSight  = 9,  // Calculating — map:    far-sight (scout the roads)
+
+        // Answer only once all five traits stand at the gate at once.
+        UndividedFlame = 10, // All five — battle: nova, devastating to Ashen and the Kindled
+        Reckoning      = 11, // All five — map:    strikes the nearest Ashen and wild elemental bands
     }
 
     public struct MiracleDef
     {
         public MiracleType Type;
-        public GraceTrait  Trait;
+        public GraceTrait  Trait;          // ignored when RequiresAllTraits is set
         public bool        IsGrace;
+        public bool        RequiresAllTraits; // The Undivided Flame / The Reckoning: all five at once
         public string      Name;
         public string      Effect;
         public string      Flavour;
@@ -56,7 +66,12 @@ namespace AshAndEmber
         public string Context => UsableInBattle ? "battle only" : "field only";
 
         // Shown on the litany so the player knows which virtue unlocks it.
-        public string GateNote => $"[{TraitName} +1]";
+        public string GateNote => RequiresAllTraits ? "[all five virtues +1]" : $"[{TraitName} +1]";
+
+        // Used where a locked prayer explains itself to the player.
+        public string GateExplanation => RequiresAllTraits
+            ? "it answers only to one who holds all five virtues at once, each at +1 or higher"
+            : $"it is granted by the {TraitName} (that trait must stand at +1 or higher)";
 
         public string TraitName =>
             Trait == GraceTrait.Mercy       ? "Merciful"
@@ -149,6 +164,24 @@ namespace AshAndEmber
                 Flavour = "Foresight is only attention, paid early. The Fire doesn't see for you — it just lengthens your reach.",
                 UsableInBattle = false, UsableOnMap = true,
                 Sequence = MiracleMath.SeqInsightSight },
+
+            // ── All five, at once ──────────────────────────────────────────────
+            new MiracleDef {
+                Type = MiracleType.UndividedFlame, Trait = GraceTrait.Calculating, IsGrace = true,
+                RequiresAllTraits = true,
+                Name = "The Undivided Flame",
+                Effect = "Every part of you agrees at once, and the Fire answers whole — those beside you are warded and mended, and the Ashen's cold and the Kindled's untempered wildness burn hardest of all.",
+                Flavour = "Mercy does not flinch. Honour does not calculate. Calculation does not hesitate. For one breath there is no seam left in you for the Fire to catch on — so it simply pours through.",
+                UsableInBattle = true, UsableOnMap = false,
+                Sequence = MiracleMath.SeqUndividedFlame },
+            new MiracleDef {
+                Type = MiracleType.Reckoning, Trait = GraceTrait.Calculating, IsGrace = true,
+                RequiresAllTraits = true,
+                Name = "The Reckoning",
+                Effect = "Cast out from a whole heart, the Fire finds what resists it nearby — the grey banners and the wild, untempered kindling alike — and answers both.",
+                Flavour = "It does not ask which is worse: the cold that refuses the Fire, or the flame that never learned to mean anything. It only asks which is nearest.",
+                UsableInBattle = false, UsableOnMap = true,
+                Sequence = MiracleMath.SeqReckoning },
         };
 
         public static IReadOnlyList<MiracleDef> All    => _defs;

@@ -7,6 +7,10 @@
 //   incomplete sequence still spends 1 Grace.
 //   Controller: hold RB and flick the left stick 6 times in the same directions.
 //   There is NO menu in battle — the battlefield answers the gesture alone.
+//   The Undivided Flame answers a longer, 8-character gesture instead of 6 —
+//   keep holding past the sixth tap and the buffer grows to fit it. It still
+//   only answers once all five traits are held at once; anyone else's Grace is
+//   simply spent for nothing, the same as any other unanswered sequence.
 //
 // CAMPAIGN MAP — the litany + the rite (mirrors fire magic's map casting):
 //   Open the litany (Shift+X / RB + L3) — it lists ONLY the prayers that answer
@@ -125,7 +129,11 @@ namespace AshAndEmber
                 }
 
                 // Show buffer with remaining placeholder underscores (gold — Grace only).
-                string display = _seqBuffer + new string('_', MiracleMath.SequenceLength - _seqBuffer.Length);
+                // Past the sixth tap the target grows to the Undivided Flame's 8, so the
+                // padding never goes negative and the player sees they've crossed over.
+                int displayTarget = _seqBuffer.Length <= MiracleMath.SequenceLength
+                    ? MiracleMath.SequenceLength : MiracleMath.UltimateSequenceLength;
+                string display = _seqBuffer + new string('_', displayTarget - _seqBuffer.Length);
                 if (display != _lastDisplay)
                 {
                     _lastDisplay = display;
@@ -146,7 +154,10 @@ namespace AshAndEmber
 
         private static void Append(string dir)
         {
-            if (_seqBuffer.Length < MiracleMath.SequenceLength) _seqBuffer += dir;
+            // Capped at the Undivided Flame's longer length — a normal miracle is cast
+            // the moment 6 taps release, but holding past that lets the buffer keep
+            // growing to fit the rarer 8-character gesture.
+            if (_seqBuffer.Length < MiracleMath.UltimateSequenceLength) _seqBuffer += dir;
         }
 
         private static void TryCastSequence(bool inMission)
@@ -159,9 +170,16 @@ namespace AshAndEmber
                 return;
             }
 
+            // Between the two known lengths (7) can only ever be an incomplete
+            // Undivided Flame — the normal sequences already resolved at 6.
             if (_seqBuffer.Length < MiracleMath.SequenceLength)
             {
                 SpendAndFizzle($"The form is incomplete ({_seqBuffer.Length}/{MiracleMath.SequenceLength}). The power slips away.");
+                return;
+            }
+            if (_seqBuffer.Length > MiracleMath.SequenceLength && _seqBuffer.Length < MiracleMath.UltimateSequenceLength)
+            {
+                SpendAndFizzle($"The greater working is incomplete ({_seqBuffer.Length}/{MiracleMath.UltimateSequenceLength}). The power slips away.");
                 return;
             }
 
@@ -262,7 +280,7 @@ namespace AshAndEmber
                 string controls = $"Keyboard: hold Ctrl + {keys}\nController: hold RB + flick left stick {stick}";
                 string hint  = $"{controls}\n\n{def.Effect}\n\n{def.Flavour}";
                 if (!gateMet)
-                    hint = $"✗  The light does not yet answer you here — this prayer is granted by the {def.TraitName} (it requires that trait at +1 or higher).\n\n{hint}";
+                    hint = $"✗  The light does not yet answer you here — {def.GateExplanation}.\n\n{hint}";
                 elements.Add(new InquiryElement(def.Type, label, null, gateMet, hint));
             }
 
@@ -320,7 +338,7 @@ namespace AshAndEmber
                 string keys  = SequenceToKeys(def.Sequence);
                 sb.AppendLine(gateMet
                     ? $"{def.Name}   [Ctrl + {keys}]"
-                    : $"{def.Name}   [locked — granted by the {def.TraitName}, at +1 or higher]");
+                    : $"{def.Name}   [locked — {def.GateExplanation}]");
                 if (!string.IsNullOrEmpty(def.Effect)) sb.AppendLine("   " + def.Effect);
                 sb.AppendLine();
                 shown++;

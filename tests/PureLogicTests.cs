@@ -882,10 +882,48 @@ namespace AshAndEmber.Tests
         {
             foreach (var def in MiracleCatalog.All)
             {
-                Assert.AreEqual(MiracleMath.SequenceLength, def.Sequence.Length, $"{def.Name} has a non-6-char sequence.");
+                bool validLength = def.Sequence.Length == MiracleMath.SequenceLength
+                                 || def.Sequence.Length == MiracleMath.UltimateSequenceLength;
+                Assert.IsTrue(validLength, $"{def.Name} has a sequence of an unsupported length ({def.Sequence.Length}).");
                 Assert.IsTrue(MiracleMath.TryMatchSequence(def.Sequence, out var t), $"{def.Name} sequence does not match.");
                 Assert.AreEqual(def.Type, t, $"{def.Name} sequence resolves to the wrong miracle.");
             }
+        }
+
+        // ── The Undivided Flame / The Reckoning — the all-five-traits ultimate ──
+
+        [Test]
+        public void MiracleMath_MeetsAllTraitsGate_AllPresent_ReturnsTrue()
+        {
+            Assert.IsTrue(MiracleMath.MeetsAllTraitsGate(1, 1, 1, 1, 1));
+            Assert.IsTrue(MiracleMath.MeetsAllTraitsGate(2, 1, 2, 1, 2));
+        }
+
+        [Test]
+        public void MiracleMath_MeetsAllTraitsGate_OneMissing_ReturnsFalse()
+        {
+            Assert.IsFalse(MiracleMath.MeetsAllTraitsGate(0, 1, 1, 1, 1));
+            Assert.IsFalse(MiracleMath.MeetsAllTraitsGate(1, 1, 1, 1, 0));
+        }
+
+        [Test]
+        public void MiracleMath_TryMatchSequence_UndividedFlame_Resolves()
+        {
+            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqUndividedFlame, out var type));
+            Assert.AreEqual(MiracleType.UndividedFlame, type);
+        }
+
+        [Test]
+        public void MiracleMath_TryMatchSequence_WrongLengthEight_DoesNotResolve()
+        {
+            Assert.IsFalse(MiracleMath.TryMatchSequence("UUUUUUUU", out _));
+        }
+
+        [Test]
+        public void MiracleCatalog_UndividedFlameAndReckoning_RequireAllTraits()
+        {
+            Assert.IsTrue(MiracleCatalog.Get(MiracleType.UndividedFlame).RequiresAllTraits);
+            Assert.IsTrue(MiracleCatalog.Get(MiracleType.Reckoning).RequiresAllTraits);
         }
 
         // ── SanctuaryMath: the Long Vigil (raise a trait for gold or blood) ────
