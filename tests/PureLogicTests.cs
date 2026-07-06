@@ -882,9 +882,116 @@ namespace AshAndEmber.Tests
         {
             foreach (var def in MiracleCatalog.All)
             {
-                Assert.AreEqual(MiracleMath.SequenceLength, def.Sequence.Length, $"{def.Name} has a non-6-char sequence.");
+                bool validLength = def.Sequence.Length == MiracleMath.SequenceLength
+                                 || def.Sequence.Length == MiracleMath.UltimateSequenceLength;
+                Assert.IsTrue(validLength, $"{def.Name} has a sequence of an unsupported length ({def.Sequence.Length}).");
                 Assert.IsTrue(MiracleMath.TryMatchSequence(def.Sequence, out var t), $"{def.Name} sequence does not match.");
                 Assert.AreEqual(def.Type, t, $"{def.Name} sequence resolves to the wrong miracle.");
+            }
+        }
+
+        // ── The Undivided Flame / The Reckoning — the all-five-traits ultimate ──
+
+        [Test]
+        public void MiracleMath_MeetsAllTraitsGate_AllPresent_ReturnsTrue()
+        {
+            Assert.IsTrue(MiracleMath.MeetsAllTraitsGate(1, 1, 1, 1, 1));
+            Assert.IsTrue(MiracleMath.MeetsAllTraitsGate(2, 1, 2, 1, 2));
+        }
+
+        [Test]
+        public void MiracleMath_MeetsAllTraitsGate_OneMissing_ReturnsFalse()
+        {
+            Assert.IsFalse(MiracleMath.MeetsAllTraitsGate(0, 1, 1, 1, 1));
+            Assert.IsFalse(MiracleMath.MeetsAllTraitsGate(1, 1, 1, 1, 0));
+        }
+
+        [Test]
+        public void MiracleMath_TryMatchSequence_UndividedFlame_Resolves()
+        {
+            Assert.IsTrue(MiracleMath.TryMatchSequence(MiracleMath.SeqUndividedFlame, out var type));
+            Assert.AreEqual(MiracleType.UndividedFlame, type);
+        }
+
+        [Test]
+        public void MiracleMath_TryMatchSequence_WrongLengthEight_DoesNotResolve()
+        {
+            Assert.IsFalse(MiracleMath.TryMatchSequence("UUUUUUUU", out _));
+        }
+
+        [Test]
+        public void MiracleCatalog_UndividedFlameAndReckoning_RequireAllTraits()
+        {
+            Assert.IsTrue(MiracleCatalog.Get(MiracleType.UndividedFlame).RequiresAllTraits);
+            Assert.IsTrue(MiracleCatalog.Get(MiracleType.Reckoning).RequiresAllTraits);
+        }
+
+        [Test]
+        public void MiracleCatalog_UndividedFlameAndReckoning_CostTwoGrace()
+        {
+            Assert.AreEqual(2, MiracleCatalog.Get(MiracleType.UndividedFlame).GraceCost);
+            Assert.AreEqual(2, MiracleCatalog.Get(MiracleType.Reckoning).GraceCost);
+        }
+
+        [Test]
+        public void MiracleCatalog_OrdinaryMiracles_CostOneGrace()
+        {
+            Assert.AreEqual(1, MiracleCatalog.Get(MiracleType.MercyMend).GraceCost);
+            Assert.AreEqual(1, MiracleCatalog.Get(MiracleType.InsightPyre).GraceCost);
+        }
+
+        [Test]
+        public void MiracleInventory_SpendGrace_Amount_FailsWithoutEnough()
+        {
+            MiracleInventory.ResetForNewGame();
+            MiracleInventory.AddGrace(1);
+            Assert.IsFalse(MiracleInventory.SpendGrace(2));
+            Assert.AreEqual(1, MiracleInventory.Grace);
+        }
+
+        [Test]
+        public void MiracleInventory_SpendGrace_Amount_SucceedsWithEnough()
+        {
+            MiracleInventory.ResetForNewGame();
+            MiracleInventory.AddGrace(3);
+            Assert.IsTrue(MiracleInventory.SpendGrace(2));
+            Assert.AreEqual(1, MiracleInventory.Grace);
+        }
+
+        // ── SanctuaryMath: the Long Vigil (raise a trait for gold or blood) ────
+
+        [Test]
+        public void SanctuaryMath_CanRaiseTrait_BelowCap_ReturnsTrue()
+        {
+            Assert.IsTrue(SanctuaryMath.CanRaiseTrait(-2));
+            Assert.IsTrue(SanctuaryMath.CanRaiseTrait(1));
+        }
+
+        [Test]
+        public void SanctuaryMath_CanRaiseTrait_AtCap_ReturnsFalse()
+        {
+            Assert.IsFalse(SanctuaryMath.CanRaiseTrait(SanctuaryMath.TraitCap));
+        }
+
+        [Test]
+        public void SanctuaryMath_CommunionCosts_ScaleWithTargetLevel()
+        {
+            int lowGold  = SanctuaryMath.CommunionGoldCost(-1);
+            int highGold = SanctuaryMath.CommunionGoldCost(2);
+            Assert.Greater(highGold, lowGold, "Reaching a higher trait level should cost more gold.");
+
+            int lowHp  = SanctuaryMath.CommunionHpCost(-1);
+            int highHp = SanctuaryMath.CommunionHpCost(2);
+            Assert.Greater(highHp, lowHp, "Reaching a higher trait level should cost more HP.");
+        }
+
+        [Test]
+        public void SanctuaryMath_CommunionCosts_ArePositive()
+        {
+            for (int target = -1; target <= SanctuaryMath.TraitCap; target++)
+            {
+                Assert.Greater(SanctuaryMath.CommunionGoldCost(target), 0);
+                Assert.Greater(SanctuaryMath.CommunionHpCost(target), 0);
             }
         }
 

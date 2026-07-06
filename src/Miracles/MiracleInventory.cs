@@ -30,10 +30,14 @@ namespace AshAndEmber
             return add;
         }
 
-        public static bool SpendGrace()
+        public static bool SpendGrace() => SpendGrace(1);
+
+        // The Undivided Flame / The Reckoning ask more than the usual toll. Spends
+        // nothing and fails if the bank can't cover the full amount.
+        public static bool SpendGrace(int amount)
         {
-            if (_grace <= 0) return false;
-            _grace--;
+            if (amount <= 0 || _grace < amount) return false;
+            _grace -= amount;
             return true;
         }
 

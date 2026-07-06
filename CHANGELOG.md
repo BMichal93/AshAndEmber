@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### The Undivided Flame — the fifth-trait ultimate
+- Two new Grace miracles answer only once all five personality traits (Mercy, Valor, Honor, Generosity, Calculating) are held at +1 or higher **at once**, rather than a single trait: **The Undivided Flame** (battle) — a nova that wards and mends your line while burning through the Ashen's cold and the Kindled's untempered wildness far harder than anything else it touches — and **The Reckoning** (map) — strikes the nearest Ashen banners and wild elemental bands within reach. The Undivided Flame is cast with a longer, deliberate 8-direction gesture instead of the usual 6; The Reckoning is chosen from the map litany like any other prayer. Both cost **2 Grace** instead of the usual 1, win or fizzle — they're strong enough to ask double the toll.
+
+### Keep the Long Vigil
+- Sanctuaries now offer a third rite: **Keep the Long Vigil** — kneel and pay a tribute of gold or blood to raise one of the five personality traits that gate the Grace miracles (Mercy, Valor, Honor, Generosity, Calculating). The tribute scales with the level being reached, the rite is capped at the engine's usual +2 trait ceiling, and it shares a 7-day cooldown so it deepens virtue rather than trivially maxing it in an afternoon.
+
 ### Five new crystals, and the ruins remember them
 - **Five new crystals**: **Thornveil** (roots one foe near-solid), **Aegisstone** (heals you and hurls nearby enemies back), **Willowisp** (shatters one foe's nerve from range), **Bloodstone** (AoE damage that feeds half of it back to you as healing), and **Zephyrglass** (hastens you and nearby allies). Formed at the Crystalline Chamber and seeded onto lords exactly like the original six.
 - **Ashen Ruins now sometimes yield a formed crystal** as a retreat/partial reward — seven of the twenty-eight ruins carry one.

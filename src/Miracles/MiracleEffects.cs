@@ -75,7 +75,13 @@ namespace AshAndEmber
             try
             {
                 var h = Hero.MainHero;
-                return h != null && MiracleMath.MeetsTraitGate(h.GetTraitLevel(TraitObjectOf(def.Trait)));
+                if (h == null) return false;
+                if (def.RequiresAllTraits)
+                    return MiracleMath.MeetsAllTraitsGate(
+                        h.GetTraitLevel(DefaultTraits.Mercy), h.GetTraitLevel(DefaultTraits.Valor),
+                        h.GetTraitLevel(DefaultTraits.Honor), h.GetTraitLevel(DefaultTraits.Generosity),
+                        h.GetTraitLevel(DefaultTraits.Calculating));
+                return MiracleMath.MeetsTraitGate(h.GetTraitLevel(TraitObjectOf(def.Trait)));
             }
             catch { return false; }
         }
@@ -98,21 +104,26 @@ namespace AshAndEmber
             }
 
             // Inventory + trait gate
-            if (!MiracleInventory.HasGrace)
+            if (MiracleInventory.Grace < def.GraceCost)
             {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    "You carry no Grace. Pray at a Sanctuary first.", GraceColor));
+                string lackMsg = def.GraceCost > 1
+                    ? $"{def.Name} asks {def.GraceCost} Grace; you carry {MiracleInventory.Grace}. Pray at a Sanctuary first."
+                    : "You carry no Grace. Pray at a Sanctuary first.";
+                InformationManager.DisplayMessage(new InformationMessage(lackMsg, GraceColor));
                 return false;
             }
             if (!PlayerMeetsTrait(def))
             {
-                MiracleInventory.SpendGrace(); // gate failure still costs Grace
+                MiracleInventory.SpendGrace(def.GraceCost); // gate failure still costs the full toll
+                string why = def.RequiresAllTraits
+                    ? "You do not yet hold all five virtues at once."
+                    : $"You are not {def.TraitName} enough.";
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"{def.Name} — the light does not answer. You are not {def.TraitName} enough. [Grace spent]",
+                    $"{def.Name} — the light does not answer. {why} [{def.GraceCost} Grace spent]",
                     GraceColor));
                 return false;
             }
-            MiracleInventory.SpendGrace();
+            MiracleInventory.SpendGrace(def.GraceCost);
 
             if (inMission)
             {
@@ -149,6 +160,7 @@ namespace AshAndEmber
                 case MiracleType.HonorAegis:    BattleAegis(a, announce);           break;
                 case MiracleType.GraceBlessing: BattleHallowedGround(a, announce);  break;
                 case MiracleType.InsightPyre:   BattlePyreJudgement(a, announce);   break;
+                case MiracleType.UndividedFlame: BattleUndividedFlame(a, announce); break;
             }
         }
 
@@ -163,6 +175,7 @@ namespace AshAndEmber
                 case MiracleType.HonorOath:    return CampaignOath(hero);
                 case MiracleType.GraceBounty:  return CampaignBounty(party);
                 case MiracleType.InsightSight: return CampaignForesight(party);
+                case MiracleType.Reckoning:    return CampaignReckoning(party);
                 default:                       return null;
             }
         }
@@ -247,6 +260,62 @@ namespace AshAndEmber
                     : $"Far-Sight — the light shows the roads. Nothing hostile stirs nearby. The column rides easier (+{(int)sightMorale} morale).";
             }
             catch { return null; }
+        }
+
+        // The Reckoning — answers only once all five traits stand at the gate at
+        // once. Strikes the nearest parties that resist the Fire: Ashen banners
+        // and wild elemental (Kindled) bands alike, wherever they stand nearest.
+        private static string CampaignReckoning(MobileParty party)
+        {
+            if (party == null) return "No party.";
+            Vec2 p;
+            try { p = party.GetPosition2D; } catch { return "The Fire finds no path."; }
+
+            float searchRadius = MiracleMath.ReckoningSearchRadius;
+            float rng2 = searchRadius * searchRadius;
+            var targets = MobileParty.All
+                .Where(mp => mp != null && mp.IsActive && !mp.IsMainParty
+                          && (mp.MapFaction?.StringId == AshenKingdomId || ElementalWildsBehavior.IsWildBand(mp)))
+                .Select(mp => { Vec2 pp; try { pp = mp.GetPosition2D; } catch { pp = new Vec2(9999, 9999); }
+                                float dx = pp.x - p.x, dy = pp.y - p.y;
+                                return (party: mp, d2: dx * dx + dy * dy); })
+                .Where(t => t.d2 < rng2)
+                .OrderBy(t => t.d2)
+                .Take(MiracleMath.ReckoningMaxTargets)
+                .Select(t => t.party)
+                .ToList();
+
+            if (targets.Count == 0)
+                return "The Fire reaches out and finds nothing to answer — no grey banner, no wild kindling, near enough to feel it.";
+
+            int ashenHit = 0, wildHit = 0, totalBurned = 0;
+            foreach (var mp in targets)
+            {
+                bool isAshen = mp.MapFaction?.StringId == AshenKingdomId;
+                if (isAshen) ashenHit++; else wildHit++;
+
+                int toBurn = MiracleMath.ReckoningBaseBurn + _rng.Next(MiracleMath.ReckoningBurnVariance);
+                int burned = 0;
+                try
+                {
+                    foreach (var e in mp.MemberRoster.GetTroopRoster().ToList())
+                    {
+                        if (e.Character.IsHero) continue;
+                        int n = Math.Min(e.Number - e.WoundedNumber, toBurn - burned);
+                        if (n <= 0) continue;
+                        try { mp.MemberRoster.AddToCounts(e.Character, 0, false, n); burned += n; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        if (burned >= toBurn) break;
+                    }
+                    mp.RecentEventsMorale -= MiracleMath.ReckoningMoraleHit;
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                totalBurned += burned;
+            }
+
+            string ashenPart = ashenHit > 0 ? $"{ashenHit} Ashen {(ashenHit == 1 ? "banner" : "banners")}" : "";
+            string wildPart  = wildHit  > 0 ? $"{wildHit} wild {(wildHit == 1 ? "band" : "bands")}"        : "";
+            string who = (ashenPart.Length > 0 && wildPart.Length > 0) ? $"{ashenPart} and {wildPart}" : ashenPart + wildPart;
+            return $"The Fire finds what resists it. {who} recoil — {totalBurned} burned or scattered.";
         }
 
         // ── Mission tick: advance timers ──────────────────────────────────────
@@ -506,6 +575,59 @@ namespace AshAndEmber
                 Log(caster, warded > 0
                     ? $"consecrates the ground — {warded} {(warded == 1 ? "ally stands" : "allies stand")} warded against all magic for 10 seconds."
                     : "consecrates the ground — no magic can touch you for 10 seconds.");
+        }
+
+        // The Undivided Flame — answers only once all five traits stand at the
+        // gate at once. A nova centred on the caster: allies within it are warded
+        // and mended, ordinary foes are burned, and the two things that resist
+        // the Fire hardest — the Ashen's cold, the Kindled's untempered wildness
+        // — are burned far harder than anything else caught in it.
+        private static void BattleUndividedFlame(Agent caster, bool announce)
+        {
+            Vec3 pos;
+            try { pos = caster.Position; } catch { return; }
+
+            try { SpellEffects.SpawnExplosionParticle(pos, 3f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnBigFireParticle(pos, 4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Yellow, 4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.HealAgent(caster, SafeLimit(caster) * MiracleMath.UndividedFlameAllyHealFrac); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            float r2 = MiracleMath.UndividedFlameRadius * MiracleMath.UndividedFlameRadius;
+            int ashenBurned = 0, kindledBurned = 0, othersScorched = 0, alliesMended = 0;
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (a == caster || !a.IsActive() || a.IsMount) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+
+                    if (caster.Team != null && a.Team == caster.Team)
+                    {
+                        try { SpellEffects.HealAgent(a, SafeLimit(a) * MiracleMath.UndividedFlameAllyHealFrac); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        alliesMended++;
+                        continue;
+                    }
+
+                    if (SpellEffects.IsWarded(a)) continue;
+
+                    float dmg = MiracleMath.UndividedFlameBaseDamage;
+                    if (IsAshenAgent(a)) { dmg *= MiracleMath.UndividedFlameAshenMultiplier; ashenBurned++; }
+                    else if (ElementalBeings.IsElemental(a)) { dmg *= MiracleMath.UndividedFlameElementalMultiplier; kindledBurned++; }
+                    else othersScorched++;
+
+                    try { SpellEffects.DamageAgent(a, dmg, ColorSchool.Yellow, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Yellow, 4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            try { SpellEffects.ScatterEnemies(pos, MiracleMath.UndividedFlameRadius, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.RecordMagicCast(pos); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            if (announce)
+                Log(caster, $"calls the Undivided Flame — {ashenBurned} Ashen seared, {kindledBurned} Kindled unmade, " +
+                            $"{othersScorched} others burned, {alliesMended} allies mended.");
         }
 
         // ── Grace campaign implementations ────────────────────────────────────

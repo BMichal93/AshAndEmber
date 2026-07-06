@@ -1,10 +1,24 @@
 // =============================================================================
 // ASH AND EMBER — Miracles/MiracleCatalog.cs
 //
-// The Grace miracles (golden light). Each of the five PERSONALITY traits grants
-// two miracles — one for battle, one for the campaign map — once the hero holds
-// that trait at +1 or higher (the virtuous are heard; the rest are not). The old
-// honor/mercy/generosity "virtue gates" are gone; the trait IS the gate.
+// The Grace miracles (golden light). This is not a second power granted from
+// outside — it is the same Fire the rest of the mod draws on, called through
+// emotional and intellectual alignment rather than a drawn cone. Each of the
+// five PERSONALITY traits is a different way of holding that alignment, and
+// grants two miracles — one for battle, one for the campaign map — once the
+// hero holds that trait at +1 or higher: the Fire answers a settled, honest
+// state of mind, not a rank of piety. The old honor/mercy/generosity "virtue
+// gates" are gone; the trait IS the gate.
+//
+// Flavour text should never write "the light" as a watching, judging, or
+// granting party — it is the visible shape of the caster's own resonance
+// with the Fire. If a line reads like a deity deciding someone's worth,
+// rewrite it so the caster (or their own conviction) is doing the deciding.
+//
+// Two further miracles (The Undivided Flame, battle; The Reckoning, map) answer
+// only once all five traits are held at the gate at once — RequiresAllTraits —
+// rather than a single trait. Their damage leans hard on the two things that
+// resist the Fire: the Ashen's cold, and the Kindled's untempered wildness.
 //
 // Pure data — no TaleWorlds types. The sequence string mirrors the MiracleMath
 // constants so the input handler and the menu show the same notation.
@@ -30,13 +44,18 @@ namespace AshAndEmber
         GraceBounty   = 7,  // Generosity — map:    bounty (food + morale)
         InsightPyre   = 8,  // Calculating — battle: pillar of judgement
         InsightSight  = 9,  // Calculating — map:    far-sight (scout the roads)
+
+        // Answer only once all five traits stand at the gate at once.
+        UndividedFlame = 10, // All five — battle: nova, devastating to Ashen and the Kindled
+        Reckoning      = 11, // All five — map:    strikes the nearest Ashen and wild elemental bands
     }
 
     public struct MiracleDef
     {
         public MiracleType Type;
-        public GraceTrait  Trait;
+        public GraceTrait  Trait;          // ignored when RequiresAllTraits is set
         public bool        IsGrace;
+        public bool        RequiresAllTraits; // The Undivided Flame / The Reckoning: all five at once
         public string      Name;
         public string      Effect;
         public string      Flavour;
@@ -46,8 +65,18 @@ namespace AshAndEmber
 
         public string Context => UsableInBattle ? "battle only" : "field only";
 
+        // The Undivided Flame / The Reckoning ask a heavier toll than an ordinary
+        // prayer — twice the Grace, win or fizzle, matching how much rarer their
+        // gate is to meet in the first place.
+        public int GraceCost => RequiresAllTraits ? 2 : 1;
+
         // Shown on the litany so the player knows which virtue unlocks it.
-        public string GateNote => $"[{TraitName} +1]";
+        public string GateNote => RequiresAllTraits ? "[all five virtues +1]" : $"[{TraitName} +1]";
+
+        // Used where a locked prayer explains itself to the player.
+        public string GateExplanation => RequiresAllTraits
+            ? "it answers only to one who holds all five virtues at once, each at +1 or higher"
+            : $"it is granted by the {TraitName} (that trait must stand at +1 or higher)";
 
         public string TraitName =>
             Trait == GraceTrait.Mercy       ? "Merciful"
@@ -65,15 +94,15 @@ namespace AshAndEmber
             new MiracleDef {
                 Type = MiracleType.MercyMend, Trait = GraceTrait.Mercy, IsGrace = true,
                 Name = "Radiant Mending",
-                Effect = "The light closes your wounds and the wounds of those standing near you.",
-                Flavour = "A warmth that has nothing to do with fire — the kind that stays after the flame has gone.",
+                Effect = "Feeling for the ones beside you turns the Fire gentle — your wounds close, and theirs closest to you.",
+                Flavour = "Not a colder fire, held at a distance. The same one, held differently — the part of you that reaches for another before itself.",
                 UsableInBattle = true, UsableOnMap = false,
                 Sequence = MiracleMath.SeqMercyMend },
             new MiracleDef {
                 Type = MiracleType.MercyRelief, Trait = GraceTrait.Mercy, IsGrace = true,
                 Name = "The Mending Road",
                 Effect = "The party's wounded mend faster, and the worst of their hurts is eased.",
-                Flavour = "No surgeon worked this. The carts are simply lighter by morning.",
+                Flavour = "No surgeon worked this. Something in you settled overnight, and the carts are lighter for it by morning.",
                 UsableInBattle = false, UsableOnMap = true,
                 Sequence = MiracleMath.SeqMercyRelief },
 
@@ -81,15 +110,15 @@ namespace AshAndEmber
             new MiracleDef {
                 Type = MiracleType.ValorFury, Trait = GraceTrait.Valor, IsGrace = true,
                 Name = "Light of Valour",
-                Effect = "A steady glow settles over your line — courage and speed surge through those near you.",
-                Flavour = "The officers stop shouting. The men already know what to do. They always did.",
+                Effect = "Your certainty catches like dry kindling — courage and speed surge through those near you.",
+                Flavour = "The officers stop shouting. The men already know what to do — something in the air said so before anyone spoke it.",
                 UsableInBattle = true, UsableOnMap = false,
                 Sequence = MiracleMath.SeqValorFury },
             new MiracleDef {
                 Type = MiracleType.ValorMarch, Trait = GraceTrait.Valor, IsGrace = true,
                 Name = "The Long March",
                 Effect = "The column finds its second wind — morale lifts and the miles fall away faster.",
-                Flavour = "No one calls a halt. They want to be there before the light fades.",
+                Flavour = "No one calls a halt. They want to be there before the sky dims — your certainty is catching, same as it always does.",
                 UsableInBattle = false, UsableOnMap = true,
                 Sequence = MiracleMath.SeqValorMarch },
 
@@ -97,15 +126,15 @@ namespace AshAndEmber
             new MiracleDef {
                 Type = MiracleType.HonorAegis, Trait = GraceTrait.Honor, IsGrace = true,
                 Name = "Aegis of the Oath",
-                Effect = "A golden ward settles around you — more life than your body alone should hold.",
-                Flavour = "The priests say faith is a shield. They mean it literally. It holds until it doesn't.",
+                Effect = "Your own resolve hardens into a golden ward — you hold more than your body alone should.",
+                Flavour = "The priests call it faith given shape. What actually holds you is plainer than that: conviction, made solid. It holds until it doesn't.",
                 UsableInBattle = true, UsableOnMap = false,
                 Sequence = MiracleMath.SeqHonorAegis },
             new MiracleDef {
                 Type = MiracleType.HonorOath, Trait = GraceTrait.Honor, IsGrace = true,
                 Name = "The Sworn Word",
-                Effect = "An oath spoken in the light steadies a wavering town, or warms a lord toward you.",
-                Flavour = "Honour is not a feeling. It is a contract, and the light is its witness.",
+                Effect = "An oath spoken in full conviction steadies a wavering town, or warms a lord toward you.",
+                Flavour = "Honour is not a feeling. It is a debt you choose to carry — and something in you, not above you, keeps the ledger.",
                 UsableInBattle = false, UsableOnMap = true,
                 Sequence = MiracleMath.SeqHonorOath },
 
@@ -113,7 +142,7 @@ namespace AshAndEmber
             new MiracleDef {
                 Type = MiracleType.GraceBlessing, Trait = GraceTrait.Generosity, IsGrace = true,
                 Name = "Shared Light",
-                Effect = "The ground around you is consecrated — those within are warded against cold and curse, and their wounds begin to close.",
+                Effect = "Your own warmth widens to the ground around you — those within are warded against cold and curse, and their wounds begin to close.",
                 Flavour = "Draw the circle. What you have, you give. Within it, the dark has no hands.",
                 UsableInBattle = true, UsableOnMap = false,
                 Sequence = MiracleMath.SeqGraceBlessing },
@@ -129,17 +158,35 @@ namespace AshAndEmber
             new MiracleDef {
                 Type = MiracleType.InsightPyre, Trait = GraceTrait.Calculating, IsGrace = true,
                 Name = "Pyre of Judgement",
-                Effect = "A pillar of consecrated fire falls where your eyes are fixed — searing all beneath it and hurling them from the light.",
-                Flavour = "There is no mercy in the verdict and no appeal. The light has looked, and found them wanting.",
+                Effect = "A pillar of fire falls where your eyes are fixed — the same clarity that weighs a ledger weighs a life, and sears all beneath it.",
+                Flavour = "There is no mercy in the verdict, because you rendered it, and no appeal, because you don't grant them. The Fire only carries out what you had already decided.",
                 UsableInBattle = true, UsableOnMap = false,
                 Sequence = MiracleMath.SeqInsightPyre },
             new MiracleDef {
                 Type = MiracleType.InsightSight, Trait = GraceTrait.Calculating, IsGrace = true,
                 Name = "Far-Sight",
-                Effect = "The light shows you the roads — what moves on them, and how close it has come.",
-                Flavour = "Foresight is only attention, paid early. The light merely lengthens your reach.",
+                Effect = "Your own attention, kindled, reaches out along the roads — what moves on them, and how close it has come.",
+                Flavour = "Foresight is only attention, paid early. The Fire doesn't see for you — it just lengthens your reach.",
                 UsableInBattle = false, UsableOnMap = true,
                 Sequence = MiracleMath.SeqInsightSight },
+
+            // ── All five, at once ──────────────────────────────────────────────
+            new MiracleDef {
+                Type = MiracleType.UndividedFlame, Trait = GraceTrait.Calculating, IsGrace = true,
+                RequiresAllTraits = true,
+                Name = "The Undivided Flame",
+                Effect = "Every part of you agrees at once, and the Fire answers whole — those beside you are warded and mended, and the Ashen's cold and the Kindled's untempered wildness burn hardest of all.",
+                Flavour = "Mercy does not flinch. Honour does not calculate. Calculation does not hesitate. For one breath there is no seam left in you for the Fire to catch on — so it simply pours through.",
+                UsableInBattle = true, UsableOnMap = false,
+                Sequence = MiracleMath.SeqUndividedFlame },
+            new MiracleDef {
+                Type = MiracleType.Reckoning, Trait = GraceTrait.Calculating, IsGrace = true,
+                RequiresAllTraits = true,
+                Name = "The Reckoning",
+                Effect = "Cast out from a whole heart, the Fire finds what resists it nearby — the grey banners and the wild, untempered kindling alike — and answers both.",
+                Flavour = "It does not ask which is worse: the cold that refuses the Fire, or the flame that never learned to mean anything. It only asks which is nearest.",
+                UsableInBattle = false, UsableOnMap = true,
+                Sequence = MiracleMath.SeqReckoning },
         };
 
         public static IReadOnlyList<MiracleDef> All    => _defs;

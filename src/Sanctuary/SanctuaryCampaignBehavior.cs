@@ -1,9 +1,11 @@
 // =============================================================================
 // ASH AND EMBER — Sanctuary/SanctuaryCampaignBehavior.cs
 //
-// Sanctuaries are the player's Grace charging stations. Each offers two rites:
-//   • Pray for Grace      — gain Grace (scales with Honor/Mercy/Generosity).
+// Sanctuaries are the player's Grace charging stations. Each offers three rites:
+//   • Pray for Grace       — gain Grace (scales with Honor/Mercy/Generosity).
 //   • Take the Warding Seal — ward the world against Ashen events for a time.
+//   • Keep the Long Vigil   — pay gold or blood to raise one personality trait,
+//     the same traits that gate the Grace miracles (see MiracleCatalog).
 // Grace is spent on miracles (see the Miracle system). NPC miracle use lives
 // entirely in MiracleBattleAI / MiracleCampaignBehavior — not here.
 //
@@ -43,6 +45,7 @@ namespace AshAndEmber
         // Per-rite cooldown tracking
         private static int  _lastPrayerDay     = -999;
         private static int  _lastProtectiveDay = -999;
+        private static int  _lastCommunionDay  = -999;
 
         private static readonly Random _rng = new Random();
 
@@ -67,6 +70,7 @@ namespace AshAndEmber
             try { store.SyncData("SANCT_UseCount", ref _sanctuaryUseCount); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("SANCT_LastPrayerDay", ref _lastPrayerDay); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("SANCT_LastProtectiveDay", ref _lastProtectiveDay); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { store.SyncData("SANCT_LastCommunionDay", ref _lastCommunionDay); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -89,6 +93,7 @@ namespace AshAndEmber
             _sanctuaryUseCount          = 0;
             _lastPrayerDay              = -999;
             _lastProtectiveDay          = -999;
+            _lastCommunionDay           = -999;
         }
 
         // Authoritative new-game setup. Fired once from OnCharacterCreationIsOver —
