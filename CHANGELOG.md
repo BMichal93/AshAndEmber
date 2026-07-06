@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+### Keep the Long Vigil
+- Sanctuaries now offer a third rite: **Keep the Long Vigil** — kneel and pay a tribute of gold or blood to raise one of the five personality traits that gate the Grace miracles (Mercy, Valor, Honor, Generosity, Calculating). The tribute scales with the level being reached, the rite is capped at the engine's usual +2 trait ceiling, and it shares a 7-day cooldown so it deepens virtue rather than trivially maxing it in an afternoon.
+
 ### Five new crystals, and the ruins remember them
 - **Five new crystals**: **Thornveil** (roots one foe near-solid), **Aegisstone** (heals you and hurls nearby enemies back), **Willowisp** (shatters one foe's nerve from range), **Bloodstone** (AoE damage that feeds half of it back to you as healing), and **Zephyrglass** (hastens you and nearby allies). Formed at the Crystalline Chamber and seeded onto lords exactly like the original six.
 - **Ashen Ruins now sometimes yield a formed crystal** as a retreat/partial reward — seven of the twenty-eight ruins carry one.
