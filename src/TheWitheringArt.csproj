@@ -229,6 +229,7 @@
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.Menus.cs"/>
     <Compile Include="Sanctuary\SanctuaryCampaignBehavior.Npc.cs"/>
+    <Compile Include="Sanctuary\SanctuaryMath.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Menus.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Npc.cs"/>

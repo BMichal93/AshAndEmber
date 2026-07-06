@@ -53,6 +53,10 @@ namespace AshAndEmber
             try { MiracleBattleAI.Reset();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { MiracleInputHandler.ResetInputState(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { NatureEffects.ClearBattleState();      } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Wire the Grace bank to the live Abundant Grace devotion (the bank itself
+            // is kept TaleWorlds-free so it stays unit-testable — see behaviour.md).
+            MiracleInventory.TalentCapBonusProvider = () =>
+            { try { return MiracleTalents.GraceCapBonus; } catch { return 0; } };
             try { NatureCharge.ClearForMission();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { NatureChargeBar.Reset();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { NatureSeerAI.ClearCooldowns();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

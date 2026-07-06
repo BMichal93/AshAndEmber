@@ -1,12 +1,14 @@
 // =============================================================================
 // ASH AND EMBER — SanctuaryCampaignBehavior.Menus.cs
-// Sanctuary menu: two options — Pray for Grace, Take the Warding Seal.
+// Sanctuary menu: three options — Pray for Grace, Take the Warding Seal, and
+// Keep the Long Vigil (raise a personality trait for gold or blood).
 // The old five-rite system has been replaced. Old SANCT_* save keys that are
 // no longer written are silently ignored on load (backward compatible).
 // Partial of SanctuaryCampaignBehavior.
 // =============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
@@ -144,7 +146,37 @@ namespace AshAndEmber
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            // ── Option 3: Meditate on the Flame ───────────────────────────────
+            // ── Option 3: Keep the Long Vigil ─────────────────────────────────
+            try
+            {
+                starter.AddGameMenuOption("sanctuary_menu", "sanctuary_vigil", "{SANCT_VIGIL_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            int today = CurrentCampaignDay();
+                            bool onCooldown = (today - _lastCommunionDay) < SanctuaryMath.CommunionCooldownDays;
+                            bool allCapped = VigilTraits.All(t =>
+                                !SanctuaryMath.CanRaiseTrait(SafeTraitLevel(t)));
+
+                            string suffix = "";
+                            if (allCapped)
+                            { args.IsEnabled = false; suffix = "  [your virtues already burn as bright as the flame allows]"; }
+                            else if (onCooldown)
+                            { args.IsEnabled = false; suffix = $"  [On cooldown: {SanctuaryMath.CommunionCooldownDays - (today - _lastCommunionDay)} day(s)]"; }
+
+                            MBTextManager.SetTextVariable("SANCT_VIGIL_TEXT",
+                                $"Keep the Long Vigil  (raise a virtue — gold or blood){suffix}");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Default; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        return true;
+                    },
+                    args => DoOpenVigil());
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            // ── Option 4: Meditate on the Flame ───────────────────────────────
             try
             {
                 starter.AddGameMenuOption("sanctuary_menu", "sanctuary_meditate_rite", "Meditate on the Flame",
@@ -296,6 +328,155 @@ namespace AshAndEmber
             catch
             {
                 MBInformationManager.AddQuickInformation(new TextObject($"Warding Seal active for {wardDays} days."));
+                try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+        }
+
+        // ── Action: Keep the Long Vigil (raise a personality trait) ────────────
+        // The same five traits that gate the Grace miracles (MiracleCatalog).
+        // Raising one costs gold or blood — the player's choice — and is capped
+        // and cooled down so it augments virtue rather than trivially maxing it.
+        private static readonly GraceTrait[] VigilTraits =
+        {
+            GraceTrait.Mercy, GraceTrait.Valor, GraceTrait.Honor,
+            GraceTrait.Generosity, GraceTrait.Calculating,
+        };
+
+        private static int SafeTraitLevel(GraceTrait t)
+        {
+            try { return Hero.MainHero?.GetTraitLevel(MiracleEffects.TraitObjectOf(t)) ?? 0; }
+            catch { return 0; }
+        }
+
+        private static string VigilTraitName(GraceTrait t)
+        {
+            switch (t)
+            {
+                case GraceTrait.Mercy:      return "Mercy";
+                case GraceTrait.Valor:      return "Valour";
+                case GraceTrait.Honor:      return "Honour";
+                case GraceTrait.Generosity: return "Generosity";
+                default:                    return "Calculation";
+            }
+        }
+
+        private static string SignedLevel(int lvl) => lvl > 0 ? "+" + lvl : lvl.ToString();
+
+        private static readonly Color GraceColor = new Color(0.95f, 0.82f, 0.35f);
+
+        private static void DoOpenVigil()
+        {
+            var hero = Hero.MainHero;
+            if (hero == null) return;
+
+            var elements = new List<InquiryElement>();
+            foreach (var t in VigilTraits)
+            {
+                int lvl = SafeTraitLevel(t);
+                bool can = SanctuaryMath.CanRaiseTrait(lvl);
+                string tail = can
+                    ? $"[{SignedLevel(lvl)} → {SignedLevel(lvl + 1)}]"
+                    : "[already unwavering]";
+                elements.Add(new InquiryElement((int)t, $"{VigilTraitName(t)}  —  {tail}", null, can, null));
+            }
+
+            try
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "Keep the Long Vigil",
+                    "Kneel before the flame and let it weigh what you are. Choose the virtue you would deepen.",
+                    elements, true, 1, 1, "Kneel", "Step back",
+                    chosen =>
+                    {
+                        if (chosen == null || chosen.Count == 0) return;
+                        var trait = (GraceTrait)(int)chosen[0].Identifier;
+                        DoOpenVigilPayment(trait);
+                    },
+                    null, "", false), false, true);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        private static void DoOpenVigilPayment(GraceTrait trait)
+        {
+            var hero = Hero.MainHero;
+            if (hero == null) return;
+
+            int lvl = SafeTraitLevel(trait);
+            if (!SanctuaryMath.CanRaiseTrait(lvl))
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{VigilTraitName(trait)} already stands as high as the flame allows.", GraceColor));
+                return;
+            }
+
+            int target   = lvl + 1;
+            int goldCost = SanctuaryMath.CommunionGoldCost(target);
+            int hpCost   = SanctuaryMath.CommunionHpCost(target);
+
+            bool canGold  = hero.Gold >= goldCost;
+            bool canBlood = hero.HitPoints > 1;
+
+            var elements = new List<InquiryElement>
+            {
+                new InquiryElement("gold",  $"Tribute of Gold — {goldCost} denars", null, canGold, "Empty your purse before the flame."),
+                new InquiryElement("blood", $"Tribute of Blood — {hpCost} HP",       null, canBlood, "Kneel until it hurts. The flame does not ask for much."),
+            };
+
+            try
+            {
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    $"Vigil of {VigilTraitName(trait)}",
+                    $"The flame will lift you from {SignedLevel(lvl)} to {SignedLevel(target)}. How will you pay for it?",
+                    elements, true, 1, 1, "Offer", "Step back",
+                    chosen =>
+                    {
+                        if (chosen == null || chosen.Count == 0) return;
+                        bool payGold = (string)chosen[0].Identifier == "gold";
+                        DoCommitVigil(trait, target, goldCost, hpCost, payGold);
+                    },
+                    null, "", false), false, true);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        private static void DoCommitVigil(GraceTrait trait, int targetLevel, int goldCost, int hpCost, bool payGold)
+        {
+            var hero = Hero.MainHero;
+            if (hero == null) return;
+
+            if (payGold)
+            {
+                if (hero.Gold < goldCost)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage("You cannot afford that tribute.", GraceColor));
+                    return;
+                }
+                try { hero.ChangeHeroGold(-goldCost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            else
+            {
+                try { hero.HitPoints = Math.Max(1, hero.HitPoints - hpCost); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+
+            try { hero.SetTraitLevel(MiracleEffects.TraitObjectOf(trait), targetLevel); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            _lastCommunionDay    = CurrentCampaignDay();
+            _lastSanctuaryUseDay = CurrentCampaignDay();
+            _sanctuaryUseCount++;
+
+            string paidNote = payGold ? $"{goldCost} denars poorer" : $"{hpCost} HP the weaker";
+            string msg = $"The candles gutter and steady. You rise {paidNote}, and {VigilTraitName(trait)} " +
+                         $"sits differently on you now — {SignedLevel(targetLevel)}.";
+
+            try
+            {
+                InformationManager.ShowInquiry(new InquiryData("The Long Vigil", msg, true, false,
+                    "So be it.", "", () => { try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }, null));
+            }
+            catch
+            {
+                MBInformationManager.AddQuickInformation(new TextObject(msg));
                 try { GameMenu.SwitchToMenu("sanctuary_menu"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }

@@ -14,12 +14,17 @@ namespace AshAndEmber
 {
     public enum CrystalType
     {
-        Sunstone     = 0, // warmth pulse — heal self + nearby allies
-        Embershard   = 1, // shard burst  — AoE fire damage
-        Rimeshard    = 2, // frost pulse  — slow nearby enemies
-        Veilstone    = 3, // veil grasp   — strikes one random enemy at range
-        Stormcrystal = 4, // thunder clap — AoE damage + morale drain
-        Duskstone    = 5, // despair wave — morale drain + slow
+        Sunstone     = 0, // warmth pulse  — heal self + nearby allies
+        Embershard   = 1, // shard burst   — AoE fire damage
+        Rimeshard    = 2, // frost pulse   — slow nearby enemies
+        Veilstone    = 3, // veil grasp    — strikes one random enemy at range
+        Stormcrystal = 4, // thunder clap  — AoE damage + morale drain
+        Duskstone    = 5, // despair wave  — morale drain + slow
+        Thornveil    = 6, // root grasp    — immobilises one random enemy at range + damage
+        Aegisstone   = 7, // bulwark pulse — self heal + knocks back nearby enemies
+        Willowisp    = 8, // dread whisper — shatters the morale of one random enemy at range
+        Bloodstone   = 9, // vampiric burst — AoE damage, heals caster on the blood spilled
+        Zephyrglass  = 10,// quickening light — AoE haste for caster and nearby allies
     }
 
     public struct CrystalDef
@@ -108,6 +113,66 @@ namespace AshAndEmber
                 Lore        = "It looks like ash pressed into glass. It grew in the penumbra of underground caverns "
                             + "where sunlight arrives only as rumour. "
                             + "What it releases is not warmth but the memory of its absence: a grey weight that settles on the will.",
+            },
+            new CrystalDef
+            {
+                Type        = CrystalType.Thornveil,
+                ItemId      = "aae_thornveil",
+                TradeGoodId = "vegetables",
+                Name        = "Thornveil",
+                GlowColor   = ColorSchool.Green,
+                EffectDesc  = "Root grasp: reaches out to one random enemy within 10 m — deals 25 HP and roots them in place for 3 seconds.",
+                Lore        = "Something grows inside this stone that has never seen the sun — a lattice of green threads, "
+                            + "coiled and waiting. Loosed, it remembers being a root, and reaches for the nearest thing "
+                            + "still able to run.",
+            },
+            new CrystalDef
+            {
+                Type        = CrystalType.Aegisstone,
+                ItemId      = "aae_aegisstone",
+                TradeGoodId = "wine",
+                Name        = "Aegisstone",
+                GlowColor   = ColorSchool.White,
+                EffectDesc  = "Bulwark pulse: heals you for 20 HP and hurls every enemy within 5 m back from you.",
+                Lore        = "Cut from a vein that never fractures no matter how the mountain shifts around it. "
+                            + "Its lattice does not want to break, and for a moment it lends that stubbornness to its bearer — "
+                            + "warmth returning, and the world briefly pushed to arm's length.",
+            },
+            new CrystalDef
+            {
+                Type        = CrystalType.Willowisp,
+                ItemId      = "aae_willowisp",
+                TradeGoodId = "cheese",
+                Name        = "Willowisp",
+                GlowColor   = ColorSchool.Nature,
+                EffectDesc  = "Dread whisper: reaches into the mind of one random enemy within 12 m and shatters their nerve (-40 morale).",
+                Lore        = "A cold, pale light drifts inside the stone, never quite where you last looked. "
+                            + "It does not strike the body. It finds the one thought a soldier keeps buried — the fear "
+                            + "of the dark path home — and holds it up to the light.",
+            },
+            new CrystalDef
+            {
+                Type        = CrystalType.Bloodstone,
+                ItemId      = "aae_bloodstone",
+                TradeGoodId = "meat",
+                Name        = "Bloodstone",
+                GlowColor   = ColorSchool.Red,
+                EffectDesc  = "Vampiric burst: deals 25 damage to all enemies within 4 m and returns half of it to you as healing.",
+                Lore        = "Darker than Embershard, and warm in a way no stone should be. "
+                            + "It does not simply burn — it trades. What it takes from the flesh of your enemies, "
+                            + "it gives back to yours, and asks no question about the fairness of the exchange.",
+            },
+            new CrystalDef
+            {
+                Type        = CrystalType.Zephyrglass,
+                ItemId      = "aae_zephyrglass",
+                TradeGoodId = "fish",
+                Name        = "Zephyrglass",
+                GlowColor   = ColorSchool.Yellow,
+                EffectDesc  = "Quickening light: you and nearby allies (5 m) move 30 % faster for 6 seconds.",
+                Lore        = "The clearest of the lattices, and the lightest. "
+                            + "It holds no heat and no cold, only a hurry it cannot explain — a stone in a rush to be "
+                            + "somewhere else, and generous enough to take you with it.",
             },
         };
 

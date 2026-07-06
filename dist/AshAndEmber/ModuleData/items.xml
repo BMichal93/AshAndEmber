@@ -115,7 +115,7 @@
     <Flags />
   </Item>
 
-  <!-- Veilstone — veil weave: speed burst for nearby allies -->
+  <!-- Veilstone — veil grasp: strikes one random enemy at range -->
   <Item id="aae_veilstone"
         name="Veilstone"
         body_name="bo_mace_a"
@@ -184,6 +184,156 @@
         Type="OneHandedWeapon"
         weight="0.3"
         value="1600"
+        item_holsters="sword_left_hip"
+        using_tableau_cache_system="false">
+    <ItemComponent>
+      <Weapon weapon_class="OneHandedSword"
+              weapon_balance="100"
+              thrust_speed="79"
+              speed_rating="99"
+              physics_material="wood_weapon"
+              missile_speed="0"
+              weapon_length="95"
+              thrust_damage="3"
+              thrust_damage_type="Blunt"
+              swing_damage="3"
+              swing_damage_type="Blunt"
+              item_usage="onehanded_block_shield_swing">
+        <WeaponFlags MeleeWeapon="true" />
+      </Weapon>
+    </ItemComponent>
+    <Flags />
+  </Item>
+
+  <!-- Thornveil — root grasp: immobilises one random enemy at range + damage -->
+  <Item id="aae_thornveil"
+        name="Thornveil"
+        body_name="bo_mace_a"
+        recalculate_body="true"
+        mesh="throwing_stone"
+        Type="OneHandedWeapon"
+        weight="0.3"
+        value="1700"
+        item_holsters="sword_left_hip"
+        using_tableau_cache_system="false">
+    <ItemComponent>
+      <Weapon weapon_class="OneHandedSword"
+              weapon_balance="100"
+              thrust_speed="79"
+              speed_rating="99"
+              physics_material="wood_weapon"
+              missile_speed="0"
+              weapon_length="95"
+              thrust_damage="3"
+              thrust_damage_type="Blunt"
+              swing_damage="3"
+              swing_damage_type="Blunt"
+              item_usage="onehanded_block_shield_swing">
+        <WeaponFlags MeleeWeapon="true" />
+      </Weapon>
+    </ItemComponent>
+    <Flags />
+  </Item>
+
+  <!-- Aegisstone — bulwark pulse: self heal + knocks back nearby enemies -->
+  <Item id="aae_aegisstone"
+        name="Aegisstone"
+        body_name="bo_mace_a"
+        recalculate_body="true"
+        mesh="throwing_stone"
+        Type="OneHandedWeapon"
+        weight="0.3"
+        value="1800"
+        item_holsters="sword_left_hip"
+        using_tableau_cache_system="false">
+    <ItemComponent>
+      <Weapon weapon_class="OneHandedSword"
+              weapon_balance="100"
+              thrust_speed="79"
+              speed_rating="99"
+              physics_material="wood_weapon"
+              missile_speed="0"
+              weapon_length="95"
+              thrust_damage="3"
+              thrust_damage_type="Blunt"
+              swing_damage="3"
+              swing_damage_type="Blunt"
+              item_usage="onehanded_block_shield_swing">
+        <WeaponFlags MeleeWeapon="true" />
+      </Weapon>
+    </ItemComponent>
+    <Flags />
+  </Item>
+
+  <!-- Willowisp — dread whisper: shatters the morale of one random enemy at range -->
+  <Item id="aae_willowisp"
+        name="Willowisp"
+        body_name="bo_mace_a"
+        recalculate_body="true"
+        mesh="throwing_stone"
+        Type="OneHandedWeapon"
+        weight="0.3"
+        value="1600"
+        item_holsters="sword_left_hip"
+        using_tableau_cache_system="false">
+    <ItemComponent>
+      <Weapon weapon_class="OneHandedSword"
+              weapon_balance="100"
+              thrust_speed="79"
+              speed_rating="99"
+              physics_material="wood_weapon"
+              missile_speed="0"
+              weapon_length="95"
+              thrust_damage="3"
+              thrust_damage_type="Blunt"
+              swing_damage="3"
+              swing_damage_type="Blunt"
+              item_usage="onehanded_block_shield_swing">
+        <WeaponFlags MeleeWeapon="true" />
+      </Weapon>
+    </ItemComponent>
+    <Flags />
+  </Item>
+
+  <!-- Bloodstone — vampiric burst: AoE damage, heals caster on the blood spilled -->
+  <Item id="aae_bloodstone"
+        name="Bloodstone"
+        body_name="bo_mace_a"
+        recalculate_body="true"
+        mesh="throwing_stone"
+        Type="OneHandedWeapon"
+        weight="0.3"
+        value="1900"
+        item_holsters="sword_left_hip"
+        using_tableau_cache_system="false">
+    <ItemComponent>
+      <Weapon weapon_class="OneHandedSword"
+              weapon_balance="100"
+              thrust_speed="79"
+              speed_rating="99"
+              physics_material="wood_weapon"
+              missile_speed="0"
+              weapon_length="95"
+              thrust_damage="3"
+              thrust_damage_type="Blunt"
+              swing_damage="3"
+              swing_damage_type="Blunt"
+              item_usage="onehanded_block_shield_swing">
+        <WeaponFlags MeleeWeapon="true" />
+      </Weapon>
+    </ItemComponent>
+    <Flags />
+  </Item>
+
+  <!-- Zephyrglass — quickening light: AoE haste for caster and nearby allies -->
+  <Item id="aae_zephyrglass"
+        name="Zephyrglass"
+        body_name="bo_mace_a"
+        recalculate_body="true"
+        mesh="throwing_stone"
+        Type="OneHandedWeapon"
+        weight="0.3"
+        value="1500"
         item_holsters="sword_left_hip"
         using_tableau_cache_system="false">
     <ItemComponent>

@@ -18,8 +18,13 @@ namespace AshAndEmber
     {
         // ── Counters ───────────────────────────────────────────────────────────
         public const int GraceColdCap        = 10;
+        // Pure ceiling: base cap plus a supplied Abundant Grace bonus. Kept free of
+        // TaleWorlds types so the Grace bank (MiracleInventory) stays unit-testable —
+        // see behaviour.md. The talent lookup lives only in the parameterless overload.
+        public static int GraceCap(int talentBonus) => GraceColdCap + talentBonus;
         // Effective Grace ceiling — the base cap plus any Abundant Grace devotion.
-        public static int GraceCap() => GraceColdCap + MiracleTalents.GraceCapBonus;
+        // Non-pure (reads Hero via MiracleTalents); production display/refill only.
+        public static int GraceCap() => GraceCap(MiracleTalents.GraceCapBonus);
         public const int PrayerCooldownDays  =  3;   // Pray for Grace
         public const int WardingCooldownDays =  7;   // Warding Seal
 
@@ -35,14 +40,29 @@ namespace AshAndEmber
         public const string SeqGraceBounty    = "DDUULL"; // Gen.   — The Open Hand
         public const string SeqInsightPyre    = "RRUUDD"; // Calc.  — Pyre of Judgement
         public const string SeqInsightSight   = "RDRDRD"; // Calc.  — Far-Sight
+        public const string SeqReckoning      = "UDUDLR"; // All five — map:    The Reckoning (display/reference only)
 
         public const int SequenceLength = 6;
 
-        // Returns true and the matched MiracleType if the 6-char input is known.
+        // The Undivided Flame answers only to a longer, deliberate gesture — the
+        // battle counterpart of holding all five traits at once.
+        public const string SeqUndividedFlame      = "UDLRUDLR"; // All five — battle: The Undivided Flame
+        public const int    UltimateSequenceLength = 8;
+
+        // Returns true and the matched MiracleType if the input is a known sequence,
+        // at either the normal length or the longer ultimate length.
         public static bool TryMatchSequence(string input, out MiracleType type)
         {
             type = MiracleType.MercyMend;
-            if (string.IsNullOrEmpty(input) || input.Length != SequenceLength) return false;
+            if (string.IsNullOrEmpty(input)) return false;
+
+            if (input.Length == UltimateSequenceLength)
+            {
+                if (input == SeqUndividedFlame) { type = MiracleType.UndividedFlame; return true; }
+                return false;
+            }
+
+            if (input.Length != SequenceLength) return false;
             switch (input)
             {
                 case SeqMercyMend:     type = MiracleType.MercyMend;     return true;
@@ -55,6 +75,7 @@ namespace AshAndEmber
                 case SeqGraceBounty:   type = MiracleType.GraceBounty;   return true;
                 case SeqInsightPyre:   type = MiracleType.InsightPyre;   return true;
                 case SeqInsightSight:  type = MiracleType.InsightSight;  return true;
+                case SeqReckoning:     type = MiracleType.Reckoning;     return true;
                 default:                                                  return false;
             }
         }
@@ -63,6 +84,12 @@ namespace AshAndEmber
         // A miracle answers once its granting personality trait is at +1 or higher.
         public const int TraitGateLevel = 1;
         public static bool MeetsTraitGate(int traitLevel) => traitLevel >= TraitGateLevel;
+
+        // The Undivided Flame / The Reckoning answer only when all five traits
+        // stand at the same gate at once — total, rather than partial, alignment.
+        public static bool MeetsAllTraitsGate(int mercy, int valor, int honor, int generosity, int calculating) =>
+            MeetsTraitGate(mercy) && MeetsTraitGate(valor) && MeetsTraitGate(honor)
+            && MeetsTraitGate(generosity) && MeetsTraitGate(calculating);
 
         // ── Point gain (Sanctuary — unchanged) ─────────────────────────────────
         // Grace scales with virtue; a hero with no virtue gains nothing.
@@ -134,5 +161,24 @@ namespace AshAndEmber
         public const float BountyMorale         = 20f;
         public const float SightMorale          = 10f;  // morale from Far-Sight
         public const float SightRadius          = 30f;  // map units scanned for threats
+
+        // ── The Undivided Flame (battle) ────────────────────────────────────────
+        // A nova centred on the caster: it heals the line beside you and burns
+        // through what resists the Fire hardest — the Ashen's cold and the
+        // Kindled's untempered wildness — far harder than it burns anyone else.
+        public const float UndividedFlameRadius              = 15f;
+        public const float UndividedFlameBaseDamage          = 45f;  // ordinary foes
+        public const float UndividedFlameAshenMultiplier     = 3f;
+        public const float UndividedFlameElementalMultiplier = 3f;
+        public const float UndividedFlameAllyHealFrac        = 0.30f;
+
+        // ── The Reckoning (map) ─────────────────────────────────────────────────
+        // Strikes the nearest Ashen banners and wild elemental bands at once —
+        // the same working, cast wide instead of close.
+        public const int   ReckoningSearchRadius = 300;  // map units
+        public const int   ReckoningMaxTargets   = 3;
+        public const int   ReckoningBaseBurn     = 20;
+        public const int   ReckoningBurnVariance = 15;
+        public const float ReckoningMoraleHit    = 35f;
     }
 }

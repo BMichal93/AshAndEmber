@@ -4,6 +4,18 @@
 
 ## Unreleased
 
+### The Undivided Flame — the fifth-trait ultimate
+- Two new Grace miracles answer only once all five personality traits (Mercy, Valor, Honor, Generosity, Calculating) are held at +1 or higher **at once**, rather than a single trait: **The Undivided Flame** (battle) — a nova that wards and mends your line while burning through the Ashen's cold and the Kindled's untempered wildness far harder than anything else it touches — and **The Reckoning** (map) — strikes the nearest Ashen banners and wild elemental bands within reach. The Undivided Flame is cast with a longer, deliberate 8-direction gesture instead of the usual 6; The Reckoning is chosen from the map litany like any other prayer. Both cost **2 Grace** instead of the usual 1, win or fizzle — they're strong enough to ask double the toll.
+
+### Keep the Long Vigil
+- Sanctuaries now offer a third rite: **Keep the Long Vigil** — kneel and pay a tribute of gold or blood to raise one of the five personality traits that gate the Grace miracles (Mercy, Valor, Honor, Generosity, Calculating). The tribute scales with the level being reached, the rite is capped at the engine's usual +2 trait ceiling, and it shares a 7-day cooldown so it deepens virtue rather than trivially maxing it in an afternoon.
+
+### Five new crystals, and the ruins remember them
+- **Five new crystals**: **Thornveil** (roots one foe near-solid), **Aegisstone** (heals you and hurls nearby enemies back), **Willowisp** (shatters one foe's nerve from range), **Bloodstone** (AoE damage that feeds half of it back to you as healing), and **Zephyrglass** (hastens you and nearby allies). Formed at the Crystalline Chamber and seeded onto lords exactly like the original six.
+- **Ashen Ruins now sometimes yield a formed crystal** as a retreat/partial reward — seven of the twenty-eight ruins carry one.
+- **Void Crystal** and the **Poisoned Air** trial — both fully built but never actually placed in any ruin — are now live (The Heart of the Void; The Bone Labyrinth, replacing a duplicated trap room there).
+- Fixed a stale item description: Veilstone's in-game text described a speed buff it has never actually cast; it now matches its real "veil grasp" effect.
+
 ### Fixes
 - **The Ashen no longer swallow a faction's ruler on a reload.** Raganvad's ruling clan holds Mazhadan Castle (a rightful Ashen keep) alongside his own capital towns Varcheg and Balgard. The cold-city setup, reading the clan's still-forming holdings, could sweep the whole ruling house into the Ashen — and on the next load his towns fell grey and Raganvad found himself locked in the Ashen's endless war against everyone. A faction's **ruling clan is now barred from conversion by identity** (never by the fragile timing of its holdings list), and a **self-healing pass on every load** frees any ruler an earlier build already dragged in, restoring his towns and his throne. The pass is a strict no-op on a healthy save.
 - **"Notes for the Adventurer" survives a reload.** If the engine concluded the reference journal entry across a save/load, a fresh, live copy is now written in its place rather than leaving only the dead one.
