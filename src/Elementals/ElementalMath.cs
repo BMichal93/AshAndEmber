@@ -136,6 +136,22 @@ namespace AshAndEmber
         public const float AuraIntervalSeconds = 0.35f;
         public const float AuraLodMetres       = 40f;   // beyond this, emit half as often
 
+        // A second, lighter wisp is re-emitted at roughly head height each aura
+        // tick so the element itself stands where a face would be — no human
+        // features to read, just the storm. Approximate adult eye height.
+        public const float AuraHeadHeightMetres = 1.65f;
+
+        public const float AuraChestHeightMetres = 1.3f;
+
+        // Lighter wisps re-emitted up and down the whole body each aura tick
+        // (shin, waist, chest, head) so the entire silhouette reads as roiling
+        // element, not just the head — no bare human limb left uncovered.
+        public static readonly float[] AuraVeilHeightsMetres = { 0.3f, 0.9f, AuraChestHeightMetres, AuraHeadHeightMetres };
+
+        // Extra stamps either side of the chest line — roughly half a shoulder's
+        // width — so an arm swinging mid-stride isn't left bare between ticks.
+        public const float AuraBodyHalfWidthMetres = 0.28f;
+
         // ── The Kindled's attack (it fights with its element, not a weapon) ──────
         // On this cooldown, a Kindled looses a small cone of its OWN element at a
         // foe within reach and roughly ahead. Weaker than a mage's drawn cast (it
