@@ -3,9 +3,11 @@
 //
 // The visual half of the Resonance Draw (see ElementSpellMinigame /
 // ElementResonanceMath): a charge track on the campaign map whose fill sweeps
-// back and forth, with two bright brackets marking the element's own "true"
-// point. Driven from the map tick; map only. Modelled directly on
-// Nature/NatureChargeBar.cs (same prefab shape, same guarded show/hide).
+// back and forth, with a single highlighted band marking the element's own
+// "true" point. Driven from the map tick; map only. Modelled directly on
+// Nature/NatureChargeBar.cs (same prefab shape, same guarded show/hide) —
+// the band reuses that exact single-overlay-widget trick rather than
+// introducing a second, untested one, to keep the prefab's risk surface small.
 //
 // Purely additive overlay (BlankWhiteSquare_9 + tints). Everything is guarded —
 // a missing prefab or engine change degrades to no bar, never a crash.
@@ -25,8 +27,8 @@ namespace AshAndEmber
         private int    _fillWidth;
         private string _fillColor   = "#D8BA86FF";
         private int    _zoneLeftPx;
-        private int    _zoneRightPx;
-        private string _bracketColor = "#FFE9B0FF";
+        private int    _zoneWidthPx;
+        private string _zoneColor = "#FFE9B0FF";
 
         [DataSourceProperty]
         public string Prompt
@@ -57,17 +59,17 @@ namespace AshAndEmber
         }
 
         [DataSourceProperty]
-        public int ZoneRightPx
+        public int ZoneWidthPx
         {
-            get => _zoneRightPx;
-            set { if (value != _zoneRightPx) { _zoneRightPx = value; OnPropertyChangedWithValue(value, "ZoneRightPx"); } }
+            get => _zoneWidthPx;
+            set { if (value != _zoneWidthPx) { _zoneWidthPx = value; OnPropertyChangedWithValue(value, "ZoneWidthPx"); } }
         }
 
         [DataSourceProperty]
-        public string BracketColor
+        public string ZoneColor
         {
-            get => _bracketColor;
-            set { if (value != _bracketColor) { _bracketColor = value; OnPropertyChangedWithValue(value, "BracketColor"); } }
+            get => _zoneColor;
+            set { if (value != _zoneColor) { _zoneColor = value; OnPropertyChangedWithValue(value, "ZoneColor"); } }
         }
     }
 
@@ -91,14 +93,16 @@ namespace AshAndEmber
 
                 _vm = new ElementResonanceVM
                 {
-                    Prompt       = Prompt(el),
-                    FillColor    = FillColorFor(el),
-                    BracketColor = "#FFE9B0FF",
+                    Prompt    = Prompt(el),
+                    FillColor = FillColorFor(el),
+                    ZoneColor = "#FFE9B0AA",
                 };
-                float center = ElementResonanceMath.ZoneCenter(el);
-                float half   = ElementResonanceMath.PerfectHalfWidth(el);
-                _vm.ZoneLeftPx  = ClampPx((center - half) * TrackInnerWidth);
-                _vm.ZoneRightPx = ClampPx((center + half) * TrackInnerWidth);
+                float center   = ElementResonanceMath.ZoneCenter(el);
+                float half     = ElementResonanceMath.PerfectHalfWidth(el);
+                int   zoneLeft  = ClampPx((center - half) * TrackInnerWidth);
+                int   zoneRight = ClampPx((center + half) * TrackInnerWidth);
+                _vm.ZoneLeftPx  = zoneLeft;
+                _vm.ZoneWidthPx = zoneRight - zoneLeft;
 
                 _layer = new GauntletLayer("AshEmberResonanceBar", 1000, false);
                 _movie = _layer.LoadMovie("AshEmberResonanceBar", _vm);
