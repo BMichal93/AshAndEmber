@@ -24,4 +24,12 @@
       <Style Name="Default" FontColor="#D8BA86FF" TextBlur="0" TextOutlineAmount="0" TextGlowRadius="1" FontSize="40" />
     </Styles>
   </Brush>
+  <!-- Instruction line above the Resonance Draw track (ElementResonanceBar). -->
+  <Brush Name="AshEmber.Resonance.Prompt" TextHorizontalAlignment="Center">
+    <Layers>
+    </Layers>
+    <Styles>
+      <Style Name="Default" FontColor="#D8BA86FF" TextBlur="0" TextOutlineAmount="0.35" TextGlowRadius="1" FontSize="28" />
+    </Styles>
+  </Brush>
 </Brushes>

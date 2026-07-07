@@ -1,0 +1,43 @@
+<Prefab>
+  <Window>
+    <!-- Transparent full-screen host; only the prompt + track are drawn.
+         DoNotAcceptEvents so it never steals input — the resonance draw is
+         read straight from the keyboard/pad by ElementResonanceMinigame. -->
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" DoNotAcceptEvents="true" DoNotUseCustomScale="true">
+      <Children>
+        <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren"
+                   HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="150"
+                   StackLayout.LayoutMethod="VerticalTopToBottom" DoNotAcceptEvents="true">
+          <Children>
+            <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren"
+                        HorizontalAlignment="Center" Brush="AshEmber.Resonance.Prompt" Text="@Prompt" MarginBottom="10" />
+
+            <!-- Track (dark backing) -->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="320" SuggestedHeight="22"
+                    HorizontalAlignment="Center" Sprite="BlankWhiteSquare_9" Color="#0A0A0AC8" DoNotAcceptEvents="true">
+              <Children>
+                <!-- Fill (element-coloured); width is the live sweep position. -->
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="@FillWidth" SuggestedHeight="18"
+                        HorizontalAlignment="Left" VerticalAlignment="Center" MarginLeft="2"
+                        Sprite="BlankWhiteSquare_9" Color="@FillColor" DoNotAcceptEvents="true" />
+
+                <!-- The true point's perfect band — one highlighted patch the fill sweeps through.
+                     Same "spacer + widget" shape as the Fill above (a proven pattern in this
+                     module), just wrapped in a StretchToParent row so it overlays the track
+                     instead of sitting flush left. -->
+                <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent"
+                           StackLayout.LayoutMethod="HorizontalLeftToRight" DoNotAcceptEvents="true">
+                  <Children>
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="@ZoneLeftPx" SuggestedHeight="1" DoNotAcceptEvents="true" />
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="@ZoneWidthPx"
+                            Sprite="BlankWhiteSquare_9" Color="@ZoneColor" DoNotAcceptEvents="true" />
+                  </Children>
+                </ListPanel>
+              </Children>
+            </Widget>
+          </Children>
+        </ListPanel>
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>

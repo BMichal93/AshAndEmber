@@ -2024,5 +2024,59 @@ namespace AshAndEmber.Tests
             var names = AshenRuinDefs.All.Select(r => r.VillageName).ToList();
             Assert.AreEqual(names.Count, names.Distinct().Count(), "Two RuinDefs share the same VillageName.");
         }
+
+        // ── ElementResonanceMath (Resonance Draw — element map-cast minigame) ───
+
+        [Test]
+        public void ElementResonanceMath_TrianglePosition01_TracesUpThenDown()
+        {
+            Assert.AreEqual(0f,   ElementResonanceMath.TrianglePosition01(0f),    1e-5f);
+            Assert.AreEqual(0.5f, ElementResonanceMath.TrianglePosition01(0.25f), 1e-5f);
+            Assert.AreEqual(1f,   ElementResonanceMath.TrianglePosition01(0.5f),  1e-5f);
+            Assert.AreEqual(0.5f, ElementResonanceMath.TrianglePosition01(0.75f), 1e-5f);
+            Assert.AreEqual(0f,   ElementResonanceMath.TrianglePosition01(1f),    1e-5f);
+        }
+
+        [Test]
+        public void ElementResonanceMath_TrianglePosition01_WrapsNegativeAndLargePhases()
+        {
+            Assert.AreEqual(ElementResonanceMath.TrianglePosition01(0.75f), ElementResonanceMath.TrianglePosition01(-0.25f), 1e-5f);
+            Assert.AreEqual(ElementResonanceMath.TrianglePosition01(0.3f),  ElementResonanceMath.TrianglePosition01(3.3f),  1e-5f);
+        }
+
+        [Test]
+        public void ElementResonanceMath_ResolveMult_FireTiersScaleWithDistanceFromTruePoint()
+        {
+            float center = ElementResonanceMath.ZoneCenter(MagicElement.Fire);
+            Assert.AreEqual(1.50f, ElementResonanceMath.ResolveMult(MagicElement.Fire, center));
+            Assert.AreEqual(1.20f, ElementResonanceMath.ResolveMult(MagicElement.Fire, center + ElementResonanceMath.PerfectHalfWidth(MagicElement.Fire) + 0.01f));
+            Assert.AreEqual(0.80f, ElementResonanceMath.ResolveMult(MagicElement.Fire, center + ElementResonanceMath.GoodHalfWidth(MagicElement.Fire) + 0.01f));
+            Assert.AreEqual(0.50f, ElementResonanceMath.ResolveMult(MagicElement.Fire, 0f));
+        }
+
+        [Test]
+        public void ElementResonanceMath_EarthForgivesAWiderMissThanFire()
+        {
+            // Earth is the patient element: its perfect and good bands are wider
+            // than Fire's, so the same offset from each element's own true point
+            // scores better on Earth.
+            Assert.Greater(ElementResonanceMath.PerfectHalfWidth(MagicElement.Earth), ElementResonanceMath.PerfectHalfWidth(MagicElement.Fire));
+            Assert.Less(ElementResonanceMath.SweepSpeed(MagicElement.Earth), ElementResonanceMath.SweepSpeed(MagicElement.Fire));
+        }
+
+        [Test]
+        public void ElementResonanceMath_AllElementsHaveOrderedBands()
+        {
+            foreach (MagicElement el in Enum.GetValues(typeof(MagicElement)))
+            {
+                float perfect = ElementResonanceMath.PerfectHalfWidth(el);
+                float good    = ElementResonanceMath.GoodHalfWidth(el);
+                float wide    = ElementResonanceMath.WideHalfWidth(el);
+                Assert.Less(perfect, good, $"{el}: perfect band should be tighter than good.");
+                Assert.Less(good, wide, $"{el}: good band should be tighter than wide.");
+                Assert.GreaterOrEqual(ElementResonanceMath.ZoneCenter(el), 0f);
+                Assert.LessOrEqual(ElementResonanceMath.ZoneCenter(el), 1f);
+            }
+        }
     }
 }

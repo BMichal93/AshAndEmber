@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+### The elements draw their own charge now — the Resonance Draw
+- **Campaign-map element workings (Emberfall, Scattering Gale, Deeproot Blight, Tidewash, Farsight) no longer cast through Grace's word-recall rite.** They now play the **Resonance Draw**: a charge sweeps a track on the map and you loose it with Left Alt (LB on a controller). How close the release lands to the element's own "true point" sets the power — Perfect (1.50×), Good (1.20×), Wide (0.80×), or a Miss (0.50×), the same four tiers as before. Fast, volatile elements (Fire, Spirit) sweep quickly with a narrow perfect band; slow, patient ones (Earth, Water) sweep gently and forgive a wider miss — the timing itself now carries each element's character, instead of every element reciting the same kind of memorized phrase. "Cast without the rite" still skips straight to a flat 1.00×, and an untended draw disperses on its own after a few seconds rather than stalling the game. Miracles keep their prayer-recall rite unchanged.
 ### Elements answer in twos
 - **The five element keys are now peers — chord two together and they FUSE.** X (gamepad: click R3) draws on Fire the same way W/S/A/D draw Wind/Earth/Water/Spirit; press a second, different element key within a heartbeat of the first and the two blend into a sixth working instead of the second simply overwriting it. Every fusion has its own silhouette:
   - **Fire + Wind → Lightning** — an instant bolt that chains between foes and stuns (the dormant Storm working, finally reachable).
