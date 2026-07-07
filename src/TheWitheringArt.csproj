@@ -116,10 +116,7 @@
     <Compile Include="Magic\MagicTeacherDialogue.cs"/>
     <Compile Include="Magic\ElementMapSpells.cs"/>
     <Compile Include="Magic\ElementSpellMinigame.cs"/>
-    <Compile Include="Elementals\ElementalMath.cs"/>
-    <Compile Include="Elementals\ElementalBeings.cs"/>
-    <Compile Include="Elementals\ElementalFactory.cs"/>
-    <Compile Include="Elementals\ElementalWildsBehavior.cs"/>
+    <Compile Include="Magic\ElementComboMath.cs"/>
     <Compile Include="Miracles\MiracleTalents.cs"/>
     <Compile Include="Crystals\CrystalTalents.cs"/>
     <Compile Include="Talents\TalentCostCurve.cs"/>
@@ -317,6 +314,9 @@
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.cs"/>
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.Tick.cs"/>
     <Compile Include="ClanOrders\ClanOrdersCampaignBehavior.Dialogue.cs"/>
+    <Compile Include="Soldier\SoldierServiceMath.cs"/>
+    <Compile Include="Soldier\SoldierServiceCampaignBehavior.cs"/>
+    <Compile Include="Soldier\SoldierServiceCampaignBehavior.Dialogue.cs"/>
     <Compile Include="Tribes\TribalKingdomBehavior.cs"/>
   </ItemGroup>
 

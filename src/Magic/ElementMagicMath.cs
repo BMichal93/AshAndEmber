@@ -36,11 +36,15 @@ namespace AshAndEmber
         Ice       = 8,   // Wind + Water
         Sandstorm = 9,   // Wind + Earth
         Mire      = 10,  // Earth + Water
-        // ── Fusions with Spirit — summon a living kinsman of the paired element ──
-        SummonFlame = 11,  // Fire  + Spirit
-        SummonGale  = 12,  // Wind  + Spirit
-        SummonStone = 13,  // Earth + Spirit
-        SummonTide  = 14,  // Water + Spirit
+        // ── Fusions with Spirit — a BATTLE COMMAND to the caster's own troops,
+        //    themed by the paired element (see ElementComboMath / IssueCommand).
+        //    Slots kept identical to the retired Summon* members (11–14) so the
+        //    Spirit-pair fuse mapping is unchanged; older saves never stored these
+        //    (they are transient mission state), so the rename is safe.
+        CommandCharge    = 11,  // Fire  + Spirit — Onslaught (charge + fury)
+        CommandQuicken   = 12,  // Wind  + Spirit — Quicken (speed + advance)
+        CommandSteadfast = 13,  // Earth + Spirit — Steadfast (rout-immune)
+        CommandHold      = 14,  // Water + Spirit — Hold the Line (lock in place)
     }
 
     // Which half of an element's expression is being cast.

@@ -84,6 +84,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new MiracleCampaignBehavior());
                 campaignStarter.AddBehavior(new NatureCampaignBehavior());
                 campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
+                campaignStarter.AddBehavior(new SoldierServiceCampaignBehavior());
                 campaignStarter.AddBehavior(new ElementalWildsBehavior());
                 campaignStarter.AddBehavior(new SacredSitesCampaignBehavior());
                 campaignStarter.AddBehavior(new AshenRecruitCampaignBehavior());
@@ -100,6 +101,7 @@ namespace AshAndEmber
                 try { ExchangeCampaignBehavior.ResetState();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { SeaCampaignBehavior.ResetForNewGame();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ClanOrdersCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SoldierServiceCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ElementalWildsBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { BattleEvents.ResetForNewGame();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }

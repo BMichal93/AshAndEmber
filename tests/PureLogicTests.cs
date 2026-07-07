@@ -1876,21 +1876,21 @@ namespace AshAndEmber.Tests
         [Test]
         public void ElementComboMath_FusionNeverFusesAgain()
         {
-            // The chord only ever offers two BASE elements — a fused or summon
+            // The chord only ever offers two BASE elements — a fused or command
             // result is never itself a valid fuse input.
             Assert.Null(ElementComboMath.TryFuse(MagicElement.Lightning, MagicElement.Fire));
-            Assert.Null(ElementComboMath.TryFuse(MagicElement.SummonFlame, MagicElement.Wind));
+            Assert.Null(ElementComboMath.TryFuse(MagicElement.CommandCharge, MagicElement.Wind));
         }
 
         [Test]
-        public void ElementComboMath_SpiritPairsAreAlwaysSummons()
+        public void ElementComboMath_SpiritPairsAreAlwaysCommands()
         {
             foreach (var e in _baseElements)
             {
                 if (e == MagicElement.Spirit) continue;
                 var fused = ElementComboMath.TryFuse(MagicElement.Spirit, e);
                 Assert.NotNull(fused);
-                Assert.True(ElementComboMath.IsSummon(fused.Value));
+                Assert.True(ElementComboMath.IsCommand(fused.Value));
                 Assert.False(ElementComboMath.IsFusion(fused.Value));
             }
         }
@@ -1905,21 +1905,57 @@ namespace AshAndEmber.Tests
                     var fused = ElementComboMath.TryFuse(_baseElements[i], _baseElements[j]);
                     Assert.NotNull(fused);
                     Assert.True(ElementComboMath.IsFusion(fused.Value));
-                    Assert.False(ElementComboMath.IsSummon(fused.Value));
+                    Assert.False(ElementComboMath.IsCommand(fused.Value));
                 }
         }
 
         [Test]
-        public void ElementComboMath_SummonKindMatchesPairedElement()
+        public void ElementComboMath_SpiritCommandPairsMapToTheRightWorking()
         {
-            Assert.AreEqual(ElementalKind.Flame, ElementComboMath.SummonKindOf(MagicElement.SummonFlame));
-            Assert.AreEqual(ElementalKind.Gale,  ElementComboMath.SummonKindOf(MagicElement.SummonGale));
-            Assert.AreEqual(ElementalKind.Stone, ElementComboMath.SummonKindOf(MagicElement.SummonStone));
-            Assert.AreEqual(ElementalKind.Tide,  ElementComboMath.SummonKindOf(MagicElement.SummonTide));
+            // Each Spirit pair yields its element-themed command, and the command
+            // borrows the light/flavour of the NON-Spirit half of the pair.
+            Assert.AreEqual(MagicElement.CommandCharge,    ElementComboMath.TryFuse(MagicElement.Spirit, MagicElement.Fire));
+            Assert.AreEqual(MagicElement.CommandQuicken,   ElementComboMath.TryFuse(MagicElement.Spirit, MagicElement.Wind));
+            Assert.AreEqual(MagicElement.CommandSteadfast, ElementComboMath.TryFuse(MagicElement.Spirit, MagicElement.Earth));
+            Assert.AreEqual(MagicElement.CommandHold,      ElementComboMath.TryFuse(MagicElement.Spirit, MagicElement.Water));
+
+            Assert.AreEqual(MagicElement.Fire,  ElementComboMath.CommandBaseElement(MagicElement.CommandCharge));
+            Assert.AreEqual(MagicElement.Wind,  ElementComboMath.CommandBaseElement(MagicElement.CommandQuicken));
+            Assert.AreEqual(MagicElement.Earth, ElementComboMath.CommandBaseElement(MagicElement.CommandSteadfast));
+            Assert.AreEqual(MagicElement.Water, ElementComboMath.CommandBaseElement(MagicElement.CommandHold));
         }
 
         [Test]
-        public void ElementComboMath_WallFallbackNeverPointsAtAFusionOrSummon()
+        public void ElementComboMath_EveryCommandHasExactlyOneDistinctIdentity()
+        {
+            // Each command owns ONE dominant lever — Onslaught and Steadfast and
+            // Hold move morale (each at its own floor), Quicken alone moves speed —
+            // so no two commands read the same on the field.
+            var commands = new[]
+            {
+                MagicElement.CommandCharge, MagicElement.CommandQuicken,
+                MagicElement.CommandSteadfast, MagicElement.CommandHold,
+            };
+
+            // Quicken is the only command that touches speed.
+            foreach (var c in commands)
+            {
+                bool movesSpeed = ElementComboMath.CommandSpeedMult(c) != 1f;
+                Assert.AreEqual(c == MagicElement.CommandQuicken, movesSpeed, $"{c} speed identity");
+            }
+
+            // Quicken is pure mobility (no morale); the other three each hold a
+            // DISTINCT morale floor, in order Onslaught > Steadfast > Hold.
+            Assert.AreEqual(0f, ElementComboMath.CommandMoraleFloor(MagicElement.CommandQuicken));
+            Assert.True(ElementComboMath.CommandMoraleFloor(MagicElement.CommandCharge)
+                      > ElementComboMath.CommandMoraleFloor(MagicElement.CommandSteadfast));
+            Assert.True(ElementComboMath.CommandMoraleFloor(MagicElement.CommandSteadfast)
+                      > ElementComboMath.CommandMoraleFloor(MagicElement.CommandHold));
+            Assert.True(ElementComboMath.CommandMoraleFloor(MagicElement.CommandHold) > 0f);
+        }
+
+        [Test]
+        public void ElementComboMath_WallFallbackNeverPointsAtAFusionOrCommand()
         {
             MagicElement[] fusions =
             {
@@ -2062,6 +2098,52 @@ namespace AshAndEmber.Tests
         {
             var names = _fusionElements.Select(e => ElementUltimateMath.UltimateName(e, false)).ToList();
             Assert.AreEqual(names.Count, names.Distinct().Count());
+        }
+
+        // ── SoldierServiceMath (sworn-sword service) ──────────────────────────
+
+        [Test]
+        public void SoldierServiceMath_WeeklyPay_CoversUpkeepPlusTierBounty()
+        {
+            // Upkeep is always fully covered; the bounty grows with clan tier.
+            Assert.AreEqual(1000 + 50 + 0,   SoldierServiceMath.WeeklyPay(1000, 0));
+            Assert.AreEqual(1000 + 50 + 75,  SoldierServiceMath.WeeklyPay(1000, 3));
+            // A higher tier never pays less than a lower one for the same upkeep.
+            Assert.Greater(SoldierServiceMath.WeeklyPay(500, 4), SoldierServiceMath.WeeklyPay(500, 1));
+        }
+
+        [Test]
+        public void SoldierServiceMath_WeeklyPay_NegativeInputsClampToNonNegative()
+        {
+            Assert.AreEqual(50, SoldierServiceMath.WeeklyPay(-100, -5));
+        }
+
+        [Test]
+        public void SoldierServiceMath_DesertionPenalty_HeavierEarlyInTerm()
+        {
+            // Deserting with the whole term left costs more than deserting at the end.
+            int early = SoldierServiceMath.DesertionCrime(84, 84);
+            int late  = SoldierServiceMath.DesertionCrime(1, 84);
+            Assert.Greater(early, late);
+            Assert.AreEqual(30, early);           // full term remaining → max
+            int relEarly = SoldierServiceMath.DesertionRelationLoss(84, 84);
+            int relLate  = SoldierServiceMath.DesertionRelationLoss(0, 84);
+            Assert.Greater(relEarly, relLate);
+        }
+
+        [Test]
+        public void SoldierServiceMath_TermFraction_ClampsAndHandlesZeroTerm()
+        {
+            Assert.AreEqual(0.0, SoldierServiceMath.TermFraction(10, 0), 1e-9);   // guard against /0
+            Assert.AreEqual(1.0, SoldierServiceMath.TermFraction(200, 84), 1e-9); // clamps above 1
+            Assert.AreEqual(0.0, SoldierServiceMath.TermFraction(-5, 84), 1e-9);  // clamps below 0
+        }
+
+        [Test]
+        public void SoldierServiceMath_CompletionBonus_HasFloor()
+        {
+            Assert.AreEqual(100, SoldierServiceMath.CompletionBonus(20)); // floor
+            Assert.AreEqual(500, SoldierServiceMath.CompletionBonus(500));
         }
     }
 }

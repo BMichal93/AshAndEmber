@@ -68,11 +68,39 @@ namespace AshAndEmber
         }
         private static readonly List<FireBolt> _bolts = new List<FireBolt>();
 
-        public static void ClearBattleState() { _ignitions.Clear(); _bolts.Clear(); }
+        // ── Battle commands (Spirit fusions) ────────────────────────────────────
+        // A command stamps a buff on each friendly agent near the caster and, for
+        // the movement commands, an order on the nearby friendly formations. Both
+        // ride their own timer and are ticked below: the morale floor is re-
+        // asserted every tick (so a command genuinely HOLDS its warriors for its
+        // duration), the movement order is re-asserted so the battle AI cannot
+        // countermand it mid-command, and the speed buff is reverted on expiry.
+        private class TroopBuff
+        {
+            public float MoraleFloor;   // 0 = leave morale alone
+            public float SpeedMult;     // 1 = leave speed alone
+            public float Remaining;
+        }
+        private static readonly Dictionary<Agent, TroopBuff> _troopBuffs = new Dictionary<Agent, TroopBuff>();
+        private class FormationOrder
+        {
+            public MovementOrder Order;
+            public float Remaining;
+        }
+        private static readonly Dictionary<Formation, FormationOrder> _formationOrders = new Dictionary<Formation, FormationOrder>();
+
+        public static void ClearBattleState()
+        {
+            _ignitions.Clear();
+            _bolts.Clear();
+            _troopBuffs.Clear();
+            _formationOrders.Clear();
+        }
 
         public static void Tick(float dt)
         {
             TickBolts(dt);
+            TickCommands(dt);
             if (_ignitions.Count == 0) return;
             for (int i = _ignitions.Count - 1; i >= 0; i--)
             {
@@ -238,15 +266,18 @@ namespace AshAndEmber
                 case MagicElement.Fog:       FogBurst(caster, power);      break;
                 case MagicElement.Magma:     MagmaBurst(caster, power);    break;
                 case MagicElement.Mire:      MireBurst(caster, power);     break;
-                case MagicElement.SummonFlame:
-                case MagicElement.SummonGale:
-                case MagicElement.SummonStone:
-                case MagicElement.SummonTide:
-                    SummonKin(el, caster); break;
+                // ── Spirit commands — a will laid on the caster's OWN ranks ──────
+                case MagicElement.CommandCharge:
+                case MagicElement.CommandQuicken:
+                case MagicElement.CommandSteadfast:
+                case MagicElement.CommandHold:
+                    IssueCommand(el, caster); break;
             }
             CastFlash(el, caster);
-            // Enemy mages remember what was thrown, and answer with the counter-wall.
-            try { ElementWallWards.NoteCast(el, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Enemy mages remember what was THROWN at them and answer with the
+            // counter-wall — a command touches no foe, so it provokes none.
+            if (!ElementComboMath.IsCommand(el))
+                try { ElementWallWards.NoteCast(el, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.RecordMagicCast(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
@@ -275,13 +306,13 @@ namespace AshAndEmber
                 case MagicElement.Magma:
                 case MagicElement.Mire:
                     CastWall(ElementComboMath.WallFallback(el), caster, power); return;
-                // A summon answers Block exactly as it answers Attack — there is
-                // no wall to raise, only the kinsman to call.
-                case MagicElement.SummonFlame:
-                case MagicElement.SummonGale:
-                case MagicElement.SummonStone:
-                case MagicElement.SummonTide:
-                    SummonKin(el, caster); break;
+                // A command answers Block exactly as it answers Attack — there is
+                // no wall to raise, only the ranks to steady. Either input lays it.
+                case MagicElement.CommandCharge:
+                case MagicElement.CommandQuicken:
+                case MagicElement.CommandSteadfast:
+                case MagicElement.CommandHold:
+                    IssueCommand(el, caster); break;
             }
             CastFlash(el, caster);
             try { SpellEffects.RecordMagicCast(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -687,15 +718,127 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // Spirit fusions — call the living kinsman of the paired element to the
-        // caster's side (see ElementUltimates.TryCastFusionSummon). Gated to one
-        // living kinsman per summoner at a time; a refusal is silent to the
-        // caster here (the message is already shown by ElementUltimates).
-        private static void SummonKin(MagicElement el, Agent caster)
+        // ── Spirit commands ────────────────────────────────────────────────────
+        // A Spirit pairing is a WILL laid on the caster's own ranks, not a working
+        // thrown at the foe. It stamps a buff on every friendly agent within
+        // CommandRadius and, for the movement commands, an order on the nearby
+        // friendly formations; both then hold for CommandDurationSec (ticked in
+        // TickCommands). Runs through the same CastAttack/CastWall choke point as
+        // every other cast, so an NPC lord commands its own line exactly as the
+        // player commands theirs — the effect always lands on caster.Team.
+        private static void IssueCommand(MagicElement el, Agent caster)
         {
-            bool ashen = CasterAshen(caster);
-            try { ElementUltimates.TryCastFusionSummon(ElementComboMath.SummonKindOf(el), caster, ashen); }
+            if (caster == null || caster.Team == null) return;
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            bool  ashen  = CasterAshen(caster);
+            float floor  = ElementComboMath.CommandMoraleFloor(el);
+            float speed  = ElementComboMath.CommandSpeedMult(el);
+            float r2     = ElementComboMath.CommandRadius * ElementComboMath.CommandRadius;
+            var   order  = CommandMovementOrder(el);   // null for Steadfast (no move order)
+            Vec3  rgb    = Palette(el, ashen);
+
+            int touched = 0;
+            var reachedFormations = new HashSet<Formation>();
+            try
+            {
+                foreach (Agent a in Mission.Current.Agents.ToList())
+                {
+                    if (!a.IsActive() || a.IsMount) continue;
+                    if (a.Team == null || !a.Team.IsFriendOf(caster.Team)) continue;
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    if (dx * dx + dy * dy > r2) continue;
+
+                    _troopBuffs[a] = new TroopBuff { MoraleFloor = floor, SpeedMult = speed, Remaining = ElementComboMath.CommandDurationSec };
+                    if (speed != 1f) try { a.SetMaximumSpeedLimit(speed, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    if (floor > 0f)  try { a.SetMorale(Math.Max(a.GetMorale(), floor)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { if (a != caster && a.Formation != null) reachedFormations.Add(a.Formation); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    touched++;
+                }
+            }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            // The movement commands lay their order on every formation the will
+            // reached, and keep re-asserting it (TickCommands) so the battle AI
+            // cannot pull the ranks off it before the command lapses.
+            if (order.HasValue)
+                foreach (var f in reachedFormations)
+                {
+                    _formationOrders[f] = new FormationOrder { Order = order.Value, Remaining = ElementComboMath.CommandDurationSec };
+                    try { f.SetMovementOrder(order.Value); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+
+            SpawnLight(pos, rgb, 2.2f);
+            try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            CommandAnnounce(el, caster, ashen, touched);
+        }
+
+        // The formation order a movement command lays down. Steadfast holds the
+        // ranks by NERVE, not position, so it issues none (they fight where they
+        // stand); the other three each command a distinct manoeuvre.
+        private static MovementOrder? CommandMovementOrder(MagicElement el)
+        {
+            switch (el)
+            {
+                case MagicElement.CommandCharge:  return MovementOrder.MovementOrderCharge;   // loose them
+                case MagicElement.CommandQuicken: return MovementOrder.MovementOrderAdvance;  // ordered push, ranks kept
+                case MagicElement.CommandHold:    return MovementOrder.MovementOrderStop;     // lock the line
+                default:                          return null;                                // CommandSteadfast
+            }
+        }
+
+        // Player-only feedback — an enemy lord's command is felt, not narrated.
+        private static void CommandAnnounce(MagicElement el, Agent caster, bool ashen, int touched)
+        {
+            try
+            {
+                if (Agent.Main == null || caster != Agent.Main) return;
+                string name = ashen ? ElementComboMath.AshenElementName(el) : ElementComboMath.ElementName(el);
+                string body;
+                switch (el)
+                {
+                    case MagicElement.CommandCharge:    body = "your warriors surge forward as one, past all fear"; break;
+                    case MagicElement.CommandQuicken:   body = "your ranks quicken and drive ahead, swift as the gale"; break;
+                    case MagicElement.CommandSteadfast: body = "fear leaves your ranks — they will not break"; break;
+                    default:                            body = "your line sets and holds where it stands"; break;   // Hold
+                }
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{name} — {body} ({touched} at your side).", new Color(0.65f, 0.55f, 0.9f)));
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Holds active commands: re-asserts each buffed agent's morale floor and
+        // each ordered formation's order for the command's life, reverts the
+        // speed limit when a buff lapses, and drops entries whose agent/formation
+        // is gone.
+        private static void TickCommands(float dt)
+        {
+            if (_troopBuffs.Count > 0)
+                foreach (var kvp in _troopBuffs.ToList())
+                {
+                    Agent a = kvp.Key; TroopBuff b = kvp.Value;
+                    bool alive = false; try { alive = a != null && a.IsActive(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    b.Remaining -= dt;
+                    if (!alive || b.Remaining <= 0f)
+                    {
+                        _troopBuffs.Remove(a);
+                        if (alive && b.SpeedMult != 1f)
+                            try { a.SetMaximumSpeedLimit(1f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        continue;
+                    }
+                    if (b.MoraleFloor > 0f)
+                        try { if (a.GetMorale() < b.MoraleFloor) a.SetMorale(b.MoraleFloor); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+
+            if (_formationOrders.Count > 0)
+                foreach (var kvp in _formationOrders.ToList())
+                {
+                    Formation f = kvp.Key; FormationOrder o = kvp.Value;
+                    o.Remaining -= dt;
+                    bool live = false; try { live = f != null && f.CountOfUnits > 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    if (!live || o.Remaining <= 0f) { _formationOrders.Remove(f); continue; }
+                    try { f.SetMovementOrder(o.Order); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
         }
 
         // Shouts a random order into a random enemy formation — charge, fall back, or
@@ -752,18 +895,11 @@ namespace AshAndEmber
 
         private static Vec3 Palette(MagicElement el, bool ashen)
         {
-            // The summoned kinsman wears its own elemental coat (ElementalBeings'
-            // aura colour) whichever mask calls it — the being is the same either way.
-            if (ElementComboMath.IsSummon(el))
-            {
-                switch (ElementComboMath.SummonKindOf(el))
-                {
-                    case ElementalKind.Flame: return new Vec3(1.00f, 0.45f, 0.12f);
-                    case ElementalKind.Tide:  return new Vec3(0.18f, 0.50f, 1.00f);
-                    case ElementalKind.Gale:  return new Vec3(0.62f, 0.52f, 1.00f);
-                    default:                  return new Vec3(0.50f, 0.46f, 0.42f); // Stone
-                }
-            }
+            // A Spirit command borrows the light of its paired element — the will
+            // that drives the ranks wears the colour of the working it was mixed
+            // from (Onslaught burns, Hold runs blue, and so on).
+            if (ElementComboMath.IsCommand(el))
+                return Palette(ElementComboMath.CommandBaseElement(el), ashen);
             if (ashen)
             {
                 switch (el)

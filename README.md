@@ -637,6 +637,35 @@ A cooldown of 6 days prevents back-to-back encounters. Six new dark-themed event
 
 ---
 
+## Taking the Lord's Coin — Soldiering
+
+You do not need a great name or a full retinue to make war pay. Even at **clan level 0**, you can hire your entire party out to a warring commander as a common soldier — a step below the mercenary contract (which still wants clan tier 1) and available far earlier.
+
+**Who will take you.** Speak to any lord leading a party and choose *"I would take your coin and march under your banner…"*. The option appears only when:
+
+- The lord's realm is **at war with a real rival** — a living rival kingdom, not merely the Ashen.
+- That realm is **not at war with your own faction**.
+- The lord is **not one of the Ashen** (they take no hired swords).
+- You are **not already sworn to a realm** (vassal or mercenary elsewhere).
+
+**The terms.** You agree a length of service — a season (**21 days**), a half-year (**42**), or a full campaign year (**84**) — and the commander names your weekly wage up front.
+
+**While you serve:**
+
+- Your party **rides with the commander automatically and fights his battles**. When he holes up in a town or castle, you **wait there** with him.
+- You are counted a **mercenary of his realm**, exactly like a contract — with no lasting allegiance once it ends.
+- **Every week** you are paid your party's full upkeep plus a small bounty that grows with your clan's standing, drawn from the commander's coffers (or the realm's, if he is short of coin).
+
+**Leaving.** Striking out on your own — **clicking anywhere on the map** — ends the service:
+
+- **Before your term is up, that is desertion.** You are **warned first**; if you go through with it your **crimes against the realm rise** and the commander **thinks the worse of you**, the more heavily the more of the term you leave unserved.
+- **Serve the full term** and you are released cleanly, with a **parting bonus** and their thanks.
+- You can also settle up **face-to-face** with your commander in conversation (*"About my service under your banner…"*).
+
+If your commander is slain or captured, your oath ends with him.
+
+---
+
 ## Schemes and Betrayals
 
 When visiting any city, talk to the **Tavern Keeper** and choose *"I have some shadier business that needs arranging."* A scheme menu opens letting you plan covert operations against lords or settlements.

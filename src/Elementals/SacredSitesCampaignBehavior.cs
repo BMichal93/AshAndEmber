@@ -153,7 +153,7 @@ namespace AshAndEmber
         internal static float CurrentBindingOdds()
         {
             int smithing = 0;
-            try { smithing = Hero.MainHero?.GetSkillValue(DefaultSkills.Smithing) ?? 0; }
+            try { smithing = Hero.MainHero?.GetSkillValue(DefaultSkills.Crafting) ?? 0; }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             float odds = ForestClansCulture.SiteOdds(SacredSiteMath.FormationOdds(smithing))
                        + SacredSiteTalents.BindingOddsBonus;

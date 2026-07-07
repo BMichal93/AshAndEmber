@@ -68,7 +68,7 @@ namespace AshAndEmber
         {
             bool ashen = false;
             try { ashen = MageKnowledge.IsAshen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            bool combo = ElementComboMath.IsFusion(_loaded) || ElementComboMath.IsSummon(_loaded);
+            bool combo = ElementComboMath.IsFusion(_loaded) || ElementComboMath.IsCommand(_loaded);
             if (combo) return ashen ? ElementComboMath.AshenElementName(_loaded) : ElementComboMath.ElementName(_loaded);
             return ashen ? ElementMagicMath.AshenElementName(_loaded) : ElementMagicMath.ElementName(_loaded);
         }

@@ -289,10 +289,10 @@ namespace AshAndEmber
                 case MagicElement.Ice:       return "freezes a foe rooted in place.";
                 case MagicElement.Sandstorm: return "blinds the line with driven grit.";
                 case MagicElement.Mire:      return "sinks the ground into a mire.";
-                case MagicElement.SummonFlame:
-                case MagicElement.SummonGale:
-                case MagicElement.SummonStone:
-                case MagicElement.SummonTide: return "calls a living kinsman to its side.";
+                case MagicElement.CommandCharge:    return "throws its warriors forward in a fearless charge.";
+                case MagicElement.CommandQuicken:   return "quickens its ranks and drives them on.";
+                case MagicElement.CommandSteadfast: return "steels its line — they will not break.";
+                case MagicElement.CommandHold:      return "locks its line in place, immovable.";
                 default:                     return "shapes fire into a forward blade.";
             }
         }
@@ -382,8 +382,10 @@ namespace AshAndEmber
                 MagicElement chosen = pick.Value;
 
                 // A studied lord occasionally blends a second known element into
-                // the one he was about to throw. A Spirit-fusion never wastes the
-                // cast on a refusal — skip it if his kinsman already walks the field.
+                // the one he was about to throw — a fusion working, or (with
+                // Spirit) a battle command laid on his own line. Both run through
+                // the shared CastAttack/CastWall choke point below, so an enemy
+                // mage rallies its ranks exactly as the player rallies theirs.
                 if (_rng.NextDouble() < ComboUpgradeChance)
                 {
                     foreach (var partner in known)
@@ -391,7 +393,6 @@ namespace AshAndEmber
                         if (partner == chosen) continue;
                         var fused = ElementComboMath.TryFuse(chosen, partner);
                         if (fused == null) continue;
-                        if (ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveChampionFor(agent)) continue;
                         chosen = fused.Value;
                         break;
                     }

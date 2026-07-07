@@ -148,16 +148,18 @@ namespace AshAndEmber
                 "Ice, a forward freeze that roots utterly but deals no harm. WIND+EARTH: Sandstorm, a long " +
                 "blinding gust that bolts any mount it catches — it breaks a charge outright. EARTH+WATER: " +
                 "Mire, ground that keeps giving way and spreads wider the longer it stands. SPIRIT+any other " +
-                "element calls a living KINSMAN to your side instead of an attack — Flame, Gale, Stone, or " +
-                "Tide — for about a minute, though only one kinsman may walk with you at a time. A fusion is " +
-                "loaded like any element and answers to Attack OR Block alike (a summon has no separate wall " +
-                "to raise), so it can also carry its own Unbinding — draw it to its fullest and chord Attack+Block " +
-                "together. Every fusion costs the same flat toll as any other attack; only the summon is " +
-                "capped, and only by that one-at-a-time bond."), true);
+                "element is a COMMAND to your OWN ranks instead of an attack — it steadies and drives the " +
+                "warriors within reach of you for about twelve seconds. SPIRIT+FIRE — Onslaught: they charge " +
+                "as one, past all fear. SPIRIT+WIND — Quicken: a burst of speed and an ordered advance, ranks " +
+                "kept. SPIRIT+EARTH — Steadfast: their nerve is locked — they will not break. SPIRIT+WATER — " +
+                "Hold the Line: the ranks halt and lock in place. A command is loaded like any element and " +
+                "answers to Attack OR Block alike (there is no separate wall to raise), so it can also carry " +
+                "its own Unbinding — draw it to its fullest and chord Attack+Block together. Every fusion and " +
+                "command costs the same flat toll as any other attack."), true);
 
             AddLog(new TextObject(
-                "MAGIC · THE FUSION UNBINDINGS — the six blended workings (not the summons — Spirit's own " +
-                "Unbinding already IS the battlefield-scale kinsman) each carry their own Unbinding, at the " +
+                "MAGIC · THE FUSION UNBINDINGS — the six blended WORKINGS (not the Spirit commands — Spirit's own " +
+                "Unbinding already IS the battlefield-scale seizure) each carry their own Unbinding, at the " +
                 "same steep toll as the base five. LIGHTNING — The Storm's Judgment: every foe in reach struck " +
                 "and stunned as one. FOG — The Devouring Mist: one vast, long-lived fog bank swallows the " +
                 "field. MAGMA — The Ground Ignites: an eruption underfoot leaves a huge, long-burning field " +

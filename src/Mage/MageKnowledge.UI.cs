@@ -254,7 +254,8 @@ namespace AshAndEmber
             )).ToList();
 
             // Two known elements together also grant their fusion's own rite —
-            // Spirit pairs are summons, not workings, so they earn no map spell.
+            // Spirit pairs are battle commands, not workings, so they earn no
+            // map spell (IsFusion filters them out).
             for (int i = 0; i < known.Count; i++)
                 for (int j = i + 1; j < known.Count; j++)
                 {

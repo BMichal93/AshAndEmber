@@ -312,17 +312,18 @@ namespace AshAndEmber
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, VisualDuration * 0.6f);
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration * 0.5f);
                         break;
-                    // ── Summons — the kinsman's own coat, faintly, before it arrives ──
-                    case MagicElement.SummonFlame:
+                    // ── Spirit commands — a faint breath of the paired element as
+                    //    the will gathers, before it is laid on the ranks. ──
+                    case MagicElement.CommandCharge:
                         if (!ashen) SpellEffects.SpawnTempFireParticle(pos, VisualDuration * 0.6f);
                         break;
-                    case MagicElement.SummonGale:
+                    case MagicElement.CommandQuicken:
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Wind, VisualDuration * 0.6f);
                         break;
-                    case MagicElement.SummonStone:
+                    case MagicElement.CommandSteadfast:
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration * 0.6f);
                         break;
-                    case MagicElement.SummonTide:
+                    case MagicElement.CommandHold:
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, VisualDuration * 0.6f);
                         break;
                 }
@@ -385,8 +386,8 @@ namespace AshAndEmber
         // resolved — fusing them if both halves are known (falling back to
         // whichever single element the mage actually knows, which is already
         // loaded from the optimistic step above, so "falling back" needs no
-        // extra code). A Spirit summon is loaded exactly like any other
-        // fusion — the player still presses Attack OR Block to call it (both
+        // extra code). A Spirit command is loaded exactly like any other
+        // fusion — the player still presses Attack OR Block to lay it (both
         // answer the same way; see ElementSpellEffects.CastAttack/CastWall) —
         // so it draws a charge and carries an Attack+Block Unbinding chord
         // like every other element, rather than being a special case.
@@ -408,11 +409,6 @@ namespace AshAndEmber
             bool eligible = fused != null
                          && MageElementKnowledge.HasElement(first)
                          && MageElementKnowledge.HasElement(el);
-            if (eligible && ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveChampionFor(Agent.Main))
-            {
-                Msg("Your kinsman already walks the field — the working answers as a single element instead.");
-                eligible = false;
-            }
             if (!eligible) return;   // el (or first, if el is unknown) is already loaded above
 
             MageElementKnowledge.LoadDirect(fused.Value);
