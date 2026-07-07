@@ -85,6 +85,20 @@ namespace AshAndEmber
             if (hero == null) return;
             if (value)
             {
+                // The Forest Clans (Battania) do not master fire — they live
+                // alongside creatures of it instead (the Kindled). No Battanian
+                // LORD ever carries the gift on his own account; the player's own
+                // choice at character creation is untouched regardless of
+                // culture, and the cold's Ashen corruption overrides this (it is
+                // forced on a lord, not a culture mastering the flame — see
+                // MarkClanAshen, which calls SetAshen before this).
+                try
+                {
+                    if (hero != Hero.MainHero && hero.Culture?.StringId == "battania"
+                        && !_ashenIds.Contains(hero.StringId))
+                        return;
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _mageIds.Add(hero.StringId);
                 if (!_lordTalents.ContainsKey(hero.StringId))
                     AssignPathArchetype(hero.StringId);
@@ -202,11 +216,13 @@ namespace AshAndEmber
                     .Where(h => h.IsLord && h != Hero.MainHero && h.IsAlive)
                     .ToList();
                 int target = Math.Max(1, (int)(lords.Count * TargetFraction));
-                Shuffle(lords);
-                for (int i = 0; i < Math.Min(target, lords.Count); i++)
+                // The Forest Clans (Battania) never carry the gift — see SetMage.
+                var eligible = lords.Where(h => (h.Culture?.StringId ?? "") != "battania").ToList();
+                Shuffle(eligible);
+                for (int i = 0; i < Math.Min(target, eligible.Count); i++)
                 {
-                    _mageIds.Add(lords[i].StringId);
-                    AssignPathArchetype(lords[i].StringId);
+                    _mageIds.Add(eligible[i].StringId);
+                    AssignPathArchetype(eligible[i].StringId);
                 }
                 // seeding is silent — no announcement
 
@@ -290,7 +306,9 @@ namespace AshAndEmber
                 if (pct < LowerBound)
                 {
                     int needed = (int)(allLords.Count * TargetFraction) - mageLords;
-                    var candidates = allLords.Where(h => !_mageIds.Contains(h.StringId)).ToList();
+                    // The Forest Clans (Battania) never carry the gift — see SetMage.
+                    var candidates = allLords.Where(h => !_mageIds.Contains(h.StringId)
+                                                       && (h.Culture?.StringId ?? "") != "battania").ToList();
                     Shuffle(candidates);
                     int added = 0;
                     for (int i = 0; i < needed && i < candidates.Count; i++)
