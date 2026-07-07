@@ -118,6 +118,7 @@ namespace AshAndEmber
         private static bool   _memoryHungerConsumed  = false;      // player chose to "give in" to memory hunger
         private static int    _memoryHungerCountdown = 0;          // days until dissolution fires
         private static int    _poorKnightCooldown     = 0;         // long cooldown so knight event fires rarely
+        private static int    _poorKnightTournamentCountdown = 0;  // days until "ride past" tournament word arrives
         private static int    _vengefulKnightCountdown = 0;        // days until the mocked knight strikes back
         private static bool   _lastBattleHadAshenEnemy = false;   // true when enemy side had Ashen parties (not persisted)
         private static int    _ashenMachineryCooldown  = 0;       // days between crystal-machine finds
@@ -226,6 +227,7 @@ namespace AshAndEmber
             _memoryHungerConsumed         = false;
             _memoryHungerCountdown        = 0;
             _poorKnightCooldown           = 0;
+            _poorKnightTournamentCountdown = 0;
             _vengefulKnightCountdown      = 0;
             _ashenMachineryCooldown       = 0;
             _ashenMachineryCountdown      = 0;
@@ -304,6 +306,7 @@ namespace AshAndEmber
             store.SyncData("SE_MemHungerConsumed",  ref _memoryHungerConsumed);
             store.SyncData("SE_MemHungerCD",        ref _memoryHungerCountdown);
             store.SyncData("SE_PoorKnightCD",       ref _poorKnightCooldown);
+            store.SyncData("SE_PoorKnightTournCD",  ref _poorKnightTournamentCountdown);
             store.SyncData("SE_VengefulKnightCD",   ref _vengefulKnightCountdown);
             store.SyncData("SE_AshenMachineCD",     ref _ashenMachineryCooldown);
             store.SyncData("SE_AshenMachineTimer",  ref _ashenMachineryCountdown);
@@ -479,6 +482,13 @@ namespace AshAndEmber
             }
 
             if (_poorKnightCooldown > 0) _poorKnightCooldown--;
+
+            if (_poorKnightTournamentCountdown > 0)
+            {
+                _poorKnightTournamentCountdown--;
+                if (_poorKnightTournamentCountdown == 0)
+                    FirePoorKnightTournamentResult();
+            }
 
             if (_vengefulKnightCountdown > 0)
             {

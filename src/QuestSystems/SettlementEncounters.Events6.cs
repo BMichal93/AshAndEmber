@@ -187,8 +187,8 @@ namespace AshAndEmber
                                 ShiftTrait(DefaultTraits.Calculating, 1);
                                 ChangeGold(600);
                                 Msg("The cartographer stops his work for a moment as you pass and speaks without turning. " +
-                                    "He names a date three weeks from now and a location north of here. He tells you what " +
-                                    "you are expected to bring. The work in the square is part of a larger preparation " +
+                                    "He gives no date, only a place north of here and what you will be expected to bring " +
+                                    "when word finally comes. The work in the square is part of a larger preparation " +
                                     "that you are now part of.", AshenColor);
                             }
                             break;
@@ -870,9 +870,10 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "detour":
-                            Msg($"You detour. Seven days added to the march. {(trigger > 1 ? "Again. " : "")}Your men do not complain. " +
-                                "They have seen what waits on the other road.", DimColor);
-                            // Safe — no exposure
+                            AddMorale(-(3 + extraStakes));
+                            Msg($"You detour. Seven days added to the march. {(trigger > 1 ? "Again. " : "")}Your men do not complain, " +
+                                "not out loud. They have seen what waits on the other road, but a week is a week.", DimColor);
+                            // Safe — no exposure, paid for in time and patience rather than health
                             break;
 
                         case "careful":

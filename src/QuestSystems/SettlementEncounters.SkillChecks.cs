@@ -370,8 +370,8 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "a":
-                            MageKnowledge._deferredInquiry = () =>
-                                Msg("Word drifts back to you two days later: he entered, lost in the second round, and rode out without speaking to anyone. Nobody noticed.", DimColor);
+                            _poorKnightTournamentCountdown = 2;
+                            Msg("The yard and its laughter fall behind you.", DimColor);
                             break;
                         case "b":
                             if (!ChangeGold(-2000)) { Msg("You do not have enough coin.", BadColor); _poorKnightCooldown = 0; break; }

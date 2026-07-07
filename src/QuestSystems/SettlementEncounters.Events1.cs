@@ -22,6 +22,14 @@ namespace AshAndEmber
 {
     public static partial class SettlementEncounters
     {
+        // ── Deferred: FirePoorKnightTournamentResult — 2 days after EC_PoorKnight option A ──
+        private static void FirePoorKnightTournamentResult()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _poorKnightTournamentCountdown = 1; return; }
+            MageKnowledge._deferredInquiry = () =>
+                Msg("Word drifts back to you: he entered, lost in the second round, and rode out without speaking to anyone. Nobody noticed.", DimColor);
+        }
+
         // ── Deferred: FireVengefulKnightConsequence — 7–11 days after EC_PoorKnight option C ──
         private static void FireVengefulKnightConsequence()
         {
@@ -1077,6 +1085,9 @@ namespace AshAndEmber
                             break;
                         case "d":
                             Msg("You decline. They argue for another forty minutes and reach no conclusion. The merchant eventually agrees to a third-party review that will take six weeks. The auditor leaves unsatisfied. The ledger goes back into the hall. The truth is still in it.", DimColor);
+                            _merchantLedgerOutcome      = 4;
+                            _merchantLedgerSettlementId = s.StringId;
+                            _merchantLedgerCountdown    = 42;
                             break;
                     }
                 }, null, "", false), false, true);
@@ -1122,6 +1133,16 @@ namespace AshAndEmber
                     {
                         ChangeRelWithOwner(s, -5);
                         Msg("The auditor filed a full report. The ledger, reviewed by a second inspector six weeks later, was found to contain systematic irregularities — the same ones the auditor originally identified. Your name appears in the report as having intervened in favour of the merchant. The city lord, who commissioned the second review, received the report. Your standing in that city has taken a quiet, specific, and permanent hit.", BadColor);
+                    };
+                    break;
+
+                case 4: // declined to arbitrate — the third-party review concludes without you
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        if (_rng.NextDouble() < 0.5)
+                            Msg("Word reaches you, eventually, the way old business does: the third-party review found the auditor was right. Systematic, not clerical. The merchant's license was suspended pending restitution. You were not named in the proceedings — you made sure of that by staying out of it.", DimColor);
+                        else
+                            Msg("Word reaches you, eventually: the review found nothing conclusive. The ledger's irregularities were real but the intent behind them could not be proven. The merchant keeps his license and his ledger. Nobody remembers you were ever asked to weigh in.", DimColor);
                     };
                     break;
             }
