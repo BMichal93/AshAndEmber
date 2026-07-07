@@ -97,6 +97,12 @@
     <Compile Include="Elementals\ElementalFactory.cs"/>
     <Compile Include="Elementals\ElementalWildsBehavior.cs"/>
     <Compile Include="Elementals\ElementalDialogue.cs"/>
+    <Compile Include="Elementals\SacredSiteMath.cs"/>
+    <Compile Include="Elementals\SacredSiteCatalog.cs"/>
+    <Compile Include="Elementals\SacredSitesCampaignBehavior.cs"/>
+    <Compile Include="Elementals\SacredSitesCampaignBehavior.Menus.cs"/>
+    <Compile Include="Elementals\SacredSiteTalents.cs"/>
+    <Compile Include="Elementals\ElementalLordRegistry.cs"/>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="Magic\ElementMagicMath.cs"/>
     <Compile Include="Magic\ElementUltimateMath.cs"/>
@@ -198,6 +204,11 @@
     <Compile Include="AI\TempleCulture.cs"/>
     <Compile Include="AI\TribalCulture.cs"/>
     <Compile Include="AI\DunebornCulture.cs"/>
+    <Compile Include="AI\ForestClansCulture.cs"/>
+    <Compile Include="AI\AshenRecruitMath.cs"/>
+    <Compile Include="AI\AshenRecruitCatalog.cs"/>
+    <Compile Include="AI\AshenRecruitCampaignBehavior.cs"/>
+    <Compile Include="AI\AshenRecruitCampaignBehavior.Menus.cs"/>
     <Compile Include="AI\TempleCultureCardFixer.cs"/>
     <Compile Include="AI\NarrativeStageTextFixer.cs"/>
     <Compile Include="AI\AshenDiplomacyModel.cs"/>
@@ -275,6 +286,7 @@
     <Compile Include="Tavern\TavernCampaignBehavior.Helpers.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Rumors.cs"/>
     <Compile Include="AshenRuins\AshenRuinDefs.cs"/>
+    <Compile Include="AshenRuins\AshenRuinMath.cs"/>
     <Compile Include="AshenRuins\AshenRuinSystem.cs"/>
     <Compile Include="AshenRuins\AshenRuinMenus.cs"/>
     <Compile Include="AshenRuins\AshenRuinCampaignBehavior.cs"/>

@@ -86,11 +86,14 @@ namespace AshAndEmber
                             int today = CurrentCampaignDay();
                             bool onCooldown = (today - _lastPrayerDay) < MiracleMath.PrayerCooldownDays;
                             bool blockedByDark = DarkGiftSystem.HasAnyGift;
+                            bool blockedBySacred = SacredSitesCampaignBehavior.HasElementalBond;
                             bool atCap = MiracleInventory.Grace >= MiracleMath.GraceCap();
 
                             string suffix = "";
                             if (blockedByDark)
                             { args.IsEnabled = false; suffix = "  [The darkness in you repels the flame]"; }
+                            else if (blockedBySacred)
+                            { args.IsEnabled = false; suffix = "  [The old ways in you hold the flame at arm's length]"; }
                             else if (atCap)
                             { args.IsEnabled = false; suffix = "  [Grace is full — cast a miracle first]"; }
                             else if (onCooldown)

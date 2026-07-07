@@ -382,11 +382,11 @@ namespace AshAndEmber
             "secrets better than any temple ever kept its.";
 
         // Relabels a culture's feat descriptions: positives in order, then the negative.
-        // `zeroPositiveIndex` additionally REMOVES the effect of the n-th positive
-        // feat (bonus set to 0) — used when a relabel replaces a vanilla bonus with
-        // a mod mechanic rather than merely renaming it.
+        // `zeroPositiveIndex`/`zeroPositiveIndex2` additionally REMOVE the effect of
+        // the n-th positive feat (bonus set to 0) — used when a relabel replaces a
+        // vanilla bonus with a mod mechanic rather than merely renaming it.
         private static void RelabelCulturalFeats(string cultureId, string[] feats, ref bool done,
-            int zeroPositiveIndex = -1)
+            int zeroPositiveIndex = -1, int zeroPositiveIndex2 = -1)
         {
             if (done) return;
             try
@@ -410,7 +410,7 @@ namespace AshAndEmber
                     var ft = f.GetType();
                     bool isPositive = (bool)(ft.GetProperty("IsPositive")?.GetValue(f) ?? true);
                     float bonus     = (float)(ft.GetProperty("EffectBonus")?.GetValue(f) ?? 0f);
-                    if (isPositive && posIdx == zeroPositiveIndex) bonus = 0f;
+                    if (isPositive && (posIdx == zeroPositiveIndex || posIdx == zeroPositiveIndex2)) bonus = 0f;
                     object incType  = ft.GetProperty("IncrementType")?.GetValue(f);
                     string name     = (ft.GetProperty("Name")?.GetValue(f) as TextObject)?.ToString() ?? "";
                     string desc     = isPositive
@@ -550,6 +550,108 @@ namespace AshAndEmber
             }
             catch { return false; }
         }
+
+        // ── Battania → The Forest Clans (culture rename) ───────────────────────
+        // Renames the Battanian culture object so the character sheet,
+        // encyclopedia, troop culture and creation card read "Forest Clan" — the
+        // adjective form, the same Templar/Tribal split as Vlandia and Khuzait
+        // (the full "The Forest Clans" carries an article and belongs to the
+        // KINGDOM name only, set in RenameForestClansKingdom below).
+        public static void RenameForestClansCulture()
+        {
+            try
+            {
+                var battaniaCulture = MBObjectManager.Instance?.GetObject<CultureObject>("battania");
+                if (battaniaCulture != null)
+                    (_cultureNameField ?? _nameField)?.SetValue(battaniaCulture, new TextObject("Forest Clan"));
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // ── Forest Clans kingdom rename ─────────────────────────────────────────
+        // Battania IS the Forest Clans. Kingdom names revert to their XML values
+        // on every session load, so this runs on the first daily tick each
+        // session alongside the other kingdom renames.
+        public static void RenameForestClansKingdom()
+        {
+            try
+            {
+                var battania = Kingdom.All.FirstOrDefault(k => k.StringId == "battania" && !k.IsEliminated);
+                if (battania == null) { RenameForestClansCulture(); return; }
+
+                (_kingdomNameField ?? _nameField)?.SetValue(battania, new TextObject("The Forest Clans"));
+                SetKingdomField(battania,
+                    new[] { "_informalName", "<InformalName>k__BackingField" },
+                    new TextObject("the Clans"));
+                SetKingdomField(battania,
+                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new TextObject("High Chieftain"));
+                SetKingdomEncyclopediaText(battania, _forestClansLore);
+
+                RenameForestClansCulture();
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // ── Character-creation culture card text override for the Forest Clans ─
+        // Works identically to ApplyDunebornCultureTexts (name, blurb AND feats —
+        // the Forest Clans' own mechanics in ForestClansCulture.cs / the
+        // sacred-site binding discount replace the vanilla Battanian feats).
+        public static bool ApplyForestClansCultureTexts()
+        {
+            try
+            {
+                RenameForestClansCulture();
+
+                var mgrField = typeof(GameTexts).GetField("_gameTextManager",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                var mgr = mgrField?.GetValue(null) as GameTextManager;
+                if (mgr == null) return false;
+
+                SetCultureVariation(mgr, "str_culture_rich_name", "battania", "The Forest Clans");
+                SetCultureVariation(mgr, "str_culture_description", "battania", _forestClansLore);
+                // Both vanilla Battanian positive feats are replaced outright by the
+                // Forest Clans' own mechanics (ForestClansCulture.cs / the sacred-site
+                // binding discount) — zero both, unlike Duneborn which keeps one.
+                RelabelCulturalFeats("battania", _forestClansFeats, ref _forestClansFeatsRelabeled,
+                    zeroPositiveIndex: 0, zeroPositiveIndex2: 1);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        private static readonly string[] _forestClansFeats =
+        {
+            "Kinship of Root and Stone — the old grove knows its own kin. (Sacred-site binding costs 15% less and succeeds 10% more often for the clan-born)",
+            "The Wilds Remember — the wandering Kindled's magic answers a Forest Clans hand only half as fiercely. (Wild-band Kindled deal half damage to a Forest Clans player)",
+            "Debt of the Deep Wood — the old bargain still asks its price. (Each bound Kindled costs 5 gold a day in upkeep)",
+        };
+        private static bool _forestClansFeatsRelabeled;
+
+        private const string _forestClansLore =
+            "The clans of the deep wood never knelt easily to any crown, and least of all to their own. What "
+          + "binds them is older than any throne: a pact struck long before memory with the roots beneath the "
+          + "leaf-mould and the standing stones the forest has not yet swallowed. Where a Templar kneels to a "
+          + "flame and a Duneborn bargains with a hunger under the sand, the Forest Clans do neither — they "
+          + "simply listen. At certain trees, at certain stones, something answers back, and what wakes there "
+          + "does not forget who woke it. The clan chieftains do not call themselves masters of these places. "
+          + "They call themselves the last debt the wood is still owed. Cross their border uninvited, and you "
+          + "will learn what the old wood keeps watch with.";
+
+        // ── Battania → Forest Clan troop rename ─────────────────────────────────
+        // Renames vanilla Battanian troops from "Battanian X" to "Forest Clan X",
+        // the same treatment as Sturgia → Northman and Aserai → Duneborn. A couple
+        // of iconic units get more evocative overrides; everything else is a plain
+        // prefix swap.
+        private static readonly Dictionary<string, string> _forestClansTroopOverrides =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Battanian Recruit",       "Forest Clan Whelp"              },
+            { "Battanian Fian Champion", "Champion of the Forest Clans"   },
+        };
+
+        public static void RenameBattanianTroops()
+            => RenameCultureTroops("battania_", "Battanian ", "Forest Clan ", _forestClansTroopOverrides);
 
         // ── Khuzait troop rename ───────────────────────────────────────────────
         // Renames all vanilla Khuzait troops from "Khuzait X" to "Tribal X", with
