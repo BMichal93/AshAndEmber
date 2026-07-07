@@ -4,6 +4,20 @@
 
 ## Unreleased
 
+### Sacred Site tuning and a new discipline
+- **The Bent Knee now seizes a random will, not the strongest, and holds it for half as long** (60s → 30s). It no longer scans for the toughest nearby enemy — just whoever the working happens to catch — so the reach never whiffs, but the borrowed will doesn't linger either.
+- **Standing Stones now teach three learnable talents** ("Study the Old Ways," bought with focus points, escalating cost — the same pattern as the Litany of Devotions and the lapidary's craft): **Deeper Binding** (+20% binding success), **Sparing Rite** (a failed binding returns its Iron Ore and Charcoal), and **Kindred Ease** (halves the daily upkeep of every Kindled you've bound).
+
+### The Ashen dead can be recruited directly
+- **Any Ashen-owned town or castle now hosts a muster yard.** Recruiting an Ashen Thrall, Warrior, Invoker, Warden, or Revenant no longer requires waiting on a roaming Spawn band or a garrison transfer — the settlement's own menu ("Muster the Ashen Dead") will raise one for you. The price is prisoners, not gold: turning a captive into one of the cold-fire dead is the whole transaction, and the prisoner's own tier must meet the Ashen rank you're raising (an Ashen Revenant demands a genuinely worthy captive, not three recruits). This is a deliberate limiter — you can only raise as many high-rank Ashen as you've actually captured worthy prisoners for.
+
+### Battania becomes the Forest Clans
+- **Forest Clans lords never carry the mage gift.** The Forest Clans don't master fire themselves — they live alongside the creatures of it instead. Battanian lords are excluded from the mage-lord seeding and population regulator entirely (0% chance), whether at campaign start or afterward. The one exception is the Ashen corruption: an Ashen Forest Clans lord still casts, since the cold's grip is forced on him, not a mastery his culture chose.
+- **Battania is renamed the Forest Clans.** Culture, kingdom, and troop names are rebranded the same way Vlandia became the Holy Temple and Sturgia the Northmen — a new faction blurb, ruler title (High Chieftain), and two new faction skills replace the vanilla Battanian feats: **Kinship of Root and Stone** (sacred-site Kindled bindings cost 15% less and succeed 10% more often for the clan-born), **The Wilds Remember** (wild-band Kindled deal half damage to a Forest Clans player), and **Debt of the Deep Wood** (each bound Kindled costs 5 gold a day in upkeep).
+- **New: Sacred Sites.** Dunglanys and Pen Cannoc — the Forest Clans' two remaining cities — each host standing stones where, for gold, Iron Ore and Charcoal, a Smithing-gated working can bind a Kindled of your chosen kind (Stone, Frost, Sand, Flame, Tide, or Gale) as a permanent unit in your own army. Binding is exclusive with Dark Gifts and Grace — the old ways do not share a caster.
+- **Forest Clans lords now sometimes march with Kindled of their own** — a chance, seeded per lord, that mirrors the sacred-site bond the player can now form.
+- **The Spirit Unbinding no longer summons an elemental.** The ultimate is reworked into **The Bent Knee** (**The Hollow Oath**, Ashen face): it seizes the strongest enemy will within reach, turning them to the caster's side for a minute before the working lets go — the thrall staggers back to their own line, dazed (the Ashen working leaves a parting frost-bite besides).
+
 ### The cursed field is more alive
 - **The battlefield events are reworked, and four new ones join them.** The randomised curses that can grip a battle have been overhauled for less "everyone takes damage at once" and more terrain you have to fight around.
   - **Cinder Rain** no longer smites every fighter at once. Cinders now fall in scattered, lingering patches of fire that burn *whoever stands in them* — friend or foe — so the field becomes a hazard to read and move around, not a blanket toll.

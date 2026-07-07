@@ -13,7 +13,9 @@
 //            damage, foes hurled back, churned rubble left to bog the field).
 //   Water  — a standing rain zone (quenches burns, halves fire, mires horses,
 //            soaks bowstrings). Only ONE sky can stand — a recast replaces it.
-//   Spirit — summons ONE terrain-shaped elemental to the caster's side.
+//   Spirit — seizes a random enemy will nearby: they fight at the caster's
+//            side for a short while, then the working lets go and they
+//            stagger back to their own line, dazed.
 //
 // WIRING (all of it already done — listed so a fix knows where to look):
 //   • MagicMissionBehavior.OnMissionTick   → Tick(dt)
@@ -32,6 +34,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
@@ -75,17 +78,17 @@ namespace AshAndEmber
         }
         private static RainZone _rain;   // a single slot — there is only one sky
 
-        // ── The land's champion (Spirit) ────────────────────────────────────────
-        private class Champion
+        // ── The seized will (Spirit) ─────────────────────────────────────────────
+        private class Thrall
         {
-            public Agent Elemental;
+            public Agent Agent;
+            public Team  OriginalTeam;   // who they revert to when the working lets go
+            public Agent Caster;         // only used to credit the Ashen parting bite
             public float Remaining;
-            public ElementalKind Kind;
             public bool  Ashen;
-            public float VisualTimer;
-            public bool  Player;   // true = the PLAYER's summon (gates the one-at-a-time cap)
+            public bool  Player;   // true = the PLAYER's seizure (gates the one-at-a-time cap)
         }
-        private static readonly List<Champion> _champions = new List<Champion>();
+        private static readonly List<Thrall> _thralls = new List<Thrall>();
 
         // ── Pending NPC windups ─────────────────────────────────────────────────
         // NPC ultimates channel visibly for NpcWindupSeconds; ANY hit on the
@@ -107,7 +110,7 @@ namespace AshAndEmber
             _npcUsed.Clear();
             _flights.Clear();
             _rain = null;
-            _champions.Clear();
+            _thralls.Clear();
             _npcWindups.Clear();
         }
 
@@ -115,21 +118,21 @@ namespace AshAndEmber
         // PLAYER ENTRY (called by ElementMagicInput on the Attack+Block chord)
         // =====================================================================
 
-        // Most Unbindings are one-per-element-per-battle. The SPIRIT summon is the
-        // exception: it is gated on whether the player's champion is still ALIVE, so
-        // you may raise another only once the first has fallen (or its time ran out)
-        // — never two at once. This stops the summon being spammed into an army.
+        // Most Unbindings are one-per-element-per-battle. SPIRIT is the exception:
+        // it is gated on whether the player's seized thrall is still held, so you
+        // may seize another only once the first has fallen or been let go — never
+        // two at once. This stops the working being spammed across an army.
         public static bool PlayerCanUnbind(MagicElement el)
-            => el == MagicElement.Spirit ? !PlayerHasLiveChampion() : !_playerUsed.Contains(el);
+            => el == MagicElement.Spirit ? !PlayerHasLiveThrall() : !_playerUsed.Contains(el);
 
-        // True while a player-summoned champion is still standing on the field.
-        private static bool PlayerHasLiveChampion()
+        // True while a player-seized thrall is still held (alive and not yet released).
+        private static bool PlayerHasLiveThrall()
         {
-            for (int i = 0; i < _champions.Count; i++)
+            for (int i = 0; i < _thralls.Count; i++)
             {
-                var c = _champions[i];
-                if (c == null || !c.Player) continue;
-                try { if (c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f) return true; }
+                var t = _thralls[i];
+                if (t == null || !t.Player) continue;
+                try { if (t.Agent != null && t.Agent.IsActive() && t.Agent.Health > 0f) return true; }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             return false;
@@ -323,7 +326,7 @@ namespace AshAndEmber
             try { TickNpcWindups(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { TickFlights(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { TickRain(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { TickChampions(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickThralls(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickNpcWindups(float dt)
@@ -373,7 +376,7 @@ namespace AshAndEmber
                 case MagicElement.Wind:   BeginFlight(caster, ashen);     break;
                 case MagicElement.Earth:  EarthquakeSunder(caster, ashen); break;
                 case MagicElement.Water:  BeginRain(caster, ashen);       break;
-                case MagicElement.Spirit: SummonChampion(caster, ashen);  break;
+                case MagicElement.Spirit: SummonThrall(caster, ashen);    break;
             }
             try { SpellEffects.TryCastSound(caster.Position,
                     ashen ? ColorSchool.Ashen : el == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -729,97 +732,142 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // ── SPIRIT — The Land's Answer / What Sleeps Beneath ─────────────────────
-        // The battlefield sends ONE champion: an elemental shaped by the scene
-        // (frost on snowfields, sand in the deserts, stone everywhere else),
-        // spawned onto the caster's team, towering in health, gone when its time
-        // runs out. The spawn path mirrors BattleEvents' proven mid-battle
-        // reinforcement build (including the adult BodyProperties gotcha — an
-        // AgentBuildData without them renders as an infant).
-        private static void SummonChampion(Agent caster, bool ashen)
+        // ── SPIRIT — The Bent Knee / The Hollow Oath ─────────────────────────────
+        // Seizes a random living will within reach and turns it to the caster's
+        // side for a short while — no new body is raised, an existing enemy
+        // simply stops being one for a time. It is never the surest hand you
+        // could have picked (the working does not reach for power, only for
+        // whoever answers), so the borrowed will runs out fast. When it does,
+        // the thrall staggers back to their own line, dazed (the Ashen face
+        // leaves a parting frost-bite besides).
+        private static void SummonThrall(Agent caster, bool ashen)
         {
             try
             {
                 if (Mission.Current == null || caster.Team == null) return;
 
-                bool snowy = false; try { snowy = SpellEffects.SceneIsSnowy(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                string sceneName = "";
-                // LOCAL-VERIFY: Mission.SceneName — if the property has moved, the
-                // catch leaves the name empty and the champion defaults to Stone.
-                try { sceneName = (Mission.Current.SceneName ?? "").ToLowerInvariant(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                ElementalKind kind = ElementUltimateMath.ElementalKindForScene(snowy, sceneName);
-
-                Vec3 fwd; try { fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
-                catch { fwd = new Vec3(0f, 1f, 0f); }
-                Vec3 pos = caster.Position + fwd * ElementUltimateMath.ElementalSpawnOffset;
-
-                // The champion is just a Kindled the land sends — build it through
-                // the shared factory so it looks, coats and buckles exactly like
-                // every other elemental (its aura and weakness are handled centrally
-                // by ElementalBeings). charge:true ropes an ENEMY lord's summon into
-                // his line; on the player's side the factory leaves battle orders be.
-                Agent elemental = ElementalFactory.SpawnElemental(kind, caster.Team, pos, charge: true);
-                if (elemental == null) return;
-
-                _champions.Add(new Champion
+                // A random living will within reach — not the strongest, just
+                // whoever the working happens to catch.
+                var candidates = EnemiesNear(caster, ElementUltimateMath.ThrallRangeMetres).ToList();
+                if (candidates.Count == 0)
                 {
-                    Elemental = elemental, Remaining = ElementUltimateMath.ElementalSeconds,
-                    Kind = kind, Ashen = ashen, Player = caster == Agent.Main,
+                    Msg("Your reach finds no will worth taking.");
+                    return;
+                }
+                Agent best = candidates[_rng.Next(candidates.Count)];
+
+                Team originalTeam = best.Team;
+                if (!TryChangeAgentTeam(best, caster.Team))
+                {
+                    Msg("Their will holds — the working slips off them, unspent.");
+                    return;
+                }
+
+                // Rouse and, if this is not the player's own line, fold the seized
+                // body into the caster's formation and set it marching — the exact
+                // treatment the Spirit champion always used (ElementalFactory), so
+                // an NPC lord's thrall advances with his line like any reinforcement.
+                try { ElementalFactory.SetAggressive(best, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+                _thralls.Add(new Thrall
+                {
+                    Agent = best, OriginalTeam = originalTeam, Caster = caster,
+                    Remaining = ElementUltimateMath.ThrallSeconds,
+                    Ashen = ashen, Player = caster == Agent.Main,
                 });
-                Msg($"The land answers — a {ElementUltimateMath.ElementalName(kind)} rises to fight beside " +
-                    (caster == Agent.Main ? "you." : "its summoner."));
+
+                string name = SafeAgentName(best);
+                Vec3 at; try { at = best.Position; } catch { at = default(Vec3); }
+                EmitThrallBurst(at, ashen, 1.6f);
+                Msg(ashen
+                    ? $"The frost grips {name}'s will — hollow-eyed, they turn to your command."
+                    : $"Something in {name} bends — for a time, they are yours.");
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        private static void EmitChampionBurst(Vec3 pos, ElementalKind kind, bool ashen, float scale)
+        private static string SafeAgentName(Agent a)
+        {
+            try { return a.Name?.ToString() ?? "the foe"; } catch { return "the foe"; }
+        }
+
+        private static void EmitThrallBurst(Vec3 pos, bool ashen, float scale)
         {
             try
             {
-                switch (kind)
-                {
-                    case ElementalKind.Frost:
-                        SpellEffects.SpawnTempSnowParticle(pos + new Vec3(0f, 0f, 0.5f), scale);
-                        break;
-                    case ElementalKind.Sand:
-                        SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
-                        break;
-                    default:
-                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, scale);
-                        break;
-                }
+                if (ashen) SpellEffects.SpawnTempSnowParticle(pos + new Vec3(0f, 0f, 0.5f), scale);
+                else       SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f),
                     ElementSpellEffects.ElementLightRgb(MagicElement.Spirit, ashen), 8f, 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        private static void TickChampions(float dt)
+        private static void TickThralls(float dt)
         {
-            for (int i = _champions.Count - 1; i >= 0; i--)
+            for (int i = _thralls.Count - 1; i >= 0; i--)
             {
-                var c = _champions[i];
+                var t = _thralls[i];
                 bool alive = false;
-                try { alive = c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                if (!alive) { _champions.RemoveAt(i); continue; }
+                try { alive = t.Agent != null && t.Agent.IsActive() && t.Agent.Health > 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (!alive) { _thralls.RemoveAt(i); continue; }   // died fighting under the borrowed will
 
-                c.Remaining -= dt;
-                if (c.Remaining <= 0f)
+                t.Remaining -= dt;
+                if (t.Remaining > 0f) continue;
+                _thralls.RemoveAt(i);
+
+                Vec3 at; try { at = t.Agent.Position; } catch { at = default(Vec3); }
+                EmitThrallBurst(at, t.Ashen, 1.6f);
+                string name = SafeAgentName(t.Agent);
+
+                TryChangeAgentTeam(t.Agent, t.OriginalTeam);
+                try { ElementalFactory.SetAggressive(t.Agent, t.OriginalTeam); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(t.Agent, ElementUltimateMath.ThrallDazedSpeedMult,
+                        ElementUltimateMath.ThrallDazedSeconds); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+                if (t.Ashen)
                 {
-                    _champions.RemoveAt(i);
-                    Vec3 at; try { at = c.Elemental.Position; } catch { at = default(Vec3); }
-                    EmitChampionBurst(at, c.Kind, c.Ashen, 2f);
-                    Msg($"The {ElementUltimateMath.ElementalName(c.Kind)} comes apart into the ground it rose from.");
-                    // LOCAL-VERIFY: Agent.FadeOut(bool hideInstantly, bool hideMount)
-                    // is the clean despawn (no corpse — it "comes apart"). If the
-                    // signature has drifted, the fallback kill still removes it.
-                    try { c.Elemental.FadeOut(true, true); }
-                    catch { try { SpellEffects.KillAgent(c.Elemental); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
-                    continue;
+                    try { SpellEffects.DamageAgent(t.Agent, ElementUltimateMath.ThrallAshenPartingDamage,
+                            ColorSchool.Ashen, t.Caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    Msg($"The frost in {name} cracks as it withdraws — they reel back to their own line, marked by its parting bite.");
                 }
-                // The living coat (following particles + glow) is driven centrally
-                // by ElementalBeings.TickAuras — the champion only owns its lifespan.
+                else
+                {
+                    Msg($"{name}'s eyes clear — the borrowed will lets go, and they stagger back to their own banner.");
+                }
             }
+        }
+
+        // LOCAL-VERIFY: Agent.Team has no public setter in any signature this mod
+        // has needed before now — every existing spawn sets Team once, at build
+        // time, via AgentBuildData. Re-assigning an agent's side mid-mission is new
+        // ground, so this tries a settable property first (reflection bypasses the
+        // C# "internal"/"private" keyword — only the CLR's own visibility rules
+        // apply — so this works whatever access level the real setter turns out to
+        // have), then falls back to the compiler-generated backing field directly,
+        // the same last-resort this mod already relies on for CultureObject.Name in
+        // AshenCitySystem.Renaming. If both fail, the thrall attempt is aborted
+        // cleanly (see the two call sites above) rather than leaving an agent in a
+        // half-seized state.
+        private static bool TryChangeAgentTeam(Agent agent, Team team)
+        {
+            if (agent == null || team == null) return false;
+            try
+            {
+                var prop = typeof(Agent).GetProperty("Team",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (prop != null && prop.CanWrite) { prop.SetValue(agent, team); return true; }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try
+            {
+                var field = typeof(Agent).GetField("<Team>k__BackingField",
+                                BindingFlags.NonPublic | BindingFlags.Instance)
+                         ?? typeof(Agent).GetField("_team", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (field != null) { field.SetValue(agent, team); return true; }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            return false;
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────

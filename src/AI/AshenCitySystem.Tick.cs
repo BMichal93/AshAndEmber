@@ -62,6 +62,8 @@ namespace AshAndEmber
             try { RenameSturgianTroops();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { RenameDunebornKingdom();            } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { RenameAseraiTroops();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameForestClansKingdom();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { RenameBattanianTroops();            } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _kingdomsRenamed = true;
         }
 
