@@ -2,7 +2,13 @@
 
 ---
 
-## Unreleased
+## v0.45.0
+
+### Magic grows with the one who wields it
+- **Spell, miracle and crystal damage now scale slightly with the caster — so a gift that felt keen at the start no longer falls behind late in a long campaign.** Each path deepens along the stat that fits its nature, and each is deliberately gentle: it starts at no bonus and caps at **+30%** at full mastery, lifting *damage and healing only* — never the tuned reach, radius, or crowd-control of any working.
+  - **Spells scale with character Level** — magic is an inborn gift, so it deepens as the caster themselves grows (+1% per level). The bonus rides the shared cast path, so **enemy mage lords grow with their level too** — late fights stay tense rather than turning into a walkover.
+  - **Miracles scale with Conviction** — the summed strength of your aligned virtues (Mercy, Valor, Honor, Generosity, Calculating). Grace is your own resolve made fire, so an unwavering heart calls a fiercer pyre; a fickle one, a thin flame. (+3% per point of virtue.)
+  - **Crystals scale with Medicine** — the deeper your grasp of the stones' lattices, the more of their fire your hand can draw (+0.1% per point).
 
 ### The Kindled look like living element now
 - **Elemental beings no longer read as bald men wearing a coloured glow.** Each Kindled is now wreathed in **continuous element bound to its own body** — real fire, freezing vapour, water-mist, wind, dust or grit rising up its trunk and streaming off both hands as it walks and swings — lit in its element's colour and edged with a bleeding contour, so a faceless thing of raw magic finally looks like one.

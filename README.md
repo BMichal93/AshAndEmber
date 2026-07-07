@@ -146,10 +146,10 @@ All these paths are **mutually exclusive** — Inner Fire, Grace, Nature, and th
 
 | Action | Input |
 |--------|-------|
-| Focus | Hold **Left Bumper (LB)** |
-| Load a learned element | Flick **left stick** (↑ Wind · ↓ Earth · ← Water · → Spirit) |
+| Focus | Hold **X** — bumpers are taken (LB = order radial, RB = miracles); X keeps both triggers free |
+| Load a learned element | Flick the **left stick** (↑ Wind · ↓ Earth · ← Water · → Spirit); **click L3** for Fire |
 | Attack / Wall | **Right Trigger** / **Left Trigger** |
-| Open grimoire | **LB + Right Bumper (RB)** |
+| Open grimoire (map) | **LB + Right Bumper (RB)** |
 
 ### How casting works
 
@@ -161,6 +161,8 @@ All these paths are **mutually exclusive** — Inner Fire, Grace, Nature, and th
 4. **The charge lingers.** Let go of Focus with a charge drawn and it **stays in your hand for ~4 seconds** — loose it with a lone Attack/Block, or re-take Focus to keep drawing. You no longer have to release the instant you stop drawing.
 
 The life-cost of a cast is **flat** — the draw buys power, never a cheaper cast. The **Nature** discipline lowers that flat cost; the Ashen pay in criminal standing instead of years.
+
+Magic is an **inborn gift**, so it deepens as you do: a spell's damage scales slightly with your **character Level** (+1% per level, up to +30%), so it never falls behind late in a long campaign. It lifts damage only — a cone's reach, a wall's depth and its ignite stay as tuned. (Enemy mage lords grow with their level the same way.) **Miracles** deepen with your **Conviction** — the summed strength of your aligned virtues — and **crystals** with your **Medicine**, on the same gentle, capped curve.
 
 **Free hand and light armour required** — unless you know **Steel**, which lets you cast with a weapon drawn and bear twice the weight.
 

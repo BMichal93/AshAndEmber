@@ -2145,5 +2145,36 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(100, SoldierServiceMath.CompletionBonus(20)); // floor
             Assert.AreEqual(500, SoldierServiceMath.CompletionBonus(500));
         }
+
+        // ── Mastery scaling — damage grows slightly with the caster ───────────────
+
+        [Test]
+        public void ElementMagicMath_MasteryScale_StartsAtOne_AndCaps()
+        {
+            Assert.AreEqual(1.0f, ElementMagicMath.MasteryScale(0),   1e-6f); // untouched at level 0
+            Assert.AreEqual(1.0f, ElementMagicMath.MasteryScale(-5),  1e-6f); // guards negatives
+            Assert.AreEqual(1.10f, ElementMagicMath.MasteryScale(10), 1e-5f); // +1%/level
+            Assert.AreEqual(1.30f, ElementMagicMath.MasteryScale(30), 1e-5f); // hits the +30% cap
+            Assert.AreEqual(1.30f, ElementMagicMath.MasteryScale(99), 1e-5f); // never exceeds it
+        }
+
+        [Test]
+        public void CrystalMath_MasteryScale_KeysOffMedicine_AndCaps()
+        {
+            Assert.AreEqual(1.0f,  CrystalMath.MasteryScale(0),    1e-6f);
+            Assert.AreEqual(1.15f, CrystalMath.MasteryScale(150),  1e-5f); // +0.1%/point
+            Assert.AreEqual(1.30f, CrystalMath.MasteryScale(300),  1e-5f); // cap at 300 Medicine
+            Assert.AreEqual(1.30f, CrystalMath.MasteryScale(1000), 1e-5f);
+        }
+
+        [Test]
+        public void MiracleMath_ConvictionScale_SumsVirtue_AndCaps()
+        {
+            Assert.AreEqual(1.0f,  MiracleMath.ConvictionScale(0),  1e-6f); // a fickle heart, thin flame
+            Assert.AreEqual(1.0f,  MiracleMath.ConvictionScale(-3), 1e-6f); // guards negatives
+            Assert.AreEqual(1.15f, MiracleMath.ConvictionScale(5),  1e-5f); // +3%/point
+            Assert.AreEqual(1.30f, MiracleMath.ConvictionScale(10), 1e-5f); // total conviction, full pyre
+            Assert.AreEqual(1.30f, MiracleMath.ConvictionScale(20), 1e-5f); // never beyond the cap
+        }
     }
 }

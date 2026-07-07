@@ -128,6 +128,17 @@ namespace AshAndEmber
         // SolarFlare (+25 % AoE radius multiplier) applies to burst-type crystals.
         public static float SolarFlareRadius(float baseRadius) => baseRadius * 1.25f;
 
+        // ── Mastery — understanding sharpens the stone ────────────────────────────
+        // A crystal is only as keen as the hand that reads it: the deeper the
+        // bearer's grasp of physic and its lattices (Medicine), the more of the
+        // stone's fire they can draw. Folded into Potency so it lifts damage and
+        // heal magnitudes only — never a control stone's tuned radius or slow. Kept
+        // deliberately slight and capped, matching the spell/miracle mastery curves.
+        public const float MasteryScaleMax      = 0.30f;   // +30% at the Medicine cap
+        public const float MasteryScalePerPoint = 0.001f;  // +0.1% per Medicine point (cap ~300)
+        public static float MasteryScale(int medicine)
+            => 1f + Math.Min(MasteryScaleMax, Math.Max(0, medicine) * MasteryScalePerPoint);
+
         // ── NPC situational use ───────────────────────────────────────────────
         // A crystal-bearer breaks a crystal when it actually helps, not on a blind
         // roll: the Sunstone heals, so it wants its bearer hurt; every other crystal

@@ -121,6 +121,19 @@ namespace AshAndEmber
         public const float IgniteSeconds = 5f;
         public static float IgniteDps(float power) => IgniteMaxDps * ChargeFraction(power);
 
+        // ── Mastery — the working grows with the caster ──────────────────────────
+        // Magic is an INBORN gift, so it deepens as the caster themselves grows: a
+        // veteran looses the same element harder than a novice. The bonus rides the
+        // caster's character LEVEL, and is folded into `power` at the CastAttack /
+        // CastWall choke (so player, mage lord, and the Kindled all share it). It is
+        // deliberately SLIGHT and caps early, and because ChargeFraction clamps at 1
+        // it lifts only the direct damage — never the tuned cone reach, wall depth,
+        // or ignite (exactly as the overchannel's >1 power already behaves).
+        public const float MasteryScaleMax    = 0.30f;  // +30% once the cap is reached
+        public const float MasteryScalePerLvl = 0.01f;  // +1% per character level
+        public static float MasteryScale(int level)
+            => 1f + Math.Min(MasteryScaleMax, Math.Max(0, level) * MasteryScalePerLvl);
+
         // ── Aging cost (days) — FLAT, independent of draw time ───────────────────
         public const int   AttackCostDays = 3;     // a released attack ages you this much
         public const int   WallCostDays   = 4;     // a wall is a slightly bigger working
