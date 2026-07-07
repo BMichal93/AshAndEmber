@@ -627,7 +627,7 @@ namespace AshAndEmber
                 if (SpellEffects.IsWarded(a)) continue;
                 try { SpellEffects.DamageAgent(a, SandstormDamage * power, ColorSchool.Nature, caster, MagicElement.Earth); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { NatureEffects.ApplySpeedToken(a, SandstormSlowMult, SandstormSlowSec * power); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                try { SpellEffects.SpawnTempSmokeWisp(a.Position + new Vec3(0f, 0f, 1.0f), 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempSandWisp(a.Position + new Vec3(0f, 0f, 1.0f), 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 SpawnLight(a.Position, Palette(MagicElement.Sandstorm, ashen), 0.8f);
                 // A blinded horse will not hold its line — it bolts off-target,
                 // rider or no rider, breaking the charge the instant the grit hits.
@@ -643,7 +643,17 @@ namespace AshAndEmber
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * range, NatureElement.Earth, 2.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // A moving wall of blown grit down the cone — Sandstorm's own dust,
+            // not Earth's stone debris (that reads as flying rock, not a storm).
+            try
+            {
+                for (int i = 1; i <= 5; i++)
+                {
+                    Vec3 dp = pos + fwd * (range * (i / 5f)) + new Vec3(0f, 0f, 0.3f);
+                    SpellEffects.SpawnTempSandParticle(dp, 1.4f);
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Fog — Fire+Water. Thrown out ahead of the caster, a standing cloud that

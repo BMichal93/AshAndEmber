@@ -306,17 +306,18 @@ namespace AshAndEmber
                         SpellEffects.SpawnTempSnowParticle(pos + up, VisualDuration);
                         break;
                     case MagicElement.Sandstorm:
-                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration);
+                        SpellEffects.SpawnTempSandParticle(pos, VisualDuration);
                         break;
                     case MagicElement.Mire:
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, VisualDuration * 0.6f);
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration * 0.5f);
                         break;
                     // ── Summons — the kinsman's own coat, faintly, before it arrives ──
                     case MagicElement.SummonFlame:
                         if (!ashen) SpellEffects.SpawnTempFireParticle(pos, VisualDuration * 0.6f);
                         break;
                     case MagicElement.SummonGale:
-                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Storm, VisualDuration * 0.6f);
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Wind, VisualDuration * 0.6f);
                         break;
                     case MagicElement.SummonStone:
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration * 0.6f);

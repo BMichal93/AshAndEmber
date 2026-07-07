@@ -976,9 +976,9 @@ namespace AshAndEmber
                     }
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                try { SpellEffects.SpawnTempSmokeWisp(a.Position + new Vec3(0f, 0f, 1f), 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempSandWisp(a.Position + new Vec3(0f, 0f, 1f), 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
-            try { SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, 2.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempSandParticle(pos, 2.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (caster == Agent.Main)
                 Msg(ashen ? "The bone storm rises — every mount in reach bolts screaming."
@@ -1056,19 +1056,33 @@ namespace AshAndEmber
             return true;
         }
 
+        // A kinsman is always one of the four PURE Kindled (Flame/Tide/Gale/
+        // Stone) — the terrain-cousins Frost/Sand belong to the old scene-
+        // shaped champion, not a fusion, but are still handled here for
+        // completeness. The burst matches the being's own coat, not a
+        // generic earth crumble.
         private static void EmitKinsmanBurst(Vec3 pos, ElementalKind kind, bool ashen, float scale)
         {
             try
             {
                 switch (kind)
                 {
+                    case ElementalKind.Flame:
+                        SpellEffects.SpawnTempFireParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
+                        break;
+                    case ElementalKind.Tide:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, scale);
+                        break;
+                    case ElementalKind.Gale:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Wind, scale);
+                        break;
                     case ElementalKind.Frost:
                         SpellEffects.SpawnTempSnowParticle(pos + new Vec3(0f, 0f, 0.5f), scale);
                         break;
                     case ElementalKind.Sand:
-                        SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
+                        SpellEffects.SpawnTempSandParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
                         break;
-                    default:
+                    default:   // Stone
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, scale);
                         break;
                 }
