@@ -386,7 +386,13 @@ namespace AshAndEmber
                 // Spirit) a battle command laid on his own line. Both run through
                 // the shared CastAttack/CastWall choke point below, so an enemy
                 // mage rallies its ranks exactly as the player rallies theirs.
-                if (_rng.NextDouble() < ComboUpgradeChance)
+                //
+                // ── FUSION TEMPORARILY DISABLED (on hold) ────────────────────────
+                // Kept in parity with the player, whose fusion chord is likewise
+                // switched off in ElementMagicInput.HandleElementKeyPress. Restore
+                // this block when fusion is re-enabled there.
+#pragma warning disable CS0162 // unreachable while fusion is on hold
+                if (false && _rng.NextDouble() < ComboUpgradeChance)
                 {
                     foreach (var partner in known)
                     {
@@ -397,6 +403,7 @@ namespace AshAndEmber
                         break;
                     }
                 }
+#pragma warning restore CS0162
 
                 float situationBase = emergency ? NpcCastPlanner.BaseDesperate
                                     : sit == Situation.Harass ? NpcCastPlanner.BaseHarass

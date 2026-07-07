@@ -395,6 +395,14 @@ namespace AshAndEmber
         {
             MageElementKnowledge.TryLoad(el);
 
+            // ── ELEMENTAL FUSION TEMPORARILY DISABLED (on hold, to revisit) ──────
+            // The chord-to-fuse behaviour did not feel right, so for now each key
+            // simply loads its own single element (the TryLoad above). The fusion
+            // machinery (ElementComboMath, MagicElement.Lightning..CommandHold,
+            // the pending-chord fields) is left intact and unreferenced so it can
+            // be switched back on later by restoring the block below.
+            return;
+#pragma warning disable CS0162 // unreachable — kept for the coming re-enable
             if (_pendingElementKey == null)
             {
                 _pendingElementKey = el;
@@ -412,6 +420,7 @@ namespace AshAndEmber
             if (!eligible) return;   // el (or first, if el is unknown) is already loaded above
 
             MageElementKnowledge.LoadDirect(fused.Value);
+#pragma warning restore CS0162
         }
 
         private static void TryCast(CastForm form)

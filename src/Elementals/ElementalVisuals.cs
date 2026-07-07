@@ -33,6 +33,15 @@ namespace AshAndEmber
 {
     public static class ElementalVisuals
     {
+        // How solid the underlying body reads. The Kindled has no face and no skin
+        // of its own — it is pooled element wearing a human shape only as a mould.
+        // We fade the body meshes almost to nothing so what the eye follows is the
+        // continuous element wreathing the bones, the coloured contour tracing the
+        // silhouette, and the follower light — not a bald, textured man. A whisper
+        // of the mesh is left (not a flat 0) so the contour still has an edge to
+        // draw and the shape reads as a translucent apparition rather than a hole.
+        private const float GhostAlpha = 0.10f;
+
         private class Shroud
         {
             public Skeleton Skeleton;
@@ -89,6 +98,13 @@ namespace AshAndEmber
                 // shared glow system would otherwise clear it for good on expiry).
                 try { agent.AgentVisuals?.GetEntity()?.SetContourColor(shroud.Contour, true); }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+                // Fade the bald, textured body away to a translucent shimmer so the
+                // being reads as pooled element, not a naked man. Re-asserted by
+                // Follow — the engine reasserts full opacity on animation/LOD
+                // changes, so a one-shot fade here would flicker back solid.
+                try { agent.AgentVisuals?.GetEntity()?.SetAlpha(GhostAlpha); }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -105,7 +121,12 @@ namespace AshAndEmber
                 if (!agent.IsActive()) return;
                 if (shroud.Light != null)
                     SpellEffects.MoveFollowerLight(shroud.Light, agent.Position + new Vec3(0f, 0f, 1.1f));
-                agent.AgentVisuals?.GetEntity()?.SetContourColor(shroud.Contour, true);
+                var entity = agent.AgentVisuals?.GetEntity();
+                if (entity != null)
+                {
+                    entity.SetContourColor(shroud.Contour, true);
+                    entity.SetAlpha(GhostAlpha);   // hold the body faded — see Attach
+                }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -135,7 +156,15 @@ namespace AshAndEmber
             shroud.Systems.Clear();
             SpellEffects.RemoveFollowerLight(shroud.Light);
             shroud.Light = null;
-            try { agent?.AgentVisuals?.GetEntity()?.SetContourColor(null, false); }
+            try
+            {
+                var entity = agent?.AgentVisuals?.GetEntity();
+                if (entity != null)
+                {
+                    entity.SetContourColor(null, false);
+                    entity.SetAlpha(1f);   // restore full opacity (e.g. the corpse)
+                }
+            }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
