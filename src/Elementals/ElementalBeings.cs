@@ -291,6 +291,35 @@ namespace AshAndEmber
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // A lighter wisp at head height every tick — no face to see, only the
+            // element roiling where one would be. Only for near bodies; a wisp lost
+            // in LOD distance would not read anyway.
+            if (near)
+            {
+                try
+                {
+                    Vec3 head = at + new Vec3(0f, 0f, ElementalMath.AuraHeadHeightMetres);
+                    switch (kind)
+                    {
+                        case ElementalKind.Flame:
+                            SpellEffects.SpawnTempFireWisp(head, 0.4f);
+                            break;
+                        case ElementalKind.Frost:
+                            SpellEffects.SpawnTempSnowWisp(head, 0.4f);
+                            break;
+                        case ElementalKind.Tide:
+                            SpellEffects.SpawnNatureBurst(head, NatureElement.Water, 0.4f);
+                            break;
+                        case ElementalKind.Gale:
+                            SpellEffects.SpawnNatureBurst(head, NatureElement.Storm, 0.4f);
+                            break;
+                        default: // Stone / Sand
+                            SpellEffects.SpawnNatureBurst(head, NatureElement.Earth, 0.4f);
+                            break;
+                    }
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
             // A body-hugging light only for the bodies close enough to see it —
             // dozens of persistent lights across a field is the kind of cost this
             // mod does not pay.

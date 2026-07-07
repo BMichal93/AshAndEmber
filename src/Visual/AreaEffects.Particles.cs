@@ -124,6 +124,9 @@ namespace AshAndEmber
         // Single-wisp variants — for repeating ambience (steam over burning
         // ground, the deepening Ashen drifts) where a full three-entity cluster
         // per tick per patch would flood the frame with entity churn.
+        internal static void SpawnTempFireWisp(Vec3 position, float duration)
+            => SpawnSingleParticle(position, duration, _fireParticleNames);
+
         internal static void SpawnTempSmokeWisp(Vec3 position, float duration)
             => SpawnSingleParticle(position, duration, _smokeParticleNames);
 

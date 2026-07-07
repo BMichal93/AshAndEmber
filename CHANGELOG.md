@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+### The Kindled read as storm, not skin
+- **A Kindled's head now carries its own wisp of element** — fire, frost, water, storm-wind, or earth roiling at roughly eye height alongside the existing following aura, so no human face is left to read at a glance; it's woken from the first breath (the spawn burst) and sustained by every aura tick after.
+
 ### Sacred Site tuning and a new discipline
 - **The Bent Knee now seizes a random will, not the strongest, and holds it for half as long** (60s → 30s). It no longer scans for the toughest nearby enemy — just whoever the working happens to catch — so the reach never whiffs, but the borrowed will doesn't linger either.
 - **Standing Stones now teach three learnable talents** ("Study the Old Ways," bought with focus points, escalating cost — the same pattern as the Litany of Devotions and the lapidary's craft): **Deeper Binding** (+20% binding success), **Sparing Rite** (a failed binding returns its Iron Ore and Charcoal), and **Kindred Ease** (halves the daily upkeep of every Kindled you've bound).
