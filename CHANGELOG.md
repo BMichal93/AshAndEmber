@@ -4,6 +4,19 @@
 
 ## Unreleased
 
+### Elements answer in twos
+- **The five element keys are now peers — chord two together and they FUSE.** X (gamepad: click R3) draws on Fire the same way W/S/A/D draw Wind/Earth/Water/Spirit; press a second, different element key within a heartbeat of the first and the two blend into a sixth working instead of the second simply overwriting it. Every fusion has its own silhouette:
+  - **Fire + Wind → Lightning** — an instant bolt that chains between foes and stuns (the dormant Storm working, finally reachable).
+  - **Fire + Water → Fog** — a standing, blinding cloud that never damages a soul — pure denial.
+  - **Fire + Earth → Magma** — a thrown glob of molten ground that burns and bogs down everyone who crosses it, and keeps doing both.
+  - **Wind + Water → Ice** — a forward freeze with zero damage: every point of hurt is traded for a total, hard root.
+  - **Wind + Earth → Sandstorm** — a long blinding gust, no knockback, just grit that will not leave the eyes.
+  - **Earth + Water → Mire** — ground that keeps giving way underfoot; standing in it only ever gets worse.
+  - **Spirit + any other element → a summon** — a living kinsman (Flame, Gale, Stone, or Tide) fights at your side for about a minute, gated to one kinsman at a time (shared with the Unbinding's own champion) so it can never be spammed into a horde.
+  - Every fusion costs the same flat toll as any other attack cast; only the summon is capped, and only by the one-kinsman bond.
+  - NPC mage lords fuse too — a lord who has studied a second element occasionally blends it into the one he was about to throw.
+  - The Journal's "Notes for the Adventurer" explains the chord and the full combo table.
+
 ### The cursed field is more alive
 - **The battlefield events are reworked, and four new ones join them.** The randomised curses that can grip a battle have been overhauled for less "everyone takes damage at once" and more terrain you have to fight around.
   - **Cinder Rain** no longer smites every fighter at once. Cinders now fall in scattered, lingering patches of fire that burn *whoever stands in them* — friend or foe — so the field becomes a hazard to read and move around, not a blanket toll.

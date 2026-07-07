@@ -29,6 +29,11 @@ namespace AshAndEmber
         private const float ImpulsiveCooldown   = 15f;
         private const float CalculatingCooldown = 35f;
         private const float AshenCooldown       = 6f;  // Ashen lords cast ~4× more often
+        // A lord who knows a second element may blend it into the one he was
+        // about to throw — the same fusion the player commands by chord. Kept
+        // modest so a well-studied lord still throws each element straight most
+        // of the time; the blend is a flourish, not his whole repertoire.
+        private const double ComboUpgradeChance = 0.35;
         // 6s matches the Ashen cadence. At the old 3s a single False Emperor
         // cast ~100 times in a 5-minute battle at max recipe — unanswerable.
         private const float FalseEmperorCooldown = 6f;
@@ -274,11 +279,21 @@ namespace AshAndEmber
             }
             switch (el)
             {
-                case MagicElement.Wind:   return "looses a blast of wind.";
-                case MagicElement.Earth:  return "tears the earth upward.";
-                case MagicElement.Water:  return "hurls a slowing wave.";
-                case MagicElement.Spirit: return "strikes the mind with cold dread.";
-                default:                  return "shapes fire into a forward blade.";
+                case MagicElement.Wind:      return "looses a blast of wind.";
+                case MagicElement.Earth:     return "tears the earth upward.";
+                case MagicElement.Water:     return "hurls a slowing wave.";
+                case MagicElement.Spirit:    return "strikes the mind with cold dread.";
+                case MagicElement.Lightning: return "calls down a bolt that chains between foes.";
+                case MagicElement.Fog:       return "throws out a blinding cloud.";
+                case MagicElement.Magma:     return "hurls a glob of molten ground.";
+                case MagicElement.Ice:       return "freezes a foe rooted in place.";
+                case MagicElement.Sandstorm: return "blinds the line with driven grit.";
+                case MagicElement.Mire:      return "sinks the ground into a mire.";
+                case MagicElement.SummonFlame:
+                case MagicElement.SummonGale:
+                case MagicElement.SummonStone:
+                case MagicElement.SummonTide: return "calls a living kinsman to its side.";
+                default:                     return "shapes fire into a forward blade.";
             }
         }
 
@@ -365,6 +380,22 @@ namespace AshAndEmber
                     pick = known[0];            // Fire — reckless casters loose it anyway
                 }
                 MagicElement chosen = pick.Value;
+
+                // A studied lord occasionally blends a second known element into
+                // the one he was about to throw. A Spirit-fusion never wastes the
+                // cast on a refusal — skip it if his kinsman already walks the field.
+                if (_rng.NextDouble() < ComboUpgradeChance)
+                {
+                    foreach (var partner in known)
+                    {
+                        if (partner == chosen) continue;
+                        var fused = ElementComboMath.TryFuse(chosen, partner);
+                        if (fused == null) continue;
+                        if (ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveChampionFor(agent)) continue;
+                        chosen = fused.Value;
+                        break;
+                    }
+                }
 
                 float situationBase = emergency ? NpcCastPlanner.BaseDesperate
                                     : sit == Situation.Harass ? NpcCastPlanner.BaseHarass

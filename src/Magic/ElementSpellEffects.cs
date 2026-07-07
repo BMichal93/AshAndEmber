@@ -164,6 +164,37 @@ namespace AshAndEmber
         private const float SpiritHealFrac   = 0.18f;  // ally heal fraction
         private const int   SpiritRadiusInt  = 9;
 
+        // ── Fusions (v0.37) ─────────────────────────────────────────────────────
+        // Ice — Wind+Water. Zero damage: the fusion trades every point of hurt for
+        // a HARD, total root (Entangle's root, doubled, with no damage attached).
+        private const float IceRange        = 10f;
+        private const float IceConeAngleDeg = 42f;
+        private const float IceRootSec      = 5.5f;
+        // Sandstorm — Wind+Earth. A forward blind: low damage, long disorient, no
+        // knockback (Gale/Entangle both shove; this one just grits the eyes shut).
+        private const float SandstormRange        = 10f;
+        private const float SandstormConeAngleDeg = 55f;
+        private const float SandstormDamage       = 16f;
+        private const float SandstormSlowMult     = 0.55f;
+        private const float SandstormSlowSec      = 6f;
+        // Fog — Fire+Water. A standing cloud thrown out ahead of the caster; the
+        // only fusion that never damages a soul — pure area denial that lingers
+        // long after the cast itself is spent.
+        private const float FogThrowDistance = 6f;
+        private const float FogRadius        = 6.5f;
+        private const float FogDuration      = 8f;
+        // Magma — Fire+Earth. A thrown glob of molten ground: burns AND bogs down
+        // whoever crosses it, and keeps doing both for as long as it lingers.
+        private const float MagmaThrowDistance = 7f;
+        private const float MagmaTickDamage    = 16f;
+        private const float MagmaDuration      = 6f;
+        // Mire — Earth+Water. No burn, no blade — ground that keeps giving way
+        // underfoot; every tick re-applies the hold, so standing in it only
+        // ever gets worse, never better, until you break free of the radius.
+        private const float MireThrowDistance = 6f;
+        private const float MireTickDamage    = 10f;
+        private const float MireDuration      = 7f;
+
         // ── Public dispatch ─────────────────────────────────────────────────────
         // `power` (0..1+) scales the working's strength — the caller sets it from
         // how long the charge was drawn. Defaults to full for NPC callers.
@@ -181,6 +212,18 @@ namespace AshAndEmber
                 case MagicElement.Earth:  NatureEffects.ExecuteNpc(NaturePower.Entangle, caster, caster.Team, power); break;
                 case MagicElement.Water:  NatureEffects.ExecuteNpc(NaturePower.Torrent,  caster, caster.Team, power); break;
                 case MagicElement.Spirit: SpiritPanic(caster, power); break;
+                // ── Fusions ──────────────────────────────────────────────────────
+                case MagicElement.Lightning: NatureEffects.ExecuteNpc(NaturePower.ThunderClap, caster, caster.Team, power); break;
+                case MagicElement.Ice:       IceLance(caster, power);      break;
+                case MagicElement.Sandstorm: SandstormGust(caster, power); break;
+                case MagicElement.Fog:       FogBurst(caster, power);      break;
+                case MagicElement.Magma:     MagmaBurst(caster, power);    break;
+                case MagicElement.Mire:      MireBurst(caster, power);     break;
+                case MagicElement.SummonFlame:
+                case MagicElement.SummonGale:
+                case MagicElement.SummonStone:
+                case MagicElement.SummonTide:
+                    SummonKin(el, caster); break;
             }
             CastFlash(el, caster);
             // Enemy mages remember what was thrown, and answer with the counter-wall.
@@ -201,6 +244,25 @@ namespace AshAndEmber
                 case MagicElement.Earth:  NatureEffects.ExecuteNpc(NaturePower.Thornwall, caster, caster.Team, power); break;
                 case MagicElement.Water:  NatureEffects.ExecuteNpc(NaturePower.Mistwall,  caster, caster.Team, power); break;
                 case MagicElement.Spirit: SpiritWall(caster, power); break;
+                // Lightning raises its own — the crackling Stormwall (push +
+                // damage) it already shares with the dormant Storm discipline.
+                case MagicElement.Lightning: NatureEffects.ExecuteNpc(NaturePower.Stormwall, caster, caster.Team, power); break;
+                // Every other fusion borrows a parent's wall (see
+                // ElementComboMath.WallFallback) — a bespoke barrier for all
+                // five was more content than the working needs.
+                case MagicElement.Ice:
+                case MagicElement.Sandstorm:
+                case MagicElement.Fog:
+                case MagicElement.Magma:
+                case MagicElement.Mire:
+                    CastWall(ElementComboMath.WallFallback(el), caster, power); return;
+                // A summon answers Block exactly as it answers Attack — there is
+                // no wall to raise, only the kinsman to call.
+                case MagicElement.SummonFlame:
+                case MagicElement.SummonGale:
+                case MagicElement.SummonStone:
+                case MagicElement.SummonTide:
+                    SummonKin(el, caster); break;
             }
             CastFlash(el, caster);
             try { SpellEffects.RecordMagicCast(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -490,6 +552,107 @@ namespace AshAndEmber
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
+        // ── Fusions ──────────────────────────────────────────────────────────────
+        // A flat, horizontal facing — mirrors NatureEffects.GroundFacing so a
+        // fusion's cone reads exactly like the base elements it was drawn from.
+        private static Vec3 GroundFacing(Agent caster)
+        {
+            Vec3 f = caster.LookDirection; f.z = 0f;
+            return f.Length < 0.01f ? new Vec3(0f, 1f, 0f) : f.NormalizedCopy();
+        }
+
+        private static bool InCone(Vec3 fwd, Vec3 from, Vec3 target, float cosHalf)
+        {
+            Vec3 d = target - from; d.z = 0f;
+            if (d.Length < 0.01f) return true;
+            return Vec3.DotProduct(fwd, d.NormalizedCopy()) >= cosHalf;
+        }
+
+        // Ice — Wind+Water. A forward cone with NO damage at all: every point of
+        // hurt is traded away for a total, hard root — the only fusion (besides
+        // Fog) that cannot kill, only hold.
+        private static void IceLance(Agent caster, float power)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            bool ashen = CasterAshen(caster);
+            Vec3 fwd = GroundFacing(caster);
+            float cosHalf = (float)Math.Cos(IceConeAngleDeg * 0.5 * (Math.PI / 180.0));
+            float range = ElementMagicMath.ConeRange(IceRange, power);
+            foreach (Agent a in EnemiesNear(caster, range))
+            {
+                if (!InCone(fwd, pos, a.Position, cosHalf)) continue;
+                if (SpellEffects.IsWarded(a)) continue;
+                try { a.SetMaximumSpeedLimit(0f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(a, 0f, IceRootSec * power); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempSnowParticle(a.Position + new Vec3(0f, 0f, 0.6f), 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                SpawnLight(a.Position, Palette(MagicElement.Ice, ashen), 0.9f);
+            }
+            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * range, NatureElement.Water, 2.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Sandstorm — Wind+Earth. A forward blind: low damage, no knockback, a
+        // long slow — the grit gets in the eyes and stays there.
+        private static void SandstormGust(Agent caster, float power)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            bool ashen = CasterAshen(caster);
+            Vec3 fwd = GroundFacing(caster);
+            float cosHalf = (float)Math.Cos(SandstormConeAngleDeg * 0.5 * (Math.PI / 180.0));
+            float range = ElementMagicMath.ConeRange(SandstormRange, power);
+            foreach (Agent a in EnemiesNear(caster, range))
+            {
+                if (!InCone(fwd, pos, a.Position, cosHalf)) continue;
+                if (SpellEffects.IsWarded(a)) continue;
+                try { SpellEffects.DamageAgent(a, SandstormDamage * power, ColorSchool.Nature, caster, MagicElement.Earth); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(a, SandstormSlowMult, SandstormSlowSec * power); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempSmokeWisp(a.Position + new Vec3(0f, 0f, 1.0f), 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                SpawnLight(a.Position, Palette(MagicElement.Sandstorm, ashen), 0.8f);
+            }
+            try { SpellEffects.SpawnNatureLine(pos, pos + fwd * range, NatureElement.Earth, 2.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Fog — Fire+Water. Thrown out ahead of the caster, a standing cloud that
+        // lingers long after the cast is spent — the only fusion that never
+        // damages anything, just denies the ground it covers.
+        private static void FogBurst(Agent caster, float power)
+        {
+            Vec3 pos; Vec3 fwd; try { pos = caster.Position; fwd = GroundFacing(caster); } catch { return; }
+            Vec3 at = pos + fwd * FogThrowDistance;
+            try { SpellEffects.SpawnFogPatch(at, FogRadius * (0.7f + 0.3f * ElementMagicMath.ChargeFraction(power)), FogDuration, caster.Team); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Magma — Fire+Earth. A thrown glob of molten ground: burns and bogs
+        // down anyone who crosses it, and keeps doing both while it lingers.
+        private static void MagmaBurst(Agent caster, float power)
+        {
+            Vec3 pos; Vec3 fwd; try { pos = caster.Position; fwd = GroundFacing(caster); } catch { return; }
+            Vec3 at = pos + fwd * MagmaThrowDistance;
+            try { SpellEffects.SpawnMagmaPatch(at, MagmaTickDamage * power, MagmaDuration, caster.Team); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Mire — Earth+Water. No burn, no blade — ground that keeps giving way;
+        // every tick re-applies the hold, so standing in it only ever worsens.
+        private static void MireBurst(Agent caster, float power)
+        {
+            Vec3 pos; Vec3 fwd; try { pos = caster.Position; fwd = GroundFacing(caster); } catch { return; }
+            Vec3 at = pos + fwd * MireThrowDistance;
+            try { SpellEffects.SpawnMirePatch(at, MireTickDamage * power, MireDuration, caster.Team); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Spirit fusions — call the living kinsman of the paired element to the
+        // caster's side (see ElementUltimates.TryCastFusionSummon). Gated to one
+        // living kinsman per summoner at a time; a refusal is silent to the
+        // caster here (the message is already shown by ElementUltimates).
+        private static void SummonKin(MagicElement el, Agent caster)
+        {
+            bool ashen = CasterAshen(caster);
+            try { ElementUltimates.TryCastFusionSummon(ElementComboMath.SummonKindOf(el), caster, ashen); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
         // Shouts a random order into a random enemy formation — charge, fall back, or
         // advance — breaking their coordination for a beat.
         private static void IssueRandomEnemyOrder(Agent caster)
@@ -544,30 +707,62 @@ namespace AshAndEmber
 
         private static Vec3 Palette(MagicElement el, bool ashen)
         {
+            // The summoned kinsman wears its own elemental coat (ElementalBeings'
+            // aura colour) whichever mask calls it — the being is the same either way.
+            if (ElementComboMath.IsSummon(el))
+            {
+                switch (ElementComboMath.SummonKindOf(el))
+                {
+                    case ElementalKind.Flame: return new Vec3(1.00f, 0.45f, 0.12f);
+                    case ElementalKind.Tide:  return new Vec3(0.18f, 0.50f, 1.00f);
+                    case ElementalKind.Gale:  return new Vec3(0.62f, 0.52f, 1.00f);
+                    default:                  return new Vec3(0.50f, 0.46f, 0.42f); // Stone
+                }
+            }
             if (ashen)
             {
                 switch (el)
                 {
-                    case MagicElement.Fire:   return new Vec3(0.55f, 0.78f, 1.00f); // Cold — pale blue-white
-                    case MagicElement.Wind:   return new Vec3(0.40f, 0.45f, 0.62f); // Storm — slate
-                    case MagicElement.Earth:  return new Vec3(0.55f, 0.54f, 0.56f); // Ash — grey
-                    case MagicElement.Water:  return new Vec3(0.88f, 0.94f, 1.00f); // Snow — white
-                    default:                  return new Vec3(0.32f, 0.18f, 0.45f); // Void — deep violet
+                    case MagicElement.Fire:      return new Vec3(0.55f, 0.78f, 1.00f); // Cold — pale blue-white
+                    case MagicElement.Wind:      return new Vec3(0.40f, 0.45f, 0.62f); // Storm — slate
+                    case MagicElement.Earth:     return new Vec3(0.55f, 0.54f, 0.56f); // Ash — grey
+                    case MagicElement.Water:     return new Vec3(0.88f, 0.94f, 1.00f); // Snow — white
+                    case MagicElement.Lightning: return new Vec3(0.65f, 0.72f, 1.00f); // Deathbolt — cold-white arc
+                    case MagicElement.Fog:       return new Vec3(0.80f, 0.85f, 0.90f); // The Shroud — pale grey
+                    case MagicElement.Magma:     return new Vec3(0.50f, 0.42f, 0.38f); // Ashfall — dull ember-grey
+                    case MagicElement.Ice:       return new Vec3(0.85f, 0.95f, 1.00f); // Rime — near-white
+                    case MagicElement.Sandstorm: return new Vec3(0.60f, 0.56f, 0.50f); // Ashstorm — grey ochre
+                    case MagicElement.Mire:      return new Vec3(0.42f, 0.44f, 0.40f); // The Sinking Ash
+                    default:                     return new Vec3(0.32f, 0.18f, 0.45f); // Void — deep violet
                 }
             }
             switch (el)
             {
-                case MagicElement.Fire:   return new Vec3(1.00f, 0.45f, 0.12f); // flame
-                case MagicElement.Wind:   return new Vec3(0.70f, 0.95f, 0.92f); // pale gale
-                case MagicElement.Earth:  return new Vec3(0.50f, 0.40f, 0.20f); // loam
-                case MagicElement.Water:  return new Vec3(0.30f, 0.55f, 0.95f); // deep blue
-                default:                  return new Vec3(0.55f, 0.40f, 0.70f); // Spirit — violet
+                case MagicElement.Fire:      return new Vec3(1.00f, 0.45f, 0.12f); // flame
+                case MagicElement.Wind:      return new Vec3(0.70f, 0.95f, 0.92f); // pale gale
+                case MagicElement.Earth:     return new Vec3(0.50f, 0.40f, 0.20f); // loam
+                case MagicElement.Water:     return new Vec3(0.30f, 0.55f, 0.95f); // deep blue
+                case MagicElement.Lightning: return new Vec3(0.85f, 0.90f, 1.00f); // white-blue arc
+                case MagicElement.Fog:       return new Vec3(0.72f, 0.76f, 0.80f); // pale, thick grey
+                case MagicElement.Magma:     return new Vec3(1.00f, 0.30f, 0.05f); // molten, deeper than flame
+                case MagicElement.Ice:       return new Vec3(0.65f, 0.90f, 1.00f); // pale cyan
+                case MagicElement.Sandstorm: return new Vec3(0.80f, 0.65f, 0.35f); // dusty ochre
+                case MagicElement.Mire:      return new Vec3(0.40f, 0.42f, 0.25f); // murky bog
+                default:                     return new Vec3(0.55f, 0.40f, 0.70f); // Spirit — violet
             }
         }
 
         private static ColorSchool GlowSchool(MagicElement el, bool ashen)
-            => ashen ? ColorSchool.Ashen
-                     : el == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature;
+        {
+            if (ashen) return ColorSchool.Ashen;
+            switch (el)
+            {
+                case MagicElement.Fire:
+                case MagicElement.Magma:     return ColorSchool.Red;
+                case MagicElement.Lightning: return ColorSchool.White;
+                default:                     return ColorSchool.Nature;
+            }
+        }
 
         // Is the caster drawing on the cold? The player by their Ashen state; an NPC
         // lord by the registry.

@@ -22,7 +22,26 @@ using System;
 namespace AshAndEmber
 {
     // The five elements of the unified magic. Fire is the default/free root.
-    public enum MagicElement { Fire = 0, Wind = 1, Earth = 2, Water = 3, Spirit = 4 }
+    // v0.37 — FUSIONS: two known elements drawn together in one chord (see
+    // ElementComboMath) blend into a sixth working, or (with Spirit) call a
+    // living kinsman to the caster's side. APPENDED, never renumbered — nothing
+    // here is serialized, but keep the numbering stable for sanity's sake.
+    public enum MagicElement
+    {
+        Fire = 0, Wind = 1, Earth = 2, Water = 3, Spirit = 4,
+        // ── Fusions (attack-only workings) ──────────────────────────────────
+        Lightning = 5,   // Fire + Wind
+        Fog       = 6,   // Fire + Water
+        Magma     = 7,   // Fire + Earth
+        Ice       = 8,   // Wind + Water
+        Sandstorm = 9,   // Wind + Earth
+        Mire      = 10,  // Earth + Water
+        // ── Fusions with Spirit — summon a living kinsman of the paired element ──
+        SummonFlame = 11,  // Fire  + Spirit
+        SummonGale  = 12,  // Wind  + Spirit
+        SummonStone = 13,  // Earth + Spirit
+        SummonTide  = 14,  // Water + Spirit
+    }
 
     // Which half of an element's expression is being cast.
     public enum CastForm { Attack, Wall }

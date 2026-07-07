@@ -83,7 +83,10 @@ namespace AshAndEmber
             public ElementalKind Kind;
             public bool  Ashen;
             public float VisualTimer;
-            public bool  Player;   // true = the PLAYER's summon (gates the one-at-a-time cap)
+            // Who called it — gates the one-at-a-time cap PER SUMMONER, whether
+            // raised by the Unbinding (terrain-shaped) or a Spirit fusion
+            // (caller-chosen kind): the same caster may not stand two at once.
+            public Agent Summoner;
         }
         private static readonly List<Champion> _champions = new List<Champion>();
 
@@ -120,15 +123,19 @@ namespace AshAndEmber
         // you may raise another only once the first has fallen (or its time ran out)
         // — never two at once. This stops the summon being spammed into an army.
         public static bool PlayerCanUnbind(MagicElement el)
-            => el == MagicElement.Spirit ? !PlayerHasLiveChampion() : !_playerUsed.Contains(el);
+            => el == MagicElement.Spirit ? !HasLiveChampionFor(Agent.Main) : !_playerUsed.Contains(el);
 
-        // True while a player-summoned champion is still standing on the field.
-        private static bool PlayerHasLiveChampion()
+        // True while `summoner` already has a living champion on the field —
+        // whether raised by the full Unbinding or a lesser Spirit fusion. Public:
+        // ElementMagicInput and ColourLordAI both check this before offering a
+        // Spirit-fusion summon, so a cast is never wasted on a refusal.
+        public static bool HasLiveChampionFor(Agent summoner)
         {
+            if (summoner == null) return false;
             for (int i = 0; i < _champions.Count; i++)
             {
                 var c = _champions[i];
-                if (c == null || !c.Player) continue;
+                if (c == null || c.Summoner != summoner) continue;
                 try { if (c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f) return true; }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
@@ -749,27 +756,65 @@ namespace AshAndEmber
                 try { sceneName = (Mission.Current.SceneName ?? "").ToLowerInvariant(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 ElementalKind kind = ElementUltimateMath.ElementalKindForScene(snowy, sceneName);
 
-                Vec3 fwd; try { fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
-                catch { fwd = new Vec3(0f, 1f, 0f); }
-                Vec3 pos = caster.Position + fwd * ElementUltimateMath.ElementalSpawnOffset;
-
-                // The champion is just a Kindled the land sends — build it through
-                // the shared factory so it looks, coats and buckles exactly like
-                // every other elemental (its aura and weakness are handled centrally
-                // by ElementalBeings). charge:true ropes an ENEMY lord's summon into
-                // his line; on the player's side the factory leaves battle orders be.
-                Agent elemental = ElementalFactory.SpawnElemental(kind, caster.Team, pos, charge: true);
-                if (elemental == null) return;
-
-                _champions.Add(new Champion
-                {
-                    Elemental = elemental, Remaining = ElementUltimateMath.ElementalSeconds,
-                    Kind = kind, Ashen = ashen, Player = caster == Agent.Main,
-                });
-                Msg($"The land answers — a {ElementUltimateMath.ElementalName(kind)} rises to fight beside " +
-                    (caster == Agent.Main ? "you." : "its summoner."));
+                if (SpawnNamedChampion(caster, ashen, kind))
+                    Msg($"The land answers — a {ElementUltimateMath.ElementalName(kind)} rises to fight beside " +
+                        (caster == Agent.Main ? "you." : "its summoner."));
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // =====================================================================
+        // SPIRIT FUSION — a lesser, repeatable cousin of the Unbinding's summon.
+        // Where the Unbinding calls a TERRAIN-shaped champion once per battle,
+        // a Spirit fusion calls the living kinsman of whichever element it was
+        // paired with — the same flat attack-form cost as any other cast, but
+        // gated to one living kinsman per summoner at a time (the same slot the
+        // Unbinding's champion uses), so it can never be spammed into a horde.
+        // =====================================================================
+        public static bool TryCastFusionSummon(ElementalKind kind, Agent caster, bool ashen)
+        {
+            if (caster == null || !caster.IsActive() || Mission.Current == null || caster.Team == null) return false;
+            if (HasLiveChampionFor(caster))
+            {
+                if (caster == Agent.Main)
+                    Msg($"{ElementUltimateMath.ElementalName(kind)} already walks the field beside you — the old bond must break before a new one answers.");
+                return false;
+            }
+            bool spawned = false;
+            try { spawned = SpawnNamedChampion(caster, ashen, kind); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (spawned)
+                Msg($"Spirit calls its kin — {ElementUltimateMath.ElementalName(kind)} rises at " +
+                    (caster == Agent.Main ? "your side." : "its summoner's side."));
+            return spawned;
+        }
+
+        // Shared spawn: builds the Kindled through the factory and registers its
+        // lifespan. Returns false (no state changed) if the mission/team is gone
+        // or the factory failed to spawn a body.
+        private static bool SpawnNamedChampion(Agent caster, bool ashen, ElementalKind kind)
+        {
+            if (Mission.Current == null || caster.Team == null) return false;
+
+            Vec3 fwd; try { fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
+            catch { fwd = new Vec3(0f, 1f, 0f); }
+            Vec3 pos = caster.Position + fwd * ElementUltimateMath.ElementalSpawnOffset;
+
+            // The champion is just a Kindled sent to the caster's side — build it
+            // through the shared factory so it looks, coats and buckles exactly
+            // like every other elemental (its aura and weakness are handled
+            // centrally by ElementalBeings). charge:true ropes an ENEMY lord's
+            // summon into his line; on the player's side the factory leaves
+            // battle orders be.
+            Agent elemental = ElementalFactory.SpawnElemental(kind, caster.Team, pos, charge: true);
+            if (elemental == null) return false;
+
+            _champions.Add(new Champion
+            {
+                Elemental = elemental, Remaining = ElementUltimateMath.ElementalSeconds,
+                Kind = kind, Ashen = ashen, Summoner = caster,
+            });
+            return true;
         }
 
         private static void EmitChampionBurst(Vec3 pos, ElementalKind kind, bool ashen, float scale)
