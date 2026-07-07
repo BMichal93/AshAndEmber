@@ -146,11 +146,12 @@ namespace AshAndEmber
                 "orders — but never burns. " +
                 "FIRE+EARTH: Magma, a molten patch that burns and bogs down all who cross it. WIND+WATER: " +
                 "Ice, a forward freeze that roots utterly but deals no harm. WIND+EARTH: Sandstorm, a long " +
-                "blinding gust. EARTH+WATER: Mire, ground that keeps giving way the longer you stand in it. " +
-                "SPIRIT+any other element calls a living KINSMAN to your side instead of an attack — Flame, " +
-                "Gale, Stone, or Tide — for about a minute, though only one kinsman may walk with you at a " +
-                "time. Every fusion costs the same flat toll as any other attack; only the summon is capped, " +
-                "and only by that one-at-a-time bond."), true);
+                "blinding gust that bolts any mount it catches — it breaks a charge outright. EARTH+WATER: " +
+                "Mire, ground that keeps giving way and spreads wider the longer it stands. SPIRIT+any other " +
+                "element calls a living KINSMAN to your side instead of an attack — Flame, Gale, Stone, or " +
+                "Tide — for about a minute, firing the instant the chord completes (no draw, no Attack/Block " +
+                "needed), though only one kinsman may walk with you at a time. Every fusion costs the same " +
+                "flat toll as any other attack; only the summon is capped, and only by that one-at-a-time bond."), true);
 
             AddLog(new TextObject(
                 "MAGIC · THE UNBINDING — Draw an element to its FULLEST (about five seconds), then press " +

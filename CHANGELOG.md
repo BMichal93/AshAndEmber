@@ -10,9 +10,9 @@
   - **Fire + Water → Fog** — a standing, blinding cloud that never damages a soul directly, but slows whoever it swallows, dampens the bite of any shot loosed from inside it (a bowman can't find the mark true through his own cloud), and every so often scrambles the orders of a formation caught blind inside it.
   - **Fire + Earth → Magma** — a thrown glob of molten ground that burns and bogs down everyone who crosses it, and keeps doing both.
   - **Wind + Water → Ice** — a forward freeze with zero damage: every point of hurt is traded for a total, hard root.
-  - **Wind + Earth → Sandstorm** — a long blinding gust, no knockback, just grit that will not leave the eyes.
-  - **Earth + Water → Mire** — ground that keeps giving way underfoot; standing in it only ever gets worse.
-  - **Spirit + any other element → a summon** — a living kinsman (Flame, Gale, Stone, or Tide) fights at your side for about a minute, gated to one kinsman at a time (shared with the Unbinding's own champion) so it can never be spammed into a horde.
+  - **Wind + Earth → Sandstorm** — a long blinding gust, no knockback, but any mount it catches bolts off-line — it breaks a cavalry charge outright, which nothing else in the mod does.
+  - **Earth + Water → Mire** — ground that keeps giving way underfoot, and the bog itself SPREADS wider the longer it stands.
+  - **Spirit + any other element → a summon** — a living kinsman (Flame, Gale, Stone, or Tide) fights at your side for about a minute, gated to one kinsman at a time (shared with the Unbinding's own champion) so it can never be spammed into a horde. A summon fires the instant the chord completes — no draw, no separate Attack/Block press, since there is only the one working to call.
   - Every fusion costs the same flat toll as any other attack cast; only the summon is capped, and only by the one-kinsman bond.
   - NPC mage lords fuse too — a lord who has studied a second element occasionally blends it into the one he was about to throw.
   - The Journal's "Notes for the Adventurer" explains the chord and the full combo table.

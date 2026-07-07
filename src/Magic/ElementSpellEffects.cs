@@ -610,7 +610,10 @@ namespace AshAndEmber
         }
 
         // Sandstorm — Wind+Earth. A forward blind: low damage, no knockback, a
-        // long slow — the grit gets in the eyes and stays there.
+        // long slow — the grit gets in the eyes and stays there. Its real
+        // identity is anti-CAVALRY: a blinded mount bolts off-line no matter
+        // how disciplined its rider, breaking a charge outright rather than
+        // just slowing it — no other fusion or base element panics mounts.
         private static void SandstormGust(Agent caster, float power)
         {
             Vec3 pos; try { pos = caster.Position; } catch { return; }
@@ -626,6 +629,19 @@ namespace AshAndEmber
                 try { NatureEffects.ApplySpeedToken(a, SandstormSlowMult, SandstormSlowSec * power); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { SpellEffects.SpawnTempSmokeWisp(a.Position + new Vec3(0f, 0f, 1.0f), 0.9f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 SpawnLight(a.Position, Palette(MagicElement.Sandstorm, ashen), 0.8f);
+                // A blinded horse will not hold its line — it bolts off-target,
+                // rider or no rider, breaking the charge the instant the grit hits.
+                try
+                {
+                    if (a.MountAgent != null && a.MountAgent.IsActive())
+                    {
+                        Vec3 bolt = a.MountAgent.Position - pos; bolt.z = 0f;
+                        bolt = bolt.Length > 0.1f ? bolt.NormalizedCopy() : new Vec3(1f, 0f, 0f);
+                        a.MountAgent.TeleportToPosition(a.MountAgent.Position + bolt * 3.5f);
+                        try { a.MountAgent.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    }
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             try { SpellEffects.SpawnNatureLine(pos, pos + fwd * range, NatureElement.Earth, 2.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }

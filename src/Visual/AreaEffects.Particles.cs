@@ -643,6 +643,10 @@ namespace AshAndEmber
 
                     case "spell_mirepatch":
                     {
+                        // Unique among the fusions: the bog SPREADS while it
+                        // lingers instead of holding a fixed footprint — ground
+                        // that was firm a moment ago keeps giving way outward.
+                        if (e.Radius < 8f) e.Radius += 0.35f;
                         if (_rng.Next(2) == 0)
                             try { SpawnNatureBurst(e.Position, NatureElement.Earth, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         foreach (Agent a in Mission.Current.Agents.ToList())

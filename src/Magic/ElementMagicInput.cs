@@ -367,25 +367,31 @@ namespace AshAndEmber
 
             if (pressed != null) HandleElementKeyPress(pressed.Value);
 
+            // The pending key was already loaded (or fired, or fused) the instant
+            // it was pressed — this timeout just closes the chord window so a
+            // late, unrelated key press does not fuse with a stale first press.
             if (_pendingElementKey != null)
             {
                 _pendingElementTimer -= dt;
-                if (_pendingElementTimer <= 0f)
-                {
-                    MagicElement solo = _pendingElementKey.Value;
-                    _pendingElementKey = null;
-                    MageElementKnowledge.TryLoad(solo);
-                }
+                if (_pendingElementTimer <= 0f) _pendingElementKey = null;
             }
         }
 
-        // One element key landed. If none was already waiting, buffer this one
-        // and start the chord window. If one WAS waiting and this is a second,
-        // different key, resolve the pair — fusing them if both halves are
-        // known (and, for a Spirit summon, a kinsman slot is free), or falling
-        // back to whichever single element the mage actually knows.
+        // One element key landed. It is loaded IMMEDIATELY — a single tap must
+        // feel exactly as instant as it always has, so there is no perceptible
+        // delay while the chord window waits to see if a second key follows.
+        // If a second, DIFFERENT key lands within the window, the pair is then
+        // resolved — fusing them if both halves are known (falling back to
+        // whichever single element the mage actually knows, which is already
+        // loaded from the optimistic step above, so "falling back" needs no
+        // extra code) — and, for a Spirit summon specifically, firing at once
+        // instead of loading anything: a summon has no separate Attack/Wall
+        // shape to draw toward, so making the player then also press Attack
+        // would just be a second button for the same one effect.
         private static void HandleElementKeyPress(MagicElement el)
         {
+            MageElementKnowledge.TryLoad(el);
+
             if (_pendingElementKey == null)
             {
                 _pendingElementKey = el;
@@ -394,25 +400,42 @@ namespace AshAndEmber
             }
             MagicElement first = _pendingElementKey.Value;
             _pendingElementKey = null;
-            if (first == el) { MageElementKnowledge.TryLoad(el); return; }   // same key twice — just (re)load it
+            if (first == el) return;   // same key twice — already (re)loaded above
 
             var fused = ElementComboMath.TryFuse(first, el);
             bool eligible = fused != null
                          && MageElementKnowledge.HasElement(first)
                          && MageElementKnowledge.HasElement(el);
-            if (eligible && ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveChampionFor(Agent.Main))
+            if (!eligible) return;   // el (or first, if el is unknown) is already loaded above
+
+            if (ElementComboMath.IsSummon(fused.Value))
             {
-                Msg("Your kinsman already walks the field — the working answers as a single element instead.");
-                eligible = false;
-            }
-            if (!eligible)
-            {
-                // Fall back to whichever of the two the mage actually knows —
-                // mirrors TryLoad's own "ignored if unknown" contract.
-                if (!MageElementKnowledge.TryLoad(el)) MageElementKnowledge.TryLoad(first);
+                if (ElementUltimates.HasLiveChampionFor(Agent.Main))
+                    Msg("Your kinsman already walks the field — the working answers as a single element instead.");
+                else
+                    FireSummonNow(fused.Value);
                 return;
             }
             MageElementKnowledge.LoadDirect(fused.Value);
+        }
+
+        // A Spirit-fusion summon fires the instant the chord completes — no
+        // draw, no separate Attack/Block press. It still respects the usual
+        // channel gates (free hand, light armour, standing still) and pays the
+        // same flat toll as any other attack cast.
+        private static void FireSummonNow(MagicElement summonEl)
+        {
+            string reason = ChannelBlockReason();
+            if (reason != null) { Msg(reason); return; }
+            var caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+            try { ElementSpellEffects.CastAttack(summonEl, caster, 1f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            ApplyCastCost(ElementMagicMath.CastAgingDays(CastForm.Attack, MageElementKnowledge.HasNature));
+            // Whatever was mid-draw is spent along with the summon — start clean.
+            _drawTime = 0f;
+            _readyAnnounced = false;
+            _fullAnnounced = false;
+            _overAnnounced = false;
         }
 
         private static void TryCast(CastForm form)
