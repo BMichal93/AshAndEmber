@@ -1,6 +1,6 @@
 // =============================================================================
 // ASH AND EMBER — AshenRuins/AshenRuinDefs.cs
-// Compile-time definitions for all 28 Ashen Ruins:
+// Compile-time definitions for all 34 Ashen Ruins:
 // locations (matched by village name), challenge sequences, and rewards.
 // =============================================================================
 
@@ -34,6 +34,19 @@ namespace AshAndEmber
         NecromanticWard,    // friendly fire; solo = +6 whisper instead
         DragonEgg,          // lore trigger; taking it marks player for Ashen attention
         VisionChamber,      // always passable, narrative only
+
+        // Standard (retreatable) — added for the ruins expansion
+        EmberWraith,        // roll vs Clan.Renown (fame draws its eye); fail = aging or troops
+        WardstoneGate,      // straight Roguery skill check; fail = aging or retreat
+        HollowChoir,        // roll vs whisper tier; high tier auto-passes with a small whisper gain
+        EmberToll,          // costs 1 unspent focus point if held, else a flat aging toll
+
+        // Mandatory — added for the ruins expansion
+        WeightOfAsh,        // flat aging toll that scales with the ruin's own tier, no retreat
+
+        // Special — added for the ruins expansion
+        ShiftingHall,       // 3-way random table: renown / troop desertion / whispers
+        TriuneReckoning,    // reacts to Ashen / Grace / Living Ember alignment; else a proficiency roll
     }
 
     // ── Reward types ──────────────────────────────────────────────────────────
@@ -50,7 +63,12 @@ namespace AshAndEmber
         AshenCrownFragment, // collect 3 → bonus 3 focus pts
         VoidCrystal,        // player chooses: 5000 gold or 20 days reclaimed
         AncientGrimoire,    // grants ALL remaining un-owned Lost Forms
-        MagicCrystal,       // grants one random formed crystal (see CrystalCatalog)
+        MagicCrystal,       // grants Math.Max(1, Points) random formed crystals (see CrystalCatalog)
+
+        // Added for the ruins expansion
+        GoldCache,          // Hero.ChangeHeroGold(Points * split) flat denars
+        SkillTome,          // AddSkillXp(Points * split) to one random skill from a curated pool
+        EmberBoon,          // reacts to path: Ashen purges whispers, Grace adds Grace, else focus points
     }
 
     public class RuinChallenge
@@ -407,6 +425,81 @@ namespace AshAndEmber
                 },
                 MainReward    = Rew(RewardType.AshenCrownFragment),
                 PartialReward = Rew(RewardType.MagicCrystal),
+            },
+
+            // ── Expansion — new sites, new trials ─────────────────────────────
+            // Village names below are the author's best-effort recall of vanilla
+            // Bannerlord villages and are NOT verified against a live game session
+            // (this branch was authored without game-DLL access). AshenRuinMenus
+            // logs a startup warning for any name below that fails to resolve to
+            // a real settlement — check the log after first launch and swap in a
+            // corrected name if one of these doesn't bind.
+
+            new RuinDef
+            {
+                VillageName = "Tubna",
+                RuinName  = "The Salt-Blind Well",
+                EntryLore = "A well gone dry a hundred years before anyone thought to look inside it. The rope is still tied to the winch, frayed through at the exact point where someone once let go.",
+                Tier      = RuinTier.Easy,
+                Challenges = new[] { Ch(ChallengeType.WardstoneGate), Ch(ChallengeType.VisionChamber) },
+                MainReward    = Rew(RewardType.GoldCache, 1200),
+                PartialReward = Rew(RewardType.RenownBurst, 15),
+            },
+            new RuinDef
+            {
+                VillageName = "Nafit",
+                RuinName  = "The Ember Toll House",
+                EntryLore = "A tollbooth on a road that no longer leads anywhere. The keeper's chair is still drawn up to the window, waiting on a coin that was never meant to be silver.",
+                Tier      = RuinTier.Easy,
+                Challenges = new[] { Ch(ChallengeType.EmberToll), Ch(ChallengeType.VisionChamber) },
+                MainReward    = Rew(RewardType.SkillTome, 60),
+                PartialReward = Rew(RewardType.FocusPoints, 1),
+            },
+            new RuinDef
+            {
+                VillageName = "Rammun",
+                RuinName  = "The Hollow Minaret",
+                EntryLore = "A tower with no door at ground level and no stair inside it. Whoever built it climbed some other way. The call to prayer that once rang from its top has not gone silent so much as redirected.",
+                Tier      = RuinTier.Standard,
+                Challenges = new[] { Ch(ChallengeType.HollowChoir), Ch(ChallengeType.RiddleGate), Ch(ChallengeType.VisionChamber) },
+                MainReward    = Rew(RewardType.GrimoireFragment),
+                PartialReward = Rew(RewardType.FocusPoints, 1),
+            },
+            new RuinDef
+            {
+                VillageName = "Iyaziyya",
+                RuinName  = "The Wraith's Toll",
+                EntryLore = "Something waits along this stretch of road for travelers who have made a name for themselves. It does not want your coin. It wants to know whether the name was earned.",
+                Tier      = RuinTier.Standard,
+                Challenges = new[] { Ch(ChallengeType.EmberWraith), Ch(ChallengeType.AncientTrap), Ch(ChallengeType.TriuneReckoning) },
+                MainReward    = Rew(RewardType.EmberBoon, 8),
+                PartialReward = Rew(RewardType.AgingReclaim, 4),
+            },
+            new RuinDef
+            {
+                VillageName = "Kanitra",
+                RuinName  = "The Weighing Chamber",
+                EntryLore = "A room built around a single stone scale, taller than a man. It has been weighing something for a very long time, and it is not finished.",
+                Tier      = RuinTier.Brutal,
+                Challenges = new[] { Ch(ChallengeType.WeightOfAsh), Ch(ChallengeType.SpectralGuardian), Ch(ChallengeType.ShiftingHall) },
+                MainReward    = Rew(RewardType.MagicCrystal, 2),
+                PartialReward = Rew(RewardType.WhisperBrand, 10),
+            },
+            new RuinDef
+            {
+                VillageName = "Wanaya",
+                RuinName  = "The Reckoning Hall",
+                EntryLore = "The last room in the last ruin anyone has bothered to map. Whatever is inside has been patient for a very long time — and patience, in a place like this, is rarely a kindness.",
+                Tier      = RuinTier.Legendary,
+                Challenges = new[]
+                {
+                    Ch(ChallengeType.TriuneReckoning),
+                    Ch(ChallengeType.WeightOfAsh),
+                    Ch(ChallengeType.ShiftingHall),
+                    Ch(ChallengeType.VoidMaw),
+                },
+                MainReward    = Rew(RewardType.AncientGrimoire),
+                PartialReward = Rew(RewardType.VoidCrystal),
             },
         };
     }
