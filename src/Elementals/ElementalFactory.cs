@@ -154,29 +154,13 @@ namespace AshAndEmber
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            // A wisp at head height right from the first breath — faceless from the
-            // moment it wakes, not just once the following aura kicks in.
+            // Wisps up and down the whole body right from the first breath —
+            // faceless and skinless from the moment it wakes, not just once the
+            // following aura kicks in.
             try
             {
-                Vec3 head = pos + new Vec3(0f, 0f, ElementalMath.AuraHeadHeightMetres);
-                switch (kind)
-                {
-                    case ElementalKind.Flame:
-                        SpellEffects.SpawnTempFireWisp(head, 1.0f);
-                        break;
-                    case ElementalKind.Frost:
-                        SpellEffects.SpawnTempSnowWisp(head, 1.0f);
-                        break;
-                    case ElementalKind.Tide:
-                        SpellEffects.SpawnNatureBurst(head, NatureElement.Water, 1.0f);
-                        break;
-                    case ElementalKind.Gale:
-                        SpellEffects.SpawnNatureBurst(head, NatureElement.Storm, 1.0f);
-                        break;
-                    default: // Stone / Sand
-                        SpellEffects.SpawnNatureBurst(head, NatureElement.Earth, 1.0f);
-                        break;
-                }
+                foreach (float h in ElementalMath.AuraVeilHeightsMetres)
+                    ElementalBeings.EmitKindWisp(kind, pos + new Vec3(0f, 0f, h), 1.0f);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }

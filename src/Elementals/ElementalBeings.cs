@@ -291,32 +291,16 @@ namespace AshAndEmber
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            // A lighter wisp at head height every tick — no face to see, only the
-            // element roiling where one would be. Only for near bodies; a wisp lost
-            // in LOD distance would not read anyway.
+            // Lighter wisps up and down the whole body every tick — shin to head —
+            // so the entire silhouette reads as roiling element, not just a human
+            // shape with a colored coat. Only for near bodies; a wisp lost in LOD
+            // distance would not read anyway.
             if (near)
             {
                 try
                 {
-                    Vec3 head = at + new Vec3(0f, 0f, ElementalMath.AuraHeadHeightMetres);
-                    switch (kind)
-                    {
-                        case ElementalKind.Flame:
-                            SpellEffects.SpawnTempFireWisp(head, 0.4f);
-                            break;
-                        case ElementalKind.Frost:
-                            SpellEffects.SpawnTempSnowWisp(head, 0.4f);
-                            break;
-                        case ElementalKind.Tide:
-                            SpellEffects.SpawnNatureBurst(head, NatureElement.Water, 0.4f);
-                            break;
-                        case ElementalKind.Gale:
-                            SpellEffects.SpawnNatureBurst(head, NatureElement.Storm, 0.4f);
-                            break;
-                        default: // Stone / Sand
-                            SpellEffects.SpawnNatureBurst(head, NatureElement.Earth, 0.4f);
-                            break;
-                    }
+                    foreach (float h in ElementalMath.AuraVeilHeightsMetres)
+                        EmitKindWisp(kind, at + new Vec3(0f, 0f, h), 0.4f);
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
@@ -326,6 +310,31 @@ namespace AshAndEmber
             if (near)
                 try { SpellEffects.SpawnTempLightRgb(at + new Vec3(0f, 0f, 1f), AuraRgb(kind), 4.5f, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.BeginAgentGlow(agent, GlowSchool(kind), 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // The cheap, single-particle wisp for a given kind at a given point —
+        // shared by the body-veil loop above and the spawn burst in
+        // ElementalFactory so both draw from the same element-to-particle map.
+        internal static void EmitKindWisp(ElementalKind kind, Vec3 pos, float duration)
+        {
+            switch (kind)
+            {
+                case ElementalKind.Flame:
+                    SpellEffects.SpawnTempFireWisp(pos, duration);
+                    break;
+                case ElementalKind.Frost:
+                    SpellEffects.SpawnTempSnowWisp(pos, duration);
+                    break;
+                case ElementalKind.Tide:
+                    SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, duration);
+                    break;
+                case ElementalKind.Gale:
+                    SpellEffects.SpawnNatureBurst(pos, NatureElement.Storm, duration);
+                    break;
+                default: // Stone / Sand
+                    SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, duration);
+                    break;
+            }
         }
 
         private static Vec3 AuraRgb(ElementalKind kind)
