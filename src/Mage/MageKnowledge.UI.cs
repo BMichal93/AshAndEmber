@@ -114,14 +114,18 @@ namespace AshAndEmber
                 "  with a weapon drawn and bears the armour weight.\n" +
                 ashenNote +
                 "\n── CAMPAIGN SPELLS  (outside a mission → \"Cast\") ────────\n" +
-                "  A 3-step ritual description appears. Commit it to memory.\n" +
-                "  Each step has many variant phrasings — one is shown each cast.\n" +
-                "  You are then asked to pick the correct phrasing from three options.\n\n" +
-                "  Score → power multiplier:\n" +
-                "    3/3 correct → 1.50×   Resonance — the rite was perfect.\n" +
-                "    2/3 correct → 1.20×   Amplified.\n" +
-                "    1/3 correct → 0.80×   Flickering.\n" +
-                "    0/3 correct → 0.50×   Scattered.\n\n" +
+                "  The Resonance Draw: a charge sweeps a track. Loose it with\n" +
+                "  Left Alt (LB on a controller) — how close the release lands\n" +
+                "  to the element's own true point sets the power. Fast, volatile\n" +
+                "  elements (Fire, Spirit) sweep quickly with a narrow perfect\n" +
+                "  band; slow, patient ones (Earth, Water) sweep gently and\n" +
+                "  forgive a wider miss. Left untended too long, the charge\n" +
+                "  disperses on its own — release it.\n\n" +
+                "  Precision → power multiplier:\n" +
+                "    Perfect → 1.50×   Resonance — the charge broke exactly where it should.\n" +
+                "    Good    → 1.20×   The working takes hold.\n" +
+                "    Wide    → 0.80×   The charge slips — it catches unevenly.\n" +
+                "    Miss    → 0.50×   The charge scatters — it finds its own shape.\n\n" +
                 "  The aging cost is always paid.\n" +
                 "  \"Cast without the rite\" skips the game at 1.00×.\n" +
                 "  Open this book any time: Left Alt + X  (LB + RB on a controller).\n\n" +

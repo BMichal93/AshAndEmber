@@ -45,6 +45,7 @@ namespace AshAndEmber
             try { SpellEffects.ClearMagicMemory();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.ClearDarkGiftsBattleState();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { MagicInputHandler.ResetInputState();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ElementSpellMinigame.ResetState();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { ElementWallWards.Clear();              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { ElementSpellEffects.ClearBattleState();} catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { ElementUltimates.ClearBattleState();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -174,6 +175,7 @@ namespace AshAndEmber
                 try { MagicInputHandler.Tick(inMission: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { MiracleInputHandler.Tick(inMission: false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { NatureInputHandler.Tick(inMission: false);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ElementSpellMinigame.Tick(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ActiveEffectManager.MapTick(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Codex of the Inner Fire — Left Alt + L opens the learning menu on the map.

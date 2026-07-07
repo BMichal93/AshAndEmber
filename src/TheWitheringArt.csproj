@@ -116,6 +116,8 @@
     <Compile Include="Magic\MagicTeacherDialogue.cs"/>
     <Compile Include="Magic\ElementMapSpells.cs"/>
     <Compile Include="Magic\ElementSpellMinigame.cs"/>
+    <Compile Include="Magic\ElementResonanceMath.cs"/>
+    <Compile Include="Magic\ElementResonanceBar.cs"/>
     <Compile Include="Elementals\ElementalMath.cs"/>
     <Compile Include="Elementals\ElementalBeings.cs"/>
     <Compile Include="Elementals\ElementalFactory.cs"/>
