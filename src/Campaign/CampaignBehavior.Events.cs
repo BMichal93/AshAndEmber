@@ -139,6 +139,8 @@ namespace AshAndEmber
                 // the rest of new-game setup — above all the Gift-prompt wiring below,
                 // without which the player can never choose their magic at all.
                 try { CrystallinesCampaignBehavior.EstablishForNewCampaign(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                SacredSitesCampaignBehavior.ResetForNewGame();
+                try { ElementalLordRegistry.EstablishForNewCampaign(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Apply any character-creation backstory boon AFTER the resets above,
                 // so it is not wiped (the pick was recorded during creation).
                 try { CreationBackstoryRework.ApplyPendingBoons(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

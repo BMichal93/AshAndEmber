@@ -1160,6 +1160,27 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
+        public void ElementUltimateMath_Spirit_IsNowTheBentKnee()
+        {
+            // The Spirit Unbinding no longer summons an elemental — it seizes a
+            // will instead. Names should reflect the reworked mechanic.
+            Assert.AreEqual("The Bent Knee",   ElementUltimateMath.UltimateName(MagicElement.Spirit, ashen: false));
+            Assert.AreEqual("The Hollow Oath", ElementUltimateMath.UltimateName(MagicElement.Spirit, ashen: true));
+            // Still the most expensive Unbinding — a full minute of borrowed will.
+            Assert.Greater(ElementUltimateMath.SpiritUltimateCostDays, ElementUltimateMath.UltimateCostDays);
+        }
+
+        [Test]
+        public void SacredSiteMath_FormationOdds_FloorsCapsAndGrowsWithSkill()
+        {
+            // Floor even at 0 Smithing, ceiling even at absurd Smithing, and
+            // strictly non-decreasing in between.
+            Assert.AreEqual(0.10f, SacredSiteMath.FormationOdds(0), 0.0001f);
+            Assert.AreEqual(0.85f, SacredSiteMath.FormationOdds(1000), 0.0001f);
+            Assert.Less(SacredSiteMath.FormationOdds(50), SacredSiteMath.FormationOdds(150));
+        }
+
+        [Test]
         public void ElementMagicMath_ChargeShapes_GrowWithCharge()
         {
             // Charge fraction: 0 at an instant cast, 1 at full power, clamped.

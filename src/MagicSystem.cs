@@ -85,6 +85,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new NatureCampaignBehavior());
                 campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
                 campaignStarter.AddBehavior(new ElementalWildsBehavior());
+                campaignStarter.AddBehavior(new SacredSitesCampaignBehavior());
                 campaignStarter.AddBehavior(new TribalKingdomBehavior());
                 campaignStarter.AddBehavior(new CreationBackstoryRework());
                 try { AshenDialogue.Register(campaignStarter);    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -114,6 +115,7 @@ namespace AshAndEmber
             try { AshenCitySystem.ApplyTribalCultureTexts();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { AshenCitySystem.ApplyForestClansCultureTexts();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Re-applies the Templar culture text while still in the menu / intro-video /
@@ -132,6 +134,7 @@ namespace AshAndEmber
                 try { AshenCitySystem.ApplyTribalCultureTexts();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { AshenCitySystem.ApplyNorthmenCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { AshenCitySystem.ApplyDunebornCultureTexts();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { AshenCitySystem.ApplyForestClansCultureTexts();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // The character-creation culture cards cache their name when built, so
                 // the text override above never reaches them — rename the card directly.
                 try { TempleCultureCardFixer.TickTryFix(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -497,6 +500,10 @@ namespace AshAndEmber
             // The Kindled: if the player marched on a wild elemental band, remake
             // the enemy bodies into that kind (aura + weakness). No-op otherwise.
             try { ElementalBeings.ConvertBattleAgent(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Sacred-site-crafted Kindled fielded as real army troops: register
+            // the same aura/weakness/self-cast behaviour by troop id. No-op for
+            // every other troop.
+            try { ElementalBeings.RegisterSacredKindled(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,

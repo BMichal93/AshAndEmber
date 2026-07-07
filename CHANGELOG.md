@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Battania becomes the Forest Clans
+- **Battania is renamed the Forest Clans.** Culture, kingdom, and troop names are rebranded the same way Vlandia became the Holy Temple and Sturgia the Northmen — a new faction blurb, ruler title (High Chieftain), and two new faction skills replace the vanilla Battanian feats: **Kinship of Root and Stone** (sacred-site Kindled bindings cost 15% less and succeed 10% more often for the clan-born), **The Wilds Remember** (wild-band Kindled deal half damage to a Forest Clans player), and **Debt of the Deep Wood** (each bound Kindled costs 5 gold a day in upkeep).
+- **New: Sacred Sites.** Dunglanys and Pen Cannoc — the Forest Clans' two remaining cities — each host standing stones where, for gold, Iron Ore and Charcoal, a Smithing-gated working can bind a Kindled of your chosen kind (Stone, Frost, Sand, Flame, Tide, or Gale) as a permanent unit in your own army. Binding is exclusive with Dark Gifts and Grace — the old ways do not share a caster.
+- **Forest Clans lords now sometimes march with Kindled of their own** — a chance, seeded per lord, that mirrors the sacred-site bond the player can now form.
+- **The Spirit Unbinding no longer summons an elemental.** The ultimate is reworked into **The Bent Knee** (**The Hollow Oath**, Ashen face): it seizes the strongest enemy will within reach, turning them to the caster's side for a minute before the working lets go — the thrall staggers back to their own line, dazed (the Ashen working leaves a parting frost-bite besides).
+
 ### The cursed field is more alive
 - **The battlefield events are reworked, and four new ones join them.** The randomised curses that can grip a battle have been overhauled for less "everyone takes damage at once" and more terrain you have to fight around.
   - **Cinder Rain** no longer smites every fighter at once. Cinders now fall in scattered, lingering patches of fire that burn *whoever stands in them* — friend or foe — so the field becomes a hazard to read and move around, not a blanket toll.

@@ -23,9 +23,11 @@
 //            stretch of field: burns quenched, fire halved, horses mired,
 //            bowstrings soaked. There is only ONE sky — a newer working
 //            replaces a standing one.
-//   Spirit — The Land's Answer / What Sleeps Beneath        — the ground sends
-//            a champion: one elemental, shaped by the terrain, fights at the
-//            caster's side and then comes apart into the land it rose from.
+//   Spirit — The Bent Knee / The Hollow Oath                — the strongest
+//            will nearby is seized and turns to fight at the caster's side;
+//            when the borrowed minute runs out it lets go and the foe
+//            staggers back to their own line, dazed (the Ashen working
+//            leaves a parting frost-bite besides).
 // =============================================================================
 
 using System;
@@ -52,8 +54,8 @@ namespace AshAndEmber
         // Steep: three walls' worth. The Nature discipline halves it as usual;
         // the Ashen pay it in criminal standing (days × 5, same as other casts).
         public const int UltimateCostDays = 12;
-        // Spirit's Unbinding does not spend itself — it leaves a living champion
-        // fighting for a full minute, worth several men. That standing power costs
+        // Spirit's Unbinding does not spend itself — it turns a living enemy to
+        // your side for a full minute, worth several men. That borrowed will costs
         // more life than a one-moment nova or gale.
         public const int SpiritUltimateCostDays = 22;
 
@@ -128,15 +130,19 @@ namespace AshAndEmber
         public const float RainArcheryDamp   = 0.4f;  // fraction of ranged damage the wet strings lose
         public const float RainAshenMoraleDrainPerTick = 0.8f; // the White Silence gnaws at foes
 
-        // ── Spirit — the elemental ───────────────────────────────────────────────
-        public const float ElementalSeconds = 60f;
-        public const float ElementalHealth  = 350f;  // towering — several men's worth
-        public const float ElementalSpawnOffset = 2.5f;
+        // ── Spirit — the seized will ─────────────────────────────────────────────
+        public const float ThrallSeconds          = 60f;   // how long the borrowed will lasts
+        public const float ThrallRangeMetres       = 16f;   // reach of the seizing — generous, it's an ultimate
+        public const float ThrallDazedSpeedMult    = 0.4f;  // stagger on release…
+        public const float ThrallDazedSeconds      = 3f;    // …while the borrowed will lets go
+        public const float ThrallAshenPartingDamage = 18f;  // the Ashen working's parting frost-bite
 
-        // Which champion the land sends, from what the scene shows. Snow always
-        // wins (a snowed-over desert is still winter's ground); then sand by the
-        // scene's name; STONE is the default answer everywhere else. Pure —
-        // the runtime passes SceneIsSnowy() and the lower-cased scene name in.
+        // Which shape the land answers Spirit's OLDER working with (still used by
+        // the Kindling battle event and wild elemental bands — the Unbinding itself
+        // no longer summons). Snow always wins (a snowed-over desert is still
+        // winter's ground); then sand by the scene's name; STONE is the default
+        // answer everywhere else. Pure — the runtime passes SceneIsSnowy() and the
+        // lower-cased scene name in.
         public static ElementalKind ElementalKindForScene(bool snowy, string sceneNameLower)
         {
             if (snowy) return ElementalKind.Frost;
@@ -182,7 +188,7 @@ namespace AshAndEmber
                     case MagicElement.Wind:   return "Carried by the Howl";
                     case MagicElement.Earth:  return "The Barrow Wakes";
                     case MagicElement.Water:  return "The White Silence";
-                    default:                  return "What Sleeps Beneath";
+                    default:                  return "The Hollow Oath";
                 }
             }
             switch (el)
@@ -191,7 +197,7 @@ namespace AshAndEmber
                 case MagicElement.Wind:   return "On the Wings of the Gale";
                 case MagicElement.Earth:  return "The Mountain's Wrath";
                 case MagicElement.Water:  return "The Weeping Sky";
-                default:                  return "The Land's Answer";
+                default:                  return "The Bent Knee";
             }
         }
     }

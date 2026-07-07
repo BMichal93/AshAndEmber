@@ -86,6 +86,38 @@ namespace AshAndEmber
             _convertedThisBattle = 0;
         }
 
+        // ── Sacred-Kindled registration (called from OnAgentBuild) ───────────────
+        // Troop ids for the six sacred-site-crafted elemental variants
+        // (troops.xml), each a permanent, persistent army troop rather than a
+        // mission-only spawn. Since a roster entry carries no per-unit metadata,
+        // the KIND must be read off the troop id itself.
+        private static readonly Dictionary<string, ElementalKind> _sacredKindledIds =
+            new Dictionary<string, ElementalKind>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "sacred_kindled_stone", ElementalKind.Stone },
+            { "sacred_kindled_frost", ElementalKind.Frost },
+            { "sacred_kindled_sand",  ElementalKind.Sand  },
+            { "sacred_kindled_flame", ElementalKind.Flame },
+            { "sacred_kindled_tide",  ElementalKind.Tide  },
+            { "sacred_kindled_gale",  ElementalKind.Gale  },
+        };
+
+        // A sacred-crafted troop fields under its own army's normal orders — it
+        // does not need SetAggressive's charge/formation override, only the
+        // aura/weakness/self-cast registration every other Kindled gets.
+        public static void RegisterSacredKindled(Agent agent)
+        {
+            try
+            {
+                if (agent == null || agent.IsMount) return;
+                string id = agent.Character?.StringId;
+                if (id == null) return;
+                if (_sacredKindledIds.TryGetValue(id, out ElementalKind kind))
+                    Register(agent, kind);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
         // ── Wild-band conversion (called from OnAgentBuild) ──────────────────────
         // Remakes an enemy body into a Kindled of the pending kind: registers it
         // for the aura + weakness, and strips its mount so a being of raw magic
@@ -225,7 +257,12 @@ namespace AshAndEmber
                         return;   // foe is not ahead — hold the working this beat
                 }
 
-                ElementSpellEffects.CastAttack(el, agent, ElementalMath.AttackPower);
+                // The Wilds Remember (Forest Clans faction skill): any Kindled not
+                // fighting FOR the player (this loop only ever targets an enemy of
+                // its own team) answers a Forest Clans hand only half as fiercely.
+                float power = ElementalMath.AttackPower;
+                if (nearest == Agent.Main) power *= ForestClansCulture.WildKindledDamageMultiplier();
+                ElementSpellEffects.CastAttack(el, agent, power);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }

@@ -124,6 +124,28 @@ namespace AshAndEmber
                     "Hungry Knives — hired blades smell the old bargain on you, and charge for it. (Daily troop wages +5%)",
                 },
             },
+            // Battania → the Forest Clans. Name, blurb AND feats: the Forest Clans'
+            // own faction skills (ForestClansCulture.cs) replace whatever vanilla
+            // Battanian feats the card would otherwise cache.
+            new CultureCard
+            {
+                Id   = "battania",
+                Name = "Forest Clan",
+                Desc =
+                    "The clans of the deep wood never knelt easily to any crown, and least of all to their own. "
+                    + "What binds them is older than any throne: a pact struck long before memory with the roots "
+                    + "beneath the leaf-mould and the standing stones the forest has not yet swallowed.\n\n"
+                    + "Where a Templar kneels to a flame and a Duneborn bargains with a hunger under the sand, "
+                    + "the Forest Clans do neither — they simply listen. At certain trees, at certain stones, "
+                    + "something answers back, and what wakes there does not forget who woke it. Cross their "
+                    + "border uninvited, and you will learn what the old wood keeps watch with.",
+                Feats = new[]
+                {
+                    "Kinship of Root and Stone — the old grove knows its own kin. (Sacred-site binding costs 15% less and succeeds 10% more often for the clan-born)",
+                    "The Wilds Remember — the wandering Kindled's magic answers a Forest Clans hand only half as fiercely. (Wild-band Kindled deal half damage to a Forest Clans player)",
+                    "Debt of the Deep Wood — the old bargain still asks its price. (Each bound Kindled costs 5 gold a day in upkeep)",
+                },
+            },
         };
 
         private static object _lastScreen;
