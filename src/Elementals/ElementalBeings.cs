@@ -39,6 +39,8 @@ namespace AshAndEmber
             public ElementalKind Kind;
             public float AuraTimer;
             public float AttackTimer;   // seconds until this Kindled next looses its element
+            public Vec3 LastPos;        // sampled every tick, to estimate ground velocity
+            public bool HasLastPos;
         }
 
         private static readonly Random _rng = new Random();
@@ -181,6 +183,14 @@ namespace AshAndEmber
                     if (!near) interval *= 2f;
                 }
 
+                // Ground velocity from the raw position delta (not a bone/skeleton
+                // read — just how far the feet moved this frame) so a charging body
+                // doesn't out-run its own veil between aura ticks.
+                Vec3 vel = default(Vec3);
+                if (b.HasLastPos && dt > 0.0001f) vel = (at - b.LastPos) * (1f / dt);
+                b.LastPos = at; b.HasLastPos = true;
+                vel.z = 0f;
+
                 if (reAggro) ReRouse(b.Agent);
 
                 // The Kindled fights with its element: on a cooldown, loose a small
@@ -197,7 +207,12 @@ namespace AshAndEmber
                 b.AuraTimer -= dt;
                 if (b.AuraTimer > 0f) continue;
                 b.AuraTimer = interval;
-                EmitAura(b.Agent, b.Kind, at, near);
+                // Lead the stamp half a gap ahead of the current position: at spawn
+                // it sits just in front of the body, and by the next tick the body
+                // has walked past it — so the worst-case gap either side is halved
+                // versus stamping squarely on the feet every time.
+                Vec3 leadAt = at + vel * (interval * 0.5f);
+                EmitAura(b.Agent, b.Kind, leadAt, near);
             }
         }
 
@@ -301,6 +316,18 @@ namespace AshAndEmber
                 {
                     foreach (float h in ElementalMath.AuraVeilHeightsMetres)
                         EmitKindWisp(kind, at + new Vec3(0f, 0f, h), 0.4f);
+
+                    // A swinging arm strays outside that single centre column mid-
+                    // stride — cover shoulder-width either side of the chest line too.
+                    Vec3 fwd = agent.LookDirection; fwd.z = 0f;
+                    float fl = fwd.Length;
+                    if (fl > 0.01f)
+                    {
+                        Vec3 right = new Vec3(-fwd.y / fl, fwd.x / fl, 0f) * ElementalMath.AuraBodyHalfWidthMetres;
+                        Vec3 chest = at + new Vec3(0f, 0f, ElementalMath.AuraChestHeightMetres);
+                        EmitKindWisp(kind, chest + right, 0.4f);
+                        EmitKindWisp(kind, chest - right, 0.4f);
+                    }
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
