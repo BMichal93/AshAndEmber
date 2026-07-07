@@ -17,6 +17,14 @@
 //            side for a short while, then the working lets go and they
 //            stagger back to their own line, dazed.
 //
+// This file also carries SPIRIT FUSION (TryCastFusionSummon): a separate,
+// repeatable mechanic wired through the elemental combo chord (see
+// ElementComboMath.IsSummon), not the Unbinding above — it calls a Kindled
+// champion to the caster's side rather than seizing a will. The two share
+// the "one active companion per summoner" cap but track separate lists
+// (_thralls vs. _champions) since either, both, or neither may be active
+// on a given caster at once.
+//
 // WIRING (all of it already done — listed so a fix knows where to look):
 //   • MagicMissionBehavior.OnMissionTick   → Tick(dt)
 //   • MagicMissionBehavior.OnAgentHit      → OnAgentHit(...)   (flight knock-out,
@@ -78,7 +86,7 @@ namespace AshAndEmber
         }
         private static RainZone _rain;   // a single slot — there is only one sky
 
-        // ── The seized will (Spirit) ─────────────────────────────────────────────
+        // ── The seized will (Spirit's Unbinding) ─────────────────────────────────
         private class Thrall
         {
             public Agent Agent;
@@ -86,14 +94,22 @@ namespace AshAndEmber
             public Agent Caster;         // only used to credit the Ashen parting bite
             public float Remaining;
             public bool  Ashen;
-            public float VisualTimer;
-            // Who called it — gates the one-at-a-time cap PER SUMMONER, whether
-            // raised by the Unbinding (terrain-shaped) or a Spirit fusion
-            // (caller-chosen kind): the same caster may not stand two at once.
-            public Agent Summoner;
             public bool  Player;   // true = the PLAYER's seizure (gates the one-at-a-time cap)
         }
         private static readonly List<Thrall> _thralls = new List<Thrall>();
+
+        // ── The summoned kinsman (Spirit fusion — ElementComboMath.IsSummon) ─────
+        private class Champion
+        {
+            public Agent Elemental;
+            public float Remaining;
+            public ElementalKind Kind;
+            public bool  Ashen;
+            // Who called it — gates the one-at-a-time cap PER SUMMONER, so the
+            // same caster may not stand two summoned kinsmen at once.
+            public Agent Summoner;
+        }
+        private static readonly List<Champion> _champions = new List<Champion>();
 
         // ── Pending NPC windups ─────────────────────────────────────────────────
         // NPC ultimates channel visibly for NpcWindupSeconds; ANY hit on the
@@ -116,6 +132,7 @@ namespace AshAndEmber
             _flights.Clear();
             _rain = null;
             _thralls.Clear();
+            _champions.Clear();
             _npcWindups.Clear();
         }
 
@@ -127,21 +144,7 @@ namespace AshAndEmber
         // it is gated on whether the player's seized thrall is still held, so you
         // may seize another only once the first has fallen or been let go — never
         // two at once. This stops the working being spammed across an army.
-        public static bool PlayerCanUnbind(MagicElement el) //THIS PART HAS A MERGE CONFLICT - RESOLVE IT!
-            => el == MagicElement.Spirit ? !HasLiveChampionFor(Agent.Main) : !_playerUsed.Contains(el);
-
-        // True while `summoner` already has a living champion on the field —
-        // whether raised by the full Unbinding or a lesser Spirit fusion. Public:
-        // ElementMagicInput and ColourLordAI both check this before offering a
-        // Spirit-fusion summon, so a cast is never wasted on a refusal.
-        public static bool HasLiveChampionFor(Agent summoner)
-        {
-            if (summoner == null) return false;
-            for (int i = 0; i < _champions.Count; i++)
-            {
-                var c = _champions[i];
-                if (c == null || c.Summoner != summoner) continue;
-                try { if (c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f) return true; }
+        public static bool PlayerCanUnbind(MagicElement el)
             => el == MagicElement.Spirit ? !PlayerHasLiveThrall() : !_playerUsed.Contains(el);
 
         // True while a player-seized thrall is still held (alive and not yet released).
@@ -152,6 +155,23 @@ namespace AshAndEmber
                 var t = _thralls[i];
                 if (t == null || !t.Player) continue;
                 try { if (t.Agent != null && t.Agent.IsActive() && t.Agent.Health > 0f) return true; }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            return false;
+        }
+
+        // True while `summoner` already has a living summoned kinsman on the
+        // field (a Spirit fusion). Public: ElementMagicInput and ColourLordAI
+        // both check this before offering a Spirit-fusion summon, so a cast is
+        // never wasted on a refusal.
+        public static bool HasLiveChampionFor(Agent summoner)
+        {
+            if (summoner == null) return false;
+            for (int i = 0; i < _champions.Count; i++)
+            {
+                var c = _champions[i];
+                if (c == null || c.Summoner != summoner) continue;
+                try { if (c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f) return true; }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             return false;
@@ -346,6 +366,7 @@ namespace AshAndEmber
             try { TickFlights(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { TickRain(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { TickThralls(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { TickChampions(dt); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private static void TickNpcWindups(float dt)
@@ -765,36 +786,6 @@ namespace AshAndEmber
             {
                 if (Mission.Current == null || caster.Team == null) return;
 
-                bool snowy = false; try { snowy = SpellEffects.SceneIsSnowy(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                string sceneName = "";
-                // LOCAL-VERIFY: Mission.SceneName — if the property has moved, the
-                // catch leaves the name empty and the champion defaults to Stone.
-                try { sceneName = (Mission.Current.SceneName ?? "").ToLowerInvariant(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                ElementalKind kind = ElementUltimateMath.ElementalKindForScene(snowy, sceneName);
-
-                if (SpawnNamedChampion(caster, ashen, kind))
-                    Msg($"The land answers — a {ElementUltimateMath.ElementalName(kind)} rises to fight beside " +
-                        (caster == Agent.Main ? "you." : "its summoner."));
-            }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-        }
-
-        // =====================================================================
-        // SPIRIT FUSION — a lesser, repeatable cousin of the Unbinding's summon.
-        // Where the Unbinding calls a TERRAIN-shaped champion once per battle,
-        // a Spirit fusion calls the living kinsman of whichever element it was
-        // paired with — the same flat attack-form cost as any other cast, but
-        // gated to one living kinsman per summoner at a time (the same slot the
-        // Unbinding's champion uses), so it can never be spammed into a horde.
-        // =====================================================================
-        public static bool TryCastFusionSummon(ElementalKind kind, Agent caster, bool ashen)
-        {
-            if (caster == null || !caster.IsActive() || Mission.Current == null || caster.Team == null) return false;
-            if (HasLiveChampionFor(caster))
-            {
-                if (caster == Agent.Main)
-                    Msg($"{ElementUltimateMath.ElementalName(kind)} already walks the field beside you — the old bond must break before a new one answers.");
-                return false;
                 // A random living will within reach — not the strongest, just
                 // whoever the working happens to catch.
                 var candidates = EnemiesNear(caster, ElementUltimateMath.ThrallRangeMetres).ToList();
@@ -831,6 +822,25 @@ namespace AshAndEmber
                 Msg(ashen
                     ? $"The frost grips {name}'s will — hollow-eyed, they turn to your command."
                     : $"Something in {name} bends — for a time, they are yours.");
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // =====================================================================
+        // SPIRIT FUSION — a lesser, repeatable cousin of the OLD champion-summon
+        // Unbinding: a Spirit + X fusion calls the living kinsman of whichever
+        // element it was paired with — the same flat attack-form cost as any
+        // other cast, but gated to one living kinsman per summoner at a time,
+        // so it can never be spammed into a horde.
+        // =====================================================================
+        public static bool TryCastFusionSummon(ElementalKind kind, Agent caster, bool ashen)
+        {
+            if (caster == null || !caster.IsActive() || Mission.Current == null || caster.Team == null) return false;
+            if (HasLiveChampionFor(caster))
+            {
+                if (caster == Agent.Main)
+                    Msg($"{ElementUltimateMath.ElementalName(kind)} already walks the field beside you — the old bond must break before a new one answers.");
+                return false;
             }
             bool spawned = false;
             try { spawned = SpawnNamedChampion(caster, ashen, kind); }
@@ -918,6 +928,56 @@ namespace AshAndEmber
                 {
                     Msg($"{name}'s eyes clear — the borrowed will lets go, and they stagger back to their own banner.");
                 }
+            }
+        }
+
+        private static void EmitChampionBurst(Vec3 pos, ElementalKind kind, bool ashen, float scale)
+        {
+            try
+            {
+                switch (kind)
+                {
+                    case ElementalKind.Frost:
+                        SpellEffects.SpawnTempSnowParticle(pos + new Vec3(0f, 0f, 0.5f), scale);
+                        break;
+                    case ElementalKind.Sand:
+                        SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
+                        break;
+                    default:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, scale);
+                        break;
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f),
+                    ElementSpellEffects.ElementLightRgb(MagicElement.Spirit, ashen), 8f, 0.8f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        private static void TickChampions(float dt)
+        {
+            for (int i = _champions.Count - 1; i >= 0; i--)
+            {
+                var c = _champions[i];
+                bool alive = false;
+                try { alive = c.Elemental != null && c.Elemental.IsActive() && c.Elemental.Health > 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (!alive) { _champions.RemoveAt(i); continue; }
+
+                c.Remaining -= dt;
+                if (c.Remaining <= 0f)
+                {
+                    _champions.RemoveAt(i);
+                    Vec3 at; try { at = c.Elemental.Position; } catch { at = default(Vec3); }
+                    EmitChampionBurst(at, c.Kind, c.Ashen, 2f);
+                    Msg($"The {ElementUltimateMath.ElementalName(c.Kind)} comes apart into the ground it rose from.");
+                    // LOCAL-VERIFY: Agent.FadeOut(bool hideInstantly, bool hideMount)
+                    // is the clean despawn (no corpse — it "comes apart"). If the
+                    // signature has drifted, the fallback kill still removes it.
+                    try { c.Elemental.FadeOut(true, true); }
+                    catch { try { SpellEffects.KillAgent(c.Elemental); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } }
+                    continue;
+                }
+                // The living coat (following particles + glow) is driven centrally
+                // by ElementalBeings.TickAuras — the champion only owns its lifespan.
             }
         }
 
