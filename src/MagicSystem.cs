@@ -521,6 +521,9 @@ namespace AshAndEmber
             // channelling lord loses the working, the stone mantle drinks most of
             // the blow, and rain-soaked bowstrings cost a ranged hit its bite.
             try { ElementUltimates.OnAgentHit(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Fog: a ranged hit loosed from inside a standing fog bank loses half
+            // its bite — the shooter cannot find the mark true through their own cloud.
+            try { ElementSpellEffects.OnRangedHitThroughFog(affectedAgent, affectorAgent, blow.InflictedDamage, isMeleeHit); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // The Kindled: stone and ice shatter under blunt force; blades pass
             // half-harmless through flame, tide and storm. Corrected after the blow.
             try { ElementalBeings.OnWeaponHit(affectedAgent, affectorAgent, blow.DamageType, blow.InflictedDamage); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

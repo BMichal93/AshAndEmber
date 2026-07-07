@@ -137,6 +137,23 @@ namespace AshAndEmber
                 "a stray order into their ranks / a wall that heartens your own and mends them a little."), true);
 
             AddLog(new TextObject(
+                "MAGIC · FUSION — the five element keys are peers: press X (gamepad: click R3) to draw on " +
+                "FIRE the same way W/S/A/D draw Wind/Earth/Water/Spirit. Press a SECOND, different element " +
+                "key within a heartbeat of the first and the two BLEND instead of the second simply " +
+                "replacing it — you need only have learned both halves. FIRE+WIND: Lightning, a bolt that " +
+                "chains between foes. FIRE+WATER: Fog, a standing cloud that slows whoever it swallows, " +
+                "dampens a shot loosed from inside it, and now and again scrambles a blinded formation's " +
+                "orders — but never burns. " +
+                "FIRE+EARTH: Magma, a molten patch that burns and bogs down all who cross it. WIND+WATER: " +
+                "Ice, a forward freeze that roots utterly but deals no harm. WIND+EARTH: Sandstorm, a long " +
+                "blinding gust that bolts any mount it catches — it breaks a charge outright. EARTH+WATER: " +
+                "Mire, ground that keeps giving way and spreads wider the longer it stands. SPIRIT+any other " +
+                "element calls a living KINSMAN to your side instead of an attack — Flame, Gale, Stone, or " +
+                "Tide — for about a minute, firing the instant the chord completes (no draw, no Attack/Block " +
+                "needed), though only one kinsman may walk with you at a time. Every fusion costs the same " +
+                "flat toll as any other attack; only the summon is capped, and only by that one-at-a-time bond."), true);
+
+            AddLog(new TextObject(
                 "MAGIC · THE UNBINDING — Draw an element to its FULLEST (about five seconds), then press " +
                 "ATTACK and BLOCK TOGETHER to unbind it: each element's ultimate working, once per element " +
                 "per battle, at a steep flat toll (twelve days). FIRE: a nova — everything around you burns, " +

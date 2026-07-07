@@ -92,6 +92,21 @@ namespace AshAndEmber
 
         public static bool HasAreaEffect(string id) => _areaEffects.Any(e => e.Id == id);
 
+        // Is `pos` inside a standing Fog patch? Used by ElementSpellEffects to
+        // dampen a ranged shot loosed from inside the bank — the shooter can't
+        // find the mark true through their own cloud.
+        internal static bool PositionInFog(Vec3 pos)
+        {
+            for (int i = 0; i < _areaEffects.Count; i++)
+            {
+                var e = _areaEffects[i];
+                if (e.Id != "spell_fogpatch") continue;
+                float dx = e.Position.x - pos.x, dy = e.Position.y - pos.y;
+                if (dx * dx + dy * dy <= e.Radius * e.Radius) return true;
+            }
+            return false;
+        }
+
         // Spawns a point light using a raw RGB color — for nature elements where each element
         // has its own color that doesn't map to an existing ColorSchool.
         public static void SpawnTempLightRgb(Vec3 position, Vec3 rgb, float radius, float duration)

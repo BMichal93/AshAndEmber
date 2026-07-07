@@ -139,6 +139,13 @@ namespace AshAndEmber
         public const float ThrallDazedSeconds      = 3f;    // …while the borrowed will lets go
         public const float ThrallAshenPartingDamage = 18f;  // the Ashen working's parting frost-bite
 
+        // ── Spirit fusion — the summoned kinsman ─────────────────────────────────
+        // A lesser, repeatable cousin of the old champion-summon Unbinding: a
+        // Spirit + X fusion (see ElementComboMath) still calls a Kindled to the
+        // caster's side, gated to one living kinsman per summoner at a time.
+        public const float ElementalSeconds     = 60f;  // how long the summoned kinsman lasts
+        public const float ElementalSpawnOffset = 2.5f; // metres in front of the caster it appears
+
         // Which shape the land answers Spirit's OLDER working with (still used by
         // the Kindling battle event and wild elemental bands — the Unbinding itself
         // no longer summons). Snow always wins (a snowed-over desert is still

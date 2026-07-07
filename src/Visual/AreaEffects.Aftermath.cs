@@ -99,6 +99,72 @@ namespace AshAndEmber
             try { SpawnNatureBurst(pos, NatureElement.Earth, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
+        // ── Elemental fusions (ElementSpellEffects) ─────────────────────────────
+        // Fire+Water — a standing cloud that answers nothing to a blade or a bolt:
+        // it just sits there, thick and blinding, and does not chase. Pure denial,
+        // no damage — the only fusion that never hurts a soul.
+        internal static void SpawnFogPatch(Vec3 pos, float radius, float duration, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id           = "spell_fogpatch",
+                School       = ColorSchool.Nature,
+                Position     = pos,
+                Radius       = radius,
+                TickInterval = 1f,
+                TickTimer    = 1f,
+                Remaining    = duration,
+                CasterTeam   = casterTeam,
+            };
+            node.LightEntity = SpawnAreaLightRaw(pos + new Vec3(0f, 0f, 0.6f), new Vec3(0.62f, 0.66f, 0.68f), Math.Max(4f, radius));
+            _areaEffects.Add(node);
+            try { SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), radius * 0.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Fire+Earth — a thrown glob of molten ground that keeps burning and
+        // bogging down whoever crosses it, long after the cast itself lands.
+        internal static void SpawnMagmaPatch(Vec3 pos, float perTickDamage, float duration, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id           = "spell_magmapatch",
+                School       = ColorSchool.Red,
+                Position     = pos,
+                Radius       = 4f,
+                TickInterval = 1f,
+                TickTimer    = 1f,
+                Remaining    = duration,
+                Power        = perTickDamage,
+                CasterTeam   = casterTeam,
+            };
+            node.LightEntity = SpawnAreaLight(pos, ColorSchool.Red, 6f);
+            _areaEffects.Add(node);
+            try { SpawnTempFireParticle(pos, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Earth+Water — ground that gives way underfoot instead of holding: no
+        // burn, no blade, just a deepening root that gets worse the longer you
+        // stand in it (each tick refreshes the hold rather than fading).
+        internal static void SpawnMirePatch(Vec3 pos, float perTickDamage, float duration, Team casterTeam)
+        {
+            var node = new AreaEffect
+            {
+                Id           = "spell_mirepatch",
+                School       = ColorSchool.Nature,
+                Position     = pos,
+                Radius       = 4.5f,
+                TickInterval = 1f,
+                TickTimer    = 1f,
+                Remaining    = duration,
+                Power        = perTickDamage,
+                CasterTeam   = casterTeam,
+            };
+            node.LightEntity = SpawnAreaLightRaw(pos + new Vec3(0f, 0f, 0.3f), new Vec3(0.34f, 0.30f, 0.16f), 5f);
+            _areaEffects.Add(node);
+            try { SpawnNatureBurst(pos, NatureElement.Earth, 1.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpawnNatureBurst(pos, NatureElement.Water, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
         // Called from ExecuteBurstFromAgent (when RestoreCount > 0 and player is caster) —
         // a consecrated zone lingers at the burst centre, slowly healing allies.
         internal static void SpawnHolyZone(Vec3 pos, int restoreCount, float radius, Team casterTeam)

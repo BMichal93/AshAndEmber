@@ -154,6 +154,15 @@ namespace AshAndEmber
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Wisps up and down the whole body right from the first breath —
+            // faceless and skinless from the moment it wakes, not just once the
+            // following aura kicks in.
+            try
+            {
+                foreach (float h in ElementalMath.AuraVeilHeightsMetres)
+                    ElementalBeings.EmitKindWisp(kind, pos + new Vec3(0f, 0f, h), 1.0f);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
     }
 }

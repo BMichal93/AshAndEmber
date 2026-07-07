@@ -6,12 +6,29 @@
 
 ### The elements draw their own charge now — the Resonance Draw
 - **Campaign-map element workings (Emberfall, Scattering Gale, Deeproot Blight, Tidewash, Farsight) no longer cast through Grace's word-recall rite.** They now play the **Resonance Draw**: a charge sweeps a track on the map and you loose it with Left Alt (LB on a controller). How close the release lands to the element's own "true point" sets the power — Perfect (1.50×), Good (1.20×), Wide (0.80×), or a Miss (0.50×), the same four tiers as before. Fast, volatile elements (Fire, Spirit) sweep quickly with a narrow perfect band; slow, patient ones (Earth, Water) sweep gently and forgive a wider miss — the timing itself now carries each element's character, instead of every element reciting the same kind of memorized phrase. "Cast without the rite" still skips straight to a flat 1.00×, and an untended draw disperses on its own after a few seconds rather than stalling the game. Miracles keep their prayer-recall rite unchanged.
+### Elements answer in twos
+- **The five element keys are now peers — chord two together and they FUSE.** X (gamepad: click R3) draws on Fire the same way W/S/A/D draw Wind/Earth/Water/Spirit; press a second, different element key within a heartbeat of the first and the two blend into a sixth working instead of the second simply overwriting it. Every fusion has its own silhouette:
+  - **Fire + Wind → Lightning** — an instant bolt that chains between foes and stuns (the dormant Storm working, finally reachable).
+  - **Fire + Water → Fog** — a standing, blinding cloud that never damages a soul directly, but slows whoever it swallows, dampens the bite of any shot loosed from inside it (a bowman can't find the mark true through his own cloud), and every so often scrambles the orders of a formation caught blind inside it.
+  - **Fire + Earth → Magma** — a thrown glob of molten ground that burns and bogs down everyone who crosses it, and keeps doing both.
+  - **Wind + Water → Ice** — a forward freeze with zero damage: every point of hurt is traded for a total, hard root.
+  - **Wind + Earth → Sandstorm** — a long blinding gust, no knockback, but any mount it catches bolts off-line — it breaks a cavalry charge outright, which nothing else in the mod does.
+  - **Earth + Water → Mire** — ground that keeps giving way underfoot, and the bog itself SPREADS wider the longer it stands.
+  - **Spirit + any other element → a summon** — a living kinsman (Flame, Gale, Stone, or Tide) fights at your side for about a minute, gated to one kinsman at a time (shared with the Unbinding's own champion) so it can never be spammed into a horde. A summon fires the instant the chord completes — no draw, no separate Attack/Block press, since there is only the one working to call.
+  - Every fusion costs the same flat toll as any other attack cast; only the summon is capped, and only by the one-kinsman bond.
+  - NPC mage lords fuse too — a lord who has studied a second element occasionally blends it into the one he was about to throw.
+  - The Journal's "Notes for the Adventurer" explains the chord and the full combo table.
+
+### The Kindled read as storm, not skin
+- **A Kindled's whole silhouette now carries its own element** — shin, waist, chest, and head each roil with a wisp of fire, frost, water, storm-wind, or earth alongside the existing following aura, so no bare human shape is left to read at a glance, not just the face. Woken from the first breath (the spawn burst) and sustained by every aura tick after.
+- **The veil keeps up with a moving body.** Each stamp now leads the being's ground velocity by half an aura tick (instead of always landing squarely on its last position) and the chest line gets a pair of shoulder-width stamps either side, so a charging Kindled doesn't out-run its own coating or bare an arm mid-swing.
 
 ### Six new Ashen Ruins, and the trials get stranger
 - **Six new ruins join the twenty-eight**: The Salt-Blind Well and The Ember Toll House (Easy), The Hollow Minaret and The Wraith's Toll (Standard), The Weighing Chamber (Brutal), and The Reckoning Hall (Legendary) — thirty-four sites total.
 - **Seven new trial rooms.** Ember Wraith (a guardian drawn by the caster's own renown — the more famous you are, the harder it presses), Wardstone Gate (a straight Roguery check), Hollow Choir (reads your whisper tier — the deeper into the cold you've gone, the easier it lets you through), Ember Toll (asks for a spent focus point instead of aging or troops, falling back to a flat toll if you have none to give), Weight of Ash (a mandatory toll that scales with the ruin's own danger tier), Shifting Hall (a three-way table of renown, desertion, or whispers), and Triune Reckoning — a room that answers differently depending on whether the fire you carry is Ashen, Grace, or the Living Ember, and rolls a plain proficiency check if it's none of the three.
 - **Three new rewards.** Gold Cache (a flat denar payout), Skill Tome (experience into a random worldly skill — Roguery, Charm, Leadership, Medicine, or Steward), and Ember Boon, which reacts to your own path the same way Triune Reckoning does. The Magic Crystal reward can now grant more than one crystal at a clear.
 - **A misnamed ruin no longer fails silently.** If a `RuinDef`'s village name doesn't match any settlement on the current map, a warning is now logged instead of the ruin simply never appearing.
+
 
 ### Sacred Site tuning and a new discipline
 - **The Bent Knee now seizes a random will, not the strongest, and holds it for half as long** (60s → 30s). It no longer scans for the toughest nearby enemy — just whoever the working happens to catch — so the reach never whiffs, but the borrowed will doesn't linger either.
