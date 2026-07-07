@@ -1171,6 +1171,14 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
+        public void AshenRecruitMath_PrisonerQualifies_TierGate()
+        {
+            Assert.IsTrue(AshenRecruitMath.PrisonerQualifies(prisonerTier: 3, requiredTier: 3));
+            Assert.IsTrue(AshenRecruitMath.PrisonerQualifies(prisonerTier: 5, requiredTier: 3));
+            Assert.IsFalse(AshenRecruitMath.PrisonerQualifies(prisonerTier: 2, requiredTier: 3));
+        }
+
+        [Test]
         public void SacredSiteMath_FormationOdds_FloorsCapsAndGrowsWithSkill()
         {
             // Floor even at 0 Smithing, ceiling even at absurd Smithing, and

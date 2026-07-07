@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+### The Ashen dead can be recruited directly
+- **Any Ashen-owned town or castle now hosts a muster yard.** Recruiting an Ashen Thrall, Warrior, Invoker, Warden, or Revenant no longer requires waiting on a roaming Spawn band or a garrison transfer — the settlement's own menu ("Muster the Ashen Dead") will raise one for you. The price is prisoners, not gold: turning a captive into one of the cold-fire dead is the whole transaction, and the prisoner's own tier must meet the Ashen rank you're raising (an Ashen Revenant demands a genuinely worthy captive, not three recruits). This is a deliberate limiter — you can only raise as many high-rank Ashen as you've actually captured worthy prisoners for.
+
 ### Battania becomes the Forest Clans
 - **Forest Clans lords never carry the mage gift.** The Forest Clans don't master fire themselves — they live alongside the creatures of it instead. Battanian lords are excluded from the mage-lord seeding and population regulator entirely (0% chance), whether at campaign start or afterward. The one exception is the Ashen corruption: an Ashen Forest Clans lord still casts, since the cold's grip is forced on him, not a mastery his culture chose.
 - **Battania is renamed the Forest Clans.** Culture, kingdom, and troop names are rebranded the same way Vlandia became the Holy Temple and Sturgia the Northmen — a new faction blurb, ruler title (High Chieftain), and two new faction skills replace the vanilla Battanian feats: **Kinship of Root and Stone** (sacred-site Kindled bindings cost 15% less and succeed 10% more often for the clan-born), **The Wilds Remember** (wild-band Kindled deal half damage to a Forest Clans player), and **Debt of the Deep Wood** (each bound Kindled costs 5 gold a day in upkeep).

@@ -86,6 +86,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new ClanOrdersCampaignBehavior());
                 campaignStarter.AddBehavior(new ElementalWildsBehavior());
                 campaignStarter.AddBehavior(new SacredSitesCampaignBehavior());
+                campaignStarter.AddBehavior(new AshenRecruitCampaignBehavior());
                 campaignStarter.AddBehavior(new TribalKingdomBehavior());
                 campaignStarter.AddBehavior(new CreationBackstoryRework());
                 try { AshenDialogue.Register(campaignStarter);    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
