@@ -141,7 +141,9 @@ namespace AshAndEmber
                 "FIRE the same way W/S/A/D draw Wind/Earth/Water/Spirit. Press a SECOND, different element " +
                 "key within a heartbeat of the first and the two BLEND instead of the second simply " +
                 "replacing it — you need only have learned both halves. FIRE+WIND: Lightning, a bolt that " +
-                "chains between foes. FIRE+WATER: Fog, a standing cloud that blinds and never burns. " +
+                "chains between foes. FIRE+WATER: Fog, a standing cloud that slows whoever it swallows, " +
+                "dampens a shot loosed from inside it, and now and again scrambles a blinded formation's " +
+                "orders — but never burns. " +
                 "FIRE+EARTH: Magma, a molten patch that burns and bogs down all who cross it. WIND+WATER: " +
                 "Ice, a forward freeze that roots utterly but deals no harm. WIND+EARTH: Sandstorm, a long " +
                 "blinding gust. EARTH+WATER: Mire, ground that keeps giving way the longer you stand in it. " +

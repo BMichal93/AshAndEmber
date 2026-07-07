@@ -582,16 +582,37 @@ namespace AshAndEmber
 
                     case "spell_fogpatch":
                     {
-                        // A standing bank of fog — thick enough to slow anyone
-                        // caught inside, but it never bites. Pure denial.
+                        // A standing bank of fog — never bites, but blinds: it
+                        // slows whoever it swallows, dampens a shot loosed FROM
+                        // inside it (see ElementSpellEffects.OnRangedHitThroughFog),
+                        // and every so often scrambles the orders of a formation
+                        // that cannot see its own banners through the murk.
                         if (_rng.Next(2) == 0)
                             try { SpawnTempSmokeParticle(e.Position + new Vec3(0f, 0f, 0.6f), e.Radius * 0.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        Formation blindedFormation = null;
                         foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount) continue;
                             if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
                             if (a.Position.Distance(e.Position) > e.Radius) continue;
                             try { NatureEffects.ApplySpeedToken(a, 0.65f, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            if (blindedFormation == null)
+                                try { blindedFormation = a.Formation; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        }
+                        // ~1 tick in 4 with someone caught inside — frequent enough
+                        // to matter, not so often the formation never recovers its feet.
+                        if (blindedFormation != null && _rng.Next(4) == 0)
+                        {
+                            try
+                            {
+                                switch (_rng.Next(3))
+                                {
+                                    case 0: blindedFormation.SetMovementOrder(MovementOrder.MovementOrderRetreat); break;
+                                    case 1: blindedFormation.SetMovementOrder(MovementOrder.MovementOrderCharge);  break;
+                                    default: blindedFormation.SetMovementOrder(MovementOrder.MovementOrderAdvance); break;
+                                }
+                            }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         }
                         break;
                     }

@@ -7,7 +7,7 @@
 ### Elements answer in twos
 - **The five element keys are now peers — chord two together and they FUSE.** X (gamepad: click R3) draws on Fire the same way W/S/A/D draw Wind/Earth/Water/Spirit; press a second, different element key within a heartbeat of the first and the two blend into a sixth working instead of the second simply overwriting it. Every fusion has its own silhouette:
   - **Fire + Wind → Lightning** — an instant bolt that chains between foes and stuns (the dormant Storm working, finally reachable).
-  - **Fire + Water → Fog** — a standing, blinding cloud that never damages a soul — pure denial.
+  - **Fire + Water → Fog** — a standing, blinding cloud that never damages a soul directly, but slows whoever it swallows, dampens the bite of any shot loosed from inside it (a bowman can't find the mark true through his own cloud), and every so often scrambles the orders of a formation caught blind inside it.
   - **Fire + Earth → Magma** — a thrown glob of molten ground that burns and bogs down everyone who crosses it, and keeps doing both.
   - **Wind + Water → Ice** — a forward freeze with zero damage: every point of hurt is traded for a total, hard root.
   - **Wind + Earth → Sandstorm** — a long blinding gust, no knockback, just grit that will not leave the eyes.

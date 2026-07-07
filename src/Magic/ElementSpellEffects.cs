@@ -183,6 +183,7 @@ namespace AshAndEmber
         private const float FogThrowDistance = 6f;
         private const float FogRadius        = 6.5f;
         private const float FogDuration      = 8f;
+        private const float FogArcheryDamp   = 0.5f;   // a shot loosed from inside the bank loses half its bite
         // Magma — Fire+Earth. A thrown glob of molten ground: burns AND bogs down
         // whoever crosses it, and keeps doing both for as long as it lingers.
         private const float MagmaThrowDistance = 7f;
@@ -194,6 +195,24 @@ namespace AshAndEmber
         private const float MireThrowDistance = 6f;
         private const float MireTickDamage    = 10f;
         private const float MireDuration      = 7f;
+
+        // Fog blinds more than it slows: a bowstring loosed from inside the bank
+        // can't find its mark true. Called from MagicMissionBehavior.OnAgentHit
+        // (same "heal back the mitigated part" pattern as the Weeping Sky's wet
+        // bowstrings) — OnAgentHit fires after damage lands, so mitigation here
+        // is corrective, not preventive.
+        public static void OnRangedHitThroughFog(Agent victim, Agent attacker, float inflictedDamage, bool isMeleeHit)
+        {
+            if (isMeleeHit || inflictedDamage <= 0f) return;
+            if (attacker == null || victim == null || !victim.IsActive()) return;
+            try
+            {
+                if (!SpellEffects.PositionInFog(attacker.Position)) return;
+                float healBack = inflictedDamage * FogArcheryDamp;
+                if (healBack >= 1f) SpellEffects.HealAgent(victim, healBack);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
 
         // ── Public dispatch ─────────────────────────────────────────────────────
         // `power` (0..1+) scales the working's strength — the caller sets it from
