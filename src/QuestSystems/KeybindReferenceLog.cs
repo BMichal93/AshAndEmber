@@ -149,9 +149,32 @@ namespace AshAndEmber
                 "blinding gust that bolts any mount it catches — it breaks a charge outright. EARTH+WATER: " +
                 "Mire, ground that keeps giving way and spreads wider the longer it stands. SPIRIT+any other " +
                 "element calls a living KINSMAN to your side instead of an attack — Flame, Gale, Stone, or " +
-                "Tide — for about a minute, firing the instant the chord completes (no draw, no Attack/Block " +
-                "needed), though only one kinsman may walk with you at a time. Every fusion costs the same " +
-                "flat toll as any other attack; only the summon is capped, and only by that one-at-a-time bond."), true);
+                "Tide — for about a minute, though only one kinsman may walk with you at a time. A fusion is " +
+                "loaded like any element and answers to Attack OR Block alike (a summon has no separate wall " +
+                "to raise), so it can also carry its own Unbinding — draw it to its fullest and chord Attack+Block " +
+                "together. Every fusion costs the same flat toll as any other attack; only the summon is " +
+                "capped, and only by that one-at-a-time bond."), true);
+
+            AddLog(new TextObject(
+                "MAGIC · THE FUSION UNBINDINGS — the six blended workings (not the summons — Spirit's own " +
+                "Unbinding already IS the battlefield-scale kinsman) each carry their own Unbinding, at the " +
+                "same steep toll as the base five. LIGHTNING — The Storm's Judgment: every foe in reach struck " +
+                "and stunned as one. FOG — The Devouring Mist: one vast, long-lived fog bank swallows the " +
+                "field. MAGMA — The Ground Ignites: an eruption underfoot leaves a huge, long-burning field " +
+                "behind it. ICE — The Absolute Stillness: every foe in reach frozen solid, still no damage " +
+                "done. SANDSTORM — The Devouring Dunes: every mount in reach bolts at once — no charge can " +
+                "hold. MIRE — The Swallowing Ground: one vast bog, already spreading wider than the working " +
+                "alone ever could."), true);
+
+            AddLog(new TextObject(
+                "MAGIC · FUSION RITES (on the map) — two known elements together also grant their fusion's " +
+                "own memory-rite, cast through the grimoire exactly like the base five. STORM'S RECKONING " +
+                "(Fire+Wind): a hostile host struck from the sky, no warning given. SCORCHED EARTH " +
+                "(Fire+Earth): a hostile host's wagons and stores burn. THE HIDDEN ROAD (Fire+Water): your OWN " +
+                "column slips away from the nearest threat under standing fog. SHIFTING DUNES (Wind+Earth): a " +
+                "hostile host is turned back on itself, days of its march undone. THE SINKING ROAD " +
+                "(Earth+Water): a hostile host's road and stores both give way. THE LONG STILLNESS " +
+                "(Wind+Water): a hostile host's nerve and standing wither — not a blade drawn."), true);
 
             AddLog(new TextObject(
                 "MAGIC · THE UNBINDING — Draw an element to its FULLEST (about five seconds), then press " +

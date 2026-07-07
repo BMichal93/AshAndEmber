@@ -1911,5 +1911,44 @@ namespace AshAndEmber.Tests
             // absent from WallFallback's cases, which return the Fire default.
             Assert.AreEqual(MagicElement.Fire, ElementComboMath.WallFallback(MagicElement.Lightning));
         }
+
+        // ── Fusion Ultimates ──────────────────────────────────────────────────
+
+        private static readonly MagicElement[] _fusionElements =
+        {
+            MagicElement.Lightning, MagicElement.Fog, MagicElement.Magma,
+            MagicElement.Ice, MagicElement.Sandstorm, MagicElement.Mire,
+        };
+
+        [Test]
+        public void ElementUltimateMath_EveryFusionHasALivingAndAshenName()
+        {
+            foreach (var el in _fusionElements)
+            {
+                string living = ElementUltimateMath.UltimateName(el, ashen: false);
+                string ashen  = ElementUltimateMath.UltimateName(el, ashen: true);
+                Assert.False(string.IsNullOrEmpty(living));
+                Assert.False(string.IsNullOrEmpty(ashen));
+                Assert.AreNotEqual(living, ashen, $"{el} should wear a different name under the Ashen mask");
+            }
+        }
+
+        [Test]
+        public void ElementUltimateMath_FusionUltimatesCostTheStandardToll()
+        {
+            // Only Spirit's Unbinding (the persistent champion) pays the higher
+            // toll — every fusion Ultimate is instantaneous like Fire/Wind/Earth
+            // and falls through to the standard cost.
+            int standard = ElementUltimateMath.UltimateAgingDays(hasNature: false, MagicElement.Fire);
+            foreach (var el in _fusionElements)
+                Assert.AreEqual(standard, ElementUltimateMath.UltimateAgingDays(hasNature: false, el));
+        }
+
+        [Test]
+        public void ElementUltimateMath_FusionNamesAreDistinctFromEachOther()
+        {
+            var names = _fusionElements.Select(e => ElementUltimateMath.UltimateName(e, false)).ToList();
+            Assert.AreEqual(names.Count, names.Distinct().Count());
+        }
     }
 }

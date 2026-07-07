@@ -159,6 +159,137 @@ namespace AshAndEmber
                     "Draw back what you found. Let it harden into something you can read.",
                 },
             },
+            [MagicElement.Lightning] = new[]
+            {
+                new[]
+                {
+                    "Hold both fire and wind at once, and do not let either settle.",
+                    "Grip both fire and wind together, and do not let either settle.",
+                    "Draw fire and wind into the same breath, and do not let either settle.",
+                },
+                new[]
+                {
+                    "Find the nearest host on the wind — the strike does not need to travel far.",
+                    "Find the nearest host on the wind — the bolt does not need to travel far.",
+                    "Find the nearest host on the wind — the sky does not need to travel far.",
+                },
+                new[]
+                {
+                    "Let it go all at once, with no cone and no warning.",
+                    "Loose it all at once, with no cone and no warning.",
+                    "Release it all at once, with no cone and no warning.",
+                },
+            },
+
+            [MagicElement.Magma] = new[]
+            {
+                new[]
+                {
+                    "Press fire down into the earth until the earth itself catches.",
+                    "Force fire down into the earth until the earth itself catches.",
+                    "Sink fire down into the earth until the earth itself catches.",
+                },
+                new[]
+                {
+                    "Reach for their wagons before their swords — supply burns easier than steel.",
+                    "Reach for their stores before their swords — supply burns easier than steel.",
+                    "Reach for their granary before their swords — supply burns easier than steel.",
+                },
+                new[]
+                {
+                    "Let it spread like a wound that will not close.",
+                    "Let it spread like a fire that will not tire.",
+                    "Let it spread like a rot that will not stop.",
+                },
+            },
+
+            [MagicElement.Fog] = new[]
+            {
+                new[]
+                {
+                    "Draw fire and water together until neither burns nor flows — only hangs.",
+                    "Draw fire and water together until neither burns nor flows — only hides.",
+                    "Draw fire and water together until neither burns nor flows — only lingers.",
+                },
+                new[]
+                {
+                    "Wrap it around your own column, not theirs.",
+                    "Wrap it around your own banners, not theirs.",
+                    "Wrap it around your own road, not theirs.",
+                },
+                new[]
+                {
+                    "Let the nearest threat lose you inside it.",
+                    "Let the nearest hunter lose you inside it.",
+                    "Let the nearest eye lose you inside it.",
+                },
+            },
+
+            [MagicElement.Ice] = new[]
+            {
+                new[]
+                {
+                    "Draw wind and water down together until both go still.",
+                    "Draw wind and water down together until both go quiet.",
+                    "Draw wind and water down together until both go silent.",
+                },
+                new[]
+                {
+                    "Reach not for their flesh, but for their nerve.",
+                    "Reach not for their blood, but for their will.",
+                    "Reach not for their bodies, but for their standing.",
+                },
+                new[]
+                {
+                    "Let it settle without a single blow struck.",
+                    "Let it settle without a single blade drawn.",
+                    "Let it settle without a single order given.",
+                },
+            },
+
+            [MagicElement.Sandstorm] = new[]
+            {
+                new[]
+                {
+                    "Draw wind and earth together until the ground itself starts moving.",
+                    "Draw wind and earth together until the ground itself starts turning.",
+                    "Draw wind and earth together until the ground itself starts shifting.",
+                },
+                new[]
+                {
+                    "Find the road behind them, not the road ahead.",
+                    "Find the ground behind them, not the ground ahead.",
+                    "Find the miles behind them, not the miles ahead.",
+                },
+                new[]
+                {
+                    "Let the dunes swallow the distance they already crossed.",
+                    "Let the dunes swallow the days they already spent.",
+                    "Let the dunes swallow the ground they already won.",
+                },
+            },
+
+            [MagicElement.Mire] = new[]
+            {
+                new[]
+                {
+                    "Draw earth and water together until the ground forgets how to hold.",
+                    "Draw earth and water together until the ground forgets how to bear weight.",
+                    "Draw earth and water together until the ground forgets how to stay firm.",
+                },
+                new[]
+                {
+                    "Reach for their wagons and their road both — let both give way together.",
+                    "Reach for their stores and their road both — let both give way together.",
+                    "Reach for their supply and their footing both — let both give way together.",
+                },
+                new[]
+                {
+                    "Let it swallow slowly. There is no hurry in a bog.",
+                    "Let it sink slowly. There is no hurry in a bog.",
+                    "Let it settle slowly. There is no hurry in a bog.",
+                },
+            },
         };
 
         private static string[][] GetRitual(MagicElement el) =>

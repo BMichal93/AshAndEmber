@@ -253,6 +253,21 @@ namespace AshAndEmber
                 ElementMapSpells.Lore(el)
             )).ToList();
 
+            // Two known elements together also grant their fusion's own rite —
+            // Spirit pairs are summons, not workings, so they earn no map spell.
+            for (int i = 0; i < known.Count; i++)
+                for (int j = i + 1; j < known.Count; j++)
+                {
+                    var fused = ElementComboMath.TryFuse(known[i], known[j]);
+                    if (fused == null || !ElementComboMath.IsFusion(fused.Value)) continue;
+                    elements.Add(new InquiryElement(
+                        (int)fused.Value,
+                        ElementMapSpells.Name(fused.Value),
+                        null, true,
+                        ElementMapSpells.Lore(fused.Value)
+                    ));
+                }
+
             string castDesc = _isAshen
                 ? "Choose a working. Costs criminal rating instead of years." +
                   (TalentSystem.DailyCastCount > 0 ? " After your first working today, further casts risk possession." : "")

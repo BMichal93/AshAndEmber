@@ -36,11 +36,17 @@ namespace AshAndEmber
             {
                 switch (el)
                 {
-                    case MagicElement.Fire:   NpcEmberfall(caster);      blurb = isAshen ? "looses a Coldfall — the freeze guts an enemy host."          : "calls Emberfall — fire guts an enemy host."; break;
-                    case MagicElement.Wind:   NpcScatteringGale(caster); blurb = isAshen ? "raises a Stormfront — an enemy host is thrown into disorder." : "raises a Scattering Gale — an enemy host is thrown into disorder."; break;
-                    case MagicElement.Earth:  NpcDeeprootBlight(caster); blurb = isAshen ? "spreads the Ashrot — a village's hearth withers."            : "works a Deeproot Blight — a village's hearth withers."; break;
-                    case MagicElement.Water:  NpcTidewash(caster);       blurb = isAshen ? "draws the Snowmelt — their column is mended and steadied."    : "draws a Tidewash — their column is mended and steadied."; break;
-                    case MagicElement.Spirit: NpcFarsight(caster);       blurb = isAshen ? "casts the Void's Sight — power flows to them."                : "casts Farsight — power flows to them."; break;
+                    case MagicElement.Fire:      NpcEmberfall(caster);       blurb = isAshen ? "looses a Coldfall — the freeze guts an enemy host."          : "calls Emberfall — fire guts an enemy host."; break;
+                    case MagicElement.Wind:      NpcScatteringGale(caster);  blurb = isAshen ? "raises a Stormfront — an enemy host is thrown into disorder." : "raises a Scattering Gale — an enemy host is thrown into disorder."; break;
+                    case MagicElement.Earth:     NpcDeeprootBlight(caster);  blurb = isAshen ? "spreads the Ashrot — a village's hearth withers."            : "works a Deeproot Blight — a village's hearth withers."; break;
+                    case MagicElement.Water:     NpcTidewash(caster);        blurb = isAshen ? "draws the Snowmelt — their column is mended and steadied."    : "draws a Tidewash — their column is mended and steadied."; break;
+                    case MagicElement.Spirit:    NpcFarsight(caster);        blurb = isAshen ? "casts the Void's Sight — power flows to them."                : "casts Farsight — power flows to them."; break;
+                    case MagicElement.Lightning: NpcStormsReckoning(caster); blurb = isAshen ? "unleashes the Deathbolt — an enemy host is struck from the sky." : "calls Storm's Reckoning — an enemy host is struck from the sky."; break;
+                    case MagicElement.Magma:     NpcScorchedEarth(caster);   blurb = isAshen ? "spreads the Ashfall — an enemy host's wagons burn."          : "works Scorched Earth — an enemy host's wagons burn."; break;
+                    case MagicElement.Fog:       NpcHiddenRoad(caster);      blurb = isAshen ? "raises the White Shroud — their column slips from sight."    : "raises the Hidden Road — their column slips from sight."; break;
+                    case MagicElement.Sandstorm: NpcShiftingDunes(caster);   blurb = isAshen ? "raises the Bone Storm — an enemy host loses its ground."     : "raises Shifting Dunes — an enemy host loses its ground."; break;
+                    case MagicElement.Mire:      NpcSinkingRoad(caster);     blurb = isAshen ? "opens the Grey Sinking — an enemy host's road gives way."     : "opens the Sinking Road — an enemy host's road gives way."; break;
+                    case MagicElement.Ice:       NpcLongStillness(caster);   blurb = isAshen ? "casts the Endless Winter — an enemy host's nerve is gone."    : "casts the Long Stillness — an enemy host's nerve is gone."; break;
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -163,6 +169,111 @@ namespace AshAndEmber
                     $"{casterName}'s Emberfall grazed {targetName}'s fire — the flame spread where it was not aimed.",
                     new Color(0.75f, 0.45f, 0.30f)));
             }
+        }
+
+        // ── Fusion map spells (v0.37) — mirror ElementMapSpells, caster-centred ──
+        private static MobileParty NearestHostileToCaster(Hero caster, float maxDist)
+        {
+            var party = caster.PartyBelongedTo;
+            if (party == null) return null;
+            Vec2 pos = party.GetPosition2D;
+            return MobileParty.All
+                .Where(p => p != null && p.IsActive && p != party
+                         && p.MapFaction != null && caster.MapFaction != null
+                         && FactionManager.IsAtWarAgainstFaction(p.MapFaction, caster.MapFaction)
+                         && (p.GetPosition2D - pos).Length < maxDist)
+                .OrderBy(p => (p.GetPosition2D - pos).Length)
+                .FirstOrDefault();
+        }
+
+        // Lightning — Storm's Reckoning: the nearest hostile host is struck from the sky.
+        private static void NpcStormsReckoning(Hero caster)
+        {
+            var target = NearestHostileToCaster(caster, 60f);
+            if (target == null) return;
+            var troops = target.MemberRoster.GetTroopRoster()
+                .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
+            if (troops.Count == 0) return;
+            try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { target.RecentEventsMorale -= 25f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Magma — Scorched Earth: the nearest hostile host's wagons and stores burn.
+        private static void NpcScorchedEarth(Hero caster)
+        {
+            var target = NearestHostileToCaster(caster, 60f);
+            if (target == null) return;
+            try { NatureEffects.RemoveFoodFromRoster(target, 25); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            var troops = target.MemberRoster.GetTroopRoster()
+                .Where(e => !e.Character.IsHero && e.Number > e.WoundedNumber).ToList();
+            if (troops.Count > 0)
+                try { target.MemberRoster.AddToCounts(troops[_rng.Next(troops.Count)].Character, 0, false, 1); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Fog — The Hidden Road: the caster's OWN column slips away from its nearest threat.
+        private static void NpcHiddenRoad(Hero caster)
+        {
+            var party = caster.PartyBelongedTo;
+            if (party == null) return;
+            party.RecentEventsMorale += 10f;
+            var threat = NearestHostileToCaster(caster, 200f);
+            if (threat == null) return;
+            try
+            {
+                Vec2 pos = party.GetPosition2D;
+                Vec2 away = pos - threat.GetPosition2D;
+                float len = away.Length;
+                if (len < 0.5f) away = new Vec2(1f, 0f); else away *= 1f / len;
+                party.Position = new CampaignVec2(pos + away * 4f, true);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Sandstorm — Shifting Dunes: the nearest hostile host is turned back on itself.
+        private static void NpcShiftingDunes(Hero caster)
+        {
+            var target = NearestHostileToCaster(caster, 55f);
+            if (target == null) return;
+            try
+            {
+                var party = caster.PartyBelongedTo;
+                Vec2 tPos = target.GetPosition2D;
+                Vec2 back = tPos - (party?.GetPosition2D ?? tPos);
+                float len = back.Length;
+                if (len < 0.5f) back = new Vec2(1f, 0f); else back *= 1f / len;
+                target.Position = new CampaignVec2(tPos + back * 5f, true);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { target.RecentEventsMorale -= 20f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Mire — The Sinking Road: the nearest hostile host loses stores AND ground.
+        private static void NpcSinkingRoad(Hero caster)
+        {
+            var target = NearestHostileToCaster(caster, 55f);
+            if (target == null) return;
+            try { NatureEffects.RemoveFoodFromRoster(target, 18); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try
+            {
+                var party = caster.PartyBelongedTo;
+                Vec2 tPos = target.GetPosition2D;
+                Vec2 back = tPos - (party?.GetPosition2D ?? tPos);
+                float len = back.Length;
+                if (len < 0.5f) back = new Vec2(1f, 0f); else back *= 1f / len;
+                target.Position = new CampaignVec2(tPos + back * 3f, true);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Ice — The Long Stillness: pure morale and standing, no blade drawn.
+        private static void NpcLongStillness(Hero caster)
+        {
+            var target = NearestHostileToCaster(caster, 60f);
+            if (target == null) return;
+            try { target.RecentEventsMorale -= 40f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            var tClan = target.LeaderHero?.Clan;
+            if (tClan != null)
+                try { tClan.Influence = Math.Max(0f, tClan.Influence - 12f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Spirit — Farsight: the caster reads the currents of power; renown and influence flow to him.

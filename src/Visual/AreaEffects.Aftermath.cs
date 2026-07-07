@@ -123,36 +123,40 @@ namespace AshAndEmber
 
         // Fire+Earth — a thrown glob of molten ground that keeps burning and
         // bogging down whoever crosses it, long after the cast itself lands.
-        internal static void SpawnMagmaPatch(Vec3 pos, float perTickDamage, float duration, Team casterTeam)
+        // `radius` defaults to the fusion's own thrown-glob size; the Magma
+        // Ultimate drops one at battlefield scale instead.
+        internal static void SpawnMagmaPatch(Vec3 pos, float perTickDamage, float duration, Team casterTeam, float radius = 4f)
         {
             var node = new AreaEffect
             {
                 Id           = "spell_magmapatch",
                 School       = ColorSchool.Red,
                 Position     = pos,
-                Radius       = 4f,
+                Radius       = radius,
                 TickInterval = 1f,
                 TickTimer    = 1f,
                 Remaining    = duration,
                 Power        = perTickDamage,
                 CasterTeam   = casterTeam,
             };
-            node.LightEntity = SpawnAreaLight(pos, ColorSchool.Red, 6f);
+            node.LightEntity = SpawnAreaLight(pos, ColorSchool.Red, Math.Max(6f, radius * 1.5f));
             _areaEffects.Add(node);
             try { SpawnTempFireParticle(pos, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Earth+Water — ground that gives way underfoot instead of holding: no
         // burn, no blade, just a deepening root that gets worse the longer you
-        // stand in it (each tick refreshes the hold rather than fading).
-        internal static void SpawnMirePatch(Vec3 pos, float perTickDamage, float duration, Team casterTeam)
+        // stand in it (each tick refreshes the hold rather than fading, and the
+        // tick itself widens the radius — see the spell_mirepatch case). `radius`
+        // defaults to the fusion's own footprint; the Mire Ultimate starts much wider.
+        internal static void SpawnMirePatch(Vec3 pos, float perTickDamage, float duration, Team casterTeam, float radius = 4.5f)
         {
             var node = new AreaEffect
             {
                 Id           = "spell_mirepatch",
                 School       = ColorSchool.Nature,
                 Position     = pos,
-                Radius       = 4.5f,
+                Radius       = radius,
                 TickInterval = 1f,
                 TickTimer    = 1f,
                 Remaining    = duration,

@@ -171,6 +171,37 @@ namespace AshAndEmber
         public const int   LeapCloseEnemies   = 3;
         public const int   RainMountedNear    = 4;    // a cavalry wedge → the sky weeps
 
+        // ── Fusion Ultimates — v0.37 ─────────────────────────────────────────────
+        // Each of the six non-Spirit fusions carries its own Unbinding, mirroring
+        // the base five: an instant, battlefield-scale version of what the
+        // fusion already does. Cost and the full-draw gate are unchanged
+        // (UltimateCostDays, CanUnbind) — only Spirit pays the higher toll, so
+        // these fall through to the standard cost automatically.
+        public const float LightningRadius   = 14f;
+        public const float LightningDamage   = 55f;
+        public const float LightningStunSec  = 3f;
+
+        public const float FogUltimateRadius  = 18f;
+        public const float FogUltimateSeconds = 45f;
+
+        public const float MagmaUltimateRadius = 12f;
+        public const float MagmaUltimateDamage = 50f;
+        public const float MagmaPatchRadius    = 9f;
+        public const float MagmaPatchTickDamage = 20f;
+        public const float MagmaPatchSeconds    = 20f;
+
+        public const float IceUltimateRadius    = 13f;
+        public const float IceUltimateFreezeSec = 8f;
+
+        public const float SandstormUltimateRadius  = 15f;
+        public const float SandstormUltimateDamage  = 20f;
+        public const float SandstormUltimateSlowSec = 6f;
+        public const float SandstormUltimateBolt    = 5f;
+
+        public const float MireUltimateRadius     = 8f;
+        public const float MireUltimateTickDamage = 14f;
+        public const float MireUltimateSeconds    = 30f;
+
         // ── Names ────────────────────────────────────────────────────────────────
         public static string UltimateName(MagicElement el, bool ashen)
         {
@@ -178,20 +209,32 @@ namespace AshAndEmber
             {
                 switch (el)
                 {
-                    case MagicElement.Fire:   return "The Long Winter";
-                    case MagicElement.Wind:   return "Carried by the Howl";
-                    case MagicElement.Earth:  return "The Barrow Wakes";
-                    case MagicElement.Water:  return "The White Silence";
-                    default:                  return "What Sleeps Beneath";
+                    case MagicElement.Fire:      return "The Long Winter";
+                    case MagicElement.Wind:      return "Carried by the Howl";
+                    case MagicElement.Earth:     return "The Barrow Wakes";
+                    case MagicElement.Water:     return "The White Silence";
+                    case MagicElement.Lightning: return "The Silent Thunder";
+                    case MagicElement.Fog:       return "The White Blindness";
+                    case MagicElement.Magma:     return "The Ashen Maw";
+                    case MagicElement.Ice:       return "The Endless Winter";
+                    case MagicElement.Sandstorm: return "The Bone Storm";
+                    case MagicElement.Mire:      return "The Grey Sinking";
+                    default:                     return "What Sleeps Beneath";
                 }
             }
             switch (el)
             {
-                case MagicElement.Fire:   return "The First Flame Remembered";
-                case MagicElement.Wind:   return "On the Wings of the Gale";
-                case MagicElement.Earth:  return "The Mountain's Wrath";
-                case MagicElement.Water:  return "The Weeping Sky";
-                default:                  return "The Land's Answer";
+                case MagicElement.Fire:      return "The First Flame Remembered";
+                case MagicElement.Wind:      return "On the Wings of the Gale";
+                case MagicElement.Earth:     return "The Mountain's Wrath";
+                case MagicElement.Water:     return "The Weeping Sky";
+                case MagicElement.Lightning: return "The Storm's Judgment";
+                case MagicElement.Fog:       return "The Devouring Mist";
+                case MagicElement.Magma:     return "The Ground Ignites";
+                case MagicElement.Ice:       return "The Absolute Stillness";
+                case MagicElement.Sandstorm: return "The Devouring Dunes";
+                case MagicElement.Mire:      return "The Swallowing Ground";
+                default:                     return "The Land's Answer";
             }
         }
     }

@@ -384,10 +384,11 @@ namespace AshAndEmber
         // resolved — fusing them if both halves are known (falling back to
         // whichever single element the mage actually knows, which is already
         // loaded from the optimistic step above, so "falling back" needs no
-        // extra code) — and, for a Spirit summon specifically, firing at once
-        // instead of loading anything: a summon has no separate Attack/Wall
-        // shape to draw toward, so making the player then also press Attack
-        // would just be a second button for the same one effect.
+        // extra code). A Spirit summon is loaded exactly like any other
+        // fusion — the player still presses Attack OR Block to call it (both
+        // answer the same way; see ElementSpellEffects.CastAttack/CastWall) —
+        // so it draws a charge and carries an Attack+Block Unbinding chord
+        // like every other element, rather than being a special case.
         private static void HandleElementKeyPress(MagicElement el)
         {
             MageElementKnowledge.TryLoad(el);
@@ -406,36 +407,14 @@ namespace AshAndEmber
             bool eligible = fused != null
                          && MageElementKnowledge.HasElement(first)
                          && MageElementKnowledge.HasElement(el);
+            if (eligible && ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveChampionFor(Agent.Main))
+            {
+                Msg("Your kinsman already walks the field — the working answers as a single element instead.");
+                eligible = false;
+            }
             if (!eligible) return;   // el (or first, if el is unknown) is already loaded above
 
-            if (ElementComboMath.IsSummon(fused.Value))
-            {
-                if (ElementUltimates.HasLiveChampionFor(Agent.Main))
-                    Msg("Your kinsman already walks the field — the working answers as a single element instead.");
-                else
-                    FireSummonNow(fused.Value);
-                return;
-            }
             MageElementKnowledge.LoadDirect(fused.Value);
-        }
-
-        // A Spirit-fusion summon fires the instant the chord completes — no
-        // draw, no separate Attack/Block press. It still respects the usual
-        // channel gates (free hand, light armour, standing still) and pays the
-        // same flat toll as any other attack cast.
-        private static void FireSummonNow(MagicElement summonEl)
-        {
-            string reason = ChannelBlockReason();
-            if (reason != null) { Msg(reason); return; }
-            var caster = Agent.Main;
-            if (caster == null || !caster.IsActive()) return;
-            try { ElementSpellEffects.CastAttack(summonEl, caster, 1f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            ApplyCastCost(ElementMagicMath.CastAgingDays(CastForm.Attack, MageElementKnowledge.HasNature));
-            // Whatever was mid-draw is spent along with the summon — start clean.
-            _drawTime = 0f;
-            _readyAnnounced = false;
-            _fullAnnounced = false;
-            _overAnnounced = false;
         }
 
         private static void TryCast(CastForm form)
