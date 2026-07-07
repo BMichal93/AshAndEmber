@@ -2,8 +2,8 @@
 // ASH AND EMBER — Magic/ElementUltimates.cs
 //
 // Runtime layer of THE UNBINDING — each element's once-per-battle ultimate
-// (all numbers and names live in the pure ElementUltimateMath). Five workings,
-// five different shapes:
+// (all numbers and names live in the pure ElementUltimateMath). Eleven
+// workings — the base five, plus one for each non-Spirit fusion:
 //
 //   Fire   — nova around the caster (damage, ignition, bolting horses,
 //            charred siege timber, a burning ring left behind).
@@ -16,6 +16,11 @@
 //   Spirit — seizes a random enemy will nearby: they fight at the caster's
 //            side for a short while, then the working lets go and they
 //            stagger back to their own line, dazed.
+//   Lightning/Fog/Magma/Ice/Sandstorm/Mire — v0.37 fusion Ultimates, each an
+//            instant, battlefield-scale version of the fusion's own effect
+//            (see the FUSION ULTIMATES section below). Spirit fusions
+//            (Summon Flame/Gale/Stone/Tide) carry no Ultimate of their own —
+//            Spirit's Unbinding already is the seizure at full strength.
 //
 // This file also carries SPIRIT FUSION (TryCastFusionSummon): a separate,
 // repeatable mechanic wired through the elemental combo chord (see
@@ -33,6 +38,7 @@
 //                                          → ClearBattleState()
 //   • ElementSpellEffects.CastAttack/Wall  → FireDampAt(...)       (rain vs fire)
 //   • ElementMagicInput (the chord)        → PlayerCanUnbind / CastPlayerUltimate
+//   • ElementSpellEffects.SummonKin        → TryCastFusionSummon(...) / HasLiveChampionFor(...)
 //   • ColourLordAI.TryCast                 → TryQueueNpcUltimate(...)
 //
 // Nothing here is serialized: all state is mission-scoped and cleared with the
@@ -61,6 +67,10 @@ namespace AshAndEmber
         // battle (marked at windup start — an interrupted working is still spent).
         private static readonly HashSet<MagicElement> _playerUsed = new HashSet<MagicElement>();
         private static readonly HashSet<string> _npcUsed = new HashSet<string>();
+        // How often a lord's Unbinding answers as a fusion instead of the plain
+        // element it was picked for (see TryQueueNpcUltimate) — a flourish on an
+        // already-rare, once-per-battle working, not a redesign of the AI.
+        private const double ComboUltimateUpgradeChance = 0.4;
 
         // ── Flight (Wind) ───────────────────────────────────────────────────────
         private class Flight
@@ -98,7 +108,14 @@ namespace AshAndEmber
         }
         private static readonly List<Thrall> _thralls = new List<Thrall>();
 
-        // ── The summoned kinsman (Spirit fusion — ElementComboMath.IsSummon) ─────
+        // ── The summoned champion (Spirit fusion — ElementComboMath.IsSummon) ────
+        // A lesser, repeatable cousin of Spirit's own Unbinding: where Spirit
+        // seizes a nearby ENEMY, a Spirit fusion (Fire/Wind/Earth/Water + Spirit)
+        // calls a living champion — a Kindled elemental — to fight at the
+        // caster's side. Deliberately independent of Thrall (different verb
+        // entirely: a new body raised, not a will borrowed) with its own
+        // one-at-a-time cap, so it never touches or depends on Spirit's own
+        // seizure state.
         private class Champion
         {
             public Agent Elemental;
@@ -106,7 +123,7 @@ namespace AshAndEmber
             public ElementalKind Kind;
             public bool  Ashen;
             // Who called it — gates the one-at-a-time cap PER SUMMONER, so the
-            // same caster may not stand two summoned kinsmen at once.
+            // same caster may not stand two summoned champions at once.
             public Agent Summoner;
         }
         private static readonly List<Champion> _champions = new List<Champion>();
@@ -160,10 +177,12 @@ namespace AshAndEmber
             return false;
         }
 
-        // True while `summoner` already has a living summoned kinsman on the
+        // True while `summoner` already has a living summoned champion on the
         // field (a Spirit fusion). Public: ElementMagicInput and ColourLordAI
         // both check this before offering a Spirit-fusion summon, so a cast is
-        // never wasted on a refusal.
+        // never wasted on a refusal. Entirely separate from Thrall's own cap —
+        // a champion and a seized will are different workings and never
+        // contend for the same slot.
         public static bool HasLiveChampionFor(Agent summoner)
         {
             if (summoner == null) return false;
@@ -192,8 +211,8 @@ namespace AshAndEmber
                 Msg("The wind will not carry horse and rider — take wing on your own feet.");
                 return false;
             }
-            // Spirit is gated on its champion being alive (see PlayerCanUnbind), not
-            // marked spent — so the player may raise a fresh one after this dies.
+            // Spirit is gated on its thrall being held (see PlayerCanUnbind), not
+            // marked spent — so the player may seize again after this one lets go.
             if (el != MagicElement.Spirit) _playerUsed.Add(el);
             bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             Msg($"{ElementUltimateMath.UltimateName(el, ashen)} — the " +
@@ -212,7 +231,7 @@ namespace AshAndEmber
         // cooldown and records the cost). Priority is survival-first:
         //   stone when wounded → the wind out when desperate → the nova when
         //   swarmed → the sky against cavalry or an enemy fire-mage → the
-        //   land's champion as a calculating lord's opener.
+        //   seized will as a calculating lord's opener.
         public static bool TryQueueNpcUltimate(Agent agent, Hero hero, float hpPct,
             int closeEnemies, int nearEnemies, int mountedNear,
             bool isAshen, List<MagicElement> known, CasterTemper temper)
@@ -242,6 +261,26 @@ namespace AshAndEmber
                 pick = MagicElement.Spirit;
 
             if (pick == null) return false;
+
+            // A studied lord's Unbinding sometimes answers as a blended working
+            // instead — the same fusion the player commands by chord, applied to
+            // the Unbinding itself. WIND is exempt: it was picked specifically to
+            // carry the caster OUT of danger, and a fusion has no such escape.
+            // Summons never come out of this — Spirit's own Unbinding already IS
+            // the seizure at full strength (ElementComboMath.TryFuse never
+            // returns a Fusion for a Spirit pick, so this loop is naturally a
+            // no-op whenever Spirit was chosen).
+            if (pick.Value != MagicElement.Wind && _rng.NextDouble() < ComboUltimateUpgradeChance)
+            {
+                foreach (var partner in known)
+                {
+                    if (partner == pick.Value) continue;
+                    var fused = ElementComboMath.TryFuse(pick.Value, partner);
+                    if (fused == null || !ElementComboMath.IsFusion(fused.Value)) continue;
+                    pick = fused.Value;
+                    break;
+                }
+            }
 
             // Marked SPENT at windup start: an interrupted Unbinding is gone for
             // the battle — that is the player's reward for riding the caster down.
@@ -412,11 +451,17 @@ namespace AshAndEmber
         {
             switch (el)
             {
-                case MagicElement.Fire:   FireNova(caster, ashen);        break;
-                case MagicElement.Wind:   BeginFlight(caster, ashen);     break;
-                case MagicElement.Earth:  EarthquakeSunder(caster, ashen); break;
-                case MagicElement.Water:  BeginRain(caster, ashen);       break;
-                case MagicElement.Spirit: SummonThrall(caster, ashen);    break;
+                case MagicElement.Fire:      FireNova(caster, ashen);        break;
+                case MagicElement.Wind:      BeginFlight(caster, ashen);     break;
+                case MagicElement.Earth:     EarthquakeSunder(caster, ashen); break;
+                case MagicElement.Water:     BeginRain(caster, ashen);       break;
+                case MagicElement.Spirit:    SummonThrall(caster, ashen);    break;
+                case MagicElement.Lightning: LightningJudgment(caster, ashen); break;
+                case MagicElement.Fog:       FogDevour(caster, ashen);        break;
+                case MagicElement.Magma:     MagmaIgnite(caster, ashen);      break;
+                case MagicElement.Ice:       IceStillness(caster, ashen);     break;
+                case MagicElement.Sandstorm: SandstormDevour(caster, ashen);  break;
+                case MagicElement.Mire:      MireSwallow(caster, ashen);      break;
             }
             try { SpellEffects.TryCastSound(caster.Position,
                     ashen ? ColorSchool.Ashen : el == MagicElement.Fire ? ColorSchool.Red : ColorSchool.Nature); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -827,11 +872,155 @@ namespace AshAndEmber
         }
 
         // =====================================================================
-        // SPIRIT FUSION — a lesser, repeatable cousin of the OLD champion-summon
-        // Unbinding: a Spirit + X fusion calls the living kinsman of whichever
-        // element it was paired with — the same flat attack-form cost as any
-        // other cast, but gated to one living kinsman per summoner at a time,
-        // so it can never be spammed into a horde.
+        // FUSION ULTIMATES — v0.37. Each mirrors the base five: an instant,
+        // battlefield-scale version of the fusion's own signature effect.
+        // Summons carry none of their own — Spirit's Unbinding already IS the
+        // seizure at full strength, and a second one would just be confusing.
+        // =====================================================================
+
+        // ── LIGHTNING — The Storm's Judgment / The Silent Thunder ────────────────
+        // Every foe within reach struck and stunned at once — the mass version
+        // of the fusion's chain, with no need to actually hop between them.
+        private static void LightningJudgment(Agent caster, bool ashen)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            foreach (Agent a in EnemiesNear(caster, ElementUltimateMath.LightningRadius))
+            {
+                if (SpellEffects.IsWarded(a)) continue;
+                try { SpellEffects.DamageAgent(a, ElementUltimateMath.LightningDamage, ColorSchool.White, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { a.SetMaximumSpeedLimit(0f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(a, 0f, ElementUltimateMath.LightningStunSec); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempLightWhite(a.Position + new Vec3(0f, 0f, 1f), 10f, 0.3f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnNatureBurst(a.Position + new Vec3(0f, 0f, 1f), NatureElement.Storm, 1.0f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            try { SpellEffects.SpawnTempLightWhite(pos + new Vec3(0f, 0f, 2f), 22f, 0.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.White, 1.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (caster == Agent.Main)
+                Msg(ashen ? "The silent thunder answers — every foe in reach falls still."
+                          : "The storm's judgment falls — every foe in reach is struck as one.");
+        }
+
+        // ── FOG — The Devouring Mist / The White Blindness ───────────────────────
+        // One massive, long-lived fog bank swallows the field around the caster
+        // — the fusion's own denial (slow, dampened shots, scrambled orders;
+        // see ElementSpellEffects.OnRangedHitThroughFog and spell_fogpatch) at
+        // a scale that can decide a battle rather than one skirmish.
+        private static void FogDevour(Agent caster, bool ashen)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            try { SpellEffects.SpawnFogPatch(pos, ElementUltimateMath.FogUltimateRadius, ElementUltimateMath.FogUltimateSeconds, caster.Team); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.5f), ElementSpellEffects.ElementLightRgb(MagicElement.Fog, ashen), 20f, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (caster == Agent.Main)
+                Msg(ashen ? "The white blindness rolls out — the field itself disappears."
+                          : "The devouring mist rolls out over the field.");
+        }
+
+        // ── MAGMA — The Ground Ignites / The Ashen Maw ───────────────────────────
+        // An eruption at the caster's feet (the Sundering's damage and knockback,
+        // Fire's ignition) that leaves a huge, long-burning magma field behind it.
+        private static void MagmaIgnite(Agent caster, bool ashen)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            foreach (Agent a in EnemiesNear(caster, ElementUltimateMath.MagmaUltimateRadius))
+            {
+                if (SpellEffects.IsWarded(a)) continue;
+                try { SpellEffects.DamageAgent(a, ElementUltimateMath.MagmaUltimateDamage, ColorSchool.Red, caster, MagicElement.Fire); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (!ashen) try { ElementSpellEffects.IgniteTarget(a, caster, 1f, ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                Vec3 away = a.Position - pos; away.z = 0f;
+                away = away.Length > 0.1f ? away.NormalizedCopy() : new Vec3(1f, 0f, 0f);
+                try { NatureEffects.KnockbackAgent(a, a.Position + away * 4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            try { SpellEffects.ScatterEnemies(pos, ElementUltimateMath.MagmaUltimateRadius, caster.Team); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.DamageBurnableStructures(pos, ElementUltimateMath.MagmaUltimateRadius,
+                    ElementUltimateMath.MagmaUltimateDamage * 3f, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnMagmaPatch(pos, ElementUltimateMath.MagmaPatchTickDamage,
+                    ElementUltimateMath.MagmaPatchSeconds, caster.Team, ElementUltimateMath.MagmaPatchRadius); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnBurstExplosion(pos, ColorSchool.Red, ElementUltimateMath.MagmaUltimateRadius * 0.5f, 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ashen ? ColorSchool.Ashen : ColorSchool.Red, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (caster == Agent.Main)
+                Msg(ashen ? "The ashen maw opens — the ground itself turns against them."
+                          : "The ground ignites — the earth erupts into open flame.");
+        }
+
+        // ── ICE — The Absolute Stillness / The Endless Winter ────────────────────
+        // Zero damage, as ever — every foe within reach is frozen solid for a
+        // long stretch, the fusion's own hard root at battlefield scale.
+        private static void IceStillness(Agent caster, bool ashen)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            foreach (Agent a in EnemiesNear(caster, ElementUltimateMath.IceUltimateRadius))
+            {
+                if (SpellEffects.IsWarded(a)) continue;
+                try { a.SetMaximumSpeedLimit(0f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(a, 0f, ElementUltimateMath.IceUltimateFreezeSec); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempSnowParticle(a.Position + new Vec3(0f, 0f, 0.6f), 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            try { SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, 2.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.5f), ElementSpellEffects.ElementLightRgb(MagicElement.Ice, ashen), 18f, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.White, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (caster == Agent.Main)
+                Msg(ashen ? "The endless winter answers — every foe in reach is locked fast."
+                          : "The absolute stillness falls — every foe in reach freezes where they stand.");
+        }
+
+        // ── SANDSTORM — The Devouring Dunes / The Bone Storm ─────────────────────
+        // Every mount within reach bolts off-line at once — the mass cavalry-
+        // breaker, plus the fusion's own blind and a modest bite.
+        private static void SandstormDevour(Agent caster, bool ashen)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            foreach (Agent a in EnemiesNear(caster, ElementUltimateMath.SandstormUltimateRadius))
+            {
+                if (SpellEffects.IsWarded(a)) continue;
+                try { SpellEffects.DamageAgent(a, ElementUltimateMath.SandstormUltimateDamage, ColorSchool.Nature, caster, MagicElement.Earth); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NatureEffects.ApplySpeedToken(a, 0.5f, ElementUltimateMath.SandstormUltimateSlowSec); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try
+                {
+                    if (a.MountAgent != null && a.MountAgent.IsActive())
+                    {
+                        Vec3 bolt = a.MountAgent.Position - pos; bolt.z = 0f;
+                        bolt = bolt.Length > 0.1f ? bolt.NormalizedCopy() : new Vec3(1f, 0f, 0f);
+                        a.MountAgent.TeleportToPosition(a.MountAgent.Position + bolt * ElementUltimateMath.SandstormUltimateBolt);
+                        a.MountAgent.MakeVoice(SkinVoiceManager.VoiceType.Fear, SkinVoiceManager.CombatVoiceNetworkPredictionType.NoPrediction);
+                    }
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SpellEffects.SpawnTempSandWisp(a.Position + new Vec3(0f, 0f, 1f), 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            try { SpellEffects.SpawnTempSandParticle(pos, 2.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (caster == Agent.Main)
+                Msg(ashen ? "The bone storm rises — every mount in reach bolts screaming."
+                          : "The devouring dunes rise — every mount in reach bolts off the line.");
+        }
+
+        // ── MIRE — The Swallowing Ground / The Grey Sinking ──────────────────────
+        // One vast bog dropped at the caster's feet — already wider than the
+        // fusion's own footprint, and spreading further still (see the
+        // spell_mirepatch tick) over its long life.
+        private static void MireSwallow(Agent caster, bool ashen)
+        {
+            Vec3 pos; try { pos = caster.Position; } catch { return; }
+            try { SpellEffects.SpawnMirePatch(pos, ElementUltimateMath.MireUltimateTickDamage,
+                    ElementUltimateMath.MireUltimateSeconds, caster.Team, ElementUltimateMath.MireUltimateRadius); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1.5f), ElementSpellEffects.ElementLightRgb(MagicElement.Mire, ashen), 18f, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.BeginAgentGlow(caster, ColorSchool.Nature, 2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (caster == Agent.Main)
+                Msg(ashen ? "The grey sinking opens beneath them."
+                          : "The swallowing ground opens — the earth itself gives way.");
+        }
+
+        // =====================================================================
+        // SPIRIT FUSION — a lesser, repeatable cousin of the Unbinding's seizure.
+        // Where the Unbinding seizes an ENEMY, a Spirit fusion calls a living
+        // CHAMPION of whichever element it was paired with to the caster's side
+        // — a new body raised, not a will borrowed. Same flat attack-form cost
+        // as any other cast, gated to one living champion per summoner at a
+        // time so it can never be spammed into a horde. Fully independent of
+        // Thrall.
         // =====================================================================
         public static bool TryCastFusionSummon(ElementalKind kind, Agent caster, bool ashen)
         {
@@ -851,7 +1040,7 @@ namespace AshAndEmber
             return spawned;
         }
 
-        // Shared spawn: builds the Kindled through the factory and registers its
+        // Builds the Kindled through the shared factory and registers its
         // lifespan. Returns false (no state changed) if the mission/team is gone
         // or the factory failed to spawn a body.
         private static bool SpawnNamedChampion(Agent caster, bool ashen, ElementalKind kind)
@@ -931,19 +1120,33 @@ namespace AshAndEmber
             }
         }
 
+        // A champion is always one of the four PURE Kindled (Flame/Tide/Gale/
+        // Stone) — the terrain-cousins Frost/Sand belong to the old scene-
+        // shaped champion, not a fusion, but are still handled here for
+        // completeness. The burst matches the being's own coat, not a
+        // generic earth crumble.
         private static void EmitChampionBurst(Vec3 pos, ElementalKind kind, bool ashen, float scale)
         {
             try
             {
                 switch (kind)
                 {
+                    case ElementalKind.Flame:
+                        SpellEffects.SpawnTempFireParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
+                        break;
+                    case ElementalKind.Tide:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, scale);
+                        break;
+                    case ElementalKind.Gale:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Wind, scale);
+                        break;
                     case ElementalKind.Frost:
                         SpellEffects.SpawnTempSnowParticle(pos + new Vec3(0f, 0f, 0.5f), scale);
                         break;
                     case ElementalKind.Sand:
-                        SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
+                        SpellEffects.SpawnTempSandParticle(pos + new Vec3(0f, 0f, 0.4f), scale);
                         break;
-                    default:
+                    default:   // Stone
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, scale);
                         break;
                 }

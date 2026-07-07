@@ -688,7 +688,9 @@ namespace AshAndEmber
         private static readonly string[] _foodIds =
             { "grain", "meat", "fish", "vegetables", "cheese", "bread", "dried_meat", "oil", "beer", "wine" };
 
-        private static int RemoveFoodFromRoster(MobileParty party, int amount)
+        // Internal (not just private) so ElementMapSpells can burn a HOSTILE
+        // party's stores the same proven way Windward spends the player's own.
+        internal static int RemoveFoodFromRoster(MobileParty party, int amount)
         {
             int removed = 0;
             try

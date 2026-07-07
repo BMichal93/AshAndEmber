@@ -121,6 +121,13 @@ namespace AshAndEmber
         internal static void SpawnTempSnowParticle(Vec3 position, float duration)
             => SpawnParticleCluster(position, duration, _snowParticleNames);
 
+        // Kicked desert grit — Sandstorm's own dust, not Earth's stone debris.
+        // Previously only ever used conditionally on desert scenes (the wind
+        // wall's dust-devil); exposed generally so a blown-grit working reads
+        // as blown grit wherever it is cast, not chunks of rock.
+        internal static void SpawnTempSandParticle(Vec3 position, float duration)
+            => SpawnParticleCluster(position, duration, _sandDustNames);
+
         // Single-wisp variants — for repeating ambience (steam over burning
         // ground, the deepening Ashen drifts) where a full three-entity cluster
         // per tick per patch would flood the frame with entity churn.
@@ -132,6 +139,9 @@ namespace AshAndEmber
 
         internal static void SpawnTempSnowWisp(Vec3 position, float duration)
             => SpawnSingleParticle(position, duration, _snowParticleNames);
+
+        internal static void SpawnTempSandWisp(Vec3 position, float duration)
+            => SpawnSingleParticle(position, duration, _sandDustNames);
 
         // Tries each candidate name; on first success spawns a main plume plus two
         // scattered companions for a fuller, churning effect.
@@ -650,8 +660,9 @@ namespace AshAndEmber
                         // lingers instead of holding a fixed footprint — ground
                         // that was firm a moment ago keeps giving way outward.
                         if (e.Radius < 8f) e.Radius += 0.35f;
-                        if (_rng.Next(2) == 0)
-                            try { SpawnNatureBurst(e.Position, NatureElement.Earth, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        // Alternates earth and water so the patch reads as wet
+                        // mud, not dry ground — Mire is Earth+Water together.
+                        try { SpawnNatureBurst(e.Position, _rng.Next(2) == 0 ? NatureElement.Earth : NatureElement.Water, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         foreach (Agent a in Mission.Current.Agents.ToList())
                         {
                             if (!a.IsActive() || a.IsMount) continue;

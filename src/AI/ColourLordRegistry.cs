@@ -526,6 +526,23 @@ namespace AshAndEmber
                     // element map workings the player wields, no old fire-path spells.
                     var known = KnownElements(hero);
                     MagicElement chosen = known[_rng.Next(known.Count)];
+
+                    // A studied lord's rite sometimes answers as a blended working
+                    // instead — the same fusion the player commands by chord, applied
+                    // to the map spell. Summons never come out of this (TryFuse only
+                    // returns a Fusion for non-Spirit pairs, so this is naturally a
+                    // no-op whenever Spirit was drawn).
+                    if (_rng.Next(100) < 35)
+                    {
+                        foreach (var partner in known)
+                        {
+                            if (partner == chosen) continue;
+                            var fused = ElementComboMath.TryFuse(chosen, partner);
+                            if (fused == null || !ElementComboMath.IsFusion(fused.Value)) continue;
+                            chosen = fused.Value;
+                            break;
+                        }
+                    }
                     try
                     {
                         TalentSystem.ExecuteNpcElementMapSpell(hero, chosen);
