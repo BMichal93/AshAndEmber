@@ -1836,6 +1836,100 @@ namespace AshAndEmber.Tests
             Assert.Greater(spirit, fire);
         }
 
+        // ── ElementComboMath tests ───────────────────────────────────────────
+
+        private static readonly MagicElement[] _baseElements =
+        {
+            MagicElement.Fire, MagicElement.Wind, MagicElement.Earth,
+            MagicElement.Water, MagicElement.Spirit,
+        };
+
+        [Test]
+        public void ElementComboMath_EveryDistinctBasePairFuses()
+        {
+            // All ten pairs among the five base elements blend into something —
+            // there is no "does not mix" case yet.
+            for (int i = 0; i < _baseElements.Length; i++)
+                for (int j = i + 1; j < _baseElements.Length; j++)
+                    Assert.NotNull(ElementComboMath.TryFuse(_baseElements[i], _baseElements[j]),
+                        $"{_baseElements[i]} + {_baseElements[j]} should fuse into something");
+        }
+
+        [Test]
+        public void ElementComboMath_FuseIsOrderIndependent()
+        {
+            foreach (var a in _baseElements)
+                foreach (var b in _baseElements)
+                {
+                    if (a == b) continue;
+                    Assert.AreEqual(ElementComboMath.TryFuse(a, b), ElementComboMath.TryFuse(b, a));
+                }
+        }
+
+        [Test]
+        public void ElementComboMath_SameElementNeverFuses()
+        {
+            foreach (var e in _baseElements)
+                Assert.Null(ElementComboMath.TryFuse(e, e));
+        }
+
+        [Test]
+        public void ElementComboMath_FusionNeverFusesAgain()
+        {
+            // The chord only ever offers two BASE elements — a fused or summon
+            // result is never itself a valid fuse input.
+            Assert.Null(ElementComboMath.TryFuse(MagicElement.Lightning, MagicElement.Fire));
+            Assert.Null(ElementComboMath.TryFuse(MagicElement.SummonFlame, MagicElement.Wind));
+        }
+
+        [Test]
+        public void ElementComboMath_SpiritPairsAreAlwaysSummons()
+        {
+            foreach (var e in _baseElements)
+            {
+                if (e == MagicElement.Spirit) continue;
+                var fused = ElementComboMath.TryFuse(MagicElement.Spirit, e);
+                Assert.NotNull(fused);
+                Assert.True(ElementComboMath.IsSummon(fused.Value));
+                Assert.False(ElementComboMath.IsFusion(fused.Value));
+            }
+        }
+
+        [Test]
+        public void ElementComboMath_NonSpiritPairsAreAlwaysFusions()
+        {
+            for (int i = 0; i < _baseElements.Length; i++)
+                for (int j = i + 1; j < _baseElements.Length; j++)
+                {
+                    if (_baseElements[i] == MagicElement.Spirit || _baseElements[j] == MagicElement.Spirit) continue;
+                    var fused = ElementComboMath.TryFuse(_baseElements[i], _baseElements[j]);
+                    Assert.NotNull(fused);
+                    Assert.True(ElementComboMath.IsFusion(fused.Value));
+                    Assert.False(ElementComboMath.IsSummon(fused.Value));
+                }
+        }
+
+        [Test]
+        public void ElementComboMath_SummonKindMatchesPairedElement()
+        {
+            Assert.AreEqual(ElementalKind.Flame, ElementComboMath.SummonKindOf(MagicElement.SummonFlame));
+            Assert.AreEqual(ElementalKind.Gale,  ElementComboMath.SummonKindOf(MagicElement.SummonGale));
+            Assert.AreEqual(ElementalKind.Stone, ElementComboMath.SummonKindOf(MagicElement.SummonStone));
+            Assert.AreEqual(ElementalKind.Tide,  ElementComboMath.SummonKindOf(MagicElement.SummonTide));
+        }
+
+        [Test]
+        public void ElementComboMath_WallFallbackNeverPointsAtAFusionOrSummon()
+        {
+            MagicElement[] fusions =
+            {
+                MagicElement.Fog, MagicElement.Ice, MagicElement.Magma,
+                MagicElement.Sandstorm, MagicElement.Mire,
+            };
+            foreach (var f in fusions)
+            {
+                var fallback = ElementComboMath.WallFallback(f);
+                Assert.True(ElementComboMath.IsBase(fallback), $"{f} wall fallback should be a base element");
         // ── AshenRuinMath tests (ruins expansion) ──────────────────────────────
 
         [Test]
@@ -1914,6 +2008,11 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
+        public void ElementComboMath_LightningHasNoWallFallback()
+        {
+            // Lightning raises its own wall (Stormwall) — it is deliberately
+            // absent from WallFallback's cases, which return the Fire default.
+            Assert.AreEqual(MagicElement.Fire, ElementComboMath.WallFallback(MagicElement.Lightning));
         public void AshenRuinDefs_VillageNamesAreUnique()
         {
             var names = AshenRuinDefs.All.Select(r => r.VillageName).ToList();

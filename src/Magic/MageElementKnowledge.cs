@@ -66,8 +66,11 @@ namespace AshAndEmber
         // Display name of the loaded element — the cold Ashen mask if the hero is Ashen.
         public static string LoadedName()
         {
-            try { if (MageKnowledge.IsAshen) return ElementMagicMath.AshenElementName(_loaded); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            return ElementMagicMath.ElementName(_loaded);
+            bool ashen = false;
+            try { ashen = MageKnowledge.IsAshen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            bool combo = ElementComboMath.IsFusion(_loaded) || ElementComboMath.IsSummon(_loaded);
+            if (combo) return ashen ? ElementComboMath.AshenElementName(_loaded) : ElementComboMath.ElementName(_loaded);
+            return ashen ? ElementMagicMath.AshenElementName(_loaded) : ElementMagicMath.ElementName(_loaded);
         }
 
         // Load an element if it is known; ignored otherwise (so the input handler can
@@ -78,6 +81,12 @@ namespace AshAndEmber
             _loaded = e;
             return true;
         }
+
+        // Load a FUSION or SUMMON directly. These are never individually "learned"
+        // (_learned only ever holds base elements) — a fusion is available the
+        // instant both its halves are known, so the input layer checks HasElement
+        // on the two BASE parents itself before calling this. No further gate here.
+        public static void LoadDirect(MagicElement e) => _loaded = e;
 
         // ── Lifecycle ───────────────────────────────────────────────────────────
         public static void ResetForNewGame()

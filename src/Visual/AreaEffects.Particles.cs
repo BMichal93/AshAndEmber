@@ -583,6 +583,95 @@ namespace AshAndEmber
                         break;
                     }
 
+                    case "spell_fogpatch":
+                    {
+                        // A standing bank of fog — never bites, but blinds: it
+                        // slows whoever it swallows, dampens a shot loosed FROM
+                        // inside it (see ElementSpellEffects.OnRangedHitThroughFog),
+                        // and every so often scrambles the orders of a formation
+                        // that cannot see its own banners through the murk.
+                        if (_rng.Next(2) == 0)
+                            try { SpawnTempSmokeParticle(e.Position + new Vec3(0f, 0f, 0.6f), e.Radius * 0.4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        Formation blindedFormation = null;
+                        foreach (Agent a in Mission.Current.Agents.ToList())
+                        {
+                            if (!a.IsActive() || a.IsMount) continue;
+                            if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                            if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            try { NatureEffects.ApplySpeedToken(a, 0.65f, 1.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            if (blindedFormation == null)
+                                try { blindedFormation = a.Formation; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        }
+                        // ~1 tick in 4 with someone caught inside — frequent enough
+                        // to matter, not so often the formation never recovers its feet.
+                        if (blindedFormation != null && _rng.Next(4) == 0)
+                        {
+                            try
+                            {
+                                switch (_rng.Next(3))
+                                {
+                                    case 0: blindedFormation.SetMovementOrder(MovementOrder.MovementOrderRetreat); break;
+                                    case 1: blindedFormation.SetMovementOrder(MovementOrder.MovementOrderCharge);  break;
+                                    default: blindedFormation.SetMovementOrder(MovementOrder.MovementOrderAdvance); break;
+                                }
+                            }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        }
+                        break;
+                    }
+
+                    case "spell_magmapatch":
+                    {
+                        SpawnTempFireParticle(e.Position, 1.4f);
+                        SpawnTempLight(e.Position, ColorSchool.Red, 6f, 1.4f);
+                        try { DamageBurnableStructures(e.Position, e.Radius + 1.5f, e.Power * 2f, null); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        foreach (Agent a in Mission.Current.Agents.ToList())
+                        {
+                            if (!a.IsActive() || a.IsMount) continue;
+                            if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                            if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            if (IsWarded(a)) continue;
+                            try
+                            {
+                                // Fire-typed so the weakness wheel still answers a
+                                // Frost-Born stumbling into the lingering flow.
+                                DamageAgent(a, e.Power, ColorSchool.Red, null, MagicElement.Fire);
+                                NatureEffects.ApplySpeedToken(a, 0.5f, 1.2f);   // the molten ground bogs every stride
+                                BeginAgentGlow(a, ColorSchool.Red, 1.5f);
+                            }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        }
+                        break;
+                    }
+
+                    case "spell_mirepatch":
+                    {
+                        // Unique among the fusions: the bog SPREADS while it
+                        // lingers instead of holding a fixed footprint — ground
+                        // that was firm a moment ago keeps giving way outward.
+                        if (e.Radius < 8f) e.Radius += 0.35f;
+                        if (_rng.Next(2) == 0)
+                            try { SpawnNatureBurst(e.Position, NatureElement.Earth, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        foreach (Agent a in Mission.Current.Agents.ToList())
+                        {
+                            if (!a.IsActive() || a.IsMount) continue;
+                            if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
+                            if (a.Position.Distance(e.Position) > e.Radius) continue;
+                            try
+                            {
+                                DamageAgent(a, e.Power, ColorSchool.Nature, null, MagicElement.Water);
+                                // Re-applied every tick rather than fading — the
+                                // ground gives a little further with every stride,
+                                // so standing in it only ever gets worse.
+                                NatureEffects.ApplySpeedToken(a, 0.35f, 1.3f);
+                                if (a.MountAgent != null && a.MountAgent.IsActive())
+                                    NatureEffects.ApplySpeedToken(a.MountAgent, 0.3f, 1.3f);
+                            }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        }
+                        break;
+                    }
+
                     case "spell_dirge":
                     {
                         SpawnTempFireParticle(e.Position, 1.5f);

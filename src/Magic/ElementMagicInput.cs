@@ -41,7 +41,15 @@ namespace AshAndEmber
         // so Attack+Block pressed together can release the element's ULTIMATE.
         private static CastForm? _pendingForm;
         private static float     _pendingTimer;
-        private static bool  _prevPadUp, _prevPadDown, _prevPadLeft, _prevPadRight;
+        private static bool  _prevPadUp, _prevPadDown, _prevPadLeft, _prevPadRight, _prevPadFire;
+        // The element chord (fusion): a lone element-key press waits
+        // ComboChordWindowSeconds for a second, DIFFERENT key to land beside it —
+        // the same buffered-chord idiom as the Attack+Block Unbinding, just
+        // generalised from two inputs to the five element keys. X (keyboard) /
+        // ControllerRThumb (gamepad) stands in for Fire, which otherwise has no
+        // key of its own to chord with.
+        private static MagicElement? _pendingElementKey;
+        private static float         _pendingElementTimer;
         private static float _reminder;            // throttle for the "why can't I draw" hint
         private const  float ReminderInterval = 2.0f;
         private const  float StillSpeed       = 0.3f;
@@ -76,7 +84,9 @@ namespace AshAndEmber
             _prevAtk = _prevBlk = false;
             _pendingForm = null;
             _pendingTimer = 0f;
-            _prevPadUp = _prevPadDown = _prevPadLeft = _prevPadRight = false;
+            _prevPadUp = _prevPadDown = _prevPadLeft = _prevPadRight = _prevPadFire = false;
+            _pendingElementKey = null;
+            _pendingElementTimer = 0f;
             _reminder = 0f;
             _readyAnnounced = false;
             _fullAnnounced = false;
@@ -121,7 +131,7 @@ namespace AshAndEmber
                     _wasFocusing = true;
                 }
 
-                ReadElementSelect(altHeld, lbHeld);
+                ReadElementSelect(altHeld, lbHeld, dt);
 
                 // Draw the charge while standing still with hands and armour free
                 // (Steel waives the hand and weight limits). The draw builds POWER,
@@ -281,6 +291,39 @@ namespace AshAndEmber
                         // No earthly debris for the void — faint wisps and the violet light carry it.
                         SpellEffects.SpawnNatureBurst(pos, NatureElement.Wind,  VisualDuration * 0.6f);
                         break;
+                    // ── Fusions — a hint of both halves engulfs the caster ──────────
+                    case MagicElement.Lightning:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Storm, VisualDuration * 0.6f);
+                        break;
+                    case MagicElement.Fog:
+                        SpellEffects.SpawnTempSmokeParticle(pos + up, VisualDuration);
+                        break;
+                    case MagicElement.Magma:
+                        if (!ashen) SpellEffects.SpawnTempFireParticle(pos, VisualDuration);
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration * 0.6f);
+                        break;
+                    case MagicElement.Ice:
+                        SpellEffects.SpawnTempSnowParticle(pos + up, VisualDuration);
+                        break;
+                    case MagicElement.Sandstorm:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration);
+                        break;
+                    case MagicElement.Mire:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, VisualDuration * 0.6f);
+                        break;
+                    // ── Summons — the kinsman's own coat, faintly, before it arrives ──
+                    case MagicElement.SummonFlame:
+                        if (!ashen) SpellEffects.SpawnTempFireParticle(pos, VisualDuration * 0.6f);
+                        break;
+                    case MagicElement.SummonGale:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Storm, VisualDuration * 0.6f);
+                        break;
+                    case MagicElement.SummonStone:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, VisualDuration * 0.6f);
+                        break;
+                    case MagicElement.SummonTide:
+                        SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, VisualDuration * 0.6f);
+                        break;
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -291,15 +334,21 @@ namespace AshAndEmber
             try { SpellEffects.BeginAgentGlow(caster, FocusSchool(), VisualInterval + 0.3f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // W/S/A/D (or left-stick flicks) load a learned element; Fire needs no key.
-        private static void ReadElementSelect(bool kb, bool pad)
+        // W/S/A/D (or left-stick flicks) load a learned element; X (gamepad: R3)
+        // stands in for Fire, which otherwise has no key of its own. Two
+        // DIFFERENT element keys landing within ComboChordWindowSeconds of one
+        // another FUSE instead of the second simply overwriting the first — see
+        // HandleElementKeyPress.
+        private static void ReadElementSelect(bool kb, bool pad, float dt)
         {
+            MagicElement? pressed = null;
             if (kb)
             {
-                if      (Input.IsKeyPressed(InputKey.W)) MageElementKnowledge.TryLoad(MagicElement.Wind);
-                else if (Input.IsKeyPressed(InputKey.S)) MageElementKnowledge.TryLoad(MagicElement.Earth);
-                else if (Input.IsKeyPressed(InputKey.A)) MageElementKnowledge.TryLoad(MagicElement.Water);
-                else if (Input.IsKeyPressed(InputKey.D)) MageElementKnowledge.TryLoad(MagicElement.Spirit);
+                if      (Input.IsKeyPressed(InputKey.W)) pressed = MagicElement.Wind;
+                else if (Input.IsKeyPressed(InputKey.S)) pressed = MagicElement.Earth;
+                else if (Input.IsKeyPressed(InputKey.A)) pressed = MagicElement.Water;
+                else if (Input.IsKeyPressed(InputKey.D)) pressed = MagicElement.Spirit;
+                else if (Input.IsKeyPressed(InputKey.X)) pressed = MagicElement.Fire;
             }
             if (pad)
             {
@@ -307,12 +356,86 @@ namespace AshAndEmber
                 bool down  = Input.IsKeyDown(InputKey.ControllerLStickDown);
                 bool left  = Input.IsKeyDown(InputKey.ControllerLStickLeft);
                 bool right = Input.IsKeyDown(InputKey.ControllerLStickRight);
-                if (up    && !_prevPadUp)    MageElementKnowledge.TryLoad(MagicElement.Wind);
-                if (down  && !_prevPadDown)  MageElementKnowledge.TryLoad(MagicElement.Earth);
-                if (left  && !_prevPadLeft)  MageElementKnowledge.TryLoad(MagicElement.Water);
-                if (right && !_prevPadRight) MageElementKnowledge.TryLoad(MagicElement.Spirit);
-                _prevPadUp = up; _prevPadDown = down; _prevPadLeft = left; _prevPadRight = right;
+                bool fire  = Input.IsKeyDown(InputKey.ControllerRThumb);
+                if (up    && !_prevPadUp)    pressed = MagicElement.Wind;
+                if (down  && !_prevPadDown)  pressed = MagicElement.Earth;
+                if (left  && !_prevPadLeft)  pressed = MagicElement.Water;
+                if (right && !_prevPadRight) pressed = MagicElement.Spirit;
+                if (fire  && !_prevPadFire)  pressed = MagicElement.Fire;
+                _prevPadUp = up; _prevPadDown = down; _prevPadLeft = left; _prevPadRight = right; _prevPadFire = fire;
             }
+
+            if (pressed != null) HandleElementKeyPress(pressed.Value);
+
+            // The pending key was already loaded (or fired, or fused) the instant
+            // it was pressed — this timeout just closes the chord window so a
+            // late, unrelated key press does not fuse with a stale first press.
+            if (_pendingElementKey != null)
+            {
+                _pendingElementTimer -= dt;
+                if (_pendingElementTimer <= 0f) _pendingElementKey = null;
+            }
+        }
+
+        // One element key landed. It is loaded IMMEDIATELY — a single tap must
+        // feel exactly as instant as it always has, so there is no perceptible
+        // delay while the chord window waits to see if a second key follows.
+        // If a second, DIFFERENT key lands within the window, the pair is then
+        // resolved — fusing them if both halves are known (falling back to
+        // whichever single element the mage actually knows, which is already
+        // loaded from the optimistic step above, so "falling back" needs no
+        // extra code) — and, for a Spirit summon specifically, firing at once
+        // instead of loading anything: a summon has no separate Attack/Wall
+        // shape to draw toward, so making the player then also press Attack
+        // would just be a second button for the same one effect.
+        private static void HandleElementKeyPress(MagicElement el)
+        {
+            MageElementKnowledge.TryLoad(el);
+
+            if (_pendingElementKey == null)
+            {
+                _pendingElementKey = el;
+                _pendingElementTimer = ElementComboMath.ComboChordWindowSeconds;
+                return;
+            }
+            MagicElement first = _pendingElementKey.Value;
+            _pendingElementKey = null;
+            if (first == el) return;   // same key twice — already (re)loaded above
+
+            var fused = ElementComboMath.TryFuse(first, el);
+            bool eligible = fused != null
+                         && MageElementKnowledge.HasElement(first)
+                         && MageElementKnowledge.HasElement(el);
+            if (!eligible) return;   // el (or first, if el is unknown) is already loaded above
+
+            if (ElementComboMath.IsSummon(fused.Value))
+            {
+                if (ElementUltimates.HasLiveChampionFor(Agent.Main))
+                    Msg("Your kinsman already walks the field — the working answers as a single element instead.");
+                else
+                    FireSummonNow(fused.Value);
+                return;
+            }
+            MageElementKnowledge.LoadDirect(fused.Value);
+        }
+
+        // A Spirit-fusion summon fires the instant the chord completes — no
+        // draw, no separate Attack/Block press. It still respects the usual
+        // channel gates (free hand, light armour, standing still) and pays the
+        // same flat toll as any other attack cast.
+        private static void FireSummonNow(MagicElement summonEl)
+        {
+            string reason = ChannelBlockReason();
+            if (reason != null) { Msg(reason); return; }
+            var caster = Agent.Main;
+            if (caster == null || !caster.IsActive()) return;
+            try { ElementSpellEffects.CastAttack(summonEl, caster, 1f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            ApplyCastCost(ElementMagicMath.CastAgingDays(CastForm.Attack, MageElementKnowledge.HasNature));
+            // Whatever was mid-draw is spent along with the summon — start clean.
+            _drawTime = 0f;
+            _readyAnnounced = false;
+            _fullAnnounced = false;
+            _overAnnounced = false;
         }
 
         private static void TryCast(CastForm form)
