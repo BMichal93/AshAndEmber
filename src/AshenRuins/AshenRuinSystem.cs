@@ -354,6 +354,20 @@ namespace AshAndEmber
                     Ch_DragonEgg(c, def, isSolo, roomIdx, sharedReward); break;
                 case ChallengeType.AshenFlame:
                     Ch_AshenFlame(c, def, isSolo, roomIdx, sharedReward); break;
+                case ChallengeType.EmberWraith:
+                    Ch_EmberWraith(c, def, isSolo, roomIdx, sharedReward); break;
+                case ChallengeType.WardstoneGate:
+                    Ch_WardstoneGate(c, def, isSolo, roomIdx, sharedReward); break;
+                case ChallengeType.HollowChoir:
+                    Ch_HollowChoir(c, def, isSolo, roomIdx, sharedReward); break;
+                case ChallengeType.EmberToll:
+                    Ch_EmberToll(c, def, isSolo, roomIdx, sharedReward); break;
+                case ChallengeType.WeightOfAsh:
+                    Ch_WeightOfAsh(c, def, isSolo, roomIdx, sharedReward); break;
+                case ChallengeType.ShiftingHall:
+                    Ch_ShiftingHall(c, def, isSolo, roomIdx, sharedReward); break;
+                case ChallengeType.TriuneReckoning:
+                    Ch_TriuneReckoning(c, def, isSolo, roomIdx, sharedReward); break;
                 default:
                     NextRoom(def, isSolo, roomIdx, sharedReward); break;
             }
@@ -864,6 +878,228 @@ namespace AshAndEmber
                 () => OnRetreat(def, ri)), true);
         }
 
+        private static void Ch_EmberWraith(RuinChallenge c, RuinDef def, bool isSolo, int ri, bool sr)
+        {
+            float renown = 0f;
+            try { renown = Hero.MainHero?.Clan?.Renown ?? 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            bool pass = _rng.Next(100) < AshenRuinMath.EmberWraithPassChance(renown);
+            if (pass)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Ember Wraith",
+                    "Something ember-eyed studies you from the dark and decides you are not worth the trouble. It withdraws.",
+                    true, false, "Continue", "",
+                    () => NextRoom(def, isSolo, ri, sr), null), true);
+            }
+            else
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Ember Wraith",
+                    "Your name has reached further than you thought. The wraith wants to test it — 8 days of your fire, or five men to test it instead.",
+                    true, true, "Spend fire (8 days aging)", "Spend troops (5 men)",
+                    () => { AgePlayer(8); NextRoom(def, isSolo, ri, sr); },
+                    () =>
+                    {
+                        int troops = MobileParty.MainParty?.MemberRoster?.TotalHealthyCount ?? 0;
+                        if (isSolo || troops < 5)
+                        {
+                            InformationManager.ShowInquiry(new InquiryData(
+                                "Not Enough Men",
+                                "You do not have the men to spend. The fire will have to do. 8 days aging.",
+                                true, false, "Pay", "",
+                                () => { AgePlayer(8); NextRoom(def, isSolo, ri, sr); }, null), true);
+                        }
+                        else
+                        { LoseTroops(5); NextRoom(def, isSolo, ri, sr); }
+                    }), true);
+            }
+        }
+
+        private static void Ch_WardstoneGate(RuinChallenge c, RuinDef def, bool isSolo, int ri, bool sr)
+        {
+            int roguery = 0;
+            try { roguery = Hero.MainHero?.GetSkillValue(DefaultSkills.Roguery) ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            bool pass = _rng.Next(100) < AshenRuinMath.WardstoneGatePassChance(roguery);
+            if (pass)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Wardstone Gate",
+                    "The ward-carved stones expect a particular kind of trespasser. You read the pattern and step through the gaps meant for exactly your sort.",
+                    true, false, "Continue", "",
+                    () => NextRoom(def, isSolo, ri, sr), null), true);
+            }
+            else
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Wardstone Gate",
+                    "The pattern eludes you. You can force the wardstones apart — 6 days of your fire — or turn back.",
+                    true, true, "Force it (6 days aging)", "Retreat",
+                    () => { AgePlayer(6); NextRoom(def, isSolo, ri, sr); },
+                    () => OnRetreat(def, ri)), true);
+            }
+        }
+
+        private static void Ch_HollowChoir(RuinChallenge c, RuinDef def, bool isSolo, int ri, bool sr)
+        {
+            int tier = MageKnowledge.IsMage ? MageKnowledge.WhisperTier : 0;
+            if (tier >= 2)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Hollow Choir",
+                    "Voices without mouths sing something that isn't quite a warning. The cold in you hums back at the same pitch. They let you pass, and leave a little more of themselves behind. +3 whispers.",
+                    true, false, "Continue", "",
+                    () => { MageKnowledge.AddWhispers(3); NextRoom(def, isSolo, ri, sr); }, null), true);
+                return;
+            }
+            bool pass = _rng.Next(100) < AshenRuinMath.HollowChoirPassChance(tier);
+            if (pass)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Hollow Choir",
+                    "The singing rises around you, searching for a voice to match. It doesn't find one in you, and loses interest.",
+                    true, false, "Continue", "",
+                    () => NextRoom(def, isSolo, ri, sr), null), true);
+            }
+            else
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Hollow Choir",
+                    "The singing finds a crack in you after all. 6 days of your fire, taken to quiet it — or retreat before it takes more.",
+                    true, true, "Push through (6 days aging)", "Retreat",
+                    () => { AgePlayer(6); NextRoom(def, isSolo, ri, sr); },
+                    () => OnRetreat(def, ri)), true);
+            }
+        }
+
+        private static void Ch_EmberToll(RuinChallenge c, RuinDef def, bool isSolo, int ri, bool sr)
+        {
+            int unspentFp = 0;
+            try { unspentFp = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            bool canPayFp = unspentFp > 0;
+            string toll = canPayFp ? "Pay with knowledge (1 focus point)" : "Pay with fire (4 days aging)";
+            InformationManager.ShowInquiry(new InquiryData(
+                "Ember Toll",
+                "The room asks for a piece of what you know, not what you carry. The fire inside you already understands the exchange.",
+                true, true, toll, "Retreat",
+                () =>
+                {
+                    if (canPayFp)
+                    {
+                        try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints -= 1; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    }
+                    else AgePlayer(4);
+                    NextRoom(def, isSolo, ri, sr);
+                },
+                () => OnRetreat(def, ri)), true);
+        }
+
+        private static void Ch_WeightOfAsh(RuinChallenge c, RuinDef def, bool isSolo, int ri, bool sr)
+        {
+            int cost = AshenRuinMath.WeightOfAshCost(def.Tier);
+            InformationManager.ShowInquiry(new InquiryData(
+                "Weight of Ash",
+                $"The scale in this room does not move for gold or blood. It moves for time. {cost} days of your fire, and no less, or the passage does not open.",
+                true, false, $"Pay ({cost} days aging)", "",
+                () => { AgePlayer(cost); NextRoom(def, isSolo, ri, sr); }, null), true);
+        }
+
+        private static void Ch_ShiftingHall(RuinChallenge c, RuinDef def, bool isSolo, int ri, bool sr)
+        {
+            var outcome = AshenRuinMath.ResolveShiftingHall(_rng.Next(100));
+            switch (outcome)
+            {
+                case ShiftingHallOutcome.RenownGain:
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Shifting Hall",
+                        "The hall rearranges itself around you and, for reasons it does not share, remembers you kindly. Word of the passage will travel. (+15 renown)",
+                        true, false, "Continue", "",
+                        () =>
+                        {
+                            try { Hero.MainHero.Clan.Renown = Math.Max(0, Hero.MainHero.Clan.Renown + 15); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            NextRoom(def, isSolo, ri, sr);
+                        }, null), true);
+                    break;
+
+                case ShiftingHallOutcome.Desertion:
+                    int troops = MobileParty.MainParty?.MemberRoster?.TotalHealthyCount ?? 0;
+                    int lost = isSolo ? 0 : AshenRuinMath.ShiftingHallDesertionLoss(troops);
+                    string line = isSolo || lost == 0
+                        ? "The hall's doubt has nothing to work with — you are alone, and unshaken."
+                        : $"The hall plants a doubt at the back of the column. {lost} men slip away in the confusion and do not come back.";
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Shifting Hall", line,
+                        true, false, "Continue", "",
+                        () => { if (!isSolo && lost > 0) LoseTroops(lost); NextRoom(def, isSolo, ri, sr); }, null), true);
+                    break;
+
+                default: // WhisperGain
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Shifting Hall",
+                        "The hall leaves something behind in you on the way through — not a wound, exactly. +5 whispers.",
+                        true, false, "Continue", "",
+                        () => { MageKnowledge.AddWhispers(5); NextRoom(def, isSolo, ri, sr); }, null), true);
+                    break;
+            }
+        }
+
+        private static void Ch_TriuneReckoning(RuinChallenge c, RuinDef def, bool isSolo, int ri, bool sr)
+        {
+            bool isAshen = MageKnowledge.IsAshen;
+            bool natureAttuned = false, hasGrace = false;
+            try { natureAttuned = NatureKnowledge.IsAttuned; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { hasGrace = MiracleInventory.HasGrace; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            if (isAshen)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Triune Reckoning",
+                    "The room asks which fire you carry. The cold in you answers before you do. It recognises itself and steps aside. +4 whispers.",
+                    true, false, "Continue", "",
+                    () => { MageKnowledge.AddWhispers(4); NextRoom(def, isSolo, ri, sr); }, null), true);
+            }
+            else if (hasGrace)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Triune Reckoning",
+                    "The room asks which fire you carry. Something in you answers with conviction rather than heat. That is enough. Word of it spreads. (+10 renown)",
+                    true, false, "Continue", "",
+                    () =>
+                    {
+                        try { Hero.MainHero.Clan.Renown = Math.Max(0, Hero.MainHero.Clan.Renown + 10); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        NextRoom(def, isSolo, ri, sr);
+                    }, null), true);
+            }
+            else if (natureAttuned)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    "Triune Reckoning",
+                    "The room asks which fire you carry. The living fire in you is quieter than the others, and older. The room eases, briefly, and gives back 3 days.",
+                    true, false, "Continue", "",
+                    () => { AgingSystem.RejuvenateHero(Hero.MainHero, 3); NextRoom(def, isSolo, ri, sr); }, null), true);
+            }
+            else
+            {
+                bool pass = _rng.Next(100) < AshenRuinMath.TriuneReckoningFallbackPassChance(TalentSystem.PurchasedCount);
+                if (pass)
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Triune Reckoning",
+                        "The room asks which fire you carry. You aren't entirely sure yourself — but the answer, whatever it was, is accepted.",
+                        true, false, "Continue", "",
+                        () => NextRoom(def, isSolo, ri, sr), null), true);
+                }
+                else
+                {
+                    InformationManager.ShowInquiry(new InquiryData(
+                        "Triune Reckoning",
+                        "The room asks which fire you carry, and finds the answer wanting. 7 days of your fire settles the matter, or retreat.",
+                        true, true, "Pay (7 days aging)", "Retreat",
+                        () => { AgePlayer(7); NextRoom(def, isSolo, ri, sr); },
+                        () => OnRetreat(def, ri)), true);
+                }
+            }
+        }
+
         // ── Reward dispatch ───────────────────────────────────────────────────
         private static void GrantReward(RuinReward reward, bool sharedReward, string ruinName, bool full)
         {
@@ -961,25 +1197,89 @@ namespace AshAndEmber
                     GrantAllGrimoireFragments(header); break;
 
                 case RewardType.MagicCrystal:
-                    GrantMagicCrystal(header); break;
+                    GrantMagicCrystal(header, Math.Max(1, (int)(reward.Points * split))); break;
+
+                case RewardType.GoldCache:
+                    int gold = Math.Max(50, (int)(reward.Points * split));
+                    try { Hero.MainHero.ChangeHeroGold(gold); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{header} A cache of coin, still good — {gold} denars.",
+                        new Color(0.9f, 0.78f, 0.25f)));
+                    break;
+
+                case RewardType.SkillTome:
+                    GrantSkillTome(header, Math.Max(10f, reward.Points * split)); break;
+
+                case RewardType.EmberBoon:
+                    GrantEmberBoon(header, Math.Max(1, (int)(reward.Points * split))); break;
             }
         }
 
-        private static void GrantMagicCrystal(string header)
+        private static readonly SkillObject[] _skillTomePool =
+        {
+            DefaultSkills.Roguery, DefaultSkills.Charm, DefaultSkills.Leadership,
+            DefaultSkills.Medicine, DefaultSkills.Steward,
+        };
+
+        private static void GrantSkillTome(string header, float xp)
+        {
+            var skill = _skillTomePool[_rng.Next(_skillTomePool.Length)];
+            try { Hero.MainHero?.HeroDeveloper?.AddSkillXp(skill, xp); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{header} Old knowledge settles into a skill you already had — {(int)xp} {skill.Name} experience.",
+                new Color(0.7f, 0.9f, 0.7f)));
+        }
+
+        // Reacts to the caster's own path — the ruins reward conviction differently
+        // depending on what kind of fire the player actually carries.
+        private static void GrantEmberBoon(string header, int points)
+        {
+            if (MageKnowledge.IsAshen)
+            {
+                MageKnowledge.RemoveWhispers(points);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{header} The cold recedes a little further than it should — {points} whisper{(points!=1?"s":"")} quieted.",
+                    new Color(0.7f, 0.7f, 0.9f)));
+                return;
+            }
+            bool hasGrace = false;
+            try { hasGrace = MiracleInventory.HasGrace; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (hasGrace)
+            {
+                int added = MiracleInventory.AddGrace(points);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{header} Conviction answers conviction — {added} Grace.",
+                    new Color(0.95f, 0.85f, 0.6f)));
+                return;
+            }
+            int fp = Math.Max(1, points / 2);
+            try { Hero.MainHero.HeroDeveloper.UnspentFocusPoints += fp; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"{header} Nothing claims the offering, so the fire simply sharpens. +{fp} focus point{(fp!=1?"s":"")}.",
+                new Color(0.7f, 0.9f, 0.7f)));
+        }
+
+        private static void GrantMagicCrystal(string header, int count)
         {
             var defs = CrystalCatalog.All;
-            var def  = defs[_rng.Next(defs.Count)];
+            string lastName = null;
             try
             {
-                var item   = TaleWorlds.ObjectSystem.MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
                 var roster = MobileParty.MainParty?.ItemRoster;
-                if (item != null && roster != null) roster.AddToCounts(item, 1);
+                for (int i = 0; i < count; i++)
+                {
+                    var def  = defs[_rng.Next(defs.Count)];
+                    var item = TaleWorlds.ObjectSystem.MBObjectManager.Instance?.GetObject<ItemObject>(def.ItemId);
+                    if (item != null && roster != null) roster.AddToCounts(item, 1);
+                    lastName = def.Name;
+                }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            InformationManager.DisplayMessage(new InformationMessage(
-                $"{header} A {def.Name} rests among the ash, its lattice somehow unbroken.",
-                new Color(0.75f, 0.55f, 0.85f)));
+            string body = count > 1
+                ? $"{count} crystals rest among the ash, their lattices somehow unbroken."
+                : $"A {lastName} rests among the ash, its lattice somehow unbroken.";
+            InformationManager.DisplayMessage(new InformationMessage($"{header} {body}", new Color(0.75f, 0.55f, 0.85f)));
         }
 
         private static void GrantGrimoireFragment(string header)

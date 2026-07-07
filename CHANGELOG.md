@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Six new Ashen Ruins, and the trials get stranger
+- **Six new ruins join the twenty-eight**: The Salt-Blind Well and The Ember Toll House (Easy), The Hollow Minaret and The Wraith's Toll (Standard), The Weighing Chamber (Brutal), and The Reckoning Hall (Legendary) — thirty-four sites total.
+- **Seven new trial rooms.** Ember Wraith (a guardian drawn by the caster's own renown — the more famous you are, the harder it presses), Wardstone Gate (a straight Roguery check), Hollow Choir (reads your whisper tier — the deeper into the cold you've gone, the easier it lets you through), Ember Toll (asks for a spent focus point instead of aging or troops, falling back to a flat toll if you have none to give), Weight of Ash (a mandatory toll that scales with the ruin's own danger tier), Shifting Hall (a three-way table of renown, desertion, or whispers), and Triune Reckoning — a room that answers differently depending on whether the fire you carry is Ashen, Grace, or the Living Ember, and rolls a plain proficiency check if it's none of the three.
+- **Three new rewards.** Gold Cache (a flat denar payout), Skill Tome (experience into a random worldly skill — Roguery, Charm, Leadership, Medicine, or Steward), and Ember Boon, which reacts to your own path the same way Triune Reckoning does. The Magic Crystal reward can now grant more than one crystal at a clear.
+- **A misnamed ruin no longer fails silently.** If a `RuinDef`'s village name doesn't match any settlement on the current map, a warning is now logged instead of the ruin simply never appearing.
+
 ### Sacred Site tuning and a new discipline
 - **The Bent Knee now seizes a random will, not the strongest, and holds it for half as long** (60s → 30s). It no longer scans for the toughest nearby enemy — just whoever the working happens to catch — so the reach never whiffs, but the borrowed will doesn't linger either.
 - **Standing Stones now teach three learnable talents** ("Study the Old Ways," bought with focus points, escalating cost — the same pattern as the Litany of Devotions and the lapidary's craft): **Deeper Binding** (+20% binding success), **Sparing Rite** (a failed binding returns its Iron Ore and Charcoal), and **Kindred Ease** (halves the daily upkeep of every Kindled you've bound).

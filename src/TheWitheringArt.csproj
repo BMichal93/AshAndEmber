@@ -286,6 +286,7 @@
     <Compile Include="Tavern\TavernCampaignBehavior.Helpers.cs"/>
     <Compile Include="Tavern\TavernCampaignBehavior.Rumors.cs"/>
     <Compile Include="AshenRuins\AshenRuinDefs.cs"/>
+    <Compile Include="AshenRuins\AshenRuinMath.cs"/>
     <Compile Include="AshenRuins\AshenRuinSystem.cs"/>
     <Compile Include="AshenRuins\AshenRuinMenus.cs"/>
     <Compile Include="AshenRuins\AshenRuinCampaignBehavior.cs"/>
