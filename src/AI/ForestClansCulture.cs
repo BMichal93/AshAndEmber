@@ -3,22 +3,23 @@
 // The Forest Clans (formerly Battania) culture's mechanics for the player.
 //
 //   Kinship of Root and Stone — sacred-site Kindled bindings cost 15% less and
-//                               succeed 10% more often for the clan-born.
-//   The Wilds Remember        — wild-band Kindled strike a Forest Clans hand
-//                               for half the usual damage.
-//   Debt of the Deep Wood     — every bound Kindled costs 5 gold a day.
+//                               succeed 10% more often for the clan-born. (bonus)
+//   The Green Roads           — Forest Clan parties move faster while crossing
+//                               forest ground. (bonus)
+//   Wild and Few              — untamed forest folk close to the land, slow to the
+//                               drilled ways of great armies: their warbands run
+//                               leaner and cost more to keep. (penalty)
 //
-// The upkeep drain is applied via DailyTick(), called from
-// CampaignBehavior.Ticks alongside TempleCulture/TribalCulture. The binding
-// discount is read by SacredSitesCampaignBehavior; the damage halving is read
-// by ElementalBeings.TryLooseElement.
+// The binding discount is read by SacredSitesCampaignBehavior; the forest speed
+// bonus is applied by ForestClansSpeedModel; the wage/size penalty is applied by
+// ForestClansWageModel and ForestClansPartySizeModel (all registered in
+// MainSubModule).
 // =============================================================================
 
 using System;
-using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.ObjectSystem;
+using TaleWorlds.Core;
 
 namespace AshAndEmber
 {
@@ -43,35 +44,29 @@ namespace AshAndEmber
         public static float SiteOdds(float baseOdds)
             => IsPlayerForestClan ? baseOdds + SiteOddsBonus : baseOdds;
 
-        // ── The Wilds Remember (wild-band Kindled damage vs. the player) ───────
-        private const float WildKindledDamageMult = 0.5f;
+        // ── Tuning (values live here so the culture's numbers stay in one place) ─
+        public const float ForestSpeedFactor = 0.20f;   // +20% while in forest (The Green Roads)
+        public const float WildWageFactor    = 0.05f;   // +5% troop wages        (Wild and Few)
+        public const float WildSizeFactor    = 0.05f;   // −5% party size limit   (Wild and Few)
 
-        public static float WildKindledDamageMultiplier()
-            => IsPlayerForestClan ? WildKindledDamageMult : 1f;
-
-        // ── Debt of the Deep Wood (daily upkeep for bound Kindled) ─────────────
-        private const int KindledUpkeepPerDay = 5;
-
-        public static void DailyTick()
+        // Is this party a Forest Clans party (player clan and Forest Clans culture)?
+        // Used by the game models, which cannot read IsPlayerForestClan because they
+        // must judge each party, not just the main hero.
+        public static bool IsForestClanParty(MobileParty party)
         {
-            if (!IsPlayerForestClan) return;
+            try { return party?.ActualClan == Clan.PlayerClan && IsPlayerForestClan; }
+            catch { return false; }
+        }
+
+        // True when the party stands on forest ground, per the map scene terrain.
+        public static bool IsInForest(MobileParty party)
+        {
             try
             {
-                var roster = MobileParty.MainParty?.MemberRoster;
-                if (roster == null) return;
-                var kindledIds = new System.Collections.Generic.HashSet<string>(
-                    SacredSiteCatalog.All.Select(def => def.TroopId), StringComparer.OrdinalIgnoreCase);
-                int bound = roster.GetTroopRoster()
-                    .Where(e => e.Character != null && kindledIds.Contains(e.Character.StringId))
-                    .Sum(e => e.Number);
-                if (bound <= 0) return;
-                // Kindred Ease (Sacred Site talent) halves the daily toll.
-                int upkeep = (int)Math.Round(bound * KindledUpkeepPerDay * SacredSiteTalents.UpkeepMult,
-                    MidpointRounding.AwayFromZero);
-                try { Hero.MainHero?.ChangeHeroGold(-upkeep); }
-                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                var terrain = Campaign.Current?.MapSceneWrapper?.GetTerrainTypeAtPosition(party.Position);
+                return terrain.HasValue && terrain.Value == TerrainType.Forest;
             }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            catch { return false; }
         }
     }
 }

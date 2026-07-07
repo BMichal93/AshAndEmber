@@ -428,16 +428,14 @@ namespace AshAndEmber
             },
 
             // ── Expansion — new sites, new trials ─────────────────────────────
-            // Village names below are the author's best-effort recall of vanilla
-            // Bannerlord villages and are NOT verified against a live game session
-            // (this branch was authored without game-DLL access). AshenRuinMenus
-            // logs a startup warning for any name below that fails to resolve to
-            // a real settlement — check the log after first launch and swap in a
-            // corrected name if one of these doesn't bind.
+            // Village names below were verified against the live SandBox
+            // settlements.xml (2026-07): each resolves to a real vanilla village
+            // and none collide with the sites used above. AshenRuinMenus still
+            // logs a startup warning for any name that fails to bind.
 
             new RuinDef
             {
-                VillageName = "Tubna",
+                VillageName = "Bir Seif",
                 RuinName  = "The Salt-Blind Well",
                 EntryLore = "A well gone dry a hundred years before anyone thought to look inside it. The rope is still tied to the winch, frayed through at the exact point where someone once let go.",
                 Tier      = RuinTier.Easy,
@@ -447,7 +445,7 @@ namespace AshAndEmber
             },
             new RuinDef
             {
-                VillageName = "Nafit",
+                VillageName = "Uqba",
                 RuinName  = "The Ember Toll House",
                 EntryLore = "A tollbooth on a road that no longer leads anywhere. The keeper's chair is still drawn up to the window, waiting on a coin that was never meant to be silver.",
                 Tier      = RuinTier.Easy,
@@ -457,7 +455,7 @@ namespace AshAndEmber
             },
             new RuinDef
             {
-                VillageName = "Rammun",
+                VillageName = "Qidnar",
                 RuinName  = "The Hollow Minaret",
                 EntryLore = "A tower with no door at ground level and no stair inside it. Whoever built it climbed some other way. The call to prayer that once rang from its top has not gone silent so much as redirected.",
                 Tier      = RuinTier.Standard,
@@ -467,7 +465,7 @@ namespace AshAndEmber
             },
             new RuinDef
             {
-                VillageName = "Iyaziyya",
+                VillageName = "Lochana",
                 RuinName  = "The Wraith's Toll",
                 EntryLore = "Something waits along this stretch of road for travelers who have made a name for themselves. It does not want your coin. It wants to know whether the name was earned.",
                 Tier      = RuinTier.Standard,
@@ -477,7 +475,7 @@ namespace AshAndEmber
             },
             new RuinDef
             {
-                VillageName = "Kanitra",
+                VillageName = "Marabrot",
                 RuinName  = "The Weighing Chamber",
                 EntryLore = "A room built around a single stone scale, taller than a man. It has been weighing something for a very long time, and it is not finished.",
                 Tier      = RuinTier.Brutal,
@@ -487,7 +485,7 @@ namespace AshAndEmber
             },
             new RuinDef
             {
-                VillageName = "Wanaya",
+                VillageName = "Druimmor",
                 RuinName  = "The Reckoning Hall",
                 EntryLore = "The last room in the last ruin anyone has bothered to map. Whatever is inside has been patient for a very long time — and patience, in a place like this, is rarely a kindness.",
                 Tier      = RuinTier.Legendary,

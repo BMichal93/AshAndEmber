@@ -739,23 +739,30 @@ namespace AshAndEmber
 
             int touched = 0;
             var reachedFormations = new HashSet<Formation>();
-            try
-            {
-                foreach (Agent a in Mission.Current.Agents.ToList())
+            List<Agent> agents;
+            try { agents = Mission.Current?.Agents?.ToList(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); agents = null; }
+            if (agents != null)
+                foreach (Agent a in agents)
                 {
-                    if (!a.IsActive() || a.IsMount) continue;
-                    if (a.Team == null || !a.Team.IsFriendOf(caster.Team)) continue;
-                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
-                    if (dx * dx + dy * dy > r2) continue;
+                    // Guard every agent on its own: an agent that still reports
+                    // IsActive() but is mid-spawn/death can carry null visuals and
+                    // NRE deep inside the Position getter, which would otherwise
+                    // abort the whole command and leave the ranks untouched.
+                    try
+                    {
+                        if (a == null || !a.IsActive() || a.IsMount) continue;
+                        if (a.Team == null || !a.Team.IsFriendOf(caster.Team)) continue;
+                        float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                        if (dx * dx + dy * dy > r2) continue;
 
-                    _troopBuffs[a] = new TroopBuff { MoraleFloor = floor, SpeedMult = speed, Remaining = ElementComboMath.CommandDurationSec };
-                    if (speed != 1f) try { a.SetMaximumSpeedLimit(speed, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                    if (floor > 0f)  try { a.SetMorale(Math.Max(a.GetMorale(), floor)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                    try { if (a != caster && a.Formation != null) reachedFormations.Add(a.Formation); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                    touched++;
+                        _troopBuffs[a] = new TroopBuff { MoraleFloor = floor, SpeedMult = speed, Remaining = ElementComboMath.CommandDurationSec };
+                        if (speed != 1f) try { a.SetMaximumSpeedLimit(speed, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        if (floor > 0f)  try { a.SetMorale(Math.Max(a.GetMorale(), floor)); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { if (a != caster && a.Formation != null) reachedFormations.Add(a.Formation); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        touched++;
+                    }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
-            }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // The movement commands lay their order on every formation the will
             // reached, and keep re-asserting it (TickCommands) so the battle AI

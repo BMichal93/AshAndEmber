@@ -6,12 +6,18 @@
 // summon, a wild band the player marched on, or a battle's Kindling). One place
 // holds them so ONE piece of code drives their look and their weakness:
 //
-//   • TickAuras(dt)   — re-emits the elemental "coat" at each body so the fire /
-//                       water / stone / storm clings to it as it moves.
+//   • TickAuras(dt)   — binds each body's continuous element to its skeleton the
+//                       first tick it is seen alive (via ElementalVisuals), then
+//                       keeps it roused, looses its element on a cooldown, and
+//                       tears the shroud down as it falls. The element itself is
+//                       carried by the engine, NOT re-stamped here every tick.
 //   • IncomingElementMultiplier(target, attack) — magical weakness, read by
 //                       SpellEffects.DamageAgent before a spell lands.
 //   • OnWeaponHit(...) — physical weakness (stone shatters to blunt, blades pass
 //                       through flame), applied after a real weapon blow.
+//
+// The LOOK — the bone-bound particle systems, the follower light and the contour
+// — lives in ElementalVisuals; this file only decides WHEN to raise and drop it.
 //
 // All state is mission-scoped and cleared with the rest of the battle state
 // (ClearBattleState) — nothing here is serialized, so saves are untouched.
@@ -37,10 +43,8 @@ namespace AshAndEmber
         {
             public Agent Agent;
             public ElementalKind Kind;
-            public float AuraTimer;
+            public bool Shrouded;       // whether its continuous element has been bound to the skeleton yet
             public float AttackTimer;   // seconds until this Kindled next looses its element
-            public Vec3 LastPos;        // sampled every tick, to estimate ground velocity
-            public bool HasLastPos;
         }
 
         private static readonly Random _rng = new Random();
@@ -64,7 +68,7 @@ namespace AshAndEmber
             _kindOf[agent] = kind;
             _beings.Add(new Being
             {
-                Agent = agent, Kind = kind, AuraTimer = 0f,
+                Agent = agent, Kind = kind,
                 // Stagger the first blast so a freshly-woken band does not volley as one.
                 AttackTimer = (float)(_rng.NextDouble() * ElementalMath.AttackCooldownSeconds),
             });
@@ -82,6 +86,7 @@ namespace AshAndEmber
 
         public static void ClearBattleState()
         {
+            try { ElementalVisuals.ClearAll(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _beings.Clear();
             _kindOf.Clear();
             PendingBattleKind = null;
@@ -162,34 +167,35 @@ namespace AshAndEmber
             bool reAggro = _aggroTimer <= 0f;
             if (reAggro) _aggroTimer = 4f;
 
-            Vec3 eye = default(Vec3); bool haveEye = false;
-            try { if (Agent.Main != null && Agent.Main.IsActive()) { eye = Agent.Main.Position; haveEye = true; } } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-
             for (int i = _beings.Count - 1; i >= 0; i--)
             {
                 Being b = _beings[i];
                 bool alive = false;
                 try { alive = b.Agent != null && b.Agent.IsActive() && b.Agent.Health > 0f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                if (!alive) { if (b.Agent != null) _kindOf.Remove(b.Agent); _beings.RemoveAt(i); continue; }
-
-                // LOD: distant bodies re-coat half as often (still reads as an aura).
-                float interval = ElementalMath.AuraIntervalSeconds;
-                Vec3 at; try { at = b.Agent.Position; } catch { continue; }
-                bool near = true;
-                if (haveEye)
+                if (!alive)
                 {
-                    float dx = at.x - eye.x, dy = at.y - eye.y;
-                    near = dx * dx + dy * dy <= ElementalMath.AuraLodMetres * ElementalMath.AuraLodMetres;
-                    if (!near) interval *= 2f;
+                    if (b.Agent != null)
+                    {
+                        _kindOf.Remove(b.Agent);
+                        try { ElementalVisuals.Detach(b.Agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    }
+                    _beings.RemoveAt(i);
+                    continue;
                 }
 
-                // Ground velocity from the raw position delta (not a bone/skeleton
-                // read — just how far the feet moved this frame) so a charging body
-                // doesn't out-run its own veil between aura ticks.
-                Vec3 vel = default(Vec3);
-                if (b.HasLastPos && dt > 0.0001f) vel = (at - b.LastPos) * (1f / dt);
-                b.LastPos = at; b.HasLastPos = true;
-                vel.z = 0f;
+                // The being's element is BUILT ONCE — real particle systems bound to
+                // its skeleton the first tick we see it alive (visuals guaranteed
+                // ready by now), after which the engine carries them for free. All
+                // that remains each tick is dragging its one light to the body.
+                if (!b.Shrouded)
+                {
+                    try { ElementalVisuals.Attach(b.Agent, b.Kind); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    b.Shrouded = ElementalVisuals.IsShrouded(b.Agent);
+                }
+                else
+                {
+                    try { ElementalVisuals.Follow(b.Agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
 
                 if (reAggro) ReRouse(b.Agent);
 
@@ -203,16 +209,6 @@ namespace AshAndEmber
                                   + (float)((_rng.NextDouble() - 0.5) * 2.0 * ElementalMath.AttackCooldownJitter);
                     TryLooseElement(b.Agent, b.Kind);
                 }
-
-                b.AuraTimer -= dt;
-                if (b.AuraTimer > 0f) continue;
-                b.AuraTimer = interval;
-                // Lead the stamp half a gap ahead of the current position: at spawn
-                // it sits just in front of the body, and by the next tick the body
-                // has walked past it — so the worst-case gap either side is halved
-                // versus stamping squarely on the feet every time.
-                Vec3 leadAt = at + vel * (interval * 0.5f);
-                EmitAura(b.Agent, b.Kind, leadAt, near);
             }
         }
 
@@ -272,76 +268,16 @@ namespace AshAndEmber
                         return;   // foe is not ahead — hold the working this beat
                 }
 
-                // The Wilds Remember (Forest Clans faction skill): any Kindled not
-                // fighting FOR the player (this loop only ever targets an enemy of
-                // its own team) answers a Forest Clans hand only half as fiercely.
                 float power = ElementalMath.AttackPower;
-                if (nearest == Agent.Main) power *= ForestClansCulture.WildKindledDamageMultiplier();
                 ElementSpellEffects.CastAttack(el, agent, power);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        private static void EmitAura(Agent agent, ElementalKind kind, Vec3 at, bool near)
-        {
-            try
-            {
-                switch (kind)
-                {
-                    case ElementalKind.Flame:
-                        SpellEffects.SpawnTempFireParticle(at + new Vec3(0f, 0f, 0.9f), 0.5f);
-                        break;
-                    case ElementalKind.Frost:
-                        SpellEffects.SpawnTempSnowParticle(at + new Vec3(0f, 0f, 0.7f), 0.5f);
-                        break;
-                    case ElementalKind.Tide:
-                        SpellEffects.SpawnNatureBurst(at + new Vec3(0f, 0f, 0.6f), NatureElement.Water, 0.5f);
-                        break;
-                    case ElementalKind.Gale:
-                        SpellEffects.SpawnNatureBurst(at + new Vec3(0f, 0f, 0.9f), NatureElement.Storm, 0.5f);
-                        break;
-                    default: // Stone / Sand
-                        SpellEffects.SpawnNatureBurst(at, NatureElement.Earth, 0.5f);
-                        break;
-                }
-            }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            // Lighter wisps up and down the whole body every tick — shin to head —
-            // so the entire silhouette reads as roiling element, not just a human
-            // shape with a colored coat. Only for near bodies; a wisp lost in LOD
-            // distance would not read anyway.
-            if (near)
-            {
-                try
-                {
-                    foreach (float h in ElementalMath.AuraVeilHeightsMetres)
-                        EmitKindWisp(kind, at + new Vec3(0f, 0f, h), 0.4f);
-
-                    // A swinging arm strays outside that single centre column mid-
-                    // stride — cover shoulder-width either side of the chest line too.
-                    Vec3 fwd = agent.LookDirection; fwd.z = 0f;
-                    float fl = fwd.Length;
-                    if (fl > 0.01f)
-                    {
-                        Vec3 right = new Vec3(-fwd.y / fl, fwd.x / fl, 0f) * ElementalMath.AuraBodyHalfWidthMetres;
-                        Vec3 chest = at + new Vec3(0f, 0f, ElementalMath.AuraChestHeightMetres);
-                        EmitKindWisp(kind, chest + right, 0.4f);
-                        EmitKindWisp(kind, chest - right, 0.4f);
-                    }
-                }
-                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            }
-            // A body-hugging light only for the bodies close enough to see it —
-            // dozens of persistent lights across a field is the kind of cost this
-            // mod does not pay.
-            if (near)
-                try { SpellEffects.SpawnTempLightRgb(at + new Vec3(0f, 0f, 1f), AuraRgb(kind), 4.5f, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { SpellEffects.BeginAgentGlow(agent, GlowSchool(kind), 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-        }
-
-        // The cheap, single-particle wisp for a given kind at a given point —
-        // shared by the body-veil loop above and the spawn burst in
-        // ElementalFactory so both draw from the same element-to-particle map.
+        // The cheap, single-particle wisp for a given kind at a given point — used
+        // by the one-shot spawn burst in ElementalFactory (a body's continuous
+        // element is now bound to its skeleton by ElementalVisuals, not stamped
+        // here every tick).
         internal static void EmitKindWisp(ElementalKind kind, Vec3 pos, float duration)
         {
             switch (kind)
@@ -361,19 +297,6 @@ namespace AshAndEmber
                 default: // Stone / Sand
                     SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, duration);
                     break;
-            }
-        }
-
-        private static Vec3 AuraRgb(ElementalKind kind)
-        {
-            switch (kind)
-            {
-                case ElementalKind.Flame: return new Vec3(1.0f, 0.45f, 0.12f);
-                case ElementalKind.Tide:  return new Vec3(0.18f, 0.50f, 1.0f);
-                case ElementalKind.Frost: return new Vec3(0.70f, 0.85f, 1.0f);
-                case ElementalKind.Gale:  return new Vec3(0.62f, 0.52f, 1.0f);
-                case ElementalKind.Sand:  return new Vec3(0.85f, 0.70f, 0.40f);
-                default:                  return new Vec3(0.50f, 0.46f, 0.42f); // Stone
             }
         }
 

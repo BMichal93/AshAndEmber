@@ -72,6 +72,9 @@ namespace AshAndEmber
                 gameStarterObject is CampaignGameStarter campaignStarter)
             {
                 campaignStarter.AddModel(new AshenDiplomacyModel());
+                campaignStarter.AddModel(new ForestClansSpeedModel());
+                campaignStarter.AddModel(new ForestClansWageModel());
+                campaignStarter.AddModel(new ForestClansPartySizeModel());
                 campaignStarter.AddBehavior(new MagicCampaignBehavior());
                 campaignStarter.AddBehavior(new SchemeCampaignBehavior());
                 campaignStarter.AddBehavior(new SanctuaryCampaignBehavior());

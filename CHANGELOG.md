@@ -4,6 +4,21 @@
 
 ## Unreleased
 
+### The Kindled look like living element now
+- **Elemental beings no longer read as bald men wearing a coloured glow.** Each Kindled is now wreathed in **continuous element bound to its own body** — real fire, freezing vapour, water-mist, wind, dust or grit rising up its trunk and streaming off both hands as it walks and swings — lit in its element's colour and edged with a bleeding contour, so a faceless thing of raw magic finally looks like one.
+- **…and they cost far less to draw.** The old aura re-stamped a fistful of short-lived particles (and a fresh light) at every being, every third of a second — churning dozens of throwaway objects a second across a field of them, the mod's heaviest battlefield cost. The new shroud is **built once and carried by the engine for free**, with only a single light nudged along per body — so a whole warband of the Kindled is lighter on frames than one used to be.
+
+### Forest Clans — reworked faction skills
+- **"The Wilds Remember" is gone**, replaced by **The Green Roads** — a proper Battanian strength: Forest Clan parties know the wood's hidden paths and move **+20% faster while crossing forest ground** (applied to the player's clan parties by a new party-speed model).
+- **"Debt of the Deep Wood" (a flat 5 gold/day upkeep on every bound Kindled) is gone** — the old drain was more nuisance than flavour. In its place, **Wild and Few** keeps the culture's one true penalty in step with the others: as untamed forest folk close to the land and slow to the drilled ways of great armies, your Forest Clan warbands **run leaner (party size −5%) and cost more to keep (troop wages +5%)**.
+
+## v0.44.1
+
+### Ashen Ruins now actually appear
+- **Fixed the newly-added ruins pointing at villages that don't exist.** The six ruins introduced last release — the Salt-Blind Well, the Ember Toll House, the Hollow Minaret, the Wraith's Toll, the Weighing Chamber and the Reckoning Hall — were bound to made-up village names and so never surfaced on any map. They now sit at real settlements (Bir Seif, Uqba, Qidnar, Lochana, Marabrot and Druimmor), verified against the live game data.
+
+## v0.44.0
+
 ### Take the lord's coin — soldier for hire
 - **You can now hire your whole party out to a warring commander as a common soldier — from clan level 0**, no renown or clan tier needed (unlike a mercenary contract, which still wants tier 1). Any lord leading a party will take you on **if his realm is at war with a real rival** (not merely the Ashen), so long as that realm isn't at war with your own faction — and never the Ashen themselves.
 - **Ask in conversation** ("I would take your coin and march under your banner…") and agree a term: a season (21 days), a half-year (42), or a full campaign year (84). While sworn, your party **rides with the commander and fights his battles automatically**, and you count as a mercenary of his realm — exactly like a contract, with no lasting allegiance once it ends.

@@ -160,6 +160,33 @@ namespace AshAndEmber
         private static GameEntity SpawnAreaLight(Vec3 position, ColorSchool school, float radius)
             => SpawnAreaLightRaw(position, SchoolToLightColor(school), radius);
 
+        // ── Standalone follower light (for the Kindled's element-shroud) ─────────
+        // Unlike SpawnTempLight, this light is NOT tracked in _areaEffects and never
+        // auto-expires: it is created ONCE per elemental being and carried by
+        // ElementalVisuals, which repositions it each tick to hug the moving body and
+        // disposes it when the being falls. Keeping it off the timed list is what lets
+        // a whole battle's worth of Kindled glow without the per-frame entity churn the
+        // old re-stamped aura paid.
+        internal static GameEntity CreateFollowerLight(Vec3 position, Vec3 rgb, float radius)
+            => SpawnAreaLightRaw(position, rgb, radius);
+
+        internal static void MoveFollowerLight(GameEntity light, Vec3 position)
+        {
+            if (light == null) return;
+            try
+            {
+                var frame = new MatrixFrame(Mat3.Identity, position);
+                light.SetGlobalFrame(in frame, true);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        internal static void RemoveFollowerLight(GameEntity light)
+        {
+            if (light == null) return;
+            try { light.Remove(0); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
         // Lights a circular AoE with a centre node plus an evenly spaced ring.
         // Ring radius is 75% of aoeRadius, capped at 8m so nodes stay within the engine light limit.
         // Larger AoE (>10m) gets 6 ring nodes; smaller gets 5.

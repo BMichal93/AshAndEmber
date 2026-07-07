@@ -142,8 +142,8 @@ namespace AshAndEmber
                 Feats = new[]
                 {
                     "Kinship of Root and Stone — the old grove knows its own kin. (Sacred-site binding costs 15% less and succeeds 10% more often for the clan-born)",
-                    "The Wilds Remember — the wandering Kindled's magic answers a Forest Clans hand only half as fiercely. (Wild-band Kindled deal half damage to a Forest Clans player)",
-                    "Debt of the Deep Wood — the old bargain still asks its price. (Each bound Kindled costs 5 gold a day in upkeep)",
+                    "The Green Roads — the clans know the wood's hidden paths and cross forest ground faster than any other host. (+20% party speed on forest terrain)",
+                    "Wild and Few — untamed folk close to the land, slow to the drilled ways of great armies; their warbands run leaner and cost more to keep. (Party size −5%, troop wages +5%)",
                 },
             },
         };
