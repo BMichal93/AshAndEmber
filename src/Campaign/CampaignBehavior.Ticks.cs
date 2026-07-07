@@ -80,6 +80,7 @@ namespace AshAndEmber
                 try { AmbientRemarks.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { TempleCulture.DailyTick();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { TribalCulture.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ForestClansCulture.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 _dayCounter++;
                 if (_dayCounter % 30 == 0) try { OnMonthlyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }

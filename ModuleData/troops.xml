@@ -644,5 +644,168 @@
     </skills>
   </NPCCharacter>
 
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SACRED-KINDLED — six kind-specific twins of "elemental_being" above,
+       crafted at a Forest Clans sacred site and fielded as real, persistent
+       army troops (unlike the mission-only Kindled the factory spawns).
+       Roster entries carry no per-agent metadata, so the KIND must be known
+       from the troop id alone — hence one CharacterObject per ElementalKind
+       rather than a single generic troop. ElementalBeings.RegisterSacredKindled
+       (called from OnAgentBuild) maps id → ElementalKind and registers the
+       spawned agent for the same aura/weakness/self-cast behaviour as any
+       other Kindled. Same body key, culture and equipment as elemental_being
+       — see the gotcha notes above (adult body key; Culture.looters plural).
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <NPCCharacter id="sacred_kindled_stone"
+                name="{=sacred_kindled_stone_name}Kindled of Stone"
+                age="30"
+                level="30"
+                culture="Culture.looters"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="true">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="150"/>
+      <skill id="OneHanded"  value="80"/>
+    </skills>
+  </NPCCharacter>
+
+  <NPCCharacter id="sacred_kindled_frost"
+                name="{=sacred_kindled_frost_name}Kindled of Frost"
+                age="30"
+                level="30"
+                culture="Culture.looters"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="true">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="150"/>
+      <skill id="OneHanded"  value="80"/>
+    </skills>
+  </NPCCharacter>
+
+  <NPCCharacter id="sacred_kindled_sand"
+                name="{=sacred_kindled_sand_name}Kindled of Sand"
+                age="30"
+                level="30"
+                culture="Culture.looters"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="true">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="150"/>
+      <skill id="OneHanded"  value="80"/>
+    </skills>
+  </NPCCharacter>
+
+  <NPCCharacter id="sacred_kindled_flame"
+                name="{=sacred_kindled_flame_name}Kindled of Flame"
+                age="30"
+                level="30"
+                culture="Culture.looters"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="true">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="150"/>
+      <skill id="OneHanded"  value="80"/>
+    </skills>
+  </NPCCharacter>
+
+  <NPCCharacter id="sacred_kindled_tide"
+                name="{=sacred_kindled_tide_name}Kindled of the Tide"
+                age="30"
+                level="30"
+                culture="Culture.looters"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="true">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="150"/>
+      <skill id="OneHanded"  value="80"/>
+    </skills>
+  </NPCCharacter>
+
+  <NPCCharacter id="sacred_kindled_gale"
+                name="{=sacred_kindled_gale_name}Kindled of the Gale"
+                age="30"
+                level="30"
+                culture="Culture.looters"
+                default_group="Infantry"
+                occupation="Bandit"
+                is_basic_troop="false"
+                is_hidden_in_encyclopedia="true">
+    <face>
+      <BodyPropertiesMin version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+      <BodyPropertiesMax version="4" age="30.0" weight="0.5" build="0.7" key="0000000000000000111111111111111000001100000100000001000000100000000106030000000000000000000000000000000000000000000000001C040002"/>
+    </face>
+    <Equipments>
+      <EquipmentRoster>
+        <equipment slot="Body" id="Item.rough_tied_armor"/>
+        <equipment slot="Leg"  id="Item.strapped_leather_boots"/>
+      </EquipmentRoster>
+    </Equipments>
+    <skills>
+      <skill id="Athletics"  value="150"/>
+      <skill id="OneHanded"  value="80"/>
+    </skills>
+  </NPCCharacter>
+
 </NPCCharacters>
 

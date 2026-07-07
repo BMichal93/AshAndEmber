@@ -39,6 +39,8 @@ namespace AshAndEmber
             public ElementalKind Kind;
             public float AuraTimer;
             public float AttackTimer;   // seconds until this Kindled next looses its element
+            public Vec3 LastPos;        // sampled every tick, to estimate ground velocity
+            public bool HasLastPos;
         }
 
         private static readonly Random _rng = new Random();
@@ -84,6 +86,38 @@ namespace AshAndEmber
             _kindOf.Clear();
             PendingBattleKind = null;
             _convertedThisBattle = 0;
+        }
+
+        // ── Sacred-Kindled registration (called from OnAgentBuild) ───────────────
+        // Troop ids for the six sacred-site-crafted elemental variants
+        // (troops.xml), each a permanent, persistent army troop rather than a
+        // mission-only spawn. Since a roster entry carries no per-unit metadata,
+        // the KIND must be read off the troop id itself.
+        private static readonly Dictionary<string, ElementalKind> _sacredKindledIds =
+            new Dictionary<string, ElementalKind>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "sacred_kindled_stone", ElementalKind.Stone },
+            { "sacred_kindled_frost", ElementalKind.Frost },
+            { "sacred_kindled_sand",  ElementalKind.Sand  },
+            { "sacred_kindled_flame", ElementalKind.Flame },
+            { "sacred_kindled_tide",  ElementalKind.Tide  },
+            { "sacred_kindled_gale",  ElementalKind.Gale  },
+        };
+
+        // A sacred-crafted troop fields under its own army's normal orders — it
+        // does not need SetAggressive's charge/formation override, only the
+        // aura/weakness/self-cast registration every other Kindled gets.
+        public static void RegisterSacredKindled(Agent agent)
+        {
+            try
+            {
+                if (agent == null || agent.IsMount) return;
+                string id = agent.Character?.StringId;
+                if (id == null) return;
+                if (_sacredKindledIds.TryGetValue(id, out ElementalKind kind))
+                    Register(agent, kind);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Wild-band conversion (called from OnAgentBuild) ──────────────────────
@@ -149,6 +183,14 @@ namespace AshAndEmber
                     if (!near) interval *= 2f;
                 }
 
+                // Ground velocity from the raw position delta (not a bone/skeleton
+                // read — just how far the feet moved this frame) so a charging body
+                // doesn't out-run its own veil between aura ticks.
+                Vec3 vel = default(Vec3);
+                if (b.HasLastPos && dt > 0.0001f) vel = (at - b.LastPos) * (1f / dt);
+                b.LastPos = at; b.HasLastPos = true;
+                vel.z = 0f;
+
                 if (reAggro) ReRouse(b.Agent);
 
                 // The Kindled fights with its element: on a cooldown, loose a small
@@ -165,7 +207,12 @@ namespace AshAndEmber
                 b.AuraTimer -= dt;
                 if (b.AuraTimer > 0f) continue;
                 b.AuraTimer = interval;
-                EmitAura(b.Agent, b.Kind, at, near);
+                // Lead the stamp half a gap ahead of the current position: at spawn
+                // it sits just in front of the body, and by the next tick the body
+                // has walked past it — so the worst-case gap either side is halved
+                // versus stamping squarely on the feet every time.
+                Vec3 leadAt = at + vel * (interval * 0.5f);
+                EmitAura(b.Agent, b.Kind, leadAt, near);
             }
         }
 
@@ -225,7 +272,12 @@ namespace AshAndEmber
                         return;   // foe is not ahead — hold the working this beat
                 }
 
-                ElementSpellEffects.CastAttack(el, agent, ElementalMath.AttackPower);
+                // The Wilds Remember (Forest Clans faction skill): any Kindled not
+                // fighting FOR the player (this loop only ever targets an enemy of
+                // its own team) answers a Forest Clans hand only half as fiercely.
+                float power = ElementalMath.AttackPower;
+                if (nearest == Agent.Main) power *= ForestClansCulture.WildKindledDamageMultiplier();
+                ElementSpellEffects.CastAttack(el, agent, power);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -254,12 +306,62 @@ namespace AshAndEmber
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Lighter wisps up and down the whole body every tick — shin to head —
+            // so the entire silhouette reads as roiling element, not just a human
+            // shape with a colored coat. Only for near bodies; a wisp lost in LOD
+            // distance would not read anyway.
+            if (near)
+            {
+                try
+                {
+                    foreach (float h in ElementalMath.AuraVeilHeightsMetres)
+                        EmitKindWisp(kind, at + new Vec3(0f, 0f, h), 0.4f);
+
+                    // A swinging arm strays outside that single centre column mid-
+                    // stride — cover shoulder-width either side of the chest line too.
+                    Vec3 fwd = agent.LookDirection; fwd.z = 0f;
+                    float fl = fwd.Length;
+                    if (fl > 0.01f)
+                    {
+                        Vec3 right = new Vec3(-fwd.y / fl, fwd.x / fl, 0f) * ElementalMath.AuraBodyHalfWidthMetres;
+                        Vec3 chest = at + new Vec3(0f, 0f, ElementalMath.AuraChestHeightMetres);
+                        EmitKindWisp(kind, chest + right, 0.4f);
+                        EmitKindWisp(kind, chest - right, 0.4f);
+                    }
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
             // A body-hugging light only for the bodies close enough to see it —
             // dozens of persistent lights across a field is the kind of cost this
             // mod does not pay.
             if (near)
                 try { SpellEffects.SpawnTempLightRgb(at + new Vec3(0f, 0f, 1f), AuraRgb(kind), 4.5f, 0.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.BeginAgentGlow(agent, GlowSchool(kind), 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // The cheap, single-particle wisp for a given kind at a given point —
+        // shared by the body-veil loop above and the spawn burst in
+        // ElementalFactory so both draw from the same element-to-particle map.
+        internal static void EmitKindWisp(ElementalKind kind, Vec3 pos, float duration)
+        {
+            switch (kind)
+            {
+                case ElementalKind.Flame:
+                    SpellEffects.SpawnTempFireWisp(pos, duration);
+                    break;
+                case ElementalKind.Frost:
+                    SpellEffects.SpawnTempSnowWisp(pos, duration);
+                    break;
+                case ElementalKind.Tide:
+                    SpellEffects.SpawnNatureBurst(pos, NatureElement.Water, duration);
+                    break;
+                case ElementalKind.Gale:
+                    SpellEffects.SpawnNatureBurst(pos, NatureElement.Storm, duration);
+                    break;
+                default: // Stone / Sand
+                    SpellEffects.SpawnNatureBurst(pos, NatureElement.Earth, duration);
+                    break;
+            }
         }
 
         private static Vec3 AuraRgb(ElementalKind kind)

@@ -38,6 +38,7 @@ namespace AshAndEmber
 
             foreach (var def in AshenRuinDefs.All)
             {
+                bool matched = false;
                 foreach (var s in Settlement.All)
                 {
                     if (s == null || !s.IsVillage) continue;
@@ -47,8 +48,15 @@ namespace AshAndEmber
                     if (!string.Equals(name, def.VillageName, StringComparison.OrdinalIgnoreCase)) continue;
                     _ruinVillages.Add(s);
                     _bySettlementId[s.StringId] = def;
+                    matched = true;
                     break;
                 }
+                // A RuinDef whose VillageName doesn't match any live village never
+                // spawns a menu option — surface that instead of failing silently,
+                // so a mistyped or non-village name is caught on first launch.
+                if (!matched)
+                    AshAndEmber.ModLog.Error(new System.Exception(
+                        $"AshenRuins: '{def.RuinName}' expects a village named '{def.VillageName}' but none was found on this map — it will never appear."));
             }
         }
 

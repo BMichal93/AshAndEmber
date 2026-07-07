@@ -228,6 +228,9 @@ namespace AshAndEmber
         public static bool CanBuyGift(DarkGiftId gift)
         {
             if (!PlayerQualifies()) return false;
+            // The Forest Clans' sacred-site bond and the dark gifts do not share
+            // a caster — mirrors the Grace block below in TryPurchaseGift/GrantGift.
+            if (SacredSitesCampaignBehavior.HasElementalBond) return false;
             if (gift == DarkGiftId.DarkSpirit) return _darkSpiritCount < 3;
             return !_ownedGifts.Contains(gift);
         }
@@ -242,6 +245,11 @@ namespace AshAndEmber
         public static bool TryPurchaseGift(DarkGiftId gift, int prisonerDiscount, out string errorMsg)
         {
             errorMsg = "";
+            if (SacredSitesCampaignBehavior.HasElementalBond)
+            {
+                errorMsg = "The old ways already hold your oath — the dark gifts will not share you.";
+                return false;
+            }
             if (!CanBuyGift(gift))
             {
                 errorMsg = gift == DarkGiftId.DarkSpirit && _darkSpiritCount >= 3
@@ -286,6 +294,7 @@ namespace AshAndEmber
         // events. Clears Grace, since gifts bar the holy path.
         public static void GrantGift(DarkGiftId gift)
         {
+            if (SacredSitesCampaignBehavior.HasElementalBond) return;
             ApplyGift(gift);
             try { MiracleInventory._grace = 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
