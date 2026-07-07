@@ -13,8 +13,8 @@
 //            damage, foes hurled back, churned rubble left to bog the field).
 //   Water  — a standing rain zone (quenches burns, halves fire, mires horses,
 //            soaks bowstrings). Only ONE sky can stand — a recast replaces it.
-//   Spirit — seizes the strongest enemy will nearby: they fight at the
-//            caster's side for a minute, then the working lets go and they
+//   Spirit — seizes a random enemy will nearby: they fight at the caster's
+//            side for a short while, then the working lets go and they
 //            stagger back to their own line, dazed.
 //
 // WIRING (all of it already done — listed so a fix knows where to look):
@@ -733,34 +733,28 @@ namespace AshAndEmber
         }
 
         // ── SPIRIT — The Bent Knee / The Hollow Oath ─────────────────────────────
-        // Seizes the strongest living will within reach and turns it to the
-        // caster's side for a minute — no new body is raised, an existing enemy
-        // simply stops being one for a while. When the borrowed minute runs out
-        // the working lets go: the thrall staggers back to their own line, dazed
-        // (the Ashen face leaves a parting frost-bite besides).
+        // Seizes a random living will within reach and turns it to the caster's
+        // side for a short while — no new body is raised, an existing enemy
+        // simply stops being one for a time. It is never the surest hand you
+        // could have picked (the working does not reach for power, only for
+        // whoever answers), so the borrowed will runs out fast. When it does,
+        // the thrall staggers back to their own line, dazed (the Ashen face
+        // leaves a parting frost-bite besides).
         private static void SummonThrall(Agent caster, bool ashen)
         {
             try
             {
                 if (Mission.Current == null || caster.Team == null) return;
 
-                // The strongest will nearby: highest max health among living
-                // enemies in reach, ties broken by whoever is closest.
-                Agent best = null; float bestHealth = -1f; float bestD2 = float.MaxValue;
-                Vec3 casterPos; try { casterPos = caster.Position; } catch { return; }
-                foreach (Agent a in EnemiesNear(caster, ElementUltimateMath.ThrallRangeMetres))
-                {
-                    float hp = 0f; try { hp = a.HealthLimit; } catch { hp = a.Health; }
-                    float dx = a.Position.x - casterPos.x, dy = a.Position.y - casterPos.y;
-                    float d2 = dx * dx + dy * dy;
-                    if (hp > bestHealth || (Math.Abs(hp - bestHealth) < 0.01f && d2 < bestD2))
-                    { best = a; bestHealth = hp; bestD2 = d2; }
-                }
-                if (best == null)
+                // A random living will within reach — not the strongest, just
+                // whoever the working happens to catch.
+                var candidates = EnemiesNear(caster, ElementUltimateMath.ThrallRangeMetres).ToList();
+                if (candidates.Count == 0)
                 {
                     Msg("Your reach finds no will worth taking.");
                     return;
                 }
+                Agent best = candidates[_rng.Next(candidates.Count)];
 
                 Team originalTeam = best.Team;
                 if (!TryChangeAgentTeam(best, caster.Team))
@@ -783,7 +777,7 @@ namespace AshAndEmber
                 });
 
                 string name = SafeAgentName(best);
-                Vec3 at; try { at = best.Position; } catch { at = casterPos; }
+                Vec3 at; try { at = best.Position; } catch { at = default(Vec3); }
                 EmitThrallBurst(at, ashen, 1.6f);
                 Msg(ashen
                     ? $"The frost grips {name}'s will — hollow-eyed, they turn to your command."

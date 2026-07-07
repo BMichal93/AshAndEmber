@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### Sacred Site tuning and a new discipline
+- **The Bent Knee now seizes a random will, not the strongest, and holds it for half as long** (60s → 30s). It no longer scans for the toughest nearby enemy — just whoever the working happens to catch — so the reach never whiffs, but the borrowed will doesn't linger either.
+- **Standing Stones now teach three learnable talents** ("Study the Old Ways," bought with focus points, escalating cost — the same pattern as the Litany of Devotions and the lapidary's craft): **Deeper Binding** (+20% binding success), **Sparing Rite** (a failed binding returns its Iron Ore and Charcoal), and **Kindred Ease** (halves the daily upkeep of every Kindled you've bound).
+
 ### The Ashen dead can be recruited directly
 - **Any Ashen-owned town or castle now hosts a muster yard.** Recruiting an Ashen Thrall, Warrior, Invoker, Warden, or Revenant no longer requires waiting on a roaming Spawn band or a garrison transfer — the settlement's own menu ("Muster the Ashen Dead") will raise one for you. The price is prisoners, not gold: turning a captive into one of the cold-fire dead is the whole transaction, and the prisoner's own tier must meet the Ashen rank you're raising (an Ashen Revenant demands a genuinely worthy captive, not three recruits). This is a deliberate limiter — you can only raise as many high-rank Ashen as you've actually captured worthy prisoners for.
 

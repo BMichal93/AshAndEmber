@@ -126,6 +126,7 @@ namespace AshAndEmber
                 MiracleCampaignBehavior.ResetForNewGame();
                 NatureCampaignBehavior.ResetForNewGame();
                 CrystalTalents.ResetForNewGame();
+                SacredSiteTalents.ResetForNewGame();
                 // Clear the previous campaign's static state BEFORE re-establishing,
                 // or a new game started in the same session inherits the old game's
                 // sanctuaries/altars and cooldowns (static-leak bug class).

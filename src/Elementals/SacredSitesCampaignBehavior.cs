@@ -52,6 +52,7 @@ namespace AshAndEmber
         {
             try { store.SyncData("SACRED_HasElementalBond", ref _hasElementalBond); }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SacredSiteTalents.Save(store); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public static void ResetForNewGame()
@@ -131,14 +132,35 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        internal static bool RollBinding()
+        // Sparing Rite: a failed binding returns the Iron Ore and Charcoal spent.
+        internal static void RefundBindingMaterials()
+        {
+            try
+            {
+                var party = MobileParty.MainParty;
+                if (party?.ItemRoster == null) return;
+                var iron = MBObjectManager.Instance?.GetObject<ItemObject>("iron_ore");
+                if (iron != null) party.ItemRoster.AddToCounts(iron, SacredSiteMath.IronOreCost);
+                var charcoal = MBObjectManager.Instance?.GetObject<ItemObject>("charcoal");
+                if (charcoal != null) party.ItemRoster.AddToCounts(charcoal, SacredSiteMath.CharcoalCost);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Smithing (via SacredSiteMath), the Forest Clans discount, and the
+        // Deeper Binding talent all stack, then clamp — a studied, culturally
+        // favoured smith is very good at this, never a certainty.
+        internal static float CurrentBindingOdds()
         {
             int smithing = 0;
             try { smithing = Hero.MainHero?.GetSkillValue(DefaultSkills.Smithing) ?? 0; }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            float odds = ForestClansCulture.SiteOdds(SacredSiteMath.FormationOdds(smithing));
-            return _rng.NextDouble() < odds;
+            float odds = ForestClansCulture.SiteOdds(SacredSiteMath.FormationOdds(smithing))
+                       + SacredSiteTalents.BindingOddsBonus;
+            return Math.Min(0.95f, odds);
         }
+
+        internal static bool RollBinding() => _rng.NextDouble() < CurrentBindingOdds();
 
         internal static void GrantKindled(SacredSiteDef def)
         {

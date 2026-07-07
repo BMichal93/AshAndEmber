@@ -27,6 +27,7 @@ namespace AshAndEmber
             RegisterTownEntry(starter);
             RegisterMainMenu(starter);
             RegisterBindOptions(starter);
+            RegisterStudyOption(starter);
         }
 
         // ── Town entry ─────────────────────────────────────────────────────────
@@ -66,18 +67,22 @@ namespace AshAndEmber
                         int smithing = 0;
                         try { smithing = Hero.MainHero?.GetSkillValue(DefaultSkills.Smithing) ?? 0; }
                         catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                        float odds = ForestClansCulture.SiteOdds(SacredSiteMath.FormationOdds(smithing));
+                        float odds = CurrentBindingOdds();
 
                         string blockNote = "";
                         if (BlockedByOtherPath(out string reason))
                             blockNote = $"\n\n[{reason}]";
+
+                        string talentNote = SacredSiteTalents.OwnedCount > 0
+                            ? $"\n\n[Old ways learned: {SacredSiteTalents.OwnedCount}/3]"
+                            : "";
 
                         MBTextManager.SetTextVariable("SACRED_SITE_MAIN_TEXT",
                             "The standing stones lean at angles no mason chose. Between them the old grove keeps its own "
                           + "weather — cold where the sun should reach, warm where the frost should bite. Binding a Kindled "
                           + "here costs gold and a smith's steady hand.\n\n"
                           + $"Binding chance: {(int)(odds * 100)} % (Smithing {smithing})."
-                          + blockNote);
+                          + blockNote + talentNote);
                     }
                     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 });
@@ -90,6 +95,40 @@ namespace AshAndEmber
                     args => { try { args.optionLeaveType = GameMenuOption.LeaveType.Leave; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } return true; },
                     args => { try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } },
                     true, -1, false);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // ── Study option (the old ways' learnable talents) ────────────────────
+        private static void RegisterStudyOption(CampaignGameStarter starter)
+        {
+            try
+            {
+                starter.AddGameMenuOption("sacred_site_main", "sacred_site_study", "{SACRED_SITE_STUDY_TEXT}",
+                    args =>
+                    {
+                        try
+                        {
+                            int have = 0;
+                            try { have = Hero.MainHero?.HeroDeveloper?.UnspentFocusPoints ?? 0; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            MBTextManager.SetTextVariable("SACRED_SITE_STUDY_TEXT",
+                                $"Study the old ways  [Focus: {have}] [{SacredSiteTalents.OwnedCount}/3 known]");
+                            try { args.optionLeaveType = GameMenuOption.LeaveType.Submenu; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        return true;
+                    },
+                    args =>
+                    {
+                        try
+                        {
+                            if (MageKnowledge._deferredInquiry == null)
+                                MageKnowledge._deferredInquiry = SacredSiteTalents.ShowCodex;
+                        }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { GameMenu.SwitchToMenu("sacred_site_main"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    },
+                    false, -1, false);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -153,9 +192,15 @@ namespace AshAndEmber
 
             if (!success)
             {
+                bool refunded = SacredSiteTalents.RefundsOnFailure;
+                if (refunded) RefundBindingMaterials();
+
+                string failNote = refunded
+                    ? "\n\n[Iron Ore and Charcoal returned — Sparing Rite.]"
+                    : "\n\n[All materials consumed.]";
                 ShowDialog("The Binding Fails",
-                    "The stones stay stones a moment longer. Whatever answers here does not always choose to. "
-                  + "\n\n[All materials consumed.]",
+                    "The stones stay stones a moment longer. Whatever answers here does not always choose to."
+                  + failNote,
                     () => { try { GameMenu.SwitchToMenu("sacred_site_main"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); } });
                 return;
             }

@@ -23,9 +23,9 @@
 //            stretch of field: burns quenched, fire halved, horses mired,
 //            bowstrings soaked. There is only ONE sky — a newer working
 //            replaces a standing one.
-//   Spirit — The Bent Knee / The Hollow Oath                — the strongest
+//   Spirit — The Bent Knee / The Hollow Oath                — a random
 //            will nearby is seized and turns to fight at the caster's side;
-//            when the borrowed minute runs out it lets go and the foe
+//            when the short-lived borrowing runs out it lets go and the foe
 //            staggers back to their own line, dazed (the Ashen working
 //            leaves a parting frost-bite besides).
 // =============================================================================
@@ -55,8 +55,8 @@ namespace AshAndEmber
         // the Ashen pay it in criminal standing (days × 5, same as other casts).
         public const int UltimateCostDays = 12;
         // Spirit's Unbinding does not spend itself — it turns a living enemy to
-        // your side for a full minute, worth several men. That borrowed will costs
-        // more life than a one-moment nova or gale.
+        // your side for a short while. That borrowed will still costs more life
+        // than a one-moment nova or gale.
         public const int SpiritUltimateCostDays = 22;
 
         public static int UltimateAgingDays(bool hasNature)
@@ -131,7 +131,9 @@ namespace AshAndEmber
         public const float RainAshenMoraleDrainPerTick = 0.8f; // the White Silence gnaws at foes
 
         // ── Spirit — the seized will ─────────────────────────────────────────────
-        public const float ThrallSeconds          = 60f;   // how long the borrowed will lasts
+        // Random target (not the strongest nearby), and a short hold — a fair
+        // trade for never whiffing on "no target in range."
+        public const float ThrallSeconds          = 30f;   // how long the borrowed will lasts
         public const float ThrallRangeMetres       = 16f;   // reach of the seizing — generous, it's an ultimate
         public const float ThrallDazedSpeedMult    = 0.4f;  // stagger on release…
         public const float ThrallDazedSeconds      = 3f;    // …while the borrowed will lets go

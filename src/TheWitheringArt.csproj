@@ -101,6 +101,7 @@
     <Compile Include="Elementals\SacredSiteCatalog.cs"/>
     <Compile Include="Elementals\SacredSitesCampaignBehavior.cs"/>
     <Compile Include="Elementals\SacredSitesCampaignBehavior.Menus.cs"/>
+    <Compile Include="Elementals\SacredSiteTalents.cs"/>
     <Compile Include="Elementals\ElementalLordRegistry.cs"/>
     <Compile Include="MagicSystem.cs"/>
     <Compile Include="Magic\ElementMagicMath.cs"/>

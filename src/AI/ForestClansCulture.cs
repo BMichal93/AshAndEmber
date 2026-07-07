@@ -65,7 +65,10 @@ namespace AshAndEmber
                     .Where(e => e.Character != null && kindledIds.Contains(e.Character.StringId))
                     .Sum(e => e.Number);
                 if (bound <= 0) return;
-                try { Hero.MainHero?.ChangeHeroGold(-bound * KindledUpkeepPerDay); }
+                // Kindred Ease (Sacred Site talent) halves the daily toll.
+                int upkeep = (int)Math.Round(bound * KindledUpkeepPerDay * SacredSiteTalents.UpkeepMult,
+                    MidpointRounding.AwayFromZero);
+                try { Hero.MainHero?.ChangeHeroGold(-upkeep); }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
