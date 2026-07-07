@@ -391,7 +391,7 @@ namespace AshAndEmber
                         if (partner == chosen) continue;
                         var fused = ElementComboMath.TryFuse(chosen, partner);
                         if (fused == null) continue;
-                        if (ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveKinsmanFor(agent)) continue;
+                        if (ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveChampionFor(agent)) continue;
                         chosen = fused.Value;
                         break;
                     }

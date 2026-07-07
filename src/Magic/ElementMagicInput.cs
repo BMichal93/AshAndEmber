@@ -408,7 +408,7 @@ namespace AshAndEmber
             bool eligible = fused != null
                          && MageElementKnowledge.HasElement(first)
                          && MageElementKnowledge.HasElement(el);
-            if (eligible && ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveKinsmanFor(Agent.Main))
+            if (eligible && ElementComboMath.IsSummon(fused.Value) && ElementUltimates.HasLiveChampionFor(Agent.Main))
             {
                 Msg("Your kinsman already walks the field — the working answers as a single element instead.");
                 eligible = false;

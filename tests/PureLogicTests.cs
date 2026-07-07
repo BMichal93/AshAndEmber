@@ -1930,6 +1930,9 @@ namespace AshAndEmber.Tests
             {
                 var fallback = ElementComboMath.WallFallback(f);
                 Assert.True(ElementComboMath.IsBase(fallback), $"{f} wall fallback should be a base element");
+            }
+        }
+
         // ── AshenRuinMath tests (ruins expansion) ──────────────────────────────
 
         [Test]
@@ -2013,6 +2016,9 @@ namespace AshAndEmber.Tests
             // Lightning raises its own wall (Stormwall) — it is deliberately
             // absent from WallFallback's cases, which return the Fire default.
             Assert.AreEqual(MagicElement.Fire, ElementComboMath.WallFallback(MagicElement.Lightning));
+        }
+
+        [Test]
         public void AshenRuinDefs_VillageNamesAreUnique()
         {
             var names = AshenRuinDefs.All.Select(r => r.VillageName).ToList();
