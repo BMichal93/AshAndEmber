@@ -59,6 +59,23 @@ namespace AshAndEmber
         // Total armour weight above this cap blocks channelling and casting.
         public const float ArmourWeightCap = 25f;
 
+        // ── Knockback smoothing ─────────────────────────────────────────────────
+        // A push is eased across this many seconds instead of snapping straight to
+        // its final spot — long enough to read as a body actually travelling the
+        // distance, short enough to still feel instantaneous, not a slow glide.
+        public const float KnockbackPushDuration = 0.16f;
+
+        // Fraction of the push distance covered after `elapsedSeconds` — a quick
+        // quadratic ease-out (fastest at the moment of impact, settling into the
+        // landing) rather than a constant-speed slide.
+        public static float KnockbackEase(float elapsedSeconds)
+        {
+            if (elapsedSeconds <= 0f) return 0f;
+            if (elapsedSeconds >= KnockbackPushDuration) return 1f;
+            float t = elapsedSeconds / KnockbackPushDuration;
+            return 1f - (1f - t) * (1f - t);
+        }
+
         // ── Terrain mapping ─────────────────────────────────────────────────────
         // Bannerlord TerrainType name → the element(s) the land FAVOURS. Matched by
         // .ToString() so enum integer drift does not break the lookup. Iconic

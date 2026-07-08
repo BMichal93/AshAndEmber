@@ -222,8 +222,14 @@ namespace AshAndEmber
             float burstCheckRange = isAshen ? 10f  : 7.5f;
             const float BlastDot  = 0.65f;
 
-            int coneEnemies   = SpellEffects.CountEnemiesInCone(agent, blastRange, BlastDot);
-            int coneAllies    = SpellEffects.CountAlliesInCone(agent, blastRange, BlastDot);
+            // Read the cone along the SAME bearing the cast will actually fly (the
+            // nearest-enemy aim every forward element now uses — see
+            // ElementSpellEffects/NatureEffects.GroundFacing) rather than the lord's
+            // current LookDirection, or this safety read and the real cast could
+            // disagree about what's ahead of him.
+            Vec3 aimFwd = SpellEffects.NearestEnemyGroundDirection(agent) ?? agent.LookDirection.NormalizedCopy();
+            int coneEnemies   = SpellEffects.CountEnemiesInCone(agent, blastRange, BlastDot, aimFwd);
+            int coneAllies    = SpellEffects.CountAlliesInCone(agent, blastRange, BlastDot, aimFwd);
             int radiusEnemies = enemies.Count(a => a.Position.Distance(agent.Position) < burstCheckRange);
             int radiusAllies  = SpellEffects.CountAlliesInRadius(agent, burstCheckRange);
 
@@ -360,7 +366,15 @@ namespace AshAndEmber
                 bool probeOk = false;
                 try
                 {
-                    Vec3 fwd = agent.LookDirection; fwd.z = 0f; fwd.Normalize();
+                    // Probe the same lane the cast itself will actually fly down — the
+                    // nearest-enemy bearing every forward element now aims with
+                    // (ElementSpellEffects/NatureEffects.GroundFacing), not the lord's
+                    // possibly-unrelated LookDirection, or the ward check and the real
+                    // cast could disagree about what's ahead.
+                    Vec3? aimed = SpellEffects.NearestEnemyGroundDirection(agent);
+                    Vec3 fwd;
+                    if (aimed.HasValue) fwd = aimed.Value;
+                    else { fwd = agent.LookDirection; fwd.z = 0f; fwd.Normalize(); }
                     fwdProbe = agent.Position + fwd * 8f;
                     probeOk = true;
                 }

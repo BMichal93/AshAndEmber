@@ -3,10 +3,13 @@
 //
 // The unified elemental magic input, merging the old fire and nature handlers.
 //
-//   Hold FOCUS (Left Alt; gamepad Left Bumper). The loaded element is FIRE by
-//   default; tap W / S / A / D (or flick the left stick up / down / left / right)
-//   to load a learned element — Wind / Earth / Water / Spirit. Stand still and
-//   DRAW for at least ~3 s, then ATTACK (left mouse / right trigger) looses the
+//   Hold FOCUS (Left Alt; gamepad X). Both bumpers are taken — Left Bumper is the
+//   native order radial and Right Bumper is the miracle gesture (which an element-
+//   mage may also carry) — and X, being a THUMB button, leaves both triggers free
+//   to ATTACK / BLOCK while Focus is held. The loaded element is FIRE by default;
+//   tap W / S / A / D (or flick the left stick up / down / left / right, click it —
+//   L3 — for Fire) to load a learned element — Wind / Earth / Water / Spirit.
+//   Stand still and DRAW for at least ~3 s, then ATTACK (left mouse / right trigger) looses the
 //   element's cone, or BLOCK (right mouse / left trigger) raises its wall.
 //
 //   The longer you draw (up to ~5 s) the STRONGER the working — a charged cone
@@ -46,7 +49,7 @@ namespace AshAndEmber
         // ComboChordWindowSeconds for a second, DIFFERENT key to land beside it —
         // the same buffered-chord idiom as the Attack+Block Unbinding, just
         // generalised from two inputs to the five element keys. X (keyboard) /
-        // ControllerRThumb (gamepad) stands in for Fire, which otherwise has no
+        // ControllerLThumb — L3 (gamepad) stands in for Fire, which otherwise has no
         // key of its own to chord with.
         private static MagicElement? _pendingElementKey;
         private static float         _pendingElementTimer;
@@ -112,8 +115,13 @@ namespace AshAndEmber
             if (!MageKnowledge.IsMage) { InputSuppressed = false; return; }
 
             bool altHeld = Input.IsKeyDown(InputKey.LeftAlt);
-            bool lbHeld  = Input.IsKeyDown(InputKey.ControllerLBumper);
-            bool focusing = altHeld || lbHeld;
+            // Focus on the X button (ControllerRLeft). Both bumpers are spoken for —
+            // LB is the native order radial, RB is the miracle gesture (which an
+            // element-mage MAY also carry, so RB would genuinely clash). X is a THUMB
+            // button, so unlike a bumper it does not fight the right trigger: Attack
+            // and Block stay usable while Focus is held.
+            bool padHeld  = Input.IsKeyDown(InputKey.ControllerRLeft);
+            bool focusing = altHeld || padHeld;
             InputSuppressed = focusing;
 
             if (focusing)
@@ -131,7 +139,7 @@ namespace AshAndEmber
                     _wasFocusing = true;
                 }
 
-                ReadElementSelect(altHeld, lbHeld, dt);
+                ReadElementSelect(altHeld, padHeld, dt);
 
                 // Draw the charge while standing still with hands and armour free
                 // (Steel waives the hand and weight limits). The draw builds POWER,
@@ -354,11 +362,14 @@ namespace AshAndEmber
             }
             if (pad)
             {
+                // Element select on the LEFT stick (flick U/D/L/R for the four learned
+                // elements, click it — L3 — for Fire). Focus is held by the right thumb
+                // (X), so the left stick and its click are the free hand for selection.
                 bool up    = Input.IsKeyDown(InputKey.ControllerLStickUp);
                 bool down  = Input.IsKeyDown(InputKey.ControllerLStickDown);
                 bool left  = Input.IsKeyDown(InputKey.ControllerLStickLeft);
                 bool right = Input.IsKeyDown(InputKey.ControllerLStickRight);
-                bool fire  = Input.IsKeyDown(InputKey.ControllerRThumb);
+                bool fire  = Input.IsKeyDown(InputKey.ControllerLThumb);
                 if (up    && !_prevPadUp)    pressed = MagicElement.Wind;
                 if (down  && !_prevPadDown)  pressed = MagicElement.Earth;
                 if (left  && !_prevPadLeft)  pressed = MagicElement.Water;

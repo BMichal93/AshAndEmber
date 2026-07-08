@@ -40,7 +40,7 @@ namespace AshAndEmber
         // silhouette, and the follower light — not a bald, textured man. A whisper
         // of the mesh is left (not a flat 0) so the contour still has an edge to
         // draw and the shape reads as a translucent apparition rather than a hole.
-        private const float GhostAlpha = 0.10f;
+        private const float GhostAlpha = 0.07f;
 
         private class Shroud
         {
@@ -169,20 +169,30 @@ namespace AshAndEmber
         }
 
         // ── Per-kind dressing ────────────────────────────────────────────────────
-        // The bones we hang the element from: a rising column up the trunk (pelvis →
-        // chest → head) plus both hands, so the shroud swings with the arms and
-        // trails off a blow. Missing bones (a non-human skeleton) come back < 0 and
-        // are skipped by the caller.
+        // The bones we hang the element from: a full rising column up the trunk
+        // (pelvis → lower spine → chest → neck → head) plus both upper arms and
+        // hands AND both feet, so the element wreathes the WHOLE body — legs and
+        // feet included — instead of leaving bare skin showing between a few thin
+        // columns (the "bald man" the light smoke could not hide). More emitters
+        // also simply reads as more element. Attached once at spawn, so the extra
+        // bones cost nothing per tick. Missing bones (a non-human skeleton) come
+        // back < 0 and are skipped by the caller.
         private static IEnumerable<sbyte> WreathBones(Agent agent)
         {
             Monster m = null;
             try { m = agent.Monster; } catch { }
             if (m == null) { yield return 0; yield break; }
             yield return m.PelvisBoneIndex;
+            yield return m.SpineLowerBoneIndex;
             yield return m.SpineUpperBoneIndex;
+            yield return m.NeckRootBoneIndex;
             yield return m.HeadLookDirectionBoneIndex;
+            yield return m.LeftUpperArmBoneIndex;
+            yield return m.RightUpperArmBoneIndex;
             yield return m.MainHandBoneIndex;
             yield return m.OffHandBoneIndex;
+            yield return m.LeftFootIkEndEffectorBoneIndex;
+            yield return m.RightFootIkEndEffectorBoneIndex;
         }
 
         // Continuous emitters only — a bone-bound system loops for the being's whole

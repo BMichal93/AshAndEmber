@@ -252,6 +252,7 @@ namespace AshAndEmber
             // the rain works at half strength — judged at the caster's position.
             if (el == MagicElement.Fire)
                 try { power *= ElementUltimates.FireDampAt(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            power *= CasterMasteryScale(caster);   // inborn gift deepens with the caster
             switch (el)
             {
                 case MagicElement.Fire:   FireMissile(caster, power);  break;
@@ -284,9 +285,21 @@ namespace AshAndEmber
         public static void CastWall(MagicElement el, Agent caster, float power = 1f)
         {
             if (caster == null || !caster.IsActive()) return;
+            // Fusions borrow a parent's wall — redirect FIRST, so the fire damp and
+            // the mastery scale below are applied exactly once (not again on re-entry).
+            switch (el)
+            {
+                case MagicElement.Ice:
+                case MagicElement.Sandstorm:
+                case MagicElement.Fog:
+                case MagicElement.Magma:
+                case MagicElement.Mire:
+                    CastWall(ElementComboMath.WallFallback(el), caster, power); return;
+            }
             // The rain dampens a wall of fire raised inside it, like the cone.
             if (el == MagicElement.Fire)
                 try { power *= ElementUltimates.FireDampAt(caster.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            power *= CasterMasteryScale(caster);   // inborn gift deepens with the caster
             switch (el)
             {
                 case MagicElement.Fire:   FireWall(caster, power);  break;
@@ -297,15 +310,7 @@ namespace AshAndEmber
                 // Lightning raises its own — the crackling Stormwall (push +
                 // damage) it already shares with the dormant Storm discipline.
                 case MagicElement.Lightning: NatureEffects.ExecuteNpc(NaturePower.Stormwall, caster, caster.Team, power); break;
-                // Every other fusion borrows a parent's wall (see
-                // ElementComboMath.WallFallback) — a bespoke barrier for all
-                // five was more content than the working needs.
-                case MagicElement.Ice:
-                case MagicElement.Sandstorm:
-                case MagicElement.Fog:
-                case MagicElement.Magma:
-                case MagicElement.Mire:
-                    CastWall(ElementComboMath.WallFallback(el), caster, power); return;
+                // (The other fusions borrow a parent's wall — redirected at the top.)
                 // A command answers Block exactly as it answers Attack — there is
                 // no wall to raise, only the ranks to steady. Either input lays it.
                 case MagicElement.CommandCharge:
@@ -325,7 +330,7 @@ namespace AshAndEmber
         private static void FireMissile(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
-            try { pos = caster.Position + new Vec3(0f, 0f, 1.2f); fwd = caster.LookDirection; fwd.z = 0f; if (fwd.Length < 0.01f) return; fwd.Normalize(); }
+            try { pos = caster.Position + new Vec3(0f, 0f, 1.2f); fwd = GroundFacing(caster); }
             catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb   = Palette(MagicElement.Fire, ashen);
@@ -455,7 +460,7 @@ namespace AshAndEmber
         private static void FireWall(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
-            try { pos = caster.Position; fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
+            try { pos = caster.Position; fwd = GroundFacing(caster); }
             catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb = Palette(MagicElement.Fire, ashen);
@@ -605,8 +610,19 @@ namespace AshAndEmber
         // ── Fusions ──────────────────────────────────────────────────────────────
         // A flat, horizontal facing — mirrors NatureEffects.GroundFacing so a
         // fusion's cone reads exactly like the base elements it was drawn from.
+        // Every forward-shaped working (Fire's bolt/wall and every fusion below)
+        // routes through here, so an AI caster (anyone but the player) aims at the
+        // nearest actual enemy instead of trusting its current LookDirection, which
+        // the base game's movement/combat AI can leave facing an ally, empty ground,
+        // or mid-turn — the cause of a companion or lord's bolt bursting harmlessly
+        // amongst its own side instead of the enemy line.
         private static Vec3 GroundFacing(Agent caster)
         {
+            if (caster != Agent.Main)
+            {
+                Vec3? aimed = SpellEffects.NearestEnemyGroundDirection(caster);
+                if (aimed.HasValue) return aimed.Value;
+            }
             Vec3 f = caster.LookDirection; f.z = 0f;
             return f.Length < 0.01f ? new Vec3(0f, 1f, 0f) : f.NormalizedCopy();
         }
@@ -963,6 +979,21 @@ namespace AshAndEmber
                 return hero != null && ColourLordRegistry.IsAshenLord(hero);
             }
             catch { return false; }
+        }
+
+        // Magic is inborn, so it deepens with the caster: a hero-caster's character
+        // level lifts the working's damage by a slight, capped amount (see
+        // ElementMagicMath.MasteryScale). Non-hero casters — common troops, the
+        // Kindled — have no level and keep their tuned strength (×1). Folded into
+        // `power` at the cast choke, so player and mage lord share it (NPC parity).
+        private static float CasterMasteryScale(Agent caster)
+        {
+            try
+            {
+                var hero = (caster?.Character as TaleWorlds.CampaignSystem.CharacterObject)?.HeroObject;
+                return hero == null ? 1f : ElementMagicMath.MasteryScale(hero.Level);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); return 1f; }
         }
 
         // A single signature light in the element's (Ashen-aware) colour at the

@@ -116,10 +116,12 @@ namespace AshAndEmber
                 "What follows is set down so it is never forgotten."), true);
 
             AddLog(new TextObject(
-                "MAGIC — Hold Left Alt to FOCUS (gamepad: hold LB). FIRE is loaded by default — the " +
+                "MAGIC — Hold Left Alt to FOCUS (gamepad: hold X — the bumpers are taken by the war-order " +
+                "radial and the miracle gesture, and X leaves both triggers free to strike). " +
+                "FIRE is loaded by default — the " +
                 "physical-and-spiritual root of the art. To draw another element you have LEARNED, tap " +
                 "W (Wind) · S (Earth) · A (Water) · D (Spirit) — gamepad: flick the left stick up / down / " +
-                "left / right. Stand STILL, with a hand free and your armour light, and DRAW — the " +
+                "left / right (click it — L3 — for Fire). Stand STILL, with a hand free and your armour light, and DRAW — the " +
                 "longer you hold, the HARDER the working strikes, to full strength at about FIVE seconds. " +
                 "There is no minimum: release at once for a weak, instant cast. Then ATTACK (left mouse / " +
                 "right trigger) looses its cone, or BLOCK (right mouse / left trigger) raises its wall. " +
@@ -137,7 +139,7 @@ namespace AshAndEmber
                 "a stray order into their ranks / a wall that heartens your own and mends them a little."), true);
 
             AddLog(new TextObject(
-                "MAGIC · FUSION — the five element keys are peers: press X (gamepad: click R3) to draw on " +
+                "MAGIC · FUSION — the five element keys are peers: press X (gamepad: click L3) to draw on " +
                 "FIRE the same way W/S/A/D draw Wind/Earth/Water/Spirit. Press a SECOND, different element " +
                 "key within a heartbeat of the first and the two BLEND instead of the second simply " +
                 "replacing it — you need only have learned both halves. FIRE+WIND: Lightning, a bolt that " +

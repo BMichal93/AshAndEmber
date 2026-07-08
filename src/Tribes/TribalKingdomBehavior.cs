@@ -14,9 +14,11 @@
 //   Endless War        — any peace involving the Tribes is immediately reversed.
 //   Blood Succession   — on the God-King's death, the oldest living son inherits.
 //   Self-Immolation    — a captured God-King sets himself ablaze rather than submit.
-//   Free Recruitment   — Tribal player can recruit tier-1 tribesmen at no cost
-//                        from Tribal towns (global 7-day cooldown — the tribes
-//                        answer the champion only once a week, not once per town).
+//   Free Recruitment   — a player sworn to the God-King (clan in the Tribes'
+//                        kingdom, regardless of birth culture) can recruit tier-1
+//                        tribesmen at no cost from Tribal towns (global 7-day
+//                        cooldown — the tribes answer the champion only once a
+//                        week, not once per town). Leaving the kingdom ends it.
 // =============================================================================
 
 using System;
@@ -385,7 +387,9 @@ namespace AshAndEmber
                     {
                         try
                         {
-                            if (!TribalCulture.IsPlayerTribal) return false;
+                            // Gated on allegiance, not birth: only a champion sworn
+                            // to the God-King may call the tribes to arms.
+                            if (!TribalCulture.IsPlayerSwornToTribes) return false;
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsTown) return false;
                             if (s.OwnerClan?.Kingdom?.StringId != KhuzaitId) return false;

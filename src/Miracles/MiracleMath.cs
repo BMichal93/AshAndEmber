@@ -100,6 +100,18 @@ namespace AshAndEmber
             return Math.Min(4, gain);
         }
 
+        // ── Conviction — willpower deepens the working ────────────────────────────
+        // Grace is not bestowed; it is the caster's own conviction, expressed as
+        // personality trait. So the more resolute the soul — the greater the SUM of
+        // their aligned virtues (Mercy, Valor, Honor, Generosity, Calculating, each
+        // counted only where it stands ABOVE the point of indifference) — the harder
+        // the sacred fire bites. Kept slight and capped, and applied to miracle
+        // DAMAGE only. A fickle heart calls a thin flame; an unwavering one, a pyre.
+        public const float ConvictionScaleMax      = 0.30f;  // +30% at total conviction
+        public const float ConvictionScalePerTrait = 0.03f;  // +3% per point of aligned virtue (cap ~10)
+        public static float ConvictionScale(int traitSum)
+            => 1f + Math.Min(ConvictionScaleMax, Math.Max(0, traitSum) * ConvictionScalePerTrait);
+
         // ── NPC use chances ────────────────────────────────────────────────────
         public static double NpcBattleUseChance(bool isPriest) => isPriest ? 0.004 : 0.001;
         public static double NpcDailyUseChance(bool isPriest)  => isPriest ? 0.05  : 0.01;

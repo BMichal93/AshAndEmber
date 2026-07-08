@@ -70,6 +70,27 @@ namespace AshAndEmber
             }
         }
 
+        // Conviction — the caster's own willpower deepens the sacred fire. It sums
+        // their aligned virtues (each counted only where it stands above the point of
+        // indifference) and lifts miracle DAMAGE by a slight, capped amount (see
+        // MiracleMath.ConvictionScale). Reads the CASTER's hero, so an NPC priest's
+        // resolve counts as the player's does (NPC parity); a non-hero caster gives ×1.
+        private static float Conviction(Agent caster)
+        {
+            try
+            {
+                var h = (caster?.Character as CharacterObject)?.HeroObject;
+                if (h == null) return 1f;
+                int sum = System.Math.Max(0, h.GetTraitLevel(DefaultTraits.Mercy))
+                        + System.Math.Max(0, h.GetTraitLevel(DefaultTraits.Valor))
+                        + System.Math.Max(0, h.GetTraitLevel(DefaultTraits.Honor))
+                        + System.Math.Max(0, h.GetTraitLevel(DefaultTraits.Generosity))
+                        + System.Math.Max(0, h.GetTraitLevel(DefaultTraits.Calculating));
+                return MiracleMath.ConvictionScale(sum);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); return 1f; }
+        }
+
         public static bool PlayerMeetsTrait(MiracleDef def)
         {
             try
@@ -528,7 +549,7 @@ namespace AshAndEmber
                     float dx = a.Position.x - impact.x, dy = a.Position.y - impact.y;
                     if (dx * dx + dy * dy > r2) continue;
                     if (SpellEffects.IsWarded(a)) continue;
-                    try { SpellEffects.DamageAgent(a, MiracleMath.PyreJudgementDamage * MiracleTalents.TraitPower(GraceTrait.Calculating), ColorSchool.Yellow, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { SpellEffects.DamageAgent(a, MiracleMath.PyreJudgementDamage * MiracleTalents.TraitPower(GraceTrait.Calculating) * Conviction(caster), ColorSchool.Yellow, caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     try { SpellEffects.SpawnImpactBurst(a.Position, ColorSchool.Yellow, 4f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     hit++;
                 }
@@ -611,7 +632,7 @@ namespace AshAndEmber
 
                     if (SpellEffects.IsWarded(a)) continue;
 
-                    float dmg = MiracleMath.UndividedFlameBaseDamage;
+                    float dmg = MiracleMath.UndividedFlameBaseDamage * Conviction(caster);
                     if (IsAshenAgent(a)) { dmg *= MiracleMath.UndividedFlameAshenMultiplier; ashenBurned++; }
                     else if (ElementalBeings.IsElemental(a)) { dmg *= MiracleMath.UndividedFlameElementalMultiplier; kindledBurned++; }
                     else othersScorched++;

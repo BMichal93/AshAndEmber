@@ -16,8 +16,10 @@ namespace AshAndEmber
 {
     public partial class SoldierServiceCampaignBehavior
     {
-        // Priority 105 — sits just above vanilla lord_pretalk lines (and the
-        // clan-orders line at 101) so the option reads near the top.
+        // Priority 105 — the entry lines hang off the standard lord options hub
+        // ("hero_main_options", the same menu that holds "I have a proposal for
+        // you" and "I wish to enter the service of ..."), sitting just above the
+        // clan-orders line at 101 so the option reads near the top.
         private const int P = 105;
 
         private static void RegisterDialogue(CampaignGameStarter starter)
@@ -26,7 +28,7 @@ namespace AshAndEmber
             try
             {
                 starter.AddPlayerLine(
-                    "soldier_join_open", "lord_pretalk", "soldier_join_terms",
+                    "soldier_join_open", "hero_main_options", "soldier_join_terms",
                     "I would take your coin and march under your banner, until this war is done.",
                     CondCanOffer, OnOfferChosen, P);
             }
@@ -57,7 +59,7 @@ namespace AshAndEmber
                     "A campaign year — {SOLDIER_T2} days.",
                     null, () => DoJoin(2), P);
                 starter.AddPlayerLine(
-                    "soldier_term_no", "soldier_terms_choose", "lord_pretalk",
+                    "soldier_term_no", "soldier_terms_choose", "hero_main_options",
                     "On second thought — not yet.",
                     null, null, P);
             }
@@ -76,7 +78,7 @@ namespace AshAndEmber
             try
             {
                 starter.AddPlayerLine(
-                    "soldier_disc_open", "lord_pretalk", "soldier_disc",
+                    "soldier_disc_open", "hero_main_options", "soldier_disc",
                     "About my service under your banner...",
                     CondIsMyCommander, OnDischargeChosen, P);
             }
@@ -114,7 +116,7 @@ namespace AshAndEmber
             try
             {
                 starter.AddPlayerLine(
-                    "soldier_disc_stay", "soldier_disc_choose", "lord_pretalk",
+                    "soldier_disc_stay", "soldier_disc_choose", "hero_main_options",
                     "Nothing. I keep my word.",
                     null, null, P);
             }

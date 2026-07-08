@@ -826,7 +826,21 @@ namespace AshAndEmber
         // Brilliant Lattice potency — player only (an NPC bearer's crystal must not
         // read the player's lapidary talents).
         private static float Potency(Agent caster)
-            => caster == Agent.Main ? CrystalTalents.PotencyMult : 1f;
+            => caster == Agent.Main ? CrystalTalents.PotencyMult * PlayerMedicineScale() : 1f;
+
+        // A crystal answers only as keenly as the hand that reads it: the player's
+        // Medicine (their grasp of the stones' lattices) lifts damage and heal
+        // magnitudes by a slight, capped amount (see CrystalMath.MasteryScale).
+        // Player-only, exactly like the talent potency it multiplies.
+        private static float PlayerMedicineScale()
+        {
+            try
+            {
+                int med = Hero.MainHero?.GetSkillValue(DefaultSkills.Medicine) ?? 0;
+                return CrystalMath.MasteryScale(med);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); return 1f; }
+        }
 
         private static Color CrystalColor(ColorSchool school)
         {
