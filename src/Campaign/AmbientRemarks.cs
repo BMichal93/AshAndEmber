@@ -3,8 +3,11 @@
 // Two non-intrusive ambient systems:
 //
 //   Campfire Vignettes — a single-line observation fires on daily tick when
-//   the player is outside a settlement (~20% chance, 3-day cooldown). Three
-//   pools: general travel, mage-specific, cold-touched (high whisper tier).
+//   the player is outside a settlement (~7% chance, 8-day cooldown — a rare
+//   aside, not a habit). Pools: general travel, mage-specific, aged,
+//   cold-touched (high whisper tier), plus situational pools (wounded
+//   column, war, each season, riding alone vs. a large host) that can
+//   pre-empt the flat pools when the world state actually warrants it.
 //
 //   Companion Remarks — a companion makes an unprompted world-aware comment
 //   on settlement entry (~12% chance, 6-day cooldown — deliberately rare, so
@@ -47,6 +50,12 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
         private static readonly Color  _dim = new Color(0.65f, 0.60f, 0.52f);
+
+        // Campfire vignettes fire rarely — this is ambient colour, not a slot
+        // machine. Roughly one line every ~22 days on average (8-day cooldown,
+        // then a 7% roll per day until one lands).
+        private const int CampfireCooldownDays   = 8;
+        private const int CampfireChancePercent  = 7;
 
         private static int _campfireCooldown  = 0;
         private static int _companionCooldown = 0;
@@ -125,24 +134,139 @@ namespace AshAndEmber
             {
                 if (_campfireCooldown > 0) return;
                 if (Hero.MainHero?.CurrentSettlement != null) return;
-                if (_rng.Next(100) >= 20) return;
+                if (_rng.Next(100) >= CampfireChancePercent) return;
 
-                _campfireCooldown = 3;
+                _campfireCooldown = CampfireCooldownDays;
 
                 bool isMage      = MageKnowledge.IsMage;
                 bool isOld       = isMage && Hero.MainHero != null && (int)Hero.MainHero.Age >= 55;
                 int  whisperTier = isMage ? MageKnowledge.WhisperTier : 0;
 
-                string line;
-                if (isMage && _rng.Next(3) != 0)
-                    line = GetMageVignette(isOld, whisperTier);
-                else
-                    line = GetGeneralVignette();
+                // Situational lines (wounds, war, the season, party size) take
+                // priority over the flat pools when the world actually warrants
+                // them — but only sometimes, so the vignettes stay varied rather
+                // than becoming a status readout.
+                string line = GetSituationalVignette()
+                           ?? (isMage && _rng.Next(3) != 0 ? GetMageVignette(isOld, whisperTier) : GetGeneralVignette());
 
                 ShowQuick(line);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
+
+        // ── Situational campfire lines ───────────────────────────────────────
+
+        private static string GetSituationalVignette()
+        {
+            try
+            {
+                int wounded = 0;
+                try { wounded = MobileParty.MainParty?.MemberRoster?.GetTroopRoster().Sum(e => e.WoundedNumber) ?? 0; }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (wounded >= 5 && _rng.Next(2) == 0) return Pick(_woundedVignettes);
+
+                bool atWar = false;
+                try
+                {
+                    var faction = Hero.MainHero?.MapFaction;
+                    atWar = faction != null && Kingdom.All.Any(k => !k.IsEliminated && k != faction && faction.IsAtWarWith(k));
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (atWar && _rng.Next(2) == 0) return Pick(_warVignettes);
+
+                CampaignTime.Seasons season = CampaignTime.Seasons.Spring;
+                try { season = CampaignTime.Now.GetSeasonOfYear; }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                string[] seasonPool = season switch
+                {
+                    CampaignTime.Seasons.Winter => _winterVignettes,
+                    CampaignTime.Seasons.Summer => _summerVignettes,
+                    CampaignTime.Seasons.Autumn => _autumnVignettes,
+                    _                            => _springVignettes,
+                };
+                if (_rng.Next(2) == 0) return Pick(seasonPool);
+
+                int partySize = MobileParty.MainParty?.MemberRoster?.TotalManCount ?? 2;
+                if (partySize <= 1  && _rng.Next(2) == 0) return Pick(_soloVignettes);
+                if (partySize >= 40 && _rng.Next(2) == 0) return Pick(_largeHostVignettes);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            return null;
+        }
+
+        private static readonly string[] _woundedVignettes =
+        {
+            "The wounded groan in their sleep tonight. The healers do what they can, which isn't enough, some nights.",
+            "Someone is rationing bandages by firelight. There aren't enough for the whole column.",
+            "A soldier bites down on leather while the surgeon works. Nobody sings tonight.",
+            "The wagons carrying the wounded creak louder than they should. Every rut in the road is a small cruelty.",
+            "The healer hasn't slept in two days. Neither, really, have you.",
+        };
+
+        private static readonly string[] _warVignettes =
+        {
+            "Word travels faster than the column moves. Every village you pass already knows there's a war on.",
+            "The men check their gear twice before sleeping. Nobody sleeps deeply when there's a war somewhere close.",
+            "A rider passes going the other way, faster than any messenger should be. Nobody stops him to ask why.",
+            "Someone in camp is sharpening a blade that doesn't need it. War does that to people.",
+            "The scouts report back later than usual tonight. That alone says something.",
+        };
+
+        private static readonly string[] _winterVignettes =
+        {
+            "Frost climbs the tent ropes overnight. The horses stand closer together than they used to.",
+            "The cold gets into the boots first, then the bones. Nobody complains about it anymore. It doesn't help.",
+            "Snow falls without wind tonight — straight down, patient, like it has somewhere to be.",
+            "A soldier's breath hangs in the air long after he's stopped talking.",
+            "The fire eats twice the wood it did in autumn and gives back half the warmth.",
+            "The road has gone hard and white. The wagons take it slower than anyone will admit out loud.",
+            "Someone's fingers have gone the colour of old parchment. He flexes them by the fire and says nothing.",
+        };
+
+        private static readonly string[] _springVignettes =
+        {
+            "The mud finally gives way to something like a road again. Nobody trusts it yet.",
+            "New growth on the treeline. The scouts spend longer out than they need to, just to look at it.",
+            "A lamb bleats somewhere off the road. Half the camp goes quiet listening for it.",
+            "The rivers are running high and loud tonight. You can hear the melt even from here.",
+            "Someone finds the season's first proper flower crushed under a cart wheel and is oddly put out by it.",
+        };
+
+        private static readonly string[] _summerVignettes =
+        {
+            "The heat sits on the column like a second pack. Even the horses look for shade before they're told to.",
+            "Water is rationed before food tonight. Nobody argues about the order.",
+            "The dust doesn't settle even after the wind dies. It just hangs there, waiting.",
+            "A soldier strips off his gambeson the moment the halt is called. Nobody blames him.",
+            "The nights are too short and too warm for real sleep. Everyone is a little slower for it.",
+        };
+
+        private static readonly string[] _autumnVignettes =
+        {
+            "The leaves turn faster than the calendar says they should. An old campaigner calls it a bad omen and won't elaborate.",
+            "The harvest smoke from distant farms drifts over camp before the wind changes and takes it away again.",
+            "Rain that isn't quite cold enough to be winter soaks the column all afternoon. Everyone's temper is thinner for it.",
+            "Geese cross overhead in a ragged line. Someone counts them out loud, for no reason he can explain.",
+            "The days shorten fast enough that the evening watch keeps starting earlier than the last one did.",
+        };
+
+        private static readonly string[] _soloVignettes =
+        {
+            "No one to talk to tonight but the horse, and it isn't much of a conversationalist.",
+            "The road feels longer walked alone. You've noticed that before. You'll notice it again.",
+            "You count your own footsteps for a while, out of habit more than need.",
+            "There's a particular kind of quiet that comes with traveling alone. You've made peace with it, mostly.",
+            "You catch yourself talking out loud to no one and stop, embarrassed, though there's nobody to see it.",
+        };
+
+        private static readonly string[] _largeHostVignettes =
+        {
+            "The column takes longer to make camp than it does to break it. Someone should fix that. Nobody has.",
+            "From the rise behind camp, the fires stretch further than you expected. It's a strange thing to be proud of.",
+            "The quartermasters have stopped even pretending to know an exact headcount. Close enough is the standing order now.",
+            "A host this size announces itself long before it arrives. Every village on the road already knows you're coming.",
+            "Feeding this many mouths eats the supply wagons faster than anyone likes to say out loud.",
+        };
 
         private static string GetGeneralVignette()
         {
@@ -162,6 +286,20 @@ namespace AshAndEmber
                 "Someone lost a boot somewhere on today's march. It has not been found. Nobody is admitting to losing it.",
                 "A fire in a distant village is visible from camp. You watch it for a while. It does nothing unusual.",
                 "Two of your soldiers are arguing quietly about a card game that ended days ago. The argument has become philosophical.",
+                "A crow sits on the supply cart for the whole meal and won't be shooed. Someone eventually names it and stops trying.",
+                "The quartermaster counts the coin twice and gets a different number both times. He decides not to mention it.",
+                "Someone swears the tree line moved since yesterday's camp. Nobody else saw it. He keeps watching it anyway.",
+                "A soldier writes a letter he won't send. You've seen him do it three times this month.",
+                "The cook burns the stew and serves it anyway. Nobody complains. Complaining would mean admitting they're hungry enough to care.",
+                "One of the mules refuses to cross a perfectly ordinary bridge. It takes four men and a lot of patience.",
+                "A soldier bets another a week's pay on which of two stars will fade first. Neither of them can say how they'll ever settle it.",
+                "The watch changes and the outgoing man mutters something to the incoming one. Neither will repeat it when asked.",
+                "Somewhere behind you a wheel needs greasing. It has needed greasing for three days. Everyone has opinions and no one has grease.",
+                "A soldier polishes a sword he's never once had to use in earnest. He does it anyway, every night, like a small prayer.",
+                "The scouts come back with nothing to report and seem oddly disappointed by it.",
+                "Someone starts a rumour about the road ahead just to see how far it travels by morning. It travels further than expected.",
+                "A young soldier practices a speech under his breath. He stops the moment anyone gets close enough to hear it.",
+                "The fire pops and throws a spark onto someone's sleeve. He watches it burn a small hole before he thinks to put it out.",
             };
             return pool[_rng.Next(pool.Length)];
         }
@@ -177,6 +315,10 @@ namespace AshAndEmber
                     "The ash from the campfire settles into a shape. You scatter it before anyone else sees.",
                     "The cold feels closer tonight. Not the air — something behind the air. It has been like this for a while now.",
                     "Your shadow on the tent wall doesn't quite match your movements. You watch it for a while. It catches up.",
+                    "A soldier asks if you're feeling well. You say yes. He doesn't look convinced, and you're not sure you are either.",
+                    "The frost near your bedroll melts in a ring no wider than your shoulders. You've stopped being surprised by it.",
+                    "You count your own heartbeat without meaning to and lose track partway through. It felt wrong to keep counting.",
+                    "The dark past the firelight doesn't feel empty anymore. You've decided not to look at it directly.",
                 };
                 return cold[_rng.Next(cold.Length)];
             }
@@ -189,6 +331,10 @@ namespace AshAndEmber
                     "You ache in the morning. Not from injury. Just time. The fire helps.",
                     "One of your men was born after you first carried the fire. You are trying not to think about that.",
                     "The fire you lit tonight took no effort. That ease is not reassurance. You know what it means.",
+                    "A recruit half your age asks for advice. You give it. It sounds like something someone once told you, decades gone.",
+                    "You count the years by scars now, not by seasons. There are more scars than there used to be.",
+                    "You wake before the watch changes, out of habit rather than need. You lie still and let the fire finish the job for you.",
+                    "Someone offers you the softer bedroll without being asked. You take it. You've stopped pretending you don't need it.",
                 };
                 return aged[_rng.Next(aged.Length)];
             }
@@ -200,6 +346,10 @@ namespace AshAndEmber
                     "There is something satisfying about a good fire that has nothing to do with warmth. You know what it is. You don't say it.",
                     "The fire in the hearth at the last inn bent toward you when you passed. The innkeeper did not notice.",
                     "You press your palms together in the dark and feel them warmer than the night allows. You do not find this strange anymore.",
+                    "A moth circles your hand instead of the lantern. You let it. You understand the impulse.",
+                    "The embers hold their shape longer than embers should. You give them a moment before you scatter them.",
+                    "Rain falls all around camp and somehow not on your fire. You decide not to mention this to the men drying their boots.",
+                    "You warm your hands over a fire you didn't light. It still answers to you anyway.",
                 };
                 return mage[_rng.Next(mage.Length)];
             }
