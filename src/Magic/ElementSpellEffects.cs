@@ -330,7 +330,7 @@ namespace AshAndEmber
         private static void FireMissile(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
-            try { pos = caster.Position + new Vec3(0f, 0f, 1.2f); fwd = caster.LookDirection; fwd.z = 0f; if (fwd.Length < 0.01f) return; fwd.Normalize(); }
+            try { pos = caster.Position + new Vec3(0f, 0f, 1.2f); fwd = GroundFacing(caster); }
             catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb   = Palette(MagicElement.Fire, ashen);
@@ -460,7 +460,7 @@ namespace AshAndEmber
         private static void FireWall(Agent caster, float power)
         {
             Vec3 pos; Vec3 fwd;
-            try { pos = caster.Position; fwd = caster.LookDirection; fwd.z = 0f; fwd.Normalize(); }
+            try { pos = caster.Position; fwd = GroundFacing(caster); }
             catch { return; }
             bool ashen = CasterAshen(caster);
             Vec3 rgb = Palette(MagicElement.Fire, ashen);
@@ -610,8 +610,19 @@ namespace AshAndEmber
         // ── Fusions ──────────────────────────────────────────────────────────────
         // A flat, horizontal facing — mirrors NatureEffects.GroundFacing so a
         // fusion's cone reads exactly like the base elements it was drawn from.
+        // Every forward-shaped working (Fire's bolt/wall and every fusion below)
+        // routes through here, so an AI caster (anyone but the player) aims at the
+        // nearest actual enemy instead of trusting its current LookDirection, which
+        // the base game's movement/combat AI can leave facing an ally, empty ground,
+        // or mid-turn — the cause of a companion or lord's bolt bursting harmlessly
+        // amongst its own side instead of the enemy line.
         private static Vec3 GroundFacing(Agent caster)
         {
+            if (caster != Agent.Main)
+            {
+                Vec3? aimed = SpellEffects.NearestEnemyGroundDirection(caster);
+                if (aimed.HasValue) return aimed.Value;
+            }
             Vec3 f = caster.LookDirection; f.z = 0f;
             return f.Length < 0.01f ? new Vec3(0f, 1f, 0f) : f.NormalizedCopy();
         }

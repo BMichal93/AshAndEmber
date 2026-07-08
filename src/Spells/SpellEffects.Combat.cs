@@ -86,6 +86,35 @@ namespace AshAndEmber
             catch { return new List<Agent>(); }
         }
 
+        // Flat (ground-plane) direction to the nearest actual enemy of `source`, or
+        // null when none is in the mission. Every forward-shaped element working
+        // (fire bolt, gust, root-line, wave...) used to aim itself with the caster's
+        // raw LookDirection — fine for the player, who is steering it, but an AI
+        // caster's facing is whatever the base game's movement/combat AI left it at
+        // (mid-turn, idle, staring at the ally beside him) and has no real bearing on
+        // where the enemy line stands. NPC casts should aim here instead; the player
+        // keeps using LookDirection untouched.
+        internal static Vec3? NearestEnemyGroundDirection(Agent source)
+        {
+            if (Mission.Current == null || source == null) return null;
+            Vec3 pos; try { pos = source.Position; } catch { return null; }
+            Agent nearest = null; float bestDist2 = float.MaxValue;
+            try
+            {
+                foreach (Agent a in EnemiesOf(source))
+                {
+                    float dx = a.Position.x - pos.x, dy = a.Position.y - pos.y;
+                    float d2 = dx * dx + dy * dy;
+                    if (d2 < bestDist2) { bestDist2 = d2; nearest = a; }
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); return null; }
+            if (nearest == null) return null;
+            Vec3 d3 = nearest.Position - pos; d3.z = 0f;
+            if (d3.Length < 0.01f) return null;
+            return d3.NormalizedCopy();
+        }
+
         // ── Deferred death queue ───────────────────────────────────────────────
         private static readonly List<(Agent Target, Agent Owner)> _pendingDeaths
             = new List<(Agent, Agent)>();
@@ -286,9 +315,15 @@ namespace AshAndEmber
         }
 
         internal static List<Agent> ConeAgentsFrom(Agent source, float range, float dot)
+            => ConeAgentsFrom(source, range, dot, source?.LookDirection.NormalizedCopy() ?? Vec3.Zero);
+
+        // Explicit-direction overload — lets a caller read the cone along the
+        // SAME bearing the cast will actually fly (e.g. an AI caster's aim at the
+        // nearest enemy), rather than the source's current, possibly unrelated
+        // LookDirection.
+        internal static List<Agent> ConeAgentsFrom(Agent source, float range, float dot, Vec3 fwd)
         {
             if (Mission.Current == null || source == null) return new List<Agent>();
-            Vec3 fwd = source.LookDirection.NormalizedCopy();
             var result = new List<Agent>();
             try
             {
@@ -309,10 +344,15 @@ namespace AshAndEmber
         internal static int CountEnemiesInCone(Agent source, float range, float dot)
             => ConeAgentsFrom(source, range, dot).Count;
 
+        internal static int CountEnemiesInCone(Agent source, float range, float dot, Vec3 fwd)
+            => ConeAgentsFrom(source, range, dot, fwd).Count;
+
         internal static int CountAlliesInCone(Agent source, float range, float dot)
+            => CountAlliesInCone(source, range, dot, source?.LookDirection.NormalizedCopy() ?? Vec3.Zero);
+
+        internal static int CountAlliesInCone(Agent source, float range, float dot, Vec3 fwd)
         {
             if (Mission.Current == null || source == null || source.Team == null) return 0;
-            Vec3 fwd = source.LookDirection.NormalizedCopy();
             int count = 0;
             try
             {
