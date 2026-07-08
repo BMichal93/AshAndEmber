@@ -48,6 +48,8 @@ namespace AshAndEmber
         }
 
         private static readonly Random _rng = new Random();
+        private static readonly MagicElement[] _voidElements =
+            { MagicElement.Fire, MagicElement.Wind, MagicElement.Earth, MagicElement.Water, MagicElement.Spirit };
 
         private static readonly List<Being> _beings = new List<Being>();
         private static readonly Dictionary<Agent, ElementalKind> _kindOf = new Dictionary<Agent, ElementalKind>();
@@ -70,7 +72,7 @@ namespace AshAndEmber
             {
                 Agent = agent, Kind = kind,
                 // Stagger the first blast so a freshly-woken band does not volley as one.
-                AttackTimer = (float)(_rng.NextDouble() * ElementalMath.AttackCooldownSeconds),
+                AttackTimer = (float)(_rng.NextDouble() * ElementalMath.AttackCooldownSecondsFor(kind)),
             });
         }
 
@@ -121,6 +123,24 @@ namespace AshAndEmber
                 if (id == null) return;
                 if (_sacredKindledIds.TryGetValue(id, out ElementalKind kind))
                     Register(agent, kind);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // ── The Great Other (called from OnAgentBuild) ───────────────────────────
+        // The Great Awakening's summoned horror fields as a real troop inside its
+        // own campaign-map party (GreatOtherParty), so — unlike a wild band or the
+        // Spirit Unbinding's stolen champion — it needs no conversion trigger, just
+        // its aura, weakness and self-cast registered the moment it is built, plus
+        // the health pool no ordinary Kindled carries.
+        public static void RegisterGreatOther(Agent agent)
+        {
+            if (agent == null || _kindOf.ContainsKey(agent)) return;
+            try
+            {
+                Register(agent, ElementalKind.Void);
+                agent.HealthLimit = ElementalMath.Health(ElementalKind.Void);
+                agent.Health      = agent.HealthLimit;
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -205,7 +225,7 @@ namespace AshAndEmber
                 b.AttackTimer -= dt;
                 if (b.AttackTimer <= 0f)
                 {
-                    b.AttackTimer = ElementalMath.AttackCooldownSeconds
+                    b.AttackTimer = ElementalMath.AttackCooldownSecondsFor(b.Kind)
                                   + (float)((_rng.NextDouble() - 0.5) * 2.0 * ElementalMath.AttackCooldownJitter);
                     TryLooseElement(b.Agent, b.Kind);
                 }
@@ -251,6 +271,19 @@ namespace AshAndEmber
                     if (d2 <= bestD2) { bestD2 = d2; nearest = a; }
                 }
                 if (nearest == null) return;   // no foe within reach — don't loose into empty ground
+
+                // The Great Other does not fight with one wheel-element — it is
+                // not made of Fire, Water, Earth or Wind at all (see
+                // ElementalMath.ElementDamageMultiplier). It spends every one of
+                // them at random, in every direction, closer to a storm than a
+                // duelist — "spawns spells like crazy" — so it skips the
+                // forward-facing gate every other Kindled respects.
+                if (kind == ElementalKind.Void)
+                {
+                    MagicElement voidEl = _voidElements[_rng.Next(_voidElements.Length)];
+                    ElementSpellEffects.CastAttack(voidEl, agent, ElementalMath.VoidAttackPower);
+                    return;
+                }
 
                 // Every damage element now strikes FORWARD (Fire a bursting bolt, Water
                 // a wave, Wind a gust, Earth a line of roots), so only loose it when the

@@ -244,6 +244,16 @@
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Menus.cs"/>
     <Compile Include="AshenAltars\AshenAltarsCampaignBehavior.Npc.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningMath.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.Trigger.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.Dialogue.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.Altar.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.NpcContribution.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.Opposition.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.Resolution.cs"/>
+    <Compile Include="GreatAwakening\GreatAwakeningQuestLog.cs"/>
+    <Compile Include="GreatAwakening\GreatOtherParty.cs"/>
     <Compile Include="DarkGifts\DarkGiftSystem.cs"/>
     <Compile Include="DarkGifts\DarkGiftBattleEffects.cs"/>
     <Compile Include="Sea\SeaMath.cs"/>

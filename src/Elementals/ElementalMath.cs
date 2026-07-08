@@ -52,8 +52,17 @@ namespace AshAndEmber
         public const float WeakToCounter    = 1.90f;   // the element that unmakes it
         public const float FrostMeltsToFire = 2.20f;   // ice fears fire most of all
 
+        // The Great Other belongs to nothing on the wheel — it is not made of
+        // Fire, Water, Earth or Wind, so no working "unmakes" it the way the
+        // wheel unmakes the Kindled. Almost unkillable, not literally so: a
+        // sustained, overwhelming working still bites, just far less than it
+        // would against anything born of Calradia.
+        public const float VoidResistAll = 0.06f;
+
         public static float ElementDamageMultiplier(ElementalKind kind, MagicElement attack)
         {
+            if (kind == ElementalKind.Void) return VoidResistAll;
+
             // Ice is the special case — melts to fire, otherwise water-tough.
             if (kind == ElementalKind.Frost)
             {
@@ -90,6 +99,8 @@ namespace AshAndEmber
         {
             switch (kind)
             {
+                case ElementalKind.Void:
+                    return VoidResistAll;   // steel bites almost as little as magic does
                 case ElementalKind.Stone:
                 case ElementalKind.Sand:
                     return hit == PhysicalHit.Blunt ? 1.70f
@@ -125,9 +136,20 @@ namespace AshAndEmber
                 case ElementalKind.Flame: return 320f;
                 case ElementalKind.Tide:  return 350f;
                 case ElementalKind.Gale:  return 270f;
+                case ElementalKind.Void:  return 6000f;   // The Great Other — combined with VoidResistAll, "almost unkillable"
                 default:                  return 350f;
             }
         }
+
+        // ── The Great Other's own cadence ────────────────────────────────────────
+        // Every other Kindled looses one cone every AttackCooldownSeconds. The
+        // Great Other is not one being casting occasionally — it is the Great
+        // Awakening's whole purpose given a body, and "spawns spells like crazy."
+        public const float VoidAttackCooldownSeconds = 1.1f;
+        public const float VoidAttackPower           = 3.2f;
+
+        public static float AttackCooldownSecondsFor(ElementalKind kind)
+            => kind == ElementalKind.Void ? VoidAttackCooldownSeconds : AttackCooldownSeconds;
 
         // ── Spawn-burst veil ─────────────────────────────────────────────────────
         // Heights (shin, waist, chest, head) for the ONE-SHOT wisp burst thrown up

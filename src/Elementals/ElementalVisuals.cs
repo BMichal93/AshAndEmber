@@ -205,7 +205,7 @@ namespace AshAndEmber
             {
                 case ElementalKind.Flame: return "psys_fire_vertical";
                 case ElementalKind.Frost: return "psys_snow_dust";
-                default:                  return "psys_smoke"; // Tide / Gale / Sand / Stone — tinted by the light
+                default:                  return "psys_smoke"; // Tide / Gale / Sand / Stone / Void — tinted by the light
             }
         }
 
@@ -220,6 +220,10 @@ namespace AshAndEmber
                 case ElementalKind.Frost: return new Vec3(0.70f, 0.85f, 1.0f);
                 case ElementalKind.Gale:  return new Vec3(0.62f, 0.52f, 1.0f);
                 case ElementalKind.Sand:  return new Vec3(0.85f, 0.70f, 0.40f);
+                // Pitch black with the barest violet bruise — not zero, or the
+                // follower light would simply not exist. The Great Other reads as
+                // a hole the eye slides off, not a coloured being like the rest.
+                case ElementalKind.Void:  return new Vec3(0.035f, 0.02f, 0.05f);
                 default:                  return new Vec3(0.50f, 0.46f, 0.42f); // Stone
             }
         }

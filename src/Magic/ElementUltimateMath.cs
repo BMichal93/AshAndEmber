@@ -38,9 +38,12 @@ namespace AshAndEmber
     // — from v0.36 — what raw magic condenses into where it pools too thick.
     // Stone/Frost/Sand are the terrain champions the Spirit Unbinding still sends;
     // Flame/Tide/Gale are the "pure" beings born of concentrated magic (the
-    // Kindled), roaming the wilds and summoned against you. APPENDED, never
+    // Kindled), roaming the wilds and summoned against you. Void is a singleton
+    // boss kind — The Great Other, the thing Duneborn's Great Awakening drags
+    // out of beyond the Sands (see GreatAwakening/GreatOtherBattle.cs) — never
+    // bred by the wilds and never picked by a random roll. APPENDED, never
     // renumbered — the enum is not serialized, but old summons pass ints around.
-    public enum ElementalKind { Stone = 0, Frost = 1, Sand = 2, Flame = 3, Tide = 4, Gale = 5 }
+    public enum ElementalKind { Stone = 0, Frost = 1, Sand = 2, Flame = 3, Tide = 4, Gale = 5, Void = 6 }
 
     public static class ElementUltimateMath
     {
@@ -170,6 +173,7 @@ namespace AshAndEmber
                 case ElementalKind.Flame: return "the Kindled";
                 case ElementalKind.Tide:  return "the Risen Tide";
                 case ElementalKind.Gale:  return "the Gathered Storm";
+                case ElementalKind.Void:  return "The Great Other";
                 default:                  return "Stone-Born";
             }
         }
