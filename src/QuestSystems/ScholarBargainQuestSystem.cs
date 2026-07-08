@@ -44,6 +44,12 @@ namespace AshAndEmber
 {
     public static partial class ScholarBargainQuestSystem
     {
+        // Rolled once per qualifying enter/leave (on top of SettlementEncounters'
+        // own chance/cooldown gate) so the scholar doesn't approach at the very
+        // first opportunity — but with enough owned-settlement traffic over a
+        // campaign, he is all but certain to show up eventually.
+        internal const float ApproachChance = 0.20f;
+
         internal const int StageIdle      = 0;
         internal const int StagePendingA2 = 1;
         internal const int StagePendingA3 = 2;
@@ -80,12 +86,18 @@ namespace AshAndEmber
 
         // Gate for SettlementEncounters.Dispatch: clan tier ≥ 2, quest untouched,
         // and the settlement entered/left belongs to the player's own clan.
+        // _stage only ever leaves StageIdle once and never returns to it within
+        // the same campaign (ResetForNewGame is the only reset), so this whole
+        // questline can fire at most once per campaign; the ApproachChance roll
+        // on top of that just spreads out WHEN, across however many qualifying
+        // visits happen, that single fire lands.
         internal static bool CanTriggerAt(Settlement s)
         {
             if (_stage != StageIdle || s == null) return false;
             if (!s.IsTown && !s.IsCastle) return false;
             if (s.OwnerClan == null || s.OwnerClan != Hero.MainHero?.Clan) return false;
-            return (Hero.MainHero?.Clan?.Tier ?? 0) >= 2;
+            if ((Hero.MainHero?.Clan?.Tier ?? 0) < 2) return false;
+            return _rng.NextDouble() < ApproachChance;
         }
 
         public static void DailyTick()
