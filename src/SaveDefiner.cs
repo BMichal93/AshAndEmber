@@ -46,6 +46,10 @@ namespace AshAndEmber
             AddClassDefinition(typeof(EmberConclaveVisitLog),     10);
             AddClassDefinition(typeof(EmberConclaveRuinLog),      11);
             AddClassDefinition(typeof(EmberConclaveProtectLog),   12);
+
+            // The Great Awakening — Duneborn's bid to drag something from
+            // beyond the Sands into Calradia.
+            AddClassDefinition(typeof(GreatAwakeningQuestLog),    13);
         }
     }
 }

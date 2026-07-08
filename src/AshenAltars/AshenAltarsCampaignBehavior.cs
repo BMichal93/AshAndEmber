@@ -27,7 +27,9 @@ namespace AshAndEmber
         private static readonly HashSet<string> EmpireKingdomIds =
             new HashSet<string> { "empire", "empire_n", "empire_s", "empire_w" };
 
-        private static readonly string[] FixedAltarCities =
+        // Internal (not private): GreatAwakeningCampaignBehavior picks the Great
+        // Summoning's own altar city from this same fixed set.
+        internal static readonly string[] FixedAltarCities =
             { "Sanala", "Askar", "Iyakis", "Hubyar" };
 
         // Dynamic altar settlement StringIds — 3 random Ashen cities

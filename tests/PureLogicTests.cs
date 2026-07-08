@@ -2198,5 +2198,101 @@ namespace AshAndEmber.Tests
             Assert.AreEqual(1.30f, MiracleMath.ConvictionScale(10), 1e-5f); // total conviction, full pyre
             Assert.AreEqual(1.30f, MiracleMath.ConvictionScale(20), 1e-5f); // never beyond the cap
         }
+
+        // ── GreatAwakeningMath tests ────────────────────────────────────────────
+
+        [Test]
+        public void GreatAwakeningMath_TriggerChance_ZeroBeforeDay50()
+        {
+            Assert.AreEqual(0f, GreatAwakeningMath.TriggerChance(0));
+            Assert.AreEqual(0f, GreatAwakeningMath.TriggerChance(49));
+        }
+
+        [Test]
+        public void GreatAwakeningMath_TriggerChance_StepsEvery20Days()
+        {
+            Assert.AreEqual(0.10f, GreatAwakeningMath.TriggerChance(50),  1e-5f);
+            Assert.AreEqual(0.10f, GreatAwakeningMath.TriggerChance(69),  1e-5f);
+            Assert.AreEqual(0.20f, GreatAwakeningMath.TriggerChance(70),  1e-5f);
+            Assert.AreEqual(0.30f, GreatAwakeningMath.TriggerChance(90),  1e-5f);
+            Assert.AreEqual(0.50f, GreatAwakeningMath.TriggerChance(130), 1e-5f);
+        }
+
+        [Test]
+        public void GreatAwakeningMath_TriggerChance_CapsAt100Percent()
+        {
+            Assert.AreEqual(1.0f, GreatAwakeningMath.TriggerChance(50 + 20 * 9),  1e-5f);
+            Assert.AreEqual(1.0f, GreatAwakeningMath.TriggerChance(100_000), 1e-5f);
+        }
+
+        [Test]
+        public void GreatAwakeningMath_PrisonerTarget_IsTenThousand()
+        {
+            Assert.AreEqual(10_000, GreatAwakeningMath.PrisonerTarget);
+        }
+
+        [Test]
+        public void GreatAwakeningMath_NpcContributionAmount_NeverExceedsHeldOrMax()
+        {
+            var rng = new Random(1234);
+            for (int i = 0; i < 200; i++)
+            {
+                int held = i % 25; // sweep small rosters, including zero
+                int amount = GreatAwakeningMath.NpcContributionAmount(rng, held);
+                Assert.GreaterOrEqual(amount, 0);
+                Assert.LessOrEqual(amount, held);
+                Assert.LessOrEqual(amount, GreatAwakeningMath.NpcContributionMax);
+            }
+        }
+
+        [Test]
+        public void GreatAwakeningMath_NpcContributionAmount_ZeroWhenNoPrisonersHeld()
+        {
+            Assert.AreEqual(0, GreatAwakeningMath.NpcContributionAmount(new Random(1), 0));
+        }
+
+        [Test]
+        public void GreatAwakeningMath_ResolutionIsControlled_RoughlyHalfAndHalf()
+        {
+            var rng = new Random(42);
+            int controlled = 0;
+            const int trials = 10_000;
+            for (int i = 0; i < trials; i++)
+                if (GreatAwakeningMath.ResolutionIsControlled(rng)) controlled++;
+            double frac = (double)controlled / trials;
+            Assert.Greater(frac, 0.45);
+            Assert.Less(frac, 0.55);
+        }
+
+        // ── ElementalMath: The Great Other (Void kind) ──────────────────────────
+
+        [Test]
+        public void ElementalMath_Void_ResistsEveryMagicElement()
+        {
+            foreach (MagicElement el in new[] { MagicElement.Fire, MagicElement.Wind, MagicElement.Earth, MagicElement.Water, MagicElement.Spirit })
+                Assert.AreEqual(ElementalMath.VoidResistAll, ElementalMath.ElementDamageMultiplier(ElementalKind.Void, el), 1e-6f);
+        }
+
+        [Test]
+        public void ElementalMath_Void_ResistsEveryPhysicalHit()
+        {
+            foreach (PhysicalHit hit in new[] { PhysicalHit.Cut, PhysicalHit.Pierce, PhysicalHit.Blunt })
+                Assert.AreEqual(ElementalMath.VoidResistAll, ElementalMath.PhysicalDamageMultiplier(ElementalKind.Void, hit), 1e-6f);
+        }
+
+        [Test]
+        public void ElementalMath_Void_HasFarMoreHealthThanAnyOrdinaryKindled()
+        {
+            float voidHp = ElementalMath.Health(ElementalKind.Void);
+            foreach (var kind in new[] { ElementalKind.Stone, ElementalKind.Frost, ElementalKind.Sand, ElementalKind.Flame, ElementalKind.Tide, ElementalKind.Gale })
+                Assert.Greater(voidHp, ElementalMath.Health(kind) * 10f);
+        }
+
+        [Test]
+        public void ElementalMath_AttackCooldownSecondsFor_VoidIsFasterThanOrdinaryKindled()
+        {
+            Assert.Less(ElementalMath.AttackCooldownSecondsFor(ElementalKind.Void), ElementalMath.AttackCooldownSeconds);
+            Assert.AreEqual(ElementalMath.AttackCooldownSeconds, ElementalMath.AttackCooldownSecondsFor(ElementalKind.Stone), 1e-6f);
+        }
     }
 }

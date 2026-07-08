@@ -67,6 +67,7 @@ namespace AshAndEmber
             try { AshenSceneTone.Reset();                } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { BattleWhispers.Reset();                } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { AshenVisuals.Reset();                  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { GreatOtherParty.ClearMissionLatch();    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (game.GameType is Campaign &&
                 gameStarterObject is CampaignGameStarter campaignStarter)
@@ -93,6 +94,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new AshenRecruitCampaignBehavior());
                 campaignStarter.AddBehavior(new TribalKingdomBehavior());
                 campaignStarter.AddBehavior(new CreationBackstoryRework());
+                campaignStarter.AddBehavior(new GreatAwakeningCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ElementalDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ArenicosDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -107,6 +109,7 @@ namespace AshAndEmber
                 try { SoldierServiceCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ElementalWildsBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { BattleEvents.ResetForNewGame();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { GreatAwakeningCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
@@ -490,6 +493,7 @@ namespace AshAndEmber
             try { BattleEvents.OnMissionEnd();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { AshenSceneTone.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { BattleWhispers.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { GreatOtherParty.ClearMissionLatch();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void OnAgentBuild(Agent agent, Banner banner)
@@ -510,6 +514,10 @@ namespace AshAndEmber
             // the same aura/weakness/self-cast behaviour by troop id. No-op for
             // every other troop.
             try { ElementalBeings.RegisterSacredKindled(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // The Great Awakening: the one Great Other champion, the moment its
+            // own party's mission builds it. No-op unless this mission actually
+            // involves that party (GreatOtherParty.OnMapEventStarted).
+            try { GreatOtherParty.TryRegisterChampion(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent,
