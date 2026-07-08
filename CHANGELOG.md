@@ -8,6 +8,7 @@
 - **Fixed a choice in "The Knight Without Fortune" that promised news "two days later" but fired it as an immediate follow-up prompt instead of actually waiting** — it now runs through the same day-countdown machinery every other deferred encounter consequence uses.
 - **"The Fever Road"'s detour option now actually costs the week of travel it claims** (a morale hit for the men, scaling with how many times the road has made them detour), instead of being a free, strictly-better alternative to the other three choices.
 - **"The Merchant's Ledger"'s "decline to arbitrate" option now actually resolves** — the six-week third-party review it promises now concludes and tells you the outcome, instead of silently going nowhere.
+- **"The Poisoned Well"'s "delay your departure" choice is now a real wait** — choosing it blocks the party for the night at a new settlement-encounter wait menu (mirroring the sea-voyage and inn-stay wait menus) instead of resolving the whole night in a single click.
 
 ### The Kindled look like living element now
 - **Elemental beings no longer read as bald men wearing a coloured glow.** Each Kindled is now wreathed in **continuous element bound to its own body** — real fire, freezing vapour, water-mist, wind, dust or grit rising up its trunk and streaming off both hands as it walks and swings — lit in its element's colour and edged with a bleeding contour, so a faceless thing of raw magic finally looks like one.

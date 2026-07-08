@@ -1215,7 +1215,7 @@ namespace AshAndEmber
                     new InquiryElement("c", "Leave medicine from your supplies and your best guess at the cause.", null, true,
                         "Your guess may be right. The herb-woman will work from what you leave."),
                     new InquiryElement("d", "Delay your departure until you know they are stable.", null, true,
-                        "They will be stable or they will not. You stay either way."),
+                        "You stay the night. They will be stable or they will not — either way, you wait to see it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1245,8 +1245,14 @@ namespace AshAndEmber
                             Msg("You leave what you have and your best reading of the symptoms. The herb-woman takes your supplies and your guess with the concentrated focus of someone filtering useful signal from educated approximation. She is better with the approximate information than with nothing. Two children stabilise by evening. The third is harder. She sits with the third child through the night. In the morning you will not know how it ended. You hope your guess was close enough.", DimColor);
                             break;
                         case "d":
-                            AddMorale(-3f);
-                            Msg("You delay. Your men understand this with the quiet acceptance of soldiers who have ridden for lords who would not have stopped. By dusk two of the children are clearly improving and one is not. You stay through the night. At dawn, the third child's fever breaks. You ride out three hours late and your men ride without complaint for twelve miles before anyone says anything. Then someone near the back laughs at something and the column relaxes.", GoodColor);
+                            Msg("You delay your departure. Your men understand this with the quiet acceptance of soldiers who have ridden for lords who would not have stopped.", DimColor);
+                            StartWait(1,
+                                "You wait out the night while the herb-woman works. By dusk two of the children are clearly improving. The third is harder to say.",
+                                () =>
+                                {
+                                    AddMorale(-3f);
+                                    Msg("At dawn, the third child's fever breaks. You ride out three hours late and your men ride without complaint for twelve miles before anyone says anything. Then someone near the back laughs at something and the column relaxes.", GoodColor);
+                                });
                             break;
                     }
                 }, null, "", false), false, true);
