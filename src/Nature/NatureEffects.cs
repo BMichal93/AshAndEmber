@@ -31,6 +31,21 @@ namespace AshAndEmber
         private static readonly Dictionary<int, (float fraction, float remaining, Agent agent)> _resistTokens
             = new Dictionary<int, (float, float, Agent)>();
 
+        // In-flight pushes (agent/mount index → the body actually being moved, the
+        // start/end of the shove, and how far into it we are). Ticked every frame
+        // so a knockback reads as a body crossing the distance, not a snap to the
+        // far end. Keyed on whichever body KnockbackAgent actually teleports (the
+        // mount when the target is mounted), matching KnockbackAgent's own
+        // mount-safety rule.
+        private class Knockback
+        {
+            public Agent Mover;
+            public Vec3  Start;
+            public Vec3  End;
+            public float Elapsed;
+        }
+        private static readonly Dictionary<int, Knockback> _knockbacks = new Dictionary<int, Knockback>();
+
         // ── Armour gate ─────────────────────────────────────────────────────────
         public static bool ArmourTooHeavy(Agent agent)
         {
@@ -776,6 +791,7 @@ namespace AshAndEmber
         {
             TickSpeedTokens(dt);
             TickResistTokens(dt);
+            TickKnockbacks(dt);
         }
 
         private static void TickSpeedTokens(float dt)
@@ -826,6 +842,7 @@ namespace AshAndEmber
                 try { agent?.SetMaximumSpeedLimit(10f, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _speedTokens.Clear();
             _resistTokens.Clear();
+            _knockbacks.Clear();
         }
 
         // ── Helpers ─────────────────────────────────────────────────────────────
@@ -844,21 +861,76 @@ namespace AshAndEmber
         // the freeze system already refuses to teleport mounted agents). A
         // mounted target is knocked back by moving the MOUNT the same distance;
         // the rider follows. Everyone else is moved directly.
+        //
+        // The move itself is NOT an instant teleport to `newPos` — it starts (or
+        // restarts) an eased push that TickKnockbacks plays out over
+        // NatureMath.KnockbackPushDuration, so the body visibly crosses the gap
+        // rather than snapping to it. Re-triggering an agent already mid-push
+        // (e.g. a second gust while a barrier bounce hasn't finished) simply
+        // restarts the ease from wherever it currently is, toward the new spot.
         internal static void KnockbackAgent(Agent a, Vec3 newPos)
         {
             if (a == null) return;
             try
             {
                 var mount = a.MountAgent;
+                Vec3 targetPos;
+                Agent mover;
                 if (mount != null && mount.IsActive())
                 {
                     Vec3 delta = newPos - a.Position; delta.z = 0f;
-                    mount.TeleportToPosition(mount.Position + delta);
+                    mover = mount;
+                    targetPos = mount.Position + delta;
                 }
                 else
-                    a.TeleportToPosition(newPos);
+                {
+                    mover = a;
+                    targetPos = newPos;
+                }
+
+                if (_knockbacks.TryGetValue(mover.Index, out var existing))
+                {
+                    existing.Start = mover.Position;
+                    existing.End = targetPos;
+                    existing.Elapsed = 0f;
+                }
+                else
+                {
+                    _knockbacks[mover.Index] = new Knockback
+                    {
+                        Mover = mover,
+                        Start = mover.Position,
+                        End = targetPos,
+                        Elapsed = 0f,
+                    };
+                }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Plays out every push started by KnockbackAgent this frame — a per-tick
+        // TeleportToPosition along the eased path (the same primitive the flight
+        // ultimate uses for its glide), so a handful of small steps read as a
+        // shove instead of one big jump. Cost is O(active pushes), and a push
+        // only lives for KnockbackPushDuration (a fraction of a second), so the
+        // list is never more than a few entries deep even in a large melee.
+        private static void TickKnockbacks(float dt)
+        {
+            if (_knockbacks.Count == 0) return;
+            foreach (int key in _knockbacks.Keys.ToList())
+            {
+                var kb = _knockbacks[key];
+                if (kb.Mover == null || !kb.Mover.IsActive())
+                {
+                    _knockbacks.Remove(key);
+                    continue;
+                }
+                kb.Elapsed += dt;
+                float frac = NatureMath.KnockbackEase(kb.Elapsed);
+                Vec3 pos = kb.Start + (kb.End - kb.Start) * frac;
+                try { kb.Mover.TeleportToPosition(pos); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                if (kb.Elapsed >= NatureMath.KnockbackPushDuration) _knockbacks.Remove(key);
+            }
         }
 
         internal static void ApplySpeedToken(Agent agent, float mult, float seconds)

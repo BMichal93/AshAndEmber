@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+### A push now looks like a push
+- **Wind's gust, Water's torrent, wall barriers, and every other knockback now visibly shove their target instead of snapping them straight to the landing spot.** The underlying move was always a teleport; it's now played out over a fifth of a second of eased motion (the same primitive Wind's Unbinding flight already glides on), so a foe driven back by a gale or bounced off a wall of stone reads as a body crossing the distance — with no measurable cost, since a push only lives a fraction of a second even in a large melee.
+
 ### NPC and companion casters actually aim now
 - **Fixed enemy lords, companion mages, the Living Ember's seers, and the Kindled loosing forward workings (Fire's bolt/wall, Wind's gust, Earth's roots, Water's wave, and every fusion) with no real aim.** Every one of these read the caster's raw, momentary facing — whatever the base game's own movement/combat AI happened to leave it at — instead of actually looking for a target, so a companion could burst fire harmlessly among its own allies or into empty ground. They now aim at the nearest actual enemy; the player's own casting (still steered by the crosshair) is untouched. A lord's pre-cast safety read (whether a lane is clear of allies) and ward probe now check the same bearing the cast will actually fly, instead of disagreeing with it.
 - **Fixed bandit-tier casters (looters, raiders, and the Fire Worshipper cult troops including the Fire Zealot) being able to blast or burst their own allies.** The legacy Blast/Burst forms were built to let the *player's* imprecise aim hit friend and foe alike as a deliberate risk — but the same code path was reused for every NPC caster, so a Fire Zealot fighting in a packed melee usually caught its own side instead of the enemy. NPC casts (not the player's) now only ever damage a genuine enemy; healing still only ever reaches allies.
