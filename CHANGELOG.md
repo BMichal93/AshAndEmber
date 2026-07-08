@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### Companions speak in more than one voice
+- **Companion map-entry remarks now draw on skills and attributes, not just traits** — a companion with standout Medicine, Roguery, Scouting, Tactics, Engineering, Steward, Trade, Charm, Leadership, Crafting, Riding, Athletics, weapon proficiency, or a dominant Vigor/Control/Endurance/Cunning/Social/Intelligence now occasionally speaks from that specialty, each with its own cool/neutral/warm tone depending on your standing with them.
+- **A companion who qualifies for more than one trait voice (say, both Valorous and Merciful) no longer always defaults to the same one** — every trait pool they currently qualify for, plus any standout skill or attribute line, is now rolled as an equal candidate each time a remark fires, so their comments read as more varied instead of one fixed personality slot.
+
 ### Settlement encounter choices actually follow through
 - **Fixed a choice in "The Knight Without Fortune" that promised news "two days later" but fired it as an immediate follow-up prompt instead of actually waiting** — it now runs through the same day-countdown machinery every other deferred encounter consequence uses.
 - **"The Fever Road"'s detour option now actually costs the week of travel it claims** (a morale hit for the men, scaling with how many times the road has made them detour), instead of being a free, strictly-better alternative to the other three choices.
