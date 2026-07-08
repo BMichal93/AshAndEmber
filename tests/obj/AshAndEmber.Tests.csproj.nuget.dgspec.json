@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj": {}
+    "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj": {}
   },
   "projects": {
-    "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj": {
+    "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj": {
       "version": "0.45.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj",
+        "projectUniqueName": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj",
         "projectName": "AshAndEmber",
-        "projectPath": "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj",
+        "projectPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj",
         "packagesPath": "C:\\Users\\mbudz\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\obj\\",
+        "outputPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -54,14 +54,14 @@
         }
       }
     },
-    "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj": {
+    "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj",
+        "projectUniqueName": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj",
         "projectName": "AshAndEmber.Tests",
-        "projectPath": "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj",
+        "projectPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\AshAndEmber.Tests.csproj",
         "packagesPath": "C:\\Users\\mbudz\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\obj\\",
+        "outputPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\tests\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -83,8 +83,8 @@
           "net472": {
             "targetAlias": "net472",
             "projectReferences": {
-              "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj": {
-                "projectPath": "c:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj"
+              "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj": {
+                "projectPath": "C:\\Users\\mbudz\\source\\repos\\AshAndEmber\\src\\TheWitheringArt.csproj"
               }
             }
           }

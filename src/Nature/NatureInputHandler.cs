@@ -207,7 +207,7 @@ namespace AshAndEmber
             catch { return null; }
         }
 
-        // The Living Ember window — reached through the miracle key (Shift+X / RB+L3).
+        // The Living Ember window — reached through the miracle key (Shift+X / R3+L3).
         // The map's primary casting path; in battle it is a convenience alongside the
         // direct Attack/Block cast.
         public static void ShowNatureMenu()

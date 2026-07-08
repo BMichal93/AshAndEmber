@@ -186,7 +186,7 @@ namespace AshAndEmber
                 + "── MIRACLES — Grace & Cold ──────────────────────────\n"
                 + "  First charge at a Sanctuary (Grace) or Ashen Altar (Cold).\n"
                 + "  On the field         Shift + X            (L3 + R3)\n"
-                + "  In battle            Hold Left Ctrl …     (hold RB)\n"
+                + "  In battle            Hold Left Ctrl …     (hold R3)\n"
                 + "    then type the six-mark sequence shown for the miracle, and release.\n\n"
                 + "── CRYSTALS ─────────────────────────────────────────\n"
                 + "  Equip a crystal in a weapon slot (Sunstone, Embershard, Rimeshard,\n"

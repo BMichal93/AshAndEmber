@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = AshAndEmber.Tests
-build_property.ProjectDir = c:\Users\mbudz\source\repos\AshAndEmber\tests\
+build_property.ProjectDir = C:\Users\mbudz\source\repos\AshAndEmber\tests\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false
