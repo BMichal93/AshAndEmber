@@ -83,6 +83,13 @@ namespace AshAndEmber
                 SpawnBigFireParticle(caster.Position + fwd * range * 0.70f,  2.0f);
                 SpawnExplosionParticle(caster.Position + fwd * range,         1.5f); // tip = impact point
             }
+            else
+            {
+                // Ashfire: driven frost down the cone, bursting at the far tip.
+                SpawnTempSnowParticle(caster.Position + fwd * range * 0.35f,  2.5f);
+                SpawnTempSnowParticle(caster.Position + fwd * range * 0.70f,  2.0f);
+                SpawnTempSnowParticle(caster.Position + fwd * range,          1.5f);
+            }
             TryCastSound(caster.Position, glowColor);
             TryCastAnimation(caster);
 
@@ -99,6 +106,11 @@ namespace AshAndEmber
 
             int affected = 0;
             int alliesHit = 0;
+            // The per-target impact burst spawns a cluster of point lights + particles;
+            // in a dense horde a single blast can strike dozens of foes, so cap how many
+            // get the full flourish. Every target still takes damage and a (cheap)
+            // contour glow — only the extra light/particle burst is rationed.
+            int burstsLeft = ImpactBurstsPerCast;
             foreach (Agent a in targets)
             {
                 try
@@ -106,7 +118,7 @@ namespace AshAndEmber
                     if (cast.DamageCount > 0 && casterTeam != null && a.Team != null && a.Team == casterTeam)
                         alliesHit++;
                     ApplyEffectsToAgent(a, cast, caster);
-                    SpawnImpactBurst(a.Position, glowColor, 5f);
+                    if (burstsLeft > 0) { SpawnImpactBurst(a.Position, glowColor, 5f); burstsLeft--; }
                     BeginAgentGlow(a, glowColor, 2.5f);
                     affected++;
                 }

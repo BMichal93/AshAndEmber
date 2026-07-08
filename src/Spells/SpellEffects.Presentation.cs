@@ -190,12 +190,15 @@ namespace AshAndEmber
         }
 
         // Infers the focus-aura colour for an NPC spell caster from its identity:
-        // Ashen lords burn cold, colour lords burn violet, and bandits/troops who
-        // borrow the fire show plain red.
+        // any Ashen unit (lord, thrall, or Ashen-kingdom fighter) burns cold, colour
+        // lords burn violet, and other bandits/troops who borrow the fire show plain red.
         private static ColorSchool NpcCastFocusSchool(Agent agent)
         {
             try
             {
+                // The cold takes precedence — an Ashen thrall's wind-up aura must match
+                // the ashfire it is about to loose, not the plain-red troop default.
+                if (AshenVisuals.ShouldLookAshen(agent)) return ColorSchool.Ashen;
                 Hero h = (agent?.Character as CharacterObject)?.HeroObject;
                 if (h != null)
                     return ColourLordRegistry.IsAshenLord(h) ? ColorSchool.Ashen : ColorSchool.Purple;

@@ -69,6 +69,13 @@ namespace AshAndEmber
         private const float CooldownDuration = 18f;
         private const float WarmupDuration   = 8f;
         private const float MageChance       = 0.04f;  // ~1 caster per 25 eligible bandits
+        // Hard ceiling on simultaneous bandit casters, whatever the horde size. A
+        // 300-strong Ashen Spawn band would otherwise seed ~12 mages that all fire on
+        // the same 18 s beat — a dozen dense-melee blasts in one frame, each asking the
+        // renderer for a flood of point lights. A handful of casters reads exactly the
+        // same to the player and keeps the frame budget sane. Paired with staggered
+        // start cooldowns so even these few never all cast on the same tick.
+        private const int   MaxActiveMages   = 4;
         // Burnout chance varies by tier: looters barely control fire (high), Fire Worshippers are practiced (low)
         private const float BurnoutLooter   = 0.35f;
         private const float BurnoutBandit   = 0.25f;
@@ -147,12 +154,20 @@ namespace AshAndEmber
             _isSpecialBattle = IsSpecialBanditBattle();
 
             foreach (Agent a in candidates)
+            {
+                if (_mageAgents.Count >= MaxActiveMages) break;
                 if (_rng.NextDouble() < MageChance)
                     _mageAgents.Add(a);
+            }
 
             // Fire Worshippers and Ashen Spawn guarantee at least one mage caster
             if (_mageAgents.Count == 0 && candidates.Count > 0 && _isSpecialBattle)
                 _mageAgents.Add(candidates[_rng.Next(candidates.Count)]);
+
+            // Stagger each caster's first cast across the cooldown window so they never
+            // all fire on the same frame (which is what spikes the light/particle load).
+            foreach (Agent m in _mageAgents)
+                _cooldowns[m] = (float)_rng.NextDouble() * CooldownDuration;
         }
 
         private static bool IsSpecialBanditBattle()
@@ -232,13 +247,20 @@ namespace AshAndEmber
             string troopId   = (mage.Character as TaleWorlds.CampaignSystem.CharacterObject)?.StringId ?? "";
             bool isLooter    = troopId == "looter";
             bool isCultist   = _cultistTroops.Contains(troopId);
+            // The Ashen draw the cold fire, not real flame — their casts must read
+            // grey-blue, not orange. ShouldLookAshen covers the ashen troop tree and
+            // any Ashen Spawn / Ashen-kingdom warband.
+            bool isAshen     = AshenVisuals.ShouldLookAshen(mage);
+            ColorSchool castSchool = isAshen ? ColorSchool.Ashen : ColorSchool.Red;
 
             try
             {
                 string title = GetTitle(mage);
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"The {title} channels the fire!",
-                    new Color(0.85f, 0.35f, 0.15f)));
+                    isAshen ? $"The {title} draws the ashen cold!"
+                            : $"The {title} channels the fire!",
+                    isAshen ? new Color(0.45f, 0.55f, 0.70f)
+                            : new Color(0.85f, 0.35f, 0.15f)));
 
                 _cooldowns[mage] = CooldownDuration;
 
@@ -274,8 +296,8 @@ namespace AshAndEmber
                         else       SpellEffects.ExecuteNpcBlast(mage, 2, 1, 0, mage.Team);
                     }
 
-                    SpellEffects.BeginAgentGlow(mage, ColorSchool.Red, 2f);
-                    SpellEffects.TryCastSound(mage.Position, ColorSchool.Red);
+                    SpellEffects.BeginAgentGlow(mage, castSchool, 2f);
+                    SpellEffects.TryCastSound(mage.Position, castSchool);
                     SpellEffects.TryCastAnimation(mage);
                     SpellEffects.RecordMagicCast(mage.Position);
 
@@ -283,8 +305,10 @@ namespace AshAndEmber
                     {
                         SpellEffects.QueueKill(mage);
                         InformationManager.DisplayMessage(new InformationMessage(
-                            $"The {title} is consumed by the fire.",
-                            new Color(0.6f, 0.2f, 0.1f)));
+                            isAshen ? $"The {title} is consumed by the cold."
+                                    : $"The {title} is consumed by the fire.",
+                            isAshen ? new Color(0.35f, 0.42f, 0.55f)
+                                    : new Color(0.6f, 0.2f, 0.1f)));
                     }
                 });
             }

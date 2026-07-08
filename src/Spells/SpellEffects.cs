@@ -186,14 +186,16 @@ namespace AshAndEmber
             try { TryCastAnimation(caster); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // Returns ColorSchool.Ashen for Ashen lords so their spells show cold-blue
-        // visuals; null for everyone else so the default school logic applies.
+        // Returns ColorSchool.Ashen for anything that belongs to the cold — Ashen
+        // lords AND the Ashen Spawn troops/warbands — so their spells show cold-blue
+        // visuals instead of real fire; null for everyone else so the default school
+        // logic applies. ShouldLookAshen already covers ashen troop ids, Ashen Spawn
+        // parties, Ashen-kingdom fighters, and ashen heroes in one place.
         private static ColorSchool? ResolveNpcSchool(Agent caster)
         {
             try
             {
-                var h = (caster?.Character as TaleWorlds.CampaignSystem.CharacterObject)?.HeroObject;
-                if (h != null && ColourLordRegistry.IsAshenLord(h)) return ColorSchool.Ashen;
+                if (AshenVisuals.ShouldLookAshen(caster)) return ColorSchool.Ashen;
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return null;

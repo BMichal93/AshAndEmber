@@ -57,6 +57,15 @@ namespace AshAndEmber
         // ends. A commander's own gathered army is never touched.
         private static bool _armyIsOurs = false;
 
+        // Runtime-only breathing cycle for a host WE raised (see SustainArmy). A party
+        // in an army can neither raise nor be called into the realm's real armies, so
+        // we never pin a lone commander there forever. _ourArmyHoldUntil is the day we
+        // stop sustaining our patrol and dissolve it to free him; _reRaiseAfter is the
+        // day we may form a fresh patrol again (we ride escort until then, leaving the
+        // AI a clean window to draft him into — or let him raise — a proper war host).
+        private static double _ourArmyHoldUntil = 0.0;
+        private static double _reRaiseAfter     = 0.0;
+
         // Runtime-only: raising a host for this commander threw once, so stop trying
         // and just ride escort instead (avoids a per-tick crash loop).
         private static bool _armyCreateFailed = false;
@@ -100,6 +109,8 @@ namespace AshAndEmber
             _armyIsOurs = false;
             _armyCreateFailed = false;
             _internalArmyChange = false;
+            _ourArmyHoldUntil = 0.0;
+            _reRaiseAfter = 0.0;
         }
 
         // ── Lookups ───────────────────────────────────────────────────────────
@@ -323,7 +334,11 @@ namespace AshAndEmber
                 // (AiBehaviorObject) before anything reads it, or the army overlay UI
                 // NREs describing it — so if we can't find a settlement to target, we
                 // don't fabricate an army at all and just ride escort instead.
-                if (army == null && !_armyCreateFailed)
+                // During a breather (we recently dissolved our patrol to free the
+                // commander) we deliberately do NOT re-raise — ride escort instead so
+                // the campaign AI has a clean window to draft/lead him. The raise is
+                // also skipped once it has failed before.
+                if (army == null && !_armyCreateFailed && CampaignTime.Now.ToDays >= _reRaiseAfter)
                 {
                     var kingdom = lordParty.ActualClan?.Kingdom ?? lord.Clan?.Kingdom;
                     var objective = PickArmyObjective(lord, lordParty, kingdom);
@@ -348,6 +363,9 @@ namespace AshAndEmber
                         if (army != null)
                         {
                             _armyIsOurs = true;
+                            // Hold the patrol only for a spell, then release him (see
+                            // SustainArmy) so he is not locked out of the realm's armies.
+                            _ourArmyHoldUntil = CampaignTime.Now.ToDays + SoldierServiceMath.HostHoldDays;
                             // Belt-and-braces: never leave the objective null.
                             try { if (army.AiBehaviorObject == null) army.AiBehaviorObject = objective; }
                             catch (System.Exception ex) { AshAndEmber.ModLog.Error(ex); }
@@ -389,6 +407,14 @@ namespace AshAndEmber
         // Keep the host we raised from dispersing under the player (a lone-commander
         // patrolling army bleeds cohesion). A commander's own gathered army is left
         // to the campaign AI. Called on the slow tick.
+        //
+        // But a party that is in an army can neither raise nor be summoned to the
+        // realm's real armies (vanilla's CanLordCreateArmy / call-to-arms eligibility
+        // both refuse it), so we must NOT pin a lone commander in our patrol forever.
+        // After HostHoldDays we dissolve our host and ride escort for a breather,
+        // giving the campaign AI a clean window to draft him into — or let him raise —
+        // a proper war host. If he does answer a muster, the tick self-heal folds the
+        // player into that host; if none comes, the patrol re-forms after the breather.
         private static void SustainArmy(MobileParty lordParty)
         {
             try
@@ -396,6 +422,15 @@ namespace AshAndEmber
                 if (!_armyIsOurs || lordParty == null) return;
                 var army = lordParty.Army;
                 if (army == null || army.LeaderParty != lordParty) return;
+
+                // Held long enough — release the commander so the realm can use him.
+                if (CampaignTime.Now.ToDays >= _ourArmyHoldUntil)
+                {
+                    DetachFromArmy();
+                    _reRaiseAfter = CampaignTime.Now.ToDays + SoldierServiceMath.HostBreatherDays;
+                    return;
+                }
+
                 if (army.Cohesion < 90f) army.Cohesion = 100f;
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -452,6 +487,8 @@ namespace AshAndEmber
             _finalizePending = false;
             _armyIsOurs = false;
             _armyCreateFailed = false;
+            _ourArmyHoldUntil = 0.0;
+            _reRaiseAfter = 0.0;
         }
 
         // (7) Full term served: parting bonus + clean release, no ill will.

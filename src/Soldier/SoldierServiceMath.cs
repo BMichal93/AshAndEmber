@@ -15,6 +15,16 @@ namespace AshAndEmber
         // a half-year, and a full campaign year on the Calradic calendar.
         public static readonly int[] TermDays = { 21, 42, 84 };
 
+        // When the commander leads no host of his own, we raise a small patrol under
+        // his banner so the player marches and fights as a true member. But a party
+        // that is in an army can neither raise nor be summoned to the realm's real
+        // armies, so we must not pin him there forever: after HostHoldDays of
+        // patrolling we dissolve our host and ride escort for HostBreatherDays,
+        // giving the campaign AI a clean window to draft him into (or let him raise)
+        // a proper war host. If none comes, the patrol re-forms.
+        public const double HostHoldDays     = 4.0;
+        public const double HostBreatherDays = 3.0;
+
         // Weekly coin a commander pays a hired soldier: the party's full upkeep
         // (so taking the lord's coin never costs the player wages) plus a small
         // bounty that grows with the player's standing (clan tier).

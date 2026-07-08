@@ -96,6 +96,7 @@ namespace AshAndEmber
 
         private static GameEntity SpawnParticleEntity(Vec3 position, string particleName)
         {
+            if (VisualBudgetExceeded()) return null;
             try
             {
                 var scene = Mission.Current?.Scene;
@@ -282,12 +283,19 @@ namespace AshAndEmber
         {
             bool useFire = school != ColorSchool.Ashen;
 
-            // Central detonation column — explosion particles at three heights
+            // Central detonation column — explosion particles at three heights. The
+            // Ashen cold bursts as a frost plume, not a fireball.
             if (useFire)
             {
                 SpawnExplosionParticle(pos,                           duration);
                 SpawnExplosionParticle(pos + new Vec3(0f, 0f, 0.6f), duration * 0.75f);
                 SpawnExplosionParticle(pos + new Vec3(0f, 0f, 1.2f), duration * 0.5f);
+            }
+            else
+            {
+                SpawnTempSnowParticle(pos,                           duration);
+                SpawnTempSnowParticle(pos + new Vec3(0f, 0f, 0.6f), duration * 0.75f);
+                SpawnTempSnowParticle(pos + new Vec3(0f, 0f, 1.2f), duration * 0.5f);
             }
 
             // Brief blinding flash then sustained glow
@@ -303,6 +311,7 @@ namespace AshAndEmber
                 double angle = Math.PI * 2.0 / count * i;
                 Vec3 rp = pos + new Vec3((float)Math.Cos(angle) * ringR, (float)Math.Sin(angle) * ringR, 0f);
                 if (useFire) SpawnTempFireParticle(rp, duration * 0.5f);
+                else         SpawnTempSnowWisp(rp, duration * 0.5f);
                 SpawnTempLight(rp, school, 6f, duration * 0.4f);
             }
         }
@@ -313,11 +322,16 @@ namespace AshAndEmber
         {
             bool useFire = school != ColorSchool.Ashen;
 
-            // Central detonation
+            // Central detonation — frost plume for the Ashen cold.
             if (useFire)
             {
                 SpawnExplosionParticle(origin,                           duration);
                 SpawnExplosionParticle(origin + new Vec3(0f, 0f, 0.5f), duration * 0.8f);
+            }
+            else
+            {
+                SpawnTempSnowParticle(origin,                           duration);
+                SpawnTempSnowParticle(origin + new Vec3(0f, 0f, 0.5f), duration * 0.8f);
             }
             SpawnTempLight(origin, school, Math.Min(aoeRadius * 2.5f, 20f), duration);
             SpawnTempLight(origin + new Vec3(0f, 0f, 1.2f), school, Math.Min(aoeRadius * 1.5f, 14f), duration * 0.5f);
@@ -330,6 +344,7 @@ namespace AshAndEmber
                 double angle = Math.PI * 2.0 / innerCount * i;
                 Vec3 p = origin + new Vec3((float)Math.Cos(angle) * innerR, (float)Math.Sin(angle) * innerR, 0f);
                 if (useFire) SpawnTempFireParticle(p, duration * 0.7f);
+                else         SpawnTempSnowWisp(p, duration * 0.7f);
                 SpawnTempLight(p, school, 7f, duration * 0.6f);
             }
 
@@ -341,6 +356,7 @@ namespace AshAndEmber
                 double angle = Math.PI * 2.0 / outerCount * i + Math.PI / outerCount;
                 Vec3 p = origin + new Vec3((float)Math.Cos(angle) * outerR, (float)Math.Sin(angle) * outerR, 0f);
                 if (useFire) SpawnTempFireParticle(p, duration * 0.5f);
+                else         SpawnTempSnowWisp(p, duration * 0.5f);
                 SpawnTempLight(p, school, 5f, duration * 0.35f);
             }
         }

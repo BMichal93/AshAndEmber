@@ -136,8 +136,29 @@ namespace AshAndEmber
             _areaEffects.Add(node);
         }
 
+        // ── Visual-entity budget ─────────────────────────────────────────────────
+        // Point lights and particle GameEntities are the single most expensive thing
+        // the spell visuals create, and the legacy NPC blast/burst path spawns them
+        // per-cast AND per-target with no ceiling. A large special battle (e.g. a
+        // 300-strong Ashen Spawn horde seeding a dozen bandit mages that all fire on
+        // the same beat, each blast striking dozens of foes) could ask the renderer
+        // for thousands of dynamic lights in one frame and hard-freeze. This budget
+        // caps the number of live effect nodes: over the ceiling, the two entity
+        // factories below return null (the caller's gameplay node is still created —
+        // it simply carries no light/particle), so magic degrades to "less shiny"
+        // instead of locking up. Normal play never approaches the ceiling.
+        private const int MaxVisualEntities = 220;
+
+        private static bool VisualBudgetExceeded() => _areaEffects.Count >= MaxVisualEntities;
+
+        // How many struck targets per blast/burst get the full impact flourish (a
+        // cluster of point lights + particles). The rest still take damage and a cheap
+        // contour glow — the flourish is what scales badly in a dense melee.
+        internal const int ImpactBurstsPerCast = 6;
+
         private static GameEntity SpawnAreaLightRaw(Vec3 position, Vec3 rgb, float radius)
         {
+            if (VisualBudgetExceeded()) return null;
             try
             {
                 var scene = Mission.Current?.Scene;
@@ -223,12 +244,20 @@ namespace AshAndEmber
             };
             foreach (Vec3 pos in pts)
                 SpawnTempLight(pos, school, 8f, duration);
-            // Fire particles spread along the cone up to the actual range
+            // Fire particles spread along the cone up to the actual range — the Ashen
+            // cold looses driven frost in place of flame, so the cone still has a
+            // visible medium (blue-white snow, not orange fire).
             if (school != ColorSchool.Ashen)
             {
                 SpawnTempFireParticle(origin,               duration * 2.5f);
                 SpawnTempFireParticle(origin + fwd * range * 0.5f, duration * 2f);
                 SpawnTempFireParticle(origin + fwd * range,  duration * 1.5f);
+            }
+            else
+            {
+                SpawnTempSnowParticle(origin,               duration * 2.5f);
+                SpawnTempSnowParticle(origin + fwd * range * 0.5f, duration * 2f);
+                SpawnTempSnowParticle(origin + fwd * range,  duration * 1.5f);
             }
         }
 
@@ -248,6 +277,12 @@ namespace AshAndEmber
             {
                 SpawnTempFireParticle(origin, duration * 2f);
                 SpawnTempFireParticle(origin + new Vec3(0.4f, 0.2f, 0f), duration * 1.5f);
+            }
+            else
+            {
+                // Cold ashfire: the impact throws up driven frost, not embers.
+                SpawnTempSnowParticle(origin, duration * 2f);
+                SpawnTempSnowParticle(origin + new Vec3(0.4f, 0.2f, 0f), duration * 1.5f);
             }
         }
 

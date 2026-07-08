@@ -289,6 +289,9 @@ namespace AshAndEmber
 
             int affected = 0;
             int alliesHit = 0;
+            // Cap the per-target impact flourish (point lights + particles) so a burst
+            // landing in a dense horde cannot ask the renderer for hundreds of lights.
+            int burstsLeft = ImpactBurstsPerCast;
             foreach (Agent a in targets)
             {
                 try
@@ -303,7 +306,7 @@ namespace AshAndEmber
                     if (useCast.DamageCount > 0 && casterTeam != null && a.Team != null && a.Team == casterTeam)
                         alliesHit++;
                     ApplyEffectsToAgent(a, useCast, caster);
-                    SpawnImpactBurst(a.Position, col, 4f);
+                    if (burstsLeft > 0) { SpawnImpactBurst(a.Position, col, 4f); burstsLeft--; }
                     affected++;
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

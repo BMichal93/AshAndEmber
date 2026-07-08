@@ -55,10 +55,25 @@ namespace AshAndEmber
         private static ItemObject _hoodItem;
         private static bool       _hoodSearched;
 
+        // Explicit, menacing native items chosen first (a cold-cultist hood and a
+        // dark hooded cloak). The old approach — "cheapest native item matching a
+        // fuzzy hint" — resolved the head slot to `head_wrapped` ("Female Rural
+        // Headwrap", mesh womens_headwrap) and capes to female costume cloaks, so a
+        // whole Ashen horde read as a swarm of peasant women. These ids are checked
+        // by name against MBObjectManager first; the hint search below is only a
+        // last-resort fallback for builds where an id is missing.
+        private static readonly string[] _preferredCapeIds =
+            { "hood", "green_hood", "empire_cape_a", "a_battania_cloak_a" };
+        private static readonly string[] _preferredHoodIds =
+            { "assassin_hood", "battania_civil_hood", "pilgrim_hood", "fur_hood", "nomad_padded_hood" };
+
         private static readonly string[] _capeHints =
-            { "hood", "cloak", "shawl", "scarf", "cape" };
+            { "hood", "cloak", "cape" };
         private static readonly string[] _hoodHints =
-            { "hood", "cowl", "wrapped", "kerchief" };
+            { "hood", "cowl" };
+        // Never dress the cold dead in a woman's rural headscarf / costume cloak.
+        private static readonly string[] _femaleItemHints =
+            { "women", "female", "shawl", "kerchief", "headwrap" };
 
         public static void Reset()
         {
@@ -287,7 +302,7 @@ namespace AshAndEmber
                     eq[(EquipmentIndex)i] = src[(EquipmentIndex)i];
 
                 bool changed = false;
-                var cape = FindWitchyItem(ItemObject.ItemTypeEnum.Cape,
+                var cape = FindWitchyItem(ItemObject.ItemTypeEnum.Cape, _preferredCapeIds,
                                           _capeHints, ref _capeItem, ref _capeSearched);
                 if (cape != null)
                 {
@@ -298,7 +313,7 @@ namespace AshAndEmber
                 var character = agent.Character as CharacterObject;
                 if (character != null && _ashenTroopIds.Contains(character.StringId))
                 {
-                    var hood = FindWitchyItem(ItemObject.ItemTypeEnum.HeadArmor,
+                    var hood = FindWitchyItem(ItemObject.ItemTypeEnum.HeadArmor, _preferredHoodIds,
                                               _hoodHints, ref _hoodItem, ref _hoodSearched);
                     if (hood != null)
                     {
@@ -355,26 +370,56 @@ namespace AshAndEmber
             return false;
         }
 
-        // Cheapest native item of the given type whose id matches a hint —
-        // deterministic, and immune to item-id changes between game versions.
+        // Resolves a menacing garment for the given slot. Explicit preferred ids are
+        // tried first (deterministic, hand-picked to read as a cold cultist); only if
+        // none of those exist in this build does it fall back to the cheapest native
+        // item matching a hint — and that fallback now skips female-coded pieces
+        // (women's headwraps, shawls) so the Ashen never dress as peasant women.
         private static ItemObject FindWitchyItem(ItemObject.ItemTypeEnum type,
-            string[] hints, ref ItemObject cache, ref bool searched)
+            string[] preferredIds, string[] hints, ref ItemObject cache, ref bool searched)
         {
             if (searched) return cache;
             searched = true;
             try
             {
-                var items = MBObjectManager.Instance?.GetObjectTypeList<ItemObject>();
+                var mgr = MBObjectManager.Instance;
+                if (mgr != null)
+                {
+                    foreach (string id in preferredIds)
+                    {
+                        var pick = mgr.GetObject<ItemObject>(id);
+                        if (pick != null && pick.ItemType == type) { cache = pick; return cache; }
+                    }
+                }
+
+                var items = mgr?.GetObjectTypeList<ItemObject>();
                 if (items == null) return null;
                 cache = items
                     .Where(it => it != null && it.ItemType == type && it.StringId != null
-                              && hints.Any(h => it.StringId.IndexOf(h, StringComparison.OrdinalIgnoreCase) >= 0))
+                              && hints.Any(h => it.StringId.IndexOf(h, StringComparison.OrdinalIgnoreCase) >= 0)
+                              && !IsFemaleCoded(it))
                     .OrderBy(it => it.Value)
                     .ThenBy(it => it.StringId)
                     .FirstOrDefault();
             }
             catch { cache = null; }
             return cache;
+        }
+
+        // True when an item's id or mesh marks it as a female / peasant-woman piece.
+        private static bool IsFemaleCoded(ItemObject it)
+        {
+            try
+            {
+                string id   = it.StringId ?? "";
+                string mesh = it.MultiMeshName ?? "";
+                foreach (string h in _femaleItemHints)
+                    if (id.IndexOf(h, StringComparison.OrdinalIgnoreCase) >= 0
+                     || mesh.IndexOf(h, StringComparison.OrdinalIgnoreCase) >= 0)
+                        return true;
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            return false;
         }
     }
 }
