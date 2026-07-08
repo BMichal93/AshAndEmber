@@ -1359,6 +1359,28 @@ namespace AshAndEmber.Tests
                     $"KeyForElement/ElementForKey must round-trip for {el}.");
         }
 
+        [Test]
+        public void NatureMath_KnockbackEase_MonotonicFromZeroToOne()
+        {
+            Assert.AreEqual(0f, NatureMath.KnockbackEase(0f), 0.0001f);
+            Assert.AreEqual(0f, NatureMath.KnockbackEase(-1f), 0.0001f);
+            Assert.AreEqual(1f, NatureMath.KnockbackEase(NatureMath.KnockbackPushDuration), 0.0001f);
+            Assert.AreEqual(1f, NatureMath.KnockbackEase(NatureMath.KnockbackPushDuration + 1f), 0.0001f);
+
+            // Ease-OUT: covers more ground in the first half of the push than the second.
+            float half = NatureMath.KnockbackPushDuration * 0.5f;
+            float atHalfTime = NatureMath.KnockbackEase(half);
+            Assert.Greater(atHalfTime, 0.5f);
+
+            float prev = 0f;
+            for (int i = 1; i <= 10; i++)
+            {
+                float frac = NatureMath.KnockbackEase(NatureMath.KnockbackPushDuration * (i / 10f));
+                Assert.GreaterOrEqual(frac, prev, "Knockback ease must never move an agent backward.");
+                prev = frac;
+            }
+        }
+
         // ── LivingEnergyMath · capacity ────────────────────────────────────────
         [Test]
         public void LivingEnergyMath_AreaCapacity_ForestRichestDesertPoorest()
