@@ -44,16 +44,22 @@ namespace AshAndEmber
         // Runtime-only guard so the desertion prompt is raised once, not per tick.
         private static bool _leavePromptOpen = false;
 
-        // Runtime-only: a service deal was just sealed inside the map encounter with
-        // the commander. The next map tick steps off that encounter so the player
-        // can be folded into the host (see OnTick) instead of being dropped onto the
-        // encounter's Attack/Retreat menu.
-        private static bool _finishEncounterPending = false;
+        // Runtime-only: the service deal was sealed from inside the map meeting with
+        // the commander. We must NOT change the player's faction or touch armies
+        // while that encounter is live (it corrupts the encounter into a hostile
+        // Attack/Surrender resolution and can crash). So the deal only flags the
+        // meeting to dissolve, and the first clean map tick (no encounter, no battle)
+        // finalises it: mercenary contract + folding into the host. See OnTick.
+        private static bool _finalizePending = false;
 
         // Runtime-only: we raised a host for the commander ourselves (he led none
         // when the player took service), so it is ours to dissolve when the service
         // ends. A commander's own gathered army is never touched.
         private static bool _armyIsOurs = false;
+
+        // Runtime-only: raising a host for this commander threw once, so stop trying
+        // and just ride escort instead (avoids a per-tick crash loop).
+        private static bool _armyCreateFailed = false;
 
         // Runtime-only re-entrancy guard: set while WE add/remove the player's party
         // to/from a host, so our own OnPartyLeftArmy handler doesn't mistake an
@@ -90,8 +96,9 @@ namespace AshAndEmber
         {
             _lordId = ""; _kingdomId = ""; _endDays = 0.0; _termDays = 0.0;
             _leavePromptOpen = false;
-            _finishEncounterPending = false;
+            _finalizePending = false;
             _armyIsOurs = false;
+            _armyCreateFailed = false;
             _internalArmyChange = false;
         }
 
@@ -170,6 +177,11 @@ namespace AshAndEmber
         }
 
         // ── Joining ───────────────────────────────────────────────────────────
+        // Runs as a conversation consequence, so we are still INSIDE the map meeting
+        // with the lord. Changing the player's faction or touching armies here
+        // corrupts that encounter (the engine then offers a hostile Attack/Surrender
+        // resolution, and can crash). So we only record the deal and ask the meeting
+        // to dissolve cleanly; FinalizeJoin (next clean tick) does the real work.
         internal static void JoinService(Hero lord, int termDays)
         {
             try
@@ -183,23 +195,15 @@ namespace AshAndEmber
                 _kingdomId = kingdom.StringId;
                 _termDays  = termDays;
                 _endDays   = CampaignTime.Now.ToDays + termDays;
+                _armyIsOurs = false;
+                _armyCreateFailed = false;
 
-                // (4) Treated as a mercenary of the realm, exactly like a contract.
-                try
-                {
-                    int award = clan.MercenaryAwardMultiplier > 0 ? clan.MercenaryAwardMultiplier : 1;
-                    ChangeKingdomAction.ApplyByJoinFactionAsMercenary(
-                        clan, kingdom, CampaignTime.DaysFromNow(termDays), award, false);
-                }
+                // Dissolve the meeting when the conversation closes instead of
+                // presenting its encounter menu (Attack/Leave/Surrender).
+                try { if (PlayerEncounter.Current != null) PlayerEncounter.LeaveEncounter = true; }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                // (3) Fall in and march *in the commander's host*. The deal is
-                // sealed from inside the map encounter with the lord; the next map
-                // tick steps off that encounter (see OnTick) and only then folds the
-                // player's party into the army — so the player isn't dropped onto the
-                // encounter's Attack/Retreat menu, and joining an army mid-encounter
-                // is avoided.
-                _finishEncounterPending = true;
+                _finalizePending = true;
 
                 try
                 {
@@ -211,13 +215,97 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
+        // Finish the join once we are safely back on the map (no live encounter, no
+        // battle): become a mercenary of the realm, then fold into the host.
+        private static void FinalizeJoin()
+        {
+            try
+            {
+                var lord = ServingLord();
+                if (lord?.Clan?.Kingdom == null || lord.PartyBelongedTo == null)
+                {
+                    // Commander vanished between sealing and finalising — abort cleanly.
+                    EndServiceCommon();
+                    return;
+                }
+                var kingdom = lord.Clan.Kingdom;
+                var clan    = Hero.MainHero?.Clan;
+                if (clan == null) { EndServiceCommon(); return; }
+
+                // (4) Treated as a mercenary of the realm, exactly like a contract.
+                if (clan.Kingdom == null)
+                {
+                    try
+                    {
+                        int award = clan.MercenaryAwardMultiplier > 0 ? clan.MercenaryAwardMultiplier : 1;
+                        int rem   = Math.Max(1, (int)Math.Ceiling(_endDays - CampaignTime.Now.ToDays));
+                        ChangeKingdomAction.ApplyByJoinFactionAsMercenary(
+                            clan, kingdom, CampaignTime.DaysFromNow(rem), award, false);
+                    }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+
+                // (3) Fall in and march in the commander's host.
+                ReassertArmy(lord);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Pick a valid settlement for a raised host to nominally target. Every step
+        // is null-guarded; returns null only if nothing usable exists (in which case
+        // we do not raise a host at all).
+        private static Settlement PickArmyObjective(Hero lord, MobileParty lordParty, Kingdom kingdom)
+        {
+            try
+            {
+                var s = lordParty?.TargetSettlement;
+                if (s != null) return s;
+
+                s = lordParty?.ShortTermTargetSettlement;
+                if (s != null) return s;
+
+                s = lordParty?.CurrentSettlement;
+                if (s != null) return s;
+
+                s = lord?.HomeSettlement;
+                if (s != null) return s;
+
+                s = lordParty?.HomeSettlement;
+                if (s != null) return s;
+
+                s = kingdom?.FactionMidSettlement;
+                if (s != null) return s;
+
+                if (kingdom?.Fiefs != null)
+                {
+                    foreach (var town in kingdom.Fiefs)
+                    {
+                        var ts = town?.Settlement;
+                        if (ts != null) return ts;
+                    }
+                }
+
+                if (kingdom?.Settlements != null)
+                {
+                    foreach (var set in kingdom.Settlements)
+                        if (set != null) return set;
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            return null;
+        }
+
         // ── Army membership ───────────────────────────────────────────────────
         // Fold the player's party into the commander's host so they truly march
         // with the company: moved by the army leader, and pulled into his battles
         // on his side (earning renown/XP/loot) — exactly like any lord who answers
         // a gathering-army call. If the commander leads no host of his own, we raise
-        // a small one for him (ours to dissolve when the service ends). Idempotent
-        // and self-healing: safe to call every tick.
+        // a small one for him (ours to dissolve when the service ends); if that ever
+        // fails we fall back to riding escort so the player at least travels with him.
+        // Idempotent and self-healing: safe to call every clean map tick.
+        //
+        // Never call this while a PlayerEncounter is live — attaching a party to an
+        // army mid-encounter corrupts the encounter.
         private static void ReassertArmy(Hero lord)
         {
             try
@@ -231,33 +319,69 @@ namespace AshAndEmber
                 // The commander is soldiering alone — raise a host under his banner
                 // so the player can serve in it. (Attaching to a party outside an
                 // army does not fight as one; only army members auto-join battles on
-                // the same side.)
-                if (army == null)
+                // the same side.) A hand-built army MUST be given a valid objective
+                // (AiBehaviorObject) before anything reads it, or the army overlay UI
+                // NREs describing it — so if we can't find a settlement to target, we
+                // don't fabricate an army at all and just ride escort instead.
+                if (army == null && !_armyCreateFailed)
                 {
                     var kingdom = lordParty.ActualClan?.Kingdom ?? lord.Clan?.Kingdom;
-                    if (kingdom == null || kingdom.IsEliminated) return;
-
-                    _internalArmyChange = true;
-                    try
+                    var objective = PickArmyObjective(lord, lordParty, kingdom);
+                    if (kingdom != null && !kingdom.IsEliminated && objective != null)
                     {
-                        var raised = new Army(kingdom, lordParty, Army.ArmyTypes.Patrolling);
-                        // The ctor normally binds the leader; assign defensively in
-                        // case a game version leaves it unset, so we don't loop.
-                        if (lordParty.Army == null) lordParty.Army = raised;
+                        _internalArmyChange = true;
+                        try
+                        {
+                            var raised = new Army(kingdom, lordParty, Army.ArmyTypes.Patrolling);
+                            if (raised != null)
+                            {
+                                // Give it a target so the AI and the overlay UI have
+                                // something non-null to work with.
+                                try { raised.AiBehaviorObject = objective; }
+                                catch (System.Exception ex) { AshAndEmber.ModLog.Error(ex); }
+                            }
+                        }
+                        catch (System.Exception ex) { _armyCreateFailed = true; AshAndEmber.ModLog.Error(ex); }
+                        finally { _internalArmyChange = false; }
+
+                        army = lordParty.Army;
+                        if (army != null)
+                        {
+                            _armyIsOurs = true;
+                            // Belt-and-braces: never leave the objective null.
+                            try { if (army.AiBehaviorObject == null) army.AiBehaviorObject = objective; }
+                            catch (System.Exception ex) { AshAndEmber.ModLog.Error(ex); }
+                        }
                     }
-                    finally { _internalArmyChange = false; }
-
-                    army = lordParty.Army;
-                    if (army == null) return; // construction failed — bail, try again next tick
-                    _armyIsOurs = true;
                 }
 
-                if (main.Army != army)
+                if (army != null)
                 {
-                    _internalArmyChange = true;
-                    try { army.AddPartyToMergedParties(main); }
-                    finally { _internalArmyChange = false; }
+                    if (main.Army != army)
+                    {
+                        _internalArmyChange = true;
+                        try
+                        {
+                            // Register membership FIRST, then attach. AddPartyToMerged-
+                            // Parties sets AttachedTo (firing vanilla's statistics hook)
+                            // before it would set Army, and that hook dereferences
+                            // MainParty.Army — so for the *player's own* party it NREs
+                            // unless MainParty.Army is already set. Setting it up front
+                            // (as the join flow expects) avoids the crash; the attach
+                            // then also hands map control to the army via OnJoinArmy.
+                            main.Army = army;
+                            army.AddPartyToMergedParties(main);
+                        }
+                        catch (System.Exception ex) { AshAndEmber.ModLog.Error(ex); }
+                        finally { _internalArmyChange = false; }
+                    }
+                    return;
                 }
+
+                // No host to join (couldn't raise one) — ride escort so we still
+                // travel together; the tick will keep trying to form a host.
+                try { main.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false); }
+                catch (System.Exception ex) { AshAndEmber.ModLog.Error(ex); }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -325,8 +449,9 @@ namespace AshAndEmber
 
             _lordId = ""; _kingdomId = ""; _endDays = 0.0; _termDays = 0.0;
             _leavePromptOpen = false;
-            _finishEncounterPending = false;
+            _finalizePending = false;
             _armyIsOurs = false;
+            _armyCreateFailed = false;
         }
 
         // (7) Full term served: parting bonus + clean release, no ill will.
@@ -490,8 +615,9 @@ namespace AshAndEmber
                     return;
                 }
 
-                // Stay in the column and keep any host we raised from dispersing.
-                if (!_finishEncounterPending && !_leavePromptOpen)
+                // Stay in the column and keep any host we raised from dispersing —
+                // but only once the join has finalised and no encounter is live.
+                if (!_finalizePending && !_leavePromptOpen && !IsEncounterLive())
                 {
                     ReassertArmy(lord);
                     SustainArmy(lordParty);
@@ -500,30 +626,44 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // Fast tick: fold the player into the commander's host and keep them there.
-        // Movement, settlement stops, and battle-joining are all the army's job once
-        // the player is a member — so this tick only has to seal the join encounter
-        // and self-heal the membership if the engine ever drops it.
+        // True if the player is inside a map encounter or battle right now. We must
+        // never change faction or touch armies while this holds.
+        private static bool IsEncounterLive()
+        {
+            try
+            {
+                if (PlayerEncounter.Current != null) return true;
+                if (MapEvent.PlayerMapEvent != null) return true;
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            return false;
+        }
+
+        // Fast tick: finalise the join once the meeting has closed, then keep the
+        // player folded into the commander's host (movement, settlement stops, and
+        // battle-joining are all the army's job once the player is a member).
         private void OnTick(float dt)
         {
             try
             {
                 if (!InService) return;
 
-                // A service deal was just sealed from inside the map encounter with
-                // the commander. Step off that encounter now (the conversation has
-                // closed by the time this tick fires), then fold the player's party
-                // into the host — instead of leaving the player on the encounter's
-                // Attack/Retreat menu.
-                if (_finishEncounterPending)
+                // The deal was sealed inside the map meeting with the commander; we
+                // deliberately did NOT change faction or touch armies there. Wait for
+                // the meeting to fully close (the conversation has ended by the time
+                // this tick fires, and we asked the encounter to dissolve), then do
+                // the real join on solid ground — no Attack/Surrender menu, no crash.
+                if (_finalizePending)
                 {
-                    _finishEncounterPending = false;
-                    try
+                    if (IsEncounterLive())
                     {
-                        if (PlayerEncounter.Current != null) PlayerEncounter.Finish(true);
+                        // Meeting still resolving — keep asking it to dissolve, wait.
+                        try { PlayerEncounter.LeaveEncounter = true; }
+                        catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        return;
                     }
-                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                    ReassertArmy(ServingLord());
+                    _finalizePending = false;
+                    FinalizeJoin();
                     return;
                 }
 
@@ -531,8 +671,7 @@ namespace AshAndEmber
 
                 // Never interfere mid-encounter / mid-battle — the engine drives
                 // things then, and joining/leaving a host must not race it.
-                if (PlayerEncounter.Current != null) return;
-                if (MapEvent.PlayerMapEvent != null) return;
+                if (IsEncounterLive()) return;
 
                 var main = MobileParty.MainParty;
                 var lord = ServingLord();
@@ -542,8 +681,8 @@ namespace AshAndEmber
                 // Already marching in the commander's host — nothing to do.
                 if (main.Army != null && main.Army == lordParty.Army) return;
 
-                // Otherwise fold back in (first join after the encounter, the host
-                // dispersed under us, or the commander gathered/joined a new one).
+                // Otherwise fold back in (host dispersed under us, or the commander
+                // gathered/joined a new one, or we're riding escort as a fallback).
                 ReassertArmy(lord);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
