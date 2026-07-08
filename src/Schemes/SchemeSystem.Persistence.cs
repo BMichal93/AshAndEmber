@@ -91,6 +91,7 @@ namespace AshAndEmber
             store.SyncData("SCH_PendOpType", ref _pendingOpType);
             store.SyncData("SCH_PendOpHero", ref _pendingOpHeroId);
             store.SyncData("SCH_PendOpSett", ref _pendingOpSettId);
+            store.SyncData("SCH_PendOpSkip", ref _pendingOpSkip);
         }
     }
 }

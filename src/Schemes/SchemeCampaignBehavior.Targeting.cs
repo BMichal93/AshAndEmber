@@ -274,6 +274,7 @@ namespace AshAndEmber
                 string failNote = isAss
                     ? "If blown (exposure >21): assassin captured — crime +80, relations −80, 60% chance of war."
                     : "If blown (exposure >21): operation backfires — consequences specific to the scheme type.";
+                int skipPct = (int)(SchemeMinigame.SkipSuccessChance * 100f);
                 string body     = $"Scheme: {_selectedDef.Name}\n"
                                 + $"Target: {tName}\n"
                                 + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
@@ -282,18 +283,41 @@ namespace AshAndEmber
                                 + abilityBlock
                                 + "Receive field reports. Choose how hard your operative pushes — but the outcome "
                                 + "is unknown until you commit. Extract once you reach the threshold, or keep "
-                                + "pushing at your own risk. Rounds are limited — don't run out.\n\n"
-                                + failNote;
+                                + "pushing at your own risk (rounds are limited — don't run out). Pushing well past "
+                                + "the threshold before extracting earns a stronger result — more damage, more "
+                                + "skill gained, a faster-recovering network.\n\n"
+                                + failNote
+                                + $"\n\nOr skip the Gambit entirely and Trust to Instinct — one Roguery gamble "
+                                + $"({skipPct}%) decides it outright, with no bonus and no rounds.";
 
-                InformationManager.ShowInquiry(
-                    new InquiryData("Confirm Operation", body, true, true, "Begin the Gambit", "Stand Down",
-                        () => CommitScheme(targetHero, targetSett), null),
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement("play", "Begin the Gambit — run the operation", null, true,
+                        "Play the Gambit in full: field reports, press-on choices, and a chance at a stronger result the deeper you push."),
+                    new InquiryElement("skip", $"Trust to Instinct — skip the Gambit  [{skipPct}% Roguery]", null, true,
+                        $"One Roguery gamble ({skipPct}%) decides success or failure immediately — no field reports, no bonus, no risk of running out of rounds."),
+                };
+
+                MBInformationManager.ShowMultiSelectionInquiry(
+                    new MultiSelectionInquiryData(
+                        "Confirm Operation", body, options, false, 1, 1,
+                        "Proceed", "Stand Down",
+                        chosen =>
+                        {
+                            try
+                            {
+                                bool playMinigame = (chosen?[0]?.Identifier as string ?? "play") == "play";
+                                CommitScheme(targetHero, targetSett, playMinigame);
+                            }
+                            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        },
+                        null),
                     true);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        private static void CommitScheme(Hero targetHero, Settlement targetSett)
+        private static void CommitScheme(Hero targetHero, Settlement targetSett, bool playMinigame)
         {
             try
             {
@@ -348,16 +372,21 @@ namespace AshAndEmber
                 try { SchemeSystem.PreStampTargetCooldown(capturedDef.Type, capturedHero, capturedSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Record the committed operation. If the player reloads before the
-                // Gambit resolves, OnSessionLaunched re-launches it so the costs
-                // already paid are not silently lost.
-                try { SchemeSystem.SetPendingPlayerOperation(capturedDef.Type, capturedHero, capturedSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // Gambit (or the deferred skip resolution) resolves, OnSessionLaunched
+                // re-launches the right path so the costs already paid are not silently lost.
+                try { SchemeSystem.SetPendingPlayerOperation(capturedDef.Type, capturedHero, capturedSett, skip: !playMinigame); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 try { GameMenu.SwitchToMenu("town"); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Defer so menu transition completes before the first inquiry opens.
                 MageKnowledge._deferredInquiry = () =>
                 {
-                    try { SchemeMinigame.Begin(capturedDef, capturedHero, capturedSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try
+                    {
+                        if (playMinigame) SchemeMinigame.Begin(capturedDef, capturedHero, capturedSett);
+                        else              SchemeMinigame.ResolveSkip(capturedDef, capturedHero, capturedSett);
+                    }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

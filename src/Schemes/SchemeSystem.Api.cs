@@ -223,10 +223,16 @@ namespace AshAndEmber
             }
         }
 
+        // At most this many new NPC schemes may launch world-wide per day. NPC-vs-NPC
+        // resolutions only ever post a transient, non-blocking message (see Notify),
+        // so raising this doesn't add popups — it just makes the world feel like
+        // other lords are actually using the system.
+        private const int MaxNpcSchemesPerDay = 3;
+
         /// Each eligible lord independently rolls to attempt a scheme each day.
         /// Villainous or calculating lords scheme readily; honourable lords almost never do
-        /// (they rely on Sanctuary instead). The 20–35-day per-lord cooldown caps each lord
-        /// at roughly 1–2 schemes per year.
+        /// (they rely on Sanctuary instead). The 15–25-day per-lord cooldown caps each lord
+        /// at roughly 2–3 schemes per year.
         internal static void NpcSchemeTick()
         {
             if (Campaign.Current == null) return;
@@ -242,11 +248,11 @@ namespace AshAndEmber
                     .ToList();
                 if (candidates.Count == 0) return;
 
-                // At most one new NPC scheme per day — prevents notification clusters.
-                bool schemeLaunchedToday = false;
+                int  schemesLaunchedToday = 0;
+                bool schemeLaunchedToday  = false;
                 foreach (var lord in candidates)
                 {
-                    if (schemeLaunchedToday) break;
+                    if (schemesLaunchedToday >= MaxNpcSchemesPerDay) break;
 
                     bool schemer;
                     try
@@ -259,14 +265,17 @@ namespace AshAndEmber
                     }
                     catch { schemer = true; }
 
-                    double chance = schemer ? 0.03 : 0.005;
+                    double chance = schemer ? 0.05 : 0.01;
                     if (_rng.NextDouble() > chance) continue;
                     try
                     {
                         int countBefore = _pending.Count(p => !p.IsPlayer);
                         TryQueueNpcScheme(lord);
                         if (_pending.Count(p => !p.IsPlayer) > countBefore)
+                        {
+                            schemesLaunchedToday++;
                             schemeLaunchedToday = true;
+                        }
                     }
                     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
@@ -366,7 +375,16 @@ namespace AshAndEmber
                 else
                     targetPool = lordTargets;
 
-                targetHero = targetPool[_rng.Next(targetPool.Count)];
+                // The base-cost pre-filter above misses tier multipliers, and higher-tier
+                // targets can cost up to 3.4× gold / 7.5× influence — narrow to targets the
+                // lord can actually afford before picking, instead of rolling one target and
+                // giving up for the day if that single roll happened to be too rich.
+                var affordableHeroes = targetPool
+                    .Where(t => lord.Gold >= ComputeGoldCost(scheme, t, null)
+                             && (lord.Clan?.Influence ?? 0) >= ComputeInfluenceCost(scheme, t, null))
+                    .ToList();
+                if (affordableHeroes.Count == 0) return;
+                targetHero = affordableHeroes[_rng.Next(affordableHeroes.Count)];
             }
             else
             {
@@ -377,18 +395,18 @@ namespace AshAndEmber
                              && s.OwnerClan.Kingdom != lord.Clan.Kingdom)
                     .ToList();
                 if (targets.Count == 0) return;
-                targetSett = targets[_rng.Next(targets.Count)];
-            }
 
-            // Verify the lord can actually afford the tier-scaled effective cost before
-            // committing — the base-cost pre-filter above misses tier multipliers.
-            int effectiveGold = ComputeGoldCost(scheme, targetHero, targetSett);
-            int effectiveInf  = ComputeInfluenceCost(scheme, targetHero, targetSett);
-            if (lord.Gold < effectiveGold || (lord.Clan?.Influence ?? 0) < effectiveInf) return;
+                var affordableSetts = targets
+                    .Where(t => lord.Gold >= ComputeGoldCost(scheme, null, t)
+                             && (lord.Clan?.Influence ?? 0) >= ComputeInfluenceCost(scheme, null, t))
+                    .ToList();
+                if (affordableSetts.Count == 0) return;
+                targetSett = affordableSetts[_rng.Next(affordableSetts.Count)];
+            }
 
             bool queued = QueueScheme(lord, scheme.Type, targetHero, targetSett, isPlayer: false);
             if (queued)
-                _npcCooldowns[lord.StringId] = 20 + _rng.Next(16);
+                _npcCooldowns[lord.StringId] = 15 + _rng.Next(11);
         }
 
     }

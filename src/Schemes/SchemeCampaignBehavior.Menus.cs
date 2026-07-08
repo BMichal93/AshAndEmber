@@ -33,7 +33,7 @@ namespace AshAndEmber
         {
             try
             {
-                if (!SchemeSystem.TryGetPendingPlayerOperation(out var def, out Hero hero, out Settlement sett))
+                if (!SchemeSystem.TryGetPendingPlayerOperation(out var def, out Hero hero, out Settlement sett, out bool skip))
                     return;
                 MageKnowledge._deferredInquiry = () =>
                 {
@@ -41,7 +41,8 @@ namespace AshAndEmber
                     {
                         MBInformationManager.AddQuickInformation(new TextObject(
                             $"Your operative is still in the field — the {def.Name} operation resumes."));
-                        SchemeMinigame.Begin(def, hero, sett);
+                        if (skip) SchemeMinigame.ResolveSkip(def, hero, sett);
+                        else      SchemeMinigame.Begin(def, hero, sett);
                     }
                     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 };

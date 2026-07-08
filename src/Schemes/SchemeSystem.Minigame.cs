@@ -61,8 +61,11 @@ namespace AshAndEmber
 
         /// Applies the minigame outcome for a player operation.
         /// Routes to ApplySuccess, a silent-retreat notification, or ApplyBreakConsequence.
+        /// potency (1.0–1.5) scales Success magnitude/XP — reward for extracting well above
+        /// the bare threshold instead of the instant it's reached; skipped operations always
+        /// resolve at 1.0 (see SchemeMinigame.ResolveSkip / ComputePotency).
         internal static void ApplyPlayerSchemeOutcome(SchemeType type, Hero instigator,
-            Hero targetHero, Settlement targetSett, SchemeOutcome outcome)
+            Hero targetHero, Settlement targetSett, SchemeOutcome outcome, float potency = 1f)
         {
             if (instigator == null) return;
 
@@ -87,7 +90,7 @@ namespace AshAndEmber
                     break;
                 }
                 case SchemeOutcome.Success:
-                    try { ApplySuccess(fake, instigator, targetHero, targetSett); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { ApplySuccess(fake, instigator, targetHero, targetSett, potency); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     break;
 
                 case SchemeOutcome.Bust:
@@ -95,13 +98,13 @@ namespace AshAndEmber
                     break;
             }
 
-            // Award full skill XP on success; partial (1/3) on bust.
+            // Award full (potency-scaled) skill XP on success; partial (1/3) on bust.
             try
             {
                 var def = GetDefinition(type);
                 if (def?.Skill != null && def.SkillXp > 0)
                 {
-                    int xp = outcome == SchemeOutcome.Success ? def.SkillXp
+                    int xp = outcome == SchemeOutcome.Success ? (int)Math.Round(def.SkillXp * potency)
                            : outcome == SchemeOutcome.Bust    ? def.SkillXp / 3
                            : 0;
                     if (xp > 0)

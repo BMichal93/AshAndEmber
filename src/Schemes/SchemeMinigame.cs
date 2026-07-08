@@ -3,6 +3,13 @@
 // Push-your-luck operation minigame for player scheme resolution.
 // NPC schemes use the original RNG path — this file does not affect them.
 //
+// The Gambit is optional. Before it begins, the player may instead Trust to
+// Instinct: one Roguery gamble (same 20–80% curve as Sidestep) decides success
+// or failure outright — no rounds, no field reports, no bonus. Playing the
+// full Gambit and extracting above the bare threshold earns a potency bonus
+// (up to 1.5×, scaling success magnitude, skill XP, and post-op cooldown)
+// that a skipped operation never reaches — see ComputePotency/ResolveSkip.
+//
 // Each phase: a field report arrives. The operative decides HOW to push:
 //   · PUSH HARD (Aggressive): hidden roll +4 to +10 — volatile, high reward
 //   · TREAD CAREFULLY:        hidden roll −3 to +3  — balanced, unpredictable
@@ -253,6 +260,39 @@ namespace AshAndEmber
             return Math.Min(10, 5 + roguery / 100);
         }
 
+        // ── Skip the Gambit entirely — one Roguery gamble, no bonus ────────────
+        // Same 20–80% curve as the in-Gambit Sidestep ability. Exposed so the
+        // confirmation dialog can show the odds before the player commits.
+        internal static float SkipSuccessChance => ComputeAbilityChance(isCharm: false);
+
+        internal static void ResolveSkip(SchemeDefinition def, Hero targetHero, Settlement targetSett)
+        {
+            string tName = targetHero?.Name?.ToString() ?? targetSett?.Name?.ToString() ?? "the target";
+            bool   success = SchemeSystem.DebugFree || _rng.NextDouble() < SkipSuccessChance;
+
+            if (success)
+            {
+                try { MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Instinct alone carries it through — quick, quiet, and done before doubt could catch up. "
+                    + $"{def.Name} against {tName} succeeds.")); }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // No potency bonus — trusting to instinct forgoes the Gambit's reward.
+                try { SchemeSystem.ApplyPlayerSchemeOutcome(def.Type, Hero.MainHero, targetHero, targetSett, SchemeOutcome.Success, 1f); }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            else
+            {
+                try { MBInformationManager.AddQuickInformation(new TextObject(
+                    $"Instinct fails you. {def.Name} against {tName} collapses before it can begin — "
+                    + "and the trail leads back to your door.")); }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { SchemeSystem.ApplyBreakConsequence(def.Type, Hero.MainHero, targetHero, targetSett); }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
+            try { SchemeSystem.SetPlayerCooldown(def.Type, targetHero, targetSett); }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
         // ── Draw next report and show the phase ───────────────────────────────
         private static void NextPhase()
         {
@@ -494,15 +534,41 @@ namespace AshAndEmber
             }
         }
 
+        // Reward for pushing past the bare threshold instead of extracting the
+        // instant it's reached: 1.0× at the threshold, up to 1.5× right at the
+        // edge of Blown (21). Mirrors the Rite-of-Fire recall bonus (0.5×–1.5×) —
+        // the Gambit's version of "the working takes hold."
+        private static float ComputePotency(int riskSum)
+        {
+            int margin = BlownThreshold - riskSum;
+            if (margin <= 0) return 1f;
+            int achieved = Math.Max(0, Math.Min(margin, _exposure - riskSum));
+            return 1f + 0.5f * achieved / margin;
+        }
+
+        // Higher potency shortens the post-op cooldown — a clean, high-risk
+        // extraction rebuilds the network faster than a bare-minimum one.
+        private static int ComputeSuccessCooldownDays(float potency)
+        {
+            int baseDays = _def.Type == SchemeType.Assassinate ? 14 : 7;
+            return Math.Max(1, (int)Math.Round(baseDays / potency));
+        }
+
         // ── Resolve (EXTRACT) ─────────────────────────────────────────────────
         private static void Resolve()
         {
             var cfg = GetConfig(_def.Type);
-            SchemeOutcome outcome = _exposure >= cfg.RiskSum ? SchemeOutcome.Success : SchemeOutcome.SmallLoss;
-            try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, outcome); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            bool success = _exposure >= cfg.RiskSum;
+            SchemeOutcome outcome = success ? SchemeOutcome.Success : SchemeOutcome.SmallLoss;
+            float potency = success ? ComputePotency(cfg.RiskSum) : 1f;
+            try { SchemeSystem.ApplyPlayerSchemeOutcome(_def.Type, Hero.MainHero, _targetHero, _targetSett, outcome, potency); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            if (success && potency > 1.01f)
+                try { MBInformationManager.AddQuickInformation(new TextObject(
+                    $"A clean, hard-won extraction — the operation lands harder for it. (×{potency:0.00})")); }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // SmallLoss extract: same 2-day cooldown as Abort — deliberate quiet retreat
             // shouldn't be penalised more than panic-aborting immediately.
-            int cooldownDays = outcome == SchemeOutcome.SmallLoss ? 2 : -1;
+            int cooldownDays = outcome == SchemeOutcome.SmallLoss ? 2 : ComputeSuccessCooldownDays(potency);
             try { SchemeSystem.SetPlayerCooldown(_def.Type, _targetHero, _targetSett, cooldownDays); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
