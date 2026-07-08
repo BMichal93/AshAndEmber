@@ -4,6 +4,13 @@
 
 ## Unreleased
 
+### Settlement encounter choices actually follow through
+- **Fixed a choice in "The Knight Without Fortune" that promised news "two days later" but fired it as an immediate follow-up prompt instead of actually waiting** — it now runs through the same day-countdown machinery every other deferred encounter consequence uses.
+- **"The Fever Road"'s detour option now actually costs the week of travel it claims** (a morale hit for the men, scaling with how many times the road has made them detour), instead of being a free, strictly-better alternative to the other three choices.
+- **"The Merchant's Ledger"'s "decline to arbitrate" option now actually resolves** — the six-week third-party review it promises now concludes and tells you the outcome, instead of silently going nowhere.
+- **"The Poisoned Well"'s "delay your departure" choice is now a real wait** — choosing it blocks the party for the night at a new settlement-encounter wait menu (mirroring the sea-voyage and inn-stay wait menus) instead of resolving the whole night in a single click.
+- **"The Fever Road"'s detour and "The Camp Sickness"'s stop-and-treat options (healer, Inner Fire, living world) are now real waits too** — choosing to hole up and let the sickness pass now actually holes you up, instead of resolving days of claimed downtime in the same click. Options that explicitly mean staying in the saddle ("ride through it") or claim to work instantly ("let the cold still the fever") are left as they were.
+
 ### A push now looks like a push
 - **Wind's gust, Water's torrent, wall barriers, and every other knockback now visibly shove their target instead of snapping them straight to the landing spot.** The underlying move was always a teleport; it's now played out over a fifth of a second of eased motion (the same primitive Wind's Unbinding flight already glides on), so a foe driven back by a gale or bounced off a wall of stone reads as a body crossing the distance — with no measurable cost, since a push only lives a fraction of a second even in a large melee.
 

@@ -22,6 +22,14 @@ namespace AshAndEmber
 {
     public static partial class SettlementEncounters
     {
+        // ── Deferred: FirePoorKnightTournamentResult — 2 days after EC_PoorKnight option A ──
+        private static void FirePoorKnightTournamentResult()
+        {
+            if (MageKnowledge._deferredInquiry != null) { _poorKnightTournamentCountdown = 1; return; }
+            MageKnowledge._deferredInquiry = () =>
+                Msg("Word drifts back to you: he entered, lost in the second round, and rode out without speaking to anyone. Nobody noticed.", DimColor);
+        }
+
         // ── Deferred: FireVengefulKnightConsequence — 7–11 days after EC_PoorKnight option C ──
         private static void FireVengefulKnightConsequence()
         {
@@ -1077,6 +1085,9 @@ namespace AshAndEmber
                             break;
                         case "d":
                             Msg("You decline. They argue for another forty minutes and reach no conclusion. The merchant eventually agrees to a third-party review that will take six weeks. The auditor leaves unsatisfied. The ledger goes back into the hall. The truth is still in it.", DimColor);
+                            _merchantLedgerOutcome      = 4;
+                            _merchantLedgerSettlementId = s.StringId;
+                            _merchantLedgerCountdown    = 42;
                             break;
                     }
                 }, null, "", false), false, true);
@@ -1122,6 +1133,16 @@ namespace AshAndEmber
                     {
                         ChangeRelWithOwner(s, -5);
                         Msg("The auditor filed a full report. The ledger, reviewed by a second inspector six weeks later, was found to contain systematic irregularities — the same ones the auditor originally identified. Your name appears in the report as having intervened in favour of the merchant. The city lord, who commissioned the second review, received the report. Your standing in that city has taken a quiet, specific, and permanent hit.", BadColor);
+                    };
+                    break;
+
+                case 4: // declined to arbitrate — the third-party review concludes without you
+                    MageKnowledge._deferredInquiry = () =>
+                    {
+                        if (_rng.NextDouble() < 0.5)
+                            Msg("Word reaches you, eventually, the way old business does: the third-party review found the auditor was right. Systematic, not clerical. The merchant's license was suspended pending restitution. You were not named in the proceedings — you made sure of that by staying out of it.", DimColor);
+                        else
+                            Msg("Word reaches you, eventually: the review found nothing conclusive. The ledger's irregularities were real but the intent behind them could not be proven. The merchant keeps his license and his ledger. Nobody remembers you were ever asked to weigh in.", DimColor);
                     };
                     break;
             }
@@ -1194,7 +1215,7 @@ namespace AshAndEmber
                     new InquiryElement("c", "Leave medicine from your supplies and your best guess at the cause.", null, true,
                         "Your guess may be right. The herb-woman will work from what you leave."),
                     new InquiryElement("d", "Delay your departure until you know they are stable.", null, true,
-                        "They will be stable or they will not. You stay either way."),
+                        "You stay the night. They will be stable or they will not — either way, you wait to see it."),
                 },
                 false, 1, 1, "Decide", "",
                 chosen =>
@@ -1224,8 +1245,14 @@ namespace AshAndEmber
                             Msg("You leave what you have and your best reading of the symptoms. The herb-woman takes your supplies and your guess with the concentrated focus of someone filtering useful signal from educated approximation. She is better with the approximate information than with nothing. Two children stabilise by evening. The third is harder. She sits with the third child through the night. In the morning you will not know how it ended. You hope your guess was close enough.", DimColor);
                             break;
                         case "d":
-                            AddMorale(-3f);
-                            Msg("You delay. Your men understand this with the quiet acceptance of soldiers who have ridden for lords who would not have stopped. By dusk two of the children are clearly improving and one is not. You stay through the night. At dawn, the third child's fever breaks. You ride out three hours late and your men ride without complaint for twelve miles before anyone says anything. Then someone near the back laughs at something and the column relaxes.", GoodColor);
+                            Msg("You delay your departure. Your men understand this with the quiet acceptance of soldiers who have ridden for lords who would not have stopped.", DimColor);
+                            StartWait(1,
+                                "You wait out the night while the herb-woman works. By dusk two of the children are clearly improving. The third is harder to say.",
+                                () =>
+                                {
+                                    AddMorale(-3f);
+                                    Msg("At dawn, the third child's fever breaks. You ride out three hours late and your men ride without complaint for twelve miles before anyone says anything. Then someone near the back laughs at something and the column relaxes.", GoodColor);
+                                });
                             break;
                     }
                 }, null, "", false), false, true);

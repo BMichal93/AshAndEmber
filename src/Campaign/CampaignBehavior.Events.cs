@@ -99,6 +99,7 @@ namespace AshAndEmber
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             try { AshenCitySystem.EnsureSessionRenames(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SettlementEncounters.RegisterWaitMenu(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── New game prompt ───────────────────────────────────────────────────
