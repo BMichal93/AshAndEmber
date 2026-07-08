@@ -226,8 +226,8 @@ namespace AshAndEmber
             AddLog(new TextObject(
                 "MIRACLES — Each of your PERSONALITY TRAITS grants two prayers once it stands at +1 or " +
                 "higher: one for battle, one for the road. In battle, hold Left Ctrl and trace the prayer's " +
-                "six-stroke sequence with W / A / S / D, then release (gamepad: hold RB, flick the left " +
-                "stick). On the map, Shift + X (gamepad: RB + L3) opens the litany — pick a prayer and " +
+                "six-stroke sequence with W / A / S / D, then release (gamepad: hold R3 — the right-stick " +
+                "click — and flick the left stick). On the map, Shift + X (gamepad: R3 + L3) opens the litany — pick a prayer and " +
                 "recall its rite. Each prayer spends 1 Grace; replenish Grace at a Sanctuary. " +
                 "THE LITANY OF DEVOTIONS — Left Shift + L on the map opens a talent list that REFINES " +
                 "your prayers: a devotion for each virtue (learnable once that virtue stands at +1) " +

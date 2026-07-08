@@ -200,7 +200,7 @@ You **choose** an element by tracing a direction while focused, gather a charge 
 | Gather the charge | …then **stand still** | …then stand still |
 | Cast attack | Hold **Left Ctrl** + **Attack** (left mouse) | Hold **R3** + **Right Trigger** |
 | Cast support | Hold **Left Ctrl** + **Block** (right mouse) | Hold **R3** + **Left Trigger** |
-| Campaign map | Choose element in the litany (**Shift+X** / RB+L3); stand still ~4 hours to gather; cast via the litany | — |
+| Campaign map | Choose element in the litany (**Shift+X** / R3+L3); stand still ~4 hours to gather; cast via the litany | — |
 
 A bar appears while you channel, coloured by your chosen element, filling over ~6 seconds; the charge then lasts ~30 seconds. **Requirements (battle):** both hands empty (no weapon or shield) and armour weight ≤ 25.
 

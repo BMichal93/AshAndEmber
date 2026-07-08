@@ -5,7 +5,7 @@
 //   Keyboard: hold Left Ctrl, press W/A/S/D (= U/L/R/D) to build a 6-character
 //   sequence, release Ctrl to cast. The buffer shows in the log. A wrong or
 //   incomplete sequence still spends 1 Grace.
-//   Controller: hold RB and flick the left stick 6 times in the same directions.
+//   Controller: hold R3 (right-stick click) and flick the left stick 6 times in the same directions.
 //   There is NO menu in battle — the battlefield answers the gesture alone.
 //   The Undivided Flame answers a longer, 8-character gesture instead of 6 —
 //   keep holding past the sixth tap and the buffer grows to fit it. It still
@@ -13,17 +13,18 @@
 //   simply spent for nothing, the same as any other unanswered sequence.
 //
 // CAMPAIGN MAP — the litany + the rite (mirrors fire magic's map casting):
-//   Open the litany (Shift+X / RB + L3) — it lists ONLY the prayers that answer
+//   Open the litany (Shift+X / R3 + L3) — it lists ONLY the prayers that answer
 //   on the march — choose one, then recall its three-step rite (MiracleMinigame).
 //   Recall it truly and the light answers; let the words scatter and the Grace is
 //   spent for nothing.
 //
-// Left Ctrl does not conflict with spell input (which uses Left Alt / LB).
-// While focusing (Ctrl held, Grace in hand), Ctrl+X — or RB+Y on a controller —
+// Left Ctrl does not conflict with spell input (keyboard focus is Left Alt; the
+// gamepad element focus is X — miracles no longer share a bumper with anything).
+// While focusing (Ctrl held, Grace in hand), Ctrl+X — or R3+L3 on a controller —
 // opens a READ-ONLY reference of the prayers you can offer and their sequences
 // (the miracle counterpart to the element grimoire on Alt+X); it never traces a
 // direction, so it cannot start or corrupt a sequence.
-// RB + L3 is the map miracle menu — distinct from the alchemist's RB + R3.
+// R3 + L3 is also the map miracle menu — distinct from the alchemist's RB + R3.
 // =============================================================================
 
 using System.Collections.Generic;
@@ -71,16 +72,23 @@ namespace AshAndEmber
                 TickCampaignMenu();
         }
 
-        // ── Prayer sequence: Ctrl + W/A/S/D (or RB + left stick) ──────────────
+        // ── Prayer sequence: Ctrl + W/A/S/D (or R3 + left stick) ──────────────
         // Hold the focus key, trace the miracle's sequence, release to cast. Works on
         // the campaign map and in battle alike; the context only changes which miracle
         // answers (a battle prayer fizzles on the map, and the reverse).
         private static void TickSequence(bool inMission)
         {
-            bool rbHeld  = !Input.IsKeyDown(InputKey.ControllerLBumper)
-                        &&  Input.IsKeyDown(InputKey.ControllerRBumper);
+            // Focus on R3 (right-stick click), mirroring the Living Ember's channel.
+            // Grace and Nature are mutually exclusive, so the shared key is unambiguous:
+            // this handler only engages for a Grace-carrier (see the HasGrace gate on
+            // `holding` below); Nature's own handler answers R3 for the attuned. The
+            // bumpers are excluded so it never fires on the order radial (LB) or the
+            // alchemist's RB+R3.
+            bool r3Held  = Input.IsKeyDown(InputKey.ControllerRThumb)
+                        && !Input.IsKeyDown(InputKey.ControllerLBumper)
+                        && !Input.IsKeyDown(InputKey.ControllerRBumper);
             bool holdKb  = Input.IsKeyDown(InputKey.LeftControl) || Input.IsKeyDown(InputKey.RightControl);
-            bool holdPad = rbHeld;
+            bool holdPad = r3Held;
             // Only heroes carrying Grace react to the focus modifier. Without Grace,
             // holding Ctrl does nothing — no focus light, no buffer — so it never bleeds
             // into Nature's casting or glows for heroes with no miracles.
@@ -95,12 +103,13 @@ namespace AshAndEmber
                 }
                 _wasHolding = true;
 
-                // Spellbook: Ctrl + X (keyboard) or RB + Y (controller), only before
+                // Spellbook: Ctrl + X (keyboard) or R3 + L3 (controller), only before
                 // any direction has been traced — mirrors the element grimoire on
                 // Alt + X. A read-only list of the prayers you can offer here and the
-                // sequences that call them; casting is still the gesture itself.
+                // sequences that call them; casting is still the gesture itself. (R3 is
+                // already held; L3 — the left-stick click — is the free second thumb.)
                 bool bookKey = holdKb ? Input.IsKeyPressed(InputKey.X)
-                                      : Input.IsKeyPressed(InputKey.ControllerRUp);
+                                      : Input.IsKeyPressed(InputKey.ControllerLThumb);
                 if (bookKey && _seqBuffer.Length == 0)
                 {
                     ShowMiracleReference(inMission);
@@ -116,7 +125,7 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    // Controller: left stick directions while RBumper held.
+                    // Controller: left stick directions while R3 held.
                     bool lUp    = Input.IsKeyDown(InputKey.ControllerLStickUp);
                     bool lDown  = Input.IsKeyDown(InputKey.ControllerLStickDown);
                     bool lLeft  = Input.IsKeyDown(InputKey.ControllerLStickLeft);
@@ -235,7 +244,7 @@ namespace AshAndEmber
         private static void Fizzle(string msg) =>
             InformationManager.DisplayMessage(new InformationMessage(msg, new Color(0.6f, 0.6f, 0.6f)));
 
-        // ── Campaign map menu: Shift+X (keyboard) or RB+L3 (controller) ────────
+        // ── Campaign map menu: Shift+X (keyboard) or R3+L3 (controller) ────────
         // A map-only convenience listing the prayers that answer on the march; the
         // same prayers can also be cast directly with the Ctrl-sequence above.
         private static void TickCampaignMenu()
@@ -248,9 +257,11 @@ namespace AshAndEmber
                 ShowMiracleMenu();
             _prevShiftX = shiftX;
 
-            // Controller: RB + L3 (consistent with the battle shortcut; RB+R3 is Alchemy).
-            bool padCamp = !Input.IsKeyDown(InputKey.ControllerLBumper)
-                        &&  Input.IsKeyDown(InputKey.ControllerRBumper)
+            // Controller: R3 + L3 (consistent with the battle focus; the alchemist's
+            // menu is RB+R3, and the bumpers are excluded here so the two never blur).
+            bool padCamp = Input.IsKeyDown(InputKey.ControllerRThumb)
+                        && !Input.IsKeyDown(InputKey.ControllerLBumper)
+                        && !Input.IsKeyDown(InputKey.ControllerRBumper)
                         &&  Input.IsKeyPressed(InputKey.ControllerLThumb);
 
             if (padCamp && !_prevPadBoth)
@@ -261,7 +272,7 @@ namespace AshAndEmber
         public static void ShowMiracleMenu()
         {
             // Grace, Cold and Nature are mutually exclusive. A hero attuned to the
-            // living world uses this same key (Shift+X / RB+L3) to invoke nature.
+            // living world uses this same key (Shift+X / R3+L3) to invoke nature.
             if (NatureKnowledge.IsAttuned)
             {
                 NatureInputHandler.ShowNatureMenu();
@@ -294,7 +305,7 @@ namespace AshAndEmber
                 string gate  = string.IsNullOrEmpty(def.GateNote) ? "" : "  " + def.GateNote;
                 string costNote = def.GraceCost != 1 ? $"  [{def.GraceCost} Grace]" : "";
                 string label = $"{def.Name}   [Ctrl + {keys}]   ({def.Context}){gate}{costNote}";
-                string controls = $"Keyboard: hold Ctrl + {keys}\nController: hold RB + flick left stick {stick}";
+                string controls = $"Keyboard: hold Ctrl + {keys}\nController: hold R3 + flick left stick {stick}";
                 string hint  = $"{controls}\n\n{def.Effect}\n\n{def.Flavour}";
                 if (!gateMet)
                     hint = $"✗  The light does not yet answer you here — {def.GateExplanation}.\n\n{hint}";
@@ -327,7 +338,7 @@ namespace AshAndEmber
             }
         }
 
-        // ── Battle reference: Ctrl + X (keyboard) or RB + Y (controller) ───────
+        // ── Battle reference: Ctrl + X (keyboard) or R3 + L3 (controller) ──────
         // A READ-ONLY list of the prayers you can offer here and the sequences that
         // call them — the miracle counterpart to the element grimoire (Alt + X).
         // There is still no battle "menu"; casting stays the gesture itself. This
@@ -343,7 +354,7 @@ namespace AshAndEmber
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("Hold Left Ctrl, tap the sequence, then release Ctrl to pray.");
-            sb.AppendLine("(Controller: hold RB and flick the left stick.)");
+            sb.AppendLine("(Controller: hold R3 and flick the left stick.)");
             sb.AppendLine();
 
             int shown = 0;

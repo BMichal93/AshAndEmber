@@ -184,6 +184,9 @@
     <Compile Include="QuestSystems\SettlementEncounters.Events6.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Events7.cs"/>
     <Compile Include="QuestSystems\SettlementEncounters.Ambient.cs"/>
+    <Compile Include="QuestSystems\SettlementEncounters.WaitMenu.cs"/>
+    <Compile Include="QuestSystems\ScholarBargainQuestSystem.cs"/>
+    <Compile Include="QuestSystems\ScholarBargainQuestSystem.Encounters.cs"/>
     <Compile Include="QuestSystems\BattleEvents.cs"/>
     <Compile Include="QuestSystems\BattleEvents.Events.cs"/>
     <Compile Include="QuestSystems\BattleEvents.Helpers.cs"/>
