@@ -10,20 +10,31 @@
 //   pre-empt the flat pools when the world state actually warrants it.
 //
 //   Companion Remarks — a companion makes an unprompted world-aware comment
-//   on settlement entry (~25% chance, 3-day cooldown). The remark is drawn
-//   from a trait-specific pool (Valor/Mercy/Calculating/Honor/Generosity/
-//   cynical/default) with world-state branches AND five relation tiers:
+//   on settlement entry (~12% chance, 6-day cooldown — deliberately rare, so
+//   a line lands as a moment rather than chatter). Every trait pool the
+//   companion currently qualifies for (Valor/Mercy/Calculating/Honor/
+//   Generosity/cynical), plus a standout skill and a standout attribute if
+//   either clears a threshold, are collected as candidates and one is picked
+//   at random — so a companion who is both Valorous and Merciful doesn't
+//   always speak as the soldier, and a companion's Medicine or Cunning shows
+//   through even when their traits are middling. The last ~10 lines heard are
+//   remembered and a fresh remark is re-rolled (up to 5 tries) if it would
+//   repeat one; the same companion also won't speak twice in a row while
+//   another is available. Trait pools carry world-state branches AND five
+//   relation tiers; skill/attribute pools use a coarser three-tone version
+//   of the same scale:
 //
-//     Very negative  (≤ −50)  — hostile, pointed, implies distrust
-//     Negative       (−49 to −10) — clipped, professional, cool
-//     Neutral        (−9 to +9)   — matter-of-fact, observational
-//     Positive       (+10 to +49) — warm, collegial, "we" framing
-//     Very positive  (≥ +50)  — personal, familiar, protective
+//     Very negative  (≤ −50)  — hostile, pointed, implies distrust     ┐
+//     Negative       (−49 to −10) — clipped, professional, cool        ├ Cool
+//     Neutral        (−9 to +9)   — matter-of-fact, observational      — Neutral
+//     Positive       (+10 to +49) — warm, collegial, "we" framing      ┐
+//     Very positive  (≥ +50)  — personal, familiar, protective         ├ Warm
 //
 // Both systems are purely cosmetic — no mechanics, no save keys needed.
 // =============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
@@ -49,7 +60,18 @@ namespace AshAndEmber
         private static int _campfireCooldown  = 0;
         private static int _companionCooldown = 0;
 
+        // Companion remarks fire rarely and never repeat a recently-heard line —
+        // a companion's voice should feel occasional and considered, not chatty.
+        private const int  CompanionRemarkChancePct = 12;
+        private const int  CompanionRemarkCooldownDays = 6;
+        private const int  RecentRemarkHistory = 10;
+        private const int  RemarkRetryAttempts = 5;
+
+        private static readonly Queue<string> _recentRemarks = new Queue<string>();
+        private static Hero _lastCompanionSpoke;
+
         private enum RelationTier { VeryNegative, Negative, Neutral, Positive, VeryPositive }
+        private enum ToneBucket { Cool, Neutral, Warm }
 
         // ── Public API ────────────────────────────────────────────────────────
 
@@ -57,6 +79,8 @@ namespace AshAndEmber
         {
             _campfireCooldown  = 0;
             _companionCooldown = 0;
+            _recentRemarks.Clear();
+            _lastCompanionSpoke = null;
         }
 
         internal static void DailyTick()
@@ -70,7 +94,7 @@ namespace AshAndEmber
         internal static void CheckCompanionRemark(Settlement s)
         {
             if (_companionCooldown > 0) return;
-            if (_rng.Next(100) >= 25)   return;
+            if (_rng.Next(100) >= CompanionRemarkChancePct) return;
             try { FireCompanionRemark(s); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
@@ -85,6 +109,21 @@ namespace AshAndEmber
             if (rel <=   9) return RelationTier.Neutral;
             if (rel <=  49) return RelationTier.Positive;
             return RelationTier.VeryPositive;
+        }
+
+        private static ToneBucket GetTone(RelationTier rel)
+        {
+            switch (rel)
+            {
+                case RelationTier.VeryNegative:
+                case RelationTier.Negative:
+                    return ToneBucket.Cool;
+                case RelationTier.Positive:
+                case RelationTier.VeryPositive:
+                    return ToneBucket.Warm;
+                default:
+                    return ToneBucket.Neutral;
+            }
         }
 
         // ── Campfire vignette ─────────────────────────────────────────────────
@@ -329,13 +368,34 @@ namespace AshAndEmber
 
             if (companions.Count == 0) return;
 
-            var companion = companions[_rng.Next(companions.Count)];
+            // Don't let the same companion speak twice in a row when others could.
+            var pool = companions.Count > 1 && _lastCompanionSpoke != null
+                ? companions.Where(h => h != _lastCompanionSpoke).ToList()
+                : companions;
+            if (pool.Count == 0) pool = companions;
+
+            var companion = pool[_rng.Next(pool.Count)];
             if (companion == null) return;
 
-            string remark = BuildRemark(companion, s);
+            // Re-roll a handful of times if we land on something said recently —
+            // BuildRemark re-randomizes both the trait/skill/attribute pool and
+            // the specific line, so a retry almost always finds something fresh.
+            string remark = null;
+            for (int attempt = 0; attempt < RemarkRetryAttempts; attempt++)
+            {
+                string candidate = BuildRemark(companion, s);
+                if (string.IsNullOrEmpty(candidate)) return;
+                remark = candidate;
+                if (!_recentRemarks.Contains(candidate)) break;
+            }
             if (string.IsNullOrEmpty(remark)) return;
 
-            _companionCooldown = 3;
+            _companionCooldown = CompanionRemarkCooldownDays;
+            _lastCompanionSpoke = companion;
+
+            _recentRemarks.Enqueue(remark);
+            while (_recentRemarks.Count > RecentRemarkHistory) _recentRemarks.Dequeue();
+
             ShowQuick($"{companion.Name}: \"{remark}\"");
         }
 
@@ -367,13 +427,22 @@ namespace AshAndEmber
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-                if (valor       >= 1) return PickValor(s, ashenActive, nearWar, agingPlayer, rel);
-                if (mercy       >= 1) return PickMercy(s, ashenActive, rel);
-                if (calculating >= 1) return PickCalculating(s, ashenActive, nearWar, rel);
-                if (honor       >= 1) return PickHonor(s, nearWar, rel);
-                if (generosity  >= 1) return PickGenerosity(s, rel);
-                if (honor       <= -1) return PickCynical(s, ashenActive, rel);
-                return PickDefault(agingPlayer, rel);
+                var candidates = new List<Func<string>>();
+                if (valor       >= 1) candidates.Add(() => PickValor(s, ashenActive, nearWar, agingPlayer, rel));
+                if (mercy       >= 1) candidates.Add(() => PickMercy(s, ashenActive, rel));
+                if (calculating >= 1) candidates.Add(() => PickCalculating(s, ashenActive, nearWar, rel));
+                if (honor       >= 1) candidates.Add(() => PickHonor(s, nearWar, rel));
+                if (generosity  >= 1) candidates.Add(() => PickGenerosity(s, rel));
+                if (honor       <= -1) candidates.Add(() => PickCynical(s, ashenActive, rel));
+
+                string skillLine = PickSkillRemark(c, rel);
+                if (skillLine != null) candidates.Add(() => skillLine);
+
+                string attrLine = PickAttributeRemark(c, rel);
+                if (attrLine != null) candidates.Add(() => attrLine);
+
+                if (candidates.Count == 0) return PickDefault(agingPlayer, rel);
+                return candidates[_rng.Next(candidates.Count)]();
             }
             catch { return ""; }
         }
@@ -818,7 +887,248 @@ namespace AshAndEmber
             }
         }
 
+        // ── Skill remark ──────────────────────────────────────────────────────
+        // A companion whose standout skill clears the threshold speaks from
+        // their trade rather than (or alongside) their traits — the same
+        // roll that can hand you a Valor line can hand you a Medicine one.
+
+        private const int SkillThreshold = 70;
+
+        private static string PickSkillRemark(Hero c, RelationTier rel)
+        {
+            try
+            {
+                string bestKey = null;
+                int bestValue = SkillThreshold;
+
+                int weaponBest = 0;
+                foreach (var w in new[] { DefaultSkills.OneHanded, DefaultSkills.TwoHanded, DefaultSkills.Polearm,
+                                           DefaultSkills.Bow, DefaultSkills.Crossbow, DefaultSkills.Throwing })
+                    weaponBest = Math.Max(weaponBest, c.GetSkillValue(w));
+                if (weaponBest > bestValue) { bestValue = weaponBest; bestKey = "weapon"; }
+
+                var tracked = new (SkillObject skill, string key)[]
+                {
+                    (DefaultSkills.Medicine,    "medicine"),
+                    (DefaultSkills.Roguery,     "roguery"),
+                    (DefaultSkills.Scouting,    "scouting"),
+                    (DefaultSkills.Tactics,     "tactics"),
+                    (DefaultSkills.Engineering, "engineering"),
+                    (DefaultSkills.Steward,     "steward"),
+                    (DefaultSkills.Trade,       "trade"),
+                    (DefaultSkills.Charm,       "charm"),
+                    (DefaultSkills.Leadership,  "leadership"),
+                    (DefaultSkills.Crafting,    "crafting"),
+                    (DefaultSkills.Riding,      "riding"),
+                    (DefaultSkills.Athletics,   "athletics"),
+                };
+                foreach (var (skill, key) in tracked)
+                {
+                    int v = c.GetSkillValue(skill);
+                    if (v > bestValue) { bestValue = v; bestKey = key; }
+                }
+
+                if (bestKey == null) return null;
+                return SkillLine(bestKey, GetTone(rel));
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); return null; }
+        }
+
+        private static string SkillLine(string key, ToneBucket tone)
+        {
+            switch (key)
+            {
+                case "medicine":    return PickTone(tone,
+                                        Pick("Keep the bandages dry. That's not affection, that's professional interest.",
+                                             "I patched three men this week who wouldn't have thanked me for it. You wouldn't either."),
+                                        Pick("The blood on my hands isn't mine. I've gotten better at making sure of that.",
+                                             "A man's pulse tells you more about him than his mouth does. I check both, out of habit."),
+                                        Pick("I keep count of who I've stitched back together on this road. You're near the top of the list.",
+                                             "You don't ask if I'm tired after a battle. You just hand me the kit. I've noticed."));
+                case "roguery":     return PickTone(tone,
+                                        Pick("That merchant's purse sits wrong on his belt. Not my business. Yet.",
+                                             "I know four ways out of this settlement that aren't the gate. You don't need to know why."),
+                                        Pick("Every town has a way in that isn't the front gate. This one has three. I've counted.",
+                                             "The locks on that warehouse are older than the guard watching them. Interesting, if you're the sort who notices."),
+                                        Pick("I'll show you the back ways through a place like this sometime. Not tonight. But sometime.",
+                                             "You never ask where I learned what I know. I appreciate that more than you'd think."));
+                case "scouting":    return PickTone(tone,
+                                        Pick("I marked the terrain before you finished dismounting. Someone has to.",
+                                             "There's a rise a mile east with a clear line on the road. Not that you asked."),
+                                        Pick("I've already walked the high ground twice. Nothing waiting up there. Yet.",
+                                             "This country reads easy if you know what you're looking at. The tree line's been cleared for lumber, not for defense."),
+                                        Pick("I checked the approach before you even asked me to. Habit, with you.",
+                                             "I like knowing the ground before we're standing on it. Especially when you're standing on it with me."));
+                case "tactics":     return PickTone(tone,
+                                        Pick("That garrison is arranged wrong for the terrain. Someone's going to pay for that mistake eventually.",
+                                             "Formation like that only works if nobody attacks the flank. Someone should attack the flank."),
+                                        Pick("I've been reading the ground here for a fight that isn't happening. Old habit.",
+                                             "Whoever laid out this settlement's defenses understood chokepoints. Whoever staffs them today does not."),
+                                        Pick("I've already worked out three ways to hold this ground if it ever comes to that. For you, mostly.",
+                                             "You let me plan the approach without arguing. Not every commander does that. I notice."));
+                case "engineering": return PickTone(tone,
+                                        Pick("That wall's been patched with the wrong stone. It'll hold. For now.",
+                                             "Whoever built that gate mechanism didn't think about winter. It shows."),
+                                        Pick("The masonry on the north wall is newer than the rest. Something happened there. I'd guess a siege, badly won.",
+                                             "I could improve the drainage on half the streets here in a week. Nobody's asked."),
+                                        Pick("Give me an afternoon and the right timber and I could fix that gate mechanism properly. Just say the word.",
+                                             "You let me poke at things that aren't broken yet. Most people find that irritating. I appreciate that you don't."));
+                case "steward":     return PickTone(tone,
+                                        Pick("Our supplies will hold another nine days. I did the count so you wouldn't have to ask.",
+                                             "Someone's been skimming from the grain stores in this town. Not our problem. Probably."),
+                                        Pick("I've been counting what leaves this town against what enters it. The numbers don't quite balance.",
+                                             "A column this size eats more than people think. I keep the numbers so nobody has to wonder."),
+                                        Pick("The company's fed, watered, and accounted for. You don't have to ask anymore. I've got it.",
+                                             "I like that you trust the numbers when I bring them to you. Most captains don't bother checking who's counting."));
+                case "trade":       return PickTone(tone,
+                                        Pick("Prices here are inflated for travelers. I'd wait a day before buying anything, if I were spending your coin.",
+                                             "That merchant undercounted his own stock twice while I watched. Sloppy, or lying. Hard to say which."),
+                                        Pick("Grain's cheap here and salt is dear. Tells you something about the roads this season.",
+                                             "I could turn a modest profit off what's sitting in this market, given a free afternoon."),
+                                        Pick("I found something in the market you'd like. Didn't buy it yet — wanted to know if you'd want to see it first.",
+                                             "You never ask what I spend the coin on when I handle it. I try to make sure that trust is earned."));
+                case "charm":       return PickTone(tone,
+                                        Pick("That innkeeper likes me already. Give it an hour and he'll tell me everything worth knowing.",
+                                             "People say more than they mean to when they think they're being flattered. Most people, anyway."),
+                                        Pick("I talked to three people in the market and learned more than the guard captain would tell us outright.",
+                                             "A smile costs nothing and buys more than coin does, in a place like this."),
+                                        Pick("I got the gate guard talking. Nothing useful, honestly. I just like watching you pretend not to notice I can do that.",
+                                             "You don't need me to charm anyone when you're in the room. I do it anyway. Habit."));
+                case "leadership":  return PickTone(tone,
+                                        Pick("The men are grumbling. Nothing that won't pass. I'll handle it if it doesn't.",
+                                             "Morale dips in towns like this. Too much comfort, not enough purpose. I'm watching it."),
+                                        Pick("I checked in with the column before we entered. Spirits are fine. I like to know before you have to ask.",
+                                             "A company holds together in the field. It's towns like this that test it. Worth watching."),
+                                        Pick("The men would follow you through worse than this. I've made sure of that, quietly, over time.",
+                                             "I don't say this often, but you lead well. I've served under worse. Considerably worse."));
+                case "crafting":    return PickTone(tone,
+                                        Pick("That blacksmith's forge is running hot for this hour. Rushed order, or bad temperature control. Not our concern.",
+                                             "The steel in this town's weaponry is decent. Not the folding, though. Whoever taught them cut corners."),
+                                        Pick("I could tell you what's wrong with half the blades sold in that market. Nobody's asking, so I won't, unless you want to hear it.",
+                                             "Good ore country, this. Shame the smiths here don't know what they're sitting on."),
+                                        Pick("I've been eyeing that forge. Give me a day off the road and I'll have your blade's edge properly true again.",
+                                             "You trust my work on your gear without checking it twice. That means more than you probably realize."));
+                case "riding":      return PickTone(tone,
+                                        Pick("These stable hands don't know a lame horse from a tired one. I checked ours myself.",
+                                             "The roads out of this place are hard on hooves. I'll want to rest the horses properly before we push on."),
+                                        Pick("I've been watching the horse traders here. Overpriced, but the stock is decent.",
+                                             "A good mount reads the rider before the rider reads the road. Most people don't understand that."),
+                                        Pick("I checked your horse over before you thought to ask. Sound shoes, no strain. You're covered.",
+                                             "You let me choose the horses without arguing the price. I don't take that for granted."));
+                case "athletics":   return PickTone(tone,
+                                        Pick("I walked the wall circuit twice before breakfast. Keeps the legs honest.",
+                                             "Half this garrison would be winded chasing a chicken. Not exactly reassuring."),
+                                        Pick("This town's got good stone underfoot. Makes for an easy run at first light, if you're the sort who does that.",
+                                             "I've kept pace with the column the whole march without complaint. Nobody notices until you stop."),
+                                        Pick("I'll match you stride for stride if you ever want to outrun a bad mood instead of talking about it.",
+                                             "You've never once told me to slow down. I appreciate a pace that doesn't insult either of us."));
+                default: // "weapon"
+                    return PickTone(tone,
+                        Pick("That guard's stance is wrong for his blade. He'd lose a real fight in four moves.",
+                             "I've been watching the garrison drill. Sloppy footwork. Wouldn't last against anyone who's actually fought."),
+                        Pick("Good steel in that armory, if the guards ever learn to use it properly.",
+                             "I could read that duel from across the yard before either man landed a blow. Technique tells you everything."),
+                        Pick("I'll spar with you properly next camp, if you're willing. It's been too long since someone gave me a real match.",
+                             "You fight like someone who's actually listened when I've corrected your guard. Not everyone does."));
+            }
+        }
+
+        // ── Attribute remark ──────────────────────────────────────────────────
+        // Same principle as skills, but for the six core attributes — a
+        // companion built around Vigor or Cunning should occasionally sound
+        // like it, independent of whichever trait they happen to carry.
+
+        private const int AttributeThreshold = 6;
+
+        private static string PickAttributeRemark(Hero c, RelationTier rel)
+        {
+            try
+            {
+                var tracked = new (CharacterAttribute attr, string key)[]
+                {
+                    (DefaultCharacterAttributes.Vigor,        "vigor"),
+                    (DefaultCharacterAttributes.Control,      "control"),
+                    (DefaultCharacterAttributes.Endurance,    "endurance"),
+                    (DefaultCharacterAttributes.Cunning,      "cunning"),
+                    (DefaultCharacterAttributes.Social,       "social"),
+                    (DefaultCharacterAttributes.Intelligence, "intelligence"),
+                };
+
+                string bestKey = null;
+                int bestValue = AttributeThreshold;
+                foreach (var (attr, key) in tracked)
+                {
+                    int v = c.GetAttributeValue(attr);
+                    if (v > bestValue) { bestValue = v; bestKey = key; }
+                }
+
+                if (bestKey == null) return null;
+                return AttributeLine(bestKey, GetTone(rel));
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); return null; }
+        }
+
+        private static string AttributeLine(string key, ToneBucket tone)
+        {
+            switch (key)
+            {
+                case "vigor":        return PickTone(tone,
+                                        Pick("I could put a spear through that gate if it came to it. It won't. Probably.",
+                                             "Strength's wasted on standing around a market. Feels like it, anyway."),
+                                        Pick("There's a woodpile behind that inn that hasn't been split in weeks. I'd have it done before you finished your ale.",
+                                             "I like having somewhere to put my strength to use. Towns don't usually offer it."),
+                                        Pick("Say the word and I'll carry whatever needs carrying. You never have to ask twice.",
+                                             "I like being useful to you in the ways that don't need explaining. This is one of them."));
+                case "control":      return PickTone(tone,
+                                        Pick("My hands are steadier than half the men guarding this gate. Wasted skill, watching them fumble.",
+                                             "I could put an arrow through that weathervane from here. I won't. Just noting that I could."),
+                                        Pick("Steady hands are worth more than people credit. I've never dropped what I meant to hold.",
+                                             "There's a precision to a place like this if you look — how the stalls line up, how the guards space themselves. I notice things like that."),
+                                        Pick("I trust my hands around you more than I trust them around most people. That's not nothing, coming from me.",
+                                             "You never flinch when I'm careless-looking with a blade near you. You know it's never actually careless."));
+                case "endurance":    return PickTone(tone,
+                                        Pick("I've marched through worse than this town's cobblestones without complaint. This is nothing.",
+                                             "Cold, heat, hunger — none of it much bothers me anymore. Wears a person down eventually, I suppose."),
+                                        Pick("I don't tire the way most do. Comes in useful more often than you'd think.",
+                                             "This road's been long. I've barely felt it. Something to be said for that, I think."),
+                                        Pick("I'll outlast whatever this road throws at us. You don't have to worry about me slowing us down.",
+                                             "You've never had to wait on me. I intend to keep it that way, for as long as you'll have me along."));
+                case "cunning":      return PickTone(tone,
+                                        Pick("That merchant thinks he's clever. He isn't. I let him believe it anyway — costs nothing.",
+                                             "There's always an angle in a place like this. I've already found two."),
+                                        Pick("I like figuring out what people aren't saying. This town's full of it.",
+                                             "Every deal in that market has a second deal underneath it. Worth knowing before you sign anything."),
+                                        Pick("I'll tell you the angle before you have to ask for it. Consider it part of what I'm for.",
+                                             "You let me play the long game without questioning it. I don't forget things like that."));
+                case "social":       return PickTone(tone,
+                                        Pick("People warm to me faster than they should. Useful. Occasionally uncomfortable.",
+                                             "I could have this whole garrison eating out of my hand by evening, if I cared to bother."),
+                                        Pick("I read a room quickly. This one's tense under the surface — something's not being said.",
+                                             "People tell me things without meaning to. This town's no different."),
+                                        Pick("I like the way people open up around me when I'm trying, especially when it's for your sake and not mine.",
+                                             "You let me handle people so you don't have to. I don't mind. I'm good at it, and it's for you."));
+                default: // "intelligence"
+                    return PickTone(tone,
+                        Pick("Half the claims made in that market wouldn't survive an actual question. Nobody's asking, though.",
+                             "I've read enough history to know how this kind of town usually ends. Not well, generally."),
+                        Pick("There's a logic to how this place is laid out, once you look past the mud. Someone planned it, once.",
+                             "I like puzzling out places like this — what they used to be, what they're becoming."),
+                        Pick("I'll work through whatever's bothering you if you want a second mind on it. That's not a small offer, from me.",
+                             "You listen when I explain things at length. Most people's eyes glaze over. Yours don't. I notice."));
+            }
+        }
+
         // ── Utilities ─────────────────────────────────────────────────────────
+
+        private static string PickTone(ToneBucket tone, string cool, string neutral, string warm)
+        {
+            switch (tone)
+            {
+                case ToneBucket.Cool: return cool;
+                case ToneBucket.Warm: return warm;
+                default:              return neutral;
+            }
+        }
 
         private static string Pick(params string[] options)
             => options[_rng.Next(options.Length)];
