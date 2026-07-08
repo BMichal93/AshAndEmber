@@ -8,7 +8,7 @@
 //   Both draw on the same reservoir of player resources (gold, influence) and
 //   should feel meaningfully costly. To prevent the world from drowning in
 //   events, a player may only have ONE scheme pending at a time, and NPC
-//   schemes fire at most once per ~33 days globally.
+//   schemes are capped at a few new launches per day globally.
 //
 // Execution delay: 1–3 campaign days after queuing.
 //
@@ -26,9 +26,12 @@
 //           • Assassination / coup caught: 40% chance of war declaration.
 //
 // NPC AI:
-//   3% global chance per day (~1 scheme every 33 days).
-//   Per-lord cooldown 20–35 days; NPCs only target enemy factions.
-//   NPCs pay the same gold and influence as the player.
+//   5% daily chance per schemer lord, 1% per non-schemer; capped at 3 new
+//   launches per day world-wide (MaxNpcSchemesPerDay). Per-lord cooldown
+//   15–25 days; NPCs only target enemy factions (or, for Viper's Counsel,
+//   a rival clan within their own kingdom). NPCs pay the same gold and
+//   influence as the player, and only ever pick a target they can actually
+//   afford at that target's tier-scaled cost.
 // =============================================================================
 
 using System;
@@ -131,10 +134,11 @@ namespace AshAndEmber
             // SkillXp awarded on success.
             //
             // Balance principle: permanent > temporary, more impact > less.
-            // Influence hierarchy: assassination (80) > coup (70) > garrison (40)
-            //   > soft lord schemes (25–45) > cheap settlement schemes (15–30).
-            // StageCoup influence is intentionally below assassination — loyalty
-            // and security recover over time; dead lords do not.
+            // Influence hierarchy: assassination (80) > coup (70) > lord schemes
+            //   (15–40) > settlement/garrison schemes (8–20). The easier, purely
+            //   temporary schemes (economic/security dips that recover on their
+            //   own) were trimmed hardest — assassination and the coup stay
+            //   expensive because their effects don't reverse.
             //
             // LORD SCHEMES ─────────────────────────────────────────────────────────
             new SchemeDefinition(SchemeType.Assassinate,
@@ -145,12 +149,12 @@ namespace AshAndEmber
             new SchemeDefinition(SchemeType.ForgeDocuments,
                 "Forge Documents",
                 "Fabricated letters damage a lord's reputation with their own faction.",
-                2000, 35, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 750),
+                1700, 25, 0.40f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 750),
 
             new SchemeDefinition(SchemeType.FalseAccusations,
                 "False Accusations",
                 "Slander carefully placed at the right ears. Clan renown is damaged; their standing erodes.",
-                1500, 25, 0.45f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 500),
+                1200, 15, 0.45f, DefaultSkills.Charm, needsLord: true, needsSettlement: false, skillXp: 500),
 
             // SETTLEMENT SCHEMES ───────────────────────────────────────────────────
             new SchemeDefinition(SchemeType.StageCoup,
@@ -161,27 +165,27 @@ namespace AshAndEmber
             new SchemeDefinition(SchemeType.PoisonWell,
                 "Poison a Well",
                 "The garrison sickens. Militia die before anyone connects cause to effect.",
-                2200, 40, 0.38f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 750),
+                1700, 20, 0.38f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 750),
 
             new SchemeDefinition(SchemeType.BribeSoldiers,
                 "Bribe Soldiers",
                 "A portion of the garrison deserts. They scatter — no one joins you, they simply leave.",
-                2200, 40, 0.38f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 750),
+                1700, 20, 0.38f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 750),
 
             new SchemeDefinition(SchemeType.BurnStorage,
                 "Burn a Storage",
                 "Warehouses catch fire. Food is lost, prosperity crumbles.",
-                2000, 30, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 500),
+                1500, 15, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 500),
 
             new SchemeDefinition(SchemeType.SpreadTerror,
                 "Spread Terror",
                 "Random violence shakes the city. Security drops sharply.",
-                1500, 25, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 400),
+                1100, 12, 0.40f, DefaultSkills.Roguery, needsLord: false, needsSettlement: true, skillXp: 400),
 
             new SchemeDefinition(SchemeType.SpreadRumors,
                 "Spread Rumors",
                 "Whisper campaigns corrode trust. Loyalty and prosperity fall.",
-                1200, 15, 0.35f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 400),
+                900, 8, 0.35f, DefaultSkills.Charm, needsLord: false, needsSettlement: true, skillXp: 400),
 
             // LORD SCHEME (same kingdom only) ──────────────────────────────────────
             new SchemeDefinition(SchemeType.VipersCounsel,
