@@ -116,6 +116,7 @@ namespace AshAndEmber
                 AshenMapTone.ResetForNewGame();
                 CampaignMapEvents.ResetForNewGame();
                 SettlementEncounters.ResetForNewGame();
+                ScholarBargainQuestSystem.ResetForNewGame();
                 DragonQuestSystem.ResetForNewGame();
                 KeybindReferenceSystem.ResetForNewGame();
                 KeybindReferenceSystem.EnsureForSession();   // present from the very start

@@ -193,6 +193,7 @@ namespace AshAndEmber
             try { FireWorshippersSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { CampaignMapEvents.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SettlementEncounters.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { ScholarBargainQuestSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { DragonQuestSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { AshenQuestSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { BurningLabQuestSystem.Save(dataStore); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

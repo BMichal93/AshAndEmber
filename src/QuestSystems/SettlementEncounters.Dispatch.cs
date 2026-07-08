@@ -100,6 +100,9 @@ namespace AshAndEmber
                 // Cartographer of Silences — mage or Ashen, city enter, 3-phase, 60-day cooldown
                 if ((mage || ashen) && _cartographerCooldown == 0 && _cartographerPhase < 3)
                     pool.Add(EV_CartographerOfSilences);
+                // The Scholar's Bargain — clan tier ≥ 2, entering a settlement the player's clan owns
+                if (ScholarBargainQuestSystem.CanTriggerAt(s))
+                    pool.Add(ScholarBargainQuestSystem.EO_ScholarApproach);
             }
 
             Fire(pool, s);
@@ -146,6 +149,9 @@ namespace AshAndEmber
                 // Vow Undischarged — general, city leave, clan tier ≥ 2, 90-day cooldown
                 if (_vowCooldown == 0 && _vowPhase == 0 && clanTier >= 2)
                     pool.Add(EL_VowUndischarged);
+                // The Scholar's Bargain — clan tier ≥ 2, leaving a settlement the player's clan owns
+                if (ScholarBargainQuestSystem.CanTriggerAt(s))
+                    pool.Add(ScholarBargainQuestSystem.EO_ScholarApproach);
             }
 
             Fire(pool, s);

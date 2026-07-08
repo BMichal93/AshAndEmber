@@ -12,6 +12,7 @@
 
 using System;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.Core;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -129,6 +130,16 @@ namespace AshAndEmber
 
             ConsumeQualifyingPrisoners(def);
             GrantAshenTroop(def);
+
+            if (IsScholarGrantedOnly(Settlement.CurrentSettlement))
+            {
+                try
+                {
+                    var kingdom = Hero.MainHero?.MapFaction as Kingdom;
+                    if (kingdom != null) ChangeCrimeRatingAction.Apply(kingdom, 1f, true);
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            }
 
             ShowDialog($"{def.Name} raised",
                 $"The prisoners are led away and do not come back the same. When the yard is quiet again, "

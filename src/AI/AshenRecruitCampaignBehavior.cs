@@ -24,24 +24,49 @@ namespace AshAndEmber
     {
         private const string AshenKingdomId = "ashen_kingdom";
 
+        // Settlement granted Ashen recruiting by The Scholar's Bargain questline,
+        // independent of who actually owns it or holds the Ashen kingdom.
+        private static string _scholarGrantedSettlementId = null;
+
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
         }
 
-        public override void SyncData(IDataStore store) { }
+        public override void SyncData(IDataStore store)
+        {
+            store.SyncData("ARC_ScholarGrantedSettlement", ref _scholarGrantedSettlementId);
+        }
 
         private static void OnSessionLaunched(CampaignGameStarter starter)
         {
             try { RegisterAshenRecruitMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
+        // Called by ScholarBargainQuestSystem when the scholar's bargain pays off:
+        // the named settlement can muster the Ashen dead permanently, whether or
+        // not the player (or the settlement) is ever actually Ashen.
+        internal static void GrantScholarRecruiting(string settlementId)
+        {
+            _scholarGrantedSettlementId = settlementId;
+        }
+
         // ── Gating ─────────────────────────────────────────────────────────────
         internal static bool HasAshenRecruiter(Settlement s)
         {
             if (s == null || (!s.IsTown && !s.IsCastle)) return false;
-            try { return s.MapFaction?.StringId == AshenKingdomId; }
+            try { return s.MapFaction?.StringId == AshenKingdomId || s.StringId == _scholarGrantedSettlementId; }
             catch { return false; }
+        }
+
+        // True when the muster yard exists here only because of the scholar's
+        // bargain, not because this is an actual Ashen holding — used to add the
+        // per-unit crime toll the bargain carries that a native Ashen city does not.
+        internal static bool IsScholarGrantedOnly(Settlement s)
+        {
+            if (s == null || s.StringId != _scholarGrantedSettlementId) return false;
+            try { return s.MapFaction?.StringId != AshenKingdomId; }
+            catch { return true; }
         }
 
         // ── Prisoners ──────────────────────────────────────────────────────────
