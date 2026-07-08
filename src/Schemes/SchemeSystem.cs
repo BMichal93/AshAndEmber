@@ -234,12 +234,17 @@ namespace AshAndEmber
         private static int    _pendingOpType   = -1; // -1 = none
         private static string _pendingOpHeroId = "";
         private static string _pendingOpSettId = "";
+        // True when the committed operation was routed to Trust to Instinct rather
+        // than the full Gambit — lets a reload mid-resolution resume the right path.
+        private static bool   _pendingOpSkip   = false;
 
-        internal static void SetPendingPlayerOperation(SchemeType type, Hero targetHero, Settlement targetSett)
+        internal static void SetPendingPlayerOperation(SchemeType type, Hero targetHero,
+            Settlement targetSett, bool skip = false)
         {
             _pendingOpType   = (int)type;
             _pendingOpHeroId = targetHero?.StringId ?? "";
             _pendingOpSettId = targetSett?.StringId ?? "";
+            _pendingOpSkip   = skip;
         }
 
         internal static void ClearPendingPlayerOperation()
@@ -247,14 +252,16 @@ namespace AshAndEmber
             _pendingOpType   = -1;
             _pendingOpHeroId = "";
             _pendingOpSettId = "";
+            _pendingOpSkip   = false;
         }
 
         /// True when a committed player operation never reached a terminal state
-        /// (extract / bust / abort / rounds exhausted) — e.g. a reload mid-Gambit.
+        /// (extract / bust / abort / rounds exhausted / skip resolution) — e.g. a
+        /// reload mid-Gambit or between commit and a deferred skip resolution.
         internal static bool TryGetPendingPlayerOperation(out SchemeDefinition def,
-            out Hero targetHero, out Settlement targetSett)
+            out Hero targetHero, out Settlement targetSett, out bool skip)
         {
-            def = null; targetHero = null; targetSett = null;
+            def = null; targetHero = null; targetSett = null; skip = _pendingOpSkip;
             if (_pendingOpType < 0) return false;
             def = GetDefinition((SchemeType)_pendingOpType);
             if (def == null) { ClearPendingPlayerOperation(); return false; }

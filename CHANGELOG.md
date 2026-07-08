@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+### The Gambit is now a choice, not a toll
+- **Player schemes no longer force the full Gambit minigame** — before it begins, you can now Trust to Instinct instead: a single Roguery gamble (the same 20–80% curve as the Gambit's own Sidestep) decides the operation outright, with no field reports and no rounds to run out.
+- **Playing the Gambit in full is now the better-paying path.** Extracting well past the bare success threshold (instead of the instant you cross it) earns a potency bonus of up to 1.5× — scaling the operation's damage/effect, the skill XP earned, and shortening the cooldown before you can strike the same target again. Trusting to Instinct always resolves at baseline (1.0×): quick and safe, but never the strongest outcome.
+- Both paths apply the same bust consequences on failure, with a dedicated notification for each.
+
 ### Companions speak in more than one voice
 - **Companion map-entry remarks now draw on skills and attributes, not just traits** — a companion with standout Medicine, Roguery, Scouting, Tactics, Engineering, Steward, Trade, Charm, Leadership, Crafting, Riding, Athletics, weapon proficiency, or a dominant Vigor/Control/Endurance/Cunning/Social/Intelligence now occasionally speaks from that specialty, each with its own cool/neutral/warm tone depending on your standing with them.
 - **A companion who qualifies for more than one trait voice (say, both Valorous and Merciful) no longer always defaults to the same one** — every trait pool they currently qualify for, plus any standout skill or attribute line, is now rolled as an equal candidate each time a remark fires, so their comments read as more varied instead of one fixed personality slot.
