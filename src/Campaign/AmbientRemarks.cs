@@ -7,15 +7,19 @@
 //   pools: general travel, mage-specific, cold-touched (high whisper tier).
 //
 //   Companion Remarks — a companion makes an unprompted world-aware comment
-//   on settlement entry (~25% chance, 3-day cooldown). Every trait pool the
+//   on settlement entry (~12% chance, 6-day cooldown — deliberately rare, so
+//   a line lands as a moment rather than chatter). Every trait pool the
 //   companion currently qualifies for (Valor/Mercy/Calculating/Honor/
 //   Generosity/cynical), plus a standout skill and a standout attribute if
 //   either clears a threshold, are collected as candidates and one is picked
 //   at random — so a companion who is both Valorous and Merciful doesn't
 //   always speak as the soldier, and a companion's Medicine or Cunning shows
-//   through even when their traits are middling. Trait pools carry world-state
-//   branches AND five relation tiers; skill/attribute pools use a coarser
-//   three-tone version of the same scale:
+//   through even when their traits are middling. The last ~10 lines heard are
+//   remembered and a fresh remark is re-rolled (up to 5 tries) if it would
+//   repeat one; the same companion also won't speak twice in a row while
+//   another is available. Trait pools carry world-state branches AND five
+//   relation tiers; skill/attribute pools use a coarser three-tone version
+//   of the same scale:
 //
 //     Very negative  (≤ −50)  — hostile, pointed, implies distrust     ┐
 //     Negative       (−49 to −10) — clipped, professional, cool        ├ Cool
@@ -47,6 +51,16 @@ namespace AshAndEmber
         private static int _campfireCooldown  = 0;
         private static int _companionCooldown = 0;
 
+        // Companion remarks fire rarely and never repeat a recently-heard line —
+        // a companion's voice should feel occasional and considered, not chatty.
+        private const int  CompanionRemarkChancePct = 12;
+        private const int  CompanionRemarkCooldownDays = 6;
+        private const int  RecentRemarkHistory = 10;
+        private const int  RemarkRetryAttempts = 5;
+
+        private static readonly Queue<string> _recentRemarks = new Queue<string>();
+        private static Hero _lastCompanionSpoke;
+
         private enum RelationTier { VeryNegative, Negative, Neutral, Positive, VeryPositive }
         private enum ToneBucket { Cool, Neutral, Warm }
 
@@ -56,6 +70,8 @@ namespace AshAndEmber
         {
             _campfireCooldown  = 0;
             _companionCooldown = 0;
+            _recentRemarks.Clear();
+            _lastCompanionSpoke = null;
         }
 
         internal static void DailyTick()
@@ -69,7 +85,7 @@ namespace AshAndEmber
         internal static void CheckCompanionRemark(Settlement s)
         {
             if (_companionCooldown > 0) return;
-            if (_rng.Next(100) >= 25)   return;
+            if (_rng.Next(100) >= CompanionRemarkChancePct) return;
             try { FireCompanionRemark(s); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
@@ -202,13 +218,34 @@ namespace AshAndEmber
 
             if (companions.Count == 0) return;
 
-            var companion = companions[_rng.Next(companions.Count)];
+            // Don't let the same companion speak twice in a row when others could.
+            var pool = companions.Count > 1 && _lastCompanionSpoke != null
+                ? companions.Where(h => h != _lastCompanionSpoke).ToList()
+                : companions;
+            if (pool.Count == 0) pool = companions;
+
+            var companion = pool[_rng.Next(pool.Count)];
             if (companion == null) return;
 
-            string remark = BuildRemark(companion, s);
+            // Re-roll a handful of times if we land on something said recently —
+            // BuildRemark re-randomizes both the trait/skill/attribute pool and
+            // the specific line, so a retry almost always finds something fresh.
+            string remark = null;
+            for (int attempt = 0; attempt < RemarkRetryAttempts; attempt++)
+            {
+                string candidate = BuildRemark(companion, s);
+                if (string.IsNullOrEmpty(candidate)) return;
+                remark = candidate;
+                if (!_recentRemarks.Contains(candidate)) break;
+            }
             if (string.IsNullOrEmpty(remark)) return;
 
-            _companionCooldown = 3;
+            _companionCooldown = CompanionRemarkCooldownDays;
+            _lastCompanionSpoke = companion;
+
+            _recentRemarks.Enqueue(remark);
+            while (_recentRemarks.Count > RecentRemarkHistory) _recentRemarks.Dequeue();
+
             ShowQuick($"{companion.Name}: \"{remark}\"");
         }
 
