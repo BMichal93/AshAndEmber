@@ -5,9 +5,9 @@
 ## Unreleased
 
 ### Campfire vignettes read the road, not just the dice
-- **Campfire vignettes (the ambient "the men don't like the wind" style lines that fire while camped between settlements) now fire noticeably less often** — a 5-day cooldown and a 12% daily roll instead of 3 days and 20%, so they read as a rare aside rather than a nightly habit.
-- **Added dozens of new lines across every existing pool** (general travel, mage, aged, cold-touched) for more variety between sightings.
-- **Added four new situational pools that can pre-empt the generic lines when the world actually warrants it**: a wounded column, a kingdom at war, deep winter, and riding without company. Each only sometimes wins out over the flat pools, so the vignettes stay a mix of plain colour and lines that actually track your situation.
+- **Campfire vignettes (the ambient "the men don't like the wind" style lines that fire while camped between settlements) now fire much less often** — an 8-day cooldown and a 7% daily roll instead of 3 days and 20%, so they read as a rare aside rather than a nightly habit.
+- **Added dozens more lines across every pool** (general travel, mage, aged, cold-touched) so repeats are far less noticeable.
+- **Added situational pools that can pre-empt the generic lines when the world actually warrants it**: a wounded column, a kingdom at war, every season of the year (not just winter), riding without company, and leading a large host. Each only sometimes wins out over the flat pools, so the vignettes stay a mix of plain colour and lines that actually track your situation.
 
 ### Settlement encounter choices actually follow through
 - **Fixed a choice in "The Knight Without Fortune" that promised news "two days later" but fired it as an immediate follow-up prompt instead of actually waiting** — it now runs through the same day-countdown machinery every other deferred encounter consequence uses.
