@@ -870,9 +870,14 @@ namespace AshAndEmber
                     switch (chosen?[0]?.Identifier as string)
                     {
                         case "detour":
-                            AddMorale(-(3 + extraStakes));
-                            Msg($"You detour. Seven days added to the march. {(trigger > 1 ? "Again. " : "")}Your men do not complain, " +
-                                "not out loud. They have seen what waits on the other road, but a week is a week.", DimColor);
+                            Msg($"You turn off the road. Seven days added to the march.{(trigger > 1 ? " Again." : "")} Your men do not complain, not out loud.", DimColor);
+                            StartWait(7,
+                                "You keep well clear of the sick villages, the column taking the long way around the smoke.",
+                                () =>
+                                {
+                                    AddMorale(-(3 + extraStakes));
+                                    Msg("You rejoin the road past the last of it. Nobody is sick. They have seen what waits on the other route, but a week is a week.", DimColor);
+                                });
                             // Safe — no exposure, paid for in time and patience rather than health
                             break;
 
@@ -969,9 +974,10 @@ namespace AshAndEmber
                             case "healer":
                                 if (ChangeGold(-600))
                                 {
-                                    Msg("The healer arrives before nightfall. He is methodical and humourless and effective. " +
-                                        "The fever peaks and breaks over two days. Your column is slowed but not stopped. " +
-                                        "You do not lose anyone you can name.", GoodColor);
+                                    Msg("The healer arrives before nightfall. He is methodical and humourless and effective. You make camp to let him work.", DimColor);
+                                    StartWait(2,
+                                        "The healer moves through the camp treating the sick one by one. The fever peaks.",
+                                        () => Msg("The fever breaks over two days. Your column is slowed but not stopped. You do not lose anyone you can name.", GoodColor));
                                 }
                                 break;
 
@@ -991,25 +997,30 @@ namespace AshAndEmber
                                 break;
 
                             case "fire":
-                                AgePlayer(30);
-                                ShiftTrait(DefaultTraits.Mercy, 1);
-                                Msg("You work through the column through two nights, burning the fever out of them one by one. " +
-                                    "The fire knows the difference between what belongs in a body and what doesn't. " +
-                                    "By the second dawn the column is clean. Your men do not understand what you did. " +
-                                    "They understand the result. The cost is thirty days of your years, spent without ceremony " +
-                                    "in a camp that will never know the exact price.", FireColor);
-                                AddMorale(8f);
+                                Msg("You make camp and go to work, the fire already gathering in your hands.", FireColor);
+                                StartWait(2,
+                                    "You work through the column night by night, burning the fever out of them one by one. The fire knows the difference between what belongs in a body and what doesn't.",
+                                    () =>
+                                    {
+                                        AgePlayer(30);
+                                        ShiftTrait(DefaultTraits.Mercy, 1);
+                                        AddMorale(8f);
+                                        Msg("By the second dawn the column is clean. Your men do not understand what you did. They understand the result. The cost is thirty days of your years, spent without ceremony in a camp that will never know the exact price.", FireColor);
+                                    });
                                 break;
 
                             case "nature":
-                                try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - 25); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                                ShiftTrait(DefaultTraits.Mercy, 1);
-                                Msg("You move through the camp at dusk and let the living world work through your hands. " +
-                                    "It does not burn — it draws. The fever lifts off your men like morning mist off a river, " +
-                                    "and settles somewhere beyond you, dispersed into the land. By dawn the column is clear. " +
-                                    "What it cost is in you now — not years, but blood. You will feel it for a day or two.",
-                                    new TaleWorlds.Library.Color(0.35f, 0.75f, 0.35f));
-                                AddMorale(8f);
+                                Msg("You make camp at dusk. The living world is already answering your hands.", new TaleWorlds.Library.Color(0.35f, 0.75f, 0.35f));
+                                StartWait(1,
+                                    "It does not burn — it draws. The fever lifts off your men like morning mist off a river, and settles somewhere beyond you, dispersed into the land.",
+                                    () =>
+                                    {
+                                        try { Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - 25); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                                        ShiftTrait(DefaultTraits.Mercy, 1);
+                                        AddMorale(8f);
+                                        Msg("By dawn the column is clear. What it cost is in you now — not years, but blood. You will feel it for a day or two.",
+                                            new TaleWorlds.Library.Color(0.35f, 0.75f, 0.35f));
+                                    });
                                 break;
 
                             case "cold":
