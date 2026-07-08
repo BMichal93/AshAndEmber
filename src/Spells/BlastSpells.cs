@@ -1,7 +1,11 @@
 // =============================================================================
 // LIFE & DEATH MAGIC — BlastSpells.cs
 // BLAST FORM: forward cone, 2.5m range per U input, ~49° half-angle (dot 0.65).
-// Hits everyone when DamageCount > 0 (friendly fire), allies only when RestoreCount > 0.
+// The PLAYER's own cast hits everyone when DamageCount > 0 (friendly fire is the
+// price of poor aim, warned about below) — allies only when RestoreCount > 0. An
+// NPC caster (a bandit-tier BanditMageAI mage) has no aim to speak of, so its
+// damage is restricted to actual enemies: a Fire Zealot loosing this into a packed
+// melee scrum should threaten the enemy line, not neuter itself on its own side.
 // =============================================================================
 
 using System;
@@ -30,6 +34,16 @@ namespace AshAndEmber
             int blastCnt = cast.BlastCount > 0 ? cast.BlastCount : cast.FormCount;
             float range = Math.Max(4f, blastCnt * 2.5f);
             Vec3  fwd   = caster.LookDirection.NormalizedCopy();
+            // An NPC caster (BanditMageAI) has no real aim — its current facing is
+            // whatever the base game's movement AI left it at. Aim at the nearest
+            // actual enemy instead, so a Fire Zealot's blast (visuals and damage
+            // alike) has a reason to land at all rather than firing into empty
+            // ground or its own ranks.
+            if (caster != Agent.Main)
+            {
+                Vec3? aimed = SpellEffects.NearestEnemyGroundDirection(caster);
+                if (aimed.HasValue) fwd = aimed.Value;
+            }
             // Project forward vector to horizontal — vertical pitch would otherwise
             // shrink the apparent cone angle when looking slightly up or down.
             Vec3  fwdH  = new Vec3(fwd.x, fwd.y, 0f);
@@ -46,7 +60,10 @@ namespace AshAndEmber
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
                     bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
-                    if (!(wantDmg || (wantHeal && isAlly))) continue;
+                    // The player accepts friendly fire as the cost of their own aim;
+                    // an NPC caster's damage only ever lands on an actual enemy.
+                    bool wantDmgHere = wantDmg && (caster == Agent.Main || isEnemy);
+                    if (!(wantDmgHere || (wantHeal && isAlly))) continue;
                     // Horizontal range check so mounted riders at elevation are not missed.
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > range) continue;

@@ -145,8 +145,19 @@ namespace AshAndEmber
         // LookDirection carries pitch — aiming at the ground (natural without a
         // crosshair) would tilt a forward cone off the foes standing on it. These
         // are ground wedges, so only azimuth should matter; drop the vertical.
+        //
+        // An AI caster (anyone but the player) aims at the nearest actual enemy
+        // instead: its LookDirection is whatever the base game's movement/combat AI
+        // left it at, which is frequently unrelated to where the enemy line stands —
+        // without this, a lord or seer's gust/root-line/wave can loose straight into
+        // its own ranks or empty ground and never touch a foe.
         private static Vec3 GroundFacing(Agent caster)
         {
+            if (caster != Agent.Main)
+            {
+                Vec3? aimed = SpellEffects.NearestEnemyGroundDirection(caster);
+                if (aimed.HasValue) return aimed.Value;
+            }
             Vec3 f = caster.LookDirection; f.z = 0f;
             if (f.Length < 0.01f) return new Vec3(0f, 1f, 0f);
             return f.NormalizedCopy();
@@ -205,7 +216,7 @@ namespace AshAndEmber
         // All barrier powers — place an elemental wall in front of the caster.
         private static void BattleBarrier(Agent caster, Vec3 pos, Team team, NatureElement el)
         {
-            try { SpellEffects.SpawnNatureBarrier(pos, caster.LookDirection, el, team, _castPower); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnNatureBarrier(pos, GroundFacing(caster), el, team, _castPower); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             bool isPlayer = false;
             try { isPlayer = Agent.Main != null && caster == Agent.Main; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (isPlayer)

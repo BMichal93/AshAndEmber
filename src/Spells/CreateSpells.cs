@@ -225,7 +225,10 @@ namespace AshAndEmber
                     if (!a.IsActive() || a.IsMount || a == caster) continue;
                     bool isEnemy = casterTeam != null && a.Team != null && a.Team != casterTeam;
                     bool isAlly  = casterTeam != null && a.Team != null && a.Team == casterTeam;
-                    if (!(wantDmg || (wantHeal && isAlly))) continue;
+                    // The player accepts friendly fire as the cost of their own aim;
+                    // an NPC caster's damage only ever lands on an actual enemy.
+                    bool wantDmgHere = wantDmg && (caster == Agent.Main || isEnemy);
+                    if (!(wantDmgHere || (wantHeal && isAlly))) continue;
                     Vec3 toH = new Vec3(a.Position.x - caster.Position.x, a.Position.y - caster.Position.y, 0f);
                     if (toH.Length > radius) continue;
                     targets.Add(a);
