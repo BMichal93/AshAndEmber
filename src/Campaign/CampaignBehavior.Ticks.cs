@@ -63,6 +63,7 @@ namespace AshAndEmber
                 try { MageKnowledge.DailyWhisperTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { CampaignMapEvents.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { SettlementEncounters.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { ScholarBargainQuestSystem.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { DragonQuestSystem.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { KeybindReferenceSystem.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { AshenQuestSystem.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
