@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <NPCCharacters>
 
   <!-- ═══════════════════════════════════════════════════════════════════
@@ -20,8 +20,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -61,8 +60,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -101,8 +99,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -142,8 +139,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -194,8 +190,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait" />
     </face>
     <!-- Risen peasants: ragged robes and whatever farm-tool or knife the cold
          still lets their hands close on. Item ids verified against the native
@@ -246,8 +241,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait" />
     </face>
     <!-- The cold-caller: hooded and robed, a knife or sickle for when the fire
          fails. Its reach is the ashen cold it channels, not its blade. -->
@@ -288,8 +282,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.3" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.9" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait" />
     </face>
     <!-- The dead that still remember how to hold a line: robed over a padded
          gambeson, a looted axe or falchion and a battered round shield. -->
@@ -330,8 +323,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.3" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.9" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait_veteran" />
     </face>
     <!-- Wardens: heavier robes over a gambeson, a mace or bearded axe and a
          strapped shield. The strongest of the common dead. -->
@@ -372,8 +364,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.4" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.9" build="1.0" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait_veteran" />
     </face>
     <!-- Revenants: the old and the deep-frozen, still bearing looted steel over
          their grave-robes — a bearded axe or broad falchion behind a round shield. -->
@@ -420,8 +411,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_battania" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -459,8 +449,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_battania" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -500,8 +489,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_battania_veteran" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -549,8 +537,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="30.0" weight="0.3" build="0.3" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="55.0" weight="0.7" build="0.7" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_empire_veteran" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -578,8 +565,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="30.0" weight="0.3" build="0.3" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="55.0" weight="0.7" build="0.7" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait_veteran" />
     </face>
     <Equipments>
       <EquipmentRoster>

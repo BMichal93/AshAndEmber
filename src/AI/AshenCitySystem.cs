@@ -111,17 +111,55 @@ namespace AshAndEmber
             "Ov Castle", "Mazhadan",
         };
 
+        // The same realm, keyed by the settlement's immutable StringId. Display names
+        // are session data the mod itself overwrites (RenameAshenSettlements), so a
+        // name lookup silently stops finding "Tyal" the moment it has become "The
+        // Heart of Winter" — which is why every identity decision below (is this a
+        // target? does this clan hold anything outside the cold? is this clan's seat
+        // an Ashen city?) reads the id, never the name.
+        //
+        // Kept in the same order as the names above: Initialize walks this list, and the
+        // first target it claims becomes the Ashen kingdom's seat — so Tyal leads.
+        internal static readonly string[] _targetSettlementIds =
+        {
+            "town_S5",    // Tyal
+            "town_S6",    // Sibir
+            "town_K1",    // Baltakhand
+            "castle_S7",  // Urikskala Castle
+            "castle_K9",  // Kaysar Castle
+            "castle_K6",  // Dinar Castle
+            "castle_S8",  // Vladiv Castle
+            "town_S4",    // Varnovapol
+            "castle_K4",  // Tepes Castle
+            "castle_S6",  // Takor Castle
+            "castle_K5",  // Khimli Castle
+            "town_V8",    // Ostican
+            "town_S3",    // Omor
+            "castle_S5",  // Ov Castle
+            "castle_S2",  // Mazhadan Castle
+        };
+
+        // Membership lookups for the list above.
+        private static readonly HashSet<string> _targetIdSet =
+            new HashSet<string>(_targetSettlementIds, StringComparer.OrdinalIgnoreCase);
+
+        internal static bool IsTargetSettlementId(string stringId) =>
+            stringId != null && _targetIdSet.Contains(stringId);
+
         // True if a settlement belongs to the Ashen realm — exactly the target set,
-        // never any other town. Settlements are RENAMED on session start (Amprela →
-        // "The Ashen Crown"), so a pure vanilla-name match wrongly fails for the
+        // never any other town. Settlements are RENAMED on session start (Tyal →
+        // "The Heart of Winter"), so a pure vanilla-name match wrongly fails for the
         // realm's own renamed cities and they get handed away by the confinement
-        // guard. So we match three ways: the StringId is claimed in the clan map
-        // (rename-proof), the vanilla name, OR the Ashen rename it now carries.
+        // guard. The StringId check below is the authority; the two name matches are
+        // kept as a safety net for any settlement the id table does not list.
         internal static bool IsTargetSettlement(Settlement s)
         {
             if (s == null) return false;
             try
             {
+                // The realm proper (immutable id — survives any display rename).
+                if (IsTargetSettlementId(s.StringId)) return true;
+
                 // Claimed Ashen (keyed by StringId — survives any display rename).
                 if (_settlementClanMap.ContainsKey(s.StringId)) return true;
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <NPCCharacters>
 
   <!-- ═══════════════════════════════════════════════════════════════════
@@ -20,8 +20,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -61,8 +60,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -101,8 +99,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -142,8 +139,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.looter" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -187,8 +183,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -225,8 +220,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -272,8 +266,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_battania" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -311,8 +304,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_battania" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -352,8 +344,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_battania_veteran" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -401,8 +392,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="30.0" weight="0.3" build="0.3" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="55.0" weight="0.7" build="0.7" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_empire_veteran" />
     </face>
     <Equipments>
       <EquipmentRoster>
@@ -430,8 +420,7 @@
                 is_basic_troop="false"
                 is_hidden_in_encyclopedia="false">
     <face>
-      <BodyPropertiesMin version="4" age="30.0" weight="0.3" build="0.3" key="0000000000000000"/>
-      <BodyPropertiesMax version="4" age="55.0" weight="0.7" build="0.7" key="001FFFFFFFFFFFFF"/>
+      <face_key_template value="BodyProperty.fighter_khuzait_veteran" />
     </face>
     <Equipments>
       <EquipmentRoster>

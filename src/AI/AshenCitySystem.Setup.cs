@@ -29,12 +29,15 @@ namespace AshAndEmber
             Settlement homeSettlement = null;
 
             // First pass: process settlements whose clans exclusively own Ashen settlements.
-            foreach (string name in _targetSettlementNames)
+            // Located by StringId, never by display name: EnsureSessionRenames may already
+            // have turned "Tyal" into "The Heart of Winter" by the time we run (it fires on
+            // OnSessionLaunched, we fire on the Gift prompt / first daily tick), and a name
+            // lookup then finds nothing at all — the realm silently never rises.
+            foreach (string id in _targetSettlementIds)
             {
                 try
                 {
-                    var settlement = Settlement.All.FirstOrDefault(s =>
-                        s.Name.ToString().IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+                    var settlement = Settlement.Find(id);
                     if (settlement == null) continue;
 
                     Clan clan = settlement.OwnerClan;
@@ -64,17 +67,20 @@ namespace AshAndEmber
                     var clanHoldings = clan.Settlements
                         .Where(s => s.IsTown || s.IsCastle).ToList();
                     if (clanHoldings.Count == 0) continue;   // holdings not ready — do not risk it
-                    bool hasNonTarget = clanHoldings.Any(s =>
-                        !_targetSettlementNames.Any(n =>
-                            s.Name.ToString().IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0));
+                    bool hasNonTarget = clanHoldings.Any(s => !IsTargetSettlementId(s.StringId));
                     if (hasNonTarget) continue;
 
                     if (homeSettlement == null) homeSettlement = settlement;
                     if (_ashenKingdom == null) CreateOrFindAshenKingdom(homeSettlement);
 
-                    if (_ashenClanIds.Add(clan.StringId))
+                    bool newlyAshen = _ashenClanIds.Add(clan.StringId);
+                    // Claim the settlement for its own clan whether or not the clan was
+                    // added on THIS target — a clan holding two of them (Vagiroving hold
+                    // both Tyal and Urikskala) would otherwise leave the second unclaimed,
+                    // and the second pass below would hand it to an unrelated Ashen clan.
+                    _settlementClanMap[settlement.StringId] = clan.StringId;
+                    if (newlyAshen)
                     {
-                        _settlementClanMap[settlement.StringId] = clan.StringId;
                         MarkClanAshen(clan, settlement);
                         foundAny = true;
                     }
@@ -93,12 +99,11 @@ namespace AshAndEmber
                     Hero ashenLord = ashenClan.Leader
                                   ?? ashenClan.Heroes.FirstOrDefault(h => h.IsAlive && !h.IsDisabled);
 
-                    foreach (string name in _targetSettlementNames)
+                    foreach (string id in _targetSettlementIds)
                     {
                         try
                         {
-                            var settlement = Settlement.All.FirstOrDefault(s =>
-                                s.Name.ToString().IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+                            var settlement = Settlement.Find(id);
                             if (settlement == null) continue;
                             if (_settlementClanMap.ContainsKey(settlement.StringId)) continue;
 
@@ -147,9 +152,12 @@ namespace AshAndEmber
         // True for a clan that must never be swept wholesale into the Ashen: a kingdom's
         // ruling clan, OR a clan whose ancestral seat (InitialHomeSettlement) is an
         // ordinary, non-Ashen town/castle. Every rightful Ashen clan is seated in a target
-        // city (Tyal, Sibir, Omor, Varnovapol …); Raganvad's seat is Varcheg, so he is
-        // excluded here regardless of the target castle he also holds. Both are stable
-        // identity signals, independent of holdings-enumeration timing.
+        // city (Tyal, Sibir, Omor, Varnovapol …); Raganvad's seat is Varcheg and Monchug's
+        // is Makeb, so both are excluded here regardless of the target castle each also
+        // holds (Mazhadan, Tepes) — otherwise their capitals (Varcheg/Balgard,
+        // Makeb/Chaikand) are dragged into the cold with them. Matched on the seat's
+        // StringId: a stable identity signal, independent of both the display rename and
+        // holdings-enumeration timing.
         private static bool BelongsOutsideTheCold(Clan clan)
         {
             if (clan == null) return false;
@@ -157,7 +165,8 @@ namespace AshAndEmber
             try
             {
                 var home = clan.InitialHomeSettlement;
-                if (home != null && (home.IsTown || home.IsCastle) && !IsTargetSettlement(home))
+                if (home != null && (home.IsTown || home.IsCastle)
+                    && !IsTargetSettlementId(home.StringId))
                     return true;
             }
             catch { }
@@ -184,7 +193,7 @@ namespace AshAndEmber
                     // Only act on the stable-seat signal. If the seat is unknown, never risk it.
                     var home = clan.InitialHomeSettlement;
                     if (home == null || !(home.IsTown || home.IsCastle)) continue;
-                    if (IsTargetSettlement(home)) continue;   // rightful Ashen clan — leave alone
+                    if (IsTargetSettlementId(home.StringId)) continue;   // rightful Ashen clan — leave alone
 
                     // Wrongly converted. Remove from the cold's rolls first so the heir search
                     // and the eject/rejoin logic no longer count this clan as Ashen.

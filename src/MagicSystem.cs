@@ -103,6 +103,13 @@ namespace AshAndEmber
                 try { NorthmenDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { DunebornDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { SchemeSystem.Initialize();              } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // Drop the previous campaign's Ashen rolls before this one's data loads.
+                // A save reload repopulates them in SyncData, which runs before
+                // OnSessionLaunched; a NEW game leaves them empty until Initialize claims
+                // the realm. Without this, a new game started without restarting the game
+                // inherits the old campaign's clan list and renames the fresh world's
+                // settlements at session launch, out of any clan's hands.
+                try { AshenCitySystem.ResetForNewGame();      } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ExchangeCampaignBehavior.ResetState();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { SeaCampaignBehavior.ResetForNewGame();  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ClanOrdersCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
