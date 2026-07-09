@@ -213,12 +213,14 @@ namespace AshAndEmber
         public const float GaleKnockback    = 4f;
         public const float GaleSlowMult     = 0.80f;
         public const float GaleSlowSec      = 5f;
-        // Earth · Entangle — the jailer: a forward LINE of erupting roots, moderate
-        // damage + a long hard root (a narrow ridge the caster faces, not an AoE ring).
-        public const float EntangleRange      = 11f;  // how far the line of roots erupts
-        public const float EntangleConeAngleDeg = 42f; // narrow — a ridge, not a fan
+        // Earth · Entangle — the crusher: a SHORT, almost-melee cone of erupting
+        // rock at the caster's feet. It reaches barely past sword's length, but
+        // what it catches it hits like a landslide and pins in place — the trade
+        // is reach for raw force (a close fan the caster faces, not an AoE ring).
+        public const float EntangleRange      = 5f;   // close — barely past melee
+        public const float EntangleConeAngleDeg = 78f; // a wide fan at the feet, not a distant ridge
         public const float EntangleRadius   = 6f;      // kept for save/visual compat (ring-scaled effects)
-        public const float EntangleDamage   = 32f;
+        public const float EntangleDamage   = 85f;     // far heavier than the ranged elements — reach traded for force
         public const float EntangleRootSec  = 4f;
         public const float EntangleStaggerSec = 0.4f;  // brief caster pause
 

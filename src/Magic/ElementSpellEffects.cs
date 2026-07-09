@@ -601,9 +601,17 @@ namespace AshAndEmber
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            // A rising veil of spectral smoke marks the ward.
-            try { SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 1.6f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            SpawnLight(pos, rgb, 2.2f);
+            // A rising veil of spectral smoke marks the ward — stacked up the
+            // caster's height so it reads as a standing column, not a puff, and a
+            // light that lingers for the length of the blessing rather than a flicker.
+            try
+            {
+                SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 0.6f), 2.4f);
+                SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 1.4f), 2.4f);
+                SpellEffects.SpawnTempSmokeParticle(pos + new Vec3(0f, 0f, 2.2f), 2.4f);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            SpawnLight(pos, rgb, 2.6f, 3.5f);
             try { SpellEffects.BeginAgentGlow(caster, GlowSchool(MagicElement.Spirit, ashen), 2.5f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
@@ -1003,9 +1011,9 @@ namespace AshAndEmber
             try { SpawnLight(caster.Position, Palette(el, CasterAshen(caster)), 2.2f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        private static void SpawnLight(Vec3 pos, Vec3 rgb, float scale)
+        private static void SpawnLight(Vec3 pos, Vec3 rgb, float scale, float duration = 0.7f)
         {
-            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), rgb, 7f * scale, 0.7f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SpellEffects.SpawnTempLightRgb(pos + new Vec3(0f, 0f, 1f), rgb, 7f * scale, duration); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // The visible bloom of a fire cast. The living fire erupts in real flame —

@@ -172,7 +172,7 @@ Magic is an **inborn gift**, so it deepens as you do: a spell's damage scales sl
 |--------|--------|------|
 | **Fire** | cone of fire | wall of fire |
 | **Wind** | hurling, slowing blast | wall that turns arrows and bogs down |
-| **Earth** | rooting stone burst | stone wall |
+| **Earth** | close, almost-melee crush of stone (short reach, heavy damage + root) | stone wall |
 | **Water** | slowing wave | mist barrier |
 | **Spirit** | fear + a stray order into enemy ranks | wall that heartens and mends your own |
 
@@ -242,7 +242,7 @@ Each element has one attack (Attack key) and one support (Block key).
 | Element | Attack | Support |
 |---------|--------|---------|
 | **Wind** | **Gale** — 360° gust, ~22 damage + knockback + slow, 10 m | **Tailwind** — +35% speed for you and nearby allies, 15 s |
-| **Earth** | **Entangle** — roots erupt in 6 m: ~40 damage and foes held fast ~4 s | **Bulwark** — −40% damage taken for you and allies, 12 s |
+| **Earth** | **Entangle** — a close, almost-melee crush of rock (~5 m): heavy damage (~85) and foes held fast ~4 s | **Bulwark** — −40% damage taken for you and allies, 12 s |
 | **Water** | **Torrent** — forward cone, ~30 damage + knockback that breaks formations | **Renewal** — heal yourself and nearby allies + morale |
 | **Storm** | **Thunderclap** — ~65 damage bolt that chains to 2 more foes | **Stormstep** — an instant dash forward |
 

@@ -44,6 +44,13 @@ namespace AshAndEmber
         // Runtime-only guard so the desertion prompt is raised once, not per tick.
         private static bool _leavePromptOpen = false;
 
+        // Runtime-only: the player's party has just left the host, and we must decide —
+        // on the NEXT clean tick, once the engine's army teardown has settled — whether
+        // that was the player abandoning a living host (desertion) or the commander's
+        // host breaking up on its own (a free, penalty-less parting). Deciding a tick
+        // later makes the state unambiguous regardless of event ordering.
+        private static bool _leftHostPendingCheck = false;
+
         // Runtime-only: the service deal was sealed from inside the map meeting with
         // the commander. We must NOT change the player's faction or touch armies
         // while that encounter is live (it corrupts the encounter into a hostile
@@ -105,6 +112,7 @@ namespace AshAndEmber
         {
             _lordId = ""; _kingdomId = ""; _endDays = 0.0; _termDays = 0.0;
             _leavePromptOpen = false;
+            _leftHostPendingCheck = false;
             _finalizePending = false;
             _armyIsOurs = false;
             _armyCreateFailed = false;
@@ -484,6 +492,7 @@ namespace AshAndEmber
 
             _lordId = ""; _kingdomId = ""; _endDays = 0.0; _termDays = 0.0;
             _leavePromptOpen = false;
+            _leftHostPendingCheck = false;
             _finalizePending = false;
             _armyIsOurs = false;
             _armyCreateFailed = false;
@@ -565,20 +574,20 @@ namespace AshAndEmber
             try
             {
                 // The commander pays from his own purse when he can; otherwise the
-                // realm's coffers (its ruler) cover the wage.
+                // realm's coffers (its ruler) cover the wage. GiveGoldAction refuses to
+                // let a giver go negative, so paying FROM a broke commander silently
+                // transfers nothing — which is exactly the "notified but no coin" bug.
+                // So if neither the commander nor the ruler can cover it, fall through to
+                // a null giver (minted), and the player is never shorted their wage.
                 Hero payer = lord;
                 if (payer == null || payer.Gold < amount)
                 {
                     var kingdom = Kingdom.All?.FirstOrDefault(k => k.StringId == _kingdomId);
                     var ruler = kingdom?.Leader;
-                    if (ruler != null && ruler.Gold >= amount) payer = ruler;
+                    payer = (ruler != null && ruler.Gold >= amount) ? ruler : null;
                 }
-                if (payer != null)
-                    GiveGoldAction.ApplyBetweenCharacters(payer, Hero.MainHero, amount, true);
-                else
-                    // Nobody solvent to pay — the realm still owes it; grant it so the
-                    // player is never shorted their agreed wage.
-                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount, true);
+                // A null giver mints the coin from the realm's coffers so the wage always lands.
+                GiveGoldAction.ApplyBetweenCharacters(payer, Hero.MainHero, amount, true);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -653,8 +662,10 @@ namespace AshAndEmber
                 }
 
                 // Stay in the column and keep any host we raised from dispersing —
-                // but only once the join has finalised and no encounter is live.
-                if (!_finalizePending && !_leavePromptOpen && !IsEncounterLive())
+                // but only once the join has finalised and no encounter is live. Also
+                // hold off while a left-host verdict is pending, so this self-heal can't
+                // silently re-fold the player before the fast tick offers them the choice.
+                if (!_finalizePending && !_leavePromptOpen && !_leftHostPendingCheck && !IsEncounterLive())
                 {
                     ReassertArmy(lord);
                     SustainArmy(lordParty);
@@ -710,6 +721,17 @@ namespace AshAndEmber
                 // things then, and joining/leaving a host must not race it.
                 if (IsEncounterLive()) return;
 
+                // The player left a host last tick — now that the army state has settled,
+                // decide desertion vs. a free parting (see HandleLeftHost). This runs
+                // BEFORE the self-heal below so a dispersed host prompts a choice instead
+                // of being silently re-formed under the player.
+                if (_leftHostPendingCheck)
+                {
+                    _leftHostPendingCheck = false;
+                    HandleLeftHost();
+                    return;
+                }
+
                 var main = MobileParty.MainParty;
                 var lord = ServingLord();
                 var lordParty = lord?.PartyBelongedTo;
@@ -741,19 +763,93 @@ namespace AshAndEmber
                 var lordParty = lord?.PartyBelongedTo;
                 if (lord == null || !lord.IsAlive || lord.IsPrisoner || lordParty == null) return;
 
-                // Host being torn down rather than left — let the self-heal re-form up.
-                bool hostStillAlive = false;
-                try { hostStillAlive = army != null && army.LeaderParty != null && army.Kingdom != null; }
-                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                if (!hostStillAlive) return;
-
                 // Term already served the moment they stepped out — release cleanly.
                 if (CampaignTime.Now.ToDays >= _endDays) { HonourableRelease(true); return; }
 
-                // Otherwise, warn: leaving now breaks the oath.
-                PromptLeave(lord);
+                // We cannot reliably tell HERE whether the player abandoned a living
+                // host or the commander's host is dispersing under them — the engine's
+                // teardown fires this event mid-way, so `army` can still look alive even
+                // as it dissolves. Defer the verdict to the next clean tick (HandleLeftHost),
+                // by which point the army state has settled: if the commander still leads
+                // a live host and the player is out of it, that's desertion; if his host
+                // is gone, it broke up and the player may leave freely.
+                _leftHostPendingCheck = true;
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Runs one clean tick after the player's party left a host. Decides between
+        // desertion (the player walked out on a living host) and a free parting (the
+        // commander's host broke up on its own — e.g. the lord disbanded his army).
+        private static void HandleLeftHost()
+        {
+            var lord = ServingLord();
+            var lordParty = lord?.PartyBelongedTo;
+            if (lord == null || !lord.IsAlive || lord.IsPrisoner || lordParty == null)
+            {
+                // Nothing left to serve — end quietly, no penalty.
+                EndServiceCommon();
+                return;
+            }
+
+            if (CampaignTime.Now.ToDays >= _endDays) { HonourableRelease(true); return; }
+
+            var main = MobileParty.MainParty;
+
+            // Already back in the commander's host (the tick self-heal re-folded us, or
+            // the leave was internal churn) — nothing to answer for.
+            if (main != null && main.Army != null && main.Army == lordParty.Army) return;
+
+            bool commanderStillLeadsHost = false;
+            try
+            {
+                commanderStillLeadsHost = lordParty.Army != null
+                    && lordParty.Army.LeaderParty == lordParty
+                    && lordParty.Army.Kingdom != null;
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            if (commanderStillLeadsHost)
+                // A living host the player chose to step out of — that is desertion.
+                PromptLeave(lord);
+            else
+                // The host has broken up (disbanded / dispersed), not the player's doing —
+                // offer to stay on until it re-forms, or take an honourable leave now.
+                PromptHostDisbanded(lord);
+        }
+
+        // (4) The commander's host broke up on its own. Offer a free choice: hold to the
+        // oath (the tick self-heal keeps the player marching until a new host forms), or
+        // take leave now with no desertion penalty.
+        private static void PromptHostDisbanded(Hero lord)
+        {
+            if (_leavePromptOpen) return;
+            _leavePromptOpen = true;
+            try
+            {
+                string lordName = lord?.Name?.ToString() ?? "your commander";
+                InformationManager.ShowInquiry(new InquiryData(
+                    "The Host Disperses",
+                    $"{lordName}'s host has broken up. You may hold to your oath and march on "
+                        + "until it musters again, or take your leave now with no dishonour.",
+                    true, true, "Stay in service", "Take my leave",
+                    () =>
+                    {
+                        _leavePromptOpen = false;
+                        try { ReassertArmy(ServingLord()); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    },
+                    () =>
+                    {
+                        _leavePromptOpen = false;
+                        HonourableRelease(false);
+                    }),
+                    true);
+            }
+            catch (System.Exception logEx)
+            {
+                _leavePromptOpen = false;
+                AshAndEmber.ModLog.Error(logEx);
+            }
         }
 
         // (6) Ask before letting the player break the oath. Serving the full term is

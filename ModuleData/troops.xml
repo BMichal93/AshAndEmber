@@ -197,25 +197,38 @@
       <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
       <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
+    <!-- Risen peasants: ragged robes and whatever farm-tool or knife the cold
+         still lets their hands close on. Item ids verified against the native
+         looter roster (SandBox/bandits.xml) so they actually render clothed and
+         armed — the old fighting_axe/rough_tied_armor ids do not exist in this
+         build and left the spawn naked and weaponless. -->
     <Equipments>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.fighting_axe"/>
-        <equipment slot="Item1" id="Item.wicker_shield"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.rough_tied_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0" id="Item.peasant_pitchfork_2_t1"/>
+        <equipment slot="Head"  id="Item.pilgrim_hood"/>
+        <equipment slot="Body"  id="Item.tattered_rags"/>
+        <equipment slot="Leg"   id="Item.wrapped_shoes"/>
       </EquipmentRoster>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.hand_axe"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.leather_coat"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0" id="Item.peasant_hatchet_1_t1"/>
+        <equipment slot="Item1" id="Item.throwing_stone"/>
+        <equipment slot="Head"  id="Item.wrapped_headcloth"/>
+        <equipment slot="Body"  id="Item.torn_bandit_clothes"/>
+        <equipment slot="Leg"   id="Item.wrapped_shoes"/>
+      </EquipmentRoster>
+      <EquipmentRoster>
+        <equipment slot="Item0"  id="Item.seax"/>
+        <equipment slot="Head"   id="Item.pilgrim_hood"/>
+        <equipment slot="Body"   id="Item.bandit_envelope_dress_v1"/>
+        <equipment slot="Leg"    id="Item.leather_shoes"/>
+        <equipment slot="Gloves" id="Item.armwraps"/>
       </EquipmentRoster>
     </Equipments>
     <skills>
       <skill id="Athletics"  value="50"/>
       <skill id="OneHanded"  value="60"/>
       <skill id="TwoHanded"  value="30"/>
+      <skill id="Polearm"    value="40"/>
     </skills>
     <upgrade_targets>
       <upgrade_target id="NPCCharacter.ashen_invoker"/>
@@ -236,22 +249,22 @@
       <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.2" key="0000000000000000"/>
       <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.8" key="001FFFFFFFFFFFFF"/>
     </face>
+    <!-- The cold-caller: hooded and robed, a knife or sickle for when the fire
+         fails. Its reach is the ashen cold it channels, not its blade. -->
     <Equipments>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.fighting_axe"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.bandit_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0"  id="Item.seax"/>
+        <equipment slot="Head"   id="Item.pilgrim_hood"/>
+        <equipment slot="Body"   id="Item.bandit_envelope_dress_v2"/>
+        <equipment slot="Leg"    id="Item.wrapped_shoes"/>
+        <equipment slot="Gloves" id="Item.armwraps"/>
       </EquipmentRoster>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.short_sword"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.rough_tied_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0" id="Item.peasant_sickle_1_t1"/>
+        <equipment slot="Item1" id="Item.throwing_stone"/>
+        <equipment slot="Head"  id="Item.pilgrim_hood"/>
+        <equipment slot="Body"  id="Item.tattered_rags"/>
+        <equipment slot="Leg"   id="Item.leather_shoes"/>
       </EquipmentRoster>
     </Equipments>
     <skills>
@@ -278,22 +291,22 @@
       <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.3" key="0000000000000000"/>
       <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.9" key="001FFFFFFFFFFFFF"/>
     </face>
+    <!-- The dead that still remember how to hold a line: robed over a padded
+         gambeson, a looted axe or falchion and a battered round shield. -->
     <Equipments>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.fighting_axe"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.bandit_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0" id="Item.battania_axe_1_t2"/>
+        <equipment slot="Item1" id="Item.leather_round_shield"/>
+        <equipment slot="Head"  id="Item.wrapped_headcloth"/>
+        <equipment slot="Body"  id="Item.torn_bandit_clothes"/>
+        <equipment slot="Leg"   id="Item.wrapped_shoes"/>
       </EquipmentRoster>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.short_sword"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.rough_tied_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0" id="Item.falchion_sword_t2"/>
+        <equipment slot="Item1" id="Item.throwing_stone"/>
+        <equipment slot="Head"  id="Item.pilgrim_hood"/>
+        <equipment slot="Body"  id="Item.bandit_gambeson"/>
+        <equipment slot="Leg"   id="Item.leather_shoes"/>
       </EquipmentRoster>
     </Equipments>
     <skills>
@@ -320,22 +333,22 @@
       <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.3" key="0000000000000000"/>
       <BodyPropertiesMax version="4" age="40.0" weight="0.8" build="0.9" key="001FFFFFFFFFFFFF"/>
     </face>
+    <!-- Wardens: heavier robes over a gambeson, a mace or bearded axe and a
+         strapped shield. The strongest of the common dead. -->
     <Equipments>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.fighting_axe"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.bandit_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0" id="Item.battania_mace_1_t2"/>
+        <equipment slot="Item1" id="Item.strapped_round_shield"/>
+        <equipment slot="Head"  id="Item.wrapped_headcloth"/>
+        <equipment slot="Body"  id="Item.bandit_gambeson"/>
+        <equipment slot="Leg"   id="Item.leather_shoes"/>
       </EquipmentRoster>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.short_sword"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.bandit_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0"  id="Item.bearded_axe_t3"/>
+        <equipment slot="Head"   id="Item.pilgrim_hood"/>
+        <equipment slot="Body"   id="Item.torn_bandit_clothes"/>
+        <equipment slot="Leg"    id="Item.wrapped_shoes"/>
+        <equipment slot="Gloves" id="Item.armwraps"/>
       </EquipmentRoster>
     </Equipments>
     <skills>
@@ -362,22 +375,23 @@
       <BodyPropertiesMin version="4" age="20.0" weight="0.2" build="0.4" key="0000000000000000"/>
       <BodyPropertiesMax version="4" age="40.0" weight="0.9" build="1.0" key="001FFFFFFFFFFFFF"/>
     </face>
+    <!-- Revenants: the old and the deep-frozen, still bearing looted steel over
+         their grave-robes — a bearded axe or broad falchion behind a round shield. -->
     <Equipments>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.fighting_axe"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.bandit_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0"  id="Item.bearded_axe_t3"/>
+        <equipment slot="Item1"  id="Item.leather_round_shield"/>
+        <equipment slot="Head"   id="Item.wrapped_headcloth"/>
+        <equipment slot="Body"   id="Item.bandit_gambeson"/>
+        <equipment slot="Leg"    id="Item.leather_shoes"/>
+        <equipment slot="Gloves" id="Item.armwraps"/>
       </EquipmentRoster>
       <EquipmentRoster>
-        <equipment slot="Item0" id="Item.fighting_axe"/>
-        <equipment slot="Item1" id="Item.round_shield"/>
-        <equipment slot="Item2" id="Item.javelin"/>
-        <equipment slot="Head"  id="Item.leather_cap"/>
-        <equipment slot="Body"  id="Item.bandit_armor"/>
-        <equipment slot="Leg"   id="Item.strapped_leather_boots"/>
+        <equipment slot="Item0" id="Item.broad_falchion_sword_t3"/>
+        <equipment slot="Item1" id="Item.throwing_stone"/>
+        <equipment slot="Head"  id="Item.pilgrim_hood"/>
+        <equipment slot="Body"  id="Item.torn_bandit_clothes"/>
+        <equipment slot="Leg"   id="Item.leather_shoes"/>
       </EquipmentRoster>
     </Equipments>
     <skills>

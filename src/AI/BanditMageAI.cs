@@ -280,7 +280,22 @@ namespace AshAndEmber
 
                 SpellEffects.QueueNpcCastWithWindup(mage, () =>
                 {
-                    if (effectiveSpecial)
+                    if (isAshen)
+                    {
+                        // The Ashen draw the cold through the SAME unified element path
+                        // the player and the Ashen lords cast on (ElementSpellEffects.
+                        // CastAttack), so their cold reads with real reach: a bolt of
+                        // ashen fire that flies at the nearest foe and bursts, or — when
+                        // hemmed in — a nova of cold dread. This replaces the old legacy
+                        // blast/burst, whose ~7.5 m self-centred footprint fell as a
+                        // puddle at the caster's feet and almost never landed. The kit's
+                        // CasterAshen() mask paints it grey-blue automatically, and
+                        // GroundFacing() aims a non-player caster at the nearest enemy.
+                        float power = effectiveSpecial ? 1f : looter ? 0.5f : 0.8f;
+                        MagicElement el = burst ? MagicElement.Spirit : MagicElement.Fire;
+                        ElementSpellEffects.CastAttack(el, mage, power);
+                    }
+                    else if (effectiveSpecial)
                     {
                         if (burst) SpellEffects.ExecuteNpcBurst(mage, 3, 1, 0, mage.Team);
                         else       SpellEffects.ExecuteNpcBlast(mage, 3, 1, 0, mage.Team);

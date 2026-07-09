@@ -75,7 +75,7 @@ Each registration is wrapped in its own try/catch for mod-conflict safety.
 |---|---|---|
 | Fire | **Flying bolt that explodes on impact** (bursts on first foe reached or at range's end) | `ElementSpellEffects.FireMissile` + `TickBolts`/`ExplodeBolt` (the `_bolts` list, ticked from `Tick`) |
 | Wind | **Forward gust/stream** (broad wedge, knockback drives foes ahead) | `NatureEffects.BattleGale` (shared source) |
-| Earth | **Forward line of erupting roots** (narrow ridge, damage + root) | `NatureEffects.BattleEntangle` (shared source) |
+| Earth | **Short, almost-melee cone of erupting rock** (close fan, heavy damage + root — reach traded for force) | `NatureEffects.BattleEntangle` (shared source) |
 | Water | **Forward slowing wave** (cone) | `NatureEffects.BattleTorrent` (shared source) |
 | Spirit | **Nova** (radial panic + random enemy order) | `ElementSpellEffects.SpiritPanic` |
 

@@ -238,8 +238,9 @@ namespace AshAndEmber
                 Msg($"{NatureMath.PowerName(NatureMath.SupportPower(el))} — the land rises before you.", NatureColor);
         }
 
-        // Earth · Entangle — a forward LINE of erupting roots: damage + immobilise
-        // in a narrow ridge the caster faces (no longer a 360° AoE ring).
+        // Earth · Entangle — a SHORT, almost-melee cone of erupting rock at the
+        // caster's feet: heavy damage + immobilise in a close fan the caster faces
+        // (reach traded for raw force; no longer a 360° AoE ring).
         private static void BattleEntangle(Agent caster, Vec3 pos, Team team)
         {
             Vec3 fwd = GroundFacing(caster);
