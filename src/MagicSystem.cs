@@ -95,6 +95,7 @@ namespace AshAndEmber
                 campaignStarter.AddBehavior(new TribalKingdomBehavior());
                 campaignStarter.AddBehavior(new CreationBackstoryRework());
                 campaignStarter.AddBehavior(new GreatAwakeningCampaignBehavior());
+                campaignStarter.AddBehavior(new NorthmenStonesCampaignBehavior());
                 try { AshenDialogue.Register(campaignStarter);    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ElementalDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { ArenicosDialogue.Register(campaignStarter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -117,6 +118,7 @@ namespace AshAndEmber
                 try { ElementalWildsBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { BattleEvents.ResetForNewGame();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { GreatAwakeningCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { NorthmenStonesCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 

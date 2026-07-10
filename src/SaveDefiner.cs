@@ -50,6 +50,9 @@ namespace AshAndEmber
             // The Great Awakening — Duneborn's bid to drag something from
             // beyond the Sands into Calradia.
             AddClassDefinition(typeof(GreatAwakeningQuestLog),    13);
+
+            // The Bonefire Circle — the Northmen seers' standing stones at Varcheg.
+            AddClassDefinition(typeof(NorthmenStonesQuestLog),    14);
         }
     }
 }
