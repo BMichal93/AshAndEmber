@@ -4,6 +4,9 @@
 
 ## Unreleased
 
+### Sea voyages
+- **Fixed sea voyages permanently disabling Save Game.** The voyage wait-menu has no player-facing exit option, and arriving at your destination (or winning a blockade fight) never closed it — leaving the game in the same "still in a menu" state TaleWorlds' engine uses to grey out the Save button, for the rest of the session. Arrival now explicitly closes the wait menu, matching how every other wait-menu in the mod (tavern sober-up, inn stay, settlement encounters) already hands control back to the map.
+
 ### Element tuning & visuals
 - **Earth is now a close, almost-melee crush.** Where Earth's attack used to reach out ~11 m as a narrow ridge of roots for moderate damage, it now bursts as a short, wide fan of erupting rock (~5 m) that hits far harder (~85 vs ~32) while still pinning what it catches — reach traded for raw force, giving Earth its own melee-brawler identity apart from the ranged elements. NPC casters and the Living-Ember Entangle share the change.
 - **Fixed the Spirit ward flickering out of existence.** The Spirit wall (an ally heal-and-hearten ward) only spawned a 0.7 s point light and a single smoke puff, so it read as a bug — a blink and gone. It now raises a standing column of spectral smoke and holds its light for the length of the blessing (~3.5 s).
