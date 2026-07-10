@@ -257,6 +257,15 @@
     <Compile Include="GreatAwakening\GreatAwakeningCampaignBehavior.Resolution.cs"/>
     <Compile Include="GreatAwakening\GreatAwakeningQuestLog.cs"/>
     <Compile Include="GreatAwakening\GreatOtherParty.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesMath.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesCampaignBehavior.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesCampaignBehavior.Trigger.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesCampaignBehavior.Dialogue.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesCampaignBehavior.Menu.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesCampaignBehavior.NpcContribution.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesCampaignBehavior.Invasion.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesCampaignBehavior.Ending.cs"/>
+    <Compile Include="NorthmenStones\NorthmenStonesQuestLog.cs"/>
     <Compile Include="DarkGifts\DarkGiftSystem.cs"/>
     <Compile Include="DarkGifts\DarkGiftBattleEffects.cs"/>
     <Compile Include="Sea\SeaMath.cs"/>
