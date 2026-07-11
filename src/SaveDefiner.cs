@@ -70,6 +70,9 @@ namespace AshAndEmber
                 // The Great Awakening — Duneborn's bid to drag something from
                 // beyond the Sands into Calradia.
                 new KeyValuePair<Type, int>(typeof(GreatAwakeningQuestLog),    13),
+
+                // The Bonefire Circle — the Northmen seers' standing stones at Varcheg.
+                new KeyValuePair<Type, int>(typeof(NorthmenStonesQuestLog),    14),
             };
 
         protected override void DefineClassTypes()

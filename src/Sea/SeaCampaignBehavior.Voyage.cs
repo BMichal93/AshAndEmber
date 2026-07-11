@@ -254,6 +254,12 @@ namespace AshAndEmber
                         new Color(0.65f, 0.75f, 0.9f)));
                 }
                 ResetVoyageState();
+
+                // The sea_voyage wait menu (WaitMenuShowOnlyProgressOption) has no
+                // player-facing exit option, so it must be closed explicitly here —
+                // otherwise it's left open with the save button disabled for the
+                // rest of the session. Mirrors FinishWait()/FinishInnStay().
+                try { GameMenu.ExitToLast(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
