@@ -21,9 +21,26 @@ namespace AshAndEmber
         public override TextObject Title => new TextObject("The Great Awakening");
         public override bool IsRemainingTimeHidden => true;
 
-        protected override void InitializeQuestOnGameLoad() { _questLog = this; }
+        protected override void InitializeQuestOnGameLoad()
+        {
+            _questLog = this;
+            RebindObjective();
+        }
         protected override void RegisterEvents() { }
         protected override void SetDialogs() { }
+
+        // The objective handle is not a saveable field — on load it comes back null, so
+        // it is re-bound from the journal the engine DID restore. Entry 0 is the opening
+        // narration added by Start(); entry 1 is the discrete progress objective.
+        private void RebindObjective()
+        {
+            try
+            {
+                if (_objProgress == null && JournalEntries != null && JournalEntries.Count >= 2)
+                    _objProgress = JournalEntries[1];
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
 
         private JournalLog _objProgress;
 
@@ -55,7 +72,11 @@ namespace AshAndEmber
 
         internal static void UpdateProgress(int sacrificed, int target)
         {
-            try { _questLog?._objProgress?.UpdateCurrentProgress(System.Math.Min(sacrificed, target)); }
+            try
+            {
+                _questLog?.RebindObjective();
+                _questLog?._objProgress?.UpdateCurrentProgress(System.Math.Min(sacrificed, target));
+            }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 

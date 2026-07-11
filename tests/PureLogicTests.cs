@@ -2294,5 +2294,92 @@ namespace AshAndEmber.Tests
             Assert.Less(ElementalMath.AttackCooldownSecondsFor(ElementalKind.Void), ElementalMath.AttackCooldownSeconds);
             Assert.AreEqual(ElementalMath.AttackCooldownSeconds, ElementalMath.AttackCooldownSecondsFor(ElementalKind.Stone), 1e-6f);
         }
+
+        // ── Save-definer guard ────────────────────────────────────────────────
+        //
+        // A QuestBase subclass that reaches the QuestManager without an
+        // AddClassDefinition row cannot be serialized, and the whole campaign save
+        // FAILS — but only once that quest has actually started, never at build time.
+        // That is what repeatedly broke saving on the big questlines, so it is guarded
+        // here instead of being left to review.
+        //
+        // The check is deliberately SOURCE-based, not reflection-based: loading the mod
+        // assembly's quest types would drag in the TaleWorlds runtime, which the pure
+        // test suite must not depend on (see behaviour.md — JIT type resolution).
+
+        private static string RepoRoot()
+        {
+            var dir = new System.IO.DirectoryInfo(
+                System.IO.Path.GetDirectoryName(typeof(PureLogicTests).Assembly.Location));
+            while (dir != null)
+            {
+                if (System.IO.Directory.Exists(System.IO.Path.Combine(dir.FullName, "src"))
+                    && System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "src", "SaveDefiner.cs")))
+                    return dir.FullName;
+                dir = dir.Parent;
+            }
+            return null;
+        }
+
+        [Test]
+        public void SaveDefiner_EveryQuestBaseSubclass_IsRegistered()
+        {
+            string root = RepoRoot();
+            Assert.IsNotNull(root, "Could not locate the repo root from the test assembly.");
+
+            string srcDir = System.IO.Path.Combine(root, "src");
+            string definer = System.IO.File.ReadAllText(
+                System.IO.Path.Combine(srcDir, "SaveDefiner.cs"));
+
+            // class name -> base type name, plus the set declared abstract.
+            var bases = new Dictionary<string, string>();
+            var abstracts = new HashSet<string>();
+            var declRx = new System.Text.RegularExpressions.Regex(
+                @"\b(?<mods>(?:public|internal|private|protected|sealed|abstract|static|partial|\s)*)class\s+(?<name>\w+)\s*:\s*(?<base>\w+)");
+
+            foreach (string file in System.IO.Directory.GetFiles(srcDir, "*.cs", System.IO.SearchOption.AllDirectories))
+            {
+                // Skip build output — obj/bin can hold generated or stale copies.
+                if (file.Contains(@"\obj\") || file.Contains(@"\bin\")) continue;
+                foreach (System.Text.RegularExpressions.Match m in declRx.Matches(System.IO.File.ReadAllText(file)))
+                {
+                    string name = m.Groups["name"].Value;
+                    bases[name] = m.Groups["base"].Value;
+                    if (m.Groups["mods"].Value.Contains("abstract")) abstracts.Add(name);
+                }
+            }
+
+            // Walk each class's base chain; anything that reaches QuestBase is a quest.
+            Func<string, bool> isQuest = null;
+            isQuest = name =>
+            {
+                var seen = new HashSet<string>();
+                string cur = name;
+                while (cur != null && seen.Add(cur))
+                {
+                    string b;
+                    if (!bases.TryGetValue(cur, out b)) return false;
+                    if (b == "QuestBase") return true;
+                    cur = b;
+                }
+                return false;
+            };
+
+            var missing = bases.Keys
+                .Where(n => !abstracts.Contains(n) && isQuest(n))
+                .Where(n => !definer.Contains("typeof(" + n + ")"))
+                .OrderBy(n => n)
+                .ToList();
+
+            // Sanity: the scan must actually be finding quests, or it proves nothing.
+            Assert.Greater(bases.Keys.Count(isQuest), 0,
+                "Found no QuestBase subclasses at all — the source scan is broken, not the code.");
+
+            Assert.IsEmpty(missing,
+                "These QuestBase subclasses have no AddClassDefinition row in SaveDefiner.cs. "
+                + "The campaign CANNOT be saved once one of them starts. Add each to "
+                + "AshAndEmberSaveDefiner.ClassDefinitions with a fresh, unused id: "
+                + string.Join(", ", missing));
+        }
     }
 }

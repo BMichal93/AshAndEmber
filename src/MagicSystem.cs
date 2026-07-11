@@ -117,6 +117,10 @@ namespace AshAndEmber
                 try { ElementalWildsBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { BattleEvents.ResetForNewGame();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 try { GreatAwakeningCampaignBehavior.ResetForNewGame(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+                // A quest whose type is missing from the save definer only fails when the
+                // player hits Save — long after the quest triggered. Audit at boot instead.
+                try { AshAndEmberSaveDefiner.SelfCheck(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
         }
 
