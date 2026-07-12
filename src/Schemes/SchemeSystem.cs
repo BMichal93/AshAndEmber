@@ -32,6 +32,17 @@
 //   a rival clan within their own kingdom). NPCs pay the same gold and
 //   influence as the player, and only ever pick a target they can actually
 //   afford at that target's tier-scaled cost.
+//
+//   Two safeguards keep this from piling onto the same weak clan:
+//   • Minor clans (tier < MinSchemeTargetTier — a mercenary company or a
+//     fresh landless clan) have no court standing worth spending a scheme
+//     on, and are excluded from the target pool unless a kingdom has no
+//     worthier clan to pick from (small/new kingdoms fall back to them).
+//   • Once any lord's scheme lands on a target, that target gets a
+//     NpcTargetBreatherDays breather from further NPC-launched schemes of
+//     ANY type — otherwise a cheap target could be hit by several different
+//     lords in the same week since the existing per-type cooldown only
+//     blocks a repeat of the SAME scheme type.
 // =============================================================================
 
 using System;
@@ -207,6 +218,20 @@ namespace AshAndEmber
         // Per-target repeat-scheme cooldowns. Key = "{SchemeType}:{targetStringId}".
         // Assassination: 14-day hard block. All others: 7-day 5× cost inflation.
         private static readonly Dictionary<string, int>      _targetCooldowns    = new Dictionary<string, int>();
+
+        // NPC-launched schemes only: once any lord's scheme lands on a target (hero
+        // or settlement), that target StringId is exempt from further NPC scheme
+        // targeting — regardless of scheme type or which lord throws it — for this
+        // many days. Keeps several different lords from piling onto the same cheap,
+        // low-tier victim in the same short window (the per-type _targetCooldowns
+        // above only blocks a repeat of the identical scheme type).
+        private static readonly Dictionary<string, int>      _npcTargetBreather  = new Dictionary<string, int>();
+        private const int NpcTargetBreatherDays = 10;
+
+        // NPC scheme targets below this clan tier (mercenary companies, fresh
+        // landless clans) have no real political weight to spend a scheme on —
+        // excluded from the target pool unless a kingdom has no worthier clan.
+        private const int MinSchemeTargetTier = 2;
 
         // Keys in _targetCooldowns that were set by the player — notified when they expire.
         private static readonly HashSet<string>               _playerCooldownKeys = new HashSet<string>();

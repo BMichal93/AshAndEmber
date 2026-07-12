@@ -29,6 +29,7 @@ namespace AshAndEmber
             _pending.Clear();
             _npcCooldowns.Clear();
             _targetCooldowns.Clear();
+            _npcTargetBreather.Clear();
             _playerCooldownKeys.Clear();
             _retaliationDays      = 0;
             _playerGlobalCooldown = 0;
@@ -184,6 +185,10 @@ namespace AshAndEmber
                 string cdKey = CooldownKey(type, targetId);
                 _targetCooldowns[cdKey] = type == SchemeType.Assassinate ? 14 : 7;
                 if (isPlayer) _playerCooldownKeys.Add(cdKey);
+
+                // Cross-scheme-type breather: only NPC launches trip it, so the player's
+                // own scheming isn't throttled by it.
+                if (!isPlayer) _npcTargetBreather[targetId] = NpcTargetBreatherDays;
             }
 
             return true;
@@ -206,6 +211,12 @@ namespace AshAndEmber
                     if (_playerCooldownKeys.Remove(key))
                         try { NotifyCooldownExpired(key); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
+            }
+
+            foreach (var key in _npcTargetBreather.Keys.ToList())
+            {
+                _npcTargetBreather[key]--;
+                if (_npcTargetBreather[key] <= 0) _npcTargetBreather.Remove(key);
             }
 
             if (_retaliationDays      > 0) _retaliationDays--;
@@ -312,6 +323,12 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
+        /// True when this target (hero or settlement) was hit by an NPC scheme
+        /// recently enough that it's still within its cross-type breather window.
+        private static bool IsOnNpcBreather(string targetId)
+            => !string.IsNullOrEmpty(targetId)
+            && _npcTargetBreather.TryGetValue(targetId, out int d) && d > 0;
+
         private static void TryQueueNpcScheme(Hero lord)
         {
             // Filter to schemes the lord can afford at base cost (quick pre-filter).
@@ -361,6 +378,18 @@ namespace AshAndEmber
                 }
                 if (lordTargets.Count == 0) return;
 
+                // A recently-hit target gets a breather from further NPC schemes of any
+                // type — otherwise a cheap target could be piled onto by several lords
+                // in quick succession (see _npcTargetBreather).
+                lordTargets = lordTargets.Where(t => !IsOnNpcBreather(t.StringId)).ToList();
+                if (lordTargets.Count == 0) return;
+
+                // Minor clans (tier < MinSchemeTargetTier) aren't worth the political
+                // capital of a scheme — prefer clans that matter, only falling back to
+                // minor ones if this kingdom has no worthier target.
+                var worthyTargets = lordTargets.Where(t => (t.Clan?.Tier ?? 0) >= MinSchemeTargetTier).ToList();
+                if (worthyTargets.Count > 0) lordTargets = worthyTargets;
+
                 // Ashen targets are valid but rare — weight pool 85% non-Ashen / 15% Ashen.
                 var nonAshenTargets = lordTargets
                     .Where(t => !ColourLordRegistry.IsAshenLord(t)
@@ -395,6 +424,12 @@ namespace AshAndEmber
                              && s.OwnerClan.Kingdom != lord.Clan.Kingdom)
                     .ToList();
                 if (targets.Count == 0) return;
+
+                targets = targets.Where(t => !IsOnNpcBreather(t.StringId)).ToList();
+                if (targets.Count == 0) return;
+
+                var worthySetts = targets.Where(t => (t.OwnerClan?.Tier ?? 0) >= MinSchemeTargetTier).ToList();
+                if (worthySetts.Count > 0) targets = worthySetts;
 
                 var affordableSetts = targets
                     .Where(t => lord.Gold >= ComputeGoldCost(scheme, null, t)
