@@ -15,7 +15,10 @@ namespace AshAndEmber
         private void TriggerWeeklyTick()
         {
             if (_phase != PhaseIdle) return;
-            int day = CurrentCampaignDay();
+            // Days elapsed since the campaign started — NOT CampaignTime.Now.ToDays,
+            // which is absolute calendar days (~tens of thousands) and would pass
+            // the start-day gate immediately on a new campaign.
+            int day = (int)CampaignMapEvents.ElapsedCampaignDays();
             if (day < NorthmenStonesMath.TriggerStartDay) return;
 
             if (IsPlayerNorthmen())

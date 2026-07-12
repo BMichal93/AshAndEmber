@@ -15,8 +15,10 @@ namespace AshAndEmber
             const int P = 200; // higher than vanilla (100) so our lines fire first
 
             // ── Opening and any standard lord sub-state ─────────────────────────
-            try { starter.AddDialogLine("ashen_start",    "start",        "ashen_done", "...", IsAshenInterlocutor, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { starter.AddDialogLine("ashen_pretalk",  "lord_pretalk", "ashen_done", "...", IsAshenInterlocutor, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Guarded so the vanilla defeated-lord conversation (take prisoner /
+            // let go) and prisoner flows, which also begin at "start", still run.
+            try { starter.AddDialogLine("ashen_start",    "start",        "ashen_done", "...", IsAshenFlavourContext, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { starter.AddDialogLine("ashen_pretalk",  "lord_pretalk", "ashen_done", "...", IsAshenFlavourContext, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Player's only available response — also "..."
             try { starter.AddPlayerLine("ashen_close",    "ashen_done", "close_window", "...", null, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -31,6 +33,11 @@ namespace AshAndEmber
 
             // ── Prisoner conversation ───────────────────────────────────────────
             try { starter.AddDialogLine("ashen_prisoner", "prisoner_chat",         "close_window", "...", IsAshenInterlocutor, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        private static bool IsAshenFlavourContext()
+        {
+            return IsAshenInterlocutor() && !LordDialogueGuard.MustYieldToVanilla();
         }
 
         private static bool IsAshenInterlocutor()

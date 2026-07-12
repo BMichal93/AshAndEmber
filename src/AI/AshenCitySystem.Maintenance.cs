@@ -134,9 +134,11 @@ namespace AshAndEmber
 
         // ── Lord party composition ─────────────────────────────────────────────
         // Replaces Sturgian troops in Ashen lords' mobile parties with Ashen troops.
-        // Runs on a slow throttle; targets at most one party per call to avoid hitches.
-        // The mix is weighted toward the two mid-tier garrison troops so lord armies
-        // feel appropriately strong without being identical to garrisons (no revenants).
+        // Runs on a throttle; targets a small round-robin batch per call so every
+        // host cycles through a top-up within days, not months, while keeping the
+        // per-tick cost bounded. The mix is weighted toward the two mid-tier
+        // garrison troops so lord armies feel appropriately strong without being
+        // identical to garrisons.
         private static int _lordPartyRefillIndex = 0;
 
         internal static void RefillAshenLordParties()
@@ -156,37 +158,47 @@ namespace AshAndEmber
                     .ToList();
                 if (parties.Count == 0) return;
 
-                // Process one party per call (round-robin) to spread the cost.
-                _lordPartyRefillIndex = _lordPartyRefillIndex % parties.Count;
-                var party = parties[_lordPartyRefillIndex++];
-
-                var roster = party.MemberRoster;
-                if (roster == null) return;
-
-                // Remove Sturgian troops.
-                var toRemove = roster.GetTroopRoster()
-                    .Where(e => e.Character?.StringId?.StartsWith("sturgian_",
-                        StringComparison.OrdinalIgnoreCase) == true)
-                    .ToList();
-                int sturgianCount = toRemove.Sum(e => e.Number);
-                foreach (var e in toRemove)
-                    try { roster.AddToCounts(e.Character, -e.Number); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-
-                // Enforce a minimum party size — top up if Sturgians were sparse or absent.
-                int current  = roster.TotalManCount;
-                int shortage = MinLordPartySize - current;
-                int toAdd    = Math.Max(sturgianCount, shortage > 0 ? shortage : 0);
-                if (toAdd <= 0) return;
-
-                // Troop mix: slightly stronger than a normal lord — 50% warrior, 35% warden, 15% revenant.
-                int revenantCount = toAdd * 15 / 100;
-                int wardenCount   = toAdd * 35 / 100;
-                int warriorCount  = toAdd - wardenCount - revenantCount;
-                if (warriorCount  > 0) roster.AddToCounts(warrior,  warriorCount);
-                if (wardenCount   > 0) roster.AddToCounts(warden,   wardenCount);
-                if (revenantCount > 0) roster.AddToCounts(revenant, revenantCount);
+                // Process a batch per call (round-robin) to spread the cost.
+                int batch = Math.Min(LordPartiesPerRefill, parties.Count);
+                for (int i = 0; i < batch; i++)
+                {
+                    _lordPartyRefillIndex = _lordPartyRefillIndex % parties.Count;
+                    var party = parties[_lordPartyRefillIndex++];
+                    try { RefillOneLordParty(party, warrior, warden, revenant); }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        private static void RefillOneLordParty(MobileParty party,
+            CharacterObject warrior, CharacterObject warden, CharacterObject revenant)
+        {
+            var roster = party.MemberRoster;
+            if (roster == null) return;
+
+            // Remove Sturgian troops.
+            var toRemove = roster.GetTroopRoster()
+                .Where(e => e.Character?.StringId?.StartsWith("sturgian_",
+                    StringComparison.OrdinalIgnoreCase) == true)
+                .ToList();
+            int sturgianCount = toRemove.Sum(e => e.Number);
+            foreach (var e in toRemove)
+                try { roster.AddToCounts(e.Character, -e.Number); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            // Enforce a minimum party size — top up if Sturgians were sparse or absent.
+            int current  = roster.TotalManCount;
+            int shortage = MinLordPartySize - current;
+            int toAdd    = Math.Max(sturgianCount, shortage > 0 ? shortage : 0);
+            if (toAdd <= 0) return;
+
+            // Troop mix: slightly stronger than a normal lord — 50% warrior, 35% warden, 15% revenant.
+            int revenantCount = toAdd * 15 / 100;
+            int wardenCount   = toAdd * 35 / 100;
+            int warriorCount  = toAdd - wardenCount - revenantCount;
+            if (warriorCount  > 0) roster.AddToCounts(warrior,  warriorCount);
+            if (wardenCount   > 0) roster.AddToCounts(warden,   wardenCount);
+            if (revenantCount > 0) roster.AddToCounts(revenant, revenantCount);
         }
 
         private static void RefillGarrisons()

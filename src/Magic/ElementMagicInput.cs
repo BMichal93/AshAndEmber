@@ -200,8 +200,22 @@ namespace AshAndEmber
                     _pendingForm = null; _pendingTimer = 0f;
                     TryCastUltimate();
                 }
-                else if (atkEdge) { _pendingForm = CastForm.Attack; _pendingTimer = ElementUltimateMath.ChordWindowSeconds; }
-                else if (blkEdge) { _pendingForm = CastForm.Wall;   _pendingTimer = ElementUltimateMath.ChordWindowSeconds; }
+                // A repeat press of the same button while one is already buffered
+                // is a deliberate mash — commit the buffered cast at once and
+                // buffer the new press, so EVERY press looses a working (weak
+                // instant releases are allowed, and spamming them is the player's
+                // life to spend). Without this, re-arming the chord window on each
+                // press would swallow every cast of a fast mash.
+                else if (atkEdge)
+                {
+                    if (_pendingForm == CastForm.Attack) TryCast(CastForm.Attack);
+                    _pendingForm = CastForm.Attack; _pendingTimer = ElementUltimateMath.ChordWindowSeconds;
+                }
+                else if (blkEdge)
+                {
+                    if (_pendingForm == CastForm.Wall) TryCast(CastForm.Wall);
+                    _pendingForm = CastForm.Wall;   _pendingTimer = ElementUltimateMath.ChordWindowSeconds;
+                }
                 else if (_pendingForm != null)
                 {
                     _pendingTimer -= dt;

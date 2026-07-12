@@ -73,17 +73,21 @@ namespace AshAndEmber
         private static int _villageThrottle   = 0;  // Villages     — every 7 days
         private static int _recoveryThrottle  = 0;  // Settlement   — every 3 days
         private static int _prisonerThrottle  = 0;  // Prisoners    — every 2 days
-        private static int _lordPartyThrottle = 0;  // Lord parties — every 7 days
+        private static int _lordPartyThrottle = 0;  // Lord parties — every 2 days
         private const  int WarInterval        = 5;
         private const  int ClanInterval       = 3;
         private const  int VillageInterval    = 7;
         private const  int RecoveryInterval   = 3;
         private const  int PrisonerInterval   = 2;
-        private const  int LordPartyInterval  = 7;
+        // Permanent war bleeds the Ashen hosts constantly; at the old 7-day /
+        // one-party cadence a lord could wait months for a top-up and the cold
+        // marched with skeleton warbands. Refill a batch every couple of days.
+        private const  int LordPartyInterval      = 2;
+        private const  int LordPartiesPerRefill   = 4;
 
         private const int    MinGarrisonCity   = 750;
         private const int    MinGarrisonCastle = 450;
-        private const int    MinLordPartySize  = 120;
+        private const int    MinLordPartySize  = 150;
         private const int    MinHeroGold       = 150_000;
         private const string AshenKingdomId    = "ashen_kingdom";
 

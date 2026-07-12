@@ -24,7 +24,7 @@ namespace AshAndEmber
             // options hub (hero_main_options) so Tribes lords keep every standard
             // interaction (tasks, barter, war/peace, recruitment). Gated on HasMet
             // so first-meeting introductions still run through vanilla untouched.
-            RegisterPool(starter, "trb_start",    "start",                "hero_main_options", _openings, P, requireMet: true);
+            RegisterPool(starter, "trb_start",    "start",                "hero_main_options", _openings, P, requireMet: true, guardPostBattle: true);
 
             // Text-only flavour on flows vanilla already ends by closing the window
             // (prisoner chat) or on legacy/unreachable tokens. These never divert
@@ -39,7 +39,7 @@ namespace AshAndEmber
         // at conversation time based on the interlocutor's StringId hash.
         private static void RegisterPool(CampaignGameStarter starter,
             string idPrefix, string inputToken, string outputToken,
-            string[] pool, int priority, bool requireMet = false)
+            string[] pool, int priority, bool requireMet = false, bool guardPostBattle = false)
         {
             for (int i = 0; i < pool.Length; i++)
             {
@@ -51,7 +51,7 @@ namespace AshAndEmber
                         $"{idPrefix}_{variant}",
                         inputToken, outputToken,
                         text,
-                        () => IsTribesVariant(variant, pool.Length, requireMet),
+                        () => IsTribesVariant(variant, pool.Length, requireMet, guardPostBattle),
                         null,
                         priority);
                 }
@@ -59,7 +59,7 @@ namespace AshAndEmber
             }
         }
 
-        private static bool IsTribesVariant(int variant, int poolSize, bool requireMet)
+        private static bool IsTribesVariant(int variant, int poolSize, bool requireMet, bool guardPostBattle)
         {
             try
             {
@@ -67,6 +67,7 @@ namespace AshAndEmber
                 if (h == null || ColourLordRegistry.IsAshenLord(h)) return false;
                 if (!h.IsLord) return false;   // lord dialogue only — never notables or wanderers
                 if (requireMet && !h.HasMet) return false; // let vanilla handle the first-meeting introduction
+                if (guardPostBattle && LordDialogueGuard.MustYieldToVanilla()) return false; // vanilla owns capture/prisoner talks
                 if (h.MapFaction?.StringId != "khuzait") return false;
                 int idx = Math.Abs(DeterministicHash(h.StringId ?? h.Name?.ToString() ?? "")) % poolSize;
                 return idx == variant;

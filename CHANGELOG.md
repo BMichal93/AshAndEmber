@@ -4,6 +4,32 @@
 
 ## Unreleased
 
+---
+
+## v0.46.0
+
+### Lord conversations no longer let beaten lords walk free
+- **Fixed being unable to take a defeated lord prisoner** whenever their faction spoke with a rewritten voice (the Ashen, the Templars, the Tribes, the Northmen, the Duneborn). The factions' flavour greetings claimed the conversation's opening line at a higher priority than the game's own defeated-lord talk — so instead of "You are my prisoner", the beaten lord offered small talk and rode off when the window closed. Every flavour greeting now stands down the moment a conversation belongs to a battle or a captive, handing the game back its capture-or-release choice. The Ashen in particular could never be captured at all (their "..." closed the window outright); their silence now yields the same way when a battle has been fought.
+
+### Questlines start when they should
+- **Fixed the Bonefire Circle and Great Awakening rumors both firing around day 3.** The day gate read the calendar's absolute day count (in the tens of thousands from the era date) instead of days since the campaign began, so both quest triggers passed their day-30/day-50 gates — and their ramping chance rolls maxed out — on the very first weekly tick. They now measure true elapsed campaign days: the North stirs from day 30, the Sands from day 50, and the two no longer land on the same morning.
+
+### The Forest Clans' warriors answer to their own name
+- **Fixed Forest Clans troops still being called "Battanian".** The troop rename matched unit ids against the culture's id ("battania_") when the game's troops carry the demonym ("battanian_") — so not one troop ever matched and the whole roster kept its vanilla names. The rename now lands: "Forest Clan Skirmisher", "Forest Clan Whelp" (the volunteer), "Champion of the Forest Clans" (the fian champion), and so on.
+
+### The cold marches in strength
+- **Ashen lords keep proper war-hosts now.** Their warbands were topped up one party at a time, once a week — with a dozen lords bleeding men in a war against everyone, each host waited months for its turn and the cold marched with skeleton companies. A batch of hosts is now restocked every couple of days, and the minimum host size rises from 120 to 150.
+
+### Casting
+- **Spell spam is yours to pay for.** While holding Focus, every Attack or Block press now looses a working — mashing the button no longer swallowed casts into the chord-buffer window (each press used to re-arm the short attack+block chord timer, so a fast mash cast nothing at all). Instant releases stay weak and every one still costs the full flat toll; the chord (Attack+Block together) still unbinds the ultimate.
+
+### NPC mages fight like they mean it
+- **Enemy mage lords now cast often enough to threaten.** Their cadence was one working every 25–35 s (stretched to nearly a minute once an aging lord began hoarding his years), plus a 12 s opening warmup — in the press of a battle they read as scenery. Cooldowns tighten to 16 s default (Impulsive 10 s, Calculating 24 s; the Ashen keep their relentless 6 s), the warmup drops to 8 s, and opportunistic pot-shots rise from 60% to 75% base power so even a lord merely harassing your line draws blood. The temperament and life-hoarding behaviour is unchanged — an old miser still goes quiet, he just starts from a real threat.
+- **Every renamed culture's troops now answer to their new names.** The rename matched troops by their id prefix, but vanilla ids are wildly inconsistent — "druzhinnik" and "mamluke_palace_guard" carry no culture at all, caravan guards suffix it ("caravan_guard_sturgia") — so the Sturgian noble line still read "Sturgian Druzhinnik Champion" in a Northmen host, and caravan guards, armed traders and villagers kept their old adjectives for all five renamed cultures. Troops are now matched by their actual culture, so "Northman Chosen", "Tribal Caravan Guard", "Duneborn Peasant" and kin all land, whatever their id shape.
+
+### Performance
+- **Fixed frame hitches when NPC mages cast.** Three per-frame costs in the fire bolt's flight: the trail stamped a full three-entity particle cluster plus a point light every 30 ms (~130 engine entities a second per bolt — one bolt alone nearly saturated the visual budget, and NPC volleys keep several flying), every bolt copied the entire battlefield agent list every frame to look for a target, and a burst in a dense melee spawned an uncapped flourish per struck foe. The trail now lays a single wisp per stride with a short-lived light, bolts share one agent snapshot refreshed on a 0.1 s window, and impact flourishes are capped per burst like the legacy blasts. Damage and gameplay are unchanged — the volley just stops stuttering.
+
 ### Questlines can no longer break saving
 - **Guarded the bug that used to make a started quest un-saveable.** A quest journal that reaches the game's quest manager without a registered save definition cannot be written to disk — and the failure never shows at load or during play, only the moment you press Save, long after the quest triggered. That is what repeatedly broke saving on the larger questlines. All thirteen quest journals are registered, and two guards now keep it that way: the mod audits its own quest types at startup and writes any unregistered one to `errors.log`, and the test suite fails outright if a quest is ever added without a save definition. A questline can no longer ship with a broken save.
 - **Fixed the Great Awakening's "Prisoners Sacrificed" counter freezing after a reload.** The quest's progress bar was bound to a handle that isn't carried in the save, so after loading a game the count stopped advancing even as the altar kept drinking. It is now re-bound from the restored journal, as the other questlines already did.

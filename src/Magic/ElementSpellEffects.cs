@@ -64,7 +64,10 @@ namespace AshAndEmber
             public const float Speed        = 30f;   // m/s
             public const float DetectRadius = 3.2f;  // horizontal reach at which a foe trips the burst (forgiving — a near miss still bursts)
             public const float DetectHeight = 3.0f;  // vertical band (foot-to-mounted) the trigger spans
-            public const float TrailInterval = 0.03f;
+            // A puff every ~3 m of flight. At the old 0.03 s a single bolt spawned
+            // ~130 entities a second (full particle cluster + point light per puff)
+            // and NPC volleys hitched the frame; a wisp per stride reads the same.
+            public const float TrailInterval = 0.10f;
         }
         private static readonly List<FireBolt> _bolts = new List<FireBolt>();
 
@@ -365,18 +368,21 @@ namespace AshAndEmber
                 b.Position   += b.Forward * moved;
                 b.TravelLeft -= moved;
 
-                // A living trail of fire clings behind the bolt (the Ashen cold shows pale).
+                // A living trail of fire clings behind the bolt (the Ashen cold shows
+                // pale). Single wisps, not full clusters — the puffs sit a stride
+                // apart and blur into one trail; clusters only tripled the entity
+                // churn that made NPC volleys hitch.
                 b.TrailTimer -= dt;
                 if (b.TrailTimer <= 0f)
                 {
                     b.TrailTimer = FireBolt.TrailInterval;
                     try
                     {
-                        if (b.Ashen) SpellEffects.SpawnTempSnowParticle(b.Position, 1.0f);
-                        else         SpellEffects.SpawnTempFireParticle(b.Position, 1.0f);
+                        if (b.Ashen) SpellEffects.SpawnTempSnowWisp(b.Position, 1.0f);
+                        else         SpellEffects.SpawnTempFireWisp(b.Position, 1.0f);
                     }
                     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                    SpawnLight(b.Position, Palette(MagicElement.Fire, b.Ashen), 1.2f);
+                    SpawnLight(b.Position, Palette(MagicElement.Fire, b.Ashen), 1.2f, 0.4f);
                 }
 
                 // Burst on the first live enemy the bolt reaches.
@@ -391,6 +397,11 @@ namespace AshAndEmber
         private static void ExplodeBolt(FireBolt b, Vec3 at)
         {
             Vec3 rgb = Palette(MagicElement.Fire, b.Ashen);
+            // Per-victim impact flourishes are capped like the legacy blasts —
+            // in a dense melee every foe still takes the damage and the burn,
+            // but only the first few get their own bloom (which is what scales
+            // badly when several NPC bolts burst in the same press of men).
+            int blooms = 0;
             foreach (Agent a in EnemiesNearPos(b.CasterTeam, b.Caster, at, FireBoltRadius))
             {
                 if (SpellEffects.IsWarded(a)) continue;
@@ -403,7 +414,8 @@ namespace AshAndEmber
                 // A deep draw sets the mark alight — the burn finishes what the
                 // strike began (the Ashen cold clings on as deep frost instead).
                 try { Ignite(a, b.Caster, b.Power, b.Ashen); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                FireBloom(a.Position, b.Ashen, rgb, 1.0f, false);
+                if (blooms++ < SpellEffects.ImpactBurstsPerCast)
+                    FireBloom(a.Position, b.Ashen, rgb, 1.0f, false);
             }
             // Timber burns: siege engines and gates in the blast char under the same
             // fire (the cold splits the frozen grain just as surely).
@@ -423,8 +435,10 @@ namespace AshAndEmber
         private static Agent FirstEnemyNear(Team casterTeam, Agent caster, Vec3 at, float radius, Mission mission, float height)
         {
             float r2 = radius * radius;
+            // Runs per bolt per frame — the shared 0.1 s snapshot spares a full
+            // agent-list copy for every bolt of an NPC volley.
             List<Agent> agents;
-            try { agents = mission.Agents.ToList(); } catch { return null; }
+            try { agents = SpellEffects.AgentSnapshot(); } catch { return null; }
             foreach (Agent a in agents)
             {
                 if (a == caster || !a.IsActive() || a.IsMount) continue;

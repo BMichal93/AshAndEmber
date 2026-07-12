@@ -25,9 +25,12 @@ namespace AshAndEmber
 {
     public static class ColourLordAI
     {
-        private const float DefaultCooldown     = 25f;
-        private const float ImpulsiveCooldown   = 15f;
-        private const float CalculatingCooldown = 35f;
+        // Tightened (25/15/35 → 16/10/24): at the old cadence a mage lord loosed
+        // roughly one working a minute once the near-burnout stretch applied, and
+        // read as scenery rather than a threat on the field.
+        private const float DefaultCooldown     = 16f;
+        private const float ImpulsiveCooldown   = 10f;
+        private const float CalculatingCooldown = 24f;
         private const float AshenCooldown       = 6f;  // Ashen lords cast ~4× more often
         // A lord who knows a second element may blend it into the one he was
         // about to throw — the same fusion the player commands by chord. Kept
@@ -48,7 +51,7 @@ namespace AshAndEmber
         private const  float TickInterval = 0.5f;
         private static bool  _warmupDone  = false;
         private static float _warmupTimer = 0f;
-        private const  float WarmupDuration = 12f;
+        private const  float WarmupDuration = 8f;
 
         public static void ClearCooldowns()
         {

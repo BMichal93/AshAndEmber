@@ -646,12 +646,12 @@ namespace AshAndEmber
         private static readonly Dictionary<string, string> _forestClansTroopOverrides =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Battanian Recruit",       "Forest Clan Whelp"              },
+            { "Battanian Volunteer",     "Forest Clan Whelp"              },
             { "Battanian Fian Champion", "Champion of the Forest Clans"   },
         };
 
         public static void RenameBattanianTroops()
-            => RenameCultureTroops("battania_", "Battanian ", "Forest Clan ", _forestClansTroopOverrides);
+            => RenameCultureTroops("battania", "Battanian ", "Forest Clan ", _forestClansTroopOverrides);
 
         // ── Khuzait troop rename ───────────────────────────────────────────────
         // Renames all vanilla Khuzait troops from "Khuzait X" to "Tribal X", with
@@ -666,36 +666,7 @@ namespace AshAndEmber
         };
 
         public static void RenameKhuzaitTroops()
-        {
-            try
-            {
-                var nameField = _characterNameField ?? _nameField;
-                if (nameField == null) return;
-
-                foreach (var ch in MBObjectManager.Instance
-                             ?.GetObjectTypeList<CharacterObject>()
-                             ?? Enumerable.Empty<CharacterObject>())
-                {
-                    try
-                    {
-                        if (ch == null) continue;
-                        if (!(ch.StringId?.StartsWith("khuzait_", StringComparison.OrdinalIgnoreCase) ?? false))
-                            continue;
-
-                        string current = ch.Name?.ToString() ?? "";
-                        if (!current.StartsWith("Khuzait ", StringComparison.OrdinalIgnoreCase)) continue;
-
-                        string newName;
-                        if (!_tribalTroopOverrides.TryGetValue(current, out newName))
-                            newName = "Tribal " + current.Substring("Khuzait ".Length);
-
-                        nameField.SetValue(ch, new TextObject(newName));
-                    }
-                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                }
-            }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-        }
+            => RenameCultureTroops("khuzait", "Khuzait ", "Tribal ", _tribalTroopOverrides);
 
         private static void SetKingdomField(Kingdom kingdom, string[] candidates, TextObject value)
         {
@@ -745,36 +716,7 @@ namespace AshAndEmber
         };
 
         public static void RenameVlandianTroops()
-        {
-            try
-            {
-                var nameField = _characterNameField ?? _nameField;
-                if (nameField == null) return;
-
-                foreach (var ch in MBObjectManager.Instance
-                             ?.GetObjectTypeList<CharacterObject>()
-                             ?? Enumerable.Empty<CharacterObject>())
-                {
-                    try
-                    {
-                        if (ch == null) continue;
-                        if (!(ch.StringId?.StartsWith("vlandian_", StringComparison.OrdinalIgnoreCase) ?? false))
-                            continue;
-
-                        string current = ch.Name?.ToString() ?? "";
-                        if (!current.StartsWith("Vlandian ", StringComparison.OrdinalIgnoreCase)) continue;
-
-                        string newName;
-                        if (!_troopNameOverrides.TryGetValue(current, out newName))
-                            newName = "Templar " + current.Substring("Vlandian ".Length);
-
-                        nameField.SetValue(ch, new TextObject(newName));
-                    }
-                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                }
-            }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-        }
+            => RenameCultureTroops("vlandia", "Vlandian ", "Templar ", _troopNameOverrides);
 
         // ── Sturgia → Northmen troop rename ────────────────────────────────────
         // Renames vanilla Sturgian troops from "Sturgian X" to "Northman X", the
@@ -790,7 +732,7 @@ namespace AshAndEmber
         };
 
         public static void RenameSturgianTroops()
-            => RenameCultureTroops("sturgian_", "Sturgian ", "Northman ", _northmenTroopOverrides);
+            => RenameCultureTroops("sturgia", "Sturgian ", "Northman ", _northmenTroopOverrides);
 
         // ── Aserai → Duneborn troop rename ─────────────────────────────────────
         // Renames vanilla Aserai troops from "Aserai X" to "Duneborn X". "Duneborn"
@@ -803,13 +745,16 @@ namespace AshAndEmber
         };
 
         public static void RenameAseraiTroops()
-            => RenameCultureTroops("aserai_", "Aserai ", "Duneborn ", _dunebornTroopOverrides);
+            => RenameCultureTroops("aserai", "Aserai ", "Duneborn ", _dunebornTroopOverrides);
 
-        // Shared troop-rename loop used by the Sturgia/Aserai renames above.
-        // (RenameVlandianTroops / RenameKhuzaitTroops predate this helper and keep
-        // their own inline copies.) Matches CharacterObjects by StringId prefix and
-        // rewrites the display name via overrides, falling back to a prefix swap.
-        private static void RenameCultureTroops(string idPrefix, string namePrefix,
+        // Shared troop-rename loop used by every culture rename above. Matches
+        // CharacterObjects by their CULTURE (not StringId prefix — troop ids are
+        // inconsistent: "battanian_fian" carries the demonym, "druzhinnik" and
+        // "mamluke_palace_guard" carry nothing, caravan guards suffix the culture)
+        // and rewrites any display name that leads with the culture's adjective,
+        // via overrides with a prefix-swap fallback. Idempotent: already-renamed
+        // names fail the adjective guard and are left alone.
+        private static void RenameCultureTroops(string cultureId, string namePrefix,
             string newPrefix, Dictionary<string, string> overrides)
         {
             try
@@ -824,7 +769,7 @@ namespace AshAndEmber
                     try
                     {
                         if (ch == null) continue;
-                        if (!(ch.StringId?.StartsWith(idPrefix, StringComparison.OrdinalIgnoreCase) ?? false))
+                        if (!string.Equals(ch.Culture?.StringId, cultureId, StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         string current = ch.Name?.ToString() ?? "";

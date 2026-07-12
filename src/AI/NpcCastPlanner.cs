@@ -34,7 +34,7 @@ namespace AshAndEmber
         // How hard the SITUATION alone calls for power, independent of resources.
         public const float BaseDesperate = 1.00f; // survival — pour it all out
         public const float BaseCluster   = 0.90f; // a fat target worth spending on
-        public const float BaseHarass    = 0.60f; // opportunistic pressure, cheap
+        public const float BaseHarass    = 0.75f; // opportunistic pressure — still has to sting
 
         // Non-emergency power never drops below the floor a temper is willing to
         // spend down to when his life runs short.

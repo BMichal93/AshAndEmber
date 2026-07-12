@@ -109,7 +109,7 @@ The other behaviors register their own daily/weekly/enter-leave hooks (e.g. `Nat
 
 `ColourLordAI.TryCast()` runs on cooldowns that vary by personality:
 - Ashen lords: 6 s, no aging cost, cast proactively
-- Calculating: 35 s; Impulsive: 15 s; default: 25 s
+- Calculating: 24 s; Impulsive: 10 s; default: 16 s (stretched up to ×2.5 near burnout by temperament — see `NpcCastPlanner.CooldownMult`)
 
 AI priority: defensive burst (<40% HP) → heal burst (<30% HP) → attack (school-specific). `BanditMageAI` adds burnout risk scaled to bandit tier (35% → 15%).
 

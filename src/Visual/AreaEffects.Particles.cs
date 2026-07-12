@@ -991,7 +991,7 @@ namespace AshAndEmber
 
             if (Mission.Current == null) return;
             float r2 = e.Radius * e.Radius;
-            foreach (Agent a in BarrierAgentSnapshot())
+            foreach (Agent a in AgentSnapshot())
             {
                 if (!a.IsActive() || a.IsMount || a.Health <= 0f) continue;
                 if (e.CasterTeam != null && a.Team == e.CasterTeam) continue;
@@ -1052,25 +1052,27 @@ namespace AshAndEmber
             }
         }
 
-        // Shared agent snapshot for the barrier-node pulses. All nodes of a wall
-        // pulse on the same tick, so without this every node copied the full
-        // Mission agent list for itself (15 copies per pulse on a charged wall).
-        // The snapshot is reused within a short window; IsActive()/Health guards
-        // in the consumer keep any agent that died inside the window harmless.
-        private static List<Agent> _barrierAgentSnapshot;
-        private static float _barrierSnapshotTime = -1f;
+        // Shared agent snapshot for high-frequency sweeps (barrier-node pulses,
+        // fire bolts in flight). All nodes of a wall pulse on the same tick, and
+        // every bolt scans for a target every frame, so without this each of them
+        // copied the full Mission agent list for itself (15 copies per pulse on a
+        // charged wall; one per bolt per frame). The snapshot is reused within a
+        // short window; IsActive()/Health guards in the consumers keep any agent
+        // that died inside the window harmless.
+        private static List<Agent> _agentSnapshot;
+        private static float _agentSnapshotTime = -1f;
 
-        private static List<Agent> BarrierAgentSnapshot()
+        internal static List<Agent> AgentSnapshot()
         {
             var mission = Mission.Current;
-            if (mission == null) return _barrierAgentSnapshot ?? (_barrierAgentSnapshot = new List<Agent>());
+            if (mission == null) return _agentSnapshot ?? (_agentSnapshot = new List<Agent>());
             float now = mission.CurrentTime;
-            if (_barrierAgentSnapshot == null || now < _barrierSnapshotTime || now - _barrierSnapshotTime > 0.1f)
+            if (_agentSnapshot == null || now < _agentSnapshotTime || now - _agentSnapshotTime > 0.1f)
             {
-                try { _barrierAgentSnapshot = mission.Agents.ToList(); } catch { _barrierAgentSnapshot = new List<Agent>(); }
-                _barrierSnapshotTime = now;
+                try { _agentSnapshot = mission.Agents.ToList(); } catch { _agentSnapshot = new List<Agent>(); }
+                _agentSnapshotTime = now;
             }
-            return _barrierAgentSnapshot;
+            return _agentSnapshot;
         }
 
         private static string BarrierNodeId(NatureElement el)
