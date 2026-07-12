@@ -2,7 +2,7 @@
 // ASH AND EMBER — AI/TribesDialogue.cs
 // Replaces vanilla lord dialogue for all Tribal lords (Tribes of the East /
 // khuzait kingdom) with fanatical, blood-hungry lines befitting riders sworn
-// to the God-King's fire. Mirrors the structure of TempleDialogue.cs.
+// to the Priest-King's fire. Mirrors the structure of TempleDialogue.cs.
 //
 // Each lord speaks from a pool of lines selected deterministically by their
 // StringId hash. Multiple variants are registered; conditions evaluate at
@@ -88,31 +88,31 @@ namespace AshAndEmber
 
         private static readonly string[] _openings =
         {
-            "Your fire is a candle next to the God-King's sun. Speak before I lose patience with it.",
+            "Your fire is a candle next to the Priest-King's sun. Speak before I lose patience with it.",
             "The steppe remembers every enemy who begged. Do not beg. Speak.",
-            "You still draw breath. That is either luck or the God-King's amusement — say your piece before it runs out.",
+            "You still draw breath. That is either luck or the Priest-King's amusement — say your piece before it runs out.",
             "Blood or words, stranger — the Tribes have use for both. Choose quickly.",
             "I have killed men for wasting less of my time than this. Speak, or don't.",
-            "You stand before a warrior of the God-King's own blood-oath. There is no peace here — only how you spend your breath.",
+            "You stand before a warrior of the Priest-King's own blood-oath. There is no peace here — only how you spend your breath.",
         };
 
         private static readonly string[] _barters =
         {
             "Coin? The Tribes take what they want — we do not buy it back.",
-            "The God-King's word is the only currency that matters on this steppe, and he has not spoken your name.",
+            "The Priest-King's word is the only currency that matters on this steppe, and he has not spoken your name.",
             "Trade is for men who fear the blade. Give me a reason to respect you instead.",
         };
 
         private static readonly string[] _defeats1 =
         {
             "You have blooded me. The steppe teaches that pain sharpens — it does not break. Finish it, or don't. I care little which.",
-            "A good cut. The God-King will hear I fell to a worthy hand, not a soft one.",
+            "A good cut. The Priest-King will hear I fell to a worthy hand, not a soft one.",
             "Struck down, not humbled. The Tribes do not know that word.",
         };
 
         private static readonly string[] _defeats2 =
         {
-            "One fall does not end a war the God-King already won in his heart.",
+            "One fall does not end a war the Priest-King already won in his heart.",
             "Kill me or don't. Either way, the steppe outlives the both of us.",
             "You wear my blood on your blade now. Few earn that much — carry it proudly.",
         };
@@ -120,7 +120,7 @@ namespace AshAndEmber
         private static readonly string[] _prisoners =
         {
             "Chains are a small thing. The steppe has held me in worse cages than this.",
-            "I have bled for the God-King before. I will bleed again, here or free.",
+            "I have bled for the Priest-King before. I will bleed again, here or free.",
             "Keep me if you dare. The Tribes do not forget where their own are kept.",
         };
     }

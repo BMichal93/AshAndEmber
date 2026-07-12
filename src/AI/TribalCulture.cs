@@ -35,8 +35,8 @@ namespace AshAndEmber
         }
 
         // Allegiance, not blood: true only while the player clan is sworn to the
-        // Tribes (the God-King's kingdom). This — not background/culture — gates the
-        // Call to the Tribes: a foreigner who swears to the God-King may summon
+        // Tribes (the Priest-King's kingdom). This — not background/culture — gates the
+        // Call to the Tribes: a foreigner who swears to the Priest-King may summon
         // tribesmen, and a tribe-born who serves another crown may not.
         public static bool IsPlayerSwornToTribes
         {

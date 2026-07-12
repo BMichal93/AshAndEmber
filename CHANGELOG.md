@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### The Priest-King takes the throne of the East
+- **The ruler of the Tribes of the East is now the Priest-King, not the God-King.** Every line that named him — his lords' battle-taunts, the backstory options that swear you to his rites, the world-events that invoke his word, his household and succession messages, his vanguard's banner — now speaks of the Priest-King. Mechanics are unchanged; only the title is reforged.
+- **The Tribes ride to war with two more clans at their back.** The steppe realm started thin on lords; the Priest-King now calls two wandering clans of the old blood to his banner at the campaign's dawn (landless riders first, then the strongest kinless clans he can reach). They bring their warriors, not their walls — no town or castle changes hands.
+
 ### Crystals endure
 - **Crystals shatter half as often.** The burndown roll drops from 10 % to 5 % per activation — a stone now survives ~20 draws on average (~50 with Lasting Lattice) instead of dying inside ten, so carrying one into battle no longer feels like a tax on using it.
 

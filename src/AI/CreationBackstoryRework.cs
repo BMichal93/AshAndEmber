@@ -5,7 +5,7 @@
 //
 //   Most changes are thematic renames; the bonuses are left untouched.
 //   Two options change mechanically:
-//     • Khuzait "A noyan's kinsfolk" → "Apostles of the God-King":
+//     • Khuzait "A noyan's kinsfolk" → "Apostles of the Priest-King":
 //         the Polearm skill grant is replaced by a random Dark Gift.
 //     • Vlandia "A baron's groom"   → "A Lord Templar's squire":
 //         the Charm skill grant is replaced by +3 Grace and +1 Honour.
@@ -169,10 +169,10 @@ namespace AshAndEmber
             // granted post-reset in ApplyPendingBoons.
 
             // ── Stage 1 — Family ─────────────────────────────────────────────
-            // Khuzait: A noyan's kinsfolk → Apostles of the God-King (Dark Gift for Polearm).
+            // Khuzait: A noyan's kinsfolk → Apostles of the Priest-King (Dark Gift for Polearm).
             Edit(m, "narrative_parent_menu", KhuzaitApostleOptionId,
-                "Apostles of the God-King",
-                "Your family were sworn to the God-King's inner rites — the marked few who carry his fire in "
+                "Apostles of the Priest-King",
+                "Your family were sworn to the Priest-King's inner rites — the marked few who carry his fire in "
                 + "miniature and speak his word where his horsemen have not yet ridden. You were raised among "
                 + "them, and the dark took its measure of you before you were old enough to refuse it.\n\n"
                 + "(You will begin bearing one random Dark Gift.)",
@@ -197,7 +197,7 @@ namespace AshAndEmber
             // Khuzait (urban): studied with your private tutor → attended the religious school.
             RegisterGatedRename(m, "narrative_education_menu", "education_tutor_option", "khuzait",
                 "attended the religious school.",
-                "While other children worked the herds, you were sent to the God-King's schoolmen, who drilled "
+                "While other children worked the herds, you were sent to the Priest-King's schoolmen, who drilled "
                 + "scripture, numbers, and the disciplines of the faithful into you by rote and by rod.");
             // Vlandia (urban): hung out with the gangs → denounced enemies of the faith.
             RegisterGatedRename(m, "narrative_education_menu", "education_ganger_option", "vlandia",
@@ -207,15 +207,15 @@ namespace AshAndEmber
                 + "Some of it was knowing whom to threaten, and when.");
 
             // ── Stage 4 — Youth ──────────────────────────────────────────────
-            // Khuzait: a chieftain's servant → the God-King's bloodrider's servant.
+            // Khuzait: a chieftain's servant → the Priest-King's bloodrider's servant.
             RegisterGatedRename(m, "narrative_youth_menu", "youth_servant_first_option", "khuzait",
-                "were the God-King's bloodrider's servant.",
-                "You waited on one of the God-King's bloodriders — his chosen lancers — fetching and scouting "
+                "were the Priest-King's bloodrider's servant.",
+                "You waited on one of the Priest-King's bloodriders — his chosen lancers — fetching and scouting "
                 + "and listening at the edges of councils you were never meant to hear.");
             // Khuzait: an envoy's entourage → the Tribe's emissary.
             RegisterGatedRename(m, "narrative_youth_menu", "youth_envoys_guard_first_option", "khuzait",
                 "served as the Tribe's emissary.",
-                "You rode ahead of the horde, carrying the God-King's terms to cities that still believed they "
+                "You rode ahead of the horde, carrying the Priest-King's terms to cities that still believed they "
                 + "could bargain. You learned to read a room full of frightened men — and to be gone before the "
                 + "knives came out.");
             // Vlandia: a baron's groom → a Lord Templar's squire (Grace + Honour for Charm).
