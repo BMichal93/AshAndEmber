@@ -15,6 +15,9 @@
 //   The longer you draw (up to ~5 s) the STRONGER the working — a charged cone
 //   reaches further and a charged wall thickens into a filled rectangle; the
 //   aging toll is flat either way. Hold past ~15 s and the charge disperses.
+//   After a release the fire must GATHER for a moment (~2 s) before the next can
+//   leave the hand — a break the draw itself absorbs, so a paced channeler never
+//   feels it, but panic-tapping half-charged cones is refused.
 //   Casting needs a free hand and light armour — unless
 //   you know STEEL, which lets you cast with a weapon drawn and bears the weight.
 //   Aging "burns through" your years exactly like the old fire magic (the Ashen
@@ -38,6 +41,11 @@ namespace AshAndEmber
     {
         private static bool  _wasFocusing;
         private static float _drawTime;            // seconds drawn since focus / last cast
+        // Seconds since the last working left the hand. The next release is refused
+        // until this passes ElementMagicMath.RecoverySeconds — a minimal gathering
+        // break that runs WHILE the next charge is drawn, so it is invisible to a
+        // paced channeler and blocks only panic-tapping. Starts "ready".
+        private static float _sinceCast = ElementMagicMath.RecoverySeconds;
         private static bool  _prevAtk, _prevBlk;
         // The chord buffer (the Unbinding): a lone Attack/Block press waits
         // ChordWindowSeconds for its partner before it commits as a normal cast,
@@ -84,6 +92,7 @@ namespace AshAndEmber
         {
             _wasFocusing = false;
             _drawTime = 0f;
+            _sinceCast = ElementMagicMath.RecoverySeconds;   // ready to cast at battle start
             _prevAtk = _prevBlk = false;
             _pendingForm = null;
             _pendingTimer = 0f;
@@ -113,6 +122,11 @@ namespace AshAndEmber
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (!MageKnowledge.IsMage) { InputSuppressed = false; return; }
+
+            // Advance the gathering-break clock. It runs whether or not Focus is held
+            // (walking away between casts counts), and is clamped so it never grows
+            // unbounded across a long battle.
+            if (_sinceCast < 1e6f) _sinceCast += dt;
 
             bool altHeld = Input.IsKeyDown(InputKey.LeftAlt);
             // Focus on the X button (ControllerRLeft). Both bumpers are spoken for —
@@ -454,6 +468,15 @@ namespace AshAndEmber
             // still-hands-light gates still decide whether you can cast at all.
             string reason = ChannelBlockReason();
             if (reason != null) { Msg(reason); return; }
+            // The gathering break: refuse a release that comes too soon after the
+            // last, but KEEP the drawn charge — a caster who simply keeps holding
+            // looses it the instant the fire settles, so only panic-tapping is
+            // denied. Any real draw outlasts the break, so it is never felt.
+            if (!ElementMagicMath.CanReleaseAgain(_sinceCast))
+            {
+                Msg("The fire gutters — let it gather.");
+                return;
+            }
             var caster = Agent.Main;
             if (caster == null || !caster.IsActive()) return;
 
@@ -469,6 +492,7 @@ namespace AshAndEmber
             // The toll is flat — the draw bought power, not a cheaper cast.
             int days = ElementMagicMath.CastAgingDays(form, MageElementKnowledge.HasNature);
             ApplyCastCost(days);
+            _sinceCast = 0f;       // start the gathering break before the next release
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
             _fullAnnounced = false;
@@ -507,6 +531,7 @@ namespace AshAndEmber
             // Nature halves it, the Ashen pay it in criminal standing (days × 5).
             // Spirit's living champion costs more life than a one-moment working.
             ApplyCastCost(ElementUltimateMath.UltimateAgingDays(MageElementKnowledge.HasNature, el));
+            _sinceCast = 0f;       // start the gathering break before the next release
             _drawTime = 0f;        // the charge is spent — draw again
             _readyAnnounced = false;
             _fullAnnounced = false;
