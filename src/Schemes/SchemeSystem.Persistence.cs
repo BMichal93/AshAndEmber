@@ -77,6 +77,17 @@ namespace AshAndEmber
                     _targetCooldowns[tcdKeys[i]] = tcdVals[i];
             }
 
+            var nbKeys = _npcTargetBreather.Keys.ToList();
+            var nbVals = _npcTargetBreather.Values.ToList();
+            store.SyncData("SCH_NbKeys", ref nbKeys);
+            store.SyncData("SCH_NbVals", ref nbVals);
+            if (nbKeys != null && nbVals != null && nbKeys.Count == nbVals.Count)
+            {
+                _npcTargetBreather.Clear();
+                for (int i = 0; i < nbKeys.Count; i++)
+                    _npcTargetBreather[nbKeys[i]] = nbVals[i];
+            }
+
             var pckList = _playerCooldownKeys.ToList();
             store.SyncData("SCH_PckList", ref pckList);
             if (pckList != null)
