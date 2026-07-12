@@ -16,6 +16,7 @@
 
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
+using TaleWorlds.Localization;
 
 namespace AshAndEmber
 {
@@ -61,6 +62,36 @@ namespace AshAndEmber
             if (IsArenicosPostMerger(faction1) || IsArenicosPostMerger(faction2)) return true;
             if (IsDunebornPermanentWar(faction1, faction2)) return true;
             return base.IsAtConstantWar(faction1, faction2);
+        }
+
+        // The three imperial successor realms are the map's largest — vanilla's war
+        // score inherently favors picking on a weak small kingdom over a rival
+        // empire of similar strength (lower risk, easier gains), so a mild nudge
+        // never closes that gap: a positive score gets a real multiplier, and a
+        // score that vanilla left at or below zero (i.e. "not worth it yet") gets a
+        // flat push instead, since multiplying a negative number the wrong way
+        // would only make empires shy away from each other harder.
+        private const float EmpireCivilWarScoreMult = 3.0f;
+        private const float EmpireCivilWarFlatBonus = 20f;
+
+        private static bool IsImperial(IFaction f)
+        {
+            try { return (f as Kingdom)?.Culture?.StringId == "empire"; }
+            catch { return false; }
+        }
+
+        public override float GetScoreOfDeclaringWar(IFaction factionDeclaresWar, IFaction factionDeclaredWar,
+            Clan evaluatingClan, out TextObject reason, bool includeReason = false)
+        {
+            float score = base.GetScoreOfDeclaringWar(factionDeclaresWar, factionDeclaredWar,
+                evaluatingClan, out reason, includeReason);
+            try
+            {
+                if (IsImperial(factionDeclaresWar) && IsImperial(factionDeclaredWar))
+                    score = score > 0f ? score * EmpireCivilWarScoreMult : score + EmpireCivilWarFlatBonus;
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            return score;
         }
 
         public override float GetScoreOfDeclaringPeace(IFaction factionDeclaresPeace, IFaction factionDeclaredPeace)

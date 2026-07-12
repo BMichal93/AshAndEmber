@@ -251,6 +251,7 @@ namespace AshAndEmber
 
                 ChangeOwnerOfSettlementAction.ApplyByDefault(lord, castle);
                 StabiliseSettlement(castle);
+                if (lord.Clan != null) AshenCitySystem.RegisterConqueredSettlement(castle, lord.Clan);
 
                 MBInformationManager.AddQuickInformation(new TextObject(
                     $"Ashen Tide — {castle.Name} bends to the cold fire. " +

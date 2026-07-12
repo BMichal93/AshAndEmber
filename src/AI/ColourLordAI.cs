@@ -171,7 +171,7 @@ namespace AshAndEmber
             float lifeFrac = isAshen ? 1f
                 : NpcCastPlanner.LifeFrac(ColourLordRegistry.LifeBudgetYears(hero));
 
-            // -2. THE UNBINDING — a lord's once-per-battle ultimate. Only in
+            // -2. THE UNBINDING — a lord's cooldown-gated ultimate. Only in
             //     battles worth the working (70+ men), read from the same tactical
             //     picture as his normal casts, and always behind a LONG telegraphed
             //     windup: any hit on him during the channel breaks it (and it stays
@@ -205,11 +205,14 @@ namespace AshAndEmber
                 return;
             }
 
-            // 1. Heal self when badly hurt.
-            if (hpPct < 0.30f) { CastHeal(agent, hero, isAshen, temper, lifeFrac); return; }
+            // 1. Heal self when badly hurt — only the Spirit ward can mend; a
+            //    lord who never learned it has no legitimate way to heal, same
+            //    as the player.
+            bool knowsSpirit = KnownElements(hero).Contains(MagicElement.Spirit);
+            if (knowsSpirit && hpPct < 0.30f) { CastHeal(agent, hero, isAshen, temper, lifeFrac); return; }
 
             // 2. Help hurt allies — the Ashen care only for themselves.
-            if (!isAshen)
+            if (knowsSpirit && !isAshen)
             {
                 bool allyHurt = allies.Any(a => a.Health < a.HealthLimit * 0.5f
                                              && a.Position.Distance(agent.Position) <= 15f);
@@ -488,33 +491,26 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // Self / ally heal. A lord who knows Spirit raises the warding wall (heals
-        // allies + self, lifts morale); otherwise he turns the fire inward — the one
-        // working still routed through the old path, because it carries the
-        // restorative brands (Ashveil / Hearthlight / Reflect) and lets a fire-only
-        // lord mend himself at all.
+        // Self / ally heal. Only called once the caller has confirmed the lord
+        // knows Spirit — the warding wall is the sole legitimate mending magic
+        // left in the unified system, same as the player.
         private static void CastHeal(Agent agent, Hero hero, bool isAshen, CasterTemper temper, float lifeFrac)
         {
-            if (KnownElements(hero).Contains(MagicElement.Spirit))
+            try
             {
-                try
+                // Mending is survival — pour it out (emergency floor on the power).
+                float power = isAshen ? 1.0f
+                    : NpcCastPlanner.CastPower(NpcCastPlanner.BaseCluster, lifeFrac, temper, emergency: true);
+                AnnounceEnemyCast(agent, hero, "raises a ward — the wounded are mended.");
+                SetCooldown(hero);
+                RecordCast(hero, CastForm.Wall);
+                SpellEffects.QueueNpcCastWithWindup(agent, () =>
                 {
-                    // Mending is survival — pour it out (emergency floor on the power).
-                    float power = isAshen ? 1.0f
-                        : NpcCastPlanner.CastPower(NpcCastPlanner.BaseCluster, lifeFrac, temper, emergency: true);
-                    AnnounceEnemyCast(agent, hero, "raises a ward — the wounded are mended.");
-                    SetCooldown(hero);
-                    RecordCast(hero, CastForm.Wall);
-                    SpellEffects.QueueNpcCastWithWindup(agent, () =>
-                    {
-                        ElementSpellEffects.CastWall(MagicElement.Spirit, agent, power);
-                        PlayCastFx(agent, MagicElement.Spirit, isAshen);
-                    });
-                    return;
-                }
-                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    ElementSpellEffects.CastWall(MagicElement.Spirit, agent, power);
+                    PlayCastFx(agent, MagicElement.Spirit, isAshen);
+                });
             }
-            CastHealBurst(agent, hero);
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Cast sound + gesture for a unified element working. The element effects
@@ -526,47 +522,6 @@ namespace AshAndEmber
             try { SpellEffects.TryCastSound(agent.Position, sfx); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.TryCastAnimation(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SpellEffects.RecordMagicCast(agent.Position); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-        }
-
-        // Turn the fire inward — an element-agnostic self-mend for a lord who has not
-        // learned the Spirit ward. A DIRECT heal (no SpellCast), so it carries none of
-        // the retired enchantment brands: the same pure magic the player wields.
-        private static void CastHealBurst(Agent agent, Hero hero)
-        {
-            try
-            {
-                AnnounceEnemyCast(agent, hero, "turns the fire inward — wounds close.");
-                SetCooldown(hero);
-                RecordCast(hero, CastForm.Attack);
-                SpellEffects.QueueNpcCastWithWindup(agent, () =>
-                {
-                    try { SpellEffects.HealAgent(agent, HealthCap(agent) * 0.35f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                    foreach (Agent ally in SpellEffects.AlliesOf(agent))
-                    {
-                        if (ally == agent || !ally.IsActive()) continue;
-                        if (ally.Position.Distance(agent.Position) > 8f) continue;
-                        try { SpellEffects.HealAgent(ally, HealthCap(ally) * 0.15f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-                    }
-                    ApplyCastVisuals(agent);
-                });
-            }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-        }
-
-        private static float HealthCap(Agent a)
-        {
-            try { return a.HealthLimit > 0f ? a.HealthLimit : 100f; } catch { return 100f; }
-        }
-
-        private static void ApplyCastVisuals(Agent agent)
-        {
-            Hero hero = (agent.Character as CharacterObject)?.HeroObject;
-            bool isAshen = hero != null && ColourLordRegistry.IsAshenLord(hero);
-            ColorSchool school = isAshen ? ColorSchool.Ashen : ColorSchool.Purple;
-            SpellEffects.BeginAgentGlow(agent, school, 3f);
-            SpellEffects.TryCastSound(agent.Position, school);
-            SpellEffects.TryCastAnimation(agent);
-            SpellEffects.RecordMagicCast(agent.Position);
         }
 
         private static void SetCooldown(Hero hero)

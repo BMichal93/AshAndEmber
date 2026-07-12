@@ -169,6 +169,7 @@ namespace AshAndEmber
             {
                 ChangeOwnerOfSettlementAction.ApplyByDefault(ashenLord, s);
                 StabiliseSettlement(s);
+                if (ashenLord.Clan != null) AshenCitySystem.RegisterConqueredSettlement(s, ashenLord.Clan);
                 Notify(
                     $"The Burning Laboratory — {s.Name} has fallen to the grey. " +
                     "The gates opened from the inside. " +

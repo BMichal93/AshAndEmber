@@ -260,35 +260,26 @@ namespace AshAndEmber
                 int sidePct   = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (roguery / 500f) * 0.60f)) * 100f);
                 int charmPct  = (int)(Math.Max(0.20f, Math.Min(0.80f, 0.20f + (charm  / 500f) * 0.60f)) * 100f);
 
-                string abilityBlock =
-                    $"Rounds available (Roguery {roguery}): {rounds}  —  when rounds run out: 50% bust / 50% quiet fail.\n\n"
-                    + $"Press-on options (exact value hidden — revealed only after you commit):\n"
-                    + $"  · PUSH HARD       +4 to +10  — aggressive, always builds exposure fast\n"
-                    + $"  · TREAD CAREFULLY  −3 to +3   — balanced, could go either way\n"
-                    + $"  · PULL BACK       −4 to −10  — always reduces exposure significantly, costs a round\n\n"
-                    + $"Field abilities (one use each per operation):\n"
-                    + $"  · SIDESTEP ({sidePct}% Roguery) — skip this development. Fail: ±8 exposure, advance.\n"
-                    + $"  · TALK IT DOWN ({charmPct}% Charm) — reduce heat by 5. Fail: +5 exposure. Stays in current phase.\n\n";
-
+                // Kept short on purpose — the native confirmation dialog has no scroll
+                // bar, and the old wall of text (full press-on ranges, a duplicated
+                // skip explanation) overflowed the box and pushed the Proceed button
+                // off-screen. Exact press-on shifts and the skip odds are hidden by
+                // design anyway (see the "skip" InquiryElement's own hint below), so
+                // dropping them here loses nothing you can act on.
                 var    cfg      = SchemeMinigame.GetPublicConfig(_selectedDef.Type);
                 string failNote = isAss
                     ? "If blown (exposure >21): assassin captured — crime +80, relations −80, 60% chance of war."
                     : "If blown (exposure >21): operation backfires — consequences specific to the scheme type.";
                 int skipPct = (int)(SchemeMinigame.SkipSuccessChance * 100f);
-                string body     = $"Scheme: {_selectedDef.Name}\n"
-                                + $"Target: {tName}\n"
+                string body     = $"Scheme: {_selectedDef.Name}   Target: {tName}\n"
                                 + $"Cost: {goldCost}g  +  {infCost} influence{cdNote}\n"
-                                + $"The Gambit  |  Threshold ≥{cfg.RiskSum}  |  Blown at 21\n"
+                                + $"Threshold ≥{cfg.RiskSum}  |  Blown at 21  |  Rounds: {rounds} (Roguery {roguery})"
                                 + traitNote + "\n\n"
-                                + abilityBlock
-                                + "Receive field reports. Choose how hard your operative pushes — but the outcome "
-                                + "is unknown until you commit. Extract once you reach the threshold, or keep "
-                                + "pushing at your own risk (rounds are limited — don't run out). Pushing well past "
-                                + "the threshold before extracting earns a stronger result — more damage, more "
-                                + "skill gained, a faster-recovering network.\n\n"
-                                + failNote
-                                + $"\n\nOr skip the Gambit entirely and Trust to Instinct — one Roguery gamble "
-                                + $"({skipPct}%) decides it outright, with no bonus and no rounds.";
+                                + "Each round brings a field report: push hard, tread carefully, or pull back — the "
+                                + "exact shift stays hidden until you commit. Sidestep "
+                                + $"({sidePct}% Roguery) and Talk It Down ({charmPct}% Charm) are one-use field "
+                                + "abilities. Run out of rounds and it's a coin flip between bust and a quiet fail.\n\n"
+                                + failNote;
 
                 var options = new List<InquiryElement>
                 {
