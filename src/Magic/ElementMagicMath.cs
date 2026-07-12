@@ -94,6 +94,23 @@ namespace AshAndEmber
             return f < 0f ? 0f : f > 1f ? 1f : f;
         }
 
+        // ── Gathering break — a minimal pause between releases ───────────────────
+        // Once a working leaves the hand the inner fire must SETTLE before the next
+        // can be loosed. The gap is short — RecoverySeconds — and it runs WHILE the
+        // next charge is being drawn, so it is invisible to a deliberate channeler:
+        // any draw longer than this (and the charge only reaches full at 5 s) has
+        // already outlasted it, and the release goes off unhindered. It bites one
+        // thing only — PANIC-TAPPING: release, then instantly release again. That
+        // second snatched cast is refused until the fire has gathered, so the old
+        // "hold Focus and machine-gun half-power cones" strategy no longer works,
+        // while nothing about a paced, charged rhythm changes.
+        public const float RecoverySeconds = 2f;
+
+        // True once `sinceLastCast` seconds have passed since the previous release —
+        // the fire has settled and a new working may leave the hand. Any charge held
+        // longer than RecoverySeconds is always ready (the draw absorbs the wait).
+        public static bool CanReleaseAgain(float sinceLastCast) => sinceLastCast >= RecoverySeconds;
+
         // ── Charged cone reach ───────────────────────────────────────────────────
         // A cone thrown instantly barely leaves the hand; a fully-drawn one lances
         // far further. Reach scales from 1.0× (instant) to ConeRangeChargedMult× (full).
