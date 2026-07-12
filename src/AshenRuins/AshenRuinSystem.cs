@@ -1015,7 +1015,7 @@ namespace AshAndEmber
                         true, false, "Continue", "",
                         () =>
                         {
-                            try { Hero.MainHero.Clan.Renown = Math.Max(0, Hero.MainHero.Clan.Renown + 15); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                            try { ClanRenown.Gain(Hero.MainHero.Clan, 15f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                             NextRoom(def, isSolo, ri, sr);
                         }, null), true);
                     break;
@@ -1065,7 +1065,7 @@ namespace AshAndEmber
                     true, false, "Continue", "",
                     () =>
                     {
-                        try { Hero.MainHero.Clan.Renown = Math.Max(0, Hero.MainHero.Clan.Renown + 10); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        try { ClanRenown.Gain(Hero.MainHero.Clan, 10f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         NextRoom(def, isSolo, ri, sr);
                     }, null), true);
             }
@@ -1149,7 +1149,7 @@ namespace AshAndEmber
 
                 case RewardType.RenownBurst:
                     float renown = reward.Points * split;
-                    try { Hero.MainHero.Clan.Renown = Math.Max(0, Hero.MainHero.Clan.Renown + renown); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    try { ClanRenown.Gain(Hero.MainHero.Clan, renown); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                     InformationManager.DisplayMessage(new InformationMessage(
                         $"{header} Word of this spreads. (+{(int)renown} renown)",
                         new Color(0.9f, 0.78f, 0.25f)));

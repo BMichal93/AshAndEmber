@@ -75,6 +75,8 @@ namespace AshAndEmber
             : base("ae_keybind_reference", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("Notes for the Adventurer");
+        // Exempts the quest from the engine's cancel-on-load sweep (see GreatAwakeningQuestLog).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()

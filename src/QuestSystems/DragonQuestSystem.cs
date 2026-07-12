@@ -380,6 +380,8 @@ namespace AshAndEmber
             : base("ldm_sundered_crown", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("The Sundered Crown");
+        // Exempts the quest from the engine's cancel-on-load sweep (see GreatAwakeningQuestLog).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()
@@ -487,6 +489,8 @@ namespace AshAndEmber
             : base("ldq_eternal_cold", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("Bring the Eternal Cold");
+        // Exempts the quest from the engine's cancel-on-load sweep (see GreatAwakeningQuestLog).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()

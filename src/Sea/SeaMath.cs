@@ -29,8 +29,12 @@ namespace AshAndEmber
     {
         // ── Voyage pacing ────────────────────────────────────────────────────
         // A cog under sail covers roughly twice what a marching column manages.
-        public const float ShipUnitsPerHour   = 10f;
-        public const float MinVoyageHours     = 6f;
+        // The floor sits LOW (harbor manoeuvres, not open water): with a 6-hour
+        // floor every neighbouring-port hop (34–60 map units) read as exactly
+        // "6 hours" and crossings felt distance-blind. At 8 units/hour a short
+        // hop is ~4 h, a median crossing (~275 units) ~34 h, the long way ~80 h.
+        public const float ShipUnitsPerHour   = 8f;
+        public const float MinVoyageHours     = 2f;
         public const float EmberwindTimeMult  = 0.5f;
         public const int   EmberwindAgingDays = 2;
 

@@ -70,7 +70,8 @@ namespace AshAndEmber
             {
                 if (Hero.MainHero?.Clan != null)
                 {
-                    Hero.MainHero.Clan.Renown = Math.Max(0f, Hero.MainHero.Clan.Renown + amount);
+                    if (amount >= 0f) ClanRenown.Gain(Hero.MainHero.Clan, amount);
+                    else ClanRenown.Lose(Hero.MainHero.Clan, -amount);
                     string sign = amount >= 0 ? "+" : "";
                     Msg($"({sign}{amount:F0} renown)", GoodColor);
                 }

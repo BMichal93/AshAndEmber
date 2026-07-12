@@ -324,11 +324,7 @@ namespace AshAndEmber
                     {
                         _duelPending = false;
                         _schemeTimer = 14 + _rng.Next(7);
-                        try
-                        {
-                            if (Hero.MainHero?.Clan != null)
-                                Hero.MainHero.Clan.Renown = Math.Max(0f, Hero.MainHero.Clan.Renown - 30f);
-                        }
+                        try { ClanRenown.Lose(Hero.MainHero?.Clan, 30f); }
                         catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         InformationManager.DisplayMessage(new InformationMessage(
                             $"You ride away. {shadowName} watches from the road. −30 renown.",
@@ -352,11 +348,7 @@ namespace AshAndEmber
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            try
-            {
-                if (Hero.MainHero?.Clan != null)
-                    Hero.MainHero.Clan.Renown += 200f;
-            }
+            try { ClanRenown.Gain(Hero.MainHero?.Clan, 200f); }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             // Nearest Ashen lord converts to regular mage

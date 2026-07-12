@@ -2,7 +2,7 @@
 // ASH AND EMBER — Magic/ElementUltimateMath.cs
 //
 // Pure numeric core of THE UNBINDING (the Ashen call it the UNMAKING) — each
-// element's once-per-battle ultimate working. No TaleWorlds types — fully
+// element's cooldown-gated ultimate working. No TaleWorlds types — fully
 // testable (PureLogicTests). Runtime behaviour lives in ElementUltimates.cs.
 //
 // The ultimate is released with the CHORD: while focusing, press Attack and
@@ -179,10 +179,17 @@ namespace AshAndEmber
         }
 
         // ── NPC use — the Unbinding done TO you ─────────────────────────────────
-        // A lord unbinds once per battle, only in battles worth the working, and
-        // always behind a LONG telegraphed windup: staggering him during it
-        // breaks the working (and still burns his once-per-battle).
+        // A lord unbinds only in battles worth the working, and always behind a
+        // LONG telegraphed windup: staggering him during it breaks the working
+        // (and still spends his cooldown).
         public const float NpcWindupSeconds   = 4.5f;
+
+        // ── Cooldown — v0.46+ ────────────────────────────────────────────────────
+        // The once-per-battle cap is gone (with the Kindled unified away, the
+        // Unbindings are balanced by their cost alone) — replaced by a long
+        // per-caster cooldown so the working stays an event, not a rotation.
+        public const float UltimateCooldownSeconds    = 60f;   // the player, all elements shared
+        public const float NpcUltimateCooldownSeconds = 120f;  // per lord
         public const int   NpcMinCombatants   = 70;   // no village skirmish eats an ultimate
         public const int   NovaCloseEnemies   = 4;    // swarmed → the nova answers
         public const float QuakeHpFrac        = 0.45f;// wounded and pressed → heave them back

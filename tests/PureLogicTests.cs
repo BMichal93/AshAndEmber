@@ -1739,6 +1739,20 @@ namespace AshAndEmber.Tests
                 MiracleMath.ChooseBattleMiracle(false, 0, false, false, roll: 0.9f));
         }
 
+        [Test]
+        public void MiracleMath_NpcBattleUseChance_AnswersTheMoment()
+        {
+            // When the moment calls, the answer comes within a few 1.5 s scans —
+            // orders of magnitude above the old flat trickle.
+            Assert.IsTrue(MiracleMath.NpcBattleUseChance(isPriest: true,  momentCalls: true) >= 0.30);
+            Assert.IsTrue(MiracleMath.NpcBattleUseChance(isPriest: false, momentCalls: true) >= 0.15);
+            // A priest answers more readily than a devout lord.
+            Assert.IsTrue(MiracleMath.NpcBattleUseChance(true, true) > MiracleMath.NpcBattleUseChance(false, true));
+            // Idle moments keep the old ambient trickle — nobody prays at empty air.
+            Assert.AreEqual(MiracleMath.NpcBattleUseChance(true),  MiracleMath.NpcBattleUseChance(true,  false));
+            Assert.AreEqual(MiracleMath.NpcBattleUseChance(false), MiracleMath.NpcBattleUseChance(false, false));
+        }
+
         // ── WallWardMath (elemental wall warding) ─────────────────────────────────
 
         [Test]

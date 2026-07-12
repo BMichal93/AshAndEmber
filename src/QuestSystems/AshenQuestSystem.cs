@@ -166,6 +166,8 @@ namespace AshAndEmber
             : base("ldm_ashen_quest", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("The Hunger of the Void");
+        // Exempts the quest from the engine's cancel-on-load sweep (see GreatAwakeningQuestLog).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()

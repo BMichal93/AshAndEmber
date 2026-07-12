@@ -98,6 +98,10 @@ namespace AshAndEmber
 
             store.SyncData("SCH_RetDays",    ref _retaliationDays);
             store.SyncData("SCH_GlobCd",     ref _playerGlobalCooldown);
+            // Absent on pre-v0.47 saves — SyncData leaves the default 0 (no shield),
+            // so old campaigns load unchanged and the window simply starts arming
+            // from the next NPC scheme that touches the player.
+            store.SyncData("SCH_PibDays",    ref _playerInterestBreather);
 
             store.SyncData("SCH_PendOpType", ref _pendingOpType);
             store.SyncData("SCH_PendOpHero", ref _pendingOpHeroId);

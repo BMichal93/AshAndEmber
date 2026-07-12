@@ -124,6 +124,50 @@ namespace AshAndEmber
         private static void OnDailyTick()
         {
             try { CheckGodKingCapture(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { FreeDraftTick();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // ── Free Drafting — the God-King's war levy ─────────────────────────────
+        // The Tribes conscript as they ride: every under-strength Tribes lord party
+        // refills with tier-1 tribesmen each day, far faster than any rival lord
+        // rebuilds from village volunteers. (The player's mirror of this is the
+        // Call to the Tribes town menu — NPC parity for the same free drafting.)
+        private const float FreeDraftFillThreshold = 0.85f;
+        private const int   FreeDraftDailyMax      = 5;
+
+        private static void FreeDraftTick()
+        {
+            try
+            {
+                var khuzait = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == KhuzaitId && !k.IsEliminated);
+                if (khuzait == null) return;
+
+                var tier1 = CharacterObject.All.FirstOrDefault(c =>
+                    !c.IsHero && c.Culture?.StringId == KhuzaitId && c.Tier == 1);
+                if (tier1 == null) return;
+
+                foreach (var party in MobileParty.All.ToList())
+                {
+                    try
+                    {
+                        if (party == null || !party.IsActive || !party.IsLordParty) continue;
+                        if (party == MobileParty.MainParty) continue;
+                        var clan = party.LeaderHero?.Clan;
+                        if (clan == null || clan == Clan.PlayerClan || clan.Kingdom != khuzait) continue;
+                        if (party.MapEvent != null) continue; // never mid-battle
+
+                        int limit = party.Party.PartySizeLimit;
+                        int count = party.MemberRoster?.TotalManCount ?? 0;
+                        if (limit <= 0 || count >= (int)(limit * FreeDraftFillThreshold)) continue;
+
+                        int add = Math.Min(FreeDraftDailyMax, limit - count);
+                        if (add > 0) party.AddElementToMemberRoster(tier1, add);
+                    }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Weekly tick ────────────────────────────────────────────────────────
@@ -366,6 +410,19 @@ namespace AshAndEmber
                 if (consort == null) return;
 
                 _consortIds.Add(consort.StringId);
+
+                // Actually WED her: the Spouse setter moves the previous wife into
+                // ExSpouses on its own (she stays in the clan — the household grows),
+                // so each conquest crowns a new consort while the old ones remain.
+                // Without this the "wives" were clanswomen only, invisible on the
+                // God-King's page and barren of heirs.
+                try
+                {
+                    var godKing = khuzait?.Leader ?? godKingClan.Leader;
+                    if (godKing != null && godKing.IsAlive && !godKing.IsFemale && consort.IsFemale)
+                        godKing.Spouse = consort;
+                }
+                catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"A woman of {capturedTown.Name} is claimed for the God-King's household. His dominion grows.",

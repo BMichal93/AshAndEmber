@@ -213,8 +213,7 @@ namespace AshAndEmber
             if (h == null) return;
 
             // Renown
-            if (h.Clan != null)
-                h.Clan.Renown = Math.Max(0f, h.Clan.Renown + 50f);
+            ClanRenown.Gain(h.Clan, 50f);
 
             // Large XP grant across fitting skills
             try { h.AddSkillXp(DefaultSkills.Athletics,   3000f); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

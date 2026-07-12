@@ -228,6 +228,17 @@ namespace AshAndEmber
         private static readonly Dictionary<string, int>      _npcTargetBreather  = new Dictionary<string, int>();
         private const int NpcTargetBreatherDays = 10;
 
+        // Once any NPC scheme is queued against the player's interests (the player,
+        // a lord of their clan, or a fief their clan holds), ALL player interests are
+        // exempt from further NPC scheme targeting for this many days. The per-target
+        // breather above is not enough on its own: a landed clan is a dozen separate
+        // target ids, each with its own breather, so the player could still catch a
+        // scheme somewhere in their holdings every week — with a popup every time —
+        // and feel personally hounded despite the unbiased pick. NPC-vs-NPC scheming
+        // is untouched by this window.
+        private static int _playerInterestBreather = 0;
+        private const int PlayerInterestBreatherDays = 21;
+
         // NPC scheme targets below this clan tier (mercenary companies, fresh
         // landless clans) have no real political weight to spend a scheme on —
         // excluded from the target pool unless a kingdom has no worthier clan.

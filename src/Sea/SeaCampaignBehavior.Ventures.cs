@@ -54,6 +54,10 @@ namespace AshAndEmber
 
                         if (MageKnowledge.IsMage)
                         {
+                            // Deferred a tick: shown straight from this callback the
+                            // bless prompt is swallowed while the stake picker's layer
+                            // is still closing (same trap as the destination picker).
+                            MageKnowledge._deferredInquiry = () =>
                             InformationManager.ShowInquiry(new InquiryData(
                                 "Bless the Cargo?",
                                 $"For {SeaMath.BlessVentureAgingDays} day of aging you can breathe a ward into the hold — " +

@@ -16,12 +16,18 @@ namespace AshAndEmber
             const int P = 210; // above AshenDialogue (200) and vanilla (100)
 
             // ── True Emperor — opening ────────────────────────────────────────
+            // The "start" greetings stand down when vanilla owns the conversation
+            // (post-battle capture/release, prisoner talk) — the same rule the
+            // faction voices follow (see LordDialogueGuard). Without it, a beaten
+            // Arenicos speaks his greeting instead of vanilla's capture choice and
+            // walks free. The defeat/prisoner lines below keep the unguarded
+            // conditions: they live on vanilla's own tokens and never block it.
             try { starter.AddDialogLine("ar_true_start",
                 "start", "ar_reply",
                 "You stand before Arenicos — emperor of a united Calradia, returned. " +
                 "Whatever age has passed between that throne and this one, I remember all of it. " +
                 "Say what you have come to say.",
-                IsTrueEmperor, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                IsTrueEmperorGreeting, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try { starter.AddDialogLine("ar_true_pretalk",
                 "lord_pretalk", "ar_reply",
@@ -32,7 +38,7 @@ namespace AshAndEmber
             try { starter.AddDialogLine("ar_false_start",
                 "start", "ar_reply",
                 "Come forward. I have learned to be patient with arrivals. There have been many. Say what you came to say.",
-                IsFalseEmperor, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                IsFalseEmperorGreeting, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             try { starter.AddDialogLine("ar_false_pretalk",
                 "lord_pretalk", "ar_reply",
@@ -109,6 +115,12 @@ namespace AshAndEmber
                 "I have been in smaller rooms. I have been in rooms with no door. You learn to wait.",
                 IsFalseEmperor, null, P); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
+
+        private static bool IsTrueEmperorGreeting()
+            => IsTrueEmperor() && !LordDialogueGuard.MustYieldToVanilla();
+
+        private static bool IsFalseEmperorGreeting()
+            => IsFalseEmperor() && !LordDialogueGuard.MustYieldToVanilla();
 
         private static bool IsTrueEmperor()
         {

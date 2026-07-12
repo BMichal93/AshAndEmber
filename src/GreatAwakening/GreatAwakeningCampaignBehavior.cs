@@ -67,6 +67,7 @@ namespace AshAndEmber
             try { store.SyncData("GRAWK_Phase",       ref _phase); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("GRAWK_Prisoners",   ref _prisonersSacrificed); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("GRAWK_AltarId",     ref _altarSettlementId); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { store.SyncData("GRAWK_Roused",      ref _oppositionRoused); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             SyncResolutionData(store);
             GreatOtherParty.SyncData(store);
         }
@@ -76,6 +77,7 @@ namespace AshAndEmber
             _phase = PhaseIdle;
             _prisonersSacrificed = 0;
             _altarSettlementId = null;
+            _oppositionRoused = false;
             ResetResolutionState();
             GreatOtherParty.ResetForNewGame();
         }
@@ -83,6 +85,14 @@ namespace AshAndEmber
         private void OnDailyTick()
         {
             try { GreatOtherParty.DailyTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Re-raise the journal entry on saves where the engine's cancel-on-load
+            // sweep already finalized it (before SpecialQuestType shipped).
+            try
+            {
+                if (_phase == PhaseActive)
+                    GreatAwakeningQuestLog.EnsureAlive(_prisonersSacrificed, GreatAwakeningMath.PrisonerTarget);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         private void OnMapEventStarted(MapEvent mapEvent, TaleWorlds.CampaignSystem.Party.PartyBase attackerParty, TaleWorlds.CampaignSystem.Party.PartyBase defenderParty)

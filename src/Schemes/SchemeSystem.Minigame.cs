@@ -157,7 +157,7 @@ namespace AshAndEmber
                     if (instigator.Clan != null)
                     {
                         float loss = Math.Max(80f, instigator.Clan.Renown * 0.10f);
-                        try { instigator.Clan.Renown = Math.Max(0f, instigator.Clan.Renown - loss); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        ClanRenown.Lose(instigator.Clan, loss);
                     }
                     if (targetHero != null && targetHero.IsAlive)
                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -60, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

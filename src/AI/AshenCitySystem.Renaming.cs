@@ -178,7 +178,7 @@ namespace AshAndEmber
                     new[] { "_informalName", "<InformalName>k__BackingField" },
                     new TextObject("Temple"));
                 SetKingdomField(vlandia,
-                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new[] { "<EncyclopediaRulerTitle>k__BackingField", "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("High Templar"));
                 SetKingdomEncyclopediaText(vlandia, _templeLore);
 
@@ -228,6 +228,13 @@ namespace AshAndEmber
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "vlandia", "The Holy Temple");
                 SetCultureVariation(mgr, "str_culture_description", "vlandia", _templeLore);
+                // Leader title on encyclopedia pages (see ApplyTribalCultureTexts).
+                SetCultureVariation(mgr, "str_faction_ruler", "vlandia",   "High Templar");
+                SetCultureVariation(mgr, "str_faction_ruler", "vlandia_f", "High Templar");
+                SetCultureVariation(mgr, "str_faction_ruler_name_with_title", "vlandia",
+                    "High Templar {RULER.NAME}");
+                SetCultureVariation(mgr, "str_faction_ruler_term_in_speech", "vlandia",
+                    "High Templar {RULER.NAME}");
                 RelabelCulturalFeats("vlandia", _templeFeats, ref _templeFeatsRelabeled);
                 return true;
             }
@@ -265,7 +272,7 @@ namespace AshAndEmber
                     new[] { "_informalName", "<InformalName>k__BackingField" },
                     new TextObject("Tribes"));
                 SetKingdomField(khuzait,
-                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new[] { "<EncyclopediaRulerTitle>k__BackingField", "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("God-King"));
                 SetKingdomEncyclopediaText(khuzait, _tribalLore);
 
@@ -303,6 +310,15 @@ namespace AshAndEmber
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "khuzait", "Tribes of the East");
                 SetCultureVariation(mgr, "str_culture_description", "khuzait", _tribalLore);
+                // The lexicon (N-key encyclopedia) titles a faction leader from the
+                // culture-keyed "str_faction_ruler*" texts, NOT from the kingdom
+                // object — without these the God-King's page keeps reading "khan".
+                SetCultureVariation(mgr, "str_faction_ruler", "khuzait",   "God-King");
+                SetCultureVariation(mgr, "str_faction_ruler", "khuzait_f", "God-Queen");
+                SetCultureVariation(mgr, "str_faction_ruler_name_with_title", "khuzait",
+                    "{?RULER.GENDER}God-Queen{?}God-King{\\?} {RULER.NAME}");
+                SetCultureVariation(mgr, "str_faction_ruler_term_in_speech", "khuzait",
+                    "{?RULER.GENDER}the God-Queen{?}the God-King{\\?} {RULER.NAME}");
                 RelabelCulturalFeats("khuzait", _tribalFeats, ref _tribalFeatsRelabeled);
                 return true;
             }
@@ -460,7 +476,7 @@ namespace AshAndEmber
                     new[] { "_informalName", "<InformalName>k__BackingField" },
                     new TextObject("Northmen"));
                 SetKingdomField(sturgia,
-                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new[] { "<EncyclopediaRulerTitle>k__BackingField", "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("Jarl"));
                 SetKingdomEncyclopediaText(sturgia, _northmenLore);
 
@@ -484,7 +500,7 @@ namespace AshAndEmber
                     new[] { "_informalName", "<InformalName>k__BackingField" },
                     new TextObject("Duneborn"));
                 SetKingdomField(aserai,
-                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new[] { "<EncyclopediaRulerTitle>k__BackingField", "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("Sheikh"));
                 SetKingdomEncyclopediaText(aserai, _dunebornLore);
 
@@ -508,6 +524,13 @@ namespace AshAndEmber
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "sturgia", "Northmen");
                 SetCultureVariation(mgr, "str_culture_description", "sturgia", _northmenLore);
+                // Leader title on encyclopedia pages (see ApplyTribalCultureTexts).
+                SetCultureVariation(mgr, "str_faction_ruler", "sturgia",   "Jarl");
+                SetCultureVariation(mgr, "str_faction_ruler", "sturgia_f", "Jarl");
+                SetCultureVariation(mgr, "str_faction_ruler_name_with_title", "sturgia",
+                    "Jarl {RULER.NAME}");
+                SetCultureVariation(mgr, "str_faction_ruler_term_in_speech", "sturgia",
+                    "Jarl {RULER.NAME}");
                 return true;
             }
             catch { return false; }
@@ -544,6 +567,13 @@ namespace AshAndEmber
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "aserai", "Duneborn");
                 SetCultureVariation(mgr, "str_culture_description", "aserai", _dunebornLore);
+                // Leader title on encyclopedia pages (see ApplyTribalCultureTexts).
+                SetCultureVariation(mgr, "str_faction_ruler", "aserai",   "Sheikh");
+                SetCultureVariation(mgr, "str_faction_ruler", "aserai_f", "Sheikha");
+                SetCultureVariation(mgr, "str_faction_ruler_name_with_title", "aserai",
+                    "{?RULER.GENDER}Sheikha{?}Sheikh{\\?} {RULER.NAME}");
+                SetCultureVariation(mgr, "str_faction_ruler_term_in_speech", "aserai",
+                    "{?RULER.GENDER}Sheikha{?}Sheikh{\\?} {RULER.NAME}");
                 RelabelCulturalFeats("aserai", _dunebornFeats, ref _dunebornFeatsRelabeled,
                     zeroPositiveIndex: 0);   // Blood Tithe replaces the caravan bonus outright
                 return true;
@@ -584,7 +614,7 @@ namespace AshAndEmber
                     new[] { "_informalName", "<InformalName>k__BackingField" },
                     new TextObject("the Clans"));
                 SetKingdomField(battania,
-                    new[] { "_rulerTitle", "<RulerTitle>k__BackingField" },
+                    new[] { "<EncyclopediaRulerTitle>k__BackingField", "_rulerTitle", "<RulerTitle>k__BackingField" },
                     new TextObject("High Chieftain"));
                 SetKingdomEncyclopediaText(battania, _forestClansLore);
 
@@ -610,6 +640,13 @@ namespace AshAndEmber
 
                 SetCultureVariation(mgr, "str_culture_rich_name", "battania", "The Forest Clans");
                 SetCultureVariation(mgr, "str_culture_description", "battania", _forestClansLore);
+                // Leader title on encyclopedia pages (see ApplyTribalCultureTexts).
+                SetCultureVariation(mgr, "str_faction_ruler", "battania",   "High Chieftain");
+                SetCultureVariation(mgr, "str_faction_ruler", "battania_f", "High Chieftain");
+                SetCultureVariation(mgr, "str_faction_ruler_name_with_title", "battania",
+                    "High Chieftain {RULER.NAME}");
+                SetCultureVariation(mgr, "str_faction_ruler_term_in_speech", "battania",
+                    "High Chieftain {RULER.NAME}");
                 // Both vanilla Battanian positive feats are replaced outright by the
                 // Forest Clans' own mechanics (ForestClansCulture.cs / the sacred-site
                 // binding discount) — zero both, unlike Duneborn which keeps one.

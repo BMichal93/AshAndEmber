@@ -41,6 +41,11 @@ namespace AshAndEmber
         private static double _endDays   = 0.0;   // CampaignTime.ToDays at which the term ends
         private static double _termDays  = 0.0;   // full agreed term length (for penalty scaling)
 
+        // Persisted: a mercenary release that threw mid-teardown (army dissolving,
+        // party inside a settlement) left the clan sworn to this realm with no way
+        // out. Non-empty = keep retrying the release on clean ticks until it lands.
+        private static string _pendingLeaveKingdomId = "";
+
         // Runtime-only guard so the desertion prompt is raised once, not per tick.
         private static bool _leavePromptOpen = false;
 
@@ -103,6 +108,7 @@ namespace AshAndEmber
             try { store.SyncData("SOLDIER_KINGDOM_ID", ref _kingdomId); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("SOLDIER_END_DAYS",   ref _endDays);   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("SOLDIER_TERM_DAYS",  ref _termDays);  } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { store.SyncData("SOLDIER_PENDING_LEAVE", ref _pendingLeaveKingdomId); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // Clears stale service state when a new campaign starts in the same
@@ -111,6 +117,7 @@ namespace AshAndEmber
         internal static void ResetForNewGame()
         {
             _lordId = ""; _kingdomId = ""; _endDays = 0.0; _termDays = 0.0;
+            _pendingLeaveKingdomId = "";
             _leavePromptOpen = false;
             _leftHostPendingCheck = false;
             _finalizePending = false;
@@ -484,9 +491,22 @@ namespace AshAndEmber
             {
                 var clan = Hero.MainHero?.Clan;
                 if (clan != null && clan.Kingdom != null && clan.Kingdom.StringId == _kingdomId)
-                    ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(clan, false);
+                {
+                    try { ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(clan, false); }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    // A release that throws mid-teardown (host dissolving, party inside
+                    // a settlement) used to strand the clan as a mercenary forever —
+                    // flag it and keep retrying on clean ticks until it lands.
+                    if (clan.Kingdom != null && clan.Kingdom.StringId == _kingdomId)
+                        _pendingLeaveKingdomId = _kingdomId;
+                }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+
+            // If the host dissolved while we sat inside a settlement we were only
+            // visiting as an army member, the engine leaves the party "in" it with
+            // no menu and no way to move — step out onto the map.
+            UnstickFromSettlement();
 
             try { MobileParty.MainParty?.SetMoveModeHold(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
@@ -642,7 +662,7 @@ namespace AshAndEmber
         {
             try
             {
-                if (!InService) return;
+                if (!InService) { RetryPendingLeave(); return; }
 
                 var lord = ServingLord();
                 var lordParty = lord?.PartyBelongedTo;
@@ -669,6 +689,59 @@ namespace AshAndEmber
                 {
                     ReassertArmy(lord);
                     SustainArmy(lordParty);
+                }
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // The player's party is sitting inside a settlement with no live encounter
+        // and no army — the state a mid-visit army disband leaves behind, from which
+        // the party cannot move. Pop it back onto the map.
+        private static void UnstickFromSettlement()
+        {
+            try
+            {
+                var main = MobileParty.MainParty;
+                if (main == null || main.CurrentSettlement == null) return;
+                if (main.Army != null) return;
+                if (PlayerEncounter.Current != null) return;
+                LeaveSettlementAction.ApplyForParty(main);
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // Retries a mercenary release that failed at service end (see EndServiceCommon),
+        // and adopts orphaned contracts from saves made before the retry existed: a
+        // clan-tier-0 clan sworn as a mercenary is a state only this system can create
+        // (vanilla contracts need tier 1+), so when service is over it is ours to undo.
+        private static void RetryPendingLeave()
+        {
+            try
+            {
+                var clan = Hero.MainHero?.Clan;
+                if (clan == null) return;
+
+                if (string.IsNullOrEmpty(_pendingLeaveKingdomId)
+                    && clan.Kingdom != null && clan.IsUnderMercenaryService && clan.Tier < 1)
+                    _pendingLeaveKingdomId = clan.Kingdom.StringId;
+
+                if (string.IsNullOrEmpty(_pendingLeaveKingdomId)) return;
+
+                if (clan.Kingdom == null || clan.Kingdom.StringId != _pendingLeaveKingdomId
+                    || !clan.IsUnderMercenaryService)
+                {
+                    _pendingLeaveKingdomId = ""; // already free (or sworn anew by choice)
+                    return;
+                }
+
+                if (IsEncounterLive()) return;
+                ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(clan, false);
+                if (clan.Kingdom == null || clan.Kingdom.StringId != _pendingLeaveKingdomId)
+                {
+                    _pendingLeaveKingdomId = "";
+                    UnstickFromSettlement();
+                    MBInformationManager.AddQuickInformation(new TextObject(
+                        "Your soldiering contract is formally dissolved. Your party is your own again."));
                 }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -799,6 +872,10 @@ namespace AshAndEmber
             // Already back in the commander's host (the tick self-heal re-folded us, or
             // the leave was internal churn) — nothing to answer for.
             if (main != null && main.Army != null && main.Army == lordParty.Army) return;
+
+            // A host that dissolved while we were visiting a settlement with it leaves
+            // the party wedged inside with no menu — free it before anything else.
+            UnstickFromSettlement();
 
             bool commanderStillLeadsHost = false;
             try

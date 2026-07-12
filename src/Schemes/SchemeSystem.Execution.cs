@@ -257,7 +257,7 @@ namespace AshAndEmber
                         string cAcc  = targetHero.Clan.Name?.ToString() ?? "their clan";
                         // 5% flat renown loss, floor 50 — meaningful at any clan size
                         float renown = Math.Max(50f, targetHero.Clan.Renown * 0.05f) * potency;
-                        try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - renown); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        ClanRenown.Lose(targetHero.Clan, renown);
                         // Also damage relations between instigator and target (they'll suspect someone)
                         try { ChangeRelationAction.ApplyRelationChangeBetweenHeroes(instigator, targetHero, -(int)Math.Round(20 * potency), false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                         Notify(s,
@@ -272,10 +272,10 @@ namespace AshAndEmber
                         string cVipr  = targetHero.Clan.Name?.ToString() ?? "their clan";
                         // Target loses 7% renown (floor 50) — more than FalseAccusations, justified by the king's direct involvement
                         float viprLoss = Math.Max(50f, targetHero.Clan.Renown * 0.07f) * potency;
-                        try { targetHero.Clan.Renown = Math.Max(0f, targetHero.Clan.Renown - viprLoss); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        ClanRenown.Lose(targetHero.Clan, viprLoss);
                         // Instigator clan gains renown — the contrast is the point
                         float viprGain = (30f + _rng.Next(21)) * potency; // 30–50
-                        try { if (instigator.Clan != null) instigator.Clan.Renown += viprGain; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                        ClanRenown.Gain(instigator.Clan, viprGain);
                         Notify(s,
                             $"The king's ear was turned against {cVipr}. Their renown falls; {inst}'s rises.",
                             col);
