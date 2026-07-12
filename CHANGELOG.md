@@ -7,8 +7,9 @@
 ### Crystals endure
 - **Crystals shatter half as often.** The burndown roll drops from 10 % to 5 % per activation — a stone now survives ~20 draws on average (~50 with Lasting Lattice) instead of dying inside ten, so carrying one into battle no longer feels like a tax on using it.
 
-### The Windwall earns its howl
+### The Windwall earns its howl — and the stone keeps its crown
 - **The wall of wind now HURLS.** Every wall stopped a foe with the same firm bounce, which left the Windwall strictly the worst of them — Mistwall gave the identical stop plus a slow, a cold bite, and the fire-quench. The howling wind now throws a man ~4 m clear of the wall instead of merely halting him at its edge: pure repulsion, but violent enough to break a charge on its own.
+- **Standing stone is now the one absolute arrow shield.** Wind and stone both used to stop every missile outright, which made the gust a perfect rampart on top of its new throw. Now only the stone wall stops every shaft without fail; the wind wrestles arrows aside — about two in three die in the gust, but a heavy few punch through (each shaft is rolled once at the wall's edge, never ground down frame by frame). Wind controls men; stone stops what they loose. Each wall keeps one crown.
 
 ---
 

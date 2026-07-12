@@ -49,11 +49,17 @@ namespace AshAndEmber
         private const int   MaxNodes            = 256;   // hard cap — safety against runaway registration
         private static float _blockMsgCooldown;          // throttle the player-facing block log
         private static string _lastBlockLine;            // a NEW reason always shows through the throttle
+        // Arrows that already beat a wind wall's stop roll — each shaft is rolled
+        // ONCE at the gust's edge, then remembered so the per-tick sweep cannot
+        // re-roll it into the ground a frame later.
+        private static readonly HashSet<int> _windPassedMissiles = new HashSet<int>();
+        private static readonly Random _rng = new Random();
 
         public static void Clear()
         {
             _nodes.Clear();
             _recent.Clear();
+            _windPassedMissiles.Clear();
             _blockMsgCooldown = 0f;
             _lastBlockLine = null;
         }
@@ -177,8 +183,12 @@ namespace AshAndEmber
 
         // Is this point inside a wall node that stops missiles (or, for a fire
         // missile, one that stops fire)? Returns the wall's element when hit.
+        // Stone outranks any overlapping wall: it is the ABSOLUTE missile shield,
+        // so an arrow standing in both a gust and a rampart answers to the stone
+        // (and never gets a wind pass-through roll it shouldn't have).
         public static MagicElement? MissileWardAt(Vec3 pos, bool fireMissile)
         {
+            MagicElement? hit = null;
             for (int i = 0; i < _nodes.Count; i++)
             {
                 var n = _nodes[i];
@@ -186,9 +196,11 @@ namespace AshAndEmber
                           || (fireMissile && WallWardMath.WallBlocksMagic(n.El, MagicElement.Fire));
                 if (!stops) continue;
                 float dx = pos.x - n.Pos.x, dy = pos.y - n.Pos.y;
-                if (dx * dx + dy * dy <= n.Radius * n.Radius) return n.El;
+                if (dx * dx + dy * dy > n.Radius * n.Radius) continue;
+                if (n.El == MagicElement.Earth) return MagicElement.Earth;
+                if (hit == null) hit = n.El;
             }
-            return null;
+            return hit;
         }
 
         public static bool HasBlockingNodes => _nodes.Count > 0;
@@ -210,7 +222,13 @@ namespace AshAndEmber
                 _nodes[i].Remaining -= dt;
                 if (_nodes[i].Remaining <= 0f) _nodes.RemoveAt(i);
             }
-            if (_nodes.Count == 0) return;
+            if (_nodes.Count == 0)
+            {
+                // No wall stands: forget the wind pass-throughs, so a missile
+                // index the engine later reuses cannot inherit a stale pass.
+                if (_windPassedMissiles.Count > 0) _windPassedMissiles.Clear();
+                return;
+            }
 
             // Arrows and bolts die against walls of wind and stone — whoever
             // loosed them. (Collect first: removal invalidates the list.)
@@ -230,6 +248,18 @@ namespace AshAndEmber
                     catch { continue; }
                     var wardEl = MissileWardAt(mpos, fireMissile: false);
                     if (wardEl == null) continue;
+                    // Stone stops every shaft outright. Wind only wrestles them:
+                    // one roll per arrow at the gust's edge — the few that punch
+                    // through are remembered and never re-rolled a frame later.
+                    if (wardEl == MagicElement.Wind)
+                    {
+                        if (_windPassedMissiles.Contains(m.Index)) continue;
+                        if (!WallWardMath.WindStopsMissile(_rng.NextDouble()))
+                        {
+                            _windPassedMissiles.Add(m.Index);
+                            continue;
+                        }
+                    }
                     (stopped = stopped ?? new List<int>()).Add(m.Index);
                     // The arrow dies visibly at the wall.
                     try

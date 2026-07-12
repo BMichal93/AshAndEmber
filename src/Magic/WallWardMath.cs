@@ -27,6 +27,14 @@ namespace AshAndEmber
         public static bool WallBlocksMissiles(MagicElement wall)
             => wall == MagicElement.Wind || wall == MagicElement.Earth;
 
+        // But they do not stop them EQUALLY. Standing stone is the absolute
+        // shield — nothing loosed by hand crosses it. Driven wind only wrestles
+        // the shafts aside: most die in the gust, but a heavy few punch through.
+        // (Rolled ONCE per arrow at the wall's edge, never re-rolled per tick.)
+        public const float WindwallMissileStopChance = 0.65f;
+        public static bool WindStopsMissile(double roll)
+            => roll < WindwallMissileStopChance;
+
         // Does a wall of `wall` stop an incoming working of `incoming`?
         public static bool WallBlocksMagic(MagicElement wall, MagicElement incoming)
         {

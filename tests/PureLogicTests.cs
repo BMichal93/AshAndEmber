@@ -840,6 +840,26 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
+        public void WallWardMath_StoneIsTheStrictlyBestMissileShield()
+        {
+            // Stone stops every shaft; wind only wrestles most of them aside.
+            Assert.IsTrue(WallWardMath.WallBlocksMissiles(MagicElement.Earth),
+                "Standing stone must stop missiles.");
+            Assert.IsTrue(WallWardMath.WallBlocksMissiles(MagicElement.Wind),
+                "Driven wind must engage missiles at all.");
+            Assert.IsFalse(WallWardMath.WallBlocksMissiles(MagicElement.Fire));
+            Assert.IsFalse(WallWardMath.WallBlocksMissiles(MagicElement.Water));
+            // The gust must be genuinely porous — better than nothing, worse than
+            // stone — or one of the two walls loses its reason to exist.
+            Assert.IsTrue(WallWardMath.WindwallMissileStopChance > 0f);
+            Assert.IsTrue(WallWardMath.WindwallMissileStopChance < 1f,
+                "Wind must not be an absolute shield — that is stone's crown.");
+            Assert.IsTrue(WallWardMath.WindStopsMissile(0.0));
+            Assert.IsFalse(WallWardMath.WindStopsMissile(WallWardMath.WindwallMissileStopChance));
+            Assert.IsFalse(WallWardMath.WindStopsMissile(0.99));
+        }
+
+        [Test]
         public void NatureMath_WindwallHurl_ThrowsFurtherThanTheSharedBounce()
         {
             // The Windwall's only bite is its throw — if it ever drops back to the
