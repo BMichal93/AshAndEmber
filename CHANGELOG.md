@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Crystals endure
+- **Crystals shatter half as often.** The burndown roll drops from 10 % to 5 % per activation — a stone now survives ~20 draws on average (~50 with Lasting Lattice) instead of dying inside ten, so carrying one into battle no longer feels like a tax on using it.
+
+### The Windwall earns its howl
+- **The wall of wind now HURLS.** Every wall stopped a foe with the same firm bounce, which left the Windwall strictly the worst of them — Mistwall gave the identical stop plus a slow, a cold bite, and the fire-quench. The howling wind now throws a man ~4 m clear of the wall instead of merely halting him at its edge: pure repulsion, but violent enough to break a charge on its own.
+
 ---
 
 ## v0.46.0

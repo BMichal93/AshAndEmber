@@ -834,9 +834,19 @@ namespace AshAndEmber.Tests
         }
 
         [Test]
-        public void CrystalMath_BurndownChance_IsTenPercent()
+        public void CrystalMath_BurndownChance_IsFivePercent()
         {
-            Assert.AreEqual(0.10f, CrystalMath.BurndownChance, 0.0001f);
+            Assert.AreEqual(0.05f, CrystalMath.BurndownChance, 0.0001f);
+        }
+
+        [Test]
+        public void NatureMath_WindwallHurl_ThrowsFurtherThanTheSharedBounce()
+        {
+            // The Windwall's only bite is its throw — if it ever drops back to the
+            // shared bounce margin it becomes strictly the worst wall (Mistwall
+            // gives the same stop plus a slow, a bite, and the fire-quench).
+            Assert.IsTrue(NatureMath.WindwallHurlMargin > NatureMath.BarrierBounceMargin,
+                "Windwall must hurl well past the ordinary barrier bounce.");
         }
 
         [Test]

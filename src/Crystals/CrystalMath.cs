@@ -33,8 +33,10 @@ namespace AshAndEmber
         public static bool IsDaylightExtended(float hourOfDay) => hourOfDay >= 4f  && hourOfDay < 22f;
 
         // ── Burndown chance ───────────────────────────────────────────────────
-        // Each activation has a 10 % chance to shatter the crystal.
-        public const float BurndownChance = 0.10f;
+        // Each activation has a 5 % chance to shatter the crystal. (Was 10 % —
+        // a stone that died inside ten swings on average made carrying one feel
+        // like a tax; at 5 % it lives ~20 uses, ~50 with Lasting Lattice.)
+        public const float BurndownChance = 0.05f;
 
         // PatientGrowth: on a successful formation, 15 % chance to grow two.
         public const float DoubleGrowChance = 0.15f;

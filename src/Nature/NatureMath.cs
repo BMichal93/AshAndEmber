@@ -256,7 +256,11 @@ namespace AshAndEmber
         // they cannot walk through. This is the margin past the radius.
         public const float BarrierBounceMargin = 0.75f;
 
-        // Wind · Windwall — pure firm repulsion (the bounce itself is the effect)
+        // Wind · Windwall — pure repulsion, so the repulsion must be VIOLENT: where
+        // every other wall merely stops a man at its edge, the howling wind HURLS
+        // him well clear of it. Without this the Windwall was strictly the worst
+        // wall — the same firm bounce as Mistwall, minus its slow, bite and quench.
+        public const float WindwallHurlMargin = 4.0f;   // metres past the node edge (others: BarrierBounceMargin)
 
         // Earth · Thornwall — firm bounce + brief root + damage-per-tick
         public const float ThornwallDamage  = 8f;    // per 0.4 s tick ≈ 20 dps

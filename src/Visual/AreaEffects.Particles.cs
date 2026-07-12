@@ -1008,8 +1008,12 @@ namespace AshAndEmber
                     // Firm barrier: shove the foe back to just beyond the node's edge
                     // rather than a small nudge a runner would out-pace, so the wall
                     // genuinely cannot be walked through. Each element then layers its
-                    // own bite (root/slow/arc) on top.
-                    Vec3 bounce = e.Position + away * (e.Radius + NatureMath.BarrierBounceMargin);
+                    // own bite (root/slow/arc) on top — except Wind, whose whole bite
+                    // IS the throw: the howling wall hurls a man well clear of it.
+                    float margin = el == NatureElement.Wind
+                        ? NatureMath.WindwallHurlMargin
+                        : NatureMath.BarrierBounceMargin;
+                    Vec3 bounce = e.Position + away * (e.Radius + margin);
                     bounce.z = a.Position.z;
                     // Mount-safe: a mounted rider is bounced by moving his HORSE,
                     // never by teleporting the rider out of the saddle.
