@@ -1060,6 +1060,22 @@ namespace AshAndEmber.Tests
             Assert.IsTrue(ElementMagicMath.IsFullyCharged(ElementMagicMath.MaxDrawSeconds));
         }
 
+        [Test]
+        public void ElementMagicMath_GatheringBreak_BlocksPanicTap_ButNotAPacedDraw()
+        {
+            // A snatched second cast (fired well inside the break) is refused...
+            Assert.IsFalse(ElementMagicMath.CanReleaseAgain(0f));
+            Assert.IsFalse(ElementMagicMath.CanReleaseAgain(ElementMagicMath.RecoverySeconds - 0.1f));
+            // ...but the break clears the instant it elapses.
+            Assert.IsTrue(ElementMagicMath.CanReleaseAgain(ElementMagicMath.RecoverySeconds));
+
+            // The break is short enough that even a light draw outlasts it, and a
+            // full charge (5 s) leaves it far behind — so a paced channeler is never
+            // gated, only panic-tapping is.
+            Assert.IsTrue(ElementMagicMath.RecoverySeconds < ElementMagicMath.FullChargeSeconds);
+            Assert.IsTrue(ElementMagicMath.CanReleaseAgain(ElementMagicMath.FullChargeSeconds));
+        }
+
         // ── ElementUltimateMath (the Unbinding — element ultimates) ──────────────
 
         [Test]
