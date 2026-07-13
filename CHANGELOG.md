@@ -2,7 +2,41 @@
 
 ---
 
-## Unreleased
+## v0.48.0
+
+### The eagles turn on each other
+- **The imperial successors now genuinely fight each other.** The three empires are the largest realms on the map, and vanilla's war scoring quietly rewards them for picking on a weak neighbour instead of a rival of their own size — lower risk, easier gains. The gentle nudge that was in place never overcame that pull. Their appetite for civil war is now a real multiplier (and a flat push where the game had written the war off entirely), so an empire weighing a small kingdom against its own estranged kin will now often choose the kin. The Empire's civil war was always meant to be the map's great wound; it finally bleeds.
+
+### What the Ashen take, the Ashen keep
+- **Fixed castles seized by the Ashen Gambit (and the Ashen Tide) snapping back to their old owners moments later.** The realm of the cold is defined as a fixed set of holdings, and a guard hands back anything the Ashen take beyond it — a leash meant to stop the grey from creeping across the whole north through opportunistic sieges. But the Gambit's night of knives and the Tide's silent claims were never registered as *legitimate* Ashen ground, so the guard read them as strays and returned them within days, undoing the entire event while the announcement still hung on screen. Ground taken by these events is now written into the Ashen realm proper: it garrisons, it holds, and it is only lost the way anything else is — to an army that comes and takes it back.
+
+### No mage mends what he never learned to mend
+- **Fire-only lords can no longer heal themselves.** A lord who had never learned the Spirit ward would, when badly hurt, "turn the fire inward" and close his wounds — a mending that exists nowhere in the player's art, on a path that has no healing at all. He now has no answer but the one you would have: the Spirit ward, if he studied it, and otherwise his own blood and the ground he is standing on. Lords who know Spirit still raise the ward and mend the wounded around them, exactly as before.
+
+### Instructions that fit on the screen
+- **Fixed the scheme confirmation screen running off the bottom of the window.** The briefing before an operation had grown into a wall of text with no scrollbar beneath it, pushing *Proceed* and *Stand Down* past the edge of the screen — leaving the operation with no way forward and no way out. It has been cut back to what you can actually act on. The exact swing of each press-on choice was never yours to see before committing anyway; that was always the gamble.
+
+### The stones name their own working
+- **Crystals now say what they do.** A Sunstone read as "Sunstone" and nothing more, and a stone that could not be identified without consulting the Codex was a stone no one carried. Each now wears its working in its name — *Sunstone — Warmth Pulse*, *Bloodstone — Vampiric Burst*, *Willowisp — Dread Whisper* — so what a stone is for is legible the moment you see it in your pack.
+
+---
+
+## v0.47.0
+
+### The fire keeps its own count
+- **Cast messages no longer tell you when you will die.** Spending life on a cast used to announce your exact new death age ("You will not see 98"), turning the fire's toll into arithmetic. Now the toll is felt, not counted: *"The fire flows from you — X days,"* followed by how your body answers — a passing chill at first, then weariness, then a thinness that does not grow back, a cold that lingers, and at last hollowness, as the ledger of spent years grows. Life-restoring rites likewise return their days "to a count only it keeps." The Ledger of Years in the spellbook still records every day the fire has taken and reclaimed — but the hour of the burning-out is no longer written anywhere.
+
+### The knives look elsewhere for a while
+- **NPC schemes no longer hound the player.** Scheming lords picked their marks without bias — but a landed clan is many marks at once: you, every lord of your house, every fief you hold, each shielded only by its own short per-target breather. So somewhere in your holdings a scheme could land every week, with a popup every time, while lord-on-lord intrigue passed in silence — it *felt* like the whole map conspired against you. Now, once any NPC scheme is set against your interests, **all** of them — your person, your kin, your fiefs — are off-limits to NPC schemers for the next 21 days. The world still schemes as busily as ever; it just spreads its knives around. Old saves pick the change up automatically.
+
+### Even an emperor can be taken in chains
+- **Arenicos can now be captured after a battle.** The emperor's rewritten conversation claimed the opening line even after he was beaten in the field — so instead of the game's capture-or-release choice, he delivered his greeting and rode away, every time. His greetings now stand down the moment a conversation belongs to a battle or a captive, the same way the faction voices learned to in v0.46.0. His defiance when defeated and his composure in chains remain — they were never the problem. The Burning Laboratory questline already reckons with an emperor who dies or sits in a cell; it carries on either way.
+
+### The devout no longer pray on a dice roll
+- **Grace lords and priests now answer the moment.** NPC miracle use was a flat trickle — rolled blind every 1.5 seconds at odds so long that a devout lord managed roughly one miracle per twenty-five *minutes* of fighting, landing whenever the dice felt like it rather than when the line was breaking. Now, when the moment calls — the caster bleeds, allies fall around them, the press closes in, or the Ashen stand near — they answer within seconds, choosing the miracle that fits (mend, judgement, ward, or shield) exactly as before. Between such moments the old quiet trickle remains, so nobody prays at empty air; the per-caster cooldown still paces how often the light can be called. Priests of the Flame in a garrison sally are now genuinely worth fearing.
+
+### Grace does not linger where it is not called
+- **Fixed miracle battle effects carrying over between battles.** Sacred Flame, Aegis, and Guidance blessings (and the miracle AI's cooldown ledger) were only cleared on save-load, not at the end of each mission — so blessings keyed to fallen soldiers quietly haunted the next field within the same session. All miracle battle state is now laid to rest when the mission ends, and crystal battle state is likewise cleared on save-load for full symmetry.
 
 ### The Priest-King takes the throne of the East
 - **The ruler of the Tribes of the East is now the Priest-King, not the God-King.** Every line that named him — his lords' battle-taunts, the backstory options that swear you to his rites, the world-events that invoke his word, his household and succession messages, his vanguard's banner — now speaks of the Priest-King. Mechanics are unchanged; only the title is reforged.

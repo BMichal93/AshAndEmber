@@ -47,6 +47,16 @@ namespace AshAndEmber
             return roll < prisonersHeld ? roll : prisonersHeld;
         }
 
+        // ── The world turns on Duneborn ──────────────────────────────────────────
+        // Past 60% of the count, the scale of the slaughter can no longer be hidden.
+        // Every other kingdom at peace with Duneborn rolls weekly to declare war —
+        // "a little more hostile," not an instant world war.
+        public const float OppositionThresholdFraction = 0.60f;
+        public const float RousedWeeklyWarChance       = 0.10f;
+
+        public static bool OppositionRoused(int sacrificed, int target)
+            => target > 0 && sacrificed * 100L >= (long)target * (long)(OppositionThresholdFraction * 100f + 0.5f);
+
         // ── The Great Other's party ──────────────────────────────────────────────
         public const int   RevenantCap             = 100;
         public const int   RevenantTopUpIntervalDays = 7;

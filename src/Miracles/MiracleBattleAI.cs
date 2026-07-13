@@ -66,10 +66,20 @@ namespace AshAndEmber
 
                     if (!isGraceLord) continue;
 
-                    double chance = MiracleMath.NpcBattleUseChance(isPriest);
-                    if (_rng.NextDouble() >= chance) continue;
+                    // Cheap pre-gate at the ceiling chance — the battlefield read
+                    // below only runs for rolls that could possibly cast.
+                    double r = _rng.NextDouble();
+                    if (r >= MiracleMath.NpcBattleUseChance(isPriest, momentCalls: true)) continue;
 
-                    MiracleType type = ChooseGraceMiracle(a);
+                    bool selfHurt; int alliesHurtNear, enemiesPressing; bool ashenNear;
+                    ReadMoment(a, out selfHurt, out alliesHurtNear, out enemiesPressing, out ashenNear);
+                    bool momentCalls = selfHurt || alliesHurtNear >= 1
+                                    || enemiesPressing >= 2 || ashenNear;
+                    if (r >= MiracleMath.NpcBattleUseChance(isPriest, momentCalls)) continue;
+
+                    MiracleType type = MiracleMath.ChooseBattleMiracle(
+                        selfHurt, alliesHurtNear, enemiesPressing >= 2, ashenNear,
+                        (float)_rng.NextDouble());
                     MiracleEffects.ApplyBattleMiracle(a, type, announce: true);
                     _cooldowns[a] = AgentCooldown;
                     AnnounceEnemy(a, hero, type);
@@ -78,15 +88,16 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        private static MiracleType ChooseGraceMiracle(Agent a)
+        // Read the moment: the caster's own blood, the wounded line around him, the
+        // press at his shield, and the cold nearby. MiracleMath turns these into
+        // both the cadence gate (momentCalls) and the fitting miracle to answer with.
+        private static void ReadMoment(Agent a, out bool selfHurt,
+            out int alliesHurtNear, out int enemiesPressing, out bool ashenNear)
         {
-            // Read the moment, then let MiracleMath choose the fitting miracle — heal
-            // when hurt, judge the Ashen, ward/bless a wounded line, shield under a
-            // press, otherwise rally. Grace itself is unlimited (no resource gate).
-            bool selfHurt = false;
+            selfHurt = false;
             try { selfHurt = a.Health < a.HealthLimit * 0.40f; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            int alliesHurtNear = 0, enemiesPressing = 0;
+            alliesHurtNear = 0; enemiesPressing = 0;
             try
             {
                 Vec3 pos = a.Position;
@@ -105,8 +116,7 @@ namespace AshAndEmber
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
-            return MiracleMath.ChooseBattleMiracle(
-                selfHurt, alliesHurtNear, enemiesPressing >= 2, AshenNearby(a), (float)_rng.NextDouble());
+            ashenNear = AshenNearby(a);
         }
 
         private static void AnnounceEnemy(Agent a, Hero hero, MiracleType type)

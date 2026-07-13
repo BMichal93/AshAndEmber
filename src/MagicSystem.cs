@@ -52,6 +52,8 @@ namespace AshAndEmber
             try { MiracleEffects.ClearBattleState();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { MiracleBattleAI.Reset();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { MiracleInputHandler.ResetInputState(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CrystalEffects.ClearBattleState();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CrystalBattleAI.Reset();               } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { NatureEffects.ClearBattleState();      } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             // Wire the Grace bank to the live Abundant Grace devotion (the bank itself
             // is kept TaleWorlds-free so it stays unit-testable — see behaviour.md).
@@ -494,6 +496,9 @@ namespace AshAndEmber
             try { MagicInputHandler.ResetInputState();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { CrystalEffects.ClearBattleState();           } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { CrystalBattleAI.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MiracleEffects.ClearBattleState();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MiracleBattleAI.Reset();                    } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MiracleInputHandler.ResetInputState();      } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { ElementWallWards.Clear();                   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { ElementSpellEffects.ClearBattleState();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { ElementUltimates.ClearBattleState();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

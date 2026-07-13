@@ -170,12 +170,55 @@ namespace AshAndEmber
             {
                 _ledgerDaysSpent += days;
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"The fire burns its cost — {days} day{(days > 1 ? "s" : "")} of life to come. " +
-                    $"You will not see {(int)PlayerDeathAge}.",
+                    $"The fire flows from you — {days} day{(days > 1 ? "s" : "")}. {CastTollFeeling()}",
                     new Color(0.7f, 0.5f, 0.3f)));
                 CheckAgeLimit(hero);
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // How the toll feels — darkens as the ledger of spent years grows.
+        // The player never sees a number for what remains; only their body's answer.
+        private static readonly string[][] _tollFeelings =
+        {
+            new[] {  // under a year spent — barely noticed
+                "You feel a little weaker — a chill that passes.",
+                "A breath of cold, gone before you can name it.",
+                "You feel it leave. Only just.",
+                "Something small is paid. You hardly miss it.",
+            },
+            new[] {  // 1–4 years — noticed
+                "You are wearier than the working accounts for.",
+                "Your shoulders remember it longer than they should.",
+                "The warmth returns a moment slower each time.",
+                "You are tired in a way sleep does not answer.",
+            },
+            new[] {  // 5–14 years — worn
+                "Something in you is thinner now. It does not grow back.",
+                "You feel worn through, like a coat at the elbows.",
+                "The fire takes from a purse you cannot open to count.",
+                "Your own heartbeat sounds a little further away.",
+            },
+            new[] {  // 15–29 years — the cold moves in
+                "A cold sweeps through where the fire passed — and lingers.",
+                "The chill no longer waits for the casting to find you.",
+                "You are colder after than you were before. That is new.",
+                "Winter has found a room in you and begun to furnish it.",
+            },
+            new[] {  // 30+ years — hollowed
+                "You feel hollow, as if the fire is spending what was never yours to keep.",
+                "There is an emptiness where the fire drew from. It echoes.",
+                "You give, and give, and something in you has stopped keeping count.",
+                "The fire burns bright. You are what it is burning.",
+            },
+        };
+
+        private static string CastTollFeeling()
+        {
+            int yearsSpent = NetDaysSpent / 84;
+            int tier = yearsSpent < 1 ? 0 : yearsSpent < 5 ? 1 : yearsSpent < 15 ? 2 : yearsSpent < 30 ? 3 : 4;
+            var pool = _tollFeelings[tier];
+            return pool[_rng.Next(pool.Length)];
         }
 
         /// Give back life expectancy (Blood, and other life-restoring rites).
@@ -187,8 +230,7 @@ namespace AshAndEmber
             {
                 _ledgerDaysReclaimed += days;
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"The fire gives back — {days} day{(days > 1 ? "s" : "")} of life restored. " +
-                    $"You may yet see {(int)PlayerDeathAge}.",
+                    $"The fire relents — {days} day{(days > 1 ? "s" : "")} given back to a count only it keeps.",
                     new Color(0.9f, 0.6f, 0.3f)));
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -372,11 +414,7 @@ namespace AshAndEmber
                 }
                 else
                 {
-                    // 1 Bannerlord year = 84 campaign days (4 seasons × 21 days).
-                    int deathAge  = (int)PlayerDeathAge;
-                    int daysLeft  = Math.Max(0, (int)((PlayerDeathAge - (float)h.Age) * 84f));
-                    int yearsLeft = daysLeft / 84;
-                    lines.Append($"  Age: {age}   |   Life expectancy: {deathAge} — ~{yearsLeft} year{(yearsLeft != 1 ? "s" : "")} left ({daysLeft} days)\n");
+                    lines.Append($"  Age: {age} — the fire knows when it will burn out. You do not.\n");
                 }
                 lines.Append($"  Days the fire has taken: {_ledgerDaysSpent}");
                 lines.Append($"   |   Days reclaimed: {_ledgerDaysReclaimed}\n");

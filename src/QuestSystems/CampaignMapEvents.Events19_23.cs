@@ -545,6 +545,7 @@ namespace AshAndEmber
                             var lord = ashenLords[_rng.Next(ashenLords.Count)];
                             ChangeOwnerOfSettlementAction.ApplyByDefault(lord, castle);
                             StabiliseSettlement(castle);
+                            if (lord.Clan != null) AshenCitySystem.RegisterConqueredSettlement(castle, lord.Clan);
                             seizedNames.Add(castle.Name?.ToString() ?? "a castle");
                         }
                         catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }

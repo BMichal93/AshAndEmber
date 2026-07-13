@@ -31,8 +31,9 @@ namespace AshAndEmber
             _targetCooldowns.Clear();
             _npcTargetBreather.Clear();
             _playerCooldownKeys.Clear();
-            _retaliationDays      = 0;
-            _playerGlobalCooldown = 0;
+            _retaliationDays        = 0;
+            _playerGlobalCooldown   = 0;
+            _playerInterestBreather = 0;
             ClearPendingPlayerOperation();
         }
 
@@ -61,6 +62,14 @@ namespace AshAndEmber
         }
 
         /// True when the pending scheme is aimed at the player or a player-clan fief.
+        // Player interest = the player themself, any lord of the player's clan, or
+        // any settlement the player's clan holds. Used by the collective breather.
+        private static bool IsPlayerInterestHero(Hero t)
+            => t != null && (t == Hero.MainHero || (t.Clan != null && t.Clan == Hero.MainHero?.Clan));
+
+        private static bool IsPlayerInterestSettlement(Settlement s)
+            => s?.OwnerClan != null && s.OwnerClan == Hero.MainHero?.Clan;
+
         private static bool TargetsPlayerInterests(PendingScheme p)
         {
             if (p.TargetHeroId == Hero.MainHero?.StringId) return true;
@@ -189,6 +198,12 @@ namespace AshAndEmber
                 // Cross-scheme-type breather: only NPC launches trip it, so the player's
                 // own scheming isn't throttled by it.
                 if (!isPlayer) _npcTargetBreather[targetId] = NpcTargetBreatherDays;
+
+                // Collective player shield: this NPC scheme reached the player's
+                // interests, so every player interest is off-limits to NPC schemers
+                // until the window runs out.
+                if (!isPlayer && (IsPlayerInterestHero(targetHero) || IsPlayerInterestSettlement(targetSettlement)))
+                    _playerInterestBreather = PlayerInterestBreatherDays;
             }
 
             return true;
@@ -219,8 +234,9 @@ namespace AshAndEmber
                 if (_npcTargetBreather[key] <= 0) _npcTargetBreather.Remove(key);
             }
 
-            if (_retaliationDays      > 0) _retaliationDays--;
-            if (_playerGlobalCooldown > 0) _playerGlobalCooldown--;
+            if (_retaliationDays        > 0) _retaliationDays--;
+            if (_playerGlobalCooldown   > 0) _playerGlobalCooldown--;
+            if (_playerInterestBreather > 0) _playerInterestBreather--;
 
             for (int i = _pending.Count - 1; i >= 0; i--)
             {
@@ -384,6 +400,14 @@ namespace AshAndEmber
                 lordTargets = lordTargets.Where(t => !IsOnNpcBreather(t.StringId)).ToList();
                 if (lordTargets.Count == 0) return;
 
+                // Collective player shield — while it holds, no lord of the player's
+                // clan may be picked (see _playerInterestBreather).
+                if (_playerInterestBreather > 0)
+                {
+                    lordTargets = lordTargets.Where(t => !IsPlayerInterestHero(t)).ToList();
+                    if (lordTargets.Count == 0) return;
+                }
+
                 // Minor clans (tier < MinSchemeTargetTier) aren't worth the political
                 // capital of a scheme — prefer clans that matter, only falling back to
                 // minor ones if this kingdom has no worthier target.
@@ -427,6 +451,14 @@ namespace AshAndEmber
 
                 targets = targets.Where(t => !IsOnNpcBreather(t.StringId)).ToList();
                 if (targets.Count == 0) return;
+
+                // Collective player shield — while it holds, no fief of the player's
+                // clan may be picked (see _playerInterestBreather).
+                if (_playerInterestBreather > 0)
+                {
+                    targets = targets.Where(t => !IsPlayerInterestSettlement(t)).ToList();
+                    if (targets.Count == 0) return;
+                }
 
                 var worthySetts = targets.Where(t => (t.OwnerClan?.Tier ?? 0) >= MinSchemeTargetTier).ToList();
                 if (worthySetts.Count > 0) targets = worthySetts;

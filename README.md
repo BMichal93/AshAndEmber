@@ -319,7 +319,7 @@ Owning a key's talent replaces its weak innate effect with the full version — 
 
 Every spell draws on your lifespan. Cost scales **geometrically** with total inputs — weak spells are cheap; powerful spells become very expensive. Hard cap: 84 campaign days (1 Bannerlord year = 4 seasons × 21 days).
 
-**The Ledger of Years** — the grimoire (Alt+X) opens with a running account of the aging economy: your age, time remaining until the fire burns out at 100, total days the fire has taken, days reclaimed (Reap, Ember, rites), and how many workings you have cast in battle and on the map.
+**The Ledger of Years** — the grimoire (Alt+X) opens with a running account of the aging economy: your age, total days the fire has taken, days reclaimed (Reap, Ember, rites), and how many workings you have cast in battle and on the map. When the fire will finally burn out, it does not say — the fire keeps that count, and it does not give receipts.
 
 | Total inputs | Cost | With Tempered |
 |--------------|------|---------------|

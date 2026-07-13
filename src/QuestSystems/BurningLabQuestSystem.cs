@@ -368,6 +368,8 @@ namespace AshAndEmber
             : base("ldm_burninglabqa_quest", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("The Resurrection of Arenicos");
+        // Exempts the quest from the engine's cancel-on-load sweep (see GreatAwakeningQuestLog).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()
@@ -410,6 +412,8 @@ namespace AshAndEmber
             : base("ldm_burninglabqb_quest", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("The Faction's Gambit");
+        // Exempts the quest from the engine's cancel-on-load sweep (see GreatAwakeningQuestLog).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()
@@ -443,6 +447,8 @@ namespace AshAndEmber
             : base("ldm_burninglabqc_quest", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("The Personal Rites");
+        // Exempts the quest from the engine's cancel-on-load sweep (see GreatAwakeningQuestLog).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()

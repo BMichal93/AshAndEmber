@@ -38,6 +38,19 @@ namespace AshAndEmber
         public static bool IsAshenSettlement(Settlement settlement) =>
             settlement != null && _settlementClanMap.ContainsKey(settlement.StringId);
 
+        // Called by scripted events (Ashen Tide, the Ashen Gambit) right after they
+        // hand a settlement to an Ashen lord outside the normal target set. Without
+        // this, the confinement guard (ReleaseNonTargetSettlements) sees the new
+        // holding as an opportunistic siege of an ordinary frontier town and hands
+        // it straight back within days — this registers it as legitimately Ashen
+        // instead, so it gets the same garrison/loyalty upkeep and permanent-release-
+        // on-real-conquest treatment as the original target settlements.
+        internal static void RegisterConqueredSettlement(Settlement settlement, Clan clan)
+        {
+            if (settlement == null || clan == null) return;
+            _settlementClanMap[settlement.StringId] = clan.StringId;
+        }
+
         // Returns a living Ashen clan for adopting orphan Ashen creatures (e.g. the
         // Ashen Spawn bandit bands) so they share the Ashen faction and culture —
         // giving them the Ashen banner/culture instead of the looters', and stopping

@@ -301,13 +301,15 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("burn",
                         $"Burn it away ({SeaMath.FogBurnAgingDays} days aging)", null, true,
                         "Push a thread of the Inner Fire through the air. The fog boils off clean — no delay, no danger."));
-                if (MageKnowledge.IsMage)
+                // Wind-element cast (was a Living Ember option before the v0.35 merge —
+                // now gated on actually knowing Wind, like the harbor's Call the Wind).
+                if (MageElementKnowledge.HasElement(MagicElement.Wind))
                 {
                     bool canAffordFog = Hero.MainHero.HitPoints > SeaMath.FogPartHpCost + 10;
                     options.Add(new InquiryElement("part",
-                        $"Part the fog ({SeaMath.FogPartHpCost} HP)", null, canAffordFog,
+                        $"Part the fog (Wind — {SeaMath.FogPartHpCost} HP)", null, canAffordFog,
                         canAffordFog
-                            ? "Call to the wind. The living air parts the grey curtain like a hand through smoke — no delay."
+                            ? "Call to the wind. It parts the grey curtain like a hand through smoke — no delay."
                             : "You do not have enough left to give. The land does not take the dying."));
                 }
                 options.Add(new InquiryElement("push",
@@ -386,13 +388,14 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("sense",
                         $"Read the wreck ({SeaMath.SenseWreckAgingDays} days aging)", null, true,
                         "Let the Inner Fire taste the hull — feel where coin and cargo lay heaviest. Finds more than blind hands would."));
-                if (MageKnowledge.IsMage)
+                // Spirit-element cast (was a Living Ember option before the v0.35 merge).
+                if (MageElementKnowledge.HasElement(MagicElement.Spirit))
                 {
                     bool canAffordSense = Hero.MainHero.HitPoints > SeaMath.SenseWreckHpCost + 10;
                     options.Add(new InquiryElement("feel",
-                        $"Feel the wreck ({SeaMath.SenseWreckHpCost} HP)", null, canAffordSense,
+                        $"Feel the wreck (Spirit — {SeaMath.SenseWreckHpCost} HP)", null, canAffordSense,
                         canAffordSense
-                            ? "Let the living world taste the wood — feel where hands last gripped, where life last moved. More yield than blind salvage."
+                            ? "Let the Spirit listen to the wood — feel where hands last gripped, where life last moved. More yield than blind salvage."
                             : "You do not have enough left to give."));
                 }
 
@@ -482,11 +485,13 @@ namespace AshAndEmber
                 if (MageKnowledge.IsMage)
                     options.Add(new InquiryElement("sear", $"Sear the Tide ({SeaMath.SearTheTideAgingDays} days aging)", null, true,
                         "Open the Inner Fire over open water. Burning rigging, screaming corsairs, and much better odds."));
-                if (MageKnowledge.IsMage)
+                // Water-element cast (was a Living Ember option before the v0.35 merge —
+                // gated on knowing Water, like the harbor's Still the Waters).
+                if (MageElementKnowledge.HasElement(MagicElement.Water))
                 {
                     bool canAffordCurrent = Hero.MainHero.HitPoints > SeaMath.CallCurrentHpCost + 10;
                     options.Add(new InquiryElement("current",
-                        $"Call the Current ({SeaMath.CallCurrentHpCost} HP)", null, canAffordCurrent,
+                        $"Call the Current (Water — {SeaMath.CallCurrentHpCost} HP)", null, canAffordCurrent,
                         canAffordCurrent
                             ? "Reach into the water and pull. A rogue current catches their hulls and throws their formation. Much better odds."
                             : "You do not have enough left to give."));
@@ -602,11 +607,12 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("sear",
                         $"Sear the Tide ({SeaMath.SearTheTideAgingDays} days aging)", null, true,
                         "Open the Inner Fire over the blockade line. Burning rigging, broken formation, and much better odds."));
-                if (MageKnowledge.IsMage)
+                // Water-element cast (was a Living Ember option before the v0.35 merge).
+                if (MageElementKnowledge.HasElement(MagicElement.Water))
                 {
                     bool canAffordLine = Hero.MainHero.HitPoints > SeaMath.CallCurrentHpCost + 10;
                     options.Add(new InquiryElement("current_blk",
-                        $"Call the Current ({SeaMath.CallCurrentHpCost} HP)", null, canAffordLine,
+                        $"Call the Current (Water — {SeaMath.CallCurrentHpCost} HP)", null, canAffordLine,
                         canAffordLine
                             ? "Reach into the water beneath the blockade. A surge of current capsizes galleys and scatters the line. Better odds of forcing the harbor."
                             : "You do not have enough left to give."));
@@ -718,13 +724,14 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("read",
                         $"Read the boat before you close ({SeaMath.SenseWreckAgingDays} day aging)", null, true,
                         "The Inner Fire can taste the boat from here — learn who they are before you decide whether to close."));
-                if (MageKnowledge.IsMage)
+                // Spirit-element cast (was a Living Ember option before the v0.35 merge).
+                if (MageElementKnowledge.HasElement(MagicElement.Spirit))
                 {
                     bool canAffordFeel = Hero.MainHero.HitPoints > SeaMath.FeelLifeHpCost + 10;
                     options.Add(new InquiryElement("feel_life",
-                        $"Feel for life before you close ({SeaMath.FeelLifeHpCost} HP)", null, canAffordFeel,
+                        $"Feel for life before you close (Spirit — {SeaMath.FeelLifeHpCost} HP)", null, canAffordFeel,
                         canAffordFeel
-                            ? "Let the living world taste the boat — feel whether those aboard are what they seem."
+                            ? "Let the Spirit taste the boat — feel whether those aboard are what they seem."
                             : "You do not have enough left to give."));
                 }
 
@@ -866,13 +873,14 @@ namespace AshAndEmber
                     options.Add(new InquiryElement("speak",
                         $"Speak to it through the Inner Fire ({SeaMath.SerpentAgingDays} days aging)", null, true,
                         "Ancient things in the deep listen to the Fire. It costs years — but they do not always mean harm."));
-                if (MageKnowledge.IsMage)
+                // Water-element cast (was a Living Ember option before the v0.35 merge).
+                if (MageElementKnowledge.HasElement(MagicElement.Water))
                 {
                     bool canAffordCommune = Hero.MainHero.HitPoints > SeaMath.SerpentCommuneHpCost + 10;
                     options.Add(new InquiryElement("commune",
-                        $"Commune with the deep ({SeaMath.SerpentCommuneHpCost} HP)", null, canAffordCommune,
+                        $"Commune with the deep (Water — {SeaMath.SerpentCommuneHpCost} HP)", null, canAffordCommune,
                         canAffordCommune
-                            ? "The living world runs deep as well as wide. Let it carry your presence down. " +
+                            ? "The deep water knows you now. Let it carry your presence down. " +
                               "Old things in dark water are not always what they seem."
                             : "You do not have enough left to give."));
                 }

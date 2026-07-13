@@ -550,7 +550,7 @@ namespace AshAndEmber
                         _campaignCooldowns[id] = isFalseEmperor ? 2 + _rng.Next(3)
                                                : isBlight       ? 5 + _rng.Next(4)
                                                                  : 5 + _rng.Next(5);
-                        if (hero.Clan != null) hero.Clan.Renown += 3f;
+                        ClanRenown.Gain(hero.Clan, 3f);
                         if (isFalseEmperor) falseEmperorCastsToday++;
                         else if (isBlight)  ashenCastsToday++;
                         else                normalCastsToday++;

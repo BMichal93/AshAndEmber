@@ -114,6 +114,17 @@ namespace AshAndEmber
 
         // ── NPC use chances ────────────────────────────────────────────────────
         public static double NpcBattleUseChance(bool isPriest) => isPriest ? 0.004 : 0.001;
+
+        // Situation-aware battle cadence. The flat trickle above, rolled once per
+        // 1.5 s scan, meant a Grace lord answered roughly once per 25 MINUTES of
+        // fighting — battles ended before the first prayer, and when one finally
+        // came it landed at a random moment, not the one that needed it. When the
+        // moment calls (the caster bleeds, allies fall, the press closes, the cold
+        // stands near), a devout heart now answers within a few scans; the per-agent
+        // cooldown, not this roll, paces repeat invocations. Idle moments keep the
+        // old ambient trickle so nobody prays at empty air.
+        public static double NpcBattleUseChance(bool isPriest, bool momentCalls)
+            => momentCalls ? (isPriest ? 0.35 : 0.20) : NpcBattleUseChance(isPriest);
         public static double NpcDailyUseChance(bool isPriest)  => isPriest ? 0.05  : 0.01;
 
         // ── NPC battle miracle selection ──────────────────────────────────────

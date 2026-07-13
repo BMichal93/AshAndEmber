@@ -290,7 +290,12 @@ namespace AshAndEmber
                     {
                         var dest = chosen?[0]?.Identifier as Settlement;
                         if (dest == null) return;
-                        if (forTrade) StartVenture(dest);
+                        // StartVenture opens ANOTHER inquiry; shown directly from this
+                        // callback the engine swallows it (the picker's layer is still
+                        // tearing down), so the "select a city → nothing happens" bug.
+                        // Queue it through the deferred slot instead — it opens on the
+                        // next map tick, once the picker is fully gone.
+                        if (forTrade) MageKnowledge._deferredInquiry = () => StartVenture(dest);
                         else StartVoyage(dest);
                     },
                     null, "", false), false, true);

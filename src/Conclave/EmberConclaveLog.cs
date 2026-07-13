@@ -18,6 +18,10 @@ namespace AshAndEmber
         protected EmberConclaveMissionLogBase(string questId)
             : base(questId, Hero.MainHero, CampaignTime.Never, 0) { }
 
+        // A non-empty SpecialQuestType is what exempts a quest from
+        // QuestManager.OnGameLoaded, which CANCELS every non-issue, non-special
+        // quest on save-load. Without it every mod quest silently died on reload.
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
         protected override void RegisterEvents() { }
         protected override void SetDialogs() { }
@@ -42,6 +46,8 @@ namespace AshAndEmber
             : base("ec_ember_conclave_main", Hero.MainHero, CampaignTime.Never, 0) { }
 
         public override TextObject Title => new TextObject("The Ember Conclave");
+        // Exempts the quest from the engine's cancel-on-load sweep (see EmberConclaveMissionLogBase).
+        public override string SpecialQuestType => "AshAndEmberQuest";
         public override bool IsRemainingTimeHidden => true;
 
         protected override void InitializeQuestOnGameLoad()

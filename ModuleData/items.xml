@@ -27,7 +27,7 @@
 
   <!-- Sunstone — warmth pulse: heals self and nearby allies -->
   <Item id="aae_sunstone"
-        name="Sunstone"
+        name="Sunstone — Warmth Pulse"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -57,7 +57,7 @@
 
   <!-- Embershard — shard burst: AoE fire damage to nearby enemies -->
   <Item id="aae_embershard"
-        name="Embershard"
+        name="Embershard — Shard Burst"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -87,7 +87,7 @@
 
   <!-- Rimeshard — frost pulse: slows nearby enemies -->
   <Item id="aae_rimeshard"
-        name="Rimeshard"
+        name="Rimeshard — Frost Pulse"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -117,7 +117,7 @@
 
   <!-- Veilstone — veil grasp: strikes one random enemy at range -->
   <Item id="aae_veilstone"
-        name="Veilstone"
+        name="Veilstone — Veil Grasp"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -147,7 +147,7 @@
 
   <!-- Stormcrystal — thunder clap: AoE damage + morale drain -->
   <Item id="aae_stormcrystal"
-        name="Stormcrystal"
+        name="Stormcrystal — Thunderclap"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -177,7 +177,7 @@
 
   <!-- Duskstone — despair wave: morale drain + slow -->
   <Item id="aae_duskstone"
-        name="Duskstone"
+        name="Duskstone — Despair Wave"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -207,7 +207,7 @@
 
   <!-- Thornveil — root grasp: immobilises one random enemy at range + damage -->
   <Item id="aae_thornveil"
-        name="Thornveil"
+        name="Thornveil — Root Grasp"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -237,7 +237,7 @@
 
   <!-- Aegisstone — bulwark pulse: self heal + knocks back nearby enemies -->
   <Item id="aae_aegisstone"
-        name="Aegisstone"
+        name="Aegisstone — Bulwark Pulse"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -267,7 +267,7 @@
 
   <!-- Willowisp — dread whisper: shatters the morale of one random enemy at range -->
   <Item id="aae_willowisp"
-        name="Willowisp"
+        name="Willowisp — Dread Whisper"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -297,7 +297,7 @@
 
   <!-- Bloodstone — vampiric burst: AoE damage, heals caster on the blood spilled -->
   <Item id="aae_bloodstone"
-        name="Bloodstone"
+        name="Bloodstone — Vampiric Burst"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"
@@ -327,7 +327,7 @@
 
   <!-- Zephyrglass — quickening light: AoE haste for caster and nearby allies -->
   <Item id="aae_zephyrglass"
-        name="Zephyrglass"
+        name="Zephyrglass — Quickening Light"
         body_name="bo_mace_a"
         recalculate_body="true"
         mesh="throwing_stone"

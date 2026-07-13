@@ -24,6 +24,9 @@ namespace AshAndEmber
         {
             try { SchemeSystem.DailyTick();     } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { SchemeSystem.NpcSchemeTick(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            // Old scheme renown hits wrote Clan.Renown below the tier floor, which
+            // wedges the clan-screen bar. Repairs saves damaged before ClanRenown existed.
+            try { ClanRenown.RepairFloor(TaleWorlds.CampaignSystem.Hero.MainHero?.Clan); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Counter-intelligence sweep ────────────────────────────────────────

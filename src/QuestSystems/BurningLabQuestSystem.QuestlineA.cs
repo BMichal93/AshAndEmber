@@ -245,7 +245,8 @@ namespace AshAndEmber
             {
                 if (chosen.Clan != null)
                 {
-                    chosen.Clan.Renown    = Math.Max(chosen.Clan.Renown,    50000f);
+                    // Through Gain so the clan tier actually rises with the legend.
+                    ClanRenown.Gain(chosen.Clan, 50000f - chosen.Clan.Renown);
                     chosen.Clan.Influence = Math.Max(chosen.Clan.Influence, 50000f);
                 }
             }

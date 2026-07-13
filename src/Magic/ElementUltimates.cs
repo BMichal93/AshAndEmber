@@ -1,7 +1,7 @@
 // =============================================================================
 // ASH AND EMBER — Magic/ElementUltimates.cs
 //
-// Runtime layer of THE UNBINDING — each element's once-per-battle ultimate
+// Runtime layer of THE UNBINDING — each element's cooldown-gated ultimate
 // (all numbers and names live in the pure ElementUltimateMath). Eleven
 // workings — the base five, plus one for each non-Spirit fusion:
 //
@@ -54,14 +54,21 @@ namespace AshAndEmber
     {
         private static readonly Random _rng = new Random();
 
-        // ── Once-per-battle bookkeeping ─────────────────────────────────────────
-        // Player: one Unbinding per ELEMENT per battle. NPCs: one per LORD per
-        // battle (marked at windup start — an interrupted working is still spent).
-        private static readonly HashSet<MagicElement> _playerUsed = new HashSet<MagicElement>();
-        private static readonly HashSet<string> _npcUsed = new HashSet<string>();
+        // ── Cooldown bookkeeping ────────────────────────────────────────────────
+        // The once-per-battle cap is retired (v0.46+): the player carries one
+        // shared cooldown across all elements; each lord carries his own (marked
+        // at windup start — an interrupted working still spends it). Times are
+        // Mission.CurrentTime moments at which the next Unbinding is allowed.
+        private static float _playerNextUnbind = 0f;
+        private static readonly Dictionary<string, float> _npcNextUnbind = new Dictionary<string, float>();
+
+        private static float Now()
+        {
+            try { return Mission.Current?.CurrentTime ?? 0f; } catch { return 0f; }
+        }
         // How often a lord's Unbinding answers as a fusion instead of the plain
         // element it was picked for (see TryQueueNpcUltimate) — a flourish on an
-        // already-rare, once-per-battle working, not a redesign of the AI.
+        // already-rare, cooldown-gated working, not a redesign of the AI.
         private const double ComboUltimateUpgradeChance = 0.4;
 
         // ── Flight (Wind) ───────────────────────────────────────────────────────
@@ -116,8 +123,8 @@ namespace AshAndEmber
 
         public static void ClearBattleState()
         {
-            _playerUsed.Clear();
-            _npcUsed.Clear();
+            _playerNextUnbind = 0f;
+            _npcNextUnbind.Clear();
             _flights.Clear();
             _rain = null;
             _thralls.Clear();
@@ -128,12 +135,12 @@ namespace AshAndEmber
         // PLAYER ENTRY (called by ElementMagicInput on the Attack+Block chord)
         // =====================================================================
 
-        // Most Unbindings are one-per-element-per-battle. SPIRIT is the exception:
+        // Most Unbindings share one player cooldown. SPIRIT is the exception:
         // it is gated on whether the player's seized thrall is still held, so you
         // may seize another only once the first has fallen or been let go — never
         // two at once. This stops the working being spammed across an army.
         public static bool PlayerCanUnbind(MagicElement el)
-            => el == MagicElement.Spirit ? !PlayerHasLiveThrall() : !_playerUsed.Contains(el);
+            => el == MagicElement.Spirit ? !PlayerHasLiveThrall() : Now() >= _playerNextUnbind;
 
         // True while a player-seized thrall is still held (alive and not yet released).
         private static bool PlayerHasLiveThrall()
@@ -157,15 +164,16 @@ namespace AshAndEmber
             if (!PlayerCanUnbind(el)) return false;
             // The wind will not carry horse and rider — and teleporting a mounted
             // RIDER out of the saddle is the desync class this mod never risks.
-            // Refused BEFORE the once-per-battle is spent; the charge stays drawn.
+            // Refused BEFORE the cooldown is spent; the charge stays drawn.
             if (el == MagicElement.Wind && IsMounted(caster))
             {
                 Msg("The wind will not carry horse and rider — take wing on your own feet.");
                 return false;
             }
             // Spirit is gated on its thrall being held (see PlayerCanUnbind), not
-            // marked spent — so the player may seize again after this one lets go.
-            if (el != MagicElement.Spirit) _playerUsed.Add(el);
+            // the shared cooldown — so the player may seize again after this one lets go.
+            if (el != MagicElement.Spirit)
+                _playerNextUnbind = Now() + ElementUltimateMath.UltimateCooldownSeconds;
             bool ashen = false; try { ashen = MageKnowledge.IsAshen; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             Msg($"{ElementUltimateMath.UltimateName(el, ashen)} — the " +
                 $"{(ashen ? ElementMagicMath.AshenElementName(el) : ElementMagicMath.ElementName(el))} is unbound!");
@@ -189,7 +197,7 @@ namespace AshAndEmber
             bool isAshen, List<MagicElement> known, CasterTemper temper)
         {
             if (agent == null || hero == null || Mission.Current == null) return false;
-            if (_npcUsed.Contains(hero.StringId)) return false;
+            if (_npcNextUnbind.TryGetValue(hero.StringId, out float next) && Now() < next) return false;
             if (!BattleBigEnough()) return false;
             if (_npcWindups.Any(w => w.Caster == agent)) return false;
 
@@ -236,7 +244,7 @@ namespace AshAndEmber
 
             // Marked SPENT at windup start: an interrupted Unbinding is gone for
             // the battle — that is the player's reward for riding the caster down.
-            _npcUsed.Add(hero.StringId);
+            _npcNextUnbind[hero.StringId] = Now() + ElementUltimateMath.NpcUltimateCooldownSeconds;
             try { SpellEffects.BeginCastLoop(agent); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             _npcWindups.Add(new NpcWindup
             {

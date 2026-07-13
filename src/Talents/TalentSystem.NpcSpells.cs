@@ -283,7 +283,7 @@ namespace AshAndEmber
             {
                 if (caster.Clan != null)
                 {
-                    caster.Clan.Renown    += 10f;
+                    ClanRenown.Gain(caster.Clan, 10f);
                     caster.Clan.Influence += 15f;
                 }
                 if (caster.PartyBelongedTo != null)

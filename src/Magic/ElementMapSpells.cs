@@ -192,6 +192,7 @@ namespace AshAndEmber
                 float push = Math.Min(10f, 5f * mult);
                 target.Position = new CampaignVec2(tPos + back * push, true);
                 try { target.RecentEventsMorale -= 20f * mult; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { target.SetDisorganized(true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 Msg($"Shifting Dunes — the ground itself turns beneath {target.Name}. Days of the march undone.");
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -212,6 +213,7 @@ namespace AshAndEmber
                 if (len < 0.5f) back = new Vec2(1f, 0f); else back *= 1f / len;
                 float push = Math.Min(6f, 3f * mult);
                 target.Position = new CampaignVec2(tPos + back * push, true);
+                try { target.SetDisorganized(true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 Msg($"The Sinking Road — the road beneath {target.Name} gives way. {foodLost} food lost to the mud, days undone.");
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -226,6 +228,9 @@ namespace AshAndEmber
                 var target = NearestHostileParty(MobileParty.MainParty.GetPosition2D, MobileParty.MainParty.MapFaction, 60f);
                 if (target == null) { Msg("The Long Stillness — no hostile host within reach."); return; }
                 try { target.RecentEventsMorale -= 45f * mult; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                // "Freezes where it stands" — the disorganized state slows the host
+                // for hours; the morale/influence drain alone never showed on the map.
+                try { target.SetDisorganized(true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 var tClan = target.LeaderHero?.Clan;
                 int influenceLost = 0;
                 if (tClan != null)
@@ -294,9 +299,12 @@ namespace AshAndEmber
                     try { if (!FactionManager.IsAtWarAgainstFaction(p.MapFaction, MobileParty.MainParty.MapFaction)) continue; } catch { continue; }
                     if ((p.GetPosition2D - playerPos).Length > 65f) continue;
                     try { p.RecentEventsMorale -= morale; scattered++; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                    // "Thrown into disorder" literally: the vanilla disorganized state
+                    // (-40% map speed for hours) — a morale number alone was invisible.
+                    try { p.SetDisorganized(true); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
                 Msg(scattered > 0
-                    ? $"Scattering Gale — the high wind comes down. {scattered} enemy {(scattered == 1 ? "host is" : "hosts are")} thrown into disorder. -{morale} morale."
+                    ? $"Scattering Gale — the high wind comes down. {scattered} enemy {(scattered == 1 ? "host is" : "hosts are")} thrown into disorder and slowed. -{morale} morale."
                     : "Scattering Gale — the wind rises, but finds no enemy host nearby.");
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
