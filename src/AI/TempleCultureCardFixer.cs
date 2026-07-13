@@ -71,7 +71,7 @@ namespace AshAndEmber
                 Name = "Tribes of the East",
                 Desc =
                     "They came from the eastern steppe — a hundred warring clans who forgot how to stop fighting "
-                    + "until the God-King put his hand on the sky and turned three chieftains to ash. The rest knelt. "
+                    + "until the Priest-King put his hand on the sky and turned three chieftains to ash. The rest knelt. "
                     + "Now the Tribes ride as one, not because they love their king, but because they love war, and "
                     + "he alone has shown them how to win it. He wields fire the way other men wield iron. He does not "
                     + "negotiate. He takes wives from every city his horsemen put to tribute. He is watching the Empire "
@@ -80,7 +80,7 @@ namespace AshAndEmber
                 {
                     "War Fever — The Tribes ride to war as if born to it; your clan's parties never lose heart. (party morale floor +15)",
                     "Spoils of the Raid — A village put to the torch yields more than the usual plunder. (+50–150 gold per raid)",
-                    "No Quarter — The God-King's word burns through any treaty; your wars do not end in peace.",
+                    "No Quarter — The Priest-King's word burns through any treaty; your wars do not end in peace.",
                 },
             },
             // Sturgia → the Northmen. Name + blurb only; the feats are LEFT as vanilla

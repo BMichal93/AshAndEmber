@@ -1,20 +1,20 @@
 // =============================================================================
 // ASH AND EMBER — Tribes/TribalKingdomBehavior.cs
 //
-// Manages the Tribes of the East (khuzait) as a faction ruled by the God-King:
+// Manages the Tribes of the East (khuzait) as a faction ruled by the Priest-King:
 // a fire-wielding despot who brokers no peace and collects wives from
 // conquered lands, keeping his lords in deliberate submission.
 //
 // Mechanics:
-//   God-King Setup     — marked as Pyrelord mage with dark gifts each session.
+//   Priest-King Setup     — marked as Pyrelord mage with dark gifts each session.
 //   Divine Rule        — a dominance policy is enforced weekly.
-//   God-King Dominance — ruling clan influence pinned high; other lords capped.
-//   Wives of Conquest  — each conquered town adds a woman to the God-King's
+//   Priest-King Dominance — ruling clan influence pinned high; other lords capped.
+//   Wives of Conquest  — each conquered town adds a woman to the Priest-King's
 //                        household (capped at TribalWifeMax).
 //   Endless War        — any peace involving the Tribes is immediately reversed.
-//   Blood Succession   — on the God-King's death, the oldest living son inherits.
-//   Self-Immolation    — a captured God-King sets himself ablaze rather than submit.
-//   Free Recruitment   — a player sworn to the God-King (clan in the Tribes'
+//   Blood Succession   — on the Priest-King's death, the oldest living son inherits.
+//   Self-Immolation    — a captured Priest-King sets himself ablaze rather than submit.
+//   Free Recruitment   — a player sworn to the Priest-King (clan in the Tribes'
 //                        kingdom, regardless of birth culture) can recruit tier-1
 //                        tribesmen at no cost from Tribal towns (global 7-day
 //                        cooldown — the tribes answer the champion only once a
@@ -40,13 +40,15 @@ namespace AshAndEmber
     public class TribalKingdomBehavior : CampaignBehaviorBase
     {
         internal  const string KhuzaitId          = "khuzait";
-        private   const float  GodKingInfluenceMin = 4000f;
+        internal  const string AshenKingdomId      = "ashen_kingdom";
+        private   const float  PriestKingInfluenceMin = 4000f;
         private   const float  LordInfluenceCap    = 50f;
         private   const int    TribalWifeMax        = 8;
         private   const int    FreeRecruitCount     = 6;
         private   const int    FreeRecruitCooldown  = 7; // days
+        private   const int    StarterClanDraftCount = 2; // extra clans drawn to the Tribes at the dawn of the world
 
-        // Persisted: StringIds of consort heroes added to the God-King's clan.
+        // Persisted: StringIds of consort heroes added to the Priest-King's clan.
         private static readonly List<string> _consortIds = new List<string>();
         // Persisted: settlement StringIds already processed (so starting towns are skipped).
         private static readonly HashSet<string> _processedSettlements = new HashSet<string>();
@@ -115,7 +117,7 @@ namespace AshAndEmber
         private static void OnSessionLaunched(CampaignGameStarter starter)
         {
             _recruitCooldowns.Clear();
-            try { SetupGodKing();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SetupPriestKing();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { EnforceDivineRule();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { RegisterMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -123,11 +125,11 @@ namespace AshAndEmber
         // ── Daily tick ─────────────────────────────────────────────────────────
         private static void OnDailyTick()
         {
-            try { CheckGodKingCapture(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { FreeDraftTick();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { CheckPriestKingCapture(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { FreeDraftTick();          } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // ── Free Drafting — the God-King's war levy ─────────────────────────────
+        // ── Free Drafting — the Priest-King's war levy ──────────────────────────
         // The Tribes conscript as they ride: every under-strength Tribes lord party
         // refills with tier-1 tribesmen each day, far faster than any rival lord
         // rebuilds from village volunteers. (The player's mirror of this is the
@@ -173,18 +175,18 @@ namespace AshAndEmber
         // ── Weekly tick ────────────────────────────────────────────────────────
         private static void OnWeeklyTick()
         {
-            try { SetupGodKing();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { SetupPriestKing();             } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { EnforceDivineRule();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { MaintainGodKingInfluence(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { MaintainPriestKingInfluence(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { CapLordInfluence();         } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { CheckConquestWives();       } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // ── Hero killed — God-King succession ─────────────────────────────────
+        // ── Hero killed — Priest-King succession ─────────────────────────────────
         private static void OnHeroKilled(Hero victim, Hero killer,
             KillCharacterAction.KillCharacterActionDetail detail, bool showNotification)
         {
-            try { EnforceGodKingSuccession(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+            try { EnforcePriestKingSuccession(victim); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── No Quarter ────────────────────────────────────────────────────────
@@ -205,21 +207,21 @@ namespace AshAndEmber
                 if ((tribes as Kingdom)?.IsEliminated == true) return;
                 if ((other  as Kingdom)?.IsEliminated == true) return;
 
-                // Re-declare war immediately — the God-King does not parley.
+                // Re-declare war immediately — the Priest-King does not parley.
                 try { DeclareWarAction.ApplyByDefault(tribes, other); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 if (TribalCulture.IsPlayerTribal)
                     InformationManager.DisplayMessage(new InformationMessage(
-                        "No Quarter — the God-King's word burns through any treaty. The war endures.",
+                        "No Quarter — the Priest-King's word burns through any treaty. The war endures.",
                         new Color(0.85f, 0.35f, 0.15f)));
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // ── Self-Immolation — God-King dies rather than be taken prisoner ────────
-        // Checked daily: if the God-King is a prisoner, he immediately sets himself
+        // ── Self-Immolation — Priest-King dies rather than be taken prisoner ────────
+        // Checked daily: if the Priest-King is a prisoner, he immediately sets himself
         // ablaze. Capture is not a fate the divine fire permits.
-        private static void CheckGodKingCapture()
+        private static void CheckPriestKingCapture()
         {
             try
             {
@@ -227,13 +229,13 @@ namespace AshAndEmber
                     k.StringId == KhuzaitId && !k.IsEliminated);
                 if (khuzait == null) return;
 
-                var godKing = khuzait.Leader;
-                if (godKing == null || !godKing.IsAlive || !godKing.IsPrisoner) return;
+                var priestKing = khuzait.Leader;
+                if (priestKing == null || !priestKing.IsAlive || !priestKing.IsPrisoner) return;
 
-                try { KillCharacterAction.ApplyByMurder(godKing, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                try { KillCharacterAction.ApplyByMurder(priestKing, null, false); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "The God-King would not kneel. He set himself ablaze before his captors could savour the victory.",
+                    "The Priest-King would not kneel. He set himself ablaze before his captors could savour the victory.",
                     new Color(0.85f, 0.35f, 0.15f)));
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -242,8 +244,8 @@ namespace AshAndEmber
         // ── Blood Succession — oldest son inherits the divine fire ────────────
         // Fires on HeroKilledEvent. If the dead hero was the ruling clan's leader,
         // the oldest living male child (or oldest male clan member) is installed as
-        // the new head. SetupGodKing() will re-apply the Pyrelord gifts next week.
-        private static void EnforceGodKingSuccession(Hero deadHero)
+        // the new head. SetupPriestKing() will re-apply the Pyrelord gifts next week.
+        private static void EnforcePriestKingSuccession(Hero deadHero)
         {
             try
             {
@@ -274,7 +276,7 @@ namespace AshAndEmber
                 try { ChangeClanLeaderAction.ApplyWithSelectedNewLeader(rulingClan, heir); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"The God-King is dead. His heir {heir.Name} rises — the divine fire passes to new hands.",
+                    $"The Priest-King is dead. His heir {heir.Name} rises — the divine fire passes to new hands.",
                     new Color(0.85f, 0.45f, 0.2f)));
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -283,7 +285,7 @@ namespace AshAndEmber
         // ── Wives of conquest ──────────────────────────────────────────────────
         // Checked weekly: any Khuzait town not yet in _processedSettlements is a
         // new conquest. The first call records the starting towns silently so the
-        // God-King doesn't retroactively claim wives for his own homeland.
+        // Priest-King doesn't retroactively claim wives for his own homeland.
         private static void CheckConquestWives()
         {
             try
@@ -310,8 +312,8 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
-        // ── God-King setup ─────────────────────────────────────────────────────
-        private static void SetupGodKing()
+        // ── Priest-King setup ─────────────────────────────────────────────────────
+        private static void SetupPriestKing()
         {
             try
             {
@@ -319,39 +321,109 @@ namespace AshAndEmber
                     k.StringId == KhuzaitId && !k.IsEliminated);
                 if (khuzait == null) return;
 
-                var godKing = khuzait.Leader;
-                if (godKing == null || !godKing.IsAlive) return;
+                var priestKing = khuzait.Leader;
+                if (priestKing == null || !priestKing.IsAlive) return;
 
                 // Mark as Pyrelord — fire and ruin archetype.
-                if (!ColourLordRegistry.IsColourLord(godKing))
-                    ColourLordRegistry.SetGodKing(godKing);
+                if (!ColourLordRegistry.IsColourLord(priestKing))
+                    ColourLordRegistry.SetPriestKing(priestKing);
 
                 // Ensure the evil alignment that activates dark gifts.
                 try
                 {
-                    if (godKing.GetTraitLevel(DefaultTraits.Mercy) > -1)
-                        godKing.SetTraitLevel(DefaultTraits.Mercy, -2);
-                    if (godKing.GetTraitLevel(DefaultTraits.Honor) > -1)
-                        godKing.SetTraitLevel(DefaultTraits.Honor, -2);
+                    if (priestKing.GetTraitLevel(DefaultTraits.Mercy) > -1)
+                        priestKing.SetTraitLevel(DefaultTraits.Mercy, -2);
+                    if (priestKing.GetTraitLevel(DefaultTraits.Honor) > -1)
+                        priestKing.SetTraitLevel(DefaultTraits.Honor, -2);
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 // Seed dark gifts (uses the evil-lord path: DreadPresence + BloodPact
                 // are the most thematically appropriate).
-                try { DarkGiftSystem.SeedNpcGifts(godKing, isAshenLord: false, isEvilLord: true); }
+                try { DarkGiftSystem.SeedNpcGifts(priestKing, isAshenLord: false, isEvilLord: true); }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
+        // ── Starter reinforcement — extra clans for the Tribes ────────────────
+        // Called once per new campaign from CampaignBehavior.OnNewGameCreated (after
+        // the world is fully built — the authoritative, ordering-safe point for
+        // picking world content). The steppe realm starts thin on lords, so the
+        // Priest-King calls two wandering clans of the old blood (Khuzait-blooded) to
+        // his banner. Landless kinless clans answer first; if fewer than two ride
+        // free, the strongest kinless clans elsewhere are drawn back — but only ever
+        // clans that hold no town or castle, so the draft moves warriors, never a
+        // settlement (nothing changes hands on the map). Not run for existing saves,
+        // so an in-progress campaign is never disturbed.
+        public static void EstablishForNewCampaign()
+        {
+            try
+            {
+                var khuzait = Kingdom.All.FirstOrDefault(k =>
+                    k.StringId == KhuzaitId && !k.IsEliminated);
+                if (khuzait == null) return; // no Tribes realm — nothing to reinforce
+
+                // Khuzait-blooded clans not already under the Priest-King, holding no
+                // walls of their own, and never the player's clan nor the cold Ashen.
+                var chosen = Clan.All
+                    .Where(c => c != null && !c.IsEliminated
+                             && c != Clan.PlayerClan
+                             && c.Culture?.StringId == KhuzaitId
+                             && c.Kingdom?.StringId != KhuzaitId
+                             && c.Kingdom?.StringId != AshenKingdomId
+                             && (c.Kingdom == null || c.Kingdom.RulingClan != c)
+                             && !HoldsAnyStronghold(c))
+                    .OrderBy(c => c.Kingdom == null ? 0 : 1)   // free riders answer first
+                    .ThenByDescending(c => c.Tier)              // then the strongest
+                    .ThenByDescending(c => c.Heroes?.Count(h => h != null && h.IsAlive) ?? 0)
+                    .ThenBy(c => c.StringId)                    // stable, deterministic
+                    .Take(StarterClanDraftCount)
+                    .ToList();
+
+                var stay = CampaignTime.Now + CampaignTime.Years(1000);
+                foreach (var clan in chosen)
+                {
+                    try
+                    {
+                        var old = clan.Kingdom;
+                        if (old != null && !old.IsEliminated)
+                            // Atomic defection — no ownerless flash for whatever the clan carries.
+                            ChangeKingdomAction.ApplyByJoinToKingdomByDefection(clan, old, khuzait, stay, false);
+                        else
+                            ChangeKingdomAction.ApplyByJoinToKingdom(clan, khuzait, stay, false);
+                    }
+                    catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+                }
+
+                if (chosen.Count > 0 && TribalCulture.IsPlayerSwornToTribes)
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{chosen.Count} clan(s) of the old blood ride to the Priest-King's banner.",
+                        new Color(0.85f, 0.55f, 0.2f)));
+            }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
+        }
+
+        // True if the clan owns any town or castle — such a clan is skipped so the
+        // draft can never drag a settlement into the Tribes.
+        private static bool HoldsAnyStronghold(Clan clan)
+        {
+            try
+            {
+                return clan?.Settlements != null
+                    && clan.Settlements.Any(s => s != null && (s.IsTown || s.IsCastle));
+            }
+            catch { return false; }
+        }
+
         // ── Divine Rule — represented through influence dominance ─────────────
-        // The God-King's absolute rule is enforced by pinning his clan's influence
-        // at GodKingInfluenceMin and capping all other lords. A formal policy hook
+        // The Priest-King's absolute rule is enforced by pinning his clan's influence
+        // at PriestKingInfluenceMin and capping all other lords. A formal policy hook
         // can be added once the PolicyObject API is confirmed against the game DLLs.
         private static void EnforceDivineRule() { /* placeholder — influence dominance suffices */ }
 
         // ── Influence management ───────────────────────────────────────────────
-        private static void MaintainGodKingInfluence()
+        private static void MaintainPriestKingInfluence()
         {
             try
             {
@@ -359,8 +431,8 @@ namespace AshAndEmber
                     k.StringId == KhuzaitId && !k.IsEliminated);
                 var ruling = khuzait?.RulingClan ?? khuzait?.Leader?.Clan;
                 if (ruling == null) return;
-                if (ruling.Influence < GodKingInfluenceMin)
-                    ruling.Influence = GodKingInfluenceMin;
+                if (ruling.Influence < PriestKingInfluenceMin)
+                    ruling.Influence = PriestKingInfluenceMin;
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -392,8 +464,8 @@ namespace AshAndEmber
             {
                 var khuzait   = Kingdom.All.FirstOrDefault(k =>
                     k.StringId == KhuzaitId && !k.IsEliminated);
-                var godKingClan = khuzait?.RulingClan ?? khuzait?.Leader?.Clan;
-                if (godKingClan == null) return;
+                var priestKingClan = khuzait?.RulingClan ?? khuzait?.Leader?.Clan;
+                if (priestKingClan == null) return;
 
                 string cultureId = capturedTown.Culture?.StringId ?? "";
 
@@ -406,7 +478,7 @@ namespace AshAndEmber
                 if (template == null) return;
 
                 int age = 18 + _rng.Next(9); // 18–26
-                Hero consort = HeroCreator.CreateChild(template, capturedTown, godKingClan, age);
+                Hero consort = HeroCreator.CreateChild(template, capturedTown, priestKingClan, age);
                 if (consort == null) return;
 
                 _consortIds.Add(consort.StringId);
@@ -415,17 +487,17 @@ namespace AshAndEmber
                 // ExSpouses on its own (she stays in the clan — the household grows),
                 // so each conquest crowns a new consort while the old ones remain.
                 // Without this the "wives" were clanswomen only, invisible on the
-                // God-King's page and barren of heirs.
+                // Priest-King's page and barren of heirs.
                 try
                 {
-                    var godKing = khuzait?.Leader ?? godKingClan.Leader;
-                    if (godKing != null && godKing.IsAlive && !godKing.IsFemale && consort.IsFemale)
-                        godKing.Spouse = consort;
+                    var priestKing = khuzait?.Leader ?? priestKingClan.Leader;
+                    if (priestKing != null && priestKing.IsAlive && !priestKing.IsFemale && consort.IsFemale)
+                        priestKing.Spouse = consort;
                 }
                 catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"A woman of {capturedTown.Name} is claimed for the God-King's household. His dominion grows.",
+                    $"A woman of {capturedTown.Name} is claimed for the Priest-King's household. His dominion grows.",
                     new Color(0.85f, 0.45f, 0.2f)));
             }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
@@ -445,7 +517,7 @@ namespace AshAndEmber
                         try
                         {
                             // Gated on allegiance, not birth: only a champion sworn
-                            // to the God-King may call the tribes to arms.
+                            // to the Priest-King may call the tribes to arms.
                             if (!TribalCulture.IsPlayerSwornToTribes) return false;
                             var s = Settlement.CurrentSettlement;
                             if (s == null || !s.IsTown) return false;
@@ -483,7 +555,7 @@ namespace AshAndEmber
                             {
                                 MobileParty.MainParty.AddElementToMemberRoster(tier1, FreeRecruitCount);
                                 InformationManager.DisplayMessage(new InformationMessage(
-                                    $"{FreeRecruitCount} tribesmen answer the call of the God-King's champion.",
+                                    $"{FreeRecruitCount} tribesmen answer the call of the Priest-King's champion.",
                                     new Color(0.85f, 0.55f, 0.2f)));
                             }
 

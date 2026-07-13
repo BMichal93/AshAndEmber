@@ -273,7 +273,7 @@ namespace AshAndEmber
                     new TextObject("Tribes"));
                 SetKingdomField(khuzait,
                     new[] { "<EncyclopediaRulerTitle>k__BackingField", "_rulerTitle", "<RulerTitle>k__BackingField" },
-                    new TextObject("God-King"));
+                    new TextObject("Priest-King"));
                 SetKingdomEncyclopediaText(khuzait, _tribalLore);
 
                 RenameTribalCulture();
@@ -312,13 +312,13 @@ namespace AshAndEmber
                 SetCultureVariation(mgr, "str_culture_description", "khuzait", _tribalLore);
                 // The lexicon (N-key encyclopedia) titles a faction leader from the
                 // culture-keyed "str_faction_ruler*" texts, NOT from the kingdom
-                // object — without these the God-King's page keeps reading "khan".
-                SetCultureVariation(mgr, "str_faction_ruler", "khuzait",   "God-King");
-                SetCultureVariation(mgr, "str_faction_ruler", "khuzait_f", "God-Queen");
+                // object — without these the Priest-King's page keeps reading "khan".
+                SetCultureVariation(mgr, "str_faction_ruler", "khuzait",   "Priest-King");
+                SetCultureVariation(mgr, "str_faction_ruler", "khuzait_f", "Priest-Queen");
                 SetCultureVariation(mgr, "str_faction_ruler_name_with_title", "khuzait",
-                    "{?RULER.GENDER}God-Queen{?}God-King{\\?} {RULER.NAME}");
+                    "{?RULER.GENDER}Priest-Queen{?}Priest-King{\\?} {RULER.NAME}");
                 SetCultureVariation(mgr, "str_faction_ruler_term_in_speech", "khuzait",
-                    "{?RULER.GENDER}the God-Queen{?}the God-King{\\?} {RULER.NAME}");
+                    "{?RULER.GENDER}the Priest-Queen{?}the Priest-King{\\?} {RULER.NAME}");
                 RelabelCulturalFeats("khuzait", _tribalFeats, ref _tribalFeatsRelabeled);
                 return true;
             }
@@ -343,7 +343,7 @@ namespace AshAndEmber
         {
             "War Fever — The Tribes ride to war as if born to it; your clan's parties never lose heart. (party morale floor +15)",
             "Spoils of the Raid — A village put to the torch yields more than the usual plunder. (+50–150 gold per raid)",
-            "No Quarter — The God-King's word burns through any treaty; your wars do not end in peace.",
+            "No Quarter — The Priest-King's word burns through any treaty; your wars do not end in peace.",
         };
         // Duneborn: the caravan bonus is REPLACED (its effect zeroed via
         // zeroPositiveIndex 0) by the Blood Tithe altar discount, which lives in
@@ -371,7 +371,7 @@ namespace AshAndEmber
             "They bind throne to altar. They count the cost. They do not flinch at what the Light requires of them.";
         private const string _tribalLore =
             "They came from the eastern steppe — a hundred warring clans who forgot how to stop fighting " +
-            "until the God-King put his hand on the sky and turned three chieftains to ash. " +
+            "until the Priest-King put his hand on the sky and turned three chieftains to ash. " +
             "The rest knelt. Now the Tribes ride as one, not because they love their king, " +
             "but because they love war, and he alone has shown them how to win it. " +
             "He wields fire the way other men wield iron. He does not negotiate. " +
@@ -698,7 +698,7 @@ namespace AshAndEmber
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "Khuzait Nomad",        "Tribesman"             },
-            { "Khuzait Khan's Guard", "God-King's Vanguard"   },
+            { "Khuzait Khan's Guard", "Priest-King's Vanguard"   },
             { "Khuzait Raider",       "Tribal Ravager"        },
         };
 

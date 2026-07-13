@@ -146,9 +146,9 @@ namespace AshAndEmber
             _lordTalents.TryGetValue(hero.StringId, out var list) &&
             list.Contains((int)id);
 
-        /// Registers the God-King (Tribes of the East ruler) as a Pyrelord mage.
+        /// Registers the Priest-King (Tribes of the East ruler) as a Pyrelord mage.
         /// Not Ashen — he is fire and conquest, not cold ruin.
-        public static void SetGodKing(Hero hero)
+        public static void SetPriestKing(Hero hero)
         {
             if (hero == null) return;
             _mageIds.Add(hero.StringId);

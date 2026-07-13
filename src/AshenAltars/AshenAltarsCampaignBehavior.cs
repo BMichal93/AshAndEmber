@@ -154,7 +154,7 @@ namespace AshAndEmber
                     return true;
 
                 // Every town held by the Tribes of the East has a Dark Altar —
-                // the God-King's blood-pacts run through each city he claims.
+                // the Priest-King's blood-pacts run through each city he claims.
                 return s.OwnerClan?.Kingdom?.StringId == "khuzait";
             }
             catch { return false; }
