@@ -61,9 +61,6 @@ namespace AshAndEmber
         // is a GLOBAL weekly cap — without it the player could hop between tribal towns
         // and pull FreeRecruitCount fresh troops from each, every visit.
         private static int _lastFreeRecruitDay = -1000;
-        // Persisted: set once the Priest-King's opening call for extra clans has gone
-        // out, so the one-time reinforcement never repeats on later loads.
-        private static bool _starterClansDrafted = false;
 
         private static readonly Random _rng = new Random();
 
@@ -74,7 +71,6 @@ namespace AshAndEmber
             _initialSettlementsRecorded = false;
             _recruitCooldowns.Clear();
             _lastFreeRecruitDay = -1000;
-            _starterClansDrafted = false;
         }
 
         // ── CampaignBehaviorBase ───────────────────────────────────────────────
@@ -115,8 +111,6 @@ namespace AshAndEmber
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { store.SyncData("TRIBES_LastFreeRecruitDay", ref _lastFreeRecruitDay); }
             catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { store.SyncData("TRIBES_StarterClansDrafted", ref _starterClansDrafted); }
-            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
 
         // ── Session launch ─────────────────────────────────────────────────────
@@ -124,7 +118,6 @@ namespace AshAndEmber
         {
             _recruitCooldowns.Clear();
             try { SetupPriestKing();        } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
-            try { DraftStarterClans();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { EnforceDivineRule();   } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             try { RegisterMenus(starter); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
         }
@@ -310,21 +303,22 @@ namespace AshAndEmber
         }
 
         // ── Starter reinforcement — extra clans for the Tribes ────────────────
-        // Run once per campaign, at the first session launch. The steppe realm
-        // starts thin on lords, so the Priest-King calls two wandering clans of the
-        // old blood (Khuzait-blooded) to his banner. Landless kinless clans answer
-        // first; if fewer than two ride free, the strongest kinless clans elsewhere
-        // are drawn back — but only ever clans that hold no town or castle, so the
-        // draft moves warriors, never a settlement (nothing changes hands on the map).
-        private static void DraftStarterClans()
+        // Called once per new campaign from CampaignBehavior.OnNewGameCreated (after
+        // the world is fully built — the authoritative, ordering-safe point for
+        // picking world content). The steppe realm starts thin on lords, so the
+        // Priest-King calls two wandering clans of the old blood (Khuzait-blooded) to
+        // his banner. Landless kinless clans answer first; if fewer than two ride
+        // free, the strongest kinless clans elsewhere are drawn back — but only ever
+        // clans that hold no town or castle, so the draft moves warriors, never a
+        // settlement (nothing changes hands on the map). Not run for existing saves,
+        // so an in-progress campaign is never disturbed.
+        public static void EstablishForNewCampaign()
         {
             try
             {
-                if (_starterClansDrafted) return;
-
                 var khuzait = Kingdom.All.FirstOrDefault(k =>
                     k.StringId == KhuzaitId && !k.IsEliminated);
-                if (khuzait == null) return; // no Tribes realm yet — retry next launch
+                if (khuzait == null) return; // no Tribes realm — nothing to reinforce
 
                 // Khuzait-blooded clans not already under the Priest-King, holding no
                 // walls of their own, and never the player's clan nor the cold Ashen.
@@ -357,8 +351,6 @@ namespace AshAndEmber
                     }
                     catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 }
-
-                _starterClansDrafted = true;
 
                 if (chosen.Count > 0 && TribalCulture.IsPlayerSwornToTribes)
                     InformationManager.DisplayMessage(new InformationMessage(

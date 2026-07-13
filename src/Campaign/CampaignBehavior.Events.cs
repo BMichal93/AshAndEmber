@@ -137,6 +137,7 @@ namespace AshAndEmber
                 AshenAltarsCampaignBehavior.ResetForNewGame();
                 try { AshenAltarsCampaignBehavior.EstablishForNewCampaign(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 TribalKingdomBehavior.ResetForNewGame();
+                try { TribalKingdomBehavior.EstablishForNewCampaign(); } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
                 // Each establishment is individually guarded: a failure in one world
                 // system (e.g. crystal items missing from ModuleData) must never abort
                 // the rest of new-game setup — above all the Gift-prompt wiring below,
