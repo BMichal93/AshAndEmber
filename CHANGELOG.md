@@ -19,6 +19,10 @@
 ### The stones name their own working
 - **Crystals now say what they do.** A Sunstone read as "Sunstone" and nothing more, and a stone that could not be identified without consulting the Codex was a stone no one carried. Each now wears its working in its name — *Sunstone — Warmth Pulse*, *Bloodstone — Vampiric Burst*, *Willowisp — Dread Whisper* — so what a stone is for is legible the moment you see it in your pack.
 
+### The Priest-King takes the throne of the East
+- **The ruler of the Tribes of the East is now the Priest-King, not the God-King.** Every line that named him — his lords' battle-taunts, the backstory options that swear you to his rites, the world-events that invoke his word, his household and succession messages, his vanguard's banner — now speaks of the Priest-King. Mechanics are unchanged; only the title is reforged.
+- **The Tribes ride to war with two more clans at their back.** The steppe realm started thin on lords; the Priest-King now calls two wandering clans of the old blood to his banner at the campaign's dawn (landless riders first, then the strongest kinless clans he can reach). They bring their warriors, not their walls — no town or castle changes hands.
+
 ---
 
 ## v0.47.0
@@ -37,10 +41,6 @@
 
 ### Grace does not linger where it is not called
 - **Fixed miracle battle effects carrying over between battles.** Sacred Flame, Aegis, and Guidance blessings (and the miracle AI's cooldown ledger) were only cleared on save-load, not at the end of each mission — so blessings keyed to fallen soldiers quietly haunted the next field within the same session. All miracle battle state is now laid to rest when the mission ends, and crystal battle state is likewise cleared on save-load for full symmetry.
-
-### The Priest-King takes the throne of the East
-- **The ruler of the Tribes of the East is now the Priest-King, not the God-King.** Every line that named him — his lords' battle-taunts, the backstory options that swear you to his rites, the world-events that invoke his word, his household and succession messages, his vanguard's banner — now speaks of the Priest-King. Mechanics are unchanged; only the title is reforged.
-- **The Tribes ride to war with two more clans at their back.** The steppe realm started thin on lords; the Priest-King now calls two wandering clans of the old blood to his banner at the campaign's dawn (landless riders first, then the strongest kinless clans he can reach). They bring their warriors, not their walls — no town or castle changes hands.
 
 ### Crystals endure
 - **Crystals shatter half as often.** The burndown roll drops from 10 % to 5 % per activation — a stone now survives ~20 draws on average (~50 with Lasting Lattice) instead of dying inside ten, so carrying one into battle no longer feels like a tax on using it.
