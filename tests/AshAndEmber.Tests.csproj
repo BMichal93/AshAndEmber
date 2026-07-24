@@ -7,7 +7,7 @@
     <BannerlordPath Condition="'$(BannerlordPath)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord</BannerlordPath>
     <BannerlordBin  Condition="'$(BannerlordBin)'  == ''">Win64_Shipping_Client</BannerlordBin>
     <_BL>$(BannerlordPath)\bin\$(BannerlordBin)</_BL>
-    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.2.12.77991</BannerlordReferenceAssembliesVersion>
+    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.4.7.117484</BannerlordReferenceAssembliesVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NUnit" Version="3.14.0"/>

@@ -38,7 +38,7 @@
     <BannerlordBin  Condition="'$(BannerlordBin)'  == ''">Win64_Shipping_Client</BannerlordBin>
     <_BL>$(BannerlordPath)\bin\$(BannerlordBin)</_BL>
     <!-- Version of the community reference assemblies used for headless builds (see below). -->
-    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.2.12.77991</BannerlordReferenceAssembliesVersion>
+    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.4.7.117484</BannerlordReferenceAssembliesVersion>
   </PropertyGroup>
 
   <!--
