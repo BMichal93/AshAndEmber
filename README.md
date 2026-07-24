@@ -441,6 +441,16 @@ dotnet build src\TheWitheringArt.csproj
 
 The build copies the DLL to your Modules folder automatically.
 
+### Running the tests
+
+The numeric logic lives in pure `*Math.cs` files (no engine types) and is covered by **237 NUnit tests** in `tests/PureLogicTests.cs`:
+
+```powershell
+dotnet test tests/AshAndEmber.Tests.csproj
+```
+
+Note: the test project currently references the game project, which references the TaleWorlds DLLs — so a **local Bannerlord install (and the `BannerlordPath` env var) is required to compile and run the tests**, even though the tests themselves touch no engine types.
+
 ---
 
 ## Troubleshooting
