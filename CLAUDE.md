@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Ash and Ember** is a magic overhaul for Mount & Blade II: Bannerlord (~62K lines, ~200 C# files under `src/`). It adds a unified elemental spell system, three alternative caster paths (Grace/miracles, the Living Ember/nature, and the Dark Gifts), NPC mages, campaign events, multiple questlines, covert operations (schemes), sea trade, market speculation, taverns, clan orders, and a reworked faction/culture layer (Templars, Tribes, Northmen, Duneborn, the Forest Clans, and the Ashen). Target framework: .NET Framework 4.7.2.
+**Ash and Ember** is a magic overhaul for Mount & Blade II: Bannerlord (~76K lines, ~254 C# files under `src/`). It adds a unified elemental spell system, three alternative caster paths (Grace/miracles, the Living Ember/nature, and the Dark Gifts), NPC mages, campaign events, multiple questlines, covert operations (schemes), sea trade, market speculation, taverns, clan orders, and a reworked faction/culture layer (Templars, Tribes, Northmen, Duneborn, the Forest Clans, and the Ashen). Target framework: .NET Framework 4.7.2.
 
 The current player-facing casting model (v0.35+) is the **unified element system**: hold Focus, load a learned element (Fire default; Wind/Earth/Water/Spirit), draw a charge by standing still, and release it as an attack cone or a wall. The older two-phase form/effect "Inner Fire" pipeline still exists underneath and drives NPC mage casts. Player-facing details live in `README.md`; the release history is in `CHANGELOG.md`.
 

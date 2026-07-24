@@ -1,8 +1,13 @@
 # Ash and Ember — v0.48
 
+> **A large gameplay-systems mod for Mount & Blade II: Bannerlord — and the codebase behind my context-engineering write-up.**
+> **Scale:** ~76,000 lines of C# across ~254 files. **Stack:** C# / .NET Framework 4.7.2, built against the Bannerlord (TaleWorlds) API — no Harmony; behaviour is layered through the game's `CampaignBehavior`/`MissionBehavior` hooks. **Tests:** 237 pure-logic NUnit tests in `tests/PureLogicTests.cs` (no engine types). **Working with an agent here:** [`CLAUDE.md`](CLAUDE.md) is the map I hand Claude Code — entry points, state-reset rules, and the conventions that keep changes save-compatible.
+
+---
+
 A Mount & Blade II: Bannerlord magic overhaul centred on the Inner Fire: a single, versatile force shaped by the caster's will. Lords who carry it fight differently. Bandits who steal it burn. The Ashen march from the north and do not negotiate.
 
-This is not a small spell-pack. Ash and Ember rebuilds Bannerlord's magic from the ground up (~62,000 lines across ~200 source files) — one unified elemental casting system for player and NPC lords alike, three alternate paths to power, a five-faction culture and faction rework, roaming elemental beings, and a long tail of campaign systems: covert schemes, sea trade, market speculation, mercenary soldiering, clan orders, explorable ruins, a secret society of mages, and three multi-stage questlines.
+This is not a small spell-pack. Ash and Ember rebuilds Bannerlord's magic from the ground up (~76,000 lines across ~254 source files) — one unified elemental casting system for player and NPC lords alike, three alternate paths to power, a five-faction culture and faction rework, roaming elemental beings, and a long tail of campaign systems: covert schemes, sea trade, market speculation, mercenary soldiering, clan orders, explorable ruins, a secret society of mages, and three multi-stage questlines.
 
 ---
 
@@ -18,7 +23,7 @@ AshAndEmber/
 ├── bin/
 │   ├── Win64_Shipping_Client/       Steam build
 │   └── Gaming.Desktop.x64_Shipping_Client/   Xbox / Game Pass build
-├── src/                             ~62 000 lines across ~200 source files (grouped by system folder)
+├── src/                             ~76 000 lines across ~254 source files (grouped by system folder)
 │   ├── MagicSystem.cs               module entry point + mission behaviour
 │   ├── AgingSystem.cs               life-cost of casting
 │   ├── Magic/                       the unified element system — Codex, input, effects, walls, ultimates, map spells, teachers
