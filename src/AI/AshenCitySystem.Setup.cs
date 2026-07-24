@@ -169,7 +169,7 @@ namespace AshAndEmber
                     && !IsTargetSettlementId(home.StringId))
                     return true;
             }
-            catch { }
+            catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             return false;
         }
 

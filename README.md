@@ -453,7 +453,17 @@ The numeric logic lives in pure `*Math.cs` files (no engine types) and is covere
 dotnet test tests/AshAndEmber.Tests.csproj
 ```
 
-Note: the test project currently references the game project, which references the TaleWorlds DLLs — so a **local Bannerlord install (and the `BannerlordPath` env var) is required to compile and run the tests**, even though the tests themselves touch no engine types.
+You do **not** need a Bannerlord install to build or test. When a local install is present the projects reference the real game DLLs; when it isn't (CI, a fresh clone, an automated agent), they fall back automatically to the community `Bannerlord.ReferenceAssemblies.*` NuGet packages, so `dotnet build` and `dotnet test` work headless.
+
+### Convention checks
+
+A small script enforces two repo rules that prose alone lets slip — no empty `catch {}` blocks, and the version string in sync across the four files that must match:
+
+```bash
+bash tools/checks/check-conventions.sh
+```
+
+Both the tests and this script run in [CI](.github/workflows/ci.yml) on every pull request.
 
 ---
 

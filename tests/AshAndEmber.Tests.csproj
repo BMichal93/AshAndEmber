@@ -7,19 +7,24 @@
     <BannerlordPath Condition="'$(BannerlordPath)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord</BannerlordPath>
     <BannerlordBin  Condition="'$(BannerlordBin)'  == ''">Win64_Shipping_Client</BannerlordBin>
     <_BL>$(BannerlordPath)\bin\$(BannerlordBin)</_BL>
+    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.2.12.77991</BannerlordReferenceAssembliesVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NUnit" Version="3.14.0"/>
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
   </ItemGroup>
-  <ItemGroup>
+  <!-- Local install present → real DLLs; otherwise reference assemblies (see src csproj). -->
+  <ItemGroup Condition="Exists('$(_BL)\TaleWorlds.Library.dll')">
     <Reference Include="TaleWorlds.Library"><HintPath>$(_BL)\TaleWorlds.Library.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="TaleWorlds.Core"><HintPath>$(_BL)\TaleWorlds.Core.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="TaleWorlds.MountAndBlade"><HintPath>$(_BL)\TaleWorlds.MountAndBlade.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="TaleWorlds.CampaignSystem"><HintPath>$(_BL)\TaleWorlds.CampaignSystem.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="TaleWorlds.Localization"><HintPath>$(_BL)\TaleWorlds.Localization.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="TaleWorlds.Engine"><HintPath>$(_BL)\TaleWorlds.Engine.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup Condition="!Exists('$(_BL)\TaleWorlds.Library.dll')">
+    <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\src\TheWitheringArt.csproj"/>
