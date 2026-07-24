@@ -180,7 +180,7 @@ namespace AshAndEmber
         private static IEnumerable<sbyte> WreathBones(Agent agent)
         {
             Monster m = null;
-            try { m = agent.Monster; } catch { }
+            try { m = agent.Monster; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
             if (m == null) { yield return 0; yield break; }
             yield return m.PelvisBoneIndex;
             yield return m.SpineLowerBoneIndex;

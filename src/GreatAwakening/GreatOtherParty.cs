@@ -188,7 +188,7 @@ namespace AshAndEmber
             if (party == null) return;
 
             int day = 0;
-            try { day = (int)CampaignTime.Now.ToDays; } catch { }
+            try { day = (int)CampaignTime.Now.ToDays; } catch (System.Exception logEx) { AshAndEmber.ModLog.Error(logEx); }
 
             if (day - _lastTopUpDay >= GreatAwakeningMath.RevenantTopUpIntervalDays)
             {
