@@ -425,17 +425,21 @@ At campaign start, several settlements are moved to better reflect the world sta
 ### Requirements
 
 - .NET SDK 6 or later
-- A local Bannerlord installation
+- A local Bannerlord installation (the build references the game's TaleWorlds DLLs)
+- **Windows** to build directly; the project targets `net472`, so on Linux/macOS you need Mono for the .NET Framework reference assemblies
 
 ### Environment variables
+
+Both variables must be set — the csproj falls back to a hard-coded Steam path and `Win64_Shipping_Client`, so Xbox / Game Pass users who skip `BannerlordBin` get silent reference-resolution failures.
 
 | Variable | Value |
 |----------|-------|
 | `BannerlordPath` | Path to your Bannerlord root (folder containing `bin` and `Modules`) |
-| `BannerlordBin` | `Win64_Shipping_Client` (Steam) or `Gaming.Desktop.x64_Shipping_Client` (Xbox) |
+| `BannerlordBin` | `Win64_Shipping_Client` (Steam) or `Gaming.Desktop.x64_Shipping_Client` (Xbox / Game Pass) |
 
 ```powershell
 $env:BannerlordPath = "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord"
+$env:BannerlordBin  = "Win64_Shipping_Client"   # or Gaming.Desktop.x64_Shipping_Client for Xbox / Game Pass
 dotnet build src\TheWitheringArt.csproj
 ```
 
