@@ -16,11 +16,15 @@ Harmony — everything is layered through the game's `CampaignBehavior` /
 dotnet build src/TheWitheringArt.csproj        # auto-copies the DLL into <BannerlordPath>/Modules/AshAndEmber/bin/<BannerlordBin>/
 dotnet test  tests/AshAndEmber.Tests.csproj    # 237 pure-logic NUnit tests
 dotnet test  tests/AshAndEmber.Tests.csproj --filter "PureLogicTests.<Name>"
+bash tools/checks/check-conventions.sh         # empty-catch + version-sync guardrails (also run in CI)
 ```
 
-Both need a local Bannerlord install + `BannerlordPath`/`BannerlordBin` set (see
-`README.md`). `.\install.ps1` installs a pre-built release. Build/test details and
-the version-bump checklist are in **`behaviour.md`** (imported below).
+With a local Bannerlord install the projects reference the real game DLLs (set
+`BannerlordPath`/`BannerlordBin` — see `README.md`); **without one they fall back
+to the `Bannerlord.ReferenceAssemblies.*` NuGet packages**, so build/test work
+headless (that's what `.github/workflows/ci.yml` runs). `.\install.ps1` installs a
+pre-built release. Build/test details and the four-file version-bump checklist
+are in **`behaviour.md`** (imported below).
 
 > **Naming quirk:** the main project file is still `src/TheWitheringArt.csproj`
 > (a retired working title). The assembly, root namespace, and `SubModule.xml`
