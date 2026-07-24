@@ -15,7 +15,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 
     <!--
-      ----------------------------------------------------------------
+      ================================================================
       Set BannerlordPath to your Bannerlord root directory and BannerlordBin
       to the DLL subfolder for your platform. Both can be environment
       variables (recommended) or edited directly here as fallback values.
@@ -32,14 +32,24 @@
         $env:BannerlordPath = "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord"
         $env:BannerlordBin  = "Win64_Shipping_Client"
         dotnet build TheWitheringArt.csproj
-      ----------------------------------------------------------------
+      ================================================================
     -->
     <BannerlordPath Condition="'$(BannerlordPath)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord</BannerlordPath>
     <BannerlordBin  Condition="'$(BannerlordBin)'  == ''">Win64_Shipping_Client</BannerlordBin>
     <_BL>$(BannerlordPath)\bin\$(BannerlordBin)</_BL>
+    <!-- Version of the community reference assemblies used for headless builds (see below). -->
+    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.2.12</BannerlordReferenceAssembliesVersion>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!--
+    Game assemblies. Two ways to resolve them, chosen automatically:
+      * Local install present ($(_BL)\TaleWorlds.Library.dll exists) → reference
+        the real DLLs by HintPath. This is the unchanged local-dev path.
+      * No local install (CI, a fresh clone, a headless agent) → fall back to the
+        community Bannerlord reference assemblies from NuGet, so `dotnet build`
+        and `dotnet test` work with no game installed. Pin here; CI keeps it honest.
+  -->
+  <ItemGroup Condition="Exists('$(_BL)\TaleWorlds.Library.dll')">
     <Reference Include="TaleWorlds.Library">
       <HintPath>$(_BL)\TaleWorlds.Library.dll</HintPath>
       <Private>false</Private>
@@ -88,6 +98,15 @@
       <HintPath>$(_BL)\TaleWorlds.ScreenSystem.dll</HintPath>
       <Private>false</Private>
     </Reference>
+  </ItemGroup>
+
+  <!-- Headless fallback: reference assemblies (compile-time only, PrivateAssets=all). -->
+  <ItemGroup Condition="!Exists('$(_BL)\TaleWorlds.Library.dll')">
+    <PackageReference Include="Bannerlord.ReferenceAssemblies.Core.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
+    <PackageReference Include="Bannerlord.ReferenceAssemblies.Native.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
+    <PackageReference Include="Bannerlord.ReferenceAssemblies.SandBoxCore.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
+    <PackageReference Include="Bannerlord.ReferenceAssemblies.SandBox.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
+    <PackageReference Include="Bannerlord.ReferenceAssemblies.StoryMode.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
   </ItemGroup>
 
   <ItemGroup>
