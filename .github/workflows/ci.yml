@@ -34,4 +34,7 @@ jobs:
       - name: Build
         run: dotnet build tests/AshAndEmber.Tests.csproj -c Debug --no-restore
       - name: Test
-        run: dotnet test tests/AshAndEmber.Tests.csproj -c Debug --no-build --logger "console;verbosity=normal"
+        # Exclude tests categorised RequiresGame: they touch classes with engine-typed
+        # fields that can't load against the compile-only reference assemblies. They run
+        # locally against a real Bannerlord install.
+        run: dotnet test tests/AshAndEmber.Tests.csproj -c Debug --no-build --logger "console;verbosity=normal" --filter "TestCategory!=RequiresGame"

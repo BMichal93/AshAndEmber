@@ -332,8 +332,13 @@ namespace AshAndEmber.Tests
         }
 
         // ── AshenVisuals body-key transforms ──────────────────────────────────
+        // These exercise pure ulong→ulong colour-key math, but the methods live on
+        // AshenVisuals, which holds an engine-typed field (_capeItem in TaleWorlds.Core).
+        // Loading that type needs the real game assemblies, so under the headless
+        // reference-assembly build (CI) they throw TypeLoadException. Tagged
+        // RequiresGame and skipped there; they still run locally against the real DLLs.
 
-        [Test]
+        [Test, Category("RequiresGame")]
         public void AshenVisuals_HairKey_SetsLightGreyD3D3()
         {
             ulong input  = 0xFFFFFFFFFFFFFFFFUL;
@@ -345,7 +350,7 @@ namespace AshAndEmber.Tests
                 "Bits outside the hair colour byte range must be preserved.");
         }
 
-        [Test]
+        [Test, Category("RequiresGame")]
         public void AshenVisuals_EyeKey_SetsColdBlueBytes()
         {
             ulong result = AshenVisuals.AshenEyeKey(0UL);
@@ -353,7 +358,7 @@ namespace AshAndEmber.Tests
                 "Eye transform must encode a cold-blue iris into the colour bytes.");
         }
 
-        [Test]
+        [Test, Category("RequiresGame")]
         public void AshenVisuals_EyeKey_PreservesNonColourBits()
         {
             ulong input  = 0xAB00000000C0FFEEUL;
@@ -362,7 +367,7 @@ namespace AshAndEmber.Tests
                             result & ~0x00FFFF0000000000UL);
         }
 
-        [Test]
+        [Test, Category("RequiresGame")]
         public void AshenVisuals_SkinKey_SetsLightGreyD3D3D3()
         {
             ulong input  = 0xFFFFFFFFFFFFFFFFUL;
@@ -373,7 +378,7 @@ namespace AshAndEmber.Tests
                 "All other bits must be preserved.");
         }
 
-        [Test]
+        [Test, Category("RequiresGame")]
         public void AshenVisuals_Transforms_AreIdempotent()
         {
             ulong seed = 0x123456789ABCDEF0UL;
