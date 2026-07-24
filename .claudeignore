@@ -1,0 +1,9 @@
+# Compiled output — DLLs/PDBs, nothing to read here
+**/bin/
+**/obj/
+
+# Packaged drop-in release — a mirror of src/, not the source of truth
+dist/
+
+# Release log — 1.3k lines, high volume and low signal for code search
+CHANGELOG.md
