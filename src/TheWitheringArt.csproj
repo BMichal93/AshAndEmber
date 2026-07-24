@@ -38,7 +38,7 @@
     <BannerlordBin  Condition="'$(BannerlordBin)'  == ''">Win64_Shipping_Client</BannerlordBin>
     <_BL>$(BannerlordPath)\bin\$(BannerlordBin)</_BL>
     <!-- Version of the community reference assemblies used for headless builds (see below). -->
-    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.2.12</BannerlordReferenceAssembliesVersion>
+    <BannerlordReferenceAssembliesVersion Condition="'$(BannerlordReferenceAssembliesVersion)' == ''">1.2.12.77991</BannerlordReferenceAssembliesVersion>
   </PropertyGroup>
 
   <!--
@@ -100,13 +100,11 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Headless fallback: reference assemblies (compile-time only, PrivateAssets=all). -->
+  <!-- Headless fallback: the umbrella reference-assembly package pulls in all
+       TaleWorlds.* assemblies (Core/Native/SandBox/StoryMode, incl. CampaignSystem).
+       Compile-time only (PrivateAssets=all). -->
   <ItemGroup Condition="!Exists('$(_BL)\TaleWorlds.Library.dll')">
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.Core.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.Native.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.SandBoxCore.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.SandBox.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
-    <PackageReference Include="Bannerlord.ReferenceAssemblies.StoryMode.EarlyAccess" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
+    <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="$(BannerlordReferenceAssembliesVersion)" PrivateAssets="all"/>
   </ItemGroup>
 
   <ItemGroup>
